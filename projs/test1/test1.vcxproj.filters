@@ -36,6 +36,24 @@
     <ClInclude Include="..\..\src\xx_luahelper.h">
       <Filter>xx</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\xx_list.h">
+      <Filter>xx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\xx_links.h">
+      <Filter>xx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\xx_dict.h">
+      <Filter>xx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\xx_hashutils.h">
+      <Filter>xx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\xx_charsutils.h">
+      <Filter>xx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\xx_string.h">
+      <Filter>xx</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="bak1.txt">

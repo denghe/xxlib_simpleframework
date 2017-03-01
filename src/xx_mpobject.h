@@ -3,6 +3,8 @@
 
 namespace xx
 {
+	struct String;
+
 	// 支持 MemPool 的类都应该从该基类派生
 	struct MPObject
 	{
@@ -14,6 +16,13 @@ namespace xx
 			++refCount();
 		}
 
+		/*
+		if (!tsFlags()) return; else tsFlags() = 1;
+		// str.append( .......... )........
+		tsFlags() = 0;
+		*/
+		virtual void ToString(String &str) const;
+
 		// 减持 或 析构 + 回收变野( 代码的实现在 xx_mempoolbase.h 的尾部 )
 		void Release();
 
@@ -21,8 +30,8 @@ namespace xx
 		// 下面是访问头部数据的各种 helpers
 		/***********************************************************************************/
 
-		inline MemHeader_MPObject& memHeader() { return *(MemHeader_MPObject*)((char*)this - sizeof(MemHeader_MPObject)); }
-		inline MemHeader_MPObject& memHeader() const { return *(MemHeader_MPObject*)((char*)this - sizeof(MemHeader_MPObject)); }
+		inline MemHeader_MPObject& memHeader() { return MemHeader_MPObject::Visit(this); }
+		inline MemHeader_MPObject& memHeader() const { return MemHeader_MPObject::Visit((MPObject*)this); }
 
 		inline uint64_t const& versionNumber() const { return memHeader().versionNumber; }
 		inline uint64_t pureVersionNumber() const { return versionNumber() & 0x00FFFFFFFFFFFFFFu; }
@@ -30,7 +39,10 @@ namespace xx
 		inline uint32_t& refCount() { return memHeader().refCount; }
 		inline uint32_t const& refCount() const { return memHeader().refCount; }
 
-		inline uint32_t const& typeId() const { return memHeader().typeId; }
+		inline uint16_t const& typeId() const { return memHeader().typeId; }
+
+		inline uint16_t& tsFlags() { return memHeader().tsFlags; }
+		inline uint16_t const& tsFlags() const { return memHeader().tsFlags; }
 
 		inline MemPoolBase const& mempoolbase() const { return *(memHeader().mempoolbase); }
 		inline MemPoolBase& mempoolbase() { return *(memHeader().mempoolbase); }

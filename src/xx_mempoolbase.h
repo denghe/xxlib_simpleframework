@@ -1,6 +1,7 @@
 #pragma once
 #include "xx_podstack.h"
 #include "xx_mpobject.h"
+#include "xx_string.h"
 #include <array>
 #include <vector>
 #include <cassert>
@@ -74,7 +75,27 @@ namespace xx
 		// 内存分配( Create / Release 系列 ). 仅针对派生自 MPObject 的对象
 		/***********************************************************************************/
 
-		// Create<T> 函数在 MemPool 类中
+		// 该操作将会在头部填充 MemHeader_MPObject
+		template<typename T, typename ...Args>
+		T* CreateWithoutTypeId(Args &&... args)
+		{
+			static_assert(std::is_base_of<MPObject, T>::value, "the T must be inerit of MPObject.");
+
+			// 下列代码 复制自 Alloc 函数小改
+			auto siz = sizeof(T) + sizeof(MemHeader_MPObject);
+			auto idx = Calc2n(siz);
+			if (siz > (size_t(1) << idx)) siz = size_t(1) << ++idx;
+
+			void* rtv;
+			if (!stacks[idx].TryPop(rtv)) rtv = malloc(siz);
+
+			auto p = (MemHeader_MPObject*)rtv;
+			p->versionNumber = (++versionNumber) | ((uint64_t)idx << 56);
+			p->mempoolbase = this;
+			p->refCount = 1;
+			p->typeId = -1;// (decltype(p->typeId))TupleIndexOf<T, Tuple>::value;
+			return new (p + 1) T(std::forward<Args>(args)...);
+		}
 
 		// 释放由 Create 创建的类
 		inline void Release(MPObject* p)

@@ -36,7 +36,10 @@ namespace xx
 		uint32_t refCount = 1;
 
 		// MemPool 创建时填充类型ID
-		uint32_t typeId = 0;
+		uint16_t typeId = 0;
+
+		// 当前可用于 ToString 防重入( 或是存空格缩进值 )
+		uint16_t tsFlags = 0;
 
 		// 通过一个指针来访问头部
 		static MemHeader_MPObject& Visit(void* p)

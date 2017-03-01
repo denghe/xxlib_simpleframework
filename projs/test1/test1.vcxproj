@@ -165,7 +165,12 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\src\xx_charsutils.h" />
     <ClInclude Include="..\..\src\xx_defines.h" />
+    <ClInclude Include="..\..\src\xx_dict.h" />
+    <ClInclude Include="..\..\src\xx_hashutils.h" />
+    <ClInclude Include="..\..\src\xx_links.h" />
+    <ClInclude Include="..\..\src\xx_list.h" />
     <ClInclude Include="..\..\src\xx_luahelper.h" />
     <ClInclude Include="..\..\src\xx_memheader.h" />
     <ClInclude Include="..\..\src\xx_mempool.h" />
@@ -173,6 +178,7 @@
     <ClInclude Include="..\..\src\xx_mpobject.h" />
     <ClInclude Include="..\..\src\xx_mptr.h" />
     <ClInclude Include="..\..\src\xx_podstack.h" />
+    <ClInclude Include="..\..\src\xx_string.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="bak1.txt" />
