@@ -33,7 +33,7 @@ namespace xx
 			count = 0;
 			header = -1;
 			tail = -1;
-			auto nodesByteLen = Round2n(capacity * sizeof(Node) + 8) - 8;
+			auto nodesByteLen = Round2n(capacity * sizeof(Node) + sizeof(MemHeader_VersionNumber)) - sizeof(MemHeader_VersionNumber);
 			nodesLen = (int)(nodesByteLen / sizeof(Node));
 			nodes = (Node*)mempoolbase().Alloc(nodesLen * sizeof(Node));
 		}
@@ -196,7 +196,7 @@ namespace xx
 			assert(count == 0 || count == nodesLen);          // 确保扩容函数使用情型
 			if (capacity == 0) capacity = count * 2;            // 2倍扩容
 			if (capacity <= nodesLen) return;
-			auto nodesByteLen = Round2n(capacity * sizeof(Node) + 8) - 8;	// 规避写 versionNumber 的区域
+			auto nodesByteLen = Round2n(capacity * sizeof(Node) + sizeof(MemHeader_VersionNumber)) - sizeof(MemHeader_VersionNumber);	// 规避写 versionNumber 的区域
 			nodesLen = (int)(nodesByteLen / sizeof(Node));
 
 			if (std::is_trivial<T>::value || MemmoveSupport<T>::value)

@@ -26,7 +26,7 @@ namespace xx
 			}
 			else
 			{
-				auto bufByteLen = Round2n((reservedHeaderLen + capacity) * sizeof(T) + 8) - 8;
+				auto bufByteLen = Round2n((reservedHeaderLen + capacity) * sizeof(T) + sizeof(MemHeader_VersionNumber)) - sizeof(MemHeader_VersionNumber);
 				buf = (T*)mempoolbase().Alloc((uint32_t)bufByteLen) + reservedHeaderLen;
 				bufLen = uint32_t(bufByteLen / sizeof(T)) - reservedHeaderLen;
 			}
@@ -48,7 +48,7 @@ namespace xx
 		{
 			if (capacity <= bufLen) return;
 
-			auto newBufByteLen = Round2n(reservedHeaderLen + capacity * sizeof(T) + 8) - 8;
+			auto newBufByteLen = Round2n(reservedHeaderLen + capacity * sizeof(T) + sizeof(MemHeader_VersionNumber)) - sizeof(MemHeader_VersionNumber);
 			auto newBuf = (T*)mempoolbase().Alloc((uint32_t)newBufByteLen) + reservedHeaderLen;
 
 			if (std::is_trivial<T>::value || MemmoveSupport<T>::value)

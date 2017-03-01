@@ -17,12 +17,44 @@ namespace xx
 	//template<typename T>
 	//using LuaTypeIndex = xx::TupleIndexOf<T, MPTuple>;
 
+
+	/************************************************************************************/
+	// Lua_SetAllocf
+	/************************************************************************************/
+
+	// todo: 当前这个不可用. lua 似乎会丢一些不是经由这个渠道分配的指针过来. 需要进一步看源代码
+	//// 设置 L 的内存分配方式为走内存池
+	//inline void Lua_SetAllocf(MemPoolBase& mpb, lua_State* L)
+	//{
+	//	lua_setallocf(L, [](void *ud, void *ptr, size_t osize, size_t nsize)
+	//	{
+	//		auto& mp = *(MemPoolBase*)ud;
+	//		if (nsize)
+	//		{
+	//			return mp.Realloc(ptr, nsize, osize);
+	//		}
+	//		else
+	//		{
+	//			mp.Free(ptr);
+	//			return (void*)nullptr;
+	//		}
+	//	}, &mpb);
+	//}
+
+
 	/************************************************************************************/
 	// Lua_CreateState
 	/************************************************************************************/
-	inline lua_State* Lua_CreateState()
-	{
 
+	// 创建并返回一个 lua_State*, 以内存池为内存分配方式, 默认 openLibs
+	inline lua_State* Lua_CreateState(MemPoolBase& mpb, bool openLibs = true)
+	{
+		auto L = lua_newstate([](void *ud, void *ptr, size_t osize, size_t nsize)
+		{
+			return ((MemPoolBase*)ud)->Realloc(ptr, nsize, osize);
+		}, &mpb);
+		if (openLibs) luaL_openlibs(L);
+		return L;
 	}
 
 
@@ -40,28 +72,6 @@ namespace xx
 		lua_setglobal(L, Lua_Container);						//
 	}
 
-
-	/************************************************************************************/
-	// SetAllocf
-	/************************************************************************************/
-
-	// 设置 L 的内存分配方式为走内存池
-	inline void SetAllocf(MemPoolBase& mpb, lua_State* L)
-	{
-		lua_setallocf(L, [](void *ud, void *ptr, size_t osize, size_t nsize)
-		{
-			auto& mp = *(MemPoolBase*)ud;
-			if (nsize)
-			{
-				return mp.Realloc(ptr, nsize, osize);
-			}
-			else
-			{
-				mp.Free(ptr);
-				return (void*)nullptr;
-			}
-		}, &mpb);
-	}
 
 
 	/************************************************************************************/

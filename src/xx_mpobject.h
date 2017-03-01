@@ -30,8 +30,8 @@ namespace xx
 		// 下面是访问头部数据的各种 helpers
 		/***********************************************************************************/
 
-		inline MemHeader_MPObject& memHeader() { return MemHeader_MPObject::Visit(this); }
-		inline MemHeader_MPObject& memHeader() const { return MemHeader_MPObject::Visit((MPObject*)this); }
+		inline MemHeader_MPObject& memHeader() { return *((MemHeader_MPObject*)this - 1); }
+		inline MemHeader_MPObject& memHeader() const { return *((MemHeader_MPObject*)this - 1); }
 
 		inline uint64_t const& versionNumber() const { return memHeader().versionNumber; }
 		inline uint64_t pureVersionNumber() const { return versionNumber() & 0x00FFFFFFFFFFFFFFu; }

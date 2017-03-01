@@ -17,12 +17,12 @@ namespace xx
 		MPtr& operator=(MPtr const& o) = default;
 		MPtr(T* p)
 			: pointer(p)
-			, versionNumber(p ? MemHeader_MPObject::Visit(p).versionNumber : 0)
+			, versionNumber(p ? ((MemHeader_MPObject*)p - 1)->versionNumber : 0)
 		{}
 		MPtr& operator=(T* p)
 		{
 			pointer = p;
-			versionNumber = p ? MemHeader_MPObject::Visit(p).versionNumber : 0;
+			versionNumber = p ? ((MemHeader_MPObject*)p - 1)->versionNumber : 0;
 			return *this;
 		}
 
@@ -43,7 +43,7 @@ namespace xx
 		}
 		T* Ensure() const
 		{
-			if (pointer && MemHeader_MPObject::Visit(pointer).versionNumber == versionNumber) return pointer;
+			if (pointer && ((MemHeader_MPObject*)pointer - 1)->versionNumber == versionNumber) return pointer;
 			return nullptr;
 		}
 		operator bool() const

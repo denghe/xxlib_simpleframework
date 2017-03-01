@@ -1,3 +1,5 @@
 /projs/test1/*.db
 /projs/test1/x64
 /projs/test1/*.opendb
+/projs/test1/.vs
+/projs/test1/Debug

@@ -16,12 +16,6 @@ namespace xx
 				const uint8_t mpIndex;		// 分配 / 回收时的内存池数组 下标( 指向 versionNumber 的最高位字节 )
 			};
 		};
-
-		// 通过一个指针来访问头部
-		static MemHeader_VersionNumber& Visit(void* p)
-		{
-			return *((MemHeader_VersionNumber*)p - 1);
-		}
 	};
 
 	struct MemPoolBase;
@@ -40,11 +34,5 @@ namespace xx
 
 		// 当前可用于 ToString 防重入( 或是存空格缩进值 )
 		uint16_t tsFlags = 0;
-
-		// 通过一个指针来访问头部
-		static MemHeader_MPObject& Visit(void* p)
-		{
-			return *((MemHeader_MPObject*)p - 1);
-		}
 	};
 }

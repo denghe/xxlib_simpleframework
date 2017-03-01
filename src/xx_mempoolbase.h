@@ -33,42 +33,50 @@ namespace xx
 		/***********************************************************************************/
 
 		// 该操作将会在头部区域填充 MemHeader_VersionNumber 并跳过, 返回偏移后的指针
-		// 最大化内存利用率的 size 计算: Round2n(capacity * sizeof(T) + 8) - 8
+		// 最大化内存利用率的 size 计算: Round2n(capacity * sizeof(T) + sizeof(MemHeader_VersionNumber)) - sizeof(MemHeader_VersionNumber)
 		inline void* Alloc(size_t siz)
 		{
+			assert(siz);
 			siz += sizeof(MemHeader_VersionNumber);								// 空出放置 MemHeader_VersionNumber 的地儿
 			auto idx = Calc2n(siz);
 			if (siz > (size_t(1) << idx)) siz = size_t(1) << ++idx;
 
-			void* rtv;
-			if (!stacks[idx].TryPop(rtv)) rtv = malloc(siz);
+			void* p;
+			if (!stacks[idx].TryPop(p)) p = std::malloc(siz);
 
-			auto p = (MemHeader_VersionNumber*)rtv;
-			p->versionNumber = (++versionNumber) | ((uint64_t)idx << 56);		// 将数组下标附在最高位上, Free 要用
-			return p + 1;														// 指向 header 后面的区域返回
+			auto h = (MemHeader_VersionNumber*)p;								// 指到内存头
+			h->versionNumber = (++versionNumber) | ((uint64_t)idx << 56);		// 将数组下标附在最高位上, Free 要用
+			return h + 1;														// 指向 header 后面的区域返回
 		}
 
 		inline void Free(void* p)
 		{
 			if (!p) return;
-			auto& h = MemHeader_VersionNumber::Visit(p);						// 指到内存头
-			assert(h.versionNumber);											// 理论上讲 free 的时候其版本号不应该是 0. 否则就涉嫌重复 Free
-			stacks[h.mpIndex].Push(&h);											// 入池
-			h.versionNumber = 0;												// 清空版本号
+			auto h = (MemHeader_VersionNumber*)p - 1;							// 指到内存头
+			assert(h->versionNumber && h->mpIndex < stacks.size());				// 理论上讲 free 的时候其版本号不应该是 0. 否则就涉嫌重复 Free
+			stacks[h->mpIndex].Push(h);											// 入池
+			h->versionNumber = 0;												// 清空版本号
 		}
 
 		// dataLen 表示要复制多少字节数到新的内存. 并不代表 p 的原始长度
-		inline void* Realloc(void *p, size_t newSize, size_t dataLen = std::numeric_limits<size_t>::max())
+		inline void* Realloc(void *p, size_t newSize, size_t dataLen = -1)
 		{
-			assert(!p || (p && dataLen));
-			auto rtv = Alloc(newSize);
-			if (p)
+			if (!newSize)
 			{
-				auto oldSize = (size_t(1) << ((MemHeader_VersionNumber*)p - 1)->mpIndex) - sizeof(MemHeader_VersionNumber);
-				memcpy(rtv, p, std::min(oldSize, dataLen));
 				Free(p);
+				return nullptr;
 			}
-			return rtv;
+			if (!p) return Alloc(newSize);
+
+			auto h = (MemHeader_VersionNumber*)p - 1;
+			assert(h->versionNumber && h->mpIndex < stacks.size());
+			auto oldSize = (size_t(1) << h->mpIndex) - sizeof(MemHeader_VersionNumber);
+			if (oldSize >= newSize) return p;
+
+			auto np = Alloc(newSize);
+			memcpy(np, p, std::min(oldSize, dataLen));
+			Free(p);
+			return np;
 		}
 
 		/***********************************************************************************/
@@ -105,10 +113,10 @@ namespace xx
 			if (p->refCount() == 0 || --p->refCount()) return;
 			p->~MPObject();
 
-			auto& h = MemHeader_MPObject::Visit(p);								// 指到内存头
-			assert(h.versionNumber);											// 理论上讲 free 的时候其版本号不应该是 0. 否则就涉嫌重复 Free
-			stacks[h.mpIndex].Push(&h);											// 入池
-			h.versionNumber = 0;												// 清空版本号
+			auto h = (MemHeader_MPObject*)p - 1;								// 指到内存头
+			assert(h->versionNumber);											// 理论上讲 free 的时候其版本号不应该是 0. 否则就涉嫌重复 Free
+			stacks[h->mpIndex].Push(h);											// 入池
+			h->versionNumber = 0;												// 清空版本号
 		}
 
 		/***********************************************************************************/
