@@ -23,13 +23,22 @@ namespace xx
 
 		inline MemHeader_MPObject& memHeader() { return *(MemHeader_MPObject*)((char*)this - sizeof(MemHeader_MPObject)); }
 		inline MemHeader_MPObject& memHeader() const { return *(MemHeader_MPObject*)((char*)this - sizeof(MemHeader_MPObject)); }
-		inline MemPoolBase* const& mempool() const { return memHeader().mempool; }
-		inline MemPoolBase*& mempool() { return memHeader().mempool; }
+
 		inline uint64_t const& versionNumber() const { return memHeader().versionNumber; }
 		inline uint64_t pureVersionNumber() const { return versionNumber() & 0x00FFFFFFFFFFFFFFu; }
+
 		inline uint32_t& refCount() { return memHeader().refCount; }
 		inline uint32_t const& refCount() const { return memHeader().refCount; }
+
 		inline uint32_t const& typeId() const { return memHeader().typeId; }
+
+		inline MemPoolBase const& mempoolbase() const { return *(memHeader().mempoolbase); }
+		inline MemPoolBase& mempoolbase() { return *(memHeader().mempoolbase); }
+		template<typename T> T& mempool()
+		{
+			static_assert(std::is_base_of<MemPoolBase, T>::value, "the T must be a MemPool<...>");
+			return *(T*)(memHeader().mempoolbase);
+		}
 	};
 
 

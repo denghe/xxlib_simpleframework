@@ -30,7 +30,7 @@ namespace xx
 	struct MemHeader_MPObject : public MemHeader_VersionNumber
 	{
 		// 便于局部代码访问内存池( 使用 MP::Get(this) 来引用到内存池. MP 是内存池的 type )
-		MemPoolBase *mempool;
+		MemPoolBase *mempoolbase;
 
 		// 减到 0 就真正 Dispose
 		uint32_t refCount = 1;

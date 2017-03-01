@@ -1,0 +1,46 @@
+// 对比了 TryCast 与 dynamic_cast 的性能差别
+
+#include "xx_mempool.h"
+#include <iostream>
+
+using namespace xx;
+
+struct A : MPObject {};
+struct B : A {};
+struct C : B {};
+struct D : C {};
+struct E : D {};
+struct F : E {};
+struct G : F {};
+struct H : G {};
+
+typedef MemPool<A, B, C, D, E, F, G, H> MP;
+
+int main()
+{
+	MP mp;
+	A* a = mp.Create<H>();
+
+	Stopwatch sw;
+	auto counter = 0ul;
+	for (int i = 0; i < 99999999; ++i)
+	{
+		if (mp.TryCast<H>(a))
+		{
+			counter++;
+		}
+	}
+	std::cout << counter << ", elapsed = " << sw() << std::endl;
+
+	counter = 0ul;
+	for (int i = 0; i < 99999999; ++i)
+	{
+		if (dynamic_cast<H*>(a))
+		{
+			counter++;
+		}
+	}
+	std::cout << counter << ", elapsed = " << sw() << std::endl;
+
+	return 0;
+}

@@ -7,6 +7,9 @@
     <Filter Include="xx">
       <UniqueIdentifier>{c0bd2e8f-e2ba-4c51-babb-4809b75bb96e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="bak">
+      <UniqueIdentifier>{79edfc69-daa0-496c-be6f-2244141ec2d5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\xx_mempool.h">
@@ -30,5 +33,16 @@
     <ClInclude Include="..\..\src\xx_mempoolbase.h">
       <Filter>xx</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\xx_luahelper.h">
+      <Filter>xx</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="bak1.txt">
+      <Filter>bak</Filter>
+    </Text>
+    <Text Include="bak2.txt">
+      <Filter>bak</Filter>
+    </Text>
   </ItemGroup>
 </Project>

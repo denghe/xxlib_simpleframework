@@ -1,4 +1,4 @@
-#pragma oncea
+#pragma once
 #include "xx_podstack.h"
 #include "xx_mpobject.h"
 #include <array>
@@ -56,12 +56,17 @@ namespace xx
 			h.versionNumber = 0;												// 清空版本号
 		}
 
+		// dataLen 表示要复制多少字节数到新的内存. 并不代表 p 的原始长度
 		inline void* Realloc(void *p, size_t newSize, size_t dataLen = std::numeric_limits<size_t>::max())
 		{
+			assert(!p || (p && dataLen));
 			auto rtv = Alloc(newSize);
-			auto oldSize = (size_t(1) << ((MemHeader_VersionNumber*)p - 1)->mpIndex) - sizeof(MemHeader_VersionNumber);
-			memcpy(rtv, p, std::min(oldSize, dataLen));
-			Free(p);
+			if (p)
+			{
+				auto oldSize = (size_t(1) << ((MemHeader_VersionNumber*)p - 1)->mpIndex) - sizeof(MemHeader_VersionNumber);
+				memcpy(rtv, p, std::min(oldSize, dataLen));
+				Free(p);
+			}
 			return rtv;
 		}
 
@@ -85,27 +90,6 @@ namespace xx
 			h.versionNumber = 0;												// 清空版本号
 		}
 
-		/***********************************************************************************/
-		// helpers
-		/***********************************************************************************/
-
-		template<typename T, typename ...Args>
-		MPtr<T> CreateMPtr(Args &&... args)
-		{
-			return Create<T>(std::forward<Args>(args)...);
-		}
-
-		template<typename T, typename ...Args>
-		void CreateTo(T*& outPtr, Args &&... args)
-		{
-			outPtr = Create<T>(std::forward<Args>(args)...);
-		}
-		template<typename T, typename ...Args>
-		void CreateTo(MPtr<T>& outPtr, Args &&... args)
-		{
-			outPtr = CreateMPtr<T>(std::forward<Args>(args)...);
-		}
-
 	};
 
 
@@ -114,6 +98,6 @@ namespace xx
 	/***********************************************************************************/
 	inline void MPObject::Release()
 	{
-		mempool()->Release(this);
+		mempoolbase().Release(this);
 	}
 }

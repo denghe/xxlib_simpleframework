@@ -1,4 +1,4 @@
-#pragma oncea
+#pragma once
 #include "xx_mempoolbase.h"
 
 namespace xx
@@ -7,7 +7,8 @@ namespace xx
 typedef xx::MemPool<A,B,C,D......> MP;
 MP mp;
 auto a = mp.Create<A>(.....);
-auto b = MP::Get(a).Create<B>(......)
+B* b;
+MP::Ref(a).CreateTo(b, .... );
 	*/
 
 	// 整套库的核心内存分配组件. 按 2^N 尺寸划分内存分配行为, 将 free 的指针放入 stack 缓存复用
@@ -16,19 +17,22 @@ auto b = MP::Get(a).Create<B>(......)
 	template<typename ... Types>
 	struct MemPool : MemPoolBase
 	{
-		MemPool(MemPool const&) = delete;
-		MemPool& operator=(MemPool const &) = delete;
-		MemPool()
-		{
-			FillPids(std::make_index_sequence<std::tuple_size<Tuple>::value>());
-		}
-
 		// 将 Types 声明为 Tuple 以享用 std 提供的 tuple 元组系列操作
 		typedef std::tuple<MPObject, Types...> Tuple;
+
+		// 类型个数
+		static const int typesSize = std::tuple_size<Tuple>::value;
 
 		// 放置 type 对应的 parent 的 type id. 0: MPObject
 		std::array<uint32_t, 1 + sizeof...(Types)> pids;
 
+
+		MemPool(MemPool const&) = delete;
+		MemPool& operator=(MemPool const &) = delete;
+		MemPool()
+		{
+			FillPids(std::make_index_sequence<typesSize>());
+		}
 
 		/***********************************************************************************/
 		// 内存分配( Create / Release 系列 ). 仅针对派生自 MPObject 的对象
@@ -50,11 +54,34 @@ auto b = MP::Get(a).Create<B>(......)
 
 			auto p = (MemHeader_MPObject*)rtv;
 			p->versionNumber = (++versionNumber) | ((uint64_t)idx << 56);
-			p->mempool = this;
+			p->mempoolbase = this;
 			p->refCount = 1;
 			p->typeId = (decltype(p->typeId))TupleIndexOf<T, Tuple>::value;
 			return new (p + 1) T(std::forward<Args>(args)...);
 		}
+
+		/***********************************************************************************/
+		// helpers
+		/***********************************************************************************/
+
+		template<typename T, typename ...Args>
+		MPtr<T> CreateMPtr(Args &&... args)
+		{
+			return Create<T>(std::forward<Args>(args)...);
+		}
+
+		template<typename T, typename ...Args>
+		void CreateTo(T*& outPtr, Args &&... args)
+		{
+			outPtr = Create<T>(std::forward<Args>(args)...);
+		}
+		template<typename T, typename ...Args>
+		void CreateTo(MPtr<T>& outPtr, Args &&... args)
+		{
+			outPtr = CreateMPtr<T>(std::forward<Args>(args)...);
+		}
+
+
 
 		// 根据 typeid 判断父子关系
 		bool IsBaseOf(uint32_t baseTypeId, uint32_t typeId)
