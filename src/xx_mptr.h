@@ -17,12 +17,12 @@ namespace xx
 		MPtr& operator=(MPtr const& o) = default;
 		MPtr(T* p)
 			: pointer(p)
-			, versionNumber(p ? RefVersionNumber(p) : 0)
+			, versionNumber(p ? MemHeader_MPObject::Visit(p).versionNumber : 0)
 		{}
 		MPtr& operator=(T* p)
 		{
 			pointer = p;
-			versionNumber = p ? RefVersionNumber(p) : 0;
+			versionNumber = p ? MemHeader_MPObject::Visit(p).versionNumber : 0;
 			return *this;
 		}
 

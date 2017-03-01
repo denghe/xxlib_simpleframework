@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?> 
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+
+  <Type Name="xx::MPtr&lt;*&gt;">
+    <DisplayString Condition="pointer == 0 || versionNumber != (*((MemHeader_MPObject*)pointer - 1)).versionNumber">MPtr(nullptr)</DisplayString>
+    <DisplayString Condition="pointer != 0 &amp;&amp; versionNumber == (*((MemHeader_MPObject*)pointer - 1)).versionNumber">MPtr({*pointer})</DisplayString>
+    <!--<Expand>
+      <Item Name="versionNumber">versionNumber &amp; 0x00FFFFFFFFFFFFFFu</Item>
+    </Expand>-->
+  </Type>
+
+  <Type Name="xx::MPObject" Inheritable="false">
+    <Expand>
+      <Item Name="MemHeader_MPObject">*((MemHeader_MPObject*)this - 1)</Item>
+    </Expand>
+  </Type>
+  
+  <Type Name="xx::MemHeader_MPObject" Inheritable="false">
+    <Expand>
+      <Item Name="typeId">typeId</Item>
+      <Item Name="versionNumber">versionNumber &amp; 0x00FFFFFFFFFFFFFFu</Item>
+      <Item Name="refCount">refCount</Item>
+      <Item Name="objOffset">objOffset</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="xx::List&lt;*, *&gt;">
+    <DisplayString Condition="bufLen &gt; 0 &amp;&amp; dataLen &gt; 0">dataLen = {dataLen}, bufLen = {bufLen}</DisplayString>
+    <DisplayString Condition="bufLen == 0">null</DisplayString>
+    <DisplayString Condition="bufLen &gt; 0 &amp;&amp; dataLen == 0">empty</DisplayString>
+    <Expand>
+      <ArrayItems>
+        <Size>dataLen</Size>
+        <ValuePointer>buf</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+
+  <Type Name="xx::Dict&lt;*,*&gt;">
+    <DisplayString>{{itemsCount = {count - freeCount}}, bucketsLen = {bucketsLen}}</DisplayString>
+    <Expand>
+      <CustomListItems Condition="count - freeCount != 0">
+        <Variable InitialValue="0" Name="index"/>
+        <Loop>
+          <If Condition="index == count">
+            <Break/>
+          </If>
+          <If Condition="items[index].prev != -2">
+            <Item Name="[{index}]">items[index]</Item>
+          </If>
+          <Exec>++index</Exec>
+        </Loop>
+      </CustomListItems>
+    </Expand>
+  </Type>
+  
+  <Type Name="xx::Links&lt;*&gt;">
+    <DisplayString>{{itemsCount = {count - freeCount}}, nodesLen = {nodesLen}}</DisplayString>
+    <Expand>
+      <CustomListItems Condition="count - freeCount != 0">
+        <Variable InitialValue="header" Name="index"/>
+        <Loop>
+          <If Condition="index == -1">
+            <Break/>
+          </If>
+          <Item Name="[{index}]">nodes[index]</Item>
+          <Exec>index = nodes[index].next</Exec>
+        </Loop>
+      </CustomListItems>
+    </Expand>
+  </Type>
+
+  <Type Name="xx::String">
+    <DisplayString Condition="bufLen == 0">null</DisplayString>
+    <DisplayString Condition="bufLen &gt; 0 &amp;&amp; dataLen == 0">empty</DisplayString>
+    <DisplayString Condition="dataLen &gt; 0">{buf,[dataLen]}</DisplayString>
+    <StringView Condition="bufLen == 0">buf,[dataLen]</StringView>
+    <StringView Condition="bufLen &gt; 0 &amp;&amp; dataLen == 0">buf,[dataLen]</StringView>
+    <StringView Condition="dataLen &gt; 0">buf,[dataLen]</StringView>
+    <Expand>
+      <Item Name="[size]" ExcludeView="simple">dataLen</Item>
+      <Item Name="[capacity]" ExcludeView="simple">bufLen</Item>
+      <ArrayItems>
+        <Size>dataLen</Size>
+        <ValuePointer>buf, m</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+
+</AutoVisualizer>

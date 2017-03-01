@@ -17,6 +17,14 @@ namespace xx
 	//template<typename T>
 	//using LuaTypeIndex = xx::TupleIndexOf<T, MPTuple>;
 
+	/************************************************************************************/
+	// Lua_CreateState
+	/************************************************************************************/
+	inline lua_State* Lua_CreateState()
+	{
+
+	}
+
 
 	/************************************************************************************/
 	// Lua_Container / Lua_CreatContainer

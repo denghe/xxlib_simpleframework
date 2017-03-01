@@ -183,6 +183,10 @@
   <ItemGroup>
     <Text Include="bak1.txt" />
     <Text Include="bak2.txt" />
+    <Text Include="bak3.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="..\..\src\xx.natvis" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

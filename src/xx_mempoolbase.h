@@ -111,6 +111,27 @@ namespace xx
 			h.versionNumber = 0;												// Çå¿Õ°æ±¾ºÅ
 		}
 
+		/***********************************************************************************/
+		// helpers
+		/***********************************************************************************/
+
+		template<typename T, typename ...Args>
+		MPtr<T> CreateMPtrWithoutTypeId(Args &&... args)
+		{
+			return CreateWithoutTypeId<T>(std::forward<Args>(args)...);
+		}
+
+		template<typename T, typename ...Args>
+		void CreateToWithoutTypeId(T*& outPtr, Args &&... args)
+		{
+			outPtr = CreateWithoutTypeId<T>(std::forward<Args>(args)...);
+		}
+		template<typename T, typename ...Args>
+		void CreateToWithoutTypeId(MPtr<T>& outPtr, Args &&... args)
+		{
+			outPtr = CreateMPtrWithoutTypeId<T>(std::forward<Args>(args)...);
+		}
+
 	};
 
 
