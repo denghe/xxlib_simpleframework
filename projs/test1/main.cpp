@@ -1,14 +1,17 @@
-#include "xx_luahelper.h"
+#include "lua.hpp"
+#include "xx_mempool.h"
 #include <iostream>
-using namespace xx;
 int main()
 {
 
 	auto code = R"~~(
-for i = 1, 10000000, 1 do
-	local t = {}
-	t[i] = t
-end
+local t = { 1,1,1 }
+t[1] = 1
+t[2] = 2
+t[3] = 3
+t.x = 1
+t.y = 2
+t.z = 3
 )~~";
 
 	// 传统工艺
@@ -16,19 +19,21 @@ end
 	luaL_openlibs(L1);
 
 	// 内存池加持
-	MemPoolBase mpb;
+	xx::MemPoolBase mpb;
 	auto L2 = lua_newstate([](void *ud, void *ptr, size_t osize, size_t nsize)
 	{
-		return ((MemPoolBase*)ud)->Realloc(ptr, nsize, osize);
+		return ((xx::MemPoolBase*)ud)->Realloc(ptr, nsize, osize);
 	}, &mpb);
 	luaL_openlibs(L2);
 
-	Stopwatch sw;
+	xx::Stopwatch sw;
+	for (int i = 0; i < 99999; ++i)
 	{
 		auto rtv = luaL_dostring(L1, code);
 		assert(!rtv);
 	}
 	std::cout << "L1 elapsed = " << sw() << std::endl;
+	for (int i = 0; i < 99999; ++i)
 	{
 		auto rtv = luaL_dostring(L2, code);
 		assert(!rtv);
