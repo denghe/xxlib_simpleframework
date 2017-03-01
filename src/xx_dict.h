@@ -2,7 +2,7 @@
 #include "xx_hashutils.h"
 #include "xx_mempool.h"
 
-namespace xxlib
+namespace xx
 {
 	// Dict.Add 的操作结果
 	struct DictAddResult
@@ -410,11 +410,12 @@ namespace xxlib
 		}
 
 
-		/*************************************************************************/
-		// 实现 ToString 接口
-		/*************************************************************************/
+		// todo
+		///*************************************************************************/
+		//// 实现 ToString 接口
+		///*************************************************************************/
 
-		virtual void ToString(String &str) const override;
+		//virtual void ToString(String &str) const override;
 
 	};
 
