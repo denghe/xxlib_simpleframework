@@ -12,6 +12,7 @@ namespace xx
 	// 内存池基类. 提供类型无关的内存分配 / 回收功能
 	struct MemPoolBase
 	{
+		// todo: 再实现个链表版看看会不会更快
 		// stacks 数组
 		std::array<PodStack<void*>, sizeof(size_t) * 8> stacks;
 

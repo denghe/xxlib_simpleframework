@@ -61,7 +61,7 @@ namespace xx
 	template<typename T>
 	struct IsMPObject
 	{
-		static const bool value = false;
+		static const bool value = !std::is_void<T>::value && std::is_base_of<MPObject, T>::value;
 	};
 	template<typename T>
 	struct IsMPObject<T*>
