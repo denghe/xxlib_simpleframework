@@ -12,14 +12,12 @@
 
 namespace xx
 {
-
-	// todo: 空指针于 lua 中是否用 nil 来表达?  空字串?
-	
 	// todo: 考虑用宏来将各种检查进行分级. 视情况开启.
 
 	// 可放入 LUA 的数据类型有: float, double, int64, 各式 string, 以及 T, T*
 	// 其中 T 又分为 一般结构体 以及 MPtr<T> ( T 为 MPObject 派生类 )
 	// T* 分为一般指针 或 MPObject* 派生类指针
+	// String* 空指针于 lua 中当前用 nil 来表达
 
 	/************************************************************************************/
 	// Lua_Container / Lua_SetGlobalContainer
@@ -659,9 +657,6 @@ namespace xx
 			lua_setmetatable(L, -2);									// ud
 		}
 	};
-
-	// todo: String* / MPtr<String> 适配 ??
-
 
 
 
