@@ -174,10 +174,10 @@ inline EnumTypeName operator++(EnumTypeName &a)                                 
 
 namespace xx
 {
-
 	// 计算 n 是 2 的几次方
 	inline static int Calc2n(size_t n)
 	{
+		assert(n);
 #ifdef _MSC_VER
 		unsigned long r = 0;
 # ifdef XX_64
@@ -202,6 +202,12 @@ namespace xx
 		if (rtv == n) return n;
 		else return rtv << 1;
 	}
+	//// 这个写法更慢
+	//inline static size_t Round2n_2(size_t n)
+	//{
+	//	if (n <= 1) return 1;
+	//	return size_t(1) << (Calc2n(n - 1) + 1);
+	//}
 
 	/***********************************************************************************/
 	/* XX_HAS_TYPEDEF

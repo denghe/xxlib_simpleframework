@@ -7,24 +7,65 @@
 struct B;
 struct A : xx::MPObject
 {
+	B* b;
 	xx::MPtr<B> GetB();
+	A();
+	~A();
 };
 
 struct B : xx::MPObject
 {
+	xx::String* name = nullptr;
+	void SetName(char const* name);
+	xx::String* GetName();
+	~B();
 };
 
 // MP defines
 /***********************************************************************/
 
-typedef xx::MemPool<A, B> MP;
+typedef xx::MemPool<A, B, xx::String> MP;
 
 // impls
 /***********************************************************************/
 
 inline xx::MPtr<B> A::GetB()
 {
-	return mempool<MP>().Create<B>();
+	return b;
+}
+inline A::A()
+{
+	mempool<MP>().CreateTo(b);
+}
+inline A::~A()
+{
+	b->Release();
+}
+
+inline void B::SetName(char const* name)
+{
+	if (name)
+	{
+		if (this->name) this->name->Assign(name);
+		else mempool<MP>().CreateTo(this->name, name);
+	}
+	else if (this->name)
+	{
+		this->name->Release();
+		this->name = nullptr;
+	}
+}
+inline xx::String* B::GetName()
+{
+	return name;
+}
+inline B::~B()
+{
+	if (name)
+	{
+		name->Release();
+		name = nullptr;
+	}
 }
 
 // main
@@ -34,8 +75,48 @@ int main()
 {
 	MP mp;
 	auto L = xx::Lua_NewState(mp);
-	// todo: bind
+
+	// 开始 bind A 的函数
+	xx::Lua<MP, A>::PushMetatable(L);
+	xx::Lua_BindFunc_Ensure<A>(L);
+	xxLua_BindFunc(MP, L, A, GetB, false);
 	lua_pop(L, 1);
+
+	// 开始 bind B 的函数
+	xx::Lua<MP, B>::PushMetatable(L);
+	xx::Lua_BindFunc_Ensure<B>(L);
+	xxLua_BindFunc(MP, L, B, SetName, false);
+	xxLua_BindFunc(MP, L, B, GetName, false);
+	lua_pop(L, 1);
+
+	// 造一个 a 出来压到 L 之 global
+	auto a = mp.Create<A>();
+	xx::Lua<MP, decltype(a)>::SetGlobal(L, "a", a);
+
+	auto rtv = luaL_dostring(L, R"%%(
+
+	local b = a:GetB()
+	
+	print( b )
+	print( b:Ensure() )
+
+	for k,v in pairs(getmetatable(b)) do
+		print( k, v )
+	end
+
+	b:SetName( "asdf" )
+	print( b:GetName() )
+	b:SetName( nil )
+	print( b:GetName() == nil )
+
+)%%");
+	if (rtv)
+	{
+		std::cout << lua_tostring(L, -1) << std::endl;
+	}
+	a->Release();
+
 	lua_close(L);
+	std::cin.get();
 	return 0;
 }

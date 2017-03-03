@@ -9,6 +9,7 @@ namespace xx
 	template<typename T>
 	struct MPtr
 	{
+		typedef T ChildType;
 		T* pointer = nullptr;
 		uint64_t versionNumber = 0;
 

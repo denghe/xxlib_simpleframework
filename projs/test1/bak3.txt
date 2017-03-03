@@ -61,3 +61,40 @@ t.zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz = 3
 
 	return 0;
 }
+
+
+
+
+
+
+
+template<typename T>
+struct SPtr
+{
+	T* ptr;
+	SPtr(T* ptr) : ptr(ptr) {}
+	SPtr(SPtr const& o)
+	{
+		if(o.ptr) o.ptr->AddRef();
+		ptr = o.ptr;
+	}
+	SPtr(SPtr && o)
+	{
+		ptr = o.ptr;
+		o.ptr = nullptr;
+	}
+	SPtr& operator=(SPtr const& o)
+	{
+		if (o.ptr) o.ptr->AddRef();
+		if (ptr) ptr->Release();
+		ptr = o.ptr;
+	}
+	SPtr& operator=(SPtr && o)
+	{
+		std::swap(ptr, o.ptr);
+	}
+	~SPtr()
+	{
+		if (ptr) ptr->Release();
+	}
+};

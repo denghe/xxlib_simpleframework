@@ -29,6 +29,10 @@ namespace xx
 			static_assert(len > 0, "");
 			AddRange(s, len - 1);
 		}
+		String(char const *s, uint32_t len) : BaseType(len)
+		{
+			AddRange(s, len);
+		}
 		String(std::string const& s) : BaseType((uint32_t)s.size())
 		{
 			AddRange(s.data(), (uint32_t)s.size());
@@ -40,7 +44,12 @@ namespace xx
 		inline void Assign(char const *buf, uint32_t dataLen)
 		{
 			Clear();
-			AddRange(buf, dataLen);;
+			if(buf && dataLen) AddRange(buf, dataLen);
+		}
+		inline void Assign(char const *buf)
+		{
+			Clear();
+			if(buf) AddRange(buf, (uint32_t)strlen(buf));
 		}
 		inline void Assign(MPObject const* in)
 		{
