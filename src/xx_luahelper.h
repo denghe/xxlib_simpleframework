@@ -12,92 +12,78 @@
 
 namespace xx
 {
+	// todo: lightuserdata 不能用. 要换成 userdata. 数据区设立一个头部. 放类型检查数据. 类型检查不再通过元表
+
+	// todo: 直接将欲与 coroutine 做交互的对象放到 _G[ versionNumber ]. 不使用 pure 版, 避开元表的占用空间.
+
 	// todo: 考虑用宏来将各种检查进行分级. 视情况开启. 似乎可以在 mp 上放一个标志位以便批量跳过检测?
+
 
 	// 可放入 LUA 的数据类型有: float, double, int64, 各式 string, 以及 T, T*
 	// 其中 T 又分为 一般结构体 以及 MPtr<T> ( T 为 MPObject 派生类 )
 	// T* 分为一般指针 或 MPObject* 派生类指针
 	// String* 空指针于 lua 中当前用 nil 来表达
-
-	/************************************************************************************/
-	// Lua_Container / Lua_SetGlobalContainer
-	/************************************************************************************/
-
-	// 在此设置全局容器名
-	constexpr auto Lua_Container = "objs";
-
-	// 创建全局容器
-	inline void Lua_SetGlobalContainer(lua_State* L)
-	{
-		lua_newtable(L);										// t
-		lua_setglobal(L, Lua_Container);						//
-	}
-
-
-
-	/************************************************************************************/
-	// Lua_PushMetatables
-	/************************************************************************************/
-
-	// 批量创建出所有元表放置到 L( 一直占据 stack 空间, 以便于从根 L  )
-	template<typename MP, typename Tuple, size_t... Indexs>
-	void Lua_PushMetatables(lua_State* L, std::index_sequence<Indexs...> const& idxs)
-	{
-		// isMPObject = true: idx 为正. false: idx 为负, idx 用来判断父子关系
-		auto func = [&](bool isMPObject, int idx)
-		{
-			if (idx == 0) return;								// MPObject 类型本身不注册 mt
-
-			lua_newtable(L);									// mt
-			lua_pushinteger(L, isMPObject ? idx : -idx);		// mt, idx/-idx
-			lua_rawseti(L, -2, 1);								// mt
-			lua_pushstring(L, "__index");						// mt, __index
-			lua_pushvalue(L, -2);								// mt, __index, mt
-			lua_rawset(L, -3);									// mt
-		};
-		std::initializer_list<int>{ (
-			func(IsMPObject<std::tuple_element_t<Indexs, Tuple>>::value, Indexs)
-			, 0)... };
-	}
-
-	// 批量创建出所有元表放置到 L( 一直占据 stack 空间, 以便于从根 L  )
-	template<typename MP>
-	inline void Lua_PushMetatables(lua_State* L)
-	{
-		assert(0 == lua_gettop(L));
-		Lua_PushMetatables<MP, typename MP::Tuple>(L, std::make_index_sequence<MP::typesSize>());
-	}
-
-
+	// 不支持复杂结构体创建为 ud( 可以有构造函数但不要有析构函数. 最好就是个 pod )
+	// 只支持单继承
 
 	/************************************************************************************/
 	// Lua_NewState
 	/************************************************************************************/
 
 	// 创建并返回一个 lua_State*, 以内存池为内存分配方式, 默认 openLibs
+	// 可以用 lua_getallocf 函数来得到 mp 指针
 	template<typename MP>
-	inline lua_State* Lua_NewState(MP& mp, bool openLibs = true, bool setGlobalContainer = true, bool pushMetatables = true)
+	inline lua_State* Lua_NewState(MP& mp, bool openLibs = true, bool pushMetatables = true)
 	{
 		auto L = lua_newstate([](void *ud, void *ptr, size_t osize, size_t nsize)
 		{
 			return ((MemPoolBase*)ud)->Realloc(ptr, nsize, osize);
 		}, &mp);
-		// 之后可以用 lua_getallocf 函数来得到 mp
 
 		if (openLibs) luaL_openlibs(L);
-
-		if (setGlobalContainer)
-		{
-			Lua_SetGlobalContainer(L);
-		}
-
 		if (pushMetatables)
 		{
-			Lua_PushMetatables<MP>(L);
+			lua_rawgeti(L, LUA_REGISTRYINDEX, LUA_RIDX_GLOBALS);	// _G
+			for (int i = 1; i < MP::typesSize; ++i)
+			{
+				lua_newtable(L);									// _G, mt
+				lua_pushstring(L, "__index");						// _G, mt, __index
+				lua_pushvalue(L, -2);								// _G, mt, __index, mt
+				lua_rawset(L, -3);									// _G, mt
+				lua_rawseti(L, -2, idx);							// _G
+			}
+			lua_pop(L, 1);											//
 		}
-
 		return L;
 	}
+
+
+	/************************************************************************************/
+	// Lua_GetMainThread
+	/************************************************************************************/
+
+	lua_State* Lua_GetMainThread(lua_State* L)
+	{
+		lua_rawgeti(L, LUA_REGISTRYINDEX, LUA_RIDX_MAINTHREAD);
+		auto rtv = lua_tothread(L, -1);
+		lua_pop(L, 1);
+		return rtv;
+	}
+
+
+	/************************************************************************************/
+	// Lua_GetMainThread
+	/************************************************************************************/
+
+	// 获取内存池. 仅限于用 Lua_NewState 创建的 L 可用
+	template<typename MP>
+	MP& Lua_GetMemPool(lua_State* L)
+	{
+		MP* mp;
+		lua_getallocf(L, (void**)&mp);
+		return *mp;
+	}
+
 
 
 	/************************************************************************************/
@@ -183,30 +169,45 @@ namespace xx
 	}
 
 
+
 	/************************************************************************************/
-	// Set XXXXXXX Nil
+	// Lua_PushMetatable
 	/************************************************************************************/
 
-	// 从全局容器中清除 key 项
-	inline static void SetContainerNil(lua_State* L, lua_Integer const& key)
+	// 从 _G[ TypeId ] 取出元表压入栈顶
+	template<typename MP, typename T>
+	void Lua_PushMetatable(lua_State* L)
 	{
-		if (!L) return;
-		auto rtv = lua_getglobal(L, Lua_Container);			// objs
-		assert(rtv == LUA_TTABLE);
-		lua_pushnil(L);										// objs, nil
-		lua_rawseti(L, -2, key);							// objs
-		lua_pop(L, 1);										//
-	}
-
-	// 从全局清除 key 项
-	inline static void SetGlobalNil(lua_State* L, char const* key)
-	{
-		if (!L) return;
-		lua_pushnil(L);
-		lua_setglobal(L, key);
+		lua_rawgeti(L, LUA_REGISTRYINDEX, LUA_RIDX_GLOBALS);			// _G
+		lua_rawgeti(L, -1, TupleIndexOf<T, typename MP::Tuple>::value);	// _G, mt
+		lua_replace(L, -2);												// mt
 	}
 
 
+
+	/************************************************************************************/
+	// Lua_UD
+	/************************************************************************************/
+	// auto ud = (Lua_UD*)lua_touserdata(L, -1);
+	// auto t = (T*)(ud + 1)
+
+	// 压入 lua 的 userdata 的数据形态
+	enum class Lua_UDTypes : uint8_t
+	{
+		Pointer,					// 指针( 可能是 MPObject 派生 )
+		MPtr,						// MPtr<T>( 必然是 MPObject 派生 )
+		Struct						// 结构体( 一定不是 MPObject 派生 )
+	};
+
+	// 压入 lua 的 userdata 的数据头. 应该是占 8 字节. 后面紧跟数据区
+	template<typename T>
+	struct Lua_UD
+	{
+		int typeIndex;				// MP 中的类型索引( 主用于判断继承关系, 做 dynamic_cast )
+		Lua_UDTypes udType;			// 数据形态
+		bool isMPObject;			// 是否从 MPObject 派生( 作为指针数据形态的一个补充说明 )
+		T data;
+	};
 
 
 	/************************************************************************************/
@@ -216,77 +217,35 @@ namespace xx
 	template<typename MP, typename T, typename ENABLE = void>
 	struct Lua
 	{
-		// 将 T 类型对应的 mt 压栈( 用于填充 mt 时放至栈顶 或 Bind 时压入 upvalue )( L 得是根 )
-		static void PushMetatable(lua_State* L);
-
 		// 将 v 压入栈顶( L 得是根 )
 		static void Push(lua_State* L, T const& v);
 
 		// 从 idx 读出数据填到 v
-		static void To(MP& mp, lua_State* L, T& v, int idx);
+		static void To(lua_State* L, T& v, int idx);
 
 		// 试从 idx 读出数据填到 v. 成功返回 true
-		static bool TryTo(MP& mp, lua_State* L, T& v, int idx);
-
-		// 往全局容器填一个值( L 得是根 )( 删是用外面的 SetContainerNil )
-		static void SetContainer(lua_State* L, lua_Integer const& key, T const& v);
-
-		// 往全局填一个值( L 得是根 )( 删是用外面的 SetGlobalNil )
-		static void SetGlobal(lua_State* L, char const* const& key, T const& v);
-
-		// 将 v 压入栈顶( L 非根. 针对返回值 结构体 T, 从 upvalue 拿 mt )
-		static void PushRtv(lua_State* L, T const& v);
-	};
-
-	// void
-	template<typename MP>
-	struct Lua<MP, void, void>
-	{
-		static inline void PushMetatable(lua_State* L)
-		{
-			lua_pushnil(L);
-		}
+		static bool TryTo(lua_State* L, T& v, int idx);
 	};
 
 	// string
 	template<typename MP>
 	struct Lua<MP, std::string, void>
 	{
-		static inline void PushMetatable(lua_State* L)
-		{
-			lua_pushnil(L);
-		}
 		static inline void Push(lua_State* L, std::string const& v)
 		{
 			lua_pushlstring(L, v.data(), v.size());
 		}
-		static inline void To(MP& mp, lua_State* L, std::string& v, int idx)
+		static inline void To(lua_State* L, std::string& v, int idx)
 		{
 			size_t len;
 			auto s = lua_tolstring(L, idx, &len);
 			v.assign(s, len);
 		}
-		static inline bool TryTo(MP& mp, lua_State* L, std::string& v, int idx)
+		static inline bool TryTo(lua_State* L, std::string& v, int idx)
 		{
 			if (!lua_isstring(L, idx)) return false;
-			To(mp, L, v, idx);
+			To(L, v, idx);
 			return true;
-		}
-		static inline void SetContainer(lua_State* L, lua_Integer const& key, std::string const& v)
-		{
-			auto rtv = lua_getglobal(L, Lua_Container);						// objs
-			assert(rtv == LUA_TTABLE);
-			Push(L, v);
-			lua_pop(L, 1);													//
-		}
-		static inline void SetGlobal(lua_State* L, char const* const& key, std::string const& v)
-		{
-			Push(L, v);
-			lua_pop(L, 1);													//
-		}
-		static inline void PushRtv(lua_State* L, std::string const& v)
-		{
-			lua_pushlstring(L, v.data(), v.size());
 		}
 	};
 
@@ -294,17 +253,12 @@ namespace xx
 	template<typename MP>
 	struct Lua<MP, String*, void>
 	{
-		static inline void PushMetatable(lua_State* L)
-		{
-			lua_pushnil(L);
-		}
 		static inline void Push(lua_State* L, String* const& v)
 		{
 			if (v) lua_pushlstring(L, v->buf, v->dataLen);
 			else lua_pushnil(L);
-			
 		}
-		static inline void To(MP& mp, lua_State* L, String*& v, int idx)
+		static inline void To(lua_State* L, String*& v, int idx)
 		{
 			if (v) v->Release();
 			if (lua_isnil(L, idx))
@@ -314,30 +268,13 @@ namespace xx
 			}
 			size_t len;
 			auto s = lua_tolstring(L, idx, &len);
-			v = mp.Create<String>(s, (uint32_t)len);
+			v = Lua_GetMemPool<MP>(L).Create<String>(s, (uint32_t)len);
 		}
-		static inline bool TryTo(MP& mp, lua_State* L, String*& v, int idx)
+		static inline bool TryTo(lua_State* L, String*& v, int idx)
 		{
 			if (!lua_isstring(L, idx) && !lua_isnil(L, idx)) return false;
-			To(mp, L, v, idx);
+			To(L, v, idx);
 			return true;
-		}
-		static inline void SetContainer(lua_State* L, lua_Integer const& key, String* const& v)
-		{
-			auto rtv = lua_getglobal(L, Lua_Container);						// objs
-			assert(rtv == LUA_TTABLE);
-			Push(L, v);
-			lua_pop(L, 1);													//
-		}
-		static inline void SetGlobal(lua_State* L, char const* const& key, String* const& v)
-		{
-			Push(L, v);
-			lua_pop(L, 1);													//
-		}
-		static inline void PushRtv(lua_State* L, String* const& v)
-		{
-			if(v) lua_pushlstring(L, v->buf, v->dataLen);
-			else lua_pushnil(L);
 		}
 	};
 
@@ -345,41 +282,21 @@ namespace xx
 	template<typename MP>
 	struct Lua<MP, char const*, void>
 	{
-		static inline void PushMetatable(lua_State* L)
-		{
-			lua_pushnil(L);
-		}
 		static inline void Push(lua_State* L, char const* const& v)
 		{
-			if(v) lua_pushstring(L, v);
+			if (v) lua_pushstring(L, v);
 			else lua_pushnil(L);
 		}
-		static inline void To(MP& mp, lua_State* L, char const*& v, int idx)
+		static inline void To(lua_State* L, char const*& v, int idx)
 		{
 			if (lua_isnil(L, idx)) v = nullptr;
 			else v = lua_tostring(L, idx);
 		}
-		static inline bool TryTo(MP& mp, lua_State* L, char const*& v, int idx)
+		static inline bool TryTo(lua_State* L, char const*& v, int idx)
 		{
 			if (!lua_isstring(L, idx) && !lua_isnil(L, idx)) return false;
-			To(mp, L, v, idx);
+			To(L, v, idx);
 			return true;
-		}
-		static inline void SetContainer(lua_State* L, lua_Integer const& key, char const* const& v)
-		{
-			auto rtv = lua_getglobal(L, Lua_Container);						// objs
-			assert(rtv == LUA_TTABLE);
-			Push(L, v);
-			lua_pop(L, 1);													//
-		}
-		static inline void SetGlobal(lua_State* L, char const* const& key, char const* const& v)
-		{
-			Push(L, v);
-			lua_pop(L, 1);													//
-		}
-		static inline void PushRtv(lua_State* L, char const* const& v)
-		{
-			lua_pushstring(L, v);
 		}
 	};
 
@@ -387,39 +304,19 @@ namespace xx
 	template<typename MP, typename T>
 	struct Lua<MP, T, std::enable_if_t<std::is_floating_point<T>::value>>
 	{
-		static inline void PushMetatable(lua_State* L)
-		{
-			lua_pushnil(L);
-		}
 		static inline void Push(lua_State* L, T const& v)
 		{
 			lua_pushnumber(L, (lua_Number)v);
 		}
-		static inline void To(MP& mp, lua_State* L, T& v, int idx)
+		static inline void To(lua_State* L, T& v, int idx)
 		{
 			v = (T)lua_tonumber(L, idx);
 		}
-		static inline bool TryTo(MP& mp, lua_State* L, T& v, int idx)
+		static inline bool TryTo(lua_State* L, T& v, int idx)
 		{
 			if (!lua_isnumber(L, idx)) return false;
-			To(mp, L, v, idx);
+			To(L, v, idx);
 			return true;
-		}
-		static inline void SetContainer(lua_State* L, lua_Integer const& key, T const& v)
-		{
-			auto rtv = lua_getglobal(L, Lua_Container);						// objs
-			assert(rtv == LUA_TTABLE);
-			Push(L, v);
-			lua_pop(L, 1);													//
-		}
-		static inline void SetGlobal(lua_State* L, char const* const& key, T const& v)
-		{
-			Push(L, v);
-			lua_pop(L, 1);													//
-		}
-		static inline void PushRtv(lua_State* L, T const& v)
-		{
-			lua_pushnumber(L, (lua_Number)v);
 		}
 	};
 
@@ -427,39 +324,19 @@ namespace xx
 	template<typename MP, typename T>
 	struct Lua<MP, T, std::enable_if_t<std::is_integral<T>::value || std::is_enum<T>::value>>
 	{
-		static inline void PushMetatable(lua_State* L)
-		{
-			lua_pushnil(L);
-		}
 		static inline void Push(lua_State* L, T const& v)
 		{
 			lua_pushinteger(L, (lua_Integer)v);
 		}
-		static inline void To(MP& mp, lua_State* L, T& v, int idx)
+		static inline void To(lua_State* L, T& v, int idx)
 		{
 			v = (T)lua_tointeger(L, idx);
 		}
-		static inline bool TryTo(MP& mp, lua_State* L, T& v, int idx)
+		static inline bool TryTo(lua_State* L, T& v, int idx)
 		{
 			if (!lua_isinteger(L, idx)) return false;
-			To(mp, L, v, idx);
+			To(L, v, idx);
 			return true;
-		}
-		static inline void SetContainer(lua_State* L, lua_Integer const& key, T const& v)
-		{
-			auto rtv = lua_getglobal(L, Lua_Container);						// objs
-			assert(rtv == LUA_TTABLE);
-			Push(L, v);
-			lua_pop(L, 1);													//
-		}
-		static inline void SetGlobal(lua_State* L, char const* const& key, T const& v)
-		{
-			Push(L, v);
-			lua_pop(L, 1);													//
-		}
-		static inline void PushRtv(lua_State* L, T const& v)
-		{
-			lua_pushinteger(L, (lua_Integer)v);
 		}
 	};
 
@@ -469,73 +346,38 @@ namespace xx
 	{
 		typedef std::remove_pointer_t<T> TT;
 
-		static inline void PushMetatable(lua_State* L)
-		{
-			lua_pushvalue(L, TupleIndexOf<TT, typename MP::Tuple>::value);
-		}
 		static inline void Push(lua_State* L, T const& v)
 		{
-			lua_pushlightuserdata(L, v);								// lud
-			PushMetatable(L);											// lud, mt
-			lua_setmetatable(L, -2);									// lud
+			auto ud = (Lua_UD<T>*)lua_newuserdata(L, sizeof(Lua_UD<T>);		// ud
+			Lua_PushMetatable<MP, TT>(L);									// ud, mt
+			lua_setmetatable(L, -2);										// ud
+			ud->typeIndex = TupleIndexOf<TT, typename MP::Tuple>::value;
+			ud->udType = Lua_UDTypes::Pointer;
+			ud->isMPObject = IsMPObject<TT>::value;
+			new (&ud->data) T(v);
 		}
-		static inline void To(MP& mp, lua_State* L, T& v, int idx)
+		static inline void To(lua_State* L, T& v, int idx)
 		{
-			v = (T)lua_touserdata(L, idx);
+			v = ((Lua_UD<T>*)lua_touserdata(L, idx))->data;
 		}
-		static inline bool TryTo(MP& mp, lua_State* L, T& v, int idx)
+		static inline bool TryTo(lua_State* L, T& v, int idx)
 		{
-			auto top = lua_gettop(L);
-			if (!lua_islightuserdata(L, idx)) return false;
-			auto rtv = lua_getmetatable(L, idx);						// ... mt?
-			if (!rtv) return false;
-			rtv = lua_rawgeti(L, -1, 1);								// ... mt, idx
-			if (rtv != LUA_TNUMBER) goto LabFail;
-			auto typeidx = lua_tointeger(L, -1);
-			if (typeidx == 0) goto LabFail;
-			else if (typeidx > 0)											// 如果是 MPObject 派生, 直接取指针本体的 typeId 用于判断
+			if (!lua_isuserdata(L, idx)) return false;
+			auto ud = (Lua_UD<T>*)lua_touserdata(L, idx);
+			if (!Lua_GetMemPool<MP>(L).IsBaseOf(TupleIndexOf<TT, typename MP::Tuple>::value, ud->typeIndex) return false;
+			switch (ud->udType)
 			{
-				if (typeidx >= MP::typesSize) goto LabFail;
-				v = (T)lua_touserdata(L, idx);							// 这里采取宽松的判断策略 . 如果 v 为空, 则认为必然能转
-				if (v && !mp.IsBaseOf(TupleIndexOf<TT, typename MP::Tuple>::value, ((MPObject*)v)->typeId())) goto LabFail;
-				goto LabSuccess;
+			case Lua_UDTypes::Pointer:
+				v = ud->data;
+				return true;
+			case Lua_UDTypes::MPtr:
+				v = (*(MPtr<TT>**)&ud->data)->Ensure();
+				return true;
+			case Lua_UDTypes::Struct:
+				v = (TT*)&ud->data;			// 理论上讲这个值是危险的. 如果被 lua 回收就没了. 需要立即使用
+				return true;
 			}
-			else
-			{
-				typeidx = -typeidx;
-				if (typeidx >= MP::typesSize) goto LabFail;
-				v = (T)lua_touserdata(L, idx);
-				if (v && !mp.IsBaseOf(TupleIndexOf<TT, typename MP::Tuple>::value, (int)typeidx)) goto LabFail;
-				goto LabSuccess;
-			}
-		LabSuccess:
-			lua_pop(L, 2);
-			assert(top == lua_gettop(L));
-			return true;
-		LabFail:
-			lua_pop(L, 2);
-			assert(top == lua_gettop(L));
-			v = nullptr;
 			return false;
-		}
-		static inline void SetContainer(lua_State* L, lua_Integer const& key, T const& v)
-		{
-			auto rtv = lua_getglobal(L, Lua_Container);					// objs
-			assert(rtv == LUA_TTABLE);
-			Push(L, v);													// objs, lud
-			lua_rawseti(L, -2, key);									// objs
-			lua_pop(L, 1);												//
-		}
-		static inline void SetGlobal(lua_State* L, char const* const& key, T const& v)
-		{
-			Push(L, v);													// lud
-			lua_setglobal(L, key);										//
-		}
-		static inline void PushRtv(lua_State* L, T const& v)
-		{
-			lua_pushlightuserdata(L, v);								// lud
-			lua_getupvalue(L, -lua_gettop(L) - 1, 1);					// lud, mt
-			lua_setmetatable(L, -2);									// lud
 		}
 	};
 
@@ -543,60 +385,54 @@ namespace xx
 	template<typename MP, typename T>
 	struct Lua<MP, T, std::enable_if_t<std::is_class<T>::value && !IsMPtr<T>::value>>
 	{
-		static inline void PushMetatable(lua_State* L)
-		{
-			lua_pushvalue(L, TupleIndexOf<T, typename MP::Tuple>::value);
-		}
-		// todo: 右值版
+		// todo: 右值版, 结构体析构函数
 		static inline void Push(lua_State* L, T const& v)
 		{
-			auto p = (T*)lua_newuserdata(L, sizeof(v));					// ud
-			new (p) T(v);
-			PushMetatable(L);											// ud, mt
-			lua_setmetatable(L, -2);									// ud
+			auto ud = (Lua_UD<T>*)lua_newuserdata(L, sizeof(Lua_UD<T>);		// ud
+			Lua_PushMetatable<MP, T>(L);									// ud, mt
+			lua_setmetatable(L, -2);										// ud
+			ud->typeIndex = TupleIndexOf<T, typename MP::Tuple>::value;
+			ud->udType = Lua_UDTypes::Struct;
+			ud->isMPObject = false;
+			new (&ud->data) T(v);
 		}
-		static inline void To(MP& mp, lua_State* L, T& v, int idx)
+		static inline void To(lua_State* L, T& v, int idx)
 		{
-			v = *(T*)lua_touserdata(L, idx);
+			v = ((Lua_UD<T>*)lua_touserdata(L, idx))->data;
 		}
-		static inline bool TryTo(MP& mp, lua_State* L, T& v, int idx)
+		static inline bool TryTo(lua_State* L, T& v, int idx)
 		{
 			if (!lua_isuserdata(L, idx)) return false;
-			auto rtv = lua_getmetatable(L, idx);						// ... mt?
-			if (!rtv) return false;
-			rtv = lua_rawgeti(L, -1, 1);								// ... mt, idx
-			if (rtv != LUA_TNUMBER) goto LabFail;
-			auto idx = lua_tointeger(L, -1);
-			if (idx >= 0) goto LabFail;
-			idx = -idx;
-			if (idx >= MP::typesSize) goto LabFail;
-			if (!mp.IsBaseOf(TupleIndexOf<T, typename MP::Tuple>::value, idx)) goto LabFail;
-			v = *(T*)lua_touserdata(L, idx);
-			lua_pop(L, 2);
-			return true;
-		LabFail:
-			lua_pop(L, 2);
-			return false;
+			auto ud = (Lua_UD<T>*)lua_touserdata(L, idx);
+			if (!Lua_GetMemPool<MP>(L).IsBaseOf(TupleIndexOf<TT, typename MP::Tuple>::value, ud->typeIndex) return false;
+			switch (ud->udType)
+			{
+			case Lua_UDTypes::Pointer:
+				if (ud->isMPObject) return false;
+				else
+				{
+					v = **(T**)&ud->data;
+					return true;
+				}
+			case Lua_UDTypes::MPtr:
+				return false;				// MPObject 不支持以值方式使用
+			case Lua_UDTypes::Struct:
+				v = ud->data;
+				return true;
+			}
 		}
-		static inline void SetContainer(lua_State* L, lua_Integer const& key, T const& v)
+		static inline void SetGlobal(lua_State* L, lua_Integer const& key, T const& v)
 		{
-			auto rtv = lua_getglobal(L, Lua_Container);					// objs
+			auto rtv = lua_getglobal(L, Lua_Container);						// objs
 			assert(rtv == LUA_TTABLE);
-			Push(L, v);													// objs, ud
-			lua_rawseti(L, -2, key);									// objs
-			lua_pop(L, 1);												//
+			Push(L, v);														// objs, ud
+			lua_rawseti(L, -2, key);										// objs
+			lua_pop(L, 1);													//
 		}
 		static inline void SetGlobal(lua_State* L, char const* const& key, T const& v)
 		{
-			Push(L, v);													// ud
-			lua_setglobal(L, key);										//
-		}
-		static inline void PushRtv(lua_State* L, T&& v)
-		{
-			auto p = (T*)lua_newuserdata(L, sizeof(v));					// ud
-			new (p) T((T&&)v);
-			lua_getupvalue(L, -lua_gettop(L) - 1, 1);					// ud, mt
-			lua_setmetatable(L, -2);									// ud
+			Push(L, v);														// ud
+			lua_setglobal(L, key);											//
 		}
 	};
 
@@ -606,61 +442,84 @@ namespace xx
 	{
 		typedef typename T::ChildType TT;
 
-		static inline void PushMetatable(lua_State* L)
-		{
-			lua_pushvalue(L, TupleIndexOf<TT, typename MP::Tuple>::value);
-		}
 		static inline void Push(lua_State* L, T const& v)
 		{
-			auto p = lua_newuserdata(L, sizeof(v));						// ud
-			new (p) T(v);
-			PushMetatable(L);											// lud, mt
-			lua_setmetatable(L, -2);									// ud
+			auto ud = (Lua_UD<T>*)lua_newuserdata(L, sizeof(Lua_UD<T>);		// ud
+			Lua_PushMetatable<MP, TT>(L);									// ud, mt
+			lua_setmetatable(L, -2);										// ud
+			ud->typeIndex = TupleIndexOf<T, typename MP::Tuple>::value;
+			ud->udType = Lua_UDTypes::MPtr;
+			ud->isMPObject = true;
+			new (&ud->data) T(v);
 		}
-		static inline void To(MP& mp, lua_State* L, T& v, int idx)
+		static inline void To(lua_State* L, T& v, int idx)
 		{
-			v = *(T*)lua_touserdata(L, idx);
+			v = ((Lua_UD<T>*)lua_touserdata(L, idx))->data;
 		}
-		static inline bool TryTo(MP& mp, lua_State* L, T& v, int idx)
+		static inline bool TryTo(lua_State* L, T& v, int idx)
 		{
 			if (!lua_isuserdata(L, idx)) return false;
-			auto rtv = lua_getmetatable(L, idx);						// ... mt?
-			if (!rtv) return false;
-			rtv = lua_rawgeti(L, -1, 1);								// ... mt, idx
-			if (rtv != LUA_TNUMBER) goto LabFail;
-			auto typeidx = lua_tointeger(L, -1);
-			if (typeidx <= 0 || typeidx >= MP::typesSize) goto LabFail;
-			auto& p = *(T*)lua_touserdata(L, idx);
-			if (p && !mp.IsBaseOf(TupleIndexOf<TT, typename MP::Tuple>::value, p->typeId())) goto LabFail;
-			v = p;
-			lua_pop(L, 2);
-			return true;
-		LabFail:
-			lua_pop(L, 2);
-			return false;
-		}
-		static inline void SetContainer(lua_State* L, lua_Integer const& key, T const& v)
-		{
-			auto rtv = lua_getglobal(L, Lua_Container);					// objs
-			assert(rtv == LUA_TTABLE);
-			Push(L, v);													// objs, lud
-			lua_rawseti(L, -2, key);									// objs
-			lua_pop(L, 1);												//
-		}
-		static inline void SetGlobal(lua_State* L, char const* const& key, T const& v)
-		{
-			Push(L, v);													// lud
-			lua_setglobal(L, key);										//
-		}
-		static inline void PushRtv(lua_State* L, T const& v)
-		{
-			auto p = lua_newuserdata(L, sizeof(v));						// ud
-			new (p) T(v);
-			lua_getupvalue(L, -lua_gettop(L) - 1, 1);					// ud, mt
-			lua_setmetatable(L, -2);									// ud
+			auto ud = (Lua_UD<T>*)lua_touserdata(L, idx);
+			if (!Lua_GetMemPool<MP>(L).IsBaseOf(TupleIndexOf<TT, typename MP::Tuple>::value, ud->typeIndex) return false;
+			switch (ud->udType)
+			{
+			case Lua_UDTypes::Pointer:
+				v = *(TT**)&ud->data;
+				return true;
+			case Lua_UDTypes::MPtr:
+				v = ud->data;
+				return true;
+			case Lua_UDTypes::Struct:
+				return false;
+			}
 		}
 	};
 
+	/************************************************************************************/
+	// Lua_SetGlobal
+	/************************************************************************************/
+
+	// 在全局以下标方式压入值
+	template<typename MP, typename T>
+	void Lua_SetGlobal(lua_State* L, lua_Integer const& key, T const& v)
+	{
+		lua_rawgeti(L, LUA_REGISTRYINDEX, LUA_RIDX_GLOBALS);	// _G
+		Lua<MP, T>::Push(L, v);									// _G, v
+		lua_rawseti(L, -2, key);								// _G
+		lua_pop(L, 1);											//
+	}
+
+	// 在全局以字串 key 方式压入值
+	template<typename MP, typename T>
+	void Lua_SetGlobal(lua_State* L, char const* const& key, T const& v)
+	{
+		Lua<MP, T>::Push(L, v);									// v
+		lua_setglobal(L, key);									//
+	}
+
+
+
+	/************************************************************************************/
+	// Lua_SetGlobalNil
+	/************************************************************************************/
+
+	// 从全局清除 key( integer ) 项
+	inline void Lua_SetGlobalNil(lua_State* L, lua_Integer const& key)
+	{
+		if (!L) return;
+		lua_rawgeti(L, LUA_REGISTRYINDEX, LUA_RIDX_GLOBALS);	// _G
+		lua_pushnil(L);											// _G, nil
+		lua_rawseti(L, -2, key);								// _G
+		lua_pop(L, 1);											//
+	}
+
+	// 从全局清除 key( string ) 项
+	inline void Lua_SetGlobalNil(lua_State* L, char const* key)
+	{
+		if (!L) return;
+		lua_pushnil(L);
+		lua_setglobal(L, key);
+	}
 
 
 	/************************************************************************************/
@@ -670,26 +529,26 @@ namespace xx
 	template<typename MP, typename Tuple, std::size_t N>
 	struct Lua_TupleFiller
 	{
-		static bool Fill(MP& mp, lua_State* L, Tuple& t)
+		static bool Fill(lua_State* L, Tuple& t)
 		{
-			auto rtv = Lua<MP, std::tuple_element_t<N - 1, Tuple>>::TryTo(mp, L, std::get<N - 1>(t), -(int)(std::tuple_size<Tuple>::value - N + 1));
+			auto rtv = Lua<MP, std::tuple_element_t<N - 1, Tuple>>::TryTo(L, std::get<N - 1>(t), -(int)(std::tuple_size<Tuple>::value - N + 1));
 			if (!rtv) return false;
-			return Lua_TupleFiller<MP, Tuple, N - 1>::Fill(mp, L, t);
+			return Lua_TupleFiller<MP, Tuple, N - 1>::Fill(L, t);
 		}
 	};
 	template<typename MP, typename Tuple>
 	struct Lua_TupleFiller <MP, Tuple, 1 >
 	{
-		static bool Fill(MP& mp, lua_State* L, Tuple& t)
+		static bool Fill(lua_State* L, Tuple& t)
 		{
-			return Lua<MP, std::tuple_element_t<0, Tuple>>::TryTo(mp, L, std::get<0>(t), -(int)(std::tuple_size<Tuple>::value));
+			return Lua<MP, std::tuple_element_t<0, Tuple>>::TryTo(L, std::get<0>(t), -(int)(std::tuple_size<Tuple>::value));
 		}
 	};
 
 	template<typename MP, typename Tuple>
-	bool Lua_FillTuple(MP& mp, lua_State* L, Tuple& t)
+	bool Lua_FillTuple(lua_State* L, Tuple& t)
 	{
-		return Lua_TupleFiller<MP, Tuple, std::tuple_size<Tuple>::value>::Fill(mp, L, t);
+		return Lua_TupleFiller<MP, Tuple, std::tuple_size<Tuple>::value>::Fill(L, t);
 	}
 
 	/************************************************************************************/
@@ -699,10 +558,10 @@ namespace xx
 	// 已知问题: 标记为 YIELD 方式执行的函数, 将忽略直接返回值.
 	// 有参数 有返回值
 	template<typename MP, bool YIELD, typename T, typename R, typename ...Args>
-	int Lua_CallFunc(MP& mp, std::enable_if_t<sizeof...(Args) && !std::is_void<R>::value, lua_State*> L, T* o, R(T::* f)(Args...))
+	int Lua_CallFunc(std::enable_if_t<sizeof...(Args) && !std::is_void<R>::value, lua_State*> L, T* o, R(T::* f)(Args...))
 	{
 		std::tuple<Args...> t;
-		if (Lua_FillTuple(mp, L, t))
+		if (Lua_FillTuple(L, t))
 		{
 			auto rtv = FuncTupleCaller(o, f, t, std::make_index_sequence<sizeof...(Args)>());
 			if (YIELD) return lua_yield(L, 0);
@@ -713,7 +572,7 @@ namespace xx
 	}
 	// 无参数 有返回值
 	template<typename MP, bool YIELD, typename T, typename R, typename ...Args>
-	int Lua_CallFunc(MP& mp, std::enable_if_t<!sizeof...(Args) && !std::is_void<R>::value, lua_State*> L, T* o, R(T::* f)(Args...))
+	int Lua_CallFunc(std::enable_if_t<!sizeof...(Args) && !std::is_void<R>::value, lua_State*> L, T* o, R(T::* f)(Args...))
 	{
 		auto rtv = (o->*f)();
 		if (YIELD) return lua_yield(L, 0);
@@ -722,10 +581,10 @@ namespace xx
 	}
 	// 有参数 无返回值
 	template<typename MP, bool YIELD, typename T, typename R, typename ...Args>
-	int Lua_CallFunc(MP& mp, std::enable_if_t<sizeof...(Args) && std::is_void<R>::value, lua_State*> L, T* o, R(T::* f)(Args...))
+	int Lua_CallFunc(std::enable_if_t<sizeof...(Args) && std::is_void<R>::value, lua_State*> L, T* o, R(T::* f)(Args...))
 	{
 		std::tuple<Args...> t;
-		if (Lua_FillTuple(mp, L, t))
+		if (Lua_FillTuple(L, t))
 		{
 			FuncTupleCaller(o, f, t, std::make_index_sequence<sizeof...(Args)>());
 			if (YIELD) return lua_yield(L, 0);
@@ -735,7 +594,7 @@ namespace xx
 	}
 	// 无参数 无返回值
 	template<typename MP, bool YIELD, typename T, typename R, typename ...Args>
-	int Lua_CallFunc(MP& mp, std::enable_if_t<!sizeof...(Args) && std::is_void<R>::value, lua_State*> L, T* o, R(T::* f)(Args...))
+	int Lua_CallFunc(std::enable_if_t<!sizeof...(Args) && std::is_void<R>::value, lua_State*> L, T* o, R(T::* f)(Args...))
 	{
 		(o->*f)();
 		if (YIELD) return lua_yield(L, 0);
@@ -795,83 +654,9 @@ namespace xx
 		lua_rawset(L, -3);
 	}
 
-
-
-	// 将 self 转为 T* 的形态返回. 为空则表示转换失败或指针变野
-	// 根据 lua_islightuserdata 结合 is_base_of<MPObject, T> 来判断到底是哪种情况
-	template<typename MP, typename T, typename ENABLE = void>
-	struct LuaSelf;
-
-	template<typename MP, typename T>
-	struct LuaSelf<MP, T, std::enable_if_t< std::is_base_of<MPObject, T>::value>>
-	{
-		static T* Get(MP& mp, lua_State* L)
-		{
-			bool islud = lua_islightuserdata(L, 1) != 0;
-			bool isud = lua_isuserdata(L, 1) != 0;
-			if (!islud && !isud) return nullptr;
-			if (islud)
-			{
-				T* v = nullptr;
-				if (Lua<MP, decltype(v)>::TryTo(mp, L, v, 1)) return v;
-				return nullptr;
-			}
-			else
-			{
-				MPtr<T> v = nullptr;
-				if (Lua<MP, decltype(v)>::TryTo(mp, L, v, 1)) return v.Ensure();
-				return nullptr;
-			}
-			//if (lua_islightuserdata(L, 1))
-			//{
-			//	return (T*)lua_touserdata(L, 1);
-			//}
-			//auto& ptr = *(MPtr<T>*)lua_touserdata(L, 1);
-			//if (ptr) return ptr.pointer;
-			//return nullptr;
-		}
-	};
-	template<typename MP, typename T>
-	struct LuaSelf<MP, T, std::enable_if_t<!std::is_base_of<MPObject, T>::value>>
-	{
-		static T* Get(MP& mp, lua_State* L)
-		{
-			int top = lua_gettop(L);
-			bool islud = lua_islightuserdata(L, 1) != 0;
-			bool isud = lua_isuserdata(L, 1) != 0;
-			if (!islud && !isud) return nullptr;
-			if (islud)
-			{
-				T* v = nullptr;
-				if (Lua<MP, decltype(v)>::TryTo(mp, L, v, 1)) return v;
-				return nullptr;
-			}
-			else
-			{
-				// 这段代码从上面复制小改
-				auto rtv = lua_getmetatable(L, idx);						// ... mt?
-				if (!rtv) return nullptr;
-				rtv = lua_rawgeti(L, -1, 1);								// ... mt, idx
-				if (rtv != LUA_TNUMBER) goto LabFail;
-				auto idx = lua_tointeger(L, -1);
-				if (idx >= 0) goto LabFail;
-				idx = -idx;
-				if (idx >= MP::typesSize) goto LabFail;
-				if (!mp.IsBaseOf(TupleIndexOf<T, typename MP::Tuple>::value, idx)) goto LabFail;
-				auto v = (T*)lua_touserdata(L, idx);
-				lua_pop(L, 2);
-				return v;
-			LabFail:
-				lua_pop(L, 2);
-				return nullptr;
-			}
-			//return (T*)lua_touserdata(L, 1);
-		}
-	};
-
 }
 
-
+// todo: LuaSelf 换 Lua<.....>::TryTo
 
 /************************************************************************************/
 // xxLua_BindFunc
@@ -889,14 +674,12 @@ lua_pushcclosure(LUA, [](lua_State* L)													\
 	{																					\
 		return xx::Lua_Error(L, "error!!! wrong num args.");							\
 	}																					\
-	MPTYPE* mp;																			\
-	lua_getallocf(L, (void**)&mp);														\
-	auto self = xx::LuaSelf<MPTYPE, T>::Get(*mp, L);									\
+	auto self = xx::LuaSelf<MPTYPE, T>::Get(L);											\
 	if (!self)																			\
 	{																					\
 		return xx::Lua_Error(L, "error!!! self is nil or bad data type!");				\
 	}																					\
-	return xx::Lua_CallFunc<MPTYPE, YIELD>(*mp, L, self, &T::F);						\
+	return xx::Lua_CallFunc<MPTYPE, YIELD>(L, self, &T::F);								\
 }, 1);																					\
 lua_rawset(LUA, -3);
 
@@ -916,9 +699,7 @@ lua_pushcclosure(LUA, [](lua_State* L)													\
 	{																					\
 		return xx::Lua_Error(L, "error!!! forget : ?");									\
 	}																					\
-	MPTYPE* mp;																			\
-	lua_getallocf(L, (void**)&mp);														\
-	auto self = xx::LuaSelf<MPTYPE, T>::Get(*mp, L);									\
+	auto self = xx::LuaSelf<MPTYPE, T>::Get(L);											\
 	if (!self)																			\
 	{																					\
 		return xx::Lua_Error(L, "error!!! self is nil or bad data type!");				\
@@ -934,7 +715,7 @@ lua_pushcclosure(LUA, [](lua_State* L)													\
 		{																				\
 			return xx::Lua_Error(L, "error!!! readonly!");								\
 		}																				\
-		else if (!xx::Lua<MPTYPE, decltype(self->F)>::TryTo(*mp, L, self->F, 2))		\
+		else if (!xx::Lua<MPTYPE, decltype(self->F)>::TryTo(L, self->F, 2))				\
 		{																				\
 			return xx::Lua_Error(L, "error!!! bad data type!");							\
 		}																				\
