@@ -31,22 +31,18 @@ typedef xx::MemPool<A, B, C, Factor> MP;
 
 A* Factor::CreateA()
 {
-	std::cout << "CreateA" << std::endl;
 	return nullptr;
 }
 B* Factor::CreateB()
 {
-	std::cout << "CreateB" << std::endl;
 	return nullptr;
 }
 C* Factor::CreateC()
 {
-	std::cout << "CreateC" << std::endl;
 	return nullptr;
 }
 C Factor::CreateStructC()
 {
-	std::cout << "CreateStructC" << std::endl;
 	return C();
 }
 void Factor::NeedA(A* a)
@@ -84,7 +80,28 @@ int main()
 	auto rtv = luaL_dostring(L, R"%%(
 
 local pointer_a = factor:CreateA()
-factor:NeedC( pointer_a )
+local pointer_b = factor:CreateB()
+local pointer_c = factor:CreateC()
+local struct_c  = factor:CreateStructC()
+
+print( "test struct to pointer & inherit check" )
+factor:NeedA( struct_c )		-- ok
+factor:NeedB( struct_c )		-- ok
+factor:NeedC( struct_c )		-- ok
+
+print( "test pointer & inherit check" )
+factor:NeedA( pointer_a )		-- ok
+factor:NeedB( pointer_b )		-- ok
+factor:NeedC( pointer_c )		-- ok
+factor:NeedA( pointer_a )		-- ok
+factor:NeedA( pointer_b )		-- ok
+factor:NeedA( pointer_c )		-- ok
+
+print( "test inherit check fail begin" )
+factor:NeedC( pointer_a )		-- err
+factor:NeedC( pointer_b )		-- err
+print( "test inherit check fail end" )
+
 
 )%%");
 	if (rtv)

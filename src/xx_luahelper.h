@@ -566,7 +566,7 @@ namespace xx
 			Lua<MP, R>::Push(L, rtv);
 			return 1;
 		}
-		return 0;
+		return Lua_Error(L, "error!!! bad arg data type? type cast fail?");
 	}
 	// 无参数 有返回值
 	template<typename MP, bool YIELD, typename T, typename R, typename ...Args>
@@ -588,7 +588,7 @@ namespace xx
 			if (YIELD) return lua_yield(L, 0);
 			else return 0;
 		}
-		return 0;
+		return Lua_Error(L, "error!!! bad arg data type? type cast fail?");
 	}
 	// 无参数 无返回值
 	template<typename MP, bool YIELD, typename T, typename R, typename ...Args>
@@ -604,26 +604,23 @@ namespace xx
 	// Lua_BindFunc_Ensure
 	/************************************************************************************/
 
-	template<typename MP, typename T>
-	int Lua_BindFunc_Ensure_Impl(lua_State* L)
-	{
-		auto top = lua_gettop(L);
-		if (top != 1)
-		{
-			return Lua_Error(L, "error!!! func args num wrong.");
-		}
-		T* self = nullptr;
-		lua_pushboolean(L, xx::Lua<MP, T*>::TryTo(L, self, 1));
-		return 1;
-	}
-
 	// 生成确认 ud 是否合法的 Ensure 指令
 	template<typename MP, typename T>
 	void Lua_BindFunc_Ensure(lua_State* L)
 	{
 		static_assert(std::is_base_of<MPObject, T>::value, "only MPObject* struct have Ensure func.");
 		lua_pushstring(L, "Ensure");
-		lua_pushcclosure(L, Lua_BindFunc_Ensure_Impl<MP, T>, 0);
+		lua_pushcclosure(L, [](lua_State* L)
+		{
+			auto top = lua_gettop(L);
+			if (top != 1)
+			{
+				return Lua_Error(L, "error!!! func args num wrong.");
+			}
+			T* self = nullptr;
+			lua_pushboolean(L, xx::Lua<MP, T*>::TryTo(L, self, 1));
+			return 1;
+		}, 0);
 		lua_rawset(L, -3);
 	}
 

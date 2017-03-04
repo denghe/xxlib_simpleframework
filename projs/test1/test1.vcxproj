@@ -185,6 +185,7 @@
     <Text Include="bak2.txt" />
     <Text Include="bak3.txt" />
     <Text Include="bak4.txt" />
+    <Text Include="bak5.txt" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="..\..\src\xx.natvis" />
