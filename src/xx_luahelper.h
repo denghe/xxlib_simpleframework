@@ -12,8 +12,6 @@
 
 namespace xx
 {
-	// todo: lightuserdata 不能用. 要换成 userdata. 数据区设立一个头部. 放类型检查数据. 类型检查不再通过元表
-
 	// todo: 直接将欲与 coroutine 做交互的对象放到 _G[ versionNumber ]. 不使用 pure 版, 避开元表的占用空间.
 
 	// todo: 考虑用宏来将各种检查进行分级. 视情况开启. 似乎可以在 mp 上放一个标志位以便批量跳过检测?
@@ -50,7 +48,7 @@ namespace xx
 				lua_pushstring(L, "__index");						// _G, mt, __index
 				lua_pushvalue(L, -2);								// _G, mt, __index, mt
 				lua_rawset(L, -3);									// _G, mt
-				lua_rawseti(L, -2, idx);							// _G
+				lua_rawseti(L, -2, i);								// _G
 			}
 			lua_pop(L, 1);											//
 		}
@@ -348,7 +346,7 @@ namespace xx
 
 		static inline void Push(lua_State* L, T const& v)
 		{
-			auto ud = (Lua_UD<T>*)lua_newuserdata(L, sizeof(Lua_UD<T>);		// ud
+			auto ud = (Lua_UD<T>*)lua_newuserdata(L, sizeof(Lua_UD<T>));	// ud
 			Lua_PushMetatable<MP, TT>(L);									// ud, mt
 			lua_setmetatable(L, -2);										// ud
 			ud->typeIndex = TupleIndexOf<TT, typename MP::Tuple>::value;
@@ -364,14 +362,14 @@ namespace xx
 		{
 			if (!lua_isuserdata(L, idx)) return false;
 			auto ud = (Lua_UD<T>*)lua_touserdata(L, idx);
-			if (!Lua_GetMemPool<MP>(L).IsBaseOf(TupleIndexOf<TT, typename MP::Tuple>::value, ud->typeIndex) return false;
+			if (!Lua_GetMemPool<MP>(L).IsBaseOf(TupleIndexOf<TT, typename MP::Tuple>::value, ud->typeIndex)) return false;
 			switch (ud->udType)
 			{
 			case Lua_UDTypes::Pointer:
 				v = ud->data;
 				return true;
 			case Lua_UDTypes::MPtr:
-				v = (*(MPtr<TT>**)&ud->data)->Ensure();
+				v = ((MPtr<TT>*)&ud->data)->Ensure();
 				return true;
 			case Lua_UDTypes::Struct:
 				v = (TT*)&ud->data;			// 理论上讲这个值是危险的. 如果被 lua 回收就没了. 需要立即使用
@@ -388,7 +386,7 @@ namespace xx
 		// todo: 右值版, 结构体析构函数
 		static inline void Push(lua_State* L, T const& v)
 		{
-			auto ud = (Lua_UD<T>*)lua_newuserdata(L, sizeof(Lua_UD<T>);		// ud
+			auto ud = (Lua_UD<T>*)lua_newuserdata(L, sizeof(Lua_UD<T>));	// ud
 			Lua_PushMetatable<MP, T>(L);									// ud, mt
 			lua_setmetatable(L, -2);										// ud
 			ud->typeIndex = TupleIndexOf<T, typename MP::Tuple>::value;
@@ -404,7 +402,7 @@ namespace xx
 		{
 			if (!lua_isuserdata(L, idx)) return false;
 			auto ud = (Lua_UD<T>*)lua_touserdata(L, idx);
-			if (!Lua_GetMemPool<MP>(L).IsBaseOf(TupleIndexOf<TT, typename MP::Tuple>::value, ud->typeIndex) return false;
+			if (!Lua_GetMemPool<MP>(L).IsBaseOf(TupleIndexOf<T, typename MP::Tuple>::value, ud->typeIndex)) return false;
 			switch (ud->udType)
 			{
 			case Lua_UDTypes::Pointer:
@@ -444,10 +442,10 @@ namespace xx
 
 		static inline void Push(lua_State* L, T const& v)
 		{
-			auto ud = (Lua_UD<T>*)lua_newuserdata(L, sizeof(Lua_UD<T>);		// ud
+			auto ud = (Lua_UD<T>*)lua_newuserdata(L, sizeof(Lua_UD<T>));	// ud
 			Lua_PushMetatable<MP, TT>(L);									// ud, mt
 			lua_setmetatable(L, -2);										// ud
-			ud->typeIndex = TupleIndexOf<T, typename MP::Tuple>::value;
+			ud->typeIndex = TupleIndexOf<TT, typename MP::Tuple>::value;
 			ud->udType = Lua_UDTypes::MPtr;
 			ud->isMPObject = true;
 			new (&ud->data) T(v);
@@ -460,7 +458,7 @@ namespace xx
 		{
 			if (!lua_isuserdata(L, idx)) return false;
 			auto ud = (Lua_UD<T>*)lua_touserdata(L, idx);
-			if (!Lua_GetMemPool<MP>(L).IsBaseOf(TupleIndexOf<TT, typename MP::Tuple>::value, ud->typeIndex) return false;
+			if (!Lua_GetMemPool<MP>(L).IsBaseOf(TupleIndexOf<TT, typename MP::Tuple>::value, ud->typeIndex)) return false;
 			switch (ud->udType)
 			{
 			case Lua_UDTypes::Pointer:
@@ -561,11 +559,11 @@ namespace xx
 	int Lua_CallFunc(std::enable_if_t<sizeof...(Args) && !std::is_void<R>::value, lua_State*> L, T* o, R(T::* f)(Args...))
 	{
 		std::tuple<Args...> t;
-		if (Lua_FillTuple(L, t))
+		if (Lua_FillTuple<MP>(L, t))
 		{
 			auto rtv = FuncTupleCaller(o, f, t, std::make_index_sequence<sizeof...(Args)>());
 			if (YIELD) return lua_yield(L, 0);
-			Lua<MP, R>::PushRtv(L, rtv);
+			Lua<MP, R>::Push(L, rtv);
 			return 1;
 		}
 		return 0;
@@ -576,7 +574,7 @@ namespace xx
 	{
 		auto rtv = (o->*f)();
 		if (YIELD) return lua_yield(L, 0);
-		Lua<MP, R>::PushRtv(L, rtv);
+		Lua<MP, R>::Push(L, rtv);
 		return 1;
 	}
 	// 有参数 无返回值
@@ -584,7 +582,7 @@ namespace xx
 	int Lua_CallFunc(std::enable_if_t<sizeof...(Args) && std::is_void<R>::value, lua_State*> L, T* o, R(T::* f)(Args...))
 	{
 		std::tuple<Args...> t;
-		if (Lua_FillTuple(L, t))
+		if (Lua_FillTuple<MP>(L, t))
 		{
 			FuncTupleCaller(o, f, t, std::make_index_sequence<sizeof...(Args)>());
 			if (YIELD) return lua_yield(L, 0);
@@ -606,7 +604,7 @@ namespace xx
 	// Lua_BindFunc_Ensure
 	/************************************************************************************/
 
-	template<typename T>
+	template<typename MP, typename T>
 	int Lua_BindFunc_Ensure_Impl(lua_State* L)
 	{
 		auto top = lua_gettop(L);
@@ -614,49 +612,22 @@ namespace xx
 		{
 			return Lua_Error(L, "error!!! func args num wrong.");
 		}
-		bool hasValue = false;
-		if (!lua_isuserdata(L, 1))
-		{
-			return Lua_Error(L, "error!!! self is not MPtr<T>.");
-		}
-		auto rtv = lua_getmetatable(L, 1);							// ... mt?
-		if (!rtv)
-		{
-			lua_pop(L, 1);
-			return Lua_Error(L, "error!!! self is no mt.");
-		}
-		rtv = lua_rawgeti(L, -1, 1);								// ... mt, idx
-		if (rtv != LUA_TNUMBER)
-		{
-			lua_pop(L, 2);
-			return Lua_Error(L, "error!!! self's mt is no [1].");
-		}
-		auto idx = (int)lua_tointeger(L, -1);
-		if (idx <= 0 || idx >= MP::typesSize)
-		{
-			lua_pop(L, 2);
-			return Lua_Error(L, "error!!! self's mt[1] out of range.");
-		}
-		auto& p = *(MPtr<T>*)lua_touserdata(L, 1);
-		hasValue = (bool)p;
-		lua_pop(L, 2);
-		lua_pushboolean(L, hasValue);
+		T* self = nullptr;
+		lua_pushboolean(L, xx::Lua<MP, T*>::TryTo(L, self, 1));
 		return 1;
 	}
 
 	// 生成确认 ud 是否合法的 Ensure 指令
-	template<typename T>
-	inline void Lua_BindFunc_Ensure(lua_State* L)
+	template<typename MP, typename T>
+	void Lua_BindFunc_Ensure(lua_State* L)
 	{
 		static_assert(std::is_base_of<MPObject, T>::value, "only MPObject* struct have Ensure func.");
 		lua_pushstring(L, "Ensure");
-		lua_pushcfunction(L, Lua_BindFunc_Ensure_Impl<T>);
+		lua_pushcclosure(L, Lua_BindFunc_Ensure_Impl<MP, T>, 0);
 		lua_rawset(L, -3);
 	}
 
 }
-
-// todo: LuaSelf 换 Lua<.....>::TryTo
 
 /************************************************************************************/
 // xxLua_BindFunc
@@ -665,7 +636,6 @@ namespace xx
 // 函数绑定
 #define xxLua_BindFunc(MPTYPE, LUA, T, F, YIELD)										\
 lua_pushstring(LUA, #F);																\
-xx::Lua<MPTYPE, decltype(xx::GetFuncReturnType(&T::F))>::PushMetatable(LUA);			\
 lua_pushcclosure(LUA, [](lua_State* L)													\
 {																						\
 	auto top = lua_gettop(L);															\
@@ -674,13 +644,13 @@ lua_pushcclosure(LUA, [](lua_State* L)													\
 	{																					\
 		return xx::Lua_Error(L, "error!!! wrong num args.");							\
 	}																					\
-	auto self = xx::LuaSelf<MPTYPE, T>::Get(L);											\
-	if (!self)																			\
+	T* self = nullptr;																	\
+	if (!xx::Lua<MPTYPE, T*>::TryTo(L, self, 1))										\
 	{																					\
 		return xx::Lua_Error(L, "error!!! self is nil or bad data type!");				\
 	}																					\
 	return xx::Lua_CallFunc<MPTYPE, YIELD>(L, self, &T::F);								\
-}, 1);																					\
+}, 0);																					\
 lua_rawset(LUA, -3);
 
 
@@ -691,7 +661,6 @@ lua_rawset(LUA, -3);
 // 成员变量绑定
 #define xxLua_BindField(MPTYPE, LUA, T, F, writeable)									\
 lua_pushstring(LUA, #F);																\
-xx::Lua<MPTYPE, decltype(xx::GetFieldType(&T::F))>::PushMetatable(LUA);					\
 lua_pushcclosure(LUA, [](lua_State* L)													\
 {																						\
 	auto top = lua_gettop(L);															\
@@ -699,14 +668,14 @@ lua_pushcclosure(LUA, [](lua_State* L)													\
 	{																					\
 		return xx::Lua_Error(L, "error!!! forget : ?");									\
 	}																					\
-	auto self = xx::LuaSelf<MPTYPE, T>::Get(L);											\
-	if (!self)																			\
+	T* self = nullptr;																	\
+	if (!xx::Lua<MPTYPE, T*>::TryTo(L, self, 1))										\
 	{																					\
 		return xx::Lua_Error(L, "error!!! self is nil or bad data type!");				\
 	}																					\
 	if (top == 1)																		\
 	{																					\
-		xx::Lua<MPTYPE, decltype(self->F)>::PushRtv(L, self->F);						\
+		xx::Lua<MPTYPE, decltype(self->F)>::Push(L, self->F);							\
 		return 1;																		\
 	}																					\
 	if (top == 2)																		\
@@ -722,6 +691,6 @@ lua_pushcclosure(LUA, [](lua_State* L)													\
 		return 0;																		\
 	}																					\
 	return xx::Lua_Error(L, "error!!! too many args!");									\
-}, 1);																					\
+}, 0);																					\
 lua_rawset(LUA, -3);
 

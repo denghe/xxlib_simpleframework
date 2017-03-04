@@ -1,55 +1,125 @@
+#include "xx_luahelper.h"
 #include <iostream>
-#include "lua.hpp"
 
-struct B
-{
-};
-struct A
+// types defines
+/***********************************************************************/
+
+struct B;
+struct A : xx::MPObject
 {
 	B* b;
+	xx::MPtr<B> GetB();
+	A();
+	~A();
 };
+
+struct B : xx::MPObject
+{
+	xx::String* name = nullptr;
+	void SetName(char const* name);
+	xx::String* GetName();
+	~B();
+};
+
+// MP defines
+/***********************************************************************/
+
+typedef xx::MemPool<A, xx::String, B> MP;
+
+// impls
+/***********************************************************************/
+
+inline xx::MPtr<B> A::GetB()
+{
+	return b;
+}
+inline A::A()
+{
+	mempool<MP>().CreateTo(b);
+}
+inline A::~A()
+{
+	b->Release();
+}
+
+inline void B::SetName(char const* name)
+{
+	if (name)
+	{
+		if (this->name) this->name->Assign(name);
+		else mempool<MP>().CreateTo(this->name, name);
+	}
+	else if (this->name)
+	{
+		this->name->Release();
+		this->name = nullptr;
+	}
+}
+inline xx::String* B::GetName()
+{
+	return name;
+}
+inline B::~B()
+{
+	if (name)
+	{
+		name->Release();
+		name = nullptr;
+	}
+}
+
+// main
+/***********************************************************************/
 
 int main()
 {
-	//size_t lua_rawlen
+	MP mp;
+	auto L = xx::Lua_NewState(mp);
 
-	// todo: 用 ud 替代 lud. 考虑在 ud 的头部放点类型啊 长度之类的信息 以确定 ud 是 T* MPtr<T> T. 似乎比起读 metatable 感觉要更轻量
+	// 开始 bind A 的函数
+	xx::Lua_PushMetatable<MP, A>(L);
+	xx::Lua_BindFunc_Ensure<MP, A>(L);
+	xxLua_BindFunc(MP, L, A, GetB, false);
+	xxLua_BindField(MP, L, A, b, true);
+	lua_pop(L, 1);
 
+	// 开始 bind B 的函数
+	xx::Lua_PushMetatable<MP, B>(L);
+	xx::Lua_BindFunc_Ensure<MP, B>(L);
+	xxLua_BindFunc(MP, L, B, SetName, false);
+	xxLua_BindFunc(MP, L, B, GetName, false);
+	xxLua_BindField(MP, L, B, name, true);
+	lua_pop(L, 1);
 
-	auto L = luaL_newstate();
-	luaL_openlibs(L);
-	auto a = new A();
-	lua_pushlightuserdata(L, a);					// a
-	lua_newtable(L);								// a, mt
-	lua_pushstring(L, "__index");					// a, mt, __index
-	lua_pushvalue(L, -2);							// a, mt, __index, mt
-	lua_rawset(L, -3);								// a, mt
-	lua_pushstring(L, "b");							// a, mt, "b"
-	lua_pushcclosure(L, [](lua_State* L)			// a, mt, "b", fn
-	{
-		auto self = (A*)lua_touserdata(L, 1);
-		lua_pushlightuserdata(L, self->b);				// ... b
-		//lua_newtable(L);								// ... b, mt
-		//lua_setmetatable(L, -2);						// ... b
-		return 1;
-	}, 0);
-	lua_rawset(L, -3);								// a, mt
-	lua_setmetatable(L, -2);						// a
-	lua_setglobal(L, "a");							//
-	auto result = luaL_dostring(L, R"%%(
+	// 造一个 a 出来压到 L 之 global
+	auto a = mp.Create<A>();
+	xx::Lua_SetGlobal<MP>(L, "a", a);
+	auto rtv = luaL_dostring(L, R"%%(
 
-print( a )
-print( getmetatable( a ) )
-local b = a:b()
-print( getmetatable( a ) )
-print( getmetatable( b ) )
-print( b )
+	local a = _G.a
+	print( a )
+	local b = a:GetB()
+	print( b )
+	print( b:Ensure() )
+	a:b( b )
+
+	b:SetName( "asdf" )
+	print( b:GetName() )
+	b:SetName( nil )
+	print( b:GetName() == nil )
+	b:name( "asdf" )
+	print( b:name() )
+	b:name( 1 )
+	print( b:name() )
 
 )%%");
-	if (result)
+	if (rtv)
 	{
 		std::cout << lua_tostring(L, -1) << std::endl;
 	}
+	a->Release();
 
-	// todo: release
+	lua_close(L);
+	std::cin.get();
+	return 0;
 }
