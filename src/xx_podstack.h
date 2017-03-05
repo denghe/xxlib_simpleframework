@@ -1,8 +1,5 @@
 #pragma once
 #include "xx_defines.h"
-#include <cstdint>
-#include <type_traits>
-#include <cassert>
 
 namespace xx
 {

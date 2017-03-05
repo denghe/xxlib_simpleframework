@@ -5,6 +5,7 @@ namespace xx
 {
 	struct String;
 
+
 	// 支持 MemPool 的类都应该从该基类派生
 	struct MPObject
 	{
@@ -46,6 +47,7 @@ namespace xx
 
 		inline MemPoolBase const& mempoolbase() const { return *(memHeader().mempoolbase); }
 		inline MemPoolBase& mempoolbase() { return *(memHeader().mempoolbase); }
+
 		template<typename T> T& mempool()
 		{
 			static_assert(std::is_base_of<MemPoolBase, T>::value, "the T must be a MemPool<...>");

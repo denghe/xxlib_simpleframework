@@ -1,6 +1,5 @@
 #pragma once
 #include "xx_mempool.h"
-#include <cassert>
 
 namespace xx
 {

@@ -1,5 +1,4 @@
 #pragma once
-#include <cassert>
 #include <tuple>
 #include <type_traits>
 #include <utility>
@@ -13,8 +12,6 @@
 namespace xx
 {
 	// todo: 直接将欲与 coroutine 做交互的对象放到 _G[ versionNumber ]. 不使用 pure 版, 避开元表的占用空间.
-
-	// todo: 考虑用宏来将各种检查进行分级. 视情况开启. 似乎可以在 mp 上放一个标志位以便批量跳过检测?
 
 
 	// 可放入 LUA 的数据类型有: float, double, int64, 各式 string, 以及 T, T*

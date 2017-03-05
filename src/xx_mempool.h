@@ -3,13 +3,13 @@
 
 namespace xx
 {
+
 	/*
-typedef xx::MemPool<A,B,C,D......> MP;
-MP mp;
-auto a = mp.Create<A>(.....);
-B* b;
-MP::Ref(a).CreateTo(b, .... );
+	typedef xx::MemPool<A,B,C,D......> MP;
+	MP mp;
+	auto a = mp.Create<A>(.....);
 	*/
+
 
 	// 整套库的核心内存分配组件. 按 2^N 尺寸划分内存分配行为, 将 free 的指针放入 stack 缓存复用
 	// 对于分配出来的内存, 自增 版本号 将填充在 指针 -8 区. 用于判断指针是否已失效

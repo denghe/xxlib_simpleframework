@@ -4,7 +4,6 @@
 #include "xx_string.h"
 #include <array>
 #include <vector>
-#include <cassert>
 #include <cstring>
 
 namespace xx

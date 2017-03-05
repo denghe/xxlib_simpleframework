@@ -1,6 +1,5 @@
 ﻿#pragma once
 #include "xx_defines.h"
-#include <cassert>
 #include <cmath>
 #include <algorithm>
 

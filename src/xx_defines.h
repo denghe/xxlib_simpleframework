@@ -11,6 +11,7 @@
 #include <unistd.h>
 #endif
 #include <cassert>
+#include <type_traits>
 
 /*
 XX_IA

@@ -54,6 +54,9 @@
     <ClInclude Include="..\..\src\xx_string.h">
       <Filter>xx</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\xx_scene.h">
+      <Filter>xx</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="bak1.txt">
