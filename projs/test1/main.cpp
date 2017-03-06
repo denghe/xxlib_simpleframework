@@ -4,6 +4,9 @@
 
 // types defines
 /***********************************************************************/
+
+#include "scene.h"
+
 struct A : xx::MPObject
 {
 };
@@ -17,10 +20,17 @@ struct B : xx::MPObject
 // MP defines
 /***********************************************************************/
 
-typedef xx::MemPool<::A> MP;
+typedef xx::MemPool<
+	A, 
+	B, 
+	xx::List<FSMBase*>, 
+	xx::List<SceneObjBase*, true>
+> MP;
 
 // impls
 /***********************************************************************/
+
+#include "scene.hpp"
 
 inline B::B()
 {

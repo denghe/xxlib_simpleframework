@@ -178,8 +178,9 @@
     <ClInclude Include="..\..\src\xx_mpobject.h" />
     <ClInclude Include="..\..\src\xx_mptr.h" />
     <ClInclude Include="..\..\src\xx_podstack.h" />
-    <ClInclude Include="..\..\src\xx_scene.h" />
     <ClInclude Include="..\..\src\xx_string.h" />
+    <ClInclude Include="scene.h" />
+    <ClInclude Include="scene.hpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="bak1.txt" />
