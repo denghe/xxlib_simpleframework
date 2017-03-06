@@ -1,13 +1,17 @@
 #include "xx_scene.hpp"
 
-Scene::Scene()
+Scene::Scene(char const* luacode)
 {
 	L = xx::Lua_NewState(mempool<MP>());
+	// err place here
+	mempool<MP>().CreateTo(err);
 
 	// LuaBind: Scene
 	xx::Lua_PushMetatable<MP, Scene>(L);
-	//xxLua_BindFunc
-	//xxLua_BindField
+	xxLua_BindField(MP, L, Scene, ticks, false);
+	xxLua_BindFunc(MP, L, SceneBase, Release, false);
+	xxLua_BindFunc(MP, L, Scene, CreateMonster1, false);
+	xxLua_BindFunc(MP, L, Scene, CreateMonster2, false);
 	lua_pop(L, 1);
 
 	// LuaBind: Monster1
@@ -16,8 +20,30 @@ Scene::Scene()
 	//xxLua_BindField
 	lua_pop(L, 1);
 
+	// LuaBind: Monster2
+	xx::Lua_PushMetatable<MP, Monster2>(L);
+	//xxLua_BindFunc
+	//xxLua_BindField
+	lua_pop(L, 1);
+
+
 	// set global scene
 	xx::Lua_SetGlobal<MP>(L, "scene", this);
+
+	// 创建协程( 在协程中直接用 local self = scene 来访问 )
+	co = xx::Lua_RegisterCoroutine(L, this);
+
+	// 加载协程 lua 代码
+	luaL_loadstring(co, luacode);
+}
+
+xx::MPtr<Monster1> Scene::CreateMonster1(char const* luacode)
+{
+	return this->Create<Monster1>(this, luacode);
+}
+xx::MPtr<Monster2> Scene::CreateMonster2()
+{
+	return this->Create<Monster2>(this);
 }
 
 Scene::~Scene()
@@ -35,9 +61,22 @@ Scene::~Scene()
 	}
 }
 
-void Scene::Update()
+int Scene::Update()
 {
-	std::cout << ticks << std::endl;
+	if (co) if (auto rtv = xx::Lua_Resume(co, err)) return rtv;
+
+	for (auto i = (int)this->objs->dataLen - 1; i >= 0; --i)
+	{
+		auto& o = this->objs->At(i);
+		auto r = o->Update();
+		if (r)
+		{
+			// todo: r < 0 log ?
+			this->Release(o);
+		}
+	}
+
+	return 0;
 }
 
 int Scene::Run()
@@ -47,7 +86,7 @@ int Scene::Run()
 #endif
 	int64_t accumulatMS = 0;
 	xx::Stopwatch sw;
-	while (running)
+	while (true)
 	{
 		auto durationMS = sw();
 		if (durationMS > msPerFrame)
@@ -58,12 +97,12 @@ int Scene::Run()
 
 		accumulatMS += durationMS;
 		bool executed = false;
-		while (running && accumulatMS >= msPerFrame)
+		while (accumulatMS >= msPerFrame)
 		{
 			executed = true;
 			accumulatMS -= msPerFrame;
 
-			Update();
+			if (auto rtv = Update()) return rtv;
 			++ticks;
 		}
 		if (!executed)

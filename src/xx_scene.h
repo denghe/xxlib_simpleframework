@@ -1,13 +1,15 @@
 /*
 
-三大基类:
-SceneBase
-SceneObjBase
-FSMBase
+MP 定义中须含有下面这些类型
 
-MP 定义中须含有下面这两种类型
-
-typedef xx::MemPool<............. xx::List<FSMBase*>, xx::List<SceneObjBase*, true> ................> MP;
+typedef xx::MemPool<
+.............
+SceneBase,
+SceneObjBase,
+FSMBase,
+xx::List<FSMBase*>, 
+xx::List<SceneObjBase*, true> 
+................> MP;
 
 */
 
@@ -25,6 +27,7 @@ struct SceneObjBase;
 struct FSMBase : UpdateBase
 {
 	SceneObjBase* owner;
+	FSMBase(SceneObjBase* owner) : owner(owner) {}
 };
 
 // 场景的子的基类( 场景对象 ). 只能用 SceneBase 的函数来创建和杀掉. 不可以直接 Release
@@ -41,7 +44,7 @@ struct SceneObjBase : UpdateBase
 	FSMBase* currFSM = nullptr;
 	FSMBase* deadFSM = nullptr;		// 延迟杀掉
 
-	SceneObjBase();
+	SceneObjBase(SceneBase* sceneBase);
 	~SceneObjBase();
 
 	template<typename T, typename ...Args>

@@ -3,8 +3,9 @@
 #define MPTYPENAME MP
 #endif
 
-SceneObjBase::SceneObjBase()
+SceneObjBase::SceneObjBase(SceneBase* scene)
 {
+	this->sceneBase = scene;
 	mempool<MPTYPENAME>().CreateTo(fsmStack);
 }
 
