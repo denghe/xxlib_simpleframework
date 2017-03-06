@@ -54,8 +54,21 @@
     <ClInclude Include="..\..\src\xx_string.h">
       <Filter>xx</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\xx_timer.h">
+      <Filter>xx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\xx_scene.h">
+      <Filter>xx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\xx_scene.hpp">
+      <Filter>xx</Filter>
+    </ClInclude>
     <ClInclude Include="scene.h" />
     <ClInclude Include="scene.hpp" />
+    <ClInclude Include="fsmlua.h" />
+    <ClInclude Include="fsmlua.hpp" />
+    <ClInclude Include="monster.h" />
+    <ClInclude Include="monster.hpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="bak1.txt">

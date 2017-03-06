@@ -1,109 +1,79 @@
-#pragma once
-// 如果名字不对就改这里
-#ifndef MPTYPENAME
-#define MPTYPENAME MP
+#include "xx_scene.hpp"
+
+Scene::Scene()
+{
+	L = xx::Lua_NewState(mempool<MP>());
+
+	// LuaBind: Scene
+	xx::Lua_PushMetatable<MP, Scene>(L);
+	//xxLua_BindFunc
+	//xxLua_BindField
+	lua_pop(L, 1);
+
+	// LuaBind: Monster1
+	xx::Lua_PushMetatable<MP, Monster1>(L);
+	//xxLua_BindFunc
+	//xxLua_BindField
+	lua_pop(L, 1);
+
+	// set global scene
+	xx::Lua_SetGlobal<MP>(L, "scene", this);
+}
+
+Scene::~Scene()
+{
+	if (err)
+	{
+		err->Release();
+		err = nullptr;
+	}
+	// co 不需要理会
+	if (L)
+	{
+		lua_close(L);
+		L = nullptr;
+	}
+}
+
+void Scene::Update()
+{
+	std::cout << ticks << std::endl;
+}
+
+int Scene::Run()
+{
+#ifdef _WIN32
+	timeBeginPeriod(1);
 #endif
-
-inline SceneObjBase::SceneObjBase()
-{
-	mempool<MPTYPENAME>().CreateTo(fsmStack);
-}
-
-template<typename T, typename ...Args>
-T* SceneObjBase::CreateFSM(Args&&...args)
-{
-	static_assert(std::is_base_of<FSMBase, T>::value, "the T must be inherit of FSMBase.");
-	auto p = mempool<MPTYPENAME>().Create<T>(std::forward<Args>(args)...);
-	p->owner = this;
-	return p;
-}
-inline void SceneObjBase::SetFSM(FSMBase* fsm)
-{
-	assert(fsm);
-	assert(!deadFSM);
-	deadFSM = currFSM;
-	currFSM = fsm;
-}
-inline void SceneObjBase::PushFSM(FSMBase* fsm)
-{
-	fsmStack->Add(currFSM);
-	currFSM = fsm;
-}
-inline void SceneObjBase::PopFSM()
-{
-	assert(!deadFSM);
-	deadFSM = currFSM;
-	currFSM = fsmStack->Top();
-	fsmStack->Pop();
-}
-inline int SceneObjBase::Update()
-{
-	auto rtv = currFSM->Update();
-	assert(currFSM);				// 不允许自杀
-	if (deadFSM)
+	int64_t accumulatMS = 0;
+	xx::Stopwatch sw;
+	while (running)
 	{
-		deadFSM->Release();
-		deadFSM = nullptr;
-	}
-	return rtv;
-}
-inline SceneObjBase::~SceneObjBase()
-{
-	if (deadFSM)
-	{
-		deadFSM->Release();
-		deadFSM = nullptr;
-	}
-	if (currFSM)
-	{
-		currFSM->Release();
-		currFSM = nullptr;
-	}
-	while (fsmStack->dataLen)
-	{
-		fsmStack->Top()->Release();
-		fsmStack->Pop();
-	}
-	fsmStack->Release();
-}
+		auto durationMS = sw();
+		if (durationMS > msPerFrame)
+		{
+			// todo: 日志超长帧
+			durationMS = msPerFrame;
+		}
 
-inline SceneBase::SceneBase()
-{
-	mempool<MPTYPENAME>().CreateTo(objs);
-}
-inline SceneBase::~SceneBase()
-{
-	if (objs)
-	{
-		objs->Release();
-		objs = nullptr;
+		accumulatMS += durationMS;
+		bool executed = false;
+		while (running && accumulatMS >= msPerFrame)
+		{
+			executed = true;
+			accumulatMS -= msPerFrame;
+
+			Update();
+			++ticks;
+		}
+		if (!executed)
+		{
+			Sleep(1);     // 省点 cpu
+						  // todo: 日志清闲帧
+		}
 	}
-}
-
-template<typename T, typename...Args>
-xx::MPtr<T> SceneBase::Create(Args&&...args)
-{
-	auto p = mempool<MPTYPENAME>().Create<T>(std::forward<Args>(args)...);
-	p->sceneBase = this;
-	p->sceneObjsIndex = (uint32_t)objs->dataLen;
-	objs->AddDirect(p);
-	return p;
-}
-
-template<typename T, typename...Args>
-void SceneBase::CreateTo(xx::MPtr<T>& tar, Args&&...args)
-{
-	tar = Create<MPTYPENAME, T>(std::forward<Args>(args)...);
-}
-
-// 调目标析构并入池, 从 objs 移除. 使用交换移除法, 返回是否产生过交换行为
-inline bool SceneBase::Release(SceneObjBase* p)
-{
-	auto idx = p->sceneObjsIndex;
-	if (objs->SwapRemoveAt(idx))
-	{
-		objs->At(idx)->sceneObjsIndex = idx;
-		return true;
-	}
-	return false;
+#ifdef _WIN32
+	timeEndPeriod(1);
+#endif
+	return 0;
 }

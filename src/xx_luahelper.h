@@ -57,7 +57,7 @@ namespace xx
 	// Lua_GetMainThread
 	/************************************************************************************/
 
-	lua_State* Lua_GetMainThread(lua_State* L)
+	inline lua_State* Lua_GetMainThread(lua_State* L)
 	{
 		lua_rawgeti(L, LUA_REGISTRYINDEX, LUA_RIDX_MAINTHREAD);
 		auto rtv = lua_tothread(L, -1);
@@ -131,7 +131,7 @@ namespace xx
 	// Lua_Resume
 	/************************************************************************************/
 
-	inline int Lua_Resume(lua_State* co, std::string& err)
+	inline int Lua_Resume(lua_State* co, xx::String* err)
 	{
 		assert(co);
 		int status = lua_resume(co, nullptr, 0);
@@ -141,7 +141,7 @@ namespace xx
 		}
 		else if (status == LUA_ERRRUN && lua_isstring(co, -1))
 		{
-			err = lua_tostring(co, -1);
+			if (err) err->Assign(lua_tostring(co, -1));
 			lua_pop(co, -1);
 			return -1;
 		}
