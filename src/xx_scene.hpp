@@ -14,7 +14,6 @@ T* SceneObjBase::CreateFSM(Args&&...args)
 {
 	static_assert(std::is_base_of<FSMBase, T>::value, "the T must be inherit of FSMBase.");
 	auto p = mempool<MPTYPENAME>().Create<T>(std::forward<Args>(args)...);
-	p->owner = this;
 	return p;
 }
 void SceneObjBase::SetFSM(FSMBase* fsm)
@@ -84,7 +83,6 @@ template<typename T, typename...Args>
 xx::MPtr<T> SceneBase::Create(Args&&...args)
 {
 	auto p = mempool<MPTYPENAME>().Create<T>(std::forward<Args>(args)...);
-	p->sceneBase = this;
 	p->sceneObjsIndex = (uint32_t)objs->dataLen;
 	objs->AddDirect(p);
 	return p;

@@ -64,6 +64,7 @@ struct SceneBase : xx::MPObject
 	SceneBase();
 	~SceneBase();
 
+protected:
 	template<typename T, typename...Args>
 	xx::MPtr<T> Create(Args&&...args);
 
