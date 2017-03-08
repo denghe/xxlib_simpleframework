@@ -9,7 +9,7 @@ struct Scene : SceneBase
 	static const int64_t msPerFrame = 1000 / 20;
 	int64_t ticks = 0;
 
-	Scene(char const* luacode);
+	Scene();
 	~Scene();
 
 	int Update();				// call by Run
@@ -20,6 +20,7 @@ struct Scene : SceneBase
 	// lua
 	/****************************************************************/
 
+	void SetLuaCode(char const* luacode);
 	lua_State* L = nullptr;
 	lua_State* co = nullptr;		// SceneManager 自己的脚本( 执行优先于 objs 之 Updates )
 	xx::String* err = nullptr;

@@ -1,6 +1,17 @@
 #include "xx_scene.hpp"
 
-Scene::Scene(char const* luacode)
+void Scene::SetLuaCode(char const* luacode)
+{
+	assert(luacode);
+
+	// 创建协程( 在协程中直接用 local self = scene 来访问 )
+	co = xx::Lua_RegisterCoroutine(L, this);
+
+	// 加载协程 lua 代码
+	luaL_loadstring(co, luacode);
+}
+
+Scene::Scene()
 {
 	L = xx::Lua_NewState(mempool<MP>());
 	// err place here
@@ -26,15 +37,8 @@ Scene::Scene(char const* luacode)
 	//xxLua_BindField
 	lua_pop(L, 1);
 
-
 	// set global scene
 	xx::Lua_SetGlobal<MP>(L, "scene", this);
-
-	// 创建协程( 在协程中直接用 local self = scene 来访问 )
-	co = xx::Lua_RegisterCoroutine(L, this);
-
-	// 加载协程 lua 代码
-	luaL_loadstring(co, luacode);
 }
 
 xx::MPtr<Monster1> Scene::CreateMonster1(char const* luacode)
@@ -53,7 +57,7 @@ Scene::~Scene()
 		err->Release();
 		err = nullptr;
 	}
-	// co 不需要理会
+	co = nullptr;
 	if (L)
 	{
 		lua_close(L);

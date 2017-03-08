@@ -11,6 +11,7 @@
 #endif
 #include <cassert>
 #include <type_traits>
+#include <array>
 #include <functional>
 using namespace std::placeholders;
 

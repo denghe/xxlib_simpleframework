@@ -121,24 +121,27 @@ namespace xx
 			return buf[idx];
 		}
 
-		template<typename V>
-		void SetAt(uint32_t idx, std::enable_if_t< autoRelease, V>&& v)
-		{
-			v->AddRef();
-			if (buf[idx]) buf[idx]->Release();
-			buf[idx] = std::forward<V>(v);
-		}
-		template<typename V>
+		template<typename V = T>
 		void SetAt(uint32_t idx, std::enable_if_t<!autoRelease, V>&& v)
 		{
+			assert(idx < dataLen);
 			buf[idx] = std::forward<V>(v);
 		}
-
-		template<typename V>
-		void SetAtDirect(uint32_t idx, std::enable_if_t< autoRelease, V>&& v)
+		template<typename V = T>
+		void SetAt(uint32_t idx, std::enable_if_t< autoRelease, V> const& v)
 		{
+			assert(idx < dataLen);
+			v->AddRef();
 			if (buf[idx]) buf[idx]->Release();
-			buf[idx] = std::forward<V>(v);
+			buf[idx] = v;
+		}
+
+		template<typename V = T>
+		void SetAtDirect(uint32_t idx, std::enable_if_t< autoRelease, V> const& v)
+		{
+			assert(idx < dataLen);
+			if (buf[idx]) buf[idx]->Release();
+			buf[idx] = v;
 		}
 
 

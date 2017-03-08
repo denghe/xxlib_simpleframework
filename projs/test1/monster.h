@@ -1,5 +1,6 @@
 struct MonsterBase : SceneObjBase
 {
+	int x;
 	Scene* scene();
 	MonsterBase(SceneBase* scene);
 };

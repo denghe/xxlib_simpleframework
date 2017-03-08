@@ -69,6 +69,9 @@
     <ClInclude Include="fsmlua.hpp" />
     <ClInclude Include="monster.h" />
     <ClInclude Include="monster.hpp" />
+    <ClInclude Include="..\..\src\xx_cursorpool.h">
+      <Filter>xx</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="bak1.txt">
