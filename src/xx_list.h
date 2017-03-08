@@ -83,7 +83,7 @@ namespace xx
 			else // len > dataLen
 			{
 				Reserve(len);
-				if (!std::is_pod<T>::value)
+				if (!std::is_pod<T>::value || autoRelease)
 				{
 					for (uint32_t i = dataLen; i < len; ++i)
 					{
@@ -101,21 +101,46 @@ namespace xx
 			assert(idx < dataLen);
 			return buf[idx];
 		}
-		T& operator[](uint32_t idx)
+
+		template<typename U = T>
+		std::enable_if_t<!autoRelease, U>& operator[](uint32_t idx)
 		{
 			assert(idx < dataLen);
 			return buf[idx];
 		}
+
 		T const& At(uint32_t idx) const
 		{
 			assert(idx < dataLen);
 			return buf[idx];
 		}
-		T& At(uint32_t idx)
+		template<typename U = T>
+		std::enable_if_t<!autoRelease, U>& At(uint32_t idx)
 		{
 			assert(idx < dataLen);
 			return buf[idx];
 		}
+
+		template<typename V>
+		void SetAt(uint32_t idx, std::enable_if_t< autoRelease, V>&& v)
+		{
+			v->AddRef();
+			if (buf[idx]) buf[idx]->Release();
+			buf[idx] = std::forward<V>(v);
+		}
+		template<typename V>
+		void SetAt(uint32_t idx, std::enable_if_t<!autoRelease, V>&& v)
+		{
+			buf[idx] = std::forward<V>(v);
+		}
+
+		template<typename V>
+		void SetAtDirect(uint32_t idx, std::enable_if_t< autoRelease, V>&& v)
+		{
+			if (buf[idx]) buf[idx]->Release();
+			buf[idx] = std::forward<V>(v);
+		}
+
 
 		uint32_t Count() const
 		{

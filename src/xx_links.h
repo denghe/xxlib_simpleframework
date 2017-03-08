@@ -252,16 +252,21 @@ namespace xx
 			return count == 0;
 		}
 
-		T& At(int index)
-		{
-			assert(index >= 0 && index < count && nodes[index].prev != -2);
-			return nodes[index].value;
-		}
-		Node& NodeAt(int index)
-		{
-			assert(index >= 0 && index < count && nodes[index].prev != -2);
-			return nodes[index];
-		}
+		// ¾Í¸ÃÖ»¶Á? 
+		//template<typename U = T>
+		//std::enable_if_t<!autoRelease, U>& At(int index)
+		//{
+		//	assert(index >= 0 && index < count && nodes[index].prev != -2);
+		//	return nodes[index].value;
+		//}
+		//template<typename U = Node>
+		//std::enable_if_t<!autoRelease, U>& NodeAt(int index)
+		//{
+		//	assert(index >= 0 && index < count && nodes[index].prev != -2);
+		//	return nodes[index];
+		//}
+
+		// todo: SetAt?
 
 		T const& At(int index) const
 		{

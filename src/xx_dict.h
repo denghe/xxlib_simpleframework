@@ -338,24 +338,24 @@ namespace xx
 			return operator[](std::forward<K>(key));
 		}
 
-		TK& KeyAt(int idx)
-		{
-			assert(buckets);
-			assert(idx >= 0 && idx < count && items[idx].prev != -2);
-			return items[idx].key;
-		}
+		//TK& KeyAt(int idx)
+		//{
+		//	assert(buckets);
+		//	assert(idx >= 0 && idx < count && items[idx].prev != -2);
+		//	return items[idx].key;
+		//}
 		TV& ValueAt(int idx)
 		{
 			assert(buckets);
 			assert(idx >= 0 && idx < count && items[idx].prev != -2);
 			return items[idx].value;
 		}
-		Data& DataAt(int idx)
-		{
-			assert(buckets);
-			assert(idx >= 0 && idx < count && items[idx].prev != -2);
-			return items[idx];
-		}
+		//Data& DataAt(int idx)
+		//{
+		//	assert(buckets);
+		//	assert(idx >= 0 && idx < count && items[idx].prev != -2);
+		//	return items[idx];
+		//}
 
 		TK const& KeyAt(int idx) const
 		{

@@ -3,7 +3,6 @@
 #pragma warning(disable:4819)
 
 #include <cstdint>
-#include <functional>
 #include <chrono>
 #ifdef _WIN32
 #include <intrin.h>     // _BitScanReverse  64
@@ -12,6 +11,8 @@
 #endif
 #include <cassert>
 #include <type_traits>
+#include <functional>
+using namespace std::placeholders;
 
 /*
 XX_IA
