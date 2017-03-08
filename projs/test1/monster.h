@@ -1,8 +1,9 @@
 struct MonsterBase : SceneObjBase
 {
-	int x;
+	int x = 0;
 	Scene* scene();
 	MonsterBase(SceneBase* scene);
+	~MonsterBase();
 };
 struct Monster1 : MonsterBase
 {

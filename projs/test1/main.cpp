@@ -20,7 +20,7 @@ typedef xx::MemPool<
 	SceneBase,
 	SceneObjBase,
 	xx::List<FSMBase*>,
-	xx::List<SceneObjBase*, true>,
+	xx::List<MonsterBase*>,
 	xx::String
 > MP;
 
@@ -49,6 +49,8 @@ int main()
 	auto scene = mp.Create<Scene>();
 	auto rtv = luaL_dostring(scene->L, R"##(
 
+print( "ticks = "..scene:ticks() )
+
 yield = coroutine.yield
 
 function Sleep( ticks, cond )
@@ -64,20 +66,29 @@ end
 	if (rtv)
 	{
 		std::cout << "err code = " << rtv << ", err msg = " << scene->err->C_str() << std::endl;
+		system("pause");
 	}
 
 	scene->SetLuaCode(R"##(
 local self = scene
-	local i = 0
-	local m = self:CreateMonster1([[
-
-	Sleep( 5, 
-
+local i = 0
+local m = self:CreateMonster1([[
+	print( "m begin" )
+	print( "self=", self )
+	--local x = self:x()
+	--print( "x="..x )
+--	Sleep( 5, function() 
+--		return self:x() - x > 3;	-- x 有较大变化则 sleep 终止
+--	end )
+	print( "m end" )
 ]])
-	while true do
-		yield()
+print( 1 )
+while true do
+	if m:Ensure() then
+		print( 2 )
+		-- m:x( m:x() + 1 )
 	end
-	self:Release( m )
+	yield()
 end
 	)##");
 
@@ -85,6 +96,7 @@ end
 	if (rtv)
 	{
 		std::cout << "err code = " << rtv << ", err msg = " << scene->err->C_str() << std::endl;
+		system("pause");
 	}
 	mp.Release(scene);
 	return rtv;

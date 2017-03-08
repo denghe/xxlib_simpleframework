@@ -23,14 +23,14 @@ struct UpdateBase : xx::MPObject
 struct SceneBase;
 struct SceneObjBase;
 
-// 状态机基类. 只能用 SceneObjBase 的函数来创建和杀掉. 不可以直接 Release
+// 状态机基类. 只能用 SceneObjBase 的函数来创建. 不可以直接 Release. 自杀是用 PopFSM 或 Update 返回非 0
 struct FSMBase : UpdateBase
 {
 	SceneObjBase* owner;
 	FSMBase(SceneObjBase* owner) : owner(owner) {}
 };
 
-// 场景的子的基类( 场景对象 ). 只能用 SceneBase 的函数来创建和杀掉. 不可以直接 Release
+// 场景的子的基类( 场景对象 ). 只能用 SceneBase 的函数来创建.
 struct SceneObjBase : UpdateBase
 {
 	// 指向场景容器
@@ -58,19 +58,4 @@ struct SceneObjBase : UpdateBase
 // 场景基类( 整合了内存池, 对象容器, LUA State )
 struct SceneBase : xx::MPObject
 {
-	// 所有 SceneObjBase* 的唯一持有容器. 只能用 SceneBase 的 Create, Release 来操作
-	xx::List<SceneObjBase*, true>* objs;
-
-	SceneBase();
-	~SceneBase();
-
-protected:
-	template<typename T, typename...Args>
-	xx::MPtr<T> Create(Args&&...args);
-
-	template<typename T, typename...Args>
-	void CreateTo(xx::MPtr<T>& tar, Args&&...args);
-
-	// 调目标析构并入池, 从 objs 移除. 使用交换移除法, 返回是否产生过交换行为
-	bool Release(SceneObjBase* p);
 };

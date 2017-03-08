@@ -179,12 +179,15 @@ namespace xx
 		void Clear(bool freeBuf = false)
 		{
 			if (!buf) return;
-			for (uint32_t i = 0; i < dataLen; ++i)
+			if (dataLen)
 			{
-				ItemRelease(buf[i]);
-				buf[i].~T();
+				for (uint32_t i = dataLen - 1; i != (uint32_t)-1; --i)
+				{
+					ItemRelease(buf[i]);
+					buf[i].~T();
+				}
+				dataLen = 0;
 			}
-			dataLen = 0;
 			if (freeBuf)
 			{
 				mempoolbase().Free(buf - reservedHeaderLen);
@@ -227,28 +230,28 @@ namespace xx
 			}
 		}
 
-		// 交换移除法, 返回是否产生过交换行为
-		bool SwapRemoveAt(uint32_t idx)
-		{
-			assert(idx < dataLen);
+		//// 交换移除法, 返回是否产生过交换行为
+		//bool SwapRemoveAt(uint32_t idx)
+		//{
+		//	assert(idx < dataLen);
 
-			auto& o = buf[idx];
-			ItemRelease(o);
-			o.~T();
+		//	auto& o = buf[idx];
+		//	ItemRelease(o);
+		//	o.~T();
 
-			--dataLen;
-			if (dataLen == idx) return false;	// last one
-			else if (std::is_trivial<T>::value || MemmoveSupport<T>::value)
-			{
-				o = buf[dataLen];
-			}
-			else
-			{
-				new (&o) T((T&&)buf[dataLen]);
-				buf[dataLen].~T();
-			}
-			return true;
-		}
+		//	--dataLen;
+		//	if (dataLen == idx) return false;	// last one
+		//	else if (std::is_trivial<T>::value || MemmoveSupport<T>::value)
+		//	{
+		//		o = buf[dataLen];
+		//	}
+		//	else
+		//	{
+		//		new (&o) T((T&&)buf[dataLen]);
+		//		buf[dataLen].~T();
+		//	}
+		//	return true;
+		//}
 
 	protected:
 		// 不越界检查 不加持

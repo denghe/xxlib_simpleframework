@@ -1,0 +1,250 @@
+#include <iostream>
+#include "xx_mempool.h"
+#include "xx_list.h"
+
+struct Cell;
+struct Item : xx::MPObject
+{
+	Cell* cell = nullptr;
+	Item* prev;
+	Item* next;
+	int x = 0;
+	int y = 0;
+	int mapId = 0;
+
+	~Item();
+};
+
+struct Grid;
+struct Cell : xx::MPObject
+{
+	Grid* grid = nullptr;
+	Item* header = nullptr;
+
+	int row;		// 当前行
+	int column;		// 当前列
+
+	void Remove(Item* item);
+	void Add(Item* item);
+};
+
+struct GridManager;
+struct Grid : xx::MPObject
+{
+	GridManager* gm = nullptr;
+	int mapId;
+	xx::List<Cell*, true>* cells;
+	int cellWidth = 50;
+	int cellHeight = 50;
+	int width = 500;	// 总宽
+	int height = 500;	// 总高
+	int	rows;			// 总行数
+	int columns;		// 总列数
+
+	Grid(int mapId);
+	~Grid();
+	Cell* GetCell(int x, int y);
+};
+
+struct  GridManager : xx::MPObject
+{
+	xx::List<Grid*, true>* grids;
+	GridManager();
+	~GridManager();
+	 
+	Cell* GetCell( int mapId, int x, int y);
+
+	void Register(Item* item);
+	void Unregister(Item* item);
+	void Update(Item* item);
+	void AddGrid(int mapId);
+};
+
+
+typedef xx::MemPool<
+	Cell,
+	Grid,
+	Item,
+	GridManager,
+	xx::List<Grid*, true>,
+	xx::List<Cell*, true>
+> MP;
+
+Grid::Grid(int mapId) : mapId(mapId)
+{
+	mempool<MP>().CreateTo(cells);
+
+	//
+	rows = height / cellHeight;
+	columns = width / cellWidth;
+	for (int i = 0; i < rows; i++)
+	{
+		for (int j = 0; j < columns; j++)
+		{
+			auto c = mempool<MP>().Create<Cell>();
+			c->row = i;
+			c->column = j;
+			c->grid = this;
+
+			cells->AddDirect(c);
+		}
+	}
+}
+
+Grid::~Grid()
+{
+	cells->Release();
+}
+
+GridManager::GridManager()
+{
+	mempool<MP>().CreateTo(grids);
+}
+
+GridManager::~GridManager()
+{
+	if (grids) { grids->Release(); grids = nullptr; }
+}
+
+Cell* GridManager::GetCell(int mapId, int x, int y)
+{
+	if (mapId > (int)grids->dataLen )
+	{
+		return nullptr;
+	}
+
+	return grids->At(mapId - 1)->GetCell(x, y);
+}
+
+Cell* Grid::GetCell(int x, int y)
+{
+	auto row = y / cellHeight;
+	auto col = x / cellWidth;
+
+	if ( row < 0 )
+	{
+		row = 0;
+	}
+	else if (row >= rows)
+	{
+		row = rows - 1;
+	}
+
+	if (col < 0)
+	{
+		col = 0;
+	}
+	else if (col >= columns)
+	{
+		col = columns - 1;
+	}
+
+	auto index = row * rows + col;
+
+	return cells->At(index);
+}
+
+void GridManager::Register(Item* item)
+{
+	assert(!item->cell);
+
+	auto cell = GetCell(item->mapId, item->x, item->y);
+	assert(cell);
+
+	cell->Add(item);
+
+	std::cout << "cell row = " << cell->row << ", column = " << cell->column << std::endl;
+}
+
+void GridManager::Unregister(Item* item)
+{
+	assert(item->cell);
+
+	item->cell->Remove(item);
+}
+
+void GridManager::Update(Item* item)
+{
+	assert(item->cell);
+
+	auto cell = GetCell(item->mapId, item->x, item->y);
+	if (cell != item->cell)
+	{
+		item->cell->Remove(item);
+		cell->Add(item);
+
+		std::cout << " cell row = " << cell->row << ", cell column = " << cell->column << std::endl;
+	}
+}
+
+void GridManager :: AddGrid(int mapId)
+{
+	auto grid = mempool<MP>().Create<Grid>(mapId);
+	grids->Add(grid);
+	grid->Release();
+}
+
+Item::~Item()
+{
+	if (cell)
+		cell->Remove(this);
+}
+
+void Cell::Remove(Item* t)
+{
+	assert(t->cell == this);
+
+	if (t->next) t->next->prev = t->prev;
+	if (t->prev) t->prev->next = t->next;
+	else header = t->next;
+	t->cell = nullptr;
+}
+
+void Cell::Add(Item* t)
+{
+	assert(!t->cell);
+	// 填充管理器 & 链表信息
+	t->cell = this;
+
+	t->prev = nullptr;
+
+	if (header)				// 有就链起来
+	{
+		t->next = header;
+		header->prev = t;
+	}
+	else
+	{
+		t->next = nullptr;
+	}
+	header = t;				// 成为链表头
+}
+
+
+int main()
+{
+	MP mp;
+	auto gm = mp.Create<GridManager>();
+	gm->AddGrid(1);
+
+	auto item = mp.Create<Item>();
+	item->mapId = 1;
+	item->x = 130;
+	item->y = 130;
+
+	gm->Register(item);
+
+	/*for (int i = 130; i < 500; i = i + 30)
+	{
+		for (int j = 130; j < 500; j = j + 30)
+		{
+			item->x = i;
+			item->y = j;
+
+			gm->Update(item);
+		}
+	}*/
+
+	system("pause");
+	return 0;
+}

@@ -21,6 +21,8 @@ FSMLua::FSMLua(T* owner, char const* luacode) : FSMBase(owner)
 
 	// 加载协程 lua 代码
 	luaL_loadstring(co, err->C_str());
+
+	err->Clear();
 }
 
 int FSMLua::Update()

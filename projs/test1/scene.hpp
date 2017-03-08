@@ -13,6 +13,9 @@ void Scene::SetLuaCode(char const* luacode)
 
 Scene::Scene()
 {
+	mempool<MPTYPENAME>().CreateTo(monsters);
+	// more...
+
 	L = xx::Lua_NewState(mempool<MP>());
 	// err place here
 	mempool<MP>().CreateTo(err);
@@ -20,15 +23,15 @@ Scene::Scene()
 	// LuaBind: Scene
 	xx::Lua_PushMetatable<MP, Scene>(L);
 	xxLua_BindField(MP, L, Scene, ticks, false);
-	xxLua_BindFunc(MP, L, SceneBase, Release, false);
 	xxLua_BindFunc(MP, L, Scene, CreateMonster1, false);
 	xxLua_BindFunc(MP, L, Scene, CreateMonster2, false);
 	lua_pop(L, 1);
 
 	// LuaBind: Monster1
 	xx::Lua_PushMetatable<MP, Monster1>(L);
+	xx::Lua_BindFunc_Ensure<MP, Monster1>(L);
 	//xxLua_BindFunc
-	//xxLua_BindField
+	xxLua_BindField(MP, L, MonsterBase, x, true);
 	lua_pop(L, 1);
 
 	// LuaBind: Monster2
@@ -43,15 +46,32 @@ Scene::Scene()
 
 xx::MPtr<Monster1> Scene::CreateMonster1(char const* luacode)
 {
-	return this->Create<Monster1>(this, luacode);
+	auto p = mempool<MPTYPENAME>().Create<Monster1>(this, luacode);
+	p->sceneObjsIndex = (uint32_t)monsters->dataLen;
+	monsters->AddDirect(p);
+	return p;
 }
 xx::MPtr<Monster2> Scene::CreateMonster2()
 {
-	return this->Create<Monster2>(this);
+	auto p = mempool<MPTYPENAME>().Create<Monster2>(this);
+	p->sceneObjsIndex = (uint32_t)monsters->dataLen;
+	monsters->AddDirect(p);
+	return p;
 }
 
 Scene::~Scene()
 {
+	if (monsters)
+	{
+		while (monsters->dataLen)
+		{
+			monsters->Top()->Release();
+		}
+		monsters->Release();
+		monsters = nullptr;
+	}
+	// more....
+
 	if (err)
 	{
 		err->Release();
@@ -65,20 +85,23 @@ Scene::~Scene()
 	}
 }
 
+
+
 int Scene::Update()
 {
 	if (co) if (auto rtv = xx::Lua_Resume(co, err)) return rtv;
 
-	for (auto i = (int)this->objs->dataLen - 1; i >= 0; --i)
+	for (auto i = (int)this->monsters->dataLen - 1; i >= 0; --i)
 	{
-		auto& o = this->objs->At(i);
+		auto& o = this->monsters->At(i);
 		auto r = o->Update();
 		if (r)
 		{
 			// todo: r < 0 log ?
-			this->Release(o);
+			o->Release();
 		}
 	}
+	// more for ....
 
 	return 0;
 }
