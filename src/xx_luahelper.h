@@ -11,6 +11,9 @@
 
 namespace xx
 {
+	// todo: Lua_BindFunc 之非类成员函数版. 考虑为 Lua_SetGlobal 增加函数指针重载
+
+
 	// 可放入 LUA 的数据类型有: float, double, int64, 各式 string, 以及 T, T*
 	// 其中 T 又分为 一般结构体 以及 MPtr<T> ( T 为 MPObject 派生类 )
 	// T* 分为一般指针 或 MPObject* 派生类指针
@@ -632,6 +635,22 @@ namespace xx
 			return 1;
 		}, 0);
 		lua_rawset(L, -3);
+	}
+
+
+
+	/************************************************************************************/
+	// Lua_SetGlobalFunc_Log
+	/************************************************************************************/
+
+	void Lua_SetGlobalFunc_Log(lua_State* L)
+	{
+		lua_pushcclosure(L, [](lua_State* L)
+		{
+			// todo: 遍历并获取所有入参, 记录到某处. 当前主用于打断点
+			return 0;
+		}, 0);
+		lua_setglobal(L, "Log");
 	}
 
 }

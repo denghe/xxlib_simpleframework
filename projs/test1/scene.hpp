@@ -43,6 +43,17 @@ Scene::Scene()
 
 	// set global scene
 	xx::Lua_SetGlobal<MP>(L, "scene", this);
+
+	// set global funcs
+	xx::Lua_SetGlobalFunc_Log(L);
+
+	// versionNumber()
+	lua_pushcclosure(L, [](lua_State* L) 
+	{
+		lua_pushinteger(L, xx::Lua_GetMemPool<MP>(L).versionNumber);
+		return 1;
+	}, 0);
+	lua_setglobal(L, "versionNumber");
 }
 
 xx::MPtr<Monster1> Scene::CreateMonster1(char const* luacode)

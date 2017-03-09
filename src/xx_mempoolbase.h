@@ -8,6 +8,8 @@
 
 namespace xx
 {
+	// todo: 做个内存总用量 counter. 每次拿/还内存时同步
+
 	// 内存池基类. 提供类型无关的内存分配 / 回收功能
 	struct MemPoolBase
 	{
@@ -141,6 +143,16 @@ namespace xx
 			outPtr = CreateMPtrWithoutTypeId<T>(std::forward<Args>(args)...);
 		}
 
+		//// 计算有多少内存在池
+		//uint64_t FreeMem()
+		//{
+		//	uint64_t count = 0;
+		//	for (size_t i = 0; i < stacks.size(); ++i)
+		//	{
+		//		count += stacks[i].dataLen * (2 << i);
+		//	}
+		//	return count;
+		//}
 	};
 
 

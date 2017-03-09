@@ -29,6 +29,8 @@ typedef xx::MemPool<
 #include "fsmlua.hpp"
 #include "monster.hpp"
 
+#include "ajson.hpp"
+#include <vector>
 int main()
 {
 	MP mp;

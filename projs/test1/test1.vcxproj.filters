@@ -75,6 +75,9 @@
     <ClInclude Include="..\..\src\xx_cursorpool.h">
       <Filter>xx</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\ajson.hpp">
+      <Filter>xx</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="bak1.txt">
