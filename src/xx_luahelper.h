@@ -643,7 +643,7 @@ namespace xx
 	// Lua_SetGlobalFunc_Log
 	/************************************************************************************/
 
-	void Lua_SetGlobalFunc_Log(lua_State* L)
+	inline void Lua_SetGlobalFunc_Log(lua_State* L)
 	{
 		lua_pushcclosure(L, [](lua_State* L)
 		{
