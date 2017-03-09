@@ -29,15 +29,15 @@ Scene::Scene()
 
 	// LuaBind: Monster1
 	xx::Lua_PushMetatable<MP, Monster1>(L);
-	xx::Lua_BindFunc_Ensure<MP, Monster1>(L);
+	xx::Lua_BindFunc_Ensure<MP, MPObject>(L);
 	//xxLua_BindFunc
 	xxLua_BindField(MP, L, MonsterBase, x, true);
 	lua_pop(L, 1);
 
 	// LuaBind: Monster2
 	xx::Lua_PushMetatable<MP, Monster2>(L);
+	xx::Lua_BindFunc_Ensure<MP, MPObject>(L);
 	//xxLua_BindFunc
-	//xxLua_BindField
 	xxLua_BindField(MP, L, MonsterBase, x, true);
 	lua_pop(L, 1);
 

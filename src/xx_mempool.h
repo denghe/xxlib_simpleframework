@@ -131,7 +131,9 @@ namespace xx
 		{
 			uint16_t pid = 0;
 			std::initializer_list<int>{ ((
-				!pid && std::is_base_of<std::tuple_element_t<Indexs, Tuple>, T>::value && !std::is_same<std::tuple_element_t<Indexs, Tuple>, T>::value
+				!std::is_same_v<std::tuple_element_t<Indexs, Tuple>, T>
+				&& !pid 
+				&& std::is_base_of_v<std::tuple_element_t<Indexs, Tuple>, T>
 				? (pid = Indexs) : 0
 				), 0)... };
 			pids[TupleIndexOf<T, Tuple>::value] = pid;

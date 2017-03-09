@@ -82,6 +82,9 @@ namespace xx
 	{
 		static const bool value = true;
 	};
+	template<typename T>
+	constexpr bool IsMPtr_v = IsMPtr<T>::value;
+
 
 	template<typename T>
 	struct MemmoveSupport<MPtr<T>>

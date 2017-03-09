@@ -11,6 +11,8 @@
 
 namespace xx
 {
+	// todo: 拿备份的文件来逐个应用
+
 	// todo: 直接将欲与 coroutine 做交互的对象放到 _G[ versionNumber ]. 不使用 pure 版, 避开元表的占用空间.
 
 	// todo: 遇到 MPObject push 时似乎需要直接根据指针头的类型编号来填充类型编号
@@ -348,7 +350,14 @@ namespace xx
 			auto ud = (Lua_UD<T>*)lua_newuserdata(L, sizeof(Lua_UD<T>));	// ud
 			Lua_PushMetatable<MP, TT>(L);									// ud, mt
 			lua_setmetatable(L, -2);										// ud
-			ud->typeIndex = TupleIndexOf<TT, typename MP::Tuple>::value;
+			if (std::is_base_of_v<MPObject, TT> && v)
+			{
+				ud->typeIndex = (decltype(ud->typeIndex))((MPObject*)v)->typeId();
+			}
+			else
+			{
+				ud->typeIndex = TupleIndexOf_v<TT, typename MP::Tuple>;
+			}
 			ud->udType = Lua_UDTypes::Pointer;
 			ud->isMPObject = IsMPObject<TT>::value;
 			new (&ud->data) T(v);
@@ -445,7 +454,14 @@ namespace xx
 			auto ud = (Lua_UD<T>*)lua_newuserdata(L, sizeof(Lua_UD<T>));	// ud
 			Lua_PushMetatable<MP, TT>(L);									// ud, mt
 			lua_setmetatable(L, -2);										// ud
-			ud->typeIndex = TupleIndexOf<TT, typename MP::Tuple>::value;
+			if (std::is_base_of_v<MPObject, TT> && v)
+			{
+				ud->typeIndex = (decltype(ud->typeIndex))((MPObject*)v.pointer)->typeId();
+			}
+			else
+			{
+				ud->typeIndex = TupleIndexOf_v<TT, typename MP::Tuple>;
+			}
 			ud->udType = Lua_UDTypes::MPtr;
 			ud->isMPObject = true;
 			new (&ud->data) T(v);

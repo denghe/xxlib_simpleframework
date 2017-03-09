@@ -9,7 +9,7 @@ namespace xx
 	template<typename T, bool autoRelease = false, uint32_t reservedHeaderLen = 0>
 	struct List : public MPObject
 	{
-		static_assert(!autoRelease || (std::is_pointer<T>::value && IsMPObject<T>::value), "autoRelease == true cond is T* where T : MPObject");
+		static_assert(!autoRelease || (std::is_pointer_v<T> && IsMPObject_v<T>), "autoRelease == true cond is T* where T : MPObject");
 
 		typedef T ChildType;
 		T*			buf;
@@ -50,7 +50,7 @@ namespace xx
 			auto newBufByteLen = Round2n(reservedHeaderLen + capacity * sizeof(T) + sizeof(MemHeader_VersionNumber)) - sizeof(MemHeader_VersionNumber);
 			auto newBuf = (T*)mempoolbase().Alloc((uint32_t)newBufByteLen) + reservedHeaderLen;
 
-			if (std::is_trivial<T>::value || MemmoveSupport<T>::value)
+			if (std::is_trivial_v<T> || MemmoveSupport_v<T>)
 			{
 				memcpy(newBuf, buf, dataLen * sizeof(T));
 			}
@@ -73,7 +73,7 @@ namespace xx
 		uint32_t Resize(uint32_t len)
 		{
 			if (len == dataLen) return dataLen;
-			else if (len < dataLen && !std::is_trivial<T>::value)
+			else if (len < dataLen && !std::is_trivial_v<T>)
 			{
 				for (uint32_t i = len; i < dataLen; ++i)
 				{
@@ -83,7 +83,7 @@ namespace xx
 			else // len > dataLen
 			{
 				Reserve(len);
-				if (!std::is_pod<T>::value || autoRelease)
+				if (!std::is_pod_v<T> || autoRelease)
 				{
 					for (uint32_t i = dataLen; i < len; ++i)
 					{
@@ -201,7 +201,7 @@ namespace xx
 		{
 			assert(idx < dataLen);
 			--dataLen;
-			if (std::is_trivial<T>::value || MemmoveSupport<T>::value)
+			if (std::is_trivial_v<T> || MemmoveSupport_v<T>)
 			{
 				ItemRelease(buf[idx]);
 				buf[idx].~T();
@@ -241,7 +241,7 @@ namespace xx
 
 		//	--dataLen;
 		//	if (dataLen == idx) return false;	// last one
-		//	else if (std::is_trivial<T>::value || MemmoveSupport<T>::value)
+		//	else if (std::is_trivial_v<T> || MemmoveSupport_v<T>)
 		//	{
 		//		o = buf[dataLen];
 		//	}
@@ -361,7 +361,7 @@ namespace xx
 			Reserve(dataLen + 1);
 			if (idx < dataLen)
 			{
-				if (std::is_trivial<T>::value || MemmoveSupport<T>::value)
+				if (std::is_trivial_v<T> || MemmoveSupport_v<T>)
 				{
 					memmove(buf + idx + 1, buf + idx, (dataLen - idx) * sizeof(T));
 				}
@@ -384,7 +384,7 @@ namespace xx
 		void AddRange(T const* items, uint32_t count)
 		{
 			Reserve(dataLen + count);
-			if (std::is_trivial<T>::value || MemmoveSupport<T>::value)
+			if (std::is_trivial_v<T> || MemmoveSupport_v<T>)
 			{
 				memcpy(buf, items, count * sizeof(T));
 			}

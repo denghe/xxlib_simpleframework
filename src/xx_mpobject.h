@@ -75,6 +75,8 @@ namespace xx
 	{
 		static const bool value = true;
 	};
+	template<typename T>
+	constexpr bool IsMPObject_v = IsMPObject<T>::value;
 
 
 	// 扫类型列表中是否含有 MPObject* 或 MPtr<MPObject> 类型

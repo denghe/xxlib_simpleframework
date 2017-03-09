@@ -18,8 +18,8 @@ namespace xx
 	template <typename TK, typename TV, bool autoReleaseKey = false, bool autoReleaseValue = false>
 	struct Dict : public MPObject
 	{
-		static_assert(!autoReleaseKey || (std::is_pointer<TK>::value && IsMPObject<TK>::value), "autoReleaseKey == true cond is TK* where TK : MPObject");
-		static_assert(!autoReleaseValue || (std::is_pointer<TV>::value && IsMPObject<TV>::value), "autoReleaseValue == true cond is TV* where TV : MPObject");
+		static_assert(!autoReleaseKey || (std::is_pointer_v<TK> && IsMPObject_v<TK>), "autoReleaseKey == true cond is TK* where TK : MPObject");
+		static_assert(!autoReleaseValue || (std::is_pointer_v<TV> && IsMPObject_v<TV>), "autoReleaseValue == true cond is TV* where TV : MPObject");
 		typedef TK KeyType;
 		typedef TV ValueType;
 
@@ -162,8 +162,8 @@ namespace xx
 			nodes = (Node*)mempoolbase().Realloc(nodes, bucketsLen * sizeof(Node));
 
 			// item 数组扩容
-			if ((std::is_trivial<TK>::value || MemmoveSupport<TK>::value)
-				&& (std::is_trivial<TV>::value || MemmoveSupport<TV>::value))
+			if ((std::is_trivial_v<TK> || MemmoveSupport_v<TK>)
+				&& (std::is_trivial_v<TV> || MemmoveSupport_v<TV>))
 			{
 				items = (Data*)mempoolbase().Realloc(items, bucketsLen * sizeof(Data));
 			}

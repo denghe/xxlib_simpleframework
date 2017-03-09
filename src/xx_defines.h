@@ -233,26 +233,20 @@ template<typename T> struct HasTypedef_##typedefName<T, typename xx::Typedef_Voi
 	/***********************************************************************************/
 
 	template<typename T, typename... Args>
-	class MaxSizeof
+	struct MaxSizeof
 	{
-	public:
-		enum
-		{
-			value = sizeof(T) > MaxSizeof<Args...>::value
+		static const size_t value = sizeof(T) > MaxSizeof<Args...>::value
 			? sizeof(T)
-			: MaxSizeof<Args...>::value
-		};
+			: MaxSizeof<Args...>::value;
 	};
 	template<typename T>
-	class MaxSizeof < T >
+	struct MaxSizeof<T>
 	{
-	public:
-		enum
-		{
-			value = sizeof(T)
-		};
+		static const size_t value = sizeof(T);
 	};
 
+	template<typename T, typename... Args>
+	constexpr size_t MaxSizeof_v = MaxSizeof<T, Args...>::value;
 
 	/***********************************************************************************/
 	// HasParms
@@ -285,6 +279,8 @@ template<typename T> struct HasTypedef_##typedefName<T, typename xx::Typedef_Voi
 	{
 		static const bool value = false;
 	};
+	template<typename T>
+	constexpr bool MemmoveSupport_v = MemmoveSupport<T>::value;
 
 
 	/***********************************************************************************/
@@ -473,4 +469,6 @@ template<typename T> struct HasTypedef_##typedefName<T, typename xx::Typedef_Voi
 		static const int value = 1 + TupleIndexOf<T, std::tuple<Types...>>::value;
 	};
 
+	template<typename T, typename Tuple>
+	constexpr int TupleIndexOf_v = TupleIndexOf<T, Tuple>::value;
 }
