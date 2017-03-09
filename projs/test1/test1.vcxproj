@@ -207,6 +207,11 @@
   <ItemGroup>
     <Natvis Include="..\..\src\xx.natvis" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="init.lua" />
+    <None Include="monster1.lua" />
+    <None Include="scene.lua" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

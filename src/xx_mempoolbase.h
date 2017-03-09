@@ -102,6 +102,7 @@ namespace xx
 			p->mempoolbase = this;
 			p->refCount = 1;
 			p->typeId = -1;// (decltype(p->typeId))TupleIndexOf<T, Tuple>::value;
+			c
 			return new (p + 1) T(std::forward<Args>(args)...);
 		}
 

@@ -24,7 +24,7 @@ struct Scene : SceneBase
 	// lua
 	/****************************************************************/
 
-	void SetLuaCode(char const* luacode);
+	void LoadLuaFile(char const* fn);
 	lua_State* L = nullptr;
 	lua_State* co = nullptr;		// SceneManager 自己的脚本( 执行优先于 objs 之 Updates )
 	xx::String* err = nullptr;

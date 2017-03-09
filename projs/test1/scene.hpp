@@ -1,14 +1,14 @@
 #include "xx_scene.hpp"
 
-void Scene::SetLuaCode(char const* luacode)
+void Scene::LoadLuaFile(char const* fn)
 {
-	assert(luacode);
+	assert(fn);
 
 	// 创建协程( 在协程中直接用 local self = scene 来访问 )
 	co = xx::Lua_RegisterCoroutine(L, this);
 
 	// 加载协程 lua 代码
-	luaL_loadstring(co, luacode);
+	luaL_loadfile(co, fn);
 }
 
 Scene::Scene()

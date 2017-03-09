@@ -20,7 +20,7 @@ namespace xx
 
 
 	// 整套库的核心内存分配组件. 按 2^N 尺寸划分内存分配行为, 将 free 的指针放入 stack 缓存复用
-	// 对于分配出来的内存, 自增 版本号 将填充在 指针 -8 区. 用于判断指针是否已失效
+	// 对于分配出来的内存, 自增 版本号 将填充在 指针 -8 区( Alloc ). 用于判断指针是否已失效
 	// MPObject 对象使用 Create / Release 来创建和析构
 	template<typename ... Types>
 	struct MemPool : MemPoolBase
@@ -65,6 +65,7 @@ namespace xx
 			p->mempoolbase = this;
 			p->refCount = 1;
 			p->typeId = (decltype(p->typeId))TupleIndexOf<T, Tuple>::value;
+			p->tsFlags = 0;
 			return new (p + 1) T(std::forward<Args>(args)...);
 		}
 

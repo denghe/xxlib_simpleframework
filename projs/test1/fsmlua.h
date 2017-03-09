@@ -6,6 +6,6 @@ struct FSMLua : FSMBase
 	virtual int Update() override;
 	lua_State* GetL() const;		// 用于定位到 owner-> scene 的状态机
 	template<typename T>
-	FSMLua(T* owner, char const* luacode);
+	FSMLua(T* owner, char const* fn);
 	~FSMLua();
 };

@@ -10,6 +10,9 @@
     <Filter Include="bak">
       <UniqueIdentifier>{79edfc69-daa0-496c-be6f-2244141ec2d5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="lua">
+      <UniqueIdentifier>{2731c22a-0046-403a-83d8-4dbcfb812dc1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\xx_mempool.h">
@@ -103,5 +106,16 @@
     <Natvis Include="..\..\src\xx.natvis">
       <Filter>xx</Filter>
     </Natvis>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="monster1.lua">
+      <Filter>lua</Filter>
+    </None>
+    <None Include="scene.lua">
+      <Filter>lua</Filter>
+    </None>
+    <None Include="init.lua">
+      <Filter>lua</Filter>
+    </None>
   </ItemGroup>
 </Project>

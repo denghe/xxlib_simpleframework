@@ -11,13 +11,6 @@
 
 namespace xx
 {
-	// todo: 拿备份的文件来逐个应用
-
-	// todo: 直接将欲与 coroutine 做交互的对象放到 _G[ versionNumber ]. 不使用 pure 版, 避开元表的占用空间.
-
-	// todo: 遇到 MPObject push 时似乎需要直接根据指针头的类型编号来填充类型编号
-
-
 	// 可放入 LUA 的数据类型有: float, double, int64, 各式 string, 以及 T, T*
 	// 其中 T 又分为 一般结构体 以及 MPtr<T> ( T 为 MPObject 派生类 )
 	// T* 分为一般指针 或 MPObject* 派生类指针
@@ -135,10 +128,10 @@ namespace xx
 	// Lua_Resume
 	/************************************************************************************/
 
-	inline int Lua_Resume(lua_State* co, xx::String* err)
+	inline int Lua_Resume(lua_State* co, xx::String* err, int narg = 0)
 	{
 		assert(co);
-		int status = lua_resume(co, nullptr, 0);
+		int status = lua_resume(co, nullptr, narg);
 		if (status == LUA_YIELD)
 		{
 			return 0;	// todo: 暂存函数的返回值? 

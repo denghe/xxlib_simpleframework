@@ -150,27 +150,27 @@ size_t _countof(T const (&arr)[N])
 // XX_ENUM_OPERATOR_EXT
 /***********************************************************************************/
 
-#define XX_ENUM_OPERATOR_EXT( EnumTypeName )                                                                                                \
-inline EnumTypeName operator+(EnumTypeName const &a, typename std::underlying_type<EnumTypeName>::type const &b)                            \
-{                                                                                                                                           \
-    return EnumTypeName((typename std::underlying_type<EnumTypeName>::type)(a) + b);                                                        \
-}                                                                                                                                           \
-inline EnumTypeName operator+(EnumTypeName const &a, EnumTypeName const &b)                                                                 \
-{                                                                                                                                           \
-    return EnumTypeName((typename std::underlying_type<EnumTypeName>::type)(a) + (typename std::underlying_type<EnumTypeName>::type)(b));   \
-}                                                                                                                                           \
-inline EnumTypeName operator-(EnumTypeName const &a, typename std::underlying_type<EnumTypeName>::type const &b)                            \
-{                                                                                                                                           \
-    return EnumTypeName((typename std::underlying_type<EnumTypeName>::type)(a) - b);                                                        \
-}                                                                                                                                           \
-inline typename std::underlying_type<EnumTypeName>::type operator-(EnumTypeName const &a, EnumTypeName const &b)                            \
-{                                                                                                                                           \
-    return (typename std::underlying_type<EnumTypeName>::type)(a) - (typename std::underlying_type<EnumTypeName>::type)(b);                 \
-}                                                                                                                                           \
-inline EnumTypeName operator++(EnumTypeName &a)                                                                                             \
-{                                                                                                                                           \
-    a = EnumTypeName((typename std::underlying_type<EnumTypeName>::type)(a) + 1);                                                           \
-    return a;                                                                                                                               \
+#define XX_ENUM_OPERATOR_EXT( EnumTypeName )                                                                    \
+inline EnumTypeName operator+(EnumTypeName const &a, std::underlying_type_t<EnumTypeName> const &b)				\
+{                                                                                                               \
+    return EnumTypeName((std::underlying_type_t<EnumTypeName>)(a) + b);											\
+}                                                                                                               \
+inline EnumTypeName operator+(EnumTypeName const &a, EnumTypeName const &b)                                     \
+{                                                                                                               \
+    return EnumTypeName((std::underlying_type_t<EnumTypeName>)(a) + (std::underlying_type_t<EnumTypeName>)(b));	\
+}                                                                                                               \
+inline EnumTypeName operator-(EnumTypeName const &a, std::underlying_type_t<EnumTypeName> const &b)				\
+{                                                                                                               \
+    return EnumTypeName((std::underlying_type_t<EnumTypeName>)(a) - b);											\
+}                                                                                                               \
+inline std::underlying_type_t<EnumTypeName> operator-(EnumTypeName const &a, EnumTypeName const &b)				\
+{                                                                                                               \
+    return (std::underlying_type_t<EnumTypeName>)(a) - (std::underlying_type_t<EnumTypeName>)(b);				\
+}                                                                                                               \
+inline EnumTypeName operator++(EnumTypeName &a)                                                                 \
+{                                                                                                               \
+    a = EnumTypeName((std::underlying_type_t<EnumTypeName>)(a) + 1);											\
+    return a;                                                                                                   \
 }
 
 

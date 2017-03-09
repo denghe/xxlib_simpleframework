@@ -31,49 +31,15 @@ typedef xx::MemPool<
 
 int main()
 {
-	auto code = R"##(
-
-yield = coroutine.yield
-
-function Sleep( ticks, cond )
-	for i = 1, ticks do
-		if cond() then return end
-		yield()
-	end
-end
-
--- todo: more utils
-
-)##";
-
 	MP mp;
 	auto scene = mp.Create<Scene>();
-	if (auto rtv = luaL_dostring(scene->L, code))
+	if (auto rtv = luaL_dofile(scene->L, "init.lua"))
 	{
 		std::cout << "err code = " << rtv << ", err msg = " << scene->err->C_str() << std::endl;
 		system("pause");
 	}
 
-	scene->SetLuaCode(R"##(
-local m = scene:CreateMonster1([[
-	local x = self:x()				-- bak
-	Sleep( 5, function() 
-		return self:x() - x > 3;	-- x 有较大变化则 sleep 终止
-	end )
-]])
-
-while true do
-	print( "ticks = "..scene:ticks() )
-	if m:Ensure() then
-		print( "m is alive" )
-		m:x( m:x() + 1 )
-	else
-		print( "m is released" )
-	end
-	yield()
-end
-)##");
-
+	scene->LoadLuaFile("scene.lua");
 	if (auto rtv = scene->Run())
 	{
 		std::cout << "err code = " << rtv << ", err msg = " << scene->err->C_str() << std::endl;
