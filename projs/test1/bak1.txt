@@ -14,7 +14,7 @@ struct F : E {};
 struct G : F {};
 struct H : G {};
 
-typedef MemPool<A, B, C, D, E, F, G, H> MP;
+typedef MemPool<H, G, F, E, D, C, B, A> MP;
 
 int main()
 {

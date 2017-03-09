@@ -13,6 +13,8 @@ namespace xx
 {
 	// todo: 直接将欲与 coroutine 做交互的对象放到 _G[ versionNumber ]. 不使用 pure 版, 避开元表的占用空间.
 
+	// todo: 遇到 MPObject push 时似乎需要直接根据指针头的类型编号来填充类型编号
+
 
 	// 可放入 LUA 的数据类型有: float, double, int64, 各式 string, 以及 T, T*
 	// 其中 T 又分为 一般结构体 以及 MPtr<T> ( T 为 MPObject 派生类 )
@@ -359,7 +361,8 @@ namespace xx
 		{
 			if (!lua_isuserdata(L, idx)) return false;
 			auto ud = (Lua_UD<T>*)lua_touserdata(L, idx);
-			if (!Lua_GetMemPool<MP>(L).IsBaseOf(TupleIndexOf<TT, typename MP::Tuple>::value, ud->typeIndex)) return false;
+			auto tid = TupleIndexOf<TT, typename MP::Tuple>::value;
+			if (!Lua_GetMemPool<MP>(L).IsBaseOf(tid, ud->typeIndex)) return false;
 			switch (ud->udType)
 			{
 			case Lua_UDTypes::Pointer:
@@ -615,7 +618,8 @@ namespace xx
 				return Lua_Error(L, "error!!! func args num wrong.");
 			}
 			T* self = nullptr;
-			lua_pushboolean(L, xx::Lua<MP, T*>::TryTo(L, self, 1));
+			auto b = xx::Lua<MP, T*>::TryTo(L, self, 1) && self;
+			lua_pushboolean(L, b);
 			return 1;
 		}, 0);
 		lua_rawset(L, -3);

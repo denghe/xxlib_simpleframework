@@ -5,7 +5,15 @@ namespace xx
 {
 
 	/*
-	typedef xx::MemPool<A,B,C,D......> MP;
+	// 示例:
+
+	// headers ...
+
+	// 重点: type 排列顺序 须满足 子在前父在后. 彼此无关的无所谓
+	typedef xx::MemPool<C,B,A......> MP;
+
+	// impls ...
+
 	MP mp;
 	auto a = mp.Create<A>(.....);
 	*/
@@ -123,10 +131,11 @@ namespace xx
 		{
 			uint16_t pid = 0;
 			std::initializer_list<int>{ ((
-				std::is_base_of<std::tuple_element_t<Indexs, Tuple>, T>::value && !std::is_same<std::tuple_element_t<Indexs, Tuple>, T>::value
-				? (pid = TupleIndexOf<std::tuple_element_t<Indexs, Tuple>, Tuple>::value) : 0
+				!pid && std::is_base_of<std::tuple_element_t<Indexs, Tuple>, T>::value && !std::is_same<std::tuple_element_t<Indexs, Tuple>, T>::value
+				? (pid = Indexs) : 0
 				), 0)... };
 			pids[TupleIndexOf<T, Tuple>::value] = pid;
+			//std::cout << "tid = " << TupleIndexOf<T, Tuple>::value << ", t = " << typeid(T).name() << ", pid = " << pid << std::endl;
 		}
 	};
 }

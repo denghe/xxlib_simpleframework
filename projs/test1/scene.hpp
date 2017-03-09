@@ -38,6 +38,7 @@ Scene::Scene()
 	xx::Lua_PushMetatable<MP, Monster2>(L);
 	//xxLua_BindFunc
 	//xxLua_BindField
+	xxLua_BindField(MP, L, MonsterBase, x, true);
 	lua_pop(L, 1);
 
 	// set global scene

@@ -11,15 +11,15 @@
 #include "monster.h"
 
 typedef xx::MemPool<
-	FSMLua,
-	Scene,
-	MonsterBase,
-	Monster1,
-	Monster2,
-	SceneBase,
+	Monster1,					// pt is MonsterBase
+	Monster2,					// pt is MonsterBase
+	MonsterBase,				// pt is SceneObjBase
+	Scene,						// pt is SceneBase
 	SceneObjBase,
+	SceneBase,
+	FSMLua,
 	xx::List<FSMBase*>,
-	xx::List<SceneObjBase*, true>,
+	xx::List<MonsterBase*>,
 	xx::String
 > MP;
 

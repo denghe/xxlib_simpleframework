@@ -200,6 +200,8 @@
     <Text Include="bak3.txt" />
     <Text Include="bak4.txt" />
     <Text Include="bak5.txt" />
+    <Text Include="bak6.txt" />
+    <Text Include="bak7.txt" />
     <Text Include="bak8.txt" />
   </ItemGroup>
   <ItemGroup>
