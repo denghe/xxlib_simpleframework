@@ -1,4 +1,5 @@
 #pragma once
+#include "xx_defines.h"
 #include "xx_memheader.h"
 
 namespace xx

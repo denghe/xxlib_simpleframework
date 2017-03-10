@@ -1,5 +1,6 @@
 ﻿#include "lua_mempool.h"
 #include "lua.hpp"
+#include "xx_mempool.h"
 #include "xx_luahelper.h"
 
 int main()

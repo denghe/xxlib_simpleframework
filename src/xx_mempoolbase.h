@@ -1,5 +1,4 @@
 #pragma once
-#include "xx_podstack.h"
 #include "xx_mpobject.h"
 #include "xx_string.h"
 #include <array>
