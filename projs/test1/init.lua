@@ -1,12 +1,11 @@
+--[[
 local m = scene:CreateMonster2()
 local bt = os.clock()
 for i = 1,100000000 do
 	m:Ensure()
 end
 print( os.clock() - bt )
-
-
-
+]]
 
 yield = coroutine.yield
 

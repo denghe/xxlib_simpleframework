@@ -1,51 +1,43 @@
-#pragma execution_character_set("utf-8")
-#include <iostream>
+#include "lua_mempool.h"
+#include "lua.hpp"
+#include "xx_mempool.h"
 #include "xx_luahelper.h"
-#ifdef _WIN32
-#include <Windows.h>	// Sleep
-#include <mmsystem.h>	// timeBeginPeriod at winmm.lib
-#pragma comment(lib, "winmm.lib") 
-#endif
-
-#include "scene.h"
-#include "fsmlua.h"
-#include "monster.h"
-
-// 类型要按子--父倒排
-typedef xx::MemPool<
-	Monster1,					// : MonsterBase
-	Monster2,					// : MonsterBase
-	MonsterBase,				// : SceneObjBase
-	Scene,						// : SceneBase
-	SceneObjBase,
-	SceneBase,
-	FSMLua,
-	xx::List<FSMBase*>,
-	xx::List<MonsterBase*>,
-	xx::String
-> MP;
-
-#include "scene.hpp"
-#include "fsmlua.hpp"
-#include "monster.hpp"
-
 
 int main()
 {
-	MP mp;
-	auto scene = mp.Create<Scene>();
-	if (auto rtv = luaL_dofile(scene->L, "init.lua"))
-	{
-		std::cout << "err code = " << rtv << ", err msg = " << scene->err->C_str() << std::endl;
-		system("pause");
-	}
+	auto code = R"##(
 
-	scene->LoadLuaFile("scene.lua");
-	if (auto rtv = scene->Run())
+local bt = os.clock()
+for i = 1, 10000000 do
+	t = {}
+	t.a = i
+	t.b = i
+	t.c = i
+end
+print( os.clock() - bt )
+
+)##";
 	{
-		std::cout << "err code = " << rtv << ", err msg = " << scene->err->C_str() << std::endl;
-		system("pause");
+		auto L2 = luaL_newstate();
+		luaL_openlibs(L2);
+		luaL_dostring(L2, code);
+		lua_close(L2);
 	}
-	mp.Release(scene);
+	{
+		Lua_MemPool lmp;
+		auto L1 = lua_newstate([](void *ud, void *ptr, size_t osize, size_t nsize)
+		{
+			return ((Lua_MemPool*)ud)->Realloc(ptr, nsize, osize);
+		}, &lmp);
+		luaL_openlibs(L1);
+		luaL_dostring(L1, code);
+		lua_close(L1);
+	}
+	{
+		xx::MemPool<> mp;
+		auto L3 = xx::Lua_NewState(mp);
+		luaL_dostring(L3, code);
+		lua_close(L3);
+	}
 	return 0;
 }
