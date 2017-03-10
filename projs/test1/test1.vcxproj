@@ -71,22 +71,22 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(SolutionDir)..\..\src;$(SolutionDir)..\..\lua-5.3.4\src;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)..\..\src;$(SolutionDir)..\..\lua-5.3.4\src;$(SolutionDir)..\..\snippets;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)..\..\lua-5.3.4\src;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(SolutionDir)..\..\src;$(SolutionDir)..\..\lua-5.3.4\src;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)..\..\src;$(SolutionDir)..\..\lua-5.3.4\src;$(SolutionDir)..\..\snippets;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)..\..\lua-5.3.4\src;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(SolutionDir)..\..\src;$(SolutionDir)..\..\lua-5.3.4\src;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)..\..\src;$(SolutionDir)..\..\lua-5.3.4\src;$(SolutionDir)..\..\snippets;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)..\..\lua-5.3.4\src;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(SolutionDir)..\..\src;$(SolutionDir)..\..\lua-5.3.4\src;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)..\..\src;$(SolutionDir)..\..\lua-5.3.4\src;$(SolutionDir)..\..\snippets;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)..\..\lua-5.3.4\src;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -169,6 +169,7 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\snippets\lua_mempool.h" />
     <ClInclude Include="..\..\src\ajson.hpp" />
     <ClInclude Include="..\..\src\xx_cursorpool.h" />
     <ClInclude Include="..\..\src\xx_scene.h" />
@@ -204,6 +205,7 @@
     <Text Include="bak6.txt" />
     <Text Include="bak7.txt" />
     <Text Include="bak8.txt" />
+    <Text Include="bak9.txt" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="..\..\src\xx.natvis" />

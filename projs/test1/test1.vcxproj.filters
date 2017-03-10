@@ -13,6 +13,9 @@
     <Filter Include="lua">
       <UniqueIdentifier>{2731c22a-0046-403a-83d8-4dbcfb812dc1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="snippets">
+      <UniqueIdentifier>{2fdb1e02-1902-4ba6-90e9-7c1643d7b00e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\xx_mempool.h">
@@ -78,6 +81,9 @@
     <ClInclude Include="..\..\src\ajson.hpp">
       <Filter>xx</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\snippets\lua_mempool.h">
+      <Filter>snippets</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="bak1.txt">
@@ -102,6 +108,9 @@
       <Filter>bak</Filter>
     </Text>
     <Text Include="bak7.txt">
+      <Filter>bak</Filter>
+    </Text>
+    <Text Include="bak9.txt">
       <Filter>bak</Filter>
     </Text>
   </ItemGroup>
