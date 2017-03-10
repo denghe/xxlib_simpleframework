@@ -1,5 +1,5 @@
 #pragma once
-#include "xx_scene.h"
+//#include "xx_scene.h"
 #include <limits>
 #include <cmath>	// abs
 #include <cassert>
@@ -8,7 +8,7 @@ namespace xx
 {
 	// 从 .NET System.Random 翻写, 理论上讲相同种子能输出相同结果. 支持序列化.
 	// 必须传入种子
-	struct Random : SceneObjBase
+	struct Random : MPObject
 	{
 		//
 		// Private Constants 
@@ -212,13 +212,6 @@ namespace xx
 		{
 			if (minValue == maxValue || maxValue - minValue <= 0) return minValue;
 			return minValue + (maxValue - minValue) * NextDouble();
-		}
-
-
-		// Inherited via SceneObjBase
-		inline virtual int Update() override
-		{
-			return 0;
 		}
 	};
 }
