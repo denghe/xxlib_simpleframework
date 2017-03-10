@@ -25,7 +25,7 @@ namespace xx
 		virtual void ToString(String &str) const;
 
 		// 减持 或 析构 + 回收变野( 代码的实现在 xx_mempoolbase.h 的尾部 )
-		void Release();
+		void Release() noexcept;
 
 		/***********************************************************************************/
 		// 下面是访问头部数据的各种 helpers

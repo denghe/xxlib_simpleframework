@@ -87,7 +87,7 @@ namespace xx
 
 		// 该操作将会在头部填充 MemHeader_MPObject
 		template<typename T, typename ...Args>
-		T* CreateWithoutTypeId(Args &&... args)
+		T* CreateWithoutTypeId(Args &&... args) noexcept
 		{
 			static_assert(std::is_base_of<MPObject, T>::value, "the T must be inerit of MPObject.");
 
@@ -104,12 +104,22 @@ namespace xx
 			p->mempoolbase = this;
 			p->refCount = 1;
 			p->typeId = -1;// (decltype(p->typeId))TupleIndexOf<T, Tuple>::value;
-			c
-			return new (p + 1) T(std::forward<Args>(args)...);
+
+			auto t = (T*)(p + 1);
+			try
+			{
+				new (t) T(std::forward<Args>(args)...);
+			}
+			catch (...)
+			{
+				this->Release(t);
+				return nullptr;
+			}
+			return t;
 		}
 
 		// 释放由 Create 创建的类
-		inline void Release(MPObject* p)
+		inline void Release(MPObject* p) noexcept
 		{
 			if (!p) return;
 			assert(p->versionNumber());
@@ -127,18 +137,18 @@ namespace xx
 		/***********************************************************************************/
 
 		template<typename T, typename ...Args>
-		MPtr<T> CreateMPtrWithoutTypeId(Args &&... args)
+		MPtr<T> CreateMPtrWithoutTypeId(Args &&... args) noexcept
 		{
 			return CreateWithoutTypeId<T>(std::forward<Args>(args)...);
 		}
 
 		template<typename T, typename ...Args>
-		void CreateToWithoutTypeId(T*& outPtr, Args &&... args)
+		void CreateToWithoutTypeId(T*& outPtr, Args &&... args) noexcept
 		{
 			outPtr = CreateWithoutTypeId<T>(std::forward<Args>(args)...);
 		}
 		template<typename T, typename ...Args>
-		void CreateToWithoutTypeId(MPtr<T>& outPtr, Args &&... args)
+		void CreateToWithoutTypeId(MPtr<T>& outPtr, Args &&... args) noexcept
 		{
 			outPtr = CreateMPtrWithoutTypeId<T>(std::forward<Args>(args)...);
 		}
@@ -159,7 +169,7 @@ namespace xx
 	/***********************************************************************************/
 	// 这个函数要用到 MemPool 的功能故实现写在这里
 	/***********************************************************************************/
-	inline void MPObject::Release()
+	inline void MPObject::Release() noexcept
 	{
 		mempoolbase().Release(this);
 	}

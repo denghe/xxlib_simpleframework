@@ -36,8 +36,8 @@ struct SceneObjBase : UpdateBase
 	// 指向场景容器
 	SceneBase* sceneBase;
 
-	// 位于场景怪容器中的下标( for 交换式快删 )
-	uint32_t sceneObjsIndex;
+	// 位于 scene 中某容器中的下标 ( List / Links / Dict )
+	uint32_t sceneContainerIndex = -1;
 
 	// todo: 提供一个容器用来存上个 FSM 的执行结果( 正常结束, 满足退出条件, 打断事件来临之类 )
 	xx::List<FSMBase*>* fsmStack;

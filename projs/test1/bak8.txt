@@ -82,3 +82,54 @@ end
 	mp.Release(scene);
 	return 0;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+struct Foo
+{
+	int* i;
+	Foo() 
+	{
+		i = new int(123);
+		throw std::exception();
+	}
+	~Foo()
+	{
+		delete i;
+	}
+};
+template<typename T, typename ...Args>
+T* Create(Args&&... args) noexcept
+{
+	auto m = (T*)malloc(sizeof(T));
+	if (m)
+	{
+		try
+		{
+			new (m) T(std::forward<Args>(args)...);
+		}
+		catch (...)
+		{
+			m->~T();
+			free(m);
+			m = nullptr;
+		}
+	}
+	return m;
+}
+
+int main()
+{
+	auto f = Create<Foo>();
+	auto f2 = f;

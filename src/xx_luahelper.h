@@ -13,6 +13,10 @@ namespace xx
 {
 	// todo: Lua_BindFunc 之非类成员函数版. 考虑为 Lua_SetGlobal 增加函数指针重载
 
+	// todo: 考虑一下结构体中的子结构体的 lua userdata 包装( 就是说 ud 的说明部分可能需要移到 uservalue 中去, 或是用 uservalue 来延长 container 的生命周期? )
+
+	// todo: 改进初始 metatable 创建, 默认可按类的父子关系, 自动设为继承关系
+
 
 	// 可放入 LUA 的数据类型有: float, double, int64, 各式 string, 以及 T, T*
 	// 其中 T 又分为 一般结构体 以及 MPtr<T> ( T 为 MPObject 派生类 )
@@ -21,36 +25,7 @@ namespace xx
 	// 不支持复杂结构体创建为 ud( 可以有构造函数但不要有析构函数. 最好就是个 pod )
 	// 只支持单继承
 
-	/************************************************************************************/
-	// Lua_NewState
-	/************************************************************************************/
 
-	// 创建并返回一个 lua_State*, 以内存池为内存分配方式, 默认 openLibs
-	// 可以用 lua_getallocf 函数来得到 mp 指针
-	template<typename MP>
-	inline lua_State* Lua_NewState(MP& mp, bool openLibs = true, bool pushMetatables = true)
-	{
-		auto L = lua_newstate([](void *ud, void *ptr, size_t osize, size_t nsize)
-		{
-			return ((MemPoolBase*)ud)->Realloc(ptr, nsize, osize);
-		}, &mp);
-
-		if (openLibs) luaL_openlibs(L);
-		if (pushMetatables)
-		{
-			lua_rawgeti(L, LUA_REGISTRYINDEX, LUA_RIDX_GLOBALS);	// _G
-			for (int i = 1; i < MP::typesSize; ++i)
-			{
-				lua_newtable(L);									// _G, mt
-				lua_pushstring(L, "__index");						// _G, mt, __index
-				lua_pushvalue(L, -2);								// _G, mt, __index, mt
-				lua_rawset(L, -3);									// _G, mt
-				lua_rawseti(L, -2, i);								// _G
-			}
-			lua_pop(L, 1);											//
-		}
-		return L;
-	}
 
 
 	/************************************************************************************/
@@ -82,20 +57,31 @@ namespace xx
 
 
 	/************************************************************************************/
-	// Lua_CopyItemsFromParentMetatable
+	// Lua_CloneParentMetatable
 	/************************************************************************************/
 
-	// 从指定 index 处 clone 元素到 -1 表
-	template<typename MP, typename PT>
-	inline void Lua_CopyItemsFromParentMetatable(lua_State* L)
+	// 从指定类型的第 1 级父 mt 中复制所有元素到 -1 表
+	template<typename MP, typename T>
+	inline void Lua_CloneParentMetatable(MP& mp, lua_State* L)
 	{
-		lua_pushnil(L);
-		while (lua_next(L, TupleIndexOf<PT, typename MP::Tuple>::value) != 0)
+		auto pidx = mp.pids[TupleIndexOf<T, typename MP::Tuple>::value];
+
+		lua_rawgeti(L, LUA_REGISTRYINDEX, LUA_RIDX_GLOBALS);			// mt, _G
+		lua_rawgeti(L, -1, pidx);										// mt, _G, pmt
+		lua_replace(L, -2);												// mt, pmt
+		lua_pushnil(L);													// mt, pmt, nil
+		while (lua_next(L, -2) != 0)									// mt, pmt, k, v
 		{
-			lua_pushvalue(L, -2);
-			lua_insert(L, -2);
-			lua_rawset(L, -4);
-		}
+			lua_pushvalue(L, -2);										// mt, pmt, k, v, k
+			lua_insert(L, -2);											// mt, pmt, k, k, v
+			lua_rawset(L, -5);											// mt, pmt, k
+		}																// mt, pmt
+		lua_pop(L, 1);													// mt
+
+		// 修复 __index
+		lua_pushstring(L, "__index");									// mt, __index
+		lua_pushvalue(L, -2);											// mt, __index, mt
+		lua_rawset(L, -3);												// mt
 	}
 
 
@@ -612,30 +598,6 @@ namespace xx
 	}
 
 
-	/************************************************************************************/
-	// Lua_BindFunc_Ensure
-	/************************************************************************************/
-
-	// 生成确认 ud 是否合法的 Ensure 指令
-	template<typename MP, typename T>
-	void Lua_BindFunc_Ensure(lua_State* L)
-	{
-		static_assert(std::is_base_of<MPObject, T>::value, "only MPObject* struct have Ensure func.");
-		lua_pushstring(L, "Ensure");
-		lua_pushcclosure(L, [](lua_State* L)
-		{
-			auto top = lua_gettop(L);
-			if (top != 1)
-			{
-				return Lua_Error(L, "error!!! func args num wrong.");
-			}
-			T* self = nullptr;
-			auto b = xx::Lua<MP, T*>::TryTo(L, self, 1) && self;
-			lua_pushboolean(L, b);
-			return 1;
-		}, 0);
-		lua_rawset(L, -3);
-	}
 
 
 
@@ -651,6 +613,110 @@ namespace xx
 			return 0;
 		}, 0);
 		lua_setglobal(L, "Log");
+	}
+
+
+
+	/************************************************************************************/
+	// Lua_BindFunc_Ensure
+	/************************************************************************************/
+
+	// 生成 ud.Ensure 函数
+	template<typename MP>
+	void Lua_BindFunc_Ensure(lua_State* L)
+	{
+		lua_pushstring(L, "Ensure");
+		lua_pushcclosure(L, [](lua_State* L)
+		{
+			auto top = lua_gettop(L);
+			if (top != 1)
+			{
+				return Lua_Error(L, "error!!! func args num wrong.");
+			}
+			MPObject* self = nullptr;
+			auto b = xx::Lua<MP, MPObject*>::TryTo(L, self, 1) && self;
+			lua_pushboolean(L, b);
+			return 1;
+		}, 0);
+		lua_rawset(L, -3);
+	}
+
+	/************************************************************************************/
+	// Lua_BindFunc_Release
+	/************************************************************************************/
+
+	// 生成 ud.Release 函数
+	template<typename MP>
+	void Lua_BindFunc_Release(lua_State* L)
+	{
+		lua_pushstring(L, "Release");
+		lua_pushcclosure(L, [](lua_State* L)
+		{
+			auto top = lua_gettop(L);
+			if (top != 1)
+			{
+				return Lua_Error(L, "error!!! func args num wrong.");
+			}
+			MPObject* self = nullptr;
+			auto b = xx::Lua<MP, MPObject*>::TryTo(L, self, 1) && self;
+			if (b) self->Release();
+			return 0;
+		}, 0);
+		lua_rawset(L, -3);
+	}
+
+
+
+
+	/************************************************************************************/
+	// Lua_NewState
+	/************************************************************************************/
+
+	// 创建并返回一个 lua_State*, 以内存池为内存分配方式, 默认 openLibs 以及创建 mt
+	// 可以用 lua_getallocf 函数来得到 mp 指针
+	template<typename MP>
+	inline lua_State* Lua_NewState(MP& mp, bool openLibs = true, bool registerMetatables = true)
+	{
+		auto L = lua_newstate([](void *ud, void *ptr, size_t osize, size_t nsize)
+		{
+			return ((MemPoolBase*)ud)->Realloc(ptr, nsize, osize);
+		}, &mp);
+
+		if (openLibs) luaL_openlibs(L);
+		if (registerMetatables)
+		{
+			lua_rawgeti(L, LUA_REGISTRYINDEX, LUA_RIDX_GLOBALS);	// _G
+
+			// 先造出所有类型的 空mt ( __index 指向自己 )
+			for (int i = 0; i < MP::typesSize; ++i)
+			{
+				lua_newtable(L);									// _G, mt
+				lua_pushstring(L, "__index");						// _G, mt, __index
+				lua_pushvalue(L, -2);								// _G, mt, __index, mt
+				lua_rawset(L, -3);									// _G, mt
+				lua_rawseti(L, -2, i);								// _G
+			}
+			assert(lua_gettop(L) == 1);
+
+			// 遍历设其 mt 指向父 mt
+			for (int i = 0; i < MP::typesSize; ++i)
+			{
+				if (i == mp.pids[i]) continue;
+				lua_rawgeti(L, -1, i);								// _G, mt
+				lua_rawgeti(L, -2, mp.pids[i]);						// _G, mt, pmt
+				lua_setmetatable(L, -2);							// _G, mt
+				lua_pop(L, 1);										// _G
+			}
+			assert(lua_gettop(L) == 1);
+
+			lua_rawgeti(L, -1, 0);									// _G, MPObject's mt
+			Lua_BindFunc_Ensure<MP>(L);								// _G, MPObject's mt
+			Lua_BindFunc_Release<MP>(L);							// _G, MPObject's mt
+
+			lua_pop(L, 2);											//
+			assert(lua_gettop(L) == 0);
+		}
+		return L;
 	}
 
 }

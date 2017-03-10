@@ -48,7 +48,7 @@ namespace xx
 
 		// 该操作将会在头部填充 MemHeader_MPObject
 		template<typename T, typename ...Args>
-		T* Create(Args &&... args)
+		T* Create(Args &&... args) noexcept
 		{
 			static_assert(std::is_base_of<MPObject, T>::value, "the T must be inerit of MPObject.");
 
@@ -59,6 +59,7 @@ namespace xx
 
 			void* rtv;
 			if (!stacks[idx].TryPop(rtv)) rtv = malloc(siz);
+			if (!rtv) return nullptr;
 
 			auto p = (MemHeader_MPObject*)rtv;
 			p->versionNumber = (++versionNumber) | ((uint64_t)idx << 56);
@@ -66,7 +67,18 @@ namespace xx
 			p->refCount = 1;
 			p->typeId = (decltype(p->typeId))TupleIndexOf<T, Tuple>::value;
 			p->tsFlags = 0;
-			return new (p + 1) T(std::forward<Args>(args)...);
+
+			auto t = (T*)(p + 1);
+			try
+			{
+				new (t) T(std::forward<Args>(args)...);
+			}
+			catch (...)
+			{
+				this->Release(t);
+				return nullptr;
+			}
+			return t;
 		}
 
 		/***********************************************************************************/
@@ -80,14 +92,16 @@ namespace xx
 		}
 
 		template<typename T, typename ...Args>
-		void CreateTo(T*& outPtr, Args &&... args)
+		bool CreateTo(T*& outPtr, Args &&... args)
 		{
 			outPtr = Create<T>(std::forward<Args>(args)...);
+			return outPtr != nullptr;
 		}
 		template<typename T, typename ...Args>
-		void CreateTo(MPtr<T>& outPtr, Args &&... args)
+		bool CreateTo(MPtr<T>& outPtr, Args &&... args)
 		{
 			outPtr = CreateMPtr<T>(std::forward<Args>(args)...);
+			return outPtr.pointer != nullptr;
 		}
 
 
@@ -133,7 +147,7 @@ namespace xx
 			uint16_t pid = 0;
 			std::initializer_list<int>{ ((
 				!std::is_same_v<std::tuple_element_t<Indexs, Tuple>, T>
-				&& !pid 
+				&& !pid
 				&& std::is_base_of_v<std::tuple_element_t<Indexs, Tuple>, T>
 				? (pid = Indexs) : 0
 				), 0)... };

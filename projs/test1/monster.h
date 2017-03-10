@@ -12,4 +12,5 @@ struct Monster1 : MonsterBase
 struct Monster2 : MonsterBase
 {
 	Monster2(SceneBase* scene);
+	virtual int Update() override;
 };
