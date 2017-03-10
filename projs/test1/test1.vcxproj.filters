@@ -24,9 +24,6 @@
     <ClInclude Include="..\..\src\xx_mpobject.h">
       <Filter>xx</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\xx_podstack.h">
-      <Filter>xx</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\xx_defines.h">
       <Filter>xx</Filter>
     </ClInclude>

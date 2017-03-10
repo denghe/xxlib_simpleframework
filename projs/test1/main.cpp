@@ -1,5 +1,6 @@
 ﻿#include "lua_mempool.h"
 #include "lua.hpp"
+#include "xx_luahelper.h"
 
 int main()
 {
@@ -16,6 +17,12 @@ print( os.clock() - bt )
 
 )##";
 	{
+		auto L2 = luaL_newstate();
+		luaL_openlibs(L2);
+		luaL_dostring(L2, code);
+		lua_close(L2);
+	}
+	{
 		Lua_MemPool lmp;
 		auto L1 = lua_newstate([](void *ud, void *ptr, size_t osize, size_t nsize)
 		{
@@ -26,10 +33,10 @@ print( os.clock() - bt )
 		lua_close(L1);
 	}
 	{
-		auto L2 = luaL_newstate();
-		luaL_openlibs(L2);
-		luaL_dostring(L2, code);
-		lua_close(L2);
+		xx::MemPool<> mp;
+		auto L3 = xx::Lua_NewState(mp);
+		luaL_dostring(L3, code);
+		lua_close(L3);
 	}
 	return 0;
 }

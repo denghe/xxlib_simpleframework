@@ -187,7 +187,6 @@
     <ClInclude Include="..\..\src\xx_mempoolbase.h" />
     <ClInclude Include="..\..\src\xx_mpobject.h" />
     <ClInclude Include="..\..\src\xx_mptr.h" />
-    <ClInclude Include="..\..\src\xx_podstack.h" />
     <ClInclude Include="..\..\src\xx_string.h" />
     <ClInclude Include="fsmlua.h" />
     <ClInclude Include="fsmlua.hpp" />

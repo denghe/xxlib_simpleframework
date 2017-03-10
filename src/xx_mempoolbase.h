@@ -13,9 +13,28 @@ namespace xx
 	// 内存池基类. 提供类型无关的内存分配 / 回收功能
 	struct MemPoolBase
 	{
-		// todo: 再实现个链表版看看会不会更快
+		// 单链表. 指向下一指针的内存区域避开版本号区域不写
+		struct PtrStack
+		{
+			void* header = nullptr;
+
+			bool TryPop(void*& output)
+			{
+				if (!header) return false;
+				output = header;
+				header = *(void**)((char*)header + sizeof(MemHeader_VersionNumber));
+				return true;
+			}
+
+			void Push(void* const& v)
+			{
+				*(void**)((char*)v + sizeof(MemHeader_VersionNumber)) = header;
+				header = v;
+			}
+		};
+
 		// stacks 数组
-		std::array<PodStack<void*>, sizeof(size_t) * 8> stacks;
+		std::array<PtrStack, sizeof(size_t) * 8> stacks;
 
 		// 自增版本号( 每次创建时先 ++ 再填充 )
 		uint64_t versionNumber = 0;
@@ -153,16 +172,6 @@ namespace xx
 			outPtr = CreateMPtrWithoutTypeId<T>(std::forward<Args>(args)...);
 		}
 
-		//// 计算有多少内存在池
-		//uint64_t FreeMem()
-		//{
-		//	uint64_t count = 0;
-		//	for (size_t i = 0; i < stacks.size(); ++i)
-		//	{
-		//		count += stacks[i].dataLen * (2 << i);
-		//	}
-		//	return count;
-		//}
 	};
 
 
