@@ -57,32 +57,43 @@ namespace xx
 
 
 	/************************************************************************************/
-	// Lua_CloneParentMetatable
+	// Lua_CloneParentMetatables
 	/************************************************************************************/
 
-	// 从指定类型的第 1 级父 mt 中复制所有元素到 -1 表
-	template<typename MP, typename T>
-	inline void Lua_CloneParentMetatable(MP& mp, lua_State* L)
+	// 针对所有 mt, 级联复制父的元素到自身, 避免逐级向上查找( 每多一级查询似乎就会慢 1/5, 一直叠加 )
+	template<typename MP>
+	inline void Lua_CloneParentMetatables(MP& mp, lua_State* L)
 	{
-		auto pidx = mp.pids[TupleIndexOf<T, typename MP::Tuple>::value];
-
-		lua_rawgeti(L, LUA_REGISTRYINDEX, LUA_RIDX_GLOBALS);			// mt, _G
-		lua_rawgeti(L, -1, pidx);										// mt, _G, pmt
-		lua_replace(L, -2);												// mt, pmt
-		lua_pushnil(L);													// mt, pmt, nil
-		while (lua_next(L, -2) != 0)									// mt, pmt, k, v
+		lua_rawgeti(L, LUA_REGISTRYINDEX, LUA_RIDX_GLOBALS);	// _G
+		for (int tidx = MP::typesSize - 1; tidx >= 0; --tidx)
 		{
-			lua_pushvalue(L, -2);										// mt, pmt, k, v, k
-			lua_insert(L, -2);											// mt, pmt, k, k, v
-			lua_rawset(L, -5);											// mt, pmt, k
-		}																// mt, pmt
-		lua_pop(L, 1);													// mt
-
-		// 修复 __index
-		lua_pushstring(L, "__index");									// mt, __index
-		lua_pushvalue(L, -2);											// mt, __index, mt
-		lua_rawset(L, -3);												// mt
+			auto pidx = mp.pids[tidx];
+			if (pidx == tidx) continue;
+			lua_rawgeti(L, -1, tidx);							// _G, mt
+			lua_rawgeti(L, -2, pidx);							// _G, mt, pmt
+			lua_pushnil(L);										// _G, mt, pmt, nil
+			while (lua_next(L, -2) != 0)						// _G, mt, pmt, k, v
+			{
+				lua_pushvalue(L, -2);							// _G, mt, pmt, k, v, k
+				auto dt = lua_rawget(L, -5);					// _G, mt, pmt, k, v, ?
+				if (dt == LUA_TNIL)
+				{
+					lua_pop(L, 1);								// _G, mt, pmt, k, v
+					lua_pushvalue(L, -2);						// _G, mt, pmt, k, v, k
+					lua_insert(L, -2);							// _G, mt, pmt, k, k, v
+					lua_rawset(L, -5);							// _G, mt, pmt, k
+				}
+				else
+				{
+					lua_pop(L, 2);								// _G, mt, pmt, k
+				}
+			}													// _G, mt, pmt
+			lua_pop(L, 2);										// _G
+		}
+		lua_pop(L, 1);											//
 	}
+
+
 
 
 	/************************************************************************************/

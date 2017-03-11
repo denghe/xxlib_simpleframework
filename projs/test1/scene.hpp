@@ -28,25 +28,15 @@ Scene::Scene()
 	xxLua_BindFunc(MP, L, Scene, CreateMonster2, false);
 	lua_pop(L, 1);
 
-	// LuaBind: MonsterBase( 在 MP 中这是 Monster1/2 的直接基类 )
+	// LuaBind: MonsterBase
 	xx::Lua_PushMetatable<MP, MonsterBase>(L);
-	xx::Lua_BindFunc_Ensure<MP>(L);						// 重复注册以提速, 方便派生类复制
-	xx::Lua_BindFunc_Release<MP>(L);					// 同上
 	xxLua_BindField(MP, L, MonsterBase, x, true);
 	lua_pop(L, 1);
 
+	// more bind here...
 
-	// 如果不直接在最上层 mt 中 bind, 会导致 lua mt 多级查找. 1亿次Ensure 的结果: 1层 5.2   2层 6.2   3层 8.22 秒
-
-	// LuaBind: Monster1
-	xx::Lua_PushMetatable<MP, Monster1>(L);
-	xx::Lua_CloneParentMetatable<MP, Monster1>(mp, L);
-	lua_pop(L, 1);
-
-	// LuaBind: Monster2
-	xx::Lua_PushMetatable<MP, Monster2>(L);
-	xx::Lua_CloneParentMetatable<MP, Monster2>(mp, L);
-	lua_pop(L, 1);
+	// 由根至叶, 逐级复制所有元素到下一级( 不覆盖 )
+	xx::Lua_CloneParentMetatables(mp, L);
 
 	// set global scene
 	xx::Lua_SetGlobal<MP>(L, "scene", this);
