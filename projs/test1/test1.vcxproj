@@ -176,8 +176,6 @@
     <ClInclude Include="..\..\snippets\lua_mempool.h" />
     <ClInclude Include="..\..\src\ajson.hpp" />
     <ClInclude Include="..\..\src\xx_cursorpool.h" />
-    <ClInclude Include="..\..\src\xx_scene.h" />
-    <ClInclude Include="..\..\src\xx_scene.hpp" />
     <ClInclude Include="..\..\src\xx_timer.h" />
     <ClInclude Include="..\..\src\xx_charsutils.h" />
     <ClInclude Include="..\..\src\xx_defines.h" />
@@ -192,6 +190,8 @@
     <ClInclude Include="..\..\src\xx_mpobject.h" />
     <ClInclude Include="..\..\src\xx_mptr.h" />
     <ClInclude Include="..\..\src\xx_string.h" />
+    <ClInclude Include="bases.h" />
+    <ClInclude Include="bases.hpp" />
     <ClInclude Include="fsmlua.h" />
     <ClInclude Include="fsmlua.hpp" />
     <ClInclude Include="monster.h" />

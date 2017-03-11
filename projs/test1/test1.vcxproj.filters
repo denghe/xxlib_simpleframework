@@ -60,12 +60,6 @@
     <ClInclude Include="..\..\src\xx_timer.h">
       <Filter>xx</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\xx_scene.h">
-      <Filter>xx</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\xx_scene.hpp">
-      <Filter>xx</Filter>
-    </ClInclude>
     <ClInclude Include="scene.h" />
     <ClInclude Include="scene.hpp" />
     <ClInclude Include="fsmlua.h" />
@@ -81,6 +75,8 @@
     <ClInclude Include="..\..\snippets\lua_mempool.h">
       <Filter>snippets</Filter>
     </ClInclude>
+    <ClInclude Include="bases.h" />
+    <ClInclude Include="bases.hpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="bak1.txt">

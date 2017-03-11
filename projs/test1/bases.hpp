@@ -1,15 +1,16 @@
-SCENE_TYPE_NAME& UpdateBase::scene()
+Scene& UpdateBase::scene()
 {
-	return *(SCENE_TYPE_NAME*)&mempoolbase();
+	return *(Scene*)&mempoolbase();
 }
-SCENE_TYPE_NAME& UpdateBase::scene() const
+Scene& UpdateBase::scene() const
 {
-	return *(SCENE_TYPE_NAME*)&mempoolbase();
+	return *(Scene*)&mempoolbase();
 }
 
 SceneObjBase::SceneObjBase()
+	: fsmStackMH(mempoolbase())
+	, fsmStack()
 {
-	scene().CreateTo(fsmStack);
 }
 
 template<typename T, typename ...Args>
@@ -28,15 +29,15 @@ void SceneObjBase::SetFSM(FSMBase* fsm)
 }
 void SceneObjBase::PushFSM(FSMBase* fsm)
 {
-	fsmStack->Add(currFSM);
+	fsmStack.Add(currFSM);
 	currFSM = fsm;
 }
 void SceneObjBase::PopFSM()
 {
 	assert(!deadFSM);
 	deadFSM = currFSM;
-	currFSM = fsmStack->Top();
-	fsmStack->Pop();
+	currFSM = fsmStack.Top();
+	fsmStack.Pop();
 }
 int SceneObjBase::Update()
 {
@@ -61,11 +62,10 @@ SceneObjBase::~SceneObjBase()
 		currFSM->Release();
 		currFSM = nullptr;
 	}
-	while (fsmStack->dataLen)
+	while (fsmStack.dataLen)
 	{
-		fsmStack->Top()->Release();
-		fsmStack->Pop();
+		fsmStack.Top()->Release();
+		fsmStack.Pop();
 	}
-	fsmStack->Release();
 }
 

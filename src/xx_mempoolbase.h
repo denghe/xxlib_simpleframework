@@ -148,6 +148,11 @@ namespace xx
 			h->versionNumber = 0;												// 清空版本号
 		}
 
+		inline void InitMemHeader(MPObject* p) noexcept
+		{
+
+		}
+
 		/***********************************************************************************/
 		// helpers
 		/***********************************************************************************/
@@ -173,10 +178,21 @@ namespace xx
 
 
 	/***********************************************************************************/
-	// 这个函数要用到 MemPool 的功能故实现写在这里
+	// 一些函数要用到 MemPool 的功能故实现写在这里
 	/***********************************************************************************/
+
 	inline void MPObject::Release() noexcept
 	{
 		mempoolbase().Release(this);
 	}
+
+	inline MemHeader_MPObject::MemHeader_MPObject(MemPoolBase& mempoolbase)
+		: mempoolbase(&mempoolbase)
+	{
+		this->versionNumber = 0;
+		this->refCount = 0;
+		this->typeId = 0;
+		this->tsFlags = 0;
+	}
+
 }

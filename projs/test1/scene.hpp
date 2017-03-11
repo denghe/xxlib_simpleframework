@@ -10,9 +10,9 @@ void Scene::LoadLuaFile(char const* fn)
 }
 
 Scene::Scene()
+	: monstersMH(*this)
+	, errMH(*this)
 {
-	this->CreateTo(monsters);
-	this->CreateTo(err);
 	// more...
 
 	L = xx::Lua_NewState(*this);
@@ -41,7 +41,7 @@ Scene::Scene()
 	xx::Lua_SetGlobalFunc_Log(L);
 
 	// custom bind: versionNumber()
-	lua_pushcclosure(L, [](lua_State* L) 
+	lua_pushcclosure(L, [](lua_State* L)
 	{
 		lua_pushinteger(L, xx::Lua_GetMemPool<MP>(L).versionNumber);
 		return 1;
@@ -60,22 +60,11 @@ xx::MPtr<Monster2> Scene::CreateMonster2()
 
 Scene::~Scene()
 {
-	if (monsters)
+	while (monsters.dataLen)
 	{
-		while (monsters->dataLen)
-		{
-			monsters->Top()->Release();
-		}
-		monsters->Release();
-		monsters = nullptr;
+		monsters.Top()->Release();
 	}
-	// more....
 
-	if (err)
-	{
-		err->Release();
-		err = nullptr;
-	}
 	co = nullptr;
 	if (L)
 	{
@@ -88,11 +77,11 @@ Scene::~Scene()
 
 int Scene::Update()
 {
-	if (co) if (auto rtv = xx::Lua_Resume(co, err)) return rtv;
+	if (co) if (auto rtv = xx::Lua_Resume(co, &err)) return rtv;
 
-	for (auto i = (int)this->monsters->dataLen - 1; i >= 0; --i)
+	for (auto i = (int)monsters.dataLen - 1; i >= 0; --i)
 	{
-		auto& o = this->monsters->At(i);
+		auto& o = monsters[i];
 		auto r = o->Update();
 		if (r)
 		{
