@@ -58,7 +58,7 @@ namespace xx
 			if (siz > (size_t(1) << idx)) siz = size_t(1) << ++idx;
 
 			void* rtv;
-			if (!stacks[idx].TryPop(rtv)) rtv = malloc(siz);
+			if (!ptrstacks[idx].TryPop(rtv)) rtv = malloc(siz);
 			if (!rtv) return nullptr;
 
 			auto p = (MemHeader_MPObject*)rtv;

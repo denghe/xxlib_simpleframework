@@ -1,11 +1,4 @@
-#include "xx_scene.h"
-
-struct MonsterBase;
-struct Monster1;
-struct Monster2;
-// more predefine here...
-
-struct Scene : SceneBase
+struct Scene : MP
 {
 	// 放所有的 monster
 	xx::List<MonsterBase*>* monsters;
@@ -32,5 +25,4 @@ struct Scene : SceneBase
 	// 方便在 lua 中创建 Monster1 对象
 	xx::MPtr<Monster1> CreateMonster1(char const* luacode);
 	xx::MPtr<Monster2> CreateMonster2();
-
 };

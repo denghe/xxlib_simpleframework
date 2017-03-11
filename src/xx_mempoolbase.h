@@ -7,8 +7,6 @@
 
 namespace xx
 {
-	// todo: 做个内存总用量 counter. 每次拿/还内存时同步
-
 	// 内存池基类. 提供类型无关的内存分配 / 回收功能
 	struct MemPoolBase
 	{
@@ -32,8 +30,8 @@ namespace xx
 			}
 		};
 
-		// stacks 数组
-		std::array<PtrStack, sizeof(size_t) * 8> stacks;
+		// 数组长度涵盖所有 2^n 对齐分配长度规则
+		std::array<PtrStack, sizeof(size_t) * 8> ptrstacks;
 
 		// 自增版本号( 每次创建时先 ++ 再填充 )
 		uint64_t versionNumber = 0;
@@ -42,7 +40,7 @@ namespace xx
 		~MemPoolBase()
 		{
 			void* p;
-			for (auto& stack : stacks)
+			for (auto& stack : ptrstacks)
 			{
 				while (stack.TryPop(p)) std::free(p);
 			}
@@ -62,7 +60,7 @@ namespace xx
 			if (siz > (size_t(1) << idx)) siz = size_t(1) << ++idx;
 
 			void* p;
-			if (!stacks[idx].TryPop(p)) p = std::malloc(siz);
+			if (!ptrstacks[idx].TryPop(p)) p = std::malloc(siz);
 
 			auto h = (MemHeader_VersionNumber*)p;								// 指到内存头
 			h->versionNumber = (++versionNumber) | ((uint64_t)idx << 56);		// 将数组下标附在最高位上, Free 要用
@@ -73,8 +71,8 @@ namespace xx
 		{
 			if (!p) return;
 			auto h = (MemHeader_VersionNumber*)p - 1;							// 指到内存头
-			assert(h->versionNumber && h->mpIndex < stacks.size());				// 理论上讲 free 的时候其版本号不应该是 0. 否则就涉嫌重复 Free
-			stacks[h->mpIndex].Push(h);											// 入池
+			assert(h->versionNumber && h->mpIndex < ptrstacks.size());				// 理论上讲 free 的时候其版本号不应该是 0. 否则就涉嫌重复 Free
+			ptrstacks[h->mpIndex].Push(h);											// 入池
 			h->versionNumber = 0;												// 清空版本号
 		}
 
@@ -89,7 +87,7 @@ namespace xx
 			if (!p) return Alloc(newSize);
 
 			auto h = (MemHeader_VersionNumber*)p - 1;
-			assert(h->versionNumber && h->mpIndex < stacks.size());
+			assert(h->versionNumber && h->mpIndex < ptrstacks.size());
 			auto oldSize = (size_t(1) << h->mpIndex) - sizeof(MemHeader_VersionNumber);
 			if (oldSize >= newSize) return p;
 
@@ -115,7 +113,7 @@ namespace xx
 			if (siz > (size_t(1) << idx)) siz = size_t(1) << ++idx;
 
 			void* rtv;
-			if (!stacks[idx].TryPop(rtv)) rtv = malloc(siz);
+			if (!ptrstacks[idx].TryPop(rtv)) rtv = malloc(siz);
 
 			auto p = (MemHeader_MPObject*)rtv;
 			p->versionNumber = (++versionNumber) | ((uint64_t)idx << 56);
@@ -146,7 +144,7 @@ namespace xx
 
 			auto h = (MemHeader_MPObject*)p - 1;								// 指到内存头
 			assert(h->versionNumber);											// 理论上讲 free 的时候其版本号不应该是 0. 否则就涉嫌重复 Free
-			stacks[h->mpIndex].Push(h);											// 入池
+			ptrstacks[h->mpIndex].Push(h);											// 入池
 			h->versionNumber = 0;												// 清空版本号
 		}
 

@@ -1,19 +1,22 @@
-// 如果名字不对就改这里
-#ifndef MPTYPENAME
-#define MPTYPENAME MP
-#endif
-
-SceneObjBase::SceneObjBase(SceneBase* scene)
+SCENE_TYPE_NAME& UpdateBase::scene()
 {
-	this->sceneBase = scene;
-	mempool<MPTYPENAME>().CreateTo(fsmStack);
+	return *(SCENE_TYPE_NAME*)&mempoolbase();
+}
+SCENE_TYPE_NAME& UpdateBase::scene() const
+{
+	return *(SCENE_TYPE_NAME*)&mempoolbase();
+}
+
+SceneObjBase::SceneObjBase()
+{
+	scene().CreateTo(fsmStack);
 }
 
 template<typename T, typename ...Args>
 T* SceneObjBase::CreateFSM(Args&&...args)
 {
 	static_assert(std::is_base_of<FSMBase, T>::value, "the T must be inherit of FSMBase.");
-	auto p = mempool<MPTYPENAME>().Create<T>(std::forward<Args>(args)...);
+	auto p = scene().Create<T>(std::forward<Args>(args)...);
 	return p;
 }
 void SceneObjBase::SetFSM(FSMBase* fsm)

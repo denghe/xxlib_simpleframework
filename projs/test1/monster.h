@@ -1,16 +1,14 @@
 struct MonsterBase : SceneObjBase
 {
 	int x = 0;
-	Scene* scene();
-	MonsterBase(SceneBase* scene);
 	~MonsterBase();
 };
 struct Monster1 : MonsterBase
 {
-	Monster1(SceneBase* scene, char const* luacode);
+	Monster1(char const* luacode);
 };
 struct Monster2 : MonsterBase
 {
-	Monster2(SceneBase* scene);
+	Monster2();
 	virtual int Update() override;
 };

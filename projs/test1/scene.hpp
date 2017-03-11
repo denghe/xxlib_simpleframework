@@ -1,5 +1,3 @@
-#include "xx_scene.hpp"
-
 void Scene::LoadLuaFile(char const* fn)
 {
 	assert(fn);
@@ -13,13 +11,11 @@ void Scene::LoadLuaFile(char const* fn)
 
 Scene::Scene()
 {
-	decltype(auto) mp = mempool<MP>();
-
-	mp.CreateTo(monsters);
-	mp.CreateTo(err);
+	this->CreateTo(monsters);
+	this->CreateTo(err);
 	// more...
 
-	L = xx::Lua_NewState(mp);
+	L = xx::Lua_NewState(*this);
 
 	// LuaBind: Scene
 	xx::Lua_PushMetatable<MP, Scene>(L);
@@ -36,7 +32,7 @@ Scene::Scene()
 	// more bind here...
 
 	// 由根至叶, 逐级复制所有元素到下一级( 不覆盖 )
-	xx::Lua_CloneParentMetatables(mp, L);
+	xx::Lua_CloneParentMetatables(*this, L);
 
 	// set global scene
 	xx::Lua_SetGlobal<MP>(L, "scene", this);
@@ -55,11 +51,11 @@ Scene::Scene()
 
 xx::MPtr<Monster1> Scene::CreateMonster1(char const* luacode)
 {
-	return mempool<MP>().Create<Monster1>(this, luacode);
+	return this->Create<Monster1>(luacode);
 }
 xx::MPtr<Monster2> Scene::CreateMonster2()
 {
-	return mempool<MP>().Create<Monster2>(this);
+	return this->Create<Monster2>();
 }
 
 Scene::~Scene()

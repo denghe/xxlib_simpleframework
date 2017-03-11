@@ -1,6 +1,6 @@
 lua_State* FSMLua::GetL() const
 {
-	return ((Scene*)this->owner->sceneBase)->L;
+	return this->scene().L;
 }
 template<typename T>
 FSMLua::FSMLua(T* owner, char const* fn) : FSMBase(owner)

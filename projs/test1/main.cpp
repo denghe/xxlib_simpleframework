@@ -7,7 +7,11 @@
 #pragma comment(lib, "winmm.lib") 
 #endif
 
-#include "scene.h"
+// 用宏向 xx_scene.h , xx_scene.hpp 传递类型名
+#define SCENE_TYPE_NAME Scene
+#define MEMPOOL_TYPE_NAME MP
+
+#include "xx_scene.h"
 #include "fsmlua.h"
 #include "monster.h"
 
@@ -18,13 +22,14 @@ typedef xx::MemPool<
 	MonsterBase,				// : SceneObjBase
 	Scene,						// : SceneBase
 	SceneObjBase,
-	SceneBase,
 	FSMLua,
 	xx::List<FSMBase*>,
 	xx::List<MonsterBase*>,
 	xx::String
 > MP;
+#include "scene.h"				// scene.h 就是放在 MP 的后面以便继承 MP
 
+#include "xx_scene.hpp"
 #include "scene.hpp"
 #include "fsmlua.hpp"
 #include "monster.hpp"
@@ -32,20 +37,18 @@ typedef xx::MemPool<
 
 int main()
 {
-	MP mp;
-	auto scene = mp.Create<Scene>();
-	if (auto rtv = luaL_dofile(scene->L, "init.lua"))
+	Scene scene;
+	if (auto rtv = luaL_dofile(scene.L, "init.lua"))
 	{
-		std::cout << "err code = " << rtv << ", err msg = " << scene->err->C_str() << std::endl;
+		std::cout << "err code = " << rtv << ", err msg = " << scene.err->C_str() << std::endl;
 		system("pause");
 	}
 
-	scene->LoadLuaFile("scene.lua");
-	if (auto rtv = scene->Run())
+	scene.LoadLuaFile("scene.lua");
+	if (auto rtv = scene.Run())
 	{
-		std::cout << "err code = " << rtv << ", err msg = " << scene->err->C_str() << std::endl;
+		std::cout << "err code = " << rtv << ", err msg = " << scene.err->C_str() << std::endl;
 		system("pause");
 	}
-	mp.Release(scene);
 	return 0;
 }

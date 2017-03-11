@@ -45,10 +45,15 @@ namespace xx
 		inline uint16_t& tsFlags() { return memHeader().tsFlags; }
 		inline uint16_t const& tsFlags() const { return memHeader().tsFlags; }
 
-		inline MemPoolBase const& mempoolbase() const { return *(memHeader().mempoolbase); }
+		inline MemPoolBase& mempoolbase() const { return *(memHeader().mempoolbase); }
 		inline MemPoolBase& mempoolbase() { return *(memHeader().mempoolbase); }
 
 		template<typename T> T& mempool()
+		{
+			static_assert(std::is_base_of<MemPoolBase, T>::value, "the T must be a MemPool<...>");
+			return *(T*)(memHeader().mempoolbase);
+		}
+		template<typename T> T& mempool() const
 		{
 			static_assert(std::is_base_of<MemPoolBase, T>::value, "the T must be a MemPool<...>");
 			return *(T*)(memHeader().mempoolbase);

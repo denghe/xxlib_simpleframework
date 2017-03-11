@@ -4,7 +4,6 @@ MP 定义中须含有下面这些类型
 
 typedef xx::MemPool<
 .............
-SceneBase,
 SceneObjBase,
 FSMBase,
 xx::List<FSMBase*>, 
@@ -13,15 +12,22 @@ xx::List<SceneObjBase*, true>
 
 */
 
+#ifndef SCENE_TYPE_NAME
+#define SCENE_TYPE_NAME Scene
+#endif
+
+struct SCENE_TYPE_NAME;
+struct SceneObjBase;
+
 // 带 Update 虚函数的类的基类
 struct UpdateBase : xx::MPObject
 {
+	SCENE_TYPE_NAME& scene();
+	SCENE_TYPE_NAME& scene() const;
 	// 返回非 0 表示自杀. 正数通常是正常结束生命, 负数通常表示出错
 	virtual int Update() = 0;
 };
 
-struct SceneBase;
-struct SceneObjBase;
 
 // 状态机基类. 只能用 SceneObjBase 的函数来创建. 不可以直接 Release. 自杀是用 PopFSM 或 Update 返回非 0
 struct FSMBase : UpdateBase
@@ -30,12 +36,9 @@ struct FSMBase : UpdateBase
 	FSMBase(SceneObjBase* owner) : owner(owner) {}
 };
 
-// 场景的子的基类( 场景对象 ). 只能用 SceneBase 的函数来创建.
+// 场景的子的基类( 场景对象 )
 struct SceneObjBase : UpdateBase
 {
-	// 指向场景容器
-	SceneBase* sceneBase;
-
 	// 位于 scene 中某容器中的下标 ( List / Links / Dict )
 	uint32_t sceneContainerIndex = -1;
 
@@ -44,7 +47,7 @@ struct SceneObjBase : UpdateBase
 	FSMBase* currFSM = nullptr;
 	FSMBase* deadFSM = nullptr;		// 延迟杀掉
 
-	SceneObjBase(SceneBase* sceneBase);
+	SceneObjBase();
 	~SceneObjBase();
 
 	template<typename T, typename ...Args>
@@ -53,9 +56,4 @@ struct SceneObjBase : UpdateBase
 	void PushFSM(FSMBase* fsm);
 	void PopFSM();
 	virtual int Update() override;
-};
-
-// 场景基类( 整合了内存池, 对象容器, LUA State )
-struct SceneBase : xx::MPObject
-{
 };
