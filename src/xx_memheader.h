@@ -38,4 +38,34 @@ namespace xx
 		// 当前可用于 ToString 防重入( 或是存空格缩进值 )
 		uint16_t tsFlags = 0;
 	};
+
+	// 为 MPObject 附加内存头以便提供值类型的物理结构( 这种模式下 mh 除了填充内存池指针以下, 不再填充版本号, 类型等信息 )
+	template<typename T>
+	struct MPStruct
+	{
+		MemHeader_MPObject mh;
+		T instance;
+		template<typename ...Args>
+		MPStruct(MemPoolBase& mempoolbase, Args&& ... args)
+			: mh(mempoolbase)
+			, instance(std::forward<Args>(args)...)
+		{
+		}
+		T const* const& operator->() const
+		{
+			return &instance;
+		}
+		T* const& operator->()
+		{
+			return &instance;
+		}
+		T& operator*()
+		{
+			return instance;
+		}
+		T const& operator*() const
+		{
+			return instance;
+		}
+	};
 }

@@ -44,18 +44,25 @@ typedef xx::MemPool<
 
 int main()
 {
-	Scene scene;
-	if (auto rtv = luaL_dofile(scene.L, "init.lua"))
-	{
-		std::cout << "err code = " << rtv << ", err msg = " << scene.err.C_str() << std::endl;
-		system("pause");
-	}
+	xx::MemPoolBase mp;
+	xx::MPStruct<xx::List<int>> list(mp);
+	list->AddMulti(1, 2, 3);
+	for (auto& i : *list) std::cout << i << std::endl;
 
-	scene.LoadLuaFile("scene.lua");
-	if (auto rtv = scene.Run())
-	{
-		std::cout << "err code = " << rtv << ", err msg = " << scene.err.C_str() << std::endl;
-		system("pause");
-	}
+	return 0;
+
+	//Scene scene;
+	//if (auto rtv = luaL_dofile(scene.L, "init.lua"))
+	//{
+	//	std::cout << "err code = " << rtv << ", err msg = " << scene.err.C_str() << std::endl;
+	//	system("pause");
+	//}
+
+	//scene.LoadLuaFile("scene.lua");
+	//if (auto rtv = scene.Run())
+	//{
+	//	std::cout << "err code = " << rtv << ", err msg = " << scene.err.C_str() << std::endl;
+	//	system("pause");
+	//}
 	return 0;
 }

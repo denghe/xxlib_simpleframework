@@ -190,9 +190,6 @@ namespace xx
 		: mempoolbase(&mempoolbase)
 	{
 		this->versionNumber = 0;
-		this->refCount = 0;
-		this->typeId = 0;
-		this->tsFlags = 0;
 	}
 
 }
