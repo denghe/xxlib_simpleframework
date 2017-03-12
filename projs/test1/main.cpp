@@ -42,13 +42,40 @@ typedef xx::MemPool<
 // impls
 /*********************************************************************************/
 
+#include <vector>
 int main()
 {
 	xx::MemPoolBase mp;
-	xx::MPStruct<xx::List<int>> list(mp);
-	list->AddMulti(1, 2, 3);
-	for (auto& i : *list) std::cout << i << std::endl;
 
+	{
+		xx::Stopwatch sw;
+		size_t counter = 0;
+		for (int j = 0; j < 9999999; ++j)
+		{
+			std::vector<int> list;
+			for (int i = 0; i < 99; ++i)
+			{
+				list.push_back(i);
+			}
+			for (auto& i : list) counter += i;
+		}
+		std::cout << counter << ", ms = " << sw() << std::endl;
+	}
+
+	{
+		xx::Stopwatch sw;
+		size_t counter = 0;
+		for (int j = 0; j < 9999999; ++j)
+		{
+			xx::List_v<int> list(mp);
+			for (int i = 0; i < 99; ++i)
+			{
+				list->Add(i);
+			}
+			for (auto& i : *list) counter += i;
+		}
+		std::cout << counter << ", ms = " << sw() << std::endl;
+	}
 	return 0;
 
 	//Scene scene;

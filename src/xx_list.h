@@ -490,4 +490,12 @@ namespace xx
 
 	};
 
+
+	/*************************************************************************/
+	// 值类型使用形态包装
+	/*************************************************************************/
+
+	template<typename T, bool autoRelease = false, uint32_t reservedHeaderLen = 0>
+	using List_v = MPStruct<List<T, autoRelease, reservedHeaderLen>>;
+
 }

@@ -419,4 +419,11 @@ namespace xx
 
 	};
 
+
+	/*************************************************************************/
+	// 实现值类型使用类型声明
+	/*************************************************************************/
+
+	template <typename TK, typename TV, bool autoReleaseKey = false, bool autoReleaseValue = false>
+	using Dict_v = MPStruct<Dict<TK, TV, autoReleaseKey, autoReleaseValue>>;
 }

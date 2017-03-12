@@ -46,9 +46,15 @@ namespace xx
 			}
 		}
 
+
+
+
 		/***********************************************************************************/
 		// 内存分配( malloc / free 系列. 主要供一些容器类的代码使用 )
 		/***********************************************************************************/
+
+		// todo: 基于值类型使用方式, 补充各式右值移动代码? 针对 xxxxx_v (特别是 String_v ) 做 dict / tostring 之类适配? 右值构造复制函数?
+
 
 		// 该操作将会在头部区域填充 MemHeader_VersionNumber 并跳过, 返回偏移后的指针
 		// 最大化内存利用率的 size 计算: Round2n(capacity * sizeof(T) + sizeof(MemHeader_VersionNumber)) - sizeof(MemHeader_VersionNumber)
