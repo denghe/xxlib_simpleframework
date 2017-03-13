@@ -1,5 +1,5 @@
 #pragma once
-//#include "xx_scene.h"
+#include "xx_mpobject.h"
 #include <limits>
 #include <cmath>	// abs
 #include <cassert>
@@ -214,4 +214,12 @@ namespace xx
 			return minValue + (maxValue - minValue) * NextDouble();
 		}
 	};
+
+
+
+	/*************************************************************************/
+	// 实现值类型使用类型声明
+	/*************************************************************************/
+
+	using Random_v = MPStruct<Random>;
 }

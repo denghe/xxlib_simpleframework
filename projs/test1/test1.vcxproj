@@ -176,6 +176,7 @@
     <ClInclude Include="..\..\snippets\lua_mempool.h" />
     <ClInclude Include="..\..\src\ajson.hpp" />
     <ClInclude Include="..\..\src\xx_cursorpool.h" />
+    <ClInclude Include="..\..\src\xx_random.h" />
     <ClInclude Include="..\..\src\xx_timer.h" />
     <ClInclude Include="..\..\src\xx_charsutils.h" />
     <ClInclude Include="..\..\src\xx_defines.h" />

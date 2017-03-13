@@ -168,12 +168,6 @@ namespace ajson
     bool neg = false;
   };
 
-#ifdef _MSC_VER
-#define NOEXCEPT
-#else
-#define NOEXCEPT noexcept
-#endif
-
   class exception : public std::exception
   {
     std::string msg_;
@@ -181,7 +175,7 @@ namespace ajson
     exception(std::string const& msg)
       :msg_(msg)
     {}
-    char const * what() const NOEXCEPT{ return msg_.c_str(); }
+    char const * what() const noexcept{ return msg_.c_str(); }
   };
 
   class reader

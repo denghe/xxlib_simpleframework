@@ -57,11 +57,11 @@ namespace xx
 			, instance(std::forward<Args>(args)...)
 		{
 		}
-		T const* const& operator->() const
+		T const* operator->() const
 		{
 			return &instance;
 		}
-		T* const& operator->()
+		T* operator->()
 		{
 			return &instance;
 		}
