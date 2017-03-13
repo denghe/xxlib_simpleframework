@@ -260,7 +260,7 @@ namespace xx
 			}
 			size_t len;
 			auto s = lua_tolstring(L, idx, &len);
-			v = Lua_GetMemPool<MP>(L).Create<String>(s, (uint32_t)len);
+			Lua_GetMemPool<MP>(L).CreateTo(v, s, (uint32_t)len);
 		}
 		static inline bool TryTo(lua_State* L, String*& v, int idx)
 		{
@@ -343,7 +343,7 @@ namespace xx
 			auto ud = (Lua_UD<T>*)lua_newuserdata(L, sizeof(Lua_UD<T>));	// ud
 			Lua_PushMetatable<MP, TT>(L);									// ud, mt
 			lua_setmetatable(L, -2);										// ud
-			if (std::is_base_of_v<MPObject, TT> && v)
+			if (std::is_base_of<MPObject, TT>::value && v)
 			{
 				ud->typeIndex = (decltype(ud->typeIndex))((MPObject*)v)->typeId();
 			}
@@ -421,19 +421,6 @@ namespace xx
 				return true;
 			}
 		}
-		static inline void SetGlobal(lua_State* L, lua_Integer const& key, T const& v)
-		{
-			auto rtv = lua_getglobal(L, Lua_Container);						// objs
-			assert(rtv == LUA_TTABLE);
-			Push(L, v);														// objs, ud
-			lua_rawseti(L, -2, key);										// objs
-			lua_pop(L, 1);													//
-		}
-		static inline void SetGlobal(lua_State* L, char const* const& key, T const& v)
-		{
-			Push(L, v);														// ud
-			lua_setglobal(L, key);											//
-		}
 	};
 
 	// MPtr<T>
@@ -447,7 +434,7 @@ namespace xx
 			auto ud = (Lua_UD<T>*)lua_newuserdata(L, sizeof(Lua_UD<T>));	// ud
 			Lua_PushMetatable<MP, TT>(L);									// ud, mt
 			lua_setmetatable(L, -2);										// ud
-			if (std::is_base_of_v<MPObject, TT> && v)
+			if (std::is_base_of<MPObject, TT>::value && v)
 			{
 				ud->typeIndex = (decltype(ud->typeIndex))((MPObject*)v.pointer)->typeId();
 			}

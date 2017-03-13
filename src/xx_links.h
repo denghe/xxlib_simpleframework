@@ -8,7 +8,7 @@ namespace xx
 	template <typename T, bool autoRelease = false>
 	struct Links : public MPObject
 	{
-		static_assert(!autoRelease || (std::is_pointer_v<T> && IsMPObject_v<T>), "autoRelease == true cond is T* where T : MPObject");
+		static_assert(!autoRelease || (std::is_pointer<T>::value && IsMPObject_v<T>), "autoRelease == true cond is T* where T : MPObject");
 
 		typedef T ValueType;
 		struct Node
@@ -199,7 +199,7 @@ namespace xx
 			auto nodesByteLen = Round2n(capacity * sizeof(Node) + sizeof(MemHeader_VersionNumber)) - sizeof(MemHeader_VersionNumber);	// ¹æ±ÜÐ´ versionNumber µÄÇøÓò
 			nodesLen = (int)(nodesByteLen / sizeof(Node));
 
-			if (std::is_trivial_<T> || MemmoveSupport_v<T>)
+			if (std::is_trivial<T>::value || MemmoveSupport_v<T>)
 			{
 				nodes = (Node*)mempoolbase().Realloc(nodes, nodesByteLen);
 			}

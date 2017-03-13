@@ -13,7 +13,7 @@ namespace xx
 			struct
 			{
 				uint8_t vnArea[7];
-				const uint8_t mpIndex;		// 分配 / 回收时的内存池数组 下标( 指向 versionNumber 的最高位字节 )
+				uint8_t mpIndex;		// 分配 / 回收时的内存池数组 下标( 指向 versionNumber 的最高位字节 )
 			};
 		};
 	};

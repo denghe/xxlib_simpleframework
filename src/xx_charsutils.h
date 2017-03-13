@@ -8,6 +8,8 @@
 #include <cstdlib>
 #include <type_traits>
 #include <vector>
+#include <array>
+
 namespace xx
 {
 	/**************************************************************************************************/
@@ -371,12 +373,12 @@ namespace xx
 	/**************************************************************************************************/
 
 	template<typename T>
-	uint32_t StrCalc(std::enable_if_t<std::is_enum_v<T>, T> const &in)
+	uint32_t StrCalc(std::enable_if_t<std::is_enum<T>::value, T> const &in)
 	{
 		return StrCalc((std::underlying_type_t<T> const&)in);
 	}
 	template<typename T>
-	uint32_t StrWriteTo(char *dstBuf, std::enable_if_t<std::is_enum_v<T>, T> const &in)
+	uint32_t StrWriteTo(char *dstBuf, std::enable_if_t<std::is_enum<T>::value, T> const &in)
 	{
 		return StrWriteTo(dstBuf, (std::underlying_type_t<T> const&)in);
 	}
