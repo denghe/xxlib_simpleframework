@@ -42,54 +42,20 @@ typedef xx::MemPool<
 // impls
 /*********************************************************************************/
 
-#include <vector>
 int main()
 {
-	xx::MemPoolBase mp;
-
+	Scene scene;
+	if (auto rtv = luaL_dofile(scene.L, "init.lua"))
 	{
-		xx::Stopwatch sw;
-		size_t counter = 0;
-		for (int j = 0; j < 9999999; ++j)
-		{
-			std::vector<int> list;
-			for (int i = 0; i < 99; ++i)
-			{
-				list.push_back(i);
-			}
-			for (auto& i : list) counter += i;
-		}
-		std::cout << counter << ", ms = " << sw() << std::endl;
+		std::cout << "err code = " << rtv << ", err msg = " << scene.err.C_str() << std::endl;
+		system("pause");
 	}
 
+	scene.LoadLuaFile("scene.lua");
+	if (auto rtv = scene.Run())
 	{
-		xx::Stopwatch sw;
-		size_t counter = 0;
-		for (int j = 0; j < 9999999; ++j)
-		{
-			xx::List_v<int> list(mp);
-			for (int i = 0; i < 99; ++i)
-			{
-				list->Add(i);
-			}
-			for (auto& i : *list) counter += i;
-		}
-		std::cout << counter << ", ms = " << sw() << std::endl;
+		std::cout << "err code = " << rtv << ", err msg = " << scene.err.C_str() << std::endl;
+		system("pause");
 	}
-	return 0;
-
-	//Scene scene;
-	//if (auto rtv = luaL_dofile(scene.L, "init.lua"))
-	//{
-	//	std::cout << "err code = " << rtv << ", err msg = " << scene.err.C_str() << std::endl;
-	//	system("pause");
-	//}
-
-	//scene.LoadLuaFile("scene.lua");
-	//if (auto rtv = scene.Run())
-	//{
-	//	std::cout << "err code = " << rtv << ", err msg = " << scene.err.C_str() << std::endl;
-	//	system("pause");
-	//}
 	return 0;
 }

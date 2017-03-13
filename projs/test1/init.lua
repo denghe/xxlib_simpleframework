@@ -7,13 +7,8 @@ end
 print( os.clock() - bt )
 -- ]]
 
-local m = scene:CreateMonster2()
-local mt = getmetatable(m)
-for k, v in pairs(mt) do      
-    print( k, v )
-end 
-
-yield = coroutine.yield
+print( "init.lua" )
+local yield = coroutine.yield
 
 function Sleep( ticks, cond )
 	for i = 1, ticks do

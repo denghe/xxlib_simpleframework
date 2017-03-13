@@ -7,6 +7,8 @@ void Scene::LoadLuaFile(char const* fn)
 
 	// 加载协程 lua 代码
 	luaL_loadfile(co, fn);
+	xx::Lua<MP, Scene*>::Push(co, this);
+	xx::Lua_Resume(co, &err, 1);
 }
 
 Scene::Scene()
