@@ -80,6 +80,8 @@
     <ClInclude Include="..\..\src\xx_random.h">
       <Filter>xx</Filter>
     </ClInclude>
+    <ClInclude Include="character.h" />
+    <ClInclude Include="character.hpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="bak1.txt">

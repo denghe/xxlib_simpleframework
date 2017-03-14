@@ -9,6 +9,7 @@
 #include "bases.h"
 #include "fsmlua.h"
 #include "monster.h"
+#include "character.h"
 // 类型要按子--父倒排( 会被 MP 直接创建的或是要做 luabind 的就需要放入这个声明队列 )
 typedef xx::MemPool<
 	Monster1,					// : MonsterBase
@@ -36,6 +37,7 @@ typedef xx::MemPool<
 #include "scene.hpp"
 #include "fsmlua.hpp"
 #include "monster.hpp"
+#include "character.hpp"
 
 
 /*********************************************************************************/
@@ -47,15 +49,15 @@ int main()
 	Scene scene;
 	if (auto rtv = luaL_dofile(scene.L, "init.lua"))
 	{
-		std::cout << "err code = " << rtv << ", err msg = " << scene.err.C_str() << std::endl;
-		system("pause");
+		std::cout << "err code = " << rtv << ", err msg = " << lua_tostring(scene.L, -1) << std::endl;
+		return 0;
 	}
 
 	scene.LoadLuaFile("scene.lua");
 	if (auto rtv = scene.Run())
 	{
 		std::cout << "err code = " << rtv << ", err msg = " << scene.err.C_str() << std::endl;
-		system("pause");
+		return 0;
 	}
 	return 0;
 }

@@ -193,6 +193,8 @@
     <ClInclude Include="..\..\src\xx_string.h" />
     <ClInclude Include="bases.h" />
     <ClInclude Include="bases.hpp" />
+    <ClInclude Include="character.h" />
+    <ClInclude Include="character.hpp" />
     <ClInclude Include="fsmlua.h" />
     <ClInclude Include="fsmlua.hpp" />
     <ClInclude Include="monster.h" />
