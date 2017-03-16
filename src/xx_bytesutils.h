@@ -139,7 +139,11 @@ namespace xx
 	// 写入长度大致预估函数( 声明和实现 )
 	/**************************************************************************************************/
 
-	template<typename T> uint32_t BBCalc(T const &in);
+	template<typename T> uint32_t BBCalc(T const &in)
+	{
+		static_assert(std::is_enum<T>::value);
+		return BBCalc((std::underlying_type_t<T> const&)in);
+	}
 	template<> inline uint32_t BBCalc(bool     const &in) { return 1; }
 	template<> inline uint32_t BBCalc(char     const &in) { return 1; }
 	template<> inline uint32_t BBCalc(int8_t   const &in) { return 1; }
@@ -158,7 +162,11 @@ namespace xx
 	// 写入函数( 声明 )
 	/**************************************************************************************************/
 
-	template<typename T> uint32_t BBWriteTo(char *dstBuf, T const &in);
+	template<typename T> uint32_t BBWriteTo(char *dstBuf, T const &in)
+	{
+		static_assert(std::is_enum<T>::value);
+		return BBWriteTo(dstBuf, (std::underlying_type_t<T> const&)in);
+	}
 	template<> uint32_t BBWriteTo(char *dstBuf, bool     const &in);
 	template<> uint32_t BBWriteTo(char *dstBuf, char     const &in);
 	template<> uint32_t BBWriteTo(char *dstBuf, int8_t   const &in);
@@ -177,7 +185,11 @@ namespace xx
 	// 读取函数( 声明 )
 	/**************************************************************************************************/
 
-	template<typename T> int BBReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, T &out);
+	template<typename T> int BBReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, T &out)
+	{
+		static_assert(std::is_enum<T>::value);
+		return BBReadFrom(srcBuf, dataLen, offset, (std::underlying_type_t<T>&)out);
+	}
 	template<> int BBReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, bool     &out);
 	template<> int BBReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, char     &out);
 	template<> int BBReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, int8_t   &out);
@@ -340,30 +352,6 @@ namespace xx
 	}
 
 
-
-	/**************************************************************************************************/
-	// 枚举支持
-	/**************************************************************************************************/
-
-	template<typename T>
-	uint32_t BBCalc(std::enable_if_t<std::is_enum<T>::value, T> const &in)
-	{
-		return BBCalc((std::underlying_type_t<T> const&)in);
-	}
-	template<typename T>
-	uint32_t BBWriteTo(char *dstBuf, std::enable_if_t<std::is_enum<T>::value, T> const &in)
-	{
-		return BBWriteTo(dstBuf, (std::underlying_type_t<T> const&)in);
-	}
-	template<typename T>
-	int BBReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, std::enable_if_t<std::is_enum<T>::value, T> &out)
-	{
-		return BBReadFrom(srcBuf, dataLen, offset, (std::underlying_type_t<T>&)out);
-	}
-
-
-	
-	
 	/**************************************************************************************************/
 	// 变参模板支持
 	/**************************************************************************************************/
@@ -386,11 +374,11 @@ namespace xx
 		if (rtv) return rtv;
 		return BBReadFrom(srcBuf, dataLen, offset, outs...);
 	}
-	
-	
-	
-	
-	
+
+
+
+
+
 	/**************************************************************************************************/
 	// 定长数组支持
 	/**************************************************************************************************/

@@ -5,81 +5,216 @@
 
 typedef xx::MemPool<> MP;
 
-
-// 序列化 Key
-int KeyToBBuffer(xx::BBuffer* bb, lua_State* L, int idx)
+// 序列化 lua 值支持的数据类型
+enum class LuaTypes : uint8_t
 {
-	if (lua_isinteger(L, idx))
+	Nil, True, False, Integer, Double, String, Bytes, Table
+};
+
+// 序列化 idx 处的 lua 值( 针对 String / Userdata / Table, 用 pd 来去重 )( idx 须为绝对值 ). 返回非 0 就是出错. 遇到了不能处理的数据类型.
+int Lua_ToBBuffer(xx::Dict<void*, uint32_t>& pd, xx::BBuffer& bb, lua_State* const& L, int idx)
+{
+	assert(idx > 0);
+	switch (auto t = lua_type(L, idx))
 	{
-		bb->Write(lua_tointeger(L, idx));
+	case LUA_TNIL:
+		bb.Write(LuaTypes::Nil);
 		return 0;
-	}
-	else if (lua_isstring(L, idx))
+
+	case LUA_TBOOLEAN:
+		bb.Write(lua_toboolean(L, idx) ? LuaTypes::True : LuaTypes::False);
+		return 0;
+
+	case LUA_TNUMBER:
+		if (lua_isinteger(L, idx)) bb.Write(LuaTypes::Integer, lua_tointeger(L, idx));
+		else bb.Write(LuaTypes::Double, lua_tonumber(L, idx));
+		return 0;
+
+	case LUA_TSTRING:
 	{
+		bb.Write(LuaTypes::String);
+
 		size_t len;
 		auto ptr = lua_tolstring(L, idx, &len);
-		bb->WriteBuf(ptr, (uint32_t)len);
+		auto rtv = pd.Add((void*)ptr, bb.dataLen);
+		bb.Write(pd.ValueAt(rtv.index));
+		if (!rtv.success) return 0;
+
+		bb.Write((uint32_t)len);
+		bb.WriteBuf(ptr, (uint32_t)len);
 		return 0;
 	}
-	else return -1;
-}
-// 序列化 Value
-int ValueToBBuffer(xx::BBuffer* bb, lua_State* L, int idx)
-{
-	if (lua_istable(L, idx)) return TableToBBuffer(bb, L, idx);
-	else return KeyToBBuffer(bb, L, idx);
+	case LUA_TUSERDATA:
+	{
+		bb.Write(LuaTypes::Bytes);
+
+		auto ptr = lua_touserdata(L, idx);
+		auto rtv = pd.Add((void*)ptr, bb.dataLen);
+		bb.Write(pd.ValueAt(rtv.index));
+		if (!rtv.success) return 0;
+
+		auto len = (uint32_t)lua_rawlen(L, idx);
+		bb.Write(len);
+		bb.WriteBuf((char*)ptr, len);
+		return 0;
+	}
+	case LUA_TTABLE:
+	{
+		bb.Write(LuaTypes::Table);
+
+		auto ptr = lua_topointer(L, idx);
+		auto rtv = pd.Add((void*)ptr, bb.dataLen);
+		bb.Write(pd.ValueAt(rtv.index));
+		if (!rtv.success) return 0;
+
+		lua_pushnil(L);								// ... t, nil
+		while (lua_next(L, idx) != 0)				// ... t, k, v
+		{
+			if (auto r = Lua_ToBBuffer(pd, bb, L, idx + 1)) return r;
+			if (auto r = Lua_ToBBuffer(pd, bb, L, idx + 2)) return r;
+
+			lua_pop(L, 1);							// ... t, k
+		}											// ... t
+		return 0;
+	}
+	default:
+		return t;
+	}
 }
 
-// 序列化表
-int TableToBBuffer(xx::BBuffer* bb, lua_State* L, int idx)
+// 反序列化并 push 1 个 lua 值( 通过 bb 填充, 遇到 String / Userdata / Table 就通过 pd 去查 idx ). 返回非 0 就是出错. 
+int Lua_PushFromBBuffer(xx::Dict<uint32_t, std::pair<int, LuaTypes>>& pd, xx::BBuffer& bb, lua_State* const& L)
 {
-	assert(lua_istable(L, -1));							// t
-	lua_pushnil(L);										// t, nil
-	while (lua_next(L, -2) != 0)						// t, k, v
+	// get typeid
+	LuaTypes lt;
+	if (auto rtv = bb.Read(lt)) return rtv;
+
+	switch (lt)
 	{
-		if (auto rtv = KeyToBBuffer(bb, L, idx)) return rtv;
-		if (auto rtv = ValueToBBuffer(bb, L, idx)) return rtv;
-		lua_pop(L, 1);									// t, k
-	}													// t
-	return 0;
+	case LuaTypes::Nil:
+		lua_pushnil(L);
+		return 0;
+	case LuaTypes::True:
+		lua_pushboolean(L, 1);
+		return 0;
+	case LuaTypes::False:
+		lua_pushboolean(L, 0);
+		return 0;
+	case LuaTypes::Integer:
+	{
+		lua_Integer i;
+		if (auto rtv = bb.Read(i)) return rtv;
+		lua_pushinteger(L, i);
+		return 0;
+	}
+	case LuaTypes::Double:
+	{
+		lua_Number d;
+		if (auto rtv = bb.Read(d)) return rtv;
+		lua_pushnumber(L, d);
+		return 0;
+	}
+	case LuaTypes::String:
+	{
+		uint32_t ptr_offset = 0, bb_offset_bak = bb.offset;
+		if (auto rtv = bb.Read(ptr_offset)) return rtv;
+		if (ptr_offset == bb_offset_bak)
+		{
+			if (!pd.Add(ptr_offset, std::make_pair(lua_gettop(L), lt)).success) return -1;
+			uint32_t len;
+			if (auto rtv = bb.Read(len)) return rtv;
+			if (len > bb.dataLen - bb.offset) return -2;
+			lua_pushlstring(L, bb.buf + bb.offset, len);
+			bb.offset += len;
+		}
+		else
+		{
+			std::pair<int, LuaTypes> v;
+			if (!pd.TryGetValue(ptr_offset, v)) return -3;
+			if (v.second != lt) return -4;
+			lua_pushvalue(L, v.first);
+		}
+	}
+	case LuaTypes::Bytes:
+	{
+		uint32_t ptr_offset = 0, bb_offset_bak = bb.offset;
+		if (auto rtv = bb.Read(ptr_offset)) return rtv;
+		if (ptr_offset == bb_offset_bak)
+		{
+			if (!pd.Add(ptr_offset, std::make_pair(lua_gettop(L), lt)).success) return -5;
+			uint32_t len;
+			if (auto rtv = bb.Read(len)) return rtv;
+			if (len > bb.dataLen - bb.offset) return -6;
+			auto ptr = lua_newuserdata(L, len);
+			memcpy(ptr, bb.buf + bb.offset, len);
+			bb.offset += len;
+		}
+		else
+		{
+			std::pair<int, LuaTypes> v;
+			if (!pd.TryGetValue(ptr_offset, v)) return -7;
+			if (v.second != lt) return -8;
+			lua_pushvalue(L, v.first);
+		}
+	}
+	case LuaTypes::Table:
+	{
+		uint32_t ptr_offset = 0, bb_offset_bak = bb.offset;
+		if (auto rtv = bb.Read(ptr_offset)) return rtv;
+		if (ptr_offset == bb_offset_bak)
+		{
+			if (!pd.Add(ptr_offset, std::make_pair(lua_gettop(L), lt)).success) return -9;
+			lua_newtable(L);
+			if (auto r = Lua_PushFromBBuffer(pd, bb, L)) return r;	// key
+			if (auto r = Lua_PushFromBBuffer(pd, bb, L)) return r;	// value
+			lua_rawset(L, -3);
+
+			// todo: 判断 table 成员个数?
+		}
+		else
+		{
+			std::pair<int, LuaTypes> v;
+			if (!pd.TryGetValue(ptr_offset, v)) return -10;
+			if (v.second != lt) return -11;
+			lua_pushvalue(L, v.first);
+		}
+	}
+	default:
+		return -12;
+	}
 }
 
 int main()
 {
 	MP mp;
-	//xx::BBuffer_v bb(mp);
-	//xx::String_v s(mp);
-	//bb->Write(1, 2, 3, 4, 5);
-	//bb->ToString(*s);
-	//std::cout << s->C_str() << std::endl;
 
 	auto L = xx::Lua_NewState(mp);
 	auto rtv = luaL_dostring(L, R"##(
 t = {}
 t[1] = "asdfqwer"
 t.i = 123
-t.t = t
+t.s = t[1]
+t.t = { t, 1,2, t[1] }
+t.t[t] = t
+t.t.s = t.s
 
 )##");
 	assert(!rtv);
-	// todo: xx::Lua_PushTable( BBuffer  , Lua_ToTable( BBuffer
 
+	lua_getglobal(L, "t");
+	assert(lua_type(L, 1) == LUA_TTABLE);
 
+	xx::BBuffer_v bb(mp);
+	xx::Dict_v<void*, uint32_t> pd(mp);
+	Lua_ToBBuffer(*pd, *bb, L, 1);
+	pd->Clear();
 
-	//type = lua_type(L, -1);
-	//if (type != LUA_TTABLE)
-	//{
-	//	deser_data->error = err_unpack_table_ref_no_table;
-	//	deser_data->error_info = (short)index;
-	//}
-
-	//auto ptr = lua_topointer(L, -1);		
-	//lua_pushlstring(L, "t", 1);				// t, "t"
-	//lua_rawget(L, -2);						// t, t
-	//assert(ptr == lua_topointer(L, -1));
-
-
+	lua_pop(L, 1);
 	lua_close(L);
+
+	xx::String_v s(mp);
+	bb->ToString(*s);
+	std::cout << s->C_str() << std::endl;
 
 	return 0;
 }
