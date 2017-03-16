@@ -206,6 +206,7 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="bak1.txt" />
+    <Text Include="bak10.txt" />
     <Text Include="bak2.txt" />
     <Text Include="bak3.txt" />
     <Text Include="bak4.txt" />

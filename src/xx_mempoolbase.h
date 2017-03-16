@@ -4,6 +4,7 @@
 #include <array>
 #include <vector>
 #include <cstring>
+#include <allocators>
 
 namespace xx
 {
@@ -197,5 +198,86 @@ namespace xx
 	{
 		this->versionNumber = 0;
 	}
+
+
+
+
+
+	/***********************************************************************************/
+	// 用 MemPool 实现一个符合 stl 标准的 allocator
+	/***********************************************************************************/
+
+	/*
+	
+	xx::MemPoolAllocator<int> a(mp);
+	std::vector<int, decltype(a)> vec(a);
+
+
+struct LuaTable;
+typedef std::variant< int, std::string > LuaTable_KT;
+typedef std::variant< int, std::string, LuaTable, LuaTable* > LuaTable_VT;
+typedef xx::MemPoolAllocator<std::pair<LuaTable_KT, LuaTable_VT>> LuaTable_AT;
+typedef std::map<LuaTable_KT, LuaTable_VT, std::less<LuaTable_KT>, LuaTable_AT> LuaTable_BT;
+// typedef std::unordered_map<LuaTable_KT, LuaTable_VT, std::hash<LuaTable_KT>, std::equal_to<LuaTable_KT>, LuaTable_AT> LuaTable_BT;
+struct LuaTable : LuaTable_BT
+{
+	LuaTable(LuaTable_AT const& a) : LuaTable_BT(a) {}
+	LuaTable(LuaTable_AT && a) : LuaTable_BT(std::move(a)) {}
+};
+
+int main()
+{
+	xx::MemPoolBase mpb;
+	LuaTable t((typename LuaTable_AT)(mpb));
+	t["a"] = 1;
+	t[1] = "a";
+	t[2] = &t;
+	t["newtable"] = LuaTable(mpb);
+	std::get<LuaTable>(t["newtable"])[1] = 123;
+
+
+
+	*/
+
+	template <class T>
+	struct MemPoolAllocator : public std::allocator<T>
+	{
+		typedef std::allocator<T> base_type;
+
+		template<class Other>
+		struct rebind
+		{
+			typedef MemPoolAllocator<Other> other;
+		};
+
+		xx::MemPoolBase* mpb = nullptr;
+
+		MemPoolAllocator() = delete;
+		MemPoolAllocator(xx::MemPoolBase& mpb) : mpb(&mpb) {}
+		MemPoolAllocator(MemPoolAllocator<T> const& o) : mpb(o.mpb) {}
+		MemPoolAllocator(MemPoolAllocator<T> && o) : mpb(o.mpb) {}
+		MemPoolAllocator<T>& operator=(MemPoolAllocator<T> const& o) { mpb = o.mpb; return (*this); }
+		template<class O> MemPoolAllocator(MemPoolAllocator<O> const& o) : mpb(o.mpb) {}
+		template<class O> MemPoolAllocator<T>& operator=(MemPoolAllocator<O> const& o) { mpb = o.mpb; return (*this); }
+
+		size_type max_size() const
+		{
+			return static_cast<size_type>(-1) / sizeof(value_type);
+		}
+
+		pointer allocate(size_type count)
+		{
+			assert(mpb);
+			void* p = mpb->Alloc(count * sizeof(T));
+			if (!p) throw std::bad_alloc();
+			return static_cast<pointer>(p);
+		}
+
+		void deallocate(pointer ptr, size_type count)
+		{
+			assert(mpb);
+			mpb->Free(ptr);
+		}
+	};
 
 }

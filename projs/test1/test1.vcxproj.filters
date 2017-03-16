@@ -117,6 +117,9 @@
     <Text Include="bak9.txt">
       <Filter>bak</Filter>
     </Text>
+    <Text Include="bak10.txt">
+      <Filter>bak</Filter>
+    </Text>
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="..\..\src\xx.natvis">

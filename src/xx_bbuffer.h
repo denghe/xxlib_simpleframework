@@ -1,4 +1,6 @@
 #pragma once
+#include "xx_bytesutils.h"
+#include "xx_mempool.h"
 #include "xx_list.h"
 
 namespace xx
@@ -54,7 +56,7 @@ namespace xx
 		// 先简单来点
 		virtual void ToString(String &str) const override
 		{
-			str.Append("{ \"typeName\" : \"BBuffer\", \"typeId\" : ", typeId(), ", \"refCount\" : ", refCount(), ", \"versionNumber\" : ", pureVersionNumber(), ", \"len\" : ", dataLen, ", \"data\" : [ ");
+			str.Append("{ \"len\" : ", dataLen, ", \"data\" : [ ");
 			for (size_t i = 0; i < dataLen; i++)
 			{
 				str.Append((int)(uint8_t)buf[i], ", ");
@@ -64,5 +66,12 @@ namespace xx
 		}
 
 	};
+
+
+	/*************************************************************************/
+	// 实现值类型使用类型声明
+	/*************************************************************************/
+
+	using BBuffer_v = MPStruct<BBuffer>;
 
 }
