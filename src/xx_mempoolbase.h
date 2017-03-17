@@ -4,7 +4,7 @@
 #include <array>
 #include <vector>
 #include <cstring>
-#include <allocators>
+//#include <allocators>
 
 namespace xx
 {
@@ -239,45 +239,45 @@ int main()
 
 	*/
 
-	template <class T>
-	struct MemPoolAllocator : public std::allocator<T>
-	{
-		typedef std::allocator<T> base_type;
-
-		template<class Other>
-		struct rebind
-		{
-			typedef MemPoolAllocator<Other> other;
-		};
-
-		xx::MemPoolBase* mpb = nullptr;
-
-		MemPoolAllocator() = delete;
-		MemPoolAllocator(xx::MemPoolBase& mpb) : mpb(&mpb) {}
-		MemPoolAllocator(MemPoolAllocator<T> const& o) : mpb(o.mpb) {}
-		MemPoolAllocator(MemPoolAllocator<T> && o) : mpb(o.mpb) {}
-		MemPoolAllocator<T>& operator=(MemPoolAllocator<T> const& o) { mpb = o.mpb; return (*this); }
-		template<class O> MemPoolAllocator(MemPoolAllocator<O> const& o) : mpb(o.mpb) {}
-		template<class O> MemPoolAllocator<T>& operator=(MemPoolAllocator<O> const& o) { mpb = o.mpb; return (*this); }
-
-		size_type max_size() const
-		{
-			return static_cast<size_type>(-1) / sizeof(value_type);
-		}
-
-		pointer allocate(size_type count)
-		{
-			assert(mpb);
-			void* p = mpb->Alloc(count * sizeof(T));
-			if (!p) throw std::bad_alloc();
-			return static_cast<pointer>(p);
-		}
-
-		void deallocate(pointer ptr, size_type count)
-		{
-			assert(mpb);
-			mpb->Free(ptr);
-		}
-	};
+//	template <class T>
+//	struct MemPoolAllocator : public std::allocator<T>
+//	{
+//		typedef std::allocator<T> base_type;
+//
+//		template<class Other>
+//		struct rebind
+//		{
+//			typedef MemPoolAllocator<Other> other;
+//		};
+//
+//		xx::MemPoolBase* mpb = nullptr;
+//
+//		MemPoolAllocator() = delete;
+//		MemPoolAllocator(xx::MemPoolBase& mpb) : mpb(&mpb) {}
+//		MemPoolAllocator(MemPoolAllocator<T> const& o) : mpb(o.mpb) {}
+//		MemPoolAllocator(MemPoolAllocator<T> && o) : mpb(o.mpb) {}
+//		MemPoolAllocator<T>& operator=(MemPoolAllocator<T> const& o) { mpb = o.mpb; return (*this); }
+//		template<class O> MemPoolAllocator(MemPoolAllocator<O> const& o) : mpb(o.mpb) {}
+//		template<class O> MemPoolAllocator<T>& operator=(MemPoolAllocator<O> const& o) { mpb = o.mpb; return (*this); }
+//
+//		size_type max_size() const
+//		{
+//			return static_cast<size_type>(-1) / sizeof(value_type);
+//		}
+//
+//		pointer allocate(size_type count)
+//		{
+//			assert(mpb);
+//			void* p = mpb->Alloc(count * sizeof(T));
+//			if (!p) throw std::bad_alloc();
+//			return static_cast<pointer>(p);
+//		}
+//
+//		void deallocate(pointer ptr, size_type count)
+//		{
+//			assert(mpb);
+//			mpb->Free(ptr);
+//		}
+//	};
 
 }

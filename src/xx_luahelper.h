@@ -343,8 +343,7 @@ namespace xx
 	inline int Lua_Error(lua_State* L, char const* errmsg)
 	{
 		lua_pushstring(L, errmsg);
-		lua_error(L);
-		return 0;
+		return lua_error(L);
 	}
 
 
