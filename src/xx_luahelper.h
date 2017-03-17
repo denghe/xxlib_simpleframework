@@ -39,7 +39,7 @@ namespace xx
 	};
 
 	// 序列化 idx 处的 lua 值( 针对 String / Userdata / Table, 用 pd 来去重 )( idx 须为绝对值 ). 返回非 0 就是出错. 遇到了不能处理的数据类型.
-	int Lua_ToBBuffer(xx::Dict<void*, uint32_t>& pd, xx::BBuffer& bb, lua_State* const& L, int idx)
+	inline int Lua_ToBBuffer(xx::Dict<void*, uint32_t>& pd, xx::BBuffer& bb, lua_State* const& L, int idx)
 	{
 		assert(idx > 0);
 		switch (auto t = lua_type(L, idx))
@@ -110,7 +110,7 @@ namespace xx
 	}
 
 	// 反序列化并 push 1 个 lua 值( 通过 bb 填充, 遇到 String / Userdata / Table 就通过 pd 去查 idx ). 返回非 0 就是出错. 
-	int Lua_PushFromBBuffer(xx::Dict<uint32_t, std::pair<int, LuaTypes>>& pd, xx::BBuffer& bb, lua_State* const& L)
+	inline int Lua_PushFromBBuffer(xx::Dict<uint32_t, std::pair<int, LuaTypes>>& pd, xx::BBuffer& bb, lua_State* const& L)
 	{
 		// get typeid
 		LuaTypes lt;
