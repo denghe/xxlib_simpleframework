@@ -5,6 +5,8 @@
 #include <array>
 #include <initializer_list>
 #include "xx_mempool.h"
+#include "xx_dict.h"
+#include "xx_bbuffer.h"
 #include "lua.hpp"
 
 #include <iostream>
@@ -12,10 +14,7 @@
 namespace xx
 {
 	// todo: Lua_BindFunc 之非类成员函数版. 考虑为 Lua_SetGlobal 增加函数指针重载
-
 	// todo: 考虑一下结构体中的子结构体的 lua userdata 包装( 就是说 ud 的说明部分可能需要移到 uservalue 中去, 或是用 uservalue 来延长 container 的生命周期? )
-
-	// todo: 改进初始 metatable 创建, 默认可按类的父子关系, 自动设为继承关系
 
 
 	// 可放入 LUA 的数据类型有: float, double, int64, 各式 string, 以及 T, T*
@@ -24,6 +23,194 @@ namespace xx
 	// String* 空指针于 lua 中当前用 nil 来表达
 	// 不支持复杂结构体创建为 ud( 可以有构造函数但不要有析构函数. 最好就是个 pod )
 	// 只支持单继承
+
+
+
+
+
+	/************************************************************************************/
+	// lua 值 序列化 相关
+	/************************************************************************************/
+
+	// 序列化 lua 值支持的数据类型
+	enum class LuaTypes : uint8_t
+	{
+		Nil, True, False, Integer, Double, String, Bytes, Table
+	};
+
+	// 序列化 idx 处的 lua 值( 针对 String / Userdata / Table, 用 pd 来去重 )( idx 须为绝对值 ). 返回非 0 就是出错. 遇到了不能处理的数据类型.
+	int Lua_ToBBuffer(xx::Dict<void*, uint32_t>& pd, xx::BBuffer& bb, lua_State* const& L, int idx)
+	{
+		assert(idx > 0);
+		switch (auto t = lua_type(L, idx))
+		{
+		case LUA_TNIL:
+			bb.Write(LuaTypes::Nil);
+			return 0;
+
+		case LUA_TBOOLEAN:
+			bb.Write(lua_toboolean(L, idx) ? LuaTypes::True : LuaTypes::False);
+			return 0;
+
+		case LUA_TNUMBER:
+			if (lua_isinteger(L, idx)) bb.Write(LuaTypes::Integer, lua_tointeger(L, idx));
+			else bb.Write(LuaTypes::Double, lua_tonumber(L, idx));
+			return 0;
+
+		case LUA_TSTRING:
+		{
+			bb.Write(LuaTypes::String);
+
+			size_t len;
+			auto ptr = lua_tolstring(L, idx, &len);
+			auto rtv = pd.Add((void*)ptr, bb.dataLen);
+			bb.Write(pd.ValueAt(rtv.index));
+			if (!rtv.success) return 0;
+
+			bb.Write((uint32_t)len);
+			bb.WriteBuf(ptr, (uint32_t)len);
+			return 0;
+		}
+		case LUA_TUSERDATA:
+		{
+			bb.Write(LuaTypes::Bytes);
+
+			auto ptr = lua_touserdata(L, idx);
+			auto rtv = pd.Add((void*)ptr, bb.dataLen);
+			bb.Write(pd.ValueAt(rtv.index));
+			if (!rtv.success) return 0;
+
+			auto len = (uint32_t)lua_rawlen(L, idx);
+			bb.Write(len);
+			bb.WriteBuf((char*)ptr, len);
+			return 0;
+		}
+		case LUA_TTABLE:
+		{
+			bb.Write(LuaTypes::Table);
+
+			auto ptr = lua_topointer(L, idx);
+			auto rtv = pd.Add((void*)ptr, bb.dataLen);
+			bb.Write(pd.ValueAt(rtv.index));
+			if (!rtv.success) return 0;
+
+			lua_pushnil(L);								// ... t, nil
+			while (lua_next(L, idx) != 0)				// ... t, k, v
+			{
+				if (auto r = Lua_ToBBuffer(pd, bb, L, idx + 1)) return r;
+				if (auto r = Lua_ToBBuffer(pd, bb, L, idx + 2)) return r;
+
+				lua_pop(L, 1);							// ... t, k
+			}											// ... t
+			return 0;
+		}
+		default:
+			return t;
+		}
+	}
+
+	// 反序列化并 push 1 个 lua 值( 通过 bb 填充, 遇到 String / Userdata / Table 就通过 pd 去查 idx ). 返回非 0 就是出错. 
+	int Lua_PushFromBBuffer(xx::Dict<uint32_t, std::pair<int, LuaTypes>>& pd, xx::BBuffer& bb, lua_State* const& L)
+	{
+		// get typeid
+		LuaTypes lt;
+		if (auto rtv = bb.Read(lt)) return rtv;
+
+		switch (lt)
+		{
+		case LuaTypes::Nil:
+			lua_pushnil(L);
+			return 0;
+		case LuaTypes::True:
+			lua_pushboolean(L, 1);
+			return 0;
+		case LuaTypes::False:
+			lua_pushboolean(L, 0);
+			return 0;
+		case LuaTypes::Integer:
+		{
+			lua_Integer i;
+			if (auto rtv = bb.Read(i)) return rtv;
+			lua_pushinteger(L, i);
+			return 0;
+		}
+		case LuaTypes::Double:
+		{
+			lua_Number d;
+			if (auto rtv = bb.Read(d)) return rtv;
+			lua_pushnumber(L, d);
+			return 0;
+		}
+		case LuaTypes::String:
+		{
+			uint32_t ptr_offset = 0, bb_offset_bak = bb.offset;
+			if (auto rtv = bb.Read(ptr_offset)) return rtv;
+			if (ptr_offset == bb_offset_bak)
+			{
+				if (!pd.Add(ptr_offset, std::make_pair(lua_gettop(L), lt)).success) return -1;
+				uint32_t len;
+				if (auto rtv = bb.Read(len)) return rtv;
+				if (len > bb.dataLen - bb.offset) return -2;
+				lua_pushlstring(L, bb.buf + bb.offset, len);
+				bb.offset += len;
+			}
+			else
+			{
+				std::pair<int, LuaTypes> v;
+				if (!pd.TryGetValue(ptr_offset, v)) return -3;
+				if (v.second != lt) return -4;
+				lua_pushvalue(L, v.first);
+			}
+		}
+		case LuaTypes::Bytes:
+		{
+			uint32_t ptr_offset = 0, bb_offset_bak = bb.offset;
+			if (auto rtv = bb.Read(ptr_offset)) return rtv;
+			if (ptr_offset == bb_offset_bak)
+			{
+				if (!pd.Add(ptr_offset, std::make_pair(lua_gettop(L), lt)).success) return -5;
+				uint32_t len;
+				if (auto rtv = bb.Read(len)) return rtv;
+				if (len > bb.dataLen - bb.offset) return -6;
+				auto ptr = lua_newuserdata(L, len);
+				memcpy(ptr, bb.buf + bb.offset, len);
+				bb.offset += len;
+			}
+			else
+			{
+				std::pair<int, LuaTypes> v;
+				if (!pd.TryGetValue(ptr_offset, v)) return -7;
+				if (v.second != lt) return -8;
+				lua_pushvalue(L, v.first);
+			}
+		}
+		case LuaTypes::Table:
+		{
+			uint32_t ptr_offset = 0, bb_offset_bak = bb.offset;
+			if (auto rtv = bb.Read(ptr_offset)) return rtv;
+			if (ptr_offset == bb_offset_bak)
+			{
+				if (!pd.Add(ptr_offset, std::make_pair(lua_gettop(L), lt)).success) return -9;
+				lua_newtable(L);
+				if (auto r = Lua_PushFromBBuffer(pd, bb, L)) return r;	// key
+				if (auto r = Lua_PushFromBBuffer(pd, bb, L)) return r;	// value
+				lua_rawset(L, -3);
+
+				// todo: 判断 table 成员个数?
+			}
+			else
+			{
+				std::pair<int, LuaTypes> v;
+				if (!pd.TryGetValue(ptr_offset, v)) return -10;
+				if (v.second != lt) return -11;
+				lua_pushvalue(L, v.first);
+			}
+		}
+		default:
+			return -12;
+		}
+	}
+
 
 
 
@@ -203,11 +390,11 @@ namespace xx
 
 
 	/************************************************************************************/
-	// Lua<T, cond>
+	// LuaFunc<T, cond>
 	/************************************************************************************/
 
 	template<typename MP, typename T, typename ENABLE = void>
-	struct Lua
+	struct LuaFunc
 	{
 		// 将 v 压入栈顶( L 得是根 )
 		static void Push(lua_State* L, T const& v);
@@ -221,7 +408,7 @@ namespace xx
 
 	// string
 	template<typename MP>
-	struct Lua<MP, std::string, void>
+	struct LuaFunc<MP, std::string, void>
 	{
 		static inline void Push(lua_State* L, std::string const& v)
 		{
@@ -243,7 +430,7 @@ namespace xx
 
 	// xx::String*
 	template<typename MP>
-	struct Lua<MP, String*, void>
+	struct LuaFunc<MP, String*, void>
 	{
 		static inline void Push(lua_State* L, String* const& v)
 		{
@@ -272,7 +459,7 @@ namespace xx
 
 	// char*
 	template<typename MP>
-	struct Lua<MP, char const*, void>
+	struct LuaFunc<MP, char const*, void>
 	{
 		static inline void Push(lua_State* L, char const* const& v)
 		{
@@ -294,7 +481,7 @@ namespace xx
 
 	// fp
 	template<typename MP, typename T>
-	struct Lua<MP, T, std::enable_if_t<std::is_floating_point<T>::value>>
+	struct LuaFunc<MP, T, std::enable_if_t<std::is_floating_point<T>::value>>
 	{
 		static inline void Push(lua_State* L, T const& v)
 		{
@@ -314,7 +501,7 @@ namespace xx
 
 	// int
 	template<typename MP, typename T>
-	struct Lua<MP, T, std::enable_if_t<std::is_integral<T>::value || std::is_enum<T>::value>>
+	struct LuaFunc<MP, T, std::enable_if_t<std::is_integral<T>::value || std::is_enum<T>::value>>
 	{
 		static inline void Push(lua_State* L, T const& v)
 		{
@@ -332,9 +519,11 @@ namespace xx
 		}
 	};
 
+	// todo: enum ?
+
 	// T*
 	template<typename MP, typename T>
-	struct Lua<MP, T, std::enable_if_t<std::is_pointer<T>::value>>
+	struct LuaFunc<MP, T, std::enable_if_t<std::is_pointer<T>::value>>
 	{
 		typedef std::remove_pointer_t<T> TT;
 
@@ -383,7 +572,7 @@ namespace xx
 
 	// T
 	template<typename MP, typename T>
-	struct Lua<MP, T, std::enable_if_t<std::is_class<T>::value && !IsMPtr<T>::value>>
+	struct LuaFunc<MP, T, std::enable_if_t<std::is_class<T>::value && !IsMPtr<T>::value>>
 	{
 		// todo: 右值版, 结构体析构函数
 		static inline void Push(lua_State* L, T const& v)
@@ -425,7 +614,7 @@ namespace xx
 
 	// MPtr<T>
 	template<typename MP, typename T>
-	struct Lua<MP, T, std::enable_if_t<IsMPtr<T>::value>>
+	struct LuaFunc<MP, T, std::enable_if_t<IsMPtr<T>::value>>
 	{
 		typedef typename T::ChildType TT;
 
@@ -478,7 +667,7 @@ namespace xx
 	void Lua_SetGlobal(lua_State* L, lua_Integer const& key, T const& v)
 	{
 		lua_rawgeti(L, LUA_REGISTRYINDEX, LUA_RIDX_GLOBALS);	// _G
-		Lua<MP, T>::Push(L, v);									// _G, v
+		LuaFunc<MP, T>::Push(L, v);									// _G, v
 		lua_rawseti(L, -2, key);								// _G
 		lua_pop(L, 1);											//
 	}
@@ -487,7 +676,7 @@ namespace xx
 	template<typename MP, typename T>
 	void Lua_SetGlobal(lua_State* L, char const* const& key, T const& v)
 	{
-		Lua<MP, T>::Push(L, v);									// v
+		LuaFunc<MP, T>::Push(L, v);									// v
 		lua_setglobal(L, key);									//
 	}
 
@@ -525,7 +714,7 @@ namespace xx
 	{
 		static bool Fill(lua_State* L, Tuple& t)
 		{
-			auto rtv = Lua<MP, std::tuple_element_t<N - 1, Tuple>>::TryTo(L, std::get<N - 1>(t), -(int)(std::tuple_size<Tuple>::value - N + 1));
+			auto rtv = LuaFunc<MP, std::tuple_element_t<N - 1, Tuple>>::TryTo(L, std::get<N - 1>(t), -(int)(std::tuple_size<Tuple>::value - N + 1));
 			if (!rtv) return false;
 			return Lua_TupleFiller<MP, Tuple, N - 1>::Fill(L, t);
 		}
@@ -535,7 +724,7 @@ namespace xx
 	{
 		static bool Fill(lua_State* L, Tuple& t)
 		{
-			return Lua<MP, std::tuple_element_t<0, Tuple>>::TryTo(L, std::get<0>(t), -(int)(std::tuple_size<Tuple>::value));
+			return LuaFunc<MP, std::tuple_element_t<0, Tuple>>::TryTo(L, std::get<0>(t), -(int)(std::tuple_size<Tuple>::value));
 		}
 	};
 
@@ -559,7 +748,7 @@ namespace xx
 		{
 			auto rtv = FuncTupleCaller(o, f, t, std::make_index_sequence<sizeof...(Args)>());
 			if (YIELD) return lua_yield(L, 0);
-			Lua<MP, R>::Push(L, rtv);
+			LuaFunc<MP, R>::Push(L, rtv);
 			return 1;
 		}
 		return Lua_Error(L, "error!!! bad arg data type? type cast fail?");
@@ -570,7 +759,7 @@ namespace xx
 	{
 		auto rtv = (o->*f)();
 		if (YIELD) return lua_yield(L, 0);
-		Lua<MP, R>::Push(L, rtv);
+		LuaFunc<MP, R>::Push(L, rtv);
 		return 1;
 	}
 	// 有参数 无返回值
@@ -632,7 +821,7 @@ namespace xx
 				return Lua_Error(L, "error!!! func args num wrong.");
 			}
 			MPObject* self = nullptr;
-			auto b = xx::Lua<MP, MPObject*>::TryTo(L, self, 1) && self;
+			auto b = xx::LuaFunc<MP, MPObject*>::TryTo(L, self, 1) && self;
 			lua_pushboolean(L, b);
 			return 1;
 		}, 0);
@@ -656,7 +845,7 @@ namespace xx
 				return Lua_Error(L, "error!!! func args num wrong.");
 			}
 			MPObject* self = nullptr;
-			auto b = xx::Lua<MP, MPObject*>::TryTo(L, self, 1) && self;
+			auto b = xx::LuaFunc<MP, MPObject*>::TryTo(L, self, 1) && self;
 			if (b) self->Release();
 			return 0;
 		}, 0);
@@ -735,7 +924,7 @@ lua_pushcclosure(LUA, [](lua_State* L)													\
 		return xx::Lua_Error(L, "error!!! wrong num args.");							\
 	}																					\
 	T* self = nullptr;																	\
-	if (!xx::Lua<MPTYPE, T*>::TryTo(L, self, 1))										\
+	if (!xx::LuaFunc<MPTYPE, T*>::TryTo(L, self, 1))									\
 	{																					\
 		return xx::Lua_Error(L, "error!!! self is nil or bad data type!");				\
 	}																					\
@@ -759,13 +948,13 @@ lua_pushcclosure(LUA, [](lua_State* L)													\
 		return xx::Lua_Error(L, "error!!! forget : ?");									\
 	}																					\
 	T* self = nullptr;																	\
-	if (!xx::Lua<MPTYPE, T*>::TryTo(L, self, 1))										\
+	if (!xx::LuaFunc<MPTYPE, T*>::TryTo(L, self, 1))									\
 	{																					\
 		return xx::Lua_Error(L, "error!!! self is nil or bad data type!");				\
 	}																					\
 	if (top == 1)																		\
 	{																					\
-		xx::Lua<MPTYPE, decltype(self->F)>::Push(L, self->F);							\
+		xx::LuaFunc<MPTYPE, decltype(self->F)>::Push(L, self->F);						\
 		return 1;																		\
 	}																					\
 	if (top == 2)																		\
@@ -774,7 +963,7 @@ lua_pushcclosure(LUA, [](lua_State* L)													\
 		{																				\
 			return xx::Lua_Error(L, "error!!! readonly!");								\
 		}																				\
-		else if (!xx::Lua<MPTYPE, decltype(self->F)>::TryTo(L, self->F, 2))				\
+		else if (!xx::LuaFunc<MPTYPE, decltype(self->F)>::TryTo(L, self->F, 2))			\
 		{																				\
 			return xx::Lua_Error(L, "error!!! bad data type!");							\
 		}																				\

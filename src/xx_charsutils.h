@@ -290,104 +290,211 @@ namespace xx
 
 
 	/**************************************************************************************************/
-	// 写入长度大致预估函数( 声明和实现 )
+	// 类型--操作适配模板区
 	/**************************************************************************************************/
 
-	template<typename T> uint32_t StrCalc(T const &in);
-	template<> inline uint32_t StrCalc(char        const &in) { return 1; }
-	template<> inline uint32_t StrCalc(bool        const &in) { return 5; }
-	template<> inline uint32_t StrCalc(int8_t      const &in) { return 4; }
-	template<> inline uint32_t StrCalc(uint8_t     const &in) { return 3; }
-	template<> inline uint32_t StrCalc(int16_t     const &in) { return 6; }
-	template<> inline uint32_t StrCalc(uint16_t    const &in) { return 5; }
-	template<> inline uint32_t StrCalc(int32_t     const &in) { return 11; }
-	template<> inline uint32_t StrCalc(uint32_t    const &in) { return 10; }
-	template<> inline uint32_t StrCalc(int64_t     const &in) { return 20; }
-	template<> inline uint32_t StrCalc(uint64_t    const &in) { return 19; }
-	template<> inline uint32_t StrCalc(float       const &in) { return 10; }
-	template<> inline uint32_t StrCalc(double      const &in) { return 19; }
-	template<> inline uint32_t StrCalc(void*       const &in) { return (sizeof(void*) + 1) * 2; }
-	template<> inline uint32_t StrCalc(char const* const &in) { if (!in) return 0; return (uint32_t)strlen(in); }
+	// 基础适配模板
+	template<typename T, typename ENABLE = void>
+	struct StrFunc
+	{
+		static uint32_t Calc(T const &in)
+		{
+			assert(false);
+			return 0;
+		}
+		static uint32_t WriteTo(char *dstBuf, T const &in)
+		{
+			assert(false);
+			return 0;
+		}
+	};
 
-	/**************************************************************************************************/
-	// 写入函数( 声明和实现 )
-	/**************************************************************************************************/
+	// 匹配无符号整数 32bit
+	template<typename T>
+	struct StrFunc<T, std::enable_if_t<std::is_integral<T>::value && std::is_unsigned<T>::value && sizeof(T) <= 4>>
+	{
+		static inline uint32_t Calc(T const &in)
+		{
+			return sizeof(T) * 4;
+		}
+		static inline uint32_t WriteTo(char *dstBuf, T const &in)
+		{
+			return u32toa_branchlut(in, dstBuf);
+		}
+	};
 
-	template<typename T> uint32_t StrWriteTo(char *dstBuf, T const &in);
-	template<> inline uint32_t StrWriteTo(char *dstBuf, char        const &in) { *dstBuf = in; return 1; }
-	template<> inline uint32_t StrWriteTo(char *dstBuf, bool        const &in) { if (in) { memcpy(dstBuf, "true", 4); return 4; } else { memcpy(dstBuf, "false", 5); return 5; } }
-	template<> inline uint32_t StrWriteTo(char *dstBuf, int8_t      const &in) { return i32toa_branchlut(in, dstBuf); }
-	template<> inline uint32_t StrWriteTo(char *dstBuf, uint8_t     const &in) { return u32toa_branchlut(in, dstBuf); }
-	template<> inline uint32_t StrWriteTo(char *dstBuf, int16_t     const &in) { return i32toa_branchlut(in, dstBuf); }
-	template<> inline uint32_t StrWriteTo(char *dstBuf, uint16_t    const &in) { return u32toa_branchlut(in, dstBuf); }
-	template<> inline uint32_t StrWriteTo(char *dstBuf, int32_t     const &in) { return i32toa_branchlut(in, dstBuf); }
-	template<> inline uint32_t StrWriteTo(char *dstBuf, uint32_t    const &in) { return u32toa_branchlut(in, dstBuf); }
-	template<> inline uint32_t StrWriteTo(char *dstBuf, int64_t     const &in) { return i64toa_branchlut(in, dstBuf); }
-	template<> inline uint32_t StrWriteTo(char *dstBuf, uint64_t    const &in) { return u64toa_branchlut(in, dstBuf); }
-	template<> inline uint32_t StrWriteTo(char *dstBuf, float       const &in) { return sprintf(dstBuf, "%g", in); }
-	template<> inline uint32_t StrWriteTo(char *dstBuf, double      const &in) { return sprintf(dstBuf, "%g", in); }
-	template<> inline uint32_t StrWriteTo(char *dstBuf, void*       const &in) { return u64toa_branchlut((size_t)in, dstBuf); }
-	template<> inline uint32_t StrWriteTo(char *dstBuf, char const* const &in) { if (!in) return 0; else { auto len = (uint32_t)strlen(in); memcpy(dstBuf, in, len); return len; }; }
+	// 匹配有符号整数 32bit
+	template<typename T>
+	struct StrFunc<T, std::enable_if_t<std::is_integral<T>::value && !std::is_unsigned<T>::value && sizeof(T) <= 4>>
+	{
+		static inline uint32_t Calc(T const &in)
+		{
+			return sizeof(T) * 4;
+		}
+		static inline uint32_t WriteTo(char *dstBuf, T const &in)
+		{
+			return i32toa_branchlut(in, dstBuf);
+		}
+	};
 
-	/**************************************************************************************************/
-	// 读取函数( 声明 )
-	/**************************************************************************************************/
+	// 匹配无符号整数 64bit
+	template<typename T>
+	struct StrFunc<T, std::enable_if_t<std::is_integral<T>::value && std::is_unsigned<T>::value && sizeof(T) == 8>>
+	{
+		static inline uint32_t Calc(T const &in)
+		{
+			return sizeof(T) * 4;
+		}
+		static inline uint32_t WriteTo(char *dstBuf, T const &in)
+		{
+			return u64toa_branchlut(in, dstBuf);
+		}
+	};
 
-	// todo: 能智能判断边界??
-	//int StrReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, char     &out);
-	//int StrReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, bool     &out);
-	//int StrReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, int8_t   &out);
-	//int StrReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, uint8_t  &out);
-	//int StrReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, int16_t  &out);
-	//int StrReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, uint16_t &out);
-	//int StrReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, int32_t  &out);
-	//int StrReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, uint32_t &out);
-	//int StrReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, int64_t  &out);
-	//int StrReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, uint64_t &out);
-	//int StrReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, float    &out);
-	//int StrReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, double   &out);
+	// 匹配有符号整数 64bit
+	template<typename T>
+	struct StrFunc<T, std::enable_if_t<std::is_integral<T>::value && !std::is_unsigned<T>::value && sizeof(T) == 8>>
+	{
+		static inline uint32_t Calc(T const &in)
+		{
+			return sizeof(T) * 4;
+		}
+		static inline uint32_t WriteTo(char *dstBuf, T const &in)
+		{
+			return i64toa_branchlut(in, dstBuf);
+		}
+	};
 
+	// 匹配枚举
+	template<typename T>
+	struct StrFunc<T, std::enable_if_t<std::is_enum<T>::value>>
+	{
+		static inline uint32_t Calc(T const &in)
+		{
+			return StrFunc<std::underlying_type_t<T>>::Calc((std::underlying_type_t<T> const&)in);
+		}
+		static inline uint32_t WriteTo(char *dstBuf, T const &in)
+		{
+			return StrFunc<std::underlying_type_t<T>>::WriteTo(dstBuf, (std::underlying_type_t<T> const&)in);
+		}
+	};
 
-	/**************************************************************************************************/
+	// 匹配浮点
+	template<typename T>
+	struct StrFunc<T, std::enable_if_t<std::is_floating_point<T>::value>>
+	{
+		static inline uint32_t Calc(T const &in)
+		{
+			return sizeof(T) * 3;
+		}
+		static inline uint32_t WriteTo(char *dstBuf, T const &in)
+		{
+			return sprintf(dstBuf, "%g", in);
+		}
+	};
+
+	template<>
+	struct StrFunc<bool, void>
+	{
+		static inline uint32_t Calc(bool const &in)
+		{
+			return 5;
+		}
+		static inline uint32_t WriteTo(char *dstBuf, bool const &in)
+		{
+			if (in) { memcpy(dstBuf, "true", 4); return 4; }
+			else { memcpy(dstBuf, "false", 5); return 5; }
+		}
+	};
+
+	template<>
+	struct StrFunc<char, void>
+	{
+		static inline uint32_t Calc(char const &in)
+		{
+			return 1;
+		}
+		static inline uint32_t WriteTo(char *dstBuf, char const &in)
+		{
+			*dstBuf = in;
+			return 1;
+		}
+	};
+
+	template<>
+	struct StrFunc<char const*, void>
+	{
+		static inline uint32_t Calc(char const* const &in)
+		{
+			if (!in) return 0; return (uint32_t)strlen(in);
+		}
+		static inline uint32_t WriteTo(char *dstBuf, char const* const &in)
+		{
+			if (!in) return 0;
+			else
+			{
+				auto len = (uint32_t)strlen(in);
+				memcpy(dstBuf, in, len);
+				return len;
+			};
+		}
+	};
+
 	// 定长数组支持
-	/**************************************************************************************************/
-
 	template<uint32_t len>
-	uint32_t StrCalc(char const(&in)[len])
+	struct StrFunc<char [len], void>
 	{
-		static_assert(len, "must be a literal string");
-		return len - 1;
-	}
-	template<uint32_t len>
-	uint32_t StrWriteTo(char *dstBuf, char const(&in)[len])
+		static inline uint32_t Calc(char const(&in)[len])
+		{
+			return len - 1;
+		}
+		static inline uint32_t WriteTo(char *dstBuf, char const(&in)[len])
+		{
+			memcpy(dstBuf, in, len - 1);
+			return len - 1;
+		}
+	};
+
+	// std::array 支持
+	template<typename T, size_t len>
+	struct StrFunc<std::array<T, len>, void>
 	{
-		static_assert(len, "must be a literal string");
-		memcpy(dstBuf, in, len - 1);
-		return len - 1;
-	}
+		typedef std::array<T, len> AT;
+		static inline uint32_t Calc(AT const& in)
+		{
+			uint32_t rtv = 0;
+			for (auto& o : in) rtv += StrFunc<T>::Calc(o);
+			return rtv;
+		}
+		static inline uint32_t WriteTo(char *dstBuf, AT const& in)
+		{
+			uint32_t offset = 0;
+			offset += StrFunc<T>::WriteTo(dstBuf + offset, "{ ");
+			for (auto& o : in) offset += StrFunc<T>::WriteTo(dstBuf + offset, o, ", ");
+			offset += StrFunc<T>::WriteTo(dstBuf + offset - 2, " }");
+			return offset;
+		}
+	};
 
 
+
+	// todo: more
 
 	/**************************************************************************************************/
-	// 枚举支持
+	// 将 StrFunc 映射为全局函数以方便不借助 String 类来填充 buf
 	/**************************************************************************************************/
 
 	template<typename T>
-	uint32_t StrCalc(std::enable_if_t<std::is_enum<T>::value, T> const &in)
+	uint32_t StrCalc(T const &in)
 	{
-		return StrCalc((std::underlying_type_t<T> const&)in);
+		return StrFunc<T>::Calc(in);
 	}
-	template<typename T>
-	uint32_t StrWriteTo(char *dstBuf, std::enable_if_t<std::is_enum<T>::value, T> const &in)
-	{
-		return StrWriteTo(dstBuf, (std::underlying_type_t<T> const&)in);
-	}
-	//template<typename T>
-	//int StrReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, std::enable_if_t<std::is_enum_v<T>, T> &out)
-	//{
-	//	return StrReadFrom(srcBuf, dataLen, offset, (std::underlying_type_t<T>&)out);
-	//}
 
+	template<typename T>
+	uint32_t StrWriteTo(char *dstBuf, T const &in)
+	{
+		return StrFunc<T>::WriteTo(dstBuf, in);
+	}
 
 	/**************************************************************************************************/
 	// 变参模板支持
@@ -404,60 +511,7 @@ namespace xx
 		uint32_t offset = StrWriteTo(dstBuf, in);
 		return offset + StrWriteTo(dstBuf + offset, ins...);
 	}
-	//template<typename T, typename...TS>
-	//int StrReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, T &out, TS &...outs)
-	//{
-	//	auto rtv = StrReadFrom(srcBuf, dataLen, offset, out);
-	//	if (rtv) return rtv;
-	//	return StrReadFrom(srcBuf, dataLen, offset, outs...);
-	//}
 
-
-
-
-
-
-	/**************************************************************************************************/
-	// 定长数组支持
-	/**************************************************************************************************/
-
-	// std array 
-	template<typename T, size_t len>
-	uint32_t StrCalc(std::array<T, len> const&in)
-	{
-		uint32_t rtv = 0;
-		for (auto& o : in) rtv += StrCalc(o);
-		return rtv;
-	}
-
-	template<typename T, size_t len>
-	uint32_t StrWriteTo(char *dstBuf, std::array<T, len> const&in)
-	{
-		uint32_t offset = 0;
-		offset += StrWriteTo(dstBuf + offset, "{ ");
-		for (auto& o : in) offset += StrWriteTo(dstBuf + offset, o, ", ");
-		offset += StrWriteTo(dstBuf + offset - 2, " }");
-		return offset;
-	}
-
-	// 传统数组
-	template<typename T, size_t len>
-	uint32_t StrCalc(T const(&in)[len])
-	{
-		uint32_t rtv = 0;
-		for (auto& o : in) rtv += StrCalc(o);
-		return rtv;
-	}
-
-	template<typename T, size_t len>
-	uint32_t StrWriteTo(char *dstBuf, T const(&in)[len])
-	{
-		uint32_t offset = 0;
-		offset += StrWriteTo(dstBuf + offset, "{ ");
-		for (auto& o : in) offset += StrWriteTo(dstBuf + offset, o, ", ");
-		offset += StrWriteTo(dstBuf + offset - 2, " }");
-		return offset;
-	}
 
 
 

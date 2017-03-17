@@ -135,222 +135,242 @@ namespace xx
 		return 0;// Success;
 	}
 
+
 	/**************************************************************************************************/
-	// 写入长度大致预估函数( 声明和实现 )
+	// 类型--操作适配模板区
+	/**************************************************************************************************/
+
+	// 基础适配模板
+	template<typename T, typename ENABLE = void>
+	struct BytesFunc
+	{
+		static uint32_t Calc(T const &in);
+		static uint32_t WriteTo(char *dstBuf, T const &in);
+		static int ReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, T &out);
+	};
+
+	// 适配 2 字节以内长度的 数值 或 float( 这些类型直接 memcpy )
+	template<typename T>
+	struct BytesFunc<T, std::enable_if_t< (std::is_arithmetic<T>::value && sizeof(T) <= 2) || (std::is_floating_point<T>::value && sizeof(T) == 4) >>
+	{
+		static inline uint32_t Calc(T const &in)
+		{
+			return sizeof(T);
+		}
+		static inline uint32_t WriteTo(char *dstBuf, T const &in)
+		{
+			std::memcpy(dstBuf, &in, sizeof(T));
+			return sizeof(T);
+		}
+		static inline int ReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, T &out)
+		{
+			if (offset + sizeof(T) > dataLen) return -1;
+			std::memcpy(&out, srcBuf + offset, sizeof(T));
+			offset += sizeof(T);
+			return 0;
+		}
+	};
+
+	// 适配 4/8 字节无符号整数( 变长读写 )
+	template<typename T>
+	struct BytesFunc<T, std::enable_if_t<std::is_integral<T>::value && sizeof(T) >= 4 && std::is_unsigned<T>::value>>
+	{
+		static inline uint32_t Calc(T const &in)
+		{
+			return sizeof(T) + 1;
+		}
+		static inline uint32_t WriteTo(char *dstBuf, T const &in)
+		{
+			return VarWrite7(dstBuf, in);
+		}
+		static inline int ReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, T &out)
+		{
+			return VarRead7(srcBuf, dataLen, offset, out);
+		}
+	};
+
+	// 适配 4/8 字节有符号整数( ZigZag 变长读写 )
+	template<typename T>
+	struct BytesFunc<T, std::enable_if_t<std::is_integral<T>::value && sizeof(T) >= 4 && !std::is_unsigned<T>::value>>
+	{
+		static inline uint32_t Calc(T const &in)
+		{
+			return sizeof(T) + 1;
+		}
+		static inline uint32_t WriteTo(char *dstBuf, T const &in)
+		{
+			return VarWrite7(dstBuf, ZigZagEncode(in));
+		}
+		static inline int ReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, T &out)
+		{
+			std::make_unsigned_t<T> i;
+			auto rtv = VarRead7(srcBuf, dataLen, offset, i);
+			out = ZigZagDecode(i);
+			return rtv;
+		}
+	};
+
+	// 适配 enum( 根据原始数据类型调上面的适配 )
+	template<typename T>
+	struct BytesFunc<T, std::enable_if_t<std::is_enum<T>::value>>
+	{
+		typedef std::underlying_type_t<T> UT;
+		static inline uint32_t Calc(T const &in)
+		{
+			return BytesFunc<UT>::Calc((UT const&)in);
+		}
+		static inline uint32_t WriteTo(char *dstBuf, T const &in)
+		{
+			return BytesFunc<UT>::WriteTo(dstBuf, (UT const&)in);
+		}
+		static inline int ReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, T &out)
+		{
+			return BytesFunc<UT>::ReadFrom(srcBuf, dataLen, offset, (UT&)out);
+		}
+	};
+
+	// 适配 double
+	template<>
+	struct BytesFunc<double, void>
+	{
+		static inline uint32_t Calc(double const &in)
+		{
+			return sizeof(double) + 1;
+		}
+		static inline uint32_t WriteTo(char *dstBuf, double const &in)
+		{
+			if (in == 0)
+			{
+				dstBuf[0] = 0;
+				return 1;
+			}
+			else if (std::isnan(in))
+			{
+				dstBuf[0] = 1;
+				return 1;
+			}
+			else if (in == -std::numeric_limits<double>::infinity())	// negative infinity
+			{
+				dstBuf[0] = 2;
+				return 1;
+			}
+			else if (in == std::numeric_limits<double>::infinity())		// positive infinity
+			{
+				dstBuf[0] = 3;
+				return 1;
+			}
+			else
+			{
+				auto i = (int32_t)in;
+				if (in == (double)i)
+				{
+					dstBuf[0] = 4;
+					return 1 + BytesFunc<int32_t>::WriteTo(dstBuf + 1, i);
+				}
+				else
+				{
+					dstBuf[0] = 5;
+					memcpy(dstBuf + 1, &in, sizeof(double));
+					return sizeof(double) + 1;
+				}
+			}
+		}
+		static inline int ReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, double &out)
+		{
+			if (offset >= dataLen) return -1;	    // 确保还有 1 字节可读
+			switch (srcBuf[offset++])				// 跳过 1 字节
+			{
+			case 0:
+				out = 0;
+				return 0;
+			case 1:
+				out = std::numeric_limits<double>::quiet_NaN();
+				return 0;
+			case 2:
+				out = -std::numeric_limits<double>::infinity();
+				return 0;
+			case 3:
+				out = std::numeric_limits<double>::infinity();
+				return 0;
+			case 4:
+			{
+				int32_t i = 0;
+				auto rtv = BytesFunc<int32_t>::ReadFrom(srcBuf, dataLen, offset, i);
+				if (rtv) return rtv;
+				out = i;
+				return 0;
+			}
+			case 5:
+			{
+				if (dataLen < offset + sizeof(double)) return -1;
+				memcpy(&out, srcBuf + offset, sizeof(double));
+				offset += sizeof(double);
+				return 0;
+			}
+			default:
+				return -2;                          // failed
+			}
+		}
+	};
+
+	// 适配 std::array 数组
+	template<typename T, size_t len>
+	struct BytesFunc<std::array<T, len>, void>
+	{
+		typedef std::array<T, len> AT;
+		static inline uint32_t Calc(AT const &in)
+		{
+			return BytesFunc<T>::Calc(T()) * len;
+		}
+		static inline uint32_t WriteTo(char *dstBuf, T const &in)
+		{
+			if ((std::is_arithmetic<T>::value && sizeof(T) <= 2) || (std::is_floating_point<T>::value && sizeof(T) == 4))
+			{
+				std::memcpy(dstBuf, &in, sizeof(T) * len);
+				return sizeof(T) * len;
+			}
+			else
+			{
+				uint32_t offset = 0;
+				for (auto& o : in) offset += BytesFunc<T>::WriteTo(dstBuf + offset, o);
+				return offset;
+			}
+		}
+		static inline int ReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, T &out)
+		{
+			if ((std::is_arithmetic<T>::value && sizeof(T) <= 2) || (std::is_floating_point<T>::value && sizeof(T) == 4))
+			{
+				if (dataLen < offset + len * sizeof(T)) return -1;
+				std::memcpy(&out, srcBuf + offset, len * sizeof(T));
+				offset += len * sizeof(T);
+			}
+			else
+			{
+				for (auto& o : out)
+				{
+					if (auto rtv = BytesFunc<UT>::ReadFrom(srcBuf + offset, dataLen, offset, o)) return rtv;
+				}
+			}
+			return 0;
+		}
+	};
+
+	/**************************************************************************************************/
+	// 将 BytesFunc 映射为全局函数以方便不借助 BBuffer 类来填充 buf
 	/**************************************************************************************************/
 
 	template<typename T> uint32_t BBCalc(T const &in)
 	{
-		static_assert(std::is_enum<T>::value);
-		return BBCalc((std::underlying_type_t<T> const&)in);
+		return BytesFunc<T>::Calc(in);
 	}
-	template<> inline uint32_t BBCalc(bool     const &in) { return 1; }
-	template<> inline uint32_t BBCalc(char     const &in) { return 1; }
-	template<> inline uint32_t BBCalc(int8_t   const &in) { return 1; }
-	template<> inline uint32_t BBCalc(uint8_t  const &in) { return 1; }
-	template<> inline uint32_t BBCalc(int16_t  const &in) { return 2; }
-	template<> inline uint32_t BBCalc(uint16_t const &in) { return 2; }
-	template<> inline uint32_t BBCalc(int32_t  const &in) { return 5; }
-	template<> inline uint32_t BBCalc(uint32_t const &in) { return 5; }
-	template<> inline uint32_t BBCalc(int64_t  const &in) { return 9; }
-	template<> inline uint32_t BBCalc(uint64_t const &in) { return 9; }
-	template<> inline uint32_t BBCalc(float    const &in) { return 4; }
-	template<> inline uint32_t BBCalc(double   const &in) { return 9; }
-	template<> inline uint32_t BBCalc(void*    const &in) { return sizeof(void*) + 1; }
-
-	/**************************************************************************************************/
-	// 写入函数( 声明 )
-	/**************************************************************************************************/
-
 	template<typename T> uint32_t BBWriteTo(char *dstBuf, T const &in)
 	{
-		static_assert(std::is_enum<T>::value);
-		return BBWriteTo(dstBuf, (std::underlying_type_t<T> const&)in);
+		return BytesFunc<T>::WriteTo(dstBuf, in);
 	}
-	template<> uint32_t BBWriteTo(char *dstBuf, bool     const &in);
-	template<> uint32_t BBWriteTo(char *dstBuf, char     const &in);
-	template<> uint32_t BBWriteTo(char *dstBuf, int8_t   const &in);
-	template<> uint32_t BBWriteTo(char *dstBuf, uint8_t  const &in);
-	template<> uint32_t BBWriteTo(char *dstBuf, int16_t  const &in);
-	template<> uint32_t BBWriteTo(char *dstBuf, uint16_t const &in);
-	template<> uint32_t BBWriteTo(char *dstBuf, int32_t  const &in);
-	template<> uint32_t BBWriteTo(char *dstBuf, uint32_t const &in);
-	template<> uint32_t BBWriteTo(char *dstBuf, int64_t  const &in);
-	template<> uint32_t BBWriteTo(char *dstBuf, uint64_t const &in);
-	template<> uint32_t BBWriteTo(char *dstBuf, float    const &in);
-	template<> uint32_t BBWriteTo(char *dstBuf, double   const &in);
-	template<> uint32_t BBWriteTo(char *dstBuf, void*    const &in);
-
-	/**************************************************************************************************/
-	// 读取函数( 声明 )
-	/**************************************************************************************************/
-
 	template<typename T> int BBReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, T &out)
 	{
-		static_assert(std::is_enum<T>::value);
-		return BBReadFrom(srcBuf, dataLen, offset, (std::underlying_type_t<T>&)out);
+		return BytesFunc<T>::ReadFrom(srcBuf, dataLen, offset, out);
 	}
-	template<> int BBReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, bool     &out);
-	template<> int BBReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, char     &out);
-	template<> int BBReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, int8_t   &out);
-	template<> int BBReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, uint8_t  &out);
-	template<> int BBReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, int16_t  &out);
-	template<> int BBReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, uint16_t &out);
-	template<> int BBReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, int32_t  &out);
-	template<> int BBReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, uint32_t &out);
-	template<> int BBReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, int64_t  &out);
-	template<> int BBReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, uint64_t &out);
-	template<> int BBReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, float    &out);
-	template<> int BBReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, double   &out);
-	template<> int BBReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, void *    &out);
-
-	/**************************************************************************************************/
-	// 下面是各种实现
-	/**************************************************************************************************/
-
-	// memcpy 系列 write
-	template<typename T>
-	uint32_t BBDirectWriteToCore(char *dstBuf, T const &in)
-	{
-		memcpy(dstBuf, &in, sizeof(T));
-		return sizeof(T);
-	}
-	template<> inline uint32_t BBWriteTo(char *dstBuf, int8_t   const &in) { *dstBuf = (char)in; return 1; }
-	template<> inline uint32_t BBWriteTo(char *dstBuf, uint8_t  const &in) { *dstBuf = (char)in; return 1; }
-	template<> inline uint32_t BBWriteTo(char *dstBuf, int16_t  const &in) { return BBDirectWriteToCore(dstBuf, in); }
-	template<> inline uint32_t BBWriteTo(char *dstBuf, uint16_t const &in) { return BBDirectWriteToCore(dstBuf, in); }
-	template<> inline uint32_t BBWriteTo(char *dstBuf, float    const &in) { return BBDirectWriteToCore(dstBuf, in); }
-	template<> inline uint32_t BBWriteTo(char *dstBuf, bool	  const &in) { *dstBuf = in ? 1 : 0; return 1; }
-	template<> inline uint32_t BBWriteTo(char *dstBuf, char	  const &in) { *dstBuf = in; return 1; }
-
-	// memcpy 系列 read
-	template<typename T>
-	int BBDirectReadFromCore(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, T &out)
-	{
-		if (offset + sizeof(T) > dataLen) return -1;
-		memcpy(&out, srcBuf + offset, sizeof(T));
-		offset += sizeof(T);
-		return 0;
-	}
-	template<> inline int BBReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, int8_t   &out) { if (offset >= dataLen) return -1; out = (int8_t)srcBuf[offset++]; return 0; }
-	template<> inline int BBReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, uint8_t  &out) { if (offset >= dataLen) return -1; out = (uint8_t)srcBuf[offset++]; return 0; }
-	template<> inline int BBReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, int16_t  &out) { return BBDirectReadFromCore(srcBuf, dataLen, offset, out); }
-	template<> inline int BBReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, uint16_t &out) { return BBDirectReadFromCore(srcBuf, dataLen, offset, out); }
-	template<> inline int BBReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, float    &out) { return BBDirectReadFromCore(srcBuf, dataLen, offset, out); }
-	template<> inline int BBReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, bool     &out) { if (offset >= dataLen) return -1; out = srcBuf[offset++] ? true : false; return 0; }
-	template<> inline int BBReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, char     &out) { if (offset >= dataLen) return -1; out = srcBuf[offset++]; return 0; }
-
-	// 变长系列 write
-	template<typename T>
-	uint32_t BBVarWriteToCore(char *dstBuf, std::enable_if_t<std::is_signed<T>::value, T> const &in)
-	{
-		return VarWrite7(dstBuf, ZigZagEncode(in));
-	}
-	template<typename T>
-	uint32_t BBVarWriteToCore(char *dstBuf, std::enable_if_t<std::is_unsigned<T>::value, T> const &in)
-	{
-		return VarWrite7(dstBuf, in);
-	}
-	template<> inline uint32_t BBWriteTo(char *dstBuf, int32_t  const &in) { return BBVarWriteToCore<int32_t>(dstBuf, in); }
-	template<> inline uint32_t BBWriteTo(char *dstBuf, uint32_t const &in) { return BBVarWriteToCore<uint32_t>(dstBuf, in); }
-	template<> inline uint32_t BBWriteTo(char *dstBuf, int64_t  const &in) { return BBVarWriteToCore<int64_t>(dstBuf, in); }
-	template<> inline uint32_t BBWriteTo(char *dstBuf, uint64_t const &in) { return BBVarWriteToCore<uint64_t>(dstBuf, in); }
-	template<> inline uint32_t BBWriteTo(char *dstBuf, void*    const &in) { return BBVarWriteToCore<uint64_t>(dstBuf, (uint64_t const &)in); }
-	template<> inline uint32_t BBWriteTo(char *dstBuf, double   const &in)
-	{
-		if (in == 0)
-		{
-			dstBuf[0] = 0;
-			return 1;
-		}
-		else if (std::isnan(in))
-		{
-			dstBuf[0] = 1;
-			return 1;
-		}
-		else if (in == -std::numeric_limits<double>::infinity())	// negative infinity
-		{
-			dstBuf[0] = 2;
-			return 1;
-		}
-		else if (in == std::numeric_limits<double>::infinity())		// positive infinity
-		{
-			dstBuf[0] = 3;
-			return 1;
-		}
-		else
-		{
-			auto i = (int)in;
-			if (in == (double)i)
-			{
-				dstBuf[0] = 4;
-				return 1 + BBWriteTo(dstBuf + 1, i);
-			}
-			else
-			{
-				dstBuf[0] = 5;
-				memcpy(dstBuf + 1, &in, sizeof(double));
-				return sizeof(double) + 1;
-			}
-		}
-	}
-
-	// 变长系列 read
-	template<typename T>
-	int BBVarReadFromCore(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, std::enable_if_t<std::is_signed<T>::value, T> &out)
-	{
-		std::make_unsigned_t<T> i;
-		auto rtv = VarRead7(srcBuf, dataLen, offset, i);
-		out = ZigZagDecode(i);
-		return rtv;
-	}
-	template<typename T>
-	int BBVarReadFromCore(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, std::enable_if_t<std::is_unsigned<T>::value, T> &out)
-	{
-		return VarRead7(srcBuf, dataLen, offset, out);
-	}
-	template<> inline int BBReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, int32_t  &out) { return BBVarReadFromCore<int32_t>(srcBuf, dataLen, offset, out); }
-	template<> inline int BBReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, uint32_t &out) { return BBVarReadFromCore<uint32_t>(srcBuf, dataLen, offset, out); }
-	template<> inline int BBReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, int64_t  &out) { return BBVarReadFromCore<int64_t>(srcBuf, dataLen, offset, out); }
-	template<> inline int BBReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, uint64_t &out) { return BBVarReadFromCore<uint64_t>(srcBuf, dataLen, offset, out); }
-	template<> inline int BBReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, void *   &out) { return BBVarReadFromCore<uint64_t>(srcBuf, dataLen, offset, (uint64_t &)out); }
-	template<> inline int BBReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, double &out)
-	{
-		if (offset >= dataLen) return -1;	    // 确保还有 1 字节可读
-		switch (srcBuf[offset++])				// 跳过 1 字节
-		{
-		case 0:
-			out = 0;
-			return 0;
-		case 1:
-			out = std::numeric_limits<double>::quiet_NaN();
-			return 0;
-		case 2:
-			out = -std::numeric_limits<double>::infinity();
-			return 0;
-		case 3:
-			out = std::numeric_limits<double>::infinity();
-			return 0;
-		case 4:
-		{
-			int i = 0;
-			auto rtv = BBReadFrom(srcBuf, dataLen, offset, i);
-			if (rtv) return rtv;
-			out = i;
-			return 0;
-		}
-		case 5:
-		{
-			if (dataLen < offset + sizeof(double)) return -1;
-			memcpy(&out, srcBuf + offset, sizeof(double));
-			offset += sizeof(double);
-			return 0;
-		}
-		default:
-			return -2;                          // failed
-		}
-	}
-
 
 	/**************************************************************************************************/
 	// 变参模板支持
@@ -374,99 +394,4 @@ namespace xx
 		if (rtv) return rtv;
 		return BBReadFrom(srcBuf, dataLen, offset, outs...);
 	}
-
-
-
-
-
-	/**************************************************************************************************/
-	// 定长数组支持
-	/**************************************************************************************************/
-
-	// std array 
-	template<typename T, size_t len>
-	uint32_t BBCalc(std::array<T, len> const&in)
-	{
-		return BBCalc(T()) * len;
-	}
-
-	template<typename T, size_t len>
-	uint32_t BBWriteTo(char *dstBuf, std::array<T, len> const&in)
-	{
-		if (sizeof(T) <= 2 || std::is_same<T, float>::value)
-		{
-			memcpy(dstBuf, &in, sizeof(T) * len);
-			return sizeof(T) * len;
-		}
-		else
-		{
-			uint32_t offset = 0;
-			for (auto& o : in) offset += BBWriteTo(dstBuf + offset, o);
-			return offset;
-		}
-	}
-
-	template<typename T, size_t len>
-	int BBReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, std::array<T, len>&out)
-	{
-		if (sizeof(T) <= 2 || std::is_same<T, float>::value)
-		{
-			if (dataLen < offset + len * sizeof(T)) return -1;
-			memcpy(&out, srcBuf + offset, len * sizeof(T));
-			offset += len * sizeof(T);
-		}
-		else
-		{
-			for (auto& o : out)
-			{
-				if (auto rtv = BBReadFrom(srcBuf + offset, dataLen, offset, o)) return rtv;
-			}
-		}
-		return 0;
-	}
-
-	// 传统数组
-
-	template<typename T, size_t len>
-	uint32_t BBCalc(T const(&in)[len])
-	{
-		return BBCalc(T()) * len;
-	}
-
-	template<typename T, size_t len>
-	uint32_t BBWriteTo(char *dstBuf, T const(&in)[len])
-	{
-		if (sizeof(T) <= 2 || std::is_same<T, float>::value)
-		{
-			memcpy(dstBuf, &in, sizeof(T) * len);
-			return sizeof(T) * len;
-		}
-		else
-		{
-			uint32_t offset = 0;
-			for (auto& o : in) offset += BBWriteTo(dstBuf + offset, o);
-			return offset;
-		}
-	}
-
-	template<typename T, size_t len>
-	int BBReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, T(&out)[len])
-	{
-		if (sizeof(T) <= 2 || std::is_same<T, float>::value)
-		{
-			if (dataLen < offset + len * sizeof(T)) return -1;
-			memcpy(out, srcBuf + offset, len * sizeof(T));
-			offset += len * sizeof(T);
-			return 0;
-		}
-		else
-		{
-			for (auto& o : out)
-			{
-				if (auto rtv = BBReadFrom(srcBuf, dataLen, offset, o)) return rtv;
-			}
-		}
-		return 0;
-	}
-
 }
