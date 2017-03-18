@@ -19,7 +19,7 @@ namespace xx
 		/*************************************************************************/
 
 		template<typename ...TS>
-		void Write(TS const & ...vs)
+		void Write(TS const& ...vs)
 		{
 			this->Reserve(this->dataLen + BBCalc(vs...));
 			this->dataLen += BBWriteTo(this->buf + this->dataLen, vs...);
@@ -40,6 +40,28 @@ namespace xx
 		}
 		int Read() { return 0; }
 
+		// 读指定位置的数据( 不影响 offset )
+		template<typename ...TS>
+		int ReadAt(uint32_t const& pos, TS&...vs)
+		{
+			if (pos >= dataLen) return -1;
+			auto bak = offset;
+			offset = pos;
+			if (auto rtv = Read(vs...)) return rtv;
+			offset = bak;
+			return 0;
+		}
+
+		// 从当前位置读数据但事后 offset 偏移指定长度
+		template<typename ...TS>
+		int ReadJump(uint32_t const& len, TS&...vs)
+		{
+			if (offset + len > dataLen) return -1;
+			auto bak = offset;
+			if (auto rtv = Read(vs...)) return rtv;
+			offset = bak + len;
+			return 0;
+		}
 
 		// 直接追加写入一段 buf ( 并不记录长度 )
 		void WriteBuf(char const* buf, uint32_t const& len)
@@ -69,13 +91,13 @@ namespace xx
 		}
 
 		// 在 pos 位置做 Write 操作. dataLen 可能撑大.
-		template<typename T>
-		void WriteAt(uint32_t const& pos, T const& v)
+		template<typename ...TS>
+		void WriteAt(uint32_t const& pos, TS const&...vs)
 		{
 			assert(pos < this->dataLen);
 			auto bak = this->dataLen;
 			this->dataLen = pos;
-			Write(v);
+			Write(vs...);
 			if (this->dataLen < bak) this->dataLen = bak;
 		}
 

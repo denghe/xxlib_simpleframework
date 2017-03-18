@@ -9,6 +9,10 @@ typedef xx::MemPool<> MP;
 int main()
 {
 	MP mp;
+	xx::String_v s(mp);
+	xx::BBuffer_v bb(mp);
+	xx::Dict_v<void*, uint32_t> pd(mp);
+	xx::Dict_v<uint32_t, std::pair<int, xx::LuaTypes>> od(mp);
 
 	auto L = xx::Lua_NewState(mp);
 	auto rtv = luaL_dostring(L, R"##(
@@ -16,70 +20,42 @@ t = {}
 t[1] = "asdfqwer"
 t.i = 123
 t.s = t[1]
-t.t = { t, 1,2, t[1] }
+t.t = { t, 1, 2, t[1] }
 t.t.s = t.s
 t.t[t] = t
-
 )##");
 	assert(!rtv);
 
-	// 将要序列化的值放到 L 顶
+	// 将要序列化的值放到 L 顶, 序列化后移除
 	lua_getglobal(L, "t");
-	assert(lua_type(L, 1) == LUA_TTABLE);
-
-	// 序列化 L 顶并移除
-	xx::BBuffer_v bb(mp);
-	xx::Dict_v<void*, uint32_t> pd(mp);
-	auto countPos = bb->WriteSpace(5);				// 留个写引用类型个数的空间
-	xx::Lua_ToBBuffer(*pd, *bb, L, lua_gettop(L));
-	bb->WriteAt(countPos, pd->Count());				// todo: 加一种 VarWrite7 可以设置为强行占满 5 字节
-	pd->Clear();
+	auto r = xx::Lua_ToBBuffer(*pd, *bb, L, lua_gettop(L));
+	assert(!r);
 	lua_pop(L, 1);
 
 	// 打印序列化数据
-	xx::String_v s(mp);
 	bb->ToString(*s);
 	std::cout << s->C_str() << std::endl;
 
-	// 反序列化, 压入 L 顶
-	xx::Dict_v<uint32_t, std::pair<int, xx::LuaTypes>> od(mp);
-	assert(bb->offset + 5 < bb->dataLen);			// 准备读引用类型个数
-	auto offsetBak = bb->offset;
-	uint32_t refValsCount = 0;
-	auto r = bb->Read(refValsCount);
+	// 反序列化, 压入 L 顶, 放到 global t2
+	r = xx::Lua_PushFromBBuffer(*od, *bb, L);
 	assert(!r);
-	bb->offset = offsetBak + 5;						// 读完后跳到数据区
-
-	auto topbak = lua_gettop(L);					// 记录原始 top
-	lua_settop(L, topbak + refValsCount);			// 空出引用类型存放位
-	int index = 0;
-	r = xx::Lua_PushFromBBuffer(*od, *bb, L, topbak + refValsCount, refValsCount, index);
-	od->Clear();
-	if (r)
-	{
-		assert(false);
-		lua_settop(L, topbak);						// 还原栈顶
-	}
-	else
-	{
-		lua_replace(L, topbak + 1);					// 将还原出来的数据放到理论栈顶
-		lua_settop(L, topbak + 1);					// 修正栈顶
-	}
-
-
-	// 设到 _G.t2, lua 中打印内容
 	lua_setglobal(L, "t2");
+	
+	// 在 lua 中校验输出
 	rtv = luaL_dostring(L, R"##(
-
 print( t2 )
 print( t2[1] )
 print( t2.i )
 print( t2.s )
-print( t2.t, t2.t[1], t2.t[2], t2.t[3], t2.t[4], t2.t.s, t2.t[t2] )
-
+print( t2.t )
+print( t2.t[1] )
+print( t2.t[2] )
+print( t2.t[3] )
+print( t2.t[4] )
+print( t2.t.s )
+print( t2.t[t2] )
 )##");
 	assert(!rtv);
-
 	lua_close(L);
 	return 0;
 }

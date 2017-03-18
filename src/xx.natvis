@@ -87,4 +87,17 @@
     </Expand>
   </Type>
 
+  <Type Name="xx::BBuffer">
+    <DisplayString Condition="bufLen &gt; 0 &amp;&amp; dataLen &gt; 0">dataLen = {dataLen}, bufLen = {bufLen}, offset = {offset}</DisplayString>
+    <DisplayString Condition="bufLen == 0">null</DisplayString>
+    <DisplayString Condition="bufLen &gt; 0 &amp;&amp; dataLen == 0">empty</DisplayString>
+    <Expand>
+      <ArrayItems>
+        <Size>dataLen</Size>
+        <ValuePointer>buf</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+
+
 </AutoVisualizer>

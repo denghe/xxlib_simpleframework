@@ -39,7 +39,7 @@ namespace xx
 	};
 
 	// 序列化 idx 处的 lua 值( 针对 String / Userdata / Table, 用 pd 来去重 )( idx 须为绝对值 ). 返回非 0 就是出错. 遇到了不能处理的数据类型.
-	inline int Lua_ToBBuffer(xx::Dict<void*, uint32_t>& pd, xx::BBuffer& bb, lua_State* const& L, int idx)
+	inline int Lua_ToBBufferCore(xx::Dict<void*, uint32_t>& pd, xx::BBuffer& bb, lua_State* const& L, int idx)
 	{
 		assert(idx > 0);
 		switch (auto t = lua_type(L, idx))
@@ -97,8 +97,8 @@ namespace xx
 			lua_pushnil(L);								// ... t, nil
 			while (lua_next(L, idx) != 0)				// ... t, k, v
 			{
-				if (auto r = Lua_ToBBuffer(pd, bb, L, idx + 1)) return r;
-				if (auto r = Lua_ToBBuffer(pd, bb, L, idx + 2)) return r;
+				if (auto r = Lua_ToBBufferCore(pd, bb, L, idx + 1)) return r;
+				if (auto r = Lua_ToBBufferCore(pd, bb, L, idx + 2)) return r;
 
 				lua_pop(L, 1);							// ... t, k
 			}											// ... t
@@ -109,6 +109,18 @@ namespace xx
 			return t;
 		}
 	}
+
+	inline int Lua_ToBBuffer(xx::Dict<void*, uint32_t>& pd, xx::BBuffer& bb, lua_State* const& L, int idx)
+	{
+		pd.Clear();
+		auto countPos = bb.WriteSpace(2);				// 留个写引用类型个数的空间
+		auto rtv = xx::Lua_ToBBufferCore(pd, bb, L, idx);
+		if (pd.Count() > 65536) return -65536;
+		bb.WriteAt(countPos, (uint16_t)pd.Count());		// 写入引用类型个数
+		return rtv;
+	}
+
+
 
 	// 反序列化并 push 1 个 lua 值( 通过 bb 填充, 遇到 String / Userdata / Table 就通过 od 去查 idx ). 返回非 0 就是出错. 
 	// top 负空间 用于放置所有出现过的引用数据的副本. 故调该函数前, top 应传入 settop( gettop(L) + 引用数据个数 ) 后的 top 值
@@ -211,7 +223,11 @@ namespace xx
 				while (true)
 				{
 					if (bb.offset == bb.dataLen) return -10;
-					if (bb[bb.offset] == std::underlying_type_t<LuaTypes>(LuaTypes::TableEnd)) break;
+					if (bb[bb.offset] == std::underlying_type_t<LuaTypes>(LuaTypes::TableEnd))
+					{
+						++bb.offset;
+						break;
+					}
 
 					if (auto r = Lua_PushFromBBuffer(od, bb, L, top, numRefVals, index)) return r;	// key
 					if (auto r = Lua_PushFromBBuffer(od, bb, L, top, numRefVals, index)) return r;	// value
@@ -230,6 +246,28 @@ namespace xx
 		}
 		default:
 			return -13;
+		}
+	}
+
+	inline int Lua_PushFromBBuffer(xx::Dict<uint32_t, std::pair<int, LuaTypes>>& od, xx::BBuffer& bb, lua_State* const& L)
+	{
+		uint16_t refValsCount = 0;
+		if (auto r = bb.Read(refValsCount)) return r;	// 读出 引用值个数
+		auto topbak = lua_gettop(L);					// 记录原始 top
+		lua_settop(L, topbak + refValsCount);			// 空出引用类型存放位
+		int index = 0;
+		od.Clear();
+		auto rtv = xx::Lua_PushFromBBuffer(od, bb, L, topbak + refValsCount, refValsCount, index);
+		if (rtv)
+		{
+			lua_settop(L, topbak);						// 还原栈顶
+			return rtv;
+		}
+		else
+		{
+			lua_replace(L, topbak + 1);					// 将还原出来的数据放到理论栈顶
+			lua_settop(L, topbak + 1);					// 修正栈顶
+			return 0;
 		}
 	}
 
