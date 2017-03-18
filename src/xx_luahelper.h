@@ -35,7 +35,7 @@ namespace xx
 	// 序列化 lua 值支持的数据类型
 	enum class LuaTypes : uint8_t
 	{
-		Nil, True, False, Integer, Double, String, Bytes, Table
+		Nil, True, False, Integer, Double, String, Bytes, Table, TableEnd
 	};
 
 	// 序列化 idx 处的 lua 值( 针对 String / Userdata / Table, 用 pd 来去重 )( idx 须为绝对值 ). 返回非 0 就是出错. 遇到了不能处理的数据类型.
@@ -102,6 +102,7 @@ namespace xx
 
 				lua_pop(L, 1);							// ... t, k
 			}											// ... t
+			bb.Write(LuaTypes::TableEnd);
 			return 0;
 		}
 		default:
@@ -109,10 +110,11 @@ namespace xx
 		}
 	}
 
-	// 反序列化并 push 1 个 lua 值( 通过 bb 填充, 遇到 String / Userdata / Table 就通过 pd 去查 idx ). 返回非 0 就是出错. 
-	inline int Lua_PushFromBBuffer(xx::Dict<uint32_t, std::pair<int, LuaTypes>>& pd, xx::BBuffer& bb, lua_State* const& L)
+	// 反序列化并 push 1 个 lua 值( 通过 bb 填充, 遇到 String / Userdata / Table 就通过 od 去查 idx ). 返回非 0 就是出错. 
+	// top 负空间 用于放置所有出现过的引用数据的副本. 故调该函数前, top 应传入 settop( gettop(L) + 引用数据个数 ) 后的 top 值
+	// 压入的值将出现在栈顶. 故还需要自己将其 replace 到最初 top 值, 再 settop( 最初 top 值 )
+	inline int Lua_PushFromBBuffer(xx::Dict<uint32_t, std::pair<int, LuaTypes>>& od, xx::BBuffer& bb, lua_State* const& L, int const& top, int const& numRefVals, int& index /* = 0*/)
 	{
-		// get typeid
 		LuaTypes lt;
 		if (auto rtv = bb.Read(lt)) return rtv;
 
@@ -147,19 +149,24 @@ namespace xx
 			if (auto rtv = bb.Read(ptr_offset)) return rtv;
 			if (ptr_offset == bb_offset_bak)
 			{
-				if (!pd.Add(ptr_offset, std::make_pair(lua_gettop(L), lt)).success) return -1;
+				if (index >= numRefVals) return -999;
+				if (!od.Add(ptr_offset, std::make_pair(top - index, lt)).success) return -1;
 				uint32_t len;
 				if (auto rtv = bb.Read(len)) return rtv;
 				if (len > bb.dataLen - bb.offset) return -2;
 				lua_pushlstring(L, bb.buf + bb.offset, len);
+				lua_copy(L, -1, top - index);					// 复制到引用存储区
+				++index;
 				bb.offset += len;
+				return 0;
 			}
 			else
 			{
 				std::pair<int, LuaTypes> v;
-				if (!pd.TryGetValue(ptr_offset, v)) return -3;
+				if (!od.TryGetValue(ptr_offset, v)) return -3;
 				if (v.second != lt) return -4;
 				lua_pushvalue(L, v.first);
+				return 0;
 			}
 		}
 		case LuaTypes::Bytes:
@@ -168,20 +175,25 @@ namespace xx
 			if (auto rtv = bb.Read(ptr_offset)) return rtv;
 			if (ptr_offset == bb_offset_bak)
 			{
-				if (!pd.Add(ptr_offset, std::make_pair(lua_gettop(L), lt)).success) return -5;
+				if (index >= numRefVals) return -999;
+				if (!od.Add(ptr_offset, std::make_pair(top - index, lt)).success) return -5;
 				uint32_t len;
 				if (auto rtv = bb.Read(len)) return rtv;
 				if (len > bb.dataLen - bb.offset) return -6;
 				auto ptr = lua_newuserdata(L, len);
 				memcpy(ptr, bb.buf + bb.offset, len);
+				lua_copy(L, -1, top - index);					// 复制到引用存储区
+				++index;
 				bb.offset += len;
+				return 0;
 			}
 			else
 			{
 				std::pair<int, LuaTypes> v;
-				if (!pd.TryGetValue(ptr_offset, v)) return -7;
+				if (!od.TryGetValue(ptr_offset, v)) return -7;
 				if (v.second != lt) return -8;
 				lua_pushvalue(L, v.first);
+				return 0;
 			}
 		}
 		case LuaTypes::Table:
@@ -190,24 +202,34 @@ namespace xx
 			if (auto rtv = bb.Read(ptr_offset)) return rtv;
 			if (ptr_offset == bb_offset_bak)
 			{
-				if (!pd.Add(ptr_offset, std::make_pair(lua_gettop(L), lt)).success) return -9;
+				if (index >= numRefVals) return -999;
+				if (!od.Add(ptr_offset, std::make_pair(top - index, lt)).success) return -9;
+				if (bb.offset == bb.dataLen) return -10;
 				lua_newtable(L);
-				if (auto r = Lua_PushFromBBuffer(pd, bb, L)) return r;	// key
-				if (auto r = Lua_PushFromBBuffer(pd, bb, L)) return r;	// value
-				lua_rawset(L, -3);
+				lua_copy(L, -1, top - index);					// 复制到引用存储区
+				++index;
+				while (true)
+				{
+					if (bb.offset == bb.dataLen) return -10;
+					if (bb[bb.offset] == std::underlying_type_t<LuaTypes>(LuaTypes::TableEnd)) break;
 
-				// todo: 判断 table 成员个数?
+					if (auto r = Lua_PushFromBBuffer(od, bb, L, top, numRefVals, index)) return r;	// key
+					if (auto r = Lua_PushFromBBuffer(od, bb, L, top, numRefVals, index)) return r;	// value
+					lua_rawset(L, -3);
+				}
+				return 0;
 			}
 			else
 			{
 				std::pair<int, LuaTypes> v;
-				if (!pd.TryGetValue(ptr_offset, v)) return -10;
-				if (v.second != lt) return -11;
+				if (!od.TryGetValue(ptr_offset, v)) return -11;
+				if (v.second != lt) return -12;
 				lua_pushvalue(L, v.first);
+				return 0;
 			}
 		}
 		default:
-			return -12;
+			return -13;
 		}
 	}
 

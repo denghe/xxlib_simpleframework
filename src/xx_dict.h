@@ -309,10 +309,10 @@ namespace xx
 			return Emplace(override, (TK&&)k, (TV&&)v);
 		}
 
-		int Count() const
+		uint32_t Count() const
 		{
 			assert(buckets);
-			return int(count - freeCount);
+			return uint32_t(count - freeCount);
 		}
 
 		bool Empty()

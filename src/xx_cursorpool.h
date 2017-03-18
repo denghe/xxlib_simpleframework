@@ -5,7 +5,7 @@ namespace xx
 	template<typename T, size_t Size>
 	struct CursorPool
 	{
-		static_assert(Size > 0 && !(Size & (Size - 1)));	// 2^n ensure
+		static_assert(Size > 0 && !(Size & (Size - 1)), "the Size must be 2^n");	// 2^n ensure
 		std::array<T, Size> pool;
 		size_t cursor = 0;
 		// 每执行一次, 以 cursor 为下标返回 pool 中对象的引用. cursor 为循环增加

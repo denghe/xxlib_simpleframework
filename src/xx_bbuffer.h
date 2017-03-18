@@ -42,11 +42,41 @@ namespace xx
 
 
 		// 直接追加写入一段 buf ( 并不记录长度 )
-		void WriteBuf(char const* buf, uint32_t const& dataLen)
+		void WriteBuf(char const* buf, uint32_t const& len)
 		{
-			this->Reserve(this->dataLen + dataLen);
-			std::memcpy(this->buf + this->dataLen, buf, dataLen);
-			this->dataLen += dataLen;
+			this->Reserve(this->dataLen + len);
+			std::memcpy(this->buf + this->dataLen, buf, len);
+			this->dataLen += len;
+		}
+
+		// 追加一个指定长度的空间, 返回当前 dataLen
+		uint32_t WriteSpace(uint32_t const& len)
+		{
+			auto rtv = this->dataLen;
+			this->Reserve(this->dataLen + len);
+			this->dataLen += len;
+			return rtv;
+		}
+
+		// 在 pos 位置写入一段 buf ( 并不记录长度 ). dataLen 可能撑大.
+		void WriteBufAt(uint32_t const& pos, char const* buf, uint32_t const& len)
+		{
+			assert(pos < this->dataLen);
+			auto bak = this->dataLen;		// 备份原始数据长度, 开始追加. 追加完之后, 对比原始数据长度. 如果没超出, 还要还原.
+			this->dataLen = pos;
+			WriteBuf(buf, len);
+			if (this->dataLen < bak) this->dataLen = bak;
+		}
+
+		// 在 pos 位置做 Write 操作. dataLen 可能撑大.
+		template<typename T>
+		void WriteAt(uint32_t const& pos, T const& v)
+		{
+			assert(pos < this->dataLen);
+			auto bak = this->dataLen;
+			this->dataLen = pos;
+			Write(v);
+			if (this->dataLen < bak) this->dataLen = bak;
 		}
 
 		/*************************************************************************/
