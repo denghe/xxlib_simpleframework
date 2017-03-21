@@ -171,6 +171,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="socket_sample.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\snippets\lua_mempool.h" />
@@ -207,6 +208,8 @@
   <ItemGroup>
     <Text Include="bak1.txt" />
     <Text Include="bak10.txt" />
+    <Text Include="bak11.txt" />
+    <Text Include="bak12.txt" />
     <Text Include="bak2.txt" />
     <Text Include="bak3.txt" />
     <Text Include="bak4.txt" />
@@ -222,6 +225,7 @@
   <ItemGroup>
     <None Include="init.lua" />
     <None Include="monster1.lua" />
+    <None Include="monster2.lua" />
     <None Include="scene.lua" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

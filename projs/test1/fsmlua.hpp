@@ -5,7 +5,7 @@ FSMLua::FSMLua(T* owner, char const* fn)
 {
 	co = xx::Lua_RegisterCoroutine(this->scene().L, this);
 	luaL_loadfile(co, fn);
-	xx::Lua<MP, T*>::Push(co, owner);
+	xx::LuaFunc<MP, T*>::Push(co, owner);
 	xx::Lua_Resume(co, &err, 1);
 }
 

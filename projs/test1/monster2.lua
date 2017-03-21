@@ -5,7 +5,7 @@ local self, store = ...
 local yield = coroutine.yield
 local scene = _G.scene
 
-print( "monster1.lua" )
+print( "monster2.lua" )
 
 
 local x = self:x()				-- bak

@@ -2,6 +2,7 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="socket_sample.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="xx">
@@ -120,6 +121,12 @@
     <Text Include="bak10.txt">
       <Filter>bak</Filter>
     </Text>
+    <Text Include="bak11.txt">
+      <Filter>bak</Filter>
+    </Text>
+    <Text Include="bak12.txt">
+      <Filter>bak</Filter>
+    </Text>
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="..\..\src\xx.natvis">
@@ -134,6 +141,9 @@
       <Filter>lua</Filter>
     </None>
     <None Include="init.lua">
+      <Filter>lua</Filter>
+    </None>
+    <None Include="monster2.lua">
       <Filter>lua</Filter>
     </None>
   </ItemGroup>

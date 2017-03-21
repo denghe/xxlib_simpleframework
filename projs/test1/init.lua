@@ -1,15 +1,7 @@
---[[
-local m = scene:CreateMonster2()
-local bt = os.clock()
-for i = 1,100000000 do
-	m:Ensure()
-end
-print( os.clock() - bt )
--- ]]
-
 print( "init.lua" )
 local yield = coroutine.yield
 
+-- 这个只适合 AI, 没有持久化状态记录
 function Sleep( ticks, cond )
 	for i = 1, ticks do
 		if cond() then return end
