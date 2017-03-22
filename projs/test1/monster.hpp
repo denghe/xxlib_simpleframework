@@ -1,9 +1,11 @@
 MonsterBase::MonsterBase()
+	: skills(scene())
 {
 	auto& ms = *scene().monsters;
 	sceneContainerIndex = (uint32_t)ms.dataLen;
 	ms.Add(this);
 }
+
 MonsterBase::~MonsterBase()
 {
 	// Create 时如果 throw exception 可能导致这个情况发生
@@ -22,11 +24,20 @@ MonsterBase::~MonsterBase()
 	}
 }
 
+int MonsterBase::Distance(MonsterBase* other)
+{
+	return std::abs(this->x - other->x);
+}
+
+
 Monster1::Monster1() : MonsterBase()
 {
+	// todo: 填充技能
 	SetFSM(CreateFSM<FSMLua>(this, "monster1.lua"));
 }
+
 Monster2::Monster2() : MonsterBase()
 {
+	// todo: 填充技能
 	SetFSM(CreateFSM<FSMLua>(this, "monster2.lua"));
 }

@@ -81,14 +81,14 @@
     <ClInclude Include="..\..\src\xx_random.h">
       <Filter>xx</Filter>
     </ClInclude>
-    <ClInclude Include="character.h" />
-    <ClInclude Include="character.hpp" />
     <ClInclude Include="..\..\src\xx_bbuffer.h">
       <Filter>xx</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\xx_bytesutils.h">
       <Filter>xx</Filter>
     </ClInclude>
+    <ClInclude Include="skill.h" />
+    <ClInclude Include="skill.hpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="bak1.txt">

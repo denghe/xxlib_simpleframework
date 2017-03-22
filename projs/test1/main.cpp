@@ -3,6 +3,7 @@
 
 #include "bases.h"
 #include "fsmlua.h"
+#include "skill.h"
 #include "monster.h"
 typedef xx::MemPool<
 	Monster1,
@@ -18,6 +19,7 @@ typedef xx::MemPool<
 
 #include "bases.hpp"
 #include "fsmlua.hpp"
+#include "skill.hpp"
 #include "monster.hpp"
 
 
@@ -30,8 +32,6 @@ typedef xx::MemPool<
 
 int main()
 {
-	// todo: 实现一个简单的单连接 socket server 端. 协议格式为 4字节长度 + 内容, 收一个包就认为是执行一次 Update, 执行结果也用相同包格式发回
-
 
 	Scene scene;
 	if (auto rtv = luaL_dofile(scene.L, "init.lua"))
