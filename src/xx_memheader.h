@@ -47,12 +47,13 @@ namespace xx
 
 	// 为 MPObject 附加内存头以便提供值类型的物理结构( 这种模式下 mh 除了填充内存池指针以下, 不再填充版本号, 类型等信息 )
 	template<typename T>
-	struct MPStruct
+	struct MemHeaderBox
 	{
 		MemHeader_MPObject mh;
 		T instance;
+
 		template<typename ...Args>
-		MPStruct(MemPoolBase& mempoolbase, Args&& ... args)
+		MemHeaderBox(MemPoolBase& mempoolbase, Args&& ... args)
 			: mh(mempoolbase)
 			, instance(std::forward<Args>(args)...)
 		{
@@ -73,21 +74,25 @@ namespace xx
 		{
 			return instance;
 		}
+		operator T*()
+		{
+			return &instance;
+		}
 	};
 
 
 	template<typename T>
-	struct IsMPStruct
+	struct IsMemHeaderBox
 	{
 		static const bool value = false;
 	};
 
 	template<typename T>
-	struct IsMPStruct<MPStruct<T>>
+	struct IsMemHeaderBox<MemHeaderBox<T>>
 	{
 		static const bool value = true;
 	};
 	template<typename T>
-	constexpr bool IsMPStruct_v = IsMPStruct<T>::value;
+	constexpr bool IsMemHeaderBox_v = IsMemHeaderBox<T>::value;
 
 }

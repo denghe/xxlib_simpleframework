@@ -395,5 +395,5 @@ namespace xx
 	/*************************************************************************/
 
 	template <typename T, bool autoRelease = false>
-	using Links_v = MPStruct<Links<T, autoRelease>>;
+	using Links_v = MemHeaderBox<Links<T, autoRelease>>;
 }

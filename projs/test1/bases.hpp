@@ -8,8 +8,7 @@ Scene& UpdateBase::scene() const
 }
 
 SceneObjBase::SceneObjBase()
-	: fsmStackMH(mempoolbase())
-	, fsmStack()
+	: fsmStack(mempoolbase())
 {
 }
 
@@ -29,15 +28,15 @@ void SceneObjBase::SetFSM(FSMBase* fsm)
 }
 void SceneObjBase::PushFSM(FSMBase* fsm)
 {
-	fsmStack.Add(currFSM);
+	fsmStack->Add(currFSM);
 	currFSM = fsm;
 }
 void SceneObjBase::PopFSM()
 {
 	assert(!deadFSM);
 	deadFSM = currFSM;
-	currFSM = fsmStack.Top();
-	fsmStack.Pop();
+	currFSM = fsmStack->Top();
+	fsmStack->Pop();
 }
 int SceneObjBase::Update()
 {
@@ -62,10 +61,10 @@ SceneObjBase::~SceneObjBase()
 		currFSM->Release();
 		currFSM = nullptr;
 	}
-	while (fsmStack.dataLen)
+	while (fsmStack->dataLen)
 	{
-		fsmStack.Top()->Release();
-		fsmStack.Pop();
+		fsmStack->Top()->Release();
+		fsmStack->Pop();
 	}
 }
 

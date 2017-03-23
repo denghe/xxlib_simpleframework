@@ -425,5 +425,5 @@ namespace xx
 	/*************************************************************************/
 
 	template <typename TK, typename TV, bool autoReleaseKey = false, bool autoReleaseValue = false>
-	using Dict_v = MPStruct<Dict<TK, TV, autoReleaseKey, autoReleaseValue>>;
+	using Dict_v = MemHeaderBox<Dict<TK, TV, autoReleaseKey, autoReleaseValue>>;
 }

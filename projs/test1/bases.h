@@ -36,8 +36,7 @@ struct SceneObjBase : UpdateBase
 {
 	uint32_t sceneContainerIndex = -1;		// 位于 scene 中某容器中的下标 ( List / Links / Dict )
 
-	xx::MemHeader_MPObject fsmStackMH;		// 下面这个类的内存头
-	xx::List<FSMBase*> fsmStack;
+	xx::List_v<FSMBase*> fsmStack;
 
 	FSMBase* currFSM = nullptr;
 	FSMBase* deadFSM = nullptr;		// 延迟杀掉

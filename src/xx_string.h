@@ -322,7 +322,7 @@ namespace xx
 	// 实现值类型使用类型声明
 	/*************************************************************************/
 
-	using String_v = MPStruct<String>;
+	using String_v = MemHeaderBox<String>;
 
 
 

@@ -497,6 +497,6 @@ namespace xx
 	/*************************************************************************/
 
 	template<typename T, bool autoRelease = false, uint32_t reservedHeaderLen = 0>
-	using List_v = MPStruct<List<T, autoRelease, reservedHeaderLen>>;
+	using List_v = MemHeaderBox<List<T, autoRelease, reservedHeaderLen>>;
 
 }

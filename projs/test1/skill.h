@@ -13,13 +13,14 @@ struct Range
 struct SkillBase : UpdateBase
 {
 	// 模拟配置
+	static const int cfg_gcd = 3;
+
 	Range cfg_distance;					// 施放距离范围
 	int cfg_damage;						// 伤害值
 	int cfg_cd;							// 瞬发后的延迟时长( 先这样简化 )
 
 	// runtime
-	// 公共CD 的体现方式为: 遍历怪身上的 skills, 每个 cd 都 + n
-	int cd = 0;							// 用于计算 cd 的 timer
+	int64_t cd = 0;						// 用于计算 cd 的 timer
 	MonsterBase* owner;					// 技能挂在哪个怪身上
 	SkillBase(MonsterBase* owner);
 

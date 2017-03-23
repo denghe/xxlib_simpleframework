@@ -124,6 +124,6 @@ namespace xx
 	// 实现值类型使用类型声明
 	/*************************************************************************/
 
-	using BBuffer_v = MPStruct<BBuffer>;
+	using BBuffer_v = MemHeaderBox<BBuffer>;
 
 }

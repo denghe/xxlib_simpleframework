@@ -1,7 +1,7 @@
 
 int Scene::Update()
 {
-	if (co) if (auto rtv = xx::Lua_Resume(co, &*err)) return rtv;
+	if (co) if (auto rtv = xx::Lua_Resume(co, err)) return rtv;
 
 	for (auto i = (int)monsters->dataLen - 1; i >= 0; --i)
 	{
@@ -83,7 +83,7 @@ void Scene::LoadLuaFile(char const* fn)
 	// 加载协程 lua 代码
 	luaL_loadfile(co, fn);
 	xx::LuaFunc<MP, Scene*>::Push(co, this);
-	xx::Lua_Resume(co, &*err, 1);
+	xx::Lua_Resume(co, err, 1);
 }
 
 Scene::Scene()

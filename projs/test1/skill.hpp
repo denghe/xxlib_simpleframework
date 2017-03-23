@@ -3,18 +3,23 @@ SkillBase::SkillBase(MonsterBase* owner)
 	owner->skills->Add(this);
 }
 
-// 检查 cd, target, 距离
+// 检查 gcd, cd, target, 距离
 // 即便当前技能是 "无锁定", 但也走 focus & distance 判定( 简易AI )
 bool SkillBase::Avaliable()
 {
-	return this->cd <= scene().ticks
+	return owner->skillsGcd <= scene().ticks
+		&& this->cd <= scene().ticks
 		&& owner->target
 		&& cfg_distance.Test(owner->Distance(owner->target.pointer));
 }
 
 void SkillBase::Cast()
 {
+	// 更新cd, gcd
 	cd = scene().ticks + cfg_cd;
+	owner->skillsGcd = scene().ticks + this->cfg_gcd;
+
+	// 扣血
 	auto& tarHP = owner->target->hp;
 	if (tarHP)
 	{
