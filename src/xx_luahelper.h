@@ -605,10 +605,16 @@ namespace xx
 		}
 		static inline void To(lua_State* L, T& v, int idx)
 		{
-			v = ((Lua_UD<T>*)lua_touserdata(L, idx))->data;
+			if (lua_isnil(L, idx)) v = nullptr;
+			else v = ((Lua_UD<T>*)lua_touserdata(L, idx))->data;
 		}
 		static inline bool TryTo(lua_State* L, T& v, int idx)
 		{
+			if (lua_isnil(L, idx))
+			{
+				v = nullptr;
+				return true;
+			}
 			if (!lua_isuserdata(L, idx)) return false;
 			auto ud = (Lua_UD<T>*)lua_touserdata(L, idx);
 			auto tid = TupleIndexOf<TT, typename MP::Tuple>::value;
@@ -696,10 +702,16 @@ namespace xx
 		}
 		static inline void To(lua_State* L, T& v, int idx)
 		{
-			v = ((Lua_UD<T>*)lua_touserdata(L, idx))->data;
+			if (lua_isnil(L, idx)) v = nullptr;
+			else v = ((Lua_UD<T>*)lua_touserdata(L, idx))->data;
 		}
 		static inline bool TryTo(lua_State* L, T& v, int idx)
 		{
+			if (lua_isnil(L, idx))
+			{
+				v = nullptr;
+				return true;
+			}
 			if (!lua_isuserdata(L, idx)) return false;
 			auto ud = (Lua_UD<T>*)lua_touserdata(L, idx);
 			if (!Lua_GetMemPool<MP>(L).IsBaseOf(TupleIndexOf<TT, typename MP::Tuple>::value, ud->typeIndex)) return false;

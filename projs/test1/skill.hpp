@@ -1,6 +1,6 @@
 SkillBase::SkillBase(MonsterBase* owner)
 {
-	owner->skills->Add(this);
+	owner->skills->AddDirect(this);
 }
 
 // ¼ì²é gcd, cd, target, ¾àÀë
@@ -19,10 +19,11 @@ void SkillBase::Cast()
 	cd = scene().ticks + cfg_cd;
 	owner->skillsGcd = scene().ticks + this->cfg_gcd;
 
-	// ¿ÛÑª
+	// ¿ÛÑª & Í¨Öª
 	auto& tarHP = owner->target->hp;
 	if (tarHP)
 	{
+		owner->target->Hurt(owner);
 		tarHP -= cfg_damage;
 		if (tarHP <= 0)
 		{

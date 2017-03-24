@@ -221,5 +221,5 @@ namespace xx
 	// 实现值类型使用类型声明
 	/*************************************************************************/
 
-	using Random_v = MPStruct<Random>;
+	using Random_v = MemHeaderBox<Random>;
 }

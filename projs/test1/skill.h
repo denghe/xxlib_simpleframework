@@ -26,6 +26,7 @@ struct SkillBase : UpdateBase
 
 	virtual bool Avaliable();			// 返回当前是否可用的标志位
 	virtual void Cast();				// 释放该技能, 更新 cd, 减目标血
+	inline virtual int Update() override { return 0; }
 };
 
 // 近战片伤, 无锁定

@@ -87,7 +87,8 @@ void Scene::LoadLuaFile(char const* fn)
 }
 
 Scene::Scene()
-	: monsters(*this)
+	: rnd(*this)
+	, monsters(*this)
 	, err(*this)
 {
 	// more...

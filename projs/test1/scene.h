@@ -3,9 +3,13 @@ struct Scene : MP
 	// 帧控制相关
 	static const int64_t msPerFrame = 1000 / 20;
 	int64_t ticks = 0;
+	
+	// 整个 scene 用到的随机数发生器
+	xx::Random_v rnd;
 
 	// 对象容器区
 	xx::List_v<MonsterBase*> monsters;
+
 
 	// 更新机制区
 	int Update();				// call by Run

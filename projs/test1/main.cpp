@@ -1,4 +1,5 @@
 ﻿#include "xx_luahelper.h"
+#include "xx_random.h"
 #include <iostream>
 
 #include "bases.h"
@@ -6,6 +7,8 @@
 #include "skill.h"
 #include "monster.h"
 typedef xx::MemPool<
+	SkillNear,
+	SkillFar,
 	Monster1,
 	Monster2,
 	MonsterBase,
