@@ -1,4 +1,5 @@
 SkillBase::SkillBase(MonsterBase* owner)
+	: owner(owner)
 {
 	owner->skills->AddDirect(this);
 }
@@ -21,12 +22,13 @@ void SkillBase::Cast()
 
 	// 扣血 & 通知
 	auto& tarHP = owner->target->hp;
-	if (tarHP)
+	if (tarHP > 0)
 	{
 		owner->target->Hurt(owner);
 		tarHP -= cfg_damage;
 		if (tarHP <= 0)
 		{
+			scene().deadMonsters->Add(owner->target.pointer);
 			// todo: 击杀计数? cout 
 		}
 	}

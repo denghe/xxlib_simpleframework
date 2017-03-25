@@ -8,8 +8,8 @@ struct Scene : MP
 	xx::Random_v rnd;
 
 	// 对象容器区
+	xx::List_v<xx::MPObject*> deadMonsters;		// 用于放技能过程中打死的怪的指针记录, 以便在正确的生命周期批量删
 	xx::List_v<MonsterBase*> monsters;
-
 
 	// 更新机制区
 	int Update();				// call by Run

@@ -1,22 +1,4 @@
 
-int Scene::Update()
-{
-	if (co) if (auto rtv = xx::Lua_Resume(co, err)) return rtv;
-
-	for (auto i = (int)monsters->dataLen - 1; i >= 0; --i)
-	{
-		auto& o = monsters->At(i);
-		auto r = o->Update();
-		if (r)
-		{
-			// todo: r < 0 log ?
-			o->Release();
-		}
-	}
-	// more for ....
-
-	return 0;
-}
 
 int Scene::Run()
 {
@@ -93,6 +75,37 @@ xx::MPtr<MonsterBase> Scene::Monsters_At(uint32_t index)
 }
 
 
+
+
+
+
+
+
+int Scene::Update()
+{
+	if (co) if (auto rtv = xx::Lua_Resume(co, err)) return rtv;
+
+	for (auto i = (int)monsters->dataLen - 1; i >= 0; --i)
+	{
+		auto& o = monsters->At(i);
+		auto r = o->Update();
+		if (r)
+		{
+			// todo: r < 0 log ?
+			o->Release();
+		}
+	}
+	for (auto& o : *deadMonsters)
+	{
+		o->Release();
+	}
+	deadMonsters->Clear();
+
+	// more for ....
+
+	return 0;
+}
+
 void Scene::LoadLuaFile(char const* fn)
 {
 	assert(fn);
@@ -103,11 +116,13 @@ void Scene::LoadLuaFile(char const* fn)
 	// 加载协程 lua 代码
 	luaL_loadfile(co, fn);
 	xx::LuaFunc<MP, Scene*>::Push(co, this);
+	//lua_newtable(co);							// todo: 创建或载入一张 lua 表以供 scene 使用
 	xx::Lua_Resume(co, err, 1);
 }
 
 Scene::Scene()
 	: rnd(*this)
+	, deadMonsters(*this)
 	, monsters(*this)
 	, err(*this)
 {

@@ -28,6 +28,7 @@ struct UpdateBase : xx::MPObject
 struct FSMBase : UpdateBase
 {
 	SceneObjBase* owner;
+	void Pop();
 	FSMBase(SceneObjBase* owner) : owner(owner) {}
 };
 

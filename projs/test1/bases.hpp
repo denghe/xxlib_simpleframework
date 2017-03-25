@@ -1,3 +1,8 @@
+void FSMBase::Pop()
+{
+	owner->PopFSM();
+}
+
 Scene& UpdateBase::scene()
 {
 	return *(Scene*)&mempoolbase();

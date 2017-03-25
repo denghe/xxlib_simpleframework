@@ -136,14 +136,12 @@ xx::MPtr<T> MonsterBase::Condition(Args&&...args)
 
 void MonsterBase::Idle(int64_t ticks, FSMBase* cond)
 {
-	assert(cond);
 	fsmIdle->Init(ticks, cond);
 	PushFSM(fsmIdle);
 }
 
 void MonsterBase::Move(int xInc, int count, FSMBase* cond)
 {
-	assert(cond);
 	fsmMove->Init(xInc, count, cond);
 	PushFSM(fsmMove);
 }
@@ -180,8 +178,10 @@ void MonsterFSM_Idle::Init(int64_t ticks, FSMBase* breakCond)
 }
 int MonsterFSM_Idle::Update()
 {
-	if (sleepToTicks <= scene().ticks) return 1;
-	return breakCond ? breakCond->Update() : 0;
+	// 时间到或条件的 Update 返回非 0, 弹栈
+	if (scene().ticks >= sleepToTicks
+		|| (breakCond && breakCond->Update())) Pop();
+	return 0;
 }
 
 
@@ -198,9 +198,10 @@ void MonsterFSM_Move::Init(int xInc, int count, FSMBase* breakCond)
 }
 int MonsterFSM_Move::Update()
 {
-	if (scene().ticks >= this->toTicks) return 1;
+	if (scene().ticks >= toTicks
+		|| (breakCond && breakCond->Update())) Pop();
 	ctx().x += xInc;
-	return breakCond ? breakCond->Update() : 0;
+	return 0;
 }
 
 
@@ -219,6 +220,7 @@ int MonsterFSM_Cast::Update()
 		&& (int)ctx().skills->dataLen > skillIndex
 		&& ctx().skills->At(skillIndex)->Avaliable());
 	ctx().skills->At(skillIndex)->Cast();
+	Pop();
 	return 0;
 }
 
@@ -235,7 +237,7 @@ int MonsterFSM_AlertCondition::Update()
 	{
 		ctx().target = tar;
 		ctx().originalX = ctx().x;
-		return 1;
+		return 1;						// 作为条件使用, 通过 Update 返回值来达到结果告知的目的
 	}
 	return 0;
 }
@@ -260,8 +262,7 @@ Label##n:					\
 
 #define CORO_END()			\
 }							\
-}							\
-return 0
+}
 
 #define CORO_YIELD(n)		\
 {							\
@@ -273,52 +274,54 @@ return 0
 goto Label##n
 
 
-// 先来个 idle / move, 发现怪进入范围就 Cast
+// 先来个 idle / move, 发现怪进入范围就不停追杀接近并持续循环放技能, 直到目标失效时返回原点
 int MonsterFSM_AI::Update()
 {
+	auto& c = ctx();
+	auto& s = scene();
 	CORO_BEGIN();
 	{
-		// 根据随机值 -1, 0, 1 来决定是 move 还是 idle
-		assert(!ctx().target);
-		auto& cond = ctx().fsmAlertCondition;
-		auto v = scene().rnd->Next(-1, 2);
-		assert(v >= -1 && v <= 1);
+		if (c.target) CORO_GOTO(1);					// 如果有目标( 警戒条件类赋予 ), 切到追杀状态
+		
+		auto v = s.NextInteger(-1, 2);				// 根据随机值 -1, 0, 1 来决定是 idle 还是 move( v 值同时决定移动方向 )
 		if (v == 0)
 		{
-			ctx().Idle(scene().rnd->Next(1, 3), cond);
+			c.Idle(s.NextInteger(1, 3), c.fsmAlertCondition);		// 压入 Idle 状态机
 		}
 		else
 		{
-			ctx().Move(v, scene().rnd->Next(1, 3), cond);
+			c.Move(v, s.NextInteger(1, 3), c.fsmAlertCondition);	// 压入 Move 状态机
 		}
-		CORO_YIELD(0);
+		CORO_YIELD(0);								// 下次进入时从 CORO_BEGIN 处开始执行
 	}
 	CORO_(1);
 	{
 		// 如果有目标, 则表明先前的 idle 过程中判定条件达成, 目标被设置, 则追杀( 持续向目标移动, 有技能放时就放技能 )
-		if (ctx().target)
+		if (c.target)
 		{
-			auto skillid = ctx().AnyAvaliableSkillId();
+			auto skillid = c.AnyAvaliableSkillId();
 			if (skillid == -1)
 			{
-				int xInc = ctx().target->x > ctx().x ? 1 : -1;
-				ctx().Move(xInc, 3, nullptr);
+				int xInc = c.target->x > c.x ? 1 : -1;
+				c.Move(xInc, 3, nullptr);
 			}
 			else
 			{
-				ctx().Cast(skillid);
+				c.Cast(skillid);
 			}
-			CORO_YIELD(1);
+			CORO_YIELD(1);							// 下次进入时从 CORO_(1) 处开始执行
 		}
 		else
 		{
 			// 如果目标丢失( 下线? 被打死? ), 执行回撤操作( 持续 move 到发现 target 瞬间记录的的坐标 )
-			auto d = ctx().originalX - ctx().x;
-			ctx().Move(d > 0 ? 1 : -1, std::abs(d), nullptr);
-			CORO_YIELD(0);
+			auto d = c.originalX - c.x;
+			c.Move(d > 0 ? 1 : -1, std::abs(d), nullptr);	// 无条件回撤
+
+			CORO_YIELD(0);							// 下次进入时从 CORO_BEGIN 处开始执行
 		}
 	}
 	CORO_END();
+	return 0;
 }
 
 MonsterFSM_AI::MonsterFSM_AI(SceneObjBase* owner) : MonsterFSMBase(owner) {}

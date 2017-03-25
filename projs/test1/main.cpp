@@ -28,11 +28,11 @@ typedef xx::MemPool<
 int main()
 {
 	Scene scene;
-	if (auto rtv = luaL_dofile(scene.L, "init.lua"))
-	{
-		std::cout << "err code = " << rtv << ", err msg = " << lua_tostring(scene.L, -1) << std::endl;
-		return 0;
-	}
+	//if (auto rtv = luaL_dofile(scene.L, "init.lua"))
+	//{
+	//	std::cout << "err code = " << rtv << ", err msg = " << lua_tostring(scene.L, -1) << std::endl;
+	//	return 0;
+	//}
 
 	scene.LoadLuaFile("scene.lua");
 	if (auto rtv = scene.Run())

@@ -60,7 +60,7 @@ struct MonsterBase : SceneObjBase
 	int cfg_watchDistance = 0;					// 视距( 警戒范围 )( 模拟config, 在具体类中初始化 )
 	// todo: 保持距离相关, 追击范围相关, 出生点相关
 
-	int hp = 100;								// 怪的初始血量( LUA 只读 )
+	int hp = 50;								// 怪的初始血量( LUA 只读 )
 	int x = 0;									// 怪的坐标( 带坐标的似乎可以提取为另外一种基类 )( LUA 只读 )
 	int originalX = 0;							// 当怪脱离警戒状态时, 该值用于存放原始 x 以便回撤时使用
 	xx::MPtr<MonsterBase> target;				// 当前目标/焦点( LUA 只读 )

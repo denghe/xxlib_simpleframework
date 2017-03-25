@@ -2,16 +2,22 @@
 local self, store = ...
 
 -- 将常用类或函数本地化
-local yield = coroutine.yield
 local scene = _G.scene
+local yield = coroutine.yield
+local print = print
 
-print( "scene.lua" )
+print( "scene.lua", self, store )
+yield()
 
 local m1 = self:CreateMonster("Monster1")
+local m2 = self:CreateMonster("Monster2")
 while true do
 	print( "ticks = "..self:ticks()..", lua mem = "..collectgarbage("count") )
 	if m1:Ensure() then
-		print( "m1 is alive" )
+		print( "m1 is alive", m1:x(), m1:hp() )
+	end
+	if m2:Ensure() then
+		print( "m2 is alive", m2:x(), m2:hp() )
 	end
 	yield()
 end
