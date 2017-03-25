@@ -73,6 +73,26 @@ Scene::~Scene()
 }
 
 
+int Scene::NextInteger(int min, int max)
+{
+	return rnd->Next(min, max);
+}
+double Scene::NextDouble(double min, double max)
+{
+	return rnd->NextDouble(min, max);
+}
+
+uint32_t Scene::Monsters_Count()
+{
+	return monsters->dataLen;
+}
+xx::MPtr<MonsterBase> Scene::Monsters_At(uint32_t index)
+{
+	if (index >= monsters->dataLen) return nullptr;
+	return monsters->At(index);
+}
+
+
 void Scene::LoadLuaFile(char const* fn)
 {
 	assert(fn);
@@ -99,11 +119,29 @@ Scene::Scene()
 	xx::Lua_PushMetatable<MP, Scene>(L);
 	xxLua_BindField(MP, L, Scene, ticks, false);
 	xxLua_BindFunc(MP, L, Scene, CreateMonster, false);
+	xxLua_BindFunc(MP, L, Scene, NextInteger, false);
+	xxLua_BindFunc(MP, L, Scene, NextDouble, false);
+	xxLua_BindFunc(MP, L, Scene, Monsters_Count, false);
+	xxLua_BindFunc(MP, L, Scene, Monsters_At, false);
 	lua_pop(L, 1);
 
 	// LuaBind: MonsterBase
 	xx::Lua_PushMetatable<MP, MonsterBase>(L);
-	xxLua_BindField(MP, L, MonsterBase, x, true);
+	xxLua_BindField(MP, L, MonsterBase, x, false);
+	xxLua_BindField(MP, L, MonsterBase, hp, false);
+	xxLua_BindField(MP, L, MonsterBase, target, false);
+
+	xxLua_BindFunc(MP, L, MonsterBase, Distance, false);
+	xxLua_BindFunc(MP, L, MonsterBase, SearchTarget, false);
+	xxLua_BindFunc(MP, L, MonsterBase, SetTarget, false);
+	xxLua_BindFunc(MP, L, MonsterBase, Hurt, false);
+	xxLua_BindFunc(MP, L, MonsterBase, AnyAvaliableSkillId, false);
+	xxLua_BindFunc(MP, L, MonsterBase, LuaCondition, false);
+	xxLua_BindFunc(MP, L, MonsterBase, Idle, false);
+	xxLua_BindFunc(MP, L, MonsterBase, Move, false);
+	xxLua_BindFunc(MP, L, MonsterBase, Cast, false);
+
+	// todo: more bind
 	lua_pop(L, 1);
 
 	// more bind here...

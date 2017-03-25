@@ -674,6 +674,7 @@ namespace xx
 				v = ud->data;
 				return true;
 			}
+			return true;
 		}
 	};
 
@@ -726,8 +727,26 @@ namespace xx
 			case Lua_UDTypes::Struct:
 				return false;
 			}
+			return true;
 		}
 	};
+
+	/************************************************************************************/
+	// Lua_TryTo, Lua_Push
+	/************************************************************************************/
+
+	template<typename MP, typename T>
+	bool Lua_TryTo(lua_State* L, T& v, int idx)
+	{
+		return LuaFunc<MP, T>::TryTo(L, v, idx);
+	}
+
+	template<typename MP, typename T>
+	void Lua_Push(lua_State* L, T const& v)
+	{
+		return LuaFunc<MP, T>::Push(L, v);
+	}
+
 
 	/************************************************************************************/
 	// Lua_SetGlobal
@@ -738,7 +757,7 @@ namespace xx
 	void Lua_SetGlobal(lua_State* L, lua_Integer const& key, T const& v)
 	{
 		lua_rawgeti(L, LUA_REGISTRYINDEX, LUA_RIDX_GLOBALS);	// _G
-		LuaFunc<MP, T>::Push(L, v);									// _G, v
+		Lua_Push<MP>(L, v);										// _G, v
 		lua_rawseti(L, -2, key);								// _G
 		lua_pop(L, 1);											//
 	}
@@ -747,7 +766,7 @@ namespace xx
 	template<typename MP, typename T>
 	void Lua_SetGlobal(lua_State* L, char const* const& key, T const& v)
 	{
-		LuaFunc<MP, T>::Push(L, v);									// v
+		Lua_Push<MP>(L, v);										// v
 		lua_setglobal(L, key);									//
 	}
 
@@ -785,7 +804,7 @@ namespace xx
 	{
 		static bool Fill(lua_State* L, Tuple& t)
 		{
-			auto rtv = LuaFunc<MP, std::tuple_element_t<N - 1, Tuple>>::TryTo(L, std::get<N - 1>(t), -(int)(std::tuple_size<Tuple>::value - N + 1));
+			auto rtv = Lua_TryTo<MP>(L, std::get<N - 1>(t), -(int)(std::tuple_size<Tuple>::value - N + 1));
 			if (!rtv) return false;
 			return Lua_TupleFiller<MP, Tuple, N - 1>::Fill(L, t);
 		}
@@ -795,7 +814,7 @@ namespace xx
 	{
 		static bool Fill(lua_State* L, Tuple& t)
 		{
-			return LuaFunc<MP, std::tuple_element_t<0, Tuple>>::TryTo(L, std::get<0>(t), -(int)(std::tuple_size<Tuple>::value));
+			return Lua_TryTo<MP>(L, std::get<0>(t), -(int)(std::tuple_size<Tuple>::value));
 		}
 	};
 
@@ -819,7 +838,7 @@ namespace xx
 		{
 			auto rtv = FuncTupleCaller(o, f, t, std::make_index_sequence<sizeof...(Args)>());
 			if (YIELD) return lua_yield(L, 0);
-			LuaFunc<MP, R>::Push(L, rtv);
+			Lua_Push<MP>(L, rtv);
 			return 1;
 		}
 		return Lua_Error(L, "error!!! bad arg data type? type cast fail?");
@@ -830,7 +849,7 @@ namespace xx
 	{
 		auto rtv = (o->*f)();
 		if (YIELD) return lua_yield(L, 0);
-		LuaFunc<MP, R>::Push(L, rtv);
+		Lua_Push<MP>(L, rtv);
 		return 1;
 	}
 	// 有参数 无返回值
@@ -892,7 +911,7 @@ namespace xx
 				return Lua_Error(L, "error!!! func args num wrong.");
 			}
 			MPObject* self = nullptr;
-			auto b = xx::LuaFunc<MP, MPObject*>::TryTo(L, self, 1) && self;
+			auto b = xx::Lua_TryTo<MP>(L, self, 1) && self;
 			lua_pushboolean(L, b);
 			return 1;
 		}, 0);
@@ -916,7 +935,7 @@ namespace xx
 				return Lua_Error(L, "error!!! func args num wrong.");
 			}
 			MPObject* self = nullptr;
-			auto b = xx::LuaFunc<MP, MPObject*>::TryTo(L, self, 1) && self;
+			auto b = xx::Lua_TryTo<MP>(L, self, 1) && self;
 			if (b) self->Release();
 			return 0;
 		}, 0);
@@ -995,7 +1014,7 @@ lua_pushcclosure(LUA, [](lua_State* L)													\
 		return xx::Lua_Error(L, "error!!! wrong num args.");							\
 	}																					\
 	T* self = nullptr;																	\
-	if (!xx::LuaFunc<MPTYPE, T*>::TryTo(L, self, 1))									\
+	if (!xx::Lua_TryTo<MPTYPE>(L, self, 1))												\
 	{																					\
 		return xx::Lua_Error(L, "error!!! self is nil or bad data type!");				\
 	}																					\
@@ -1019,13 +1038,13 @@ lua_pushcclosure(LUA, [](lua_State* L)													\
 		return xx::Lua_Error(L, "error!!! forget : ?");									\
 	}																					\
 	T* self = nullptr;																	\
-	if (!xx::LuaFunc<MPTYPE, T*>::TryTo(L, self, 1))									\
+	if (!xx::Lua_TryTo<MPTYPE>(L, self, 1))												\
 	{																					\
 		return xx::Lua_Error(L, "error!!! self is nil or bad data type!");				\
 	}																					\
 	if (top == 1)																		\
 	{																					\
-		xx::LuaFunc<MPTYPE, decltype(self->F)>::Push(L, self->F);						\
+		xx::Lua_Push<MPTYPE>(L, self->F);												\
 		return 1;																		\
 	}																					\
 	if (top == 2)																		\
@@ -1034,7 +1053,7 @@ lua_pushcclosure(LUA, [](lua_State* L)													\
 		{																				\
 			return xx::Lua_Error(L, "error!!! readonly!");								\
 		}																				\
-		else if (!xx::LuaFunc<MPTYPE, decltype(self->F)>::TryTo(L, self->F, 2))			\
+		else if (!xx::Lua_TryTo<MPTYPE>(L, self->F, 2))									\
 		{																				\
 			return xx::Lua_Error(L, "error!!! bad data type!");							\
 		}																				\

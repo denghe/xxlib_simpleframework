@@ -14,6 +14,7 @@ namespace xx
 		// 加持
 		inline void AddRef()
 		{
+			assert(refCount() != 0xFFFFFFFF);		// 防止出现值类型被加持
 			++refCount();
 		}
 

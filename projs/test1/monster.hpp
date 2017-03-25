@@ -43,7 +43,6 @@ Monster1::Monster1() : MonsterBase()
 
 
 	// 模拟 根据配置 载入初始AI
-	fsmAI->AddRef();
 	SetFSM(fsmAI);
 
 	// 载入 LUA 版初始 AI
@@ -62,7 +61,6 @@ Monster2::Monster2() : MonsterBase()
 	scene().Create<SkillFar>(this);
 
 	// 模拟 根据配置 载入初始AI
-	fsmAI->AddRef();
 	SetFSM(fsmAI);
 
 	// 载入 LUA 版初始 AI
@@ -139,7 +137,6 @@ xx::MPtr<T> MonsterBase::Condition(Args&&...args)
 void MonsterBase::Idle(int64_t ticks, FSMBase* cond)
 {
 	assert(cond);
-	fsmIdle->AddRef();
 	fsmIdle->Init(ticks, cond);
 	PushFSM(fsmIdle);
 }
@@ -147,14 +144,12 @@ void MonsterBase::Idle(int64_t ticks, FSMBase* cond)
 void MonsterBase::Move(int xInc, int count, FSMBase* cond)
 {
 	assert(cond);
-	fsmMove->AddRef();
 	fsmMove->Init(xInc, count, cond);
 	PushFSM(fsmMove);
 }
 
 void MonsterBase::Cast(int skillIndex)
 {
-	fsmCast->AddRef();
 	fsmCast->Init(skillIndex);
 	PushFSM(fsmCast);
 }
@@ -286,7 +281,6 @@ int MonsterFSM_AI::Update()
 		// 根据随机值 -1, 0, 1 来决定是 move 还是 idle
 		assert(!ctx().target);
 		auto& cond = ctx().fsmAlertCondition;
-		cond->AddRef();
 		auto v = scene().rnd->Next(-1, 2);
 		assert(v >= -1 && v <= 1);
 		if (v == 0)

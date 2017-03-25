@@ -25,17 +25,8 @@ typedef xx::MemPool<
 #include "skill.hpp"
 #include "monster.hpp"
 
-
-#ifdef _WIN32
-#include <Windows.h>	// Sleep
-#include <mmsystem.h>	// timeBeginPeriod at winmm.lib
-#pragma comment(lib, "winmm.lib") 
-#endif
-#include "scene.hpp"
-
 int main()
 {
-
 	Scene scene;
 	if (auto rtv = luaL_dofile(scene.L, "init.lua"))
 	{
@@ -52,3 +43,10 @@ int main()
 
 	return 0;
 }
+
+#ifdef _WIN32
+#include <Windows.h>	// Sleep
+#include <mmsystem.h>	// timeBeginPeriod at winmm.lib
+#pragma comment(lib, "winmm.lib") 
+#endif
+#include "scene.hpp"

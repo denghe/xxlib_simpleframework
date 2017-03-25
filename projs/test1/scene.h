@@ -30,4 +30,12 @@ struct Scene : MP
 
 	// 以类名来创建怪类实例
 	xx::MPtr<MonsterBase> CreateMonster(char const* classname);
+
+	// 方便在 lua 中随机
+	int NextInteger(int min, int max);
+	double NextDouble(double min, double max);
+
+	// 方便在 lua 中扫 monsters
+	uint32_t Monsters_Count();
+	xx::MPtr<MonsterBase> Monsters_At(uint32_t index);
 };

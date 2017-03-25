@@ -144,7 +144,7 @@ namespace xx
 		// 释放由 Create 创建的类
 		inline void Release(MPObject* p) noexcept
 		{
-			if (!p) return;
+			if (!p || p->refCount() > 0x7FFFFFFF) return;						// 如果空指针 或是用 MemHeaderBox 包裹则不执行 Release 操作
 			assert(p->versionNumber());
 			if (p->refCount() == 0 || --p->refCount()) return;
 			p->~MPObject();
@@ -153,11 +153,6 @@ namespace xx
 			assert(h->versionNumber);											// 理论上讲 free 的时候其版本号不应该是 0. 否则就涉嫌重复 Free
 			ptrstacks[h->mpIndex].Push(h);											// 入池
 			h->versionNumber = 0;												// 清空版本号
-		}
-
-		inline void InitMemHeader(MPObject* p) noexcept
-		{
-
 		}
 
 		/***********************************************************************************/
@@ -197,6 +192,7 @@ namespace xx
 		: mempoolbase(&mempoolbase)
 	{
 		this->versionNumber = 0;
+		this->refCount = (uint32_t)-1;											// 防 Release
 	}
 
 
@@ -208,7 +204,7 @@ namespace xx
 	/***********************************************************************************/
 
 	/*
-	
+
 	xx::MemPoolAllocator<int> a(mp);
 	std::vector<int, decltype(a)> vec(a);
 
@@ -239,45 +235,45 @@ int main()
 
 	*/
 
-//	template <class T>
-//	struct MemPoolAllocator : public std::allocator<T>
-//	{
-//		typedef std::allocator<T> base_type;
-//
-//		template<class Other>
-//		struct rebind
-//		{
-//			typedef MemPoolAllocator<Other> other;
-//		};
-//
-//		xx::MemPoolBase* mpb = nullptr;
-//
-//		MemPoolAllocator() = delete;
-//		MemPoolAllocator(xx::MemPoolBase& mpb) : mpb(&mpb) {}
-//		MemPoolAllocator(MemPoolAllocator<T> const& o) : mpb(o.mpb) {}
-//		MemPoolAllocator(MemPoolAllocator<T> && o) : mpb(o.mpb) {}
-//		MemPoolAllocator<T>& operator=(MemPoolAllocator<T> const& o) { mpb = o.mpb; return (*this); }
-//		template<class O> MemPoolAllocator(MemPoolAllocator<O> const& o) : mpb(o.mpb) {}
-//		template<class O> MemPoolAllocator<T>& operator=(MemPoolAllocator<O> const& o) { mpb = o.mpb; return (*this); }
-//
-//		size_type max_size() const
-//		{
-//			return static_cast<size_type>(-1) / sizeof(value_type);
-//		}
-//
-//		pointer allocate(size_type count)
-//		{
-//			assert(mpb);
-//			void* p = mpb->Alloc(count * sizeof(T));
-//			if (!p) throw std::bad_alloc();
-//			return static_cast<pointer>(p);
-//		}
-//
-//		void deallocate(pointer ptr, size_type count)
-//		{
-//			assert(mpb);
-//			mpb->Free(ptr);
-//		}
-//	};
+	//	template <class T>
+	//	struct MemPoolAllocator : public std::allocator<T>
+	//	{
+	//		typedef std::allocator<T> base_type;
+	//
+	//		template<class Other>
+	//		struct rebind
+	//		{
+	//			typedef MemPoolAllocator<Other> other;
+	//		};
+	//
+	//		xx::MemPoolBase* mpb = nullptr;
+	//
+	//		MemPoolAllocator() = delete;
+	//		MemPoolAllocator(xx::MemPoolBase& mpb) : mpb(&mpb) {}
+	//		MemPoolAllocator(MemPoolAllocator<T> const& o) : mpb(o.mpb) {}
+	//		MemPoolAllocator(MemPoolAllocator<T> && o) : mpb(o.mpb) {}
+	//		MemPoolAllocator<T>& operator=(MemPoolAllocator<T> const& o) { mpb = o.mpb; return (*this); }
+	//		template<class O> MemPoolAllocator(MemPoolAllocator<O> const& o) : mpb(o.mpb) {}
+	//		template<class O> MemPoolAllocator<T>& operator=(MemPoolAllocator<O> const& o) { mpb = o.mpb; return (*this); }
+	//
+	//		size_type max_size() const
+	//		{
+	//			return static_cast<size_type>(-1) / sizeof(value_type);
+	//		}
+	//
+	//		pointer allocate(size_type count)
+	//		{
+	//			assert(mpb);
+	//			void* p = mpb->Alloc(count * sizeof(T));
+	//			if (!p) throw std::bad_alloc();
+	//			return static_cast<pointer>(p);
+	//		}
+	//
+	//		void deallocate(pointer ptr, size_type count)
+	//		{
+	//			assert(mpb);
+	//			mpb->Free(ptr);
+	//		}
+	//	};
 
 }
