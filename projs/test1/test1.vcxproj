@@ -204,6 +204,7 @@
     <ClInclude Include="monster.hpp" />
     <ClInclude Include="scene.h" />
     <ClInclude Include="scene.hpp" />
+    <ClInclude Include="xymath.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="bak1.txt" />

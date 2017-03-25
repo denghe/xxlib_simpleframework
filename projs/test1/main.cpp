@@ -2,6 +2,7 @@
 #include "xx_random.h"
 #include <iostream>
 
+#include "xymath.h"
 #include "bases.h"
 #include "fsmlua.h"
 #include "skill.h"

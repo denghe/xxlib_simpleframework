@@ -89,6 +89,7 @@
     </ClInclude>
     <ClInclude Include="skill.h" />
     <ClInclude Include="skill.hpp" />
+    <ClInclude Include="xymath.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="bak1.txt">

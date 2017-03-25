@@ -1,15 +1,5 @@
 struct MonsterBase;
 
-struct Range
-{
-	int from, to;
-	inline bool Test(int n)
-	{
-		assert(from <= to);
-		return n >= from && n <= to;
-	}
-};
-
 struct SkillBase : UpdateBase
 {
 	// Ä£ÄâÅäÖÃ
