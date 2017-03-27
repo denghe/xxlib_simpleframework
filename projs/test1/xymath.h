@@ -2,42 +2,26 @@
 #include <cassert>
 #include <cmath>
 #include <array>
+#include "xx_structs.h"
 
-struct Range
-{
-	int from, to;
-	inline bool Test(int n)
-	{
-		assert(from <= to);
-		return n >= from && n <= to;
-	}
-};
-
-struct XY
-{
-	double x, y;
-};
-
+using XY = xx::XY<float>;
 struct XyMath
 {
 	static constexpr double pi = 3.14159265358979323846;
 	static constexpr double digiNum = 100;							// 当前单位是 float 米, * 100 转为厘米
-	static constexpr int angleCount = 256, halfAngleCount = angleCount / 2;
-	static constexpr int xyTableDiameter = 1024, xyTableRadius = xyTableDiameter / 2, xyTableRadiusReduce = xyTableRadius - 1;
-
-	static double Round(double x)
-	{
-		return std::ceil(x * digiNum) / digiNum;
-	}
+	static constexpr int xyTableDiameter = 2048						// 怪普遍的警戒距离(半径) 为 10 米以内
+		, xyTableRadius = xyTableDiameter / 2
+		, xyTableRadiusReduce = xyTableRadius - 1;
+	static constexpr int angleCount = 256							// 当前是按 1字节 的精度来处理角度的
+		, halfAngleCount = angleCount / 2;
 
 	std::array<XY, angleCount> xyIncs;
 	std::array<uint8_t, xyTableDiameter * xyTableDiameter> angles;
-	std::array<double, xyTableDiameter * xyTableDiameter> distances;
 
 	XyMath()
 	{
 		FillXyIncs();
-		FillAngleDistances();
+		FillAngle();
 	}
 
 	void FillXyIncs()
@@ -46,12 +30,12 @@ struct XyMath
 		for (int i = 0; i < angleCount; i++)
 		{
 			auto a = pi * i / halfAngleCount;
-			xyInc.x = Round(std::cos(a));
-			xyInc.y = Round(std::sin(a));
+			xyInc.x = (float)std::cos(a);
+			xyInc.y = (float)std::sin(a);
 			xyIncs[i] = xyInc;
 		}
 	}
-	void FillAngleDistances()
+	void FillAngle()
 	{
 		for (int i = 0; i < xyTableDiameter; i++)
 		{
@@ -65,8 +49,6 @@ struct XyMath
 				auto v = (int)(std::atan2(i - xyTableRadius, j - xyTableRadius) / pi * halfAngleCount);
 				if (v >= 0) angles[idx] = (uint8_t)v;
 				else angles[idx] = (uint8_t)(angleCount + v);
-
-				distances[idx] = Round(std::sqrt((double)(x * x + y * y)));
 			}
 		}
 	}
@@ -93,8 +75,7 @@ struct XyMath
 		return angles[(y + xyTableRadius) * xyTableDiameter + (x + xyTableRadius)];
 	}
 
-	// 考虑到多体碰撞需要用 xyInc 叠加来推算最后的方向, 故需要 double 版
-	// 通常需要将值放大以查表
+	// 将 "米" 放大到 "厘米" 来计算以确保精度
 	uint8_t GetAngle(XY xy)
 	{
 		return GetAngle((int)(xy.x * digiNum), (int)(xy.y * digiNum));
@@ -115,15 +96,15 @@ struct XyMath
 	}
 
 
-	double GetDistance(int x, int y)
+	float GetDistance(int x, int y)
 	{
-		return std::sqrt(x * x + y * y);// 恐有跨设备计算误差问题
+		return std::sqrtf((float)(x * x + y * y));
 	}
-	double GetDistance(XY xy)
+	float GetDistance(XY xy)
 	{
 		return GetDistance((int)xy.x, (int)xy.y);
 	}
-	double GetDistancePow2(XY a)
+	float GetDistancePow2(XY a)
 	{
 		return a.x * a.x + a.y * a.y;
 	}
@@ -179,3 +160,5 @@ struct XyMath
 	}
 
 };
+
+extern XyMath xyMath;			// 需要在某个 cpp 中实现

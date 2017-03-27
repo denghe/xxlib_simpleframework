@@ -3,6 +3,8 @@
 #include <iostream>
 
 #include "xymath.h"
+XyMath xyMath;
+
 #include "bases.h"
 #include "fsmlua.h"
 #include "skill.h"
@@ -17,7 +19,8 @@ typedef xx::MemPool<
 	FSMLua,
 	FSMBase,
 	UpdateBase,
-	Scene
+	Scene,
+	XY
 > MP;
 #include "scene.h"
 

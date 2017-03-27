@@ -140,20 +140,26 @@ Scene::Scene()
 	xxLua_BindFunc(MP, L, Scene, Monsters_At, false);
 	lua_pop(L, 1);
 
+	// LuaBind: XY
+	xx::Lua_PushMetatable<MP, XY>(L);
+	xxLua_BindField(MP, L, XY, x, false);
+	xxLua_BindField(MP, L, XY, y, false);
+	lua_pop(L, 1);
+
 	// LuaBind: MonsterBase
 	xx::Lua_PushMetatable<MP, MonsterBase>(L);
-	xxLua_BindField(MP, L, MonsterBase, x, false);
+	xxLua_BindField(MP, L, MonsterBase, xy, false);
 	xxLua_BindField(MP, L, MonsterBase, hp, false);
 	xxLua_BindField(MP, L, MonsterBase, target, false);
 
-	xxLua_BindFunc(MP, L, MonsterBase, Distance, false);
+	xxLua_BindFunc(MP, L, MonsterBase, DistancePow2, false);
 	xxLua_BindFunc(MP, L, MonsterBase, SearchTarget, false);
 	xxLua_BindFunc(MP, L, MonsterBase, SetTarget, false);
 	xxLua_BindFunc(MP, L, MonsterBase, Hurt, false);
-	xxLua_BindFunc(MP, L, MonsterBase, AnyAvaliableSkillId, false);
-	xxLua_BindFunc(MP, L, MonsterBase, LuaCondition, false);
-	xxLua_BindFunc(MP, L, MonsterBase, Idle, false);
-	xxLua_BindFunc(MP, L, MonsterBase, Move, false);
+	xxLua_BindFunc(MP, L, MonsterBase, TakeAvaliableSkillId, false);
+	//xxLua_BindFunc(MP, L, MonsterBase, LuaCondition, false);
+	//xxLua_BindFunc(MP, L, MonsterBase, Idle, false);
+	//xxLua_BindFunc(MP, L, MonsterBase, Move, false);
 	xxLua_BindFunc(MP, L, MonsterBase, Cast, false);
 
 	// todo: more bind

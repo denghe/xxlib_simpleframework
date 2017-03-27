@@ -5,7 +5,7 @@ struct SkillBase : UpdateBase
 	// 模拟配置
 	static const int cfg_gcd = 3;
 
-	Range cfg_distance;					// 施放距离范围
+	xx::Range<float> cfg_distance;		// 施放距离范围
 	int cfg_damage;						// 伤害值
 	int cfg_cd;							// 瞬发后的延迟时长( 先这样简化 )
 

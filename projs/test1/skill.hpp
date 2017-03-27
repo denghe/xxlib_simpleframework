@@ -11,7 +11,7 @@ bool SkillBase::Avaliable()
 	return owner->skillsGcd <= scene().ticks
 		&& this->cd <= scene().ticks
 		&& owner->target
-		&& cfg_distance.Test(owner->Distance(owner->target.pointer));
+		&& cfg_distance.IntersectPow2(owner->DistancePow2(owner->target.pointer));
 }
 
 void SkillBase::Cast()
@@ -28,6 +28,7 @@ void SkillBase::Cast()
 		tarHP -= cfg_damage;
 		if (tarHP <= 0)
 		{
+			assert(scene().deadMonsters->Find(owner->target.pointer) == -1);
 			scene().deadMonsters->Add(owner->target.pointer);
 			// todo: »÷É±¼ÆÊý? cout 
 		}

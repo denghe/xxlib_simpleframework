@@ -90,6 +90,9 @@
     <ClInclude Include="skill.h" />
     <ClInclude Include="skill.hpp" />
     <ClInclude Include="xymath.h" />
+    <ClInclude Include="..\..\src\xx_structs.h">
+      <Filter>xx</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="bak1.txt">
