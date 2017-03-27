@@ -3,6 +3,7 @@ struct Scene : MP
 	// 帧控制相关
 	static const int64_t msPerFrame = 1000 / 20;
 	int64_t ticks = 0;
+	XY mapSize = { 100.0f, 100.0f };			// 模拟一个地图大小
 	
 	// 整个 scene 用到的随机数发生器
 	xx::Random_v rnd;

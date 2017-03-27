@@ -31,14 +31,34 @@ MonsterBase::~MonsterBase()
 }
 
 
-
+// 配有保持距离的远程怪
 Monster1::Monster1() : MonsterBase()
 {
 	// 模拟 载入配置
-	this->cfg_alertDistance = 30;
+	cfg_alertInterval = 20;								// 主动警戒扫描每 1 秒发生一次
+	cfg_alertDistance = 10;								// 警戒距离 10 米
+	cfg_moveTimespan = 20;								// 每次移动都坚持 1 秒
+	cfg_moveInterval = 20;								// 移动之后休息 1 秒
+	cfg_traceMaxDistance = 30;							// 追杀到 30 米时不再追杀
+	cfg_traceMaxTimespan = 400;							// 追杀 20 秒后不再追杀
+	cfg_traceKeepDistanceRange = { 5.0f, 15.0f };		// 追杀时保持距离 5 ~ 15 米
+	cfg_moveSpeed = 0.2f;								// 每帧移动 0.2 米, 每秒移动 4 米
+	cfg_alertDistancePow2 = cfg_alertDistance * cfg_alertDistance;
+	cfg_traceMaxDistancePow2 = cfg_traceMaxDistance * cfg_traceMaxDistance;
+	cfg_traceKeepDistanceRangePow2 = cfg_traceKeepDistanceRange * cfg_traceKeepDistanceRange;
+
+	alertInterval = 0;									// 出生后立即检测
+	moveTicks = scene().ticks + cfg_moveInterval;		// 出生后先休息
+	moveSpeed = 0;										// 速度为 0 表示休息
+	moveAngle = (uint8_t)scene().NextInteger(0, 256);	// 随机角度
+
+	xy = { scene().NextDouble(0, 100), scene().NextDouble(0, 100) };
+	bornXY = xy;
+	originalXY = xy;
+
+	hp = 100;
 
 	// 模拟 根据配置 创建技能
-	scene().Create<SkillNear>(this);
 	scene().Create<SkillFar>(this);
 
 
@@ -50,15 +70,35 @@ Monster1::Monster1() : MonsterBase()
 }
 
 
-
+// 未配有保持距离的近战怪
 Monster2::Monster2() : MonsterBase()
 {
 	// 模拟 载入配置
-	this->cfg_alertDistance = 20;
+	cfg_alertInterval = 20;								// 主动警戒扫描每 1 秒发生一次
+	cfg_alertDistance = 10;								// 警戒距离 10 米
+	cfg_moveTimespan = 20;								// 每次移动都坚持 1 秒
+	cfg_moveInterval = 20;								// 移动之后休息 1 秒
+	cfg_traceMaxDistance = 30;							// 追杀到 30 米时不再追杀
+	cfg_traceMaxTimespan = 400;							// 追杀 20 秒后不再追杀
+	cfg_traceKeepDistanceRange = { 5.0f, 15.0f };		// 追杀时保持距离 5 ~ 15 米
+	cfg_moveSpeed = 0.1f;								// 每帧移动 0.1 米, 每秒移动 2 米
+	cfg_alertDistancePow2 = cfg_alertDistance * cfg_alertDistance;
+	cfg_traceMaxDistancePow2 = cfg_traceMaxDistance * cfg_traceMaxDistance;
+	cfg_traceKeepDistanceRangePow2 = cfg_traceKeepDistanceRange * cfg_traceKeepDistanceRange;
+
+	alertInterval = 0;									// 出生后立即检测
+	moveTicks = scene().ticks + cfg_moveInterval;		// 出生后先休息
+	moveSpeed = 0;										// 速度为 0 表示休息
+	moveAngle = (uint8_t)scene().NextInteger(0, 256);	// 随机角度
+
+	xy = { scene().NextDouble(0, 100), scene().NextDouble(0, 100) };
+	bornXY = xy;
+	originalXY = xy;
+
+	hp = 100;
 
 	// 模拟 根据配置 创建技能
 	scene().Create<SkillNear>(this);
-	scene().Create<SkillFar>(this);
 
 	// 模拟 根据配置 载入初始AI
 	SetFSM(fsmAI);
@@ -333,9 +373,24 @@ int MonsterFSM_AI::Update()
 	auto& s = scene();
 	CORO_BEGIN();
 	{
+		assert(c.moveSpeed == 0);
+		if (c.alertInterval <= s.ticks)
+		{
+			//	assert(!ctx().target);
+			//	auto tar = ctx().SearchTarget();
+			//	if (tar)
+			//	{
+			//		ctx().target = tar;
+			//		ctx().originalX = ctx().x;
+			//		return 1;						// 作为条件使用, 通过 Update 返回值来达到结果告知的目的
+			//	}
+			//	return 0;
+
+		}
 	}
 	CORO_(1);
 	{
+		assert(c.moveSpeed != 0);
 	}
 	CORO_END();
 	return 0;
