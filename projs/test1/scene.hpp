@@ -126,8 +126,7 @@ Scene::Scene()
 	, monsters(*this)
 	, err(*this)
 {
-	// more...
-
+	// create lua state
 	L = xx::Lua_NewState(*this);
 
 	// LuaBind: Scene
@@ -146,23 +145,21 @@ Scene::Scene()
 	xxLua_BindField(MP, L, XY, y, false);
 	lua_pop(L, 1);
 
+	// LuaBind: SkillBase
+	xx::Lua_PushMetatable<MP, SkillBase>(L);
+	xxLua_BindFunc(MP, L, SkillBase, Cast, false);
+	lua_pop(L, 1);
+
 	// LuaBind: MonsterBase
 	xx::Lua_PushMetatable<MP, MonsterBase>(L);
 	xxLua_BindField(MP, L, MonsterBase, xy, false);
 	xxLua_BindField(MP, L, MonsterBase, hp, false);
 	xxLua_BindField(MP, L, MonsterBase, target, false);
-
 	xxLua_BindFunc(MP, L, MonsterBase, DistancePow2, false);
 	xxLua_BindFunc(MP, L, MonsterBase, SearchTarget, false);
 	xxLua_BindFunc(MP, L, MonsterBase, SetTarget, false);
 	xxLua_BindFunc(MP, L, MonsterBase, Hurt, false);
-	xxLua_BindFunc(MP, L, MonsterBase, TakeAvaliableSkillId, false);
-	//xxLua_BindFunc(MP, L, MonsterBase, LuaCondition, false);
-	//xxLua_BindFunc(MP, L, MonsterBase, Idle, false);
-	//xxLua_BindFunc(MP, L, MonsterBase, Move, false);
-	//xxLua_BindFunc(MP, L, MonsterBase, Cast, false);
-
-	// todo: more bind
+	xxLua_BindFunc(MP, L, MonsterBase, TakeAvaliableSkill, false);
 	lua_pop(L, 1);
 
 	// more bind here...

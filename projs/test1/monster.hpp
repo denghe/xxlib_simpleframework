@@ -1,11 +1,6 @@
 MonsterBase::MonsterBase()
 	: skills(scene())
-	//, fsmConds(scene())
-	//, fsmIdle(scene(), this)
-	//, fsmMove(scene(), this)
-	, fsmCast(scene(), this)
 	, fsmAI(scene(), this)
-	//, fsmAlertCondition(scene(), this)
 {
 	auto& ms = *scene().monsters;
 	sceneContainerIndex = (uint32_t)ms.dataLen;
@@ -42,15 +37,34 @@ Monster1::Monster1() : MonsterBase()
 	cfg_moveBackInterval = 5;							// 随机移动 5 次来 1 次出生点方向的移动
 	cfg_traceMaxDistance = 30;							// 追杀到 30 米时不再追杀
 	cfg_traceMaxTimespan = 400;							// 追杀 20 秒后不再追杀
-	cfg_traceKeepDistanceRange = { 5.0f, 15.0f };		// 追杀时保持距离 5 ~ 15 米
 	cfg_moveSpeed = 0.2f;								// 每帧移动 0.2 米, 每秒移动 4 米
 	cfg_radius = 0.5f;									// 怪投影到地面的圆半径 0.5 米
+	cfg_traceKeepDistanceRange = { 5.0f, 15.0f };		// 追杀时保持距离 5 ~ 15 米
+	cfg_enableTraceKeepDistanceRange = true;			// 启用保持距离
 
+	// 模拟 根据配置 创建技能
+	scene().Create<SkillFar>(this);
+
+	// 根据遍历技能施放范围 修正 保持距离. 
+	assert(cfg_traceKeepDistanceRange.f <= cfg_traceKeepDistanceRange.t);
+	for (auto& skill : *this->skills)
+	{
+		if (skill->cfg_distanceRange.f > cfg_traceKeepDistanceRange.f)
+		{
+			cfg_traceKeepDistanceRange.f = skill->cfg_distanceRange.f;
+		}
+	}
+	// 最小值修正: 为确保玩家和怪的模型尽量不要重叠显示, 最小保持距离即为怪的半径
+	if (cfg_traceKeepDistanceRange.f < cfg_radius) cfg_traceKeepDistanceRange.f = cfg_radius;
+	if (cfg_traceKeepDistanceRange.t < cfg_radius) cfg_traceKeepDistanceRange.t = cfg_radius;
+
+	// 填充各种计算 cache 变量
 	cfg_moveSpeedPow2 = cfg_moveSpeed * cfg_moveSpeed;
 	cfg_alertDistancePow2 = cfg_alertDistance * cfg_alertDistance;
 	cfg_traceMaxDistancePow2 = cfg_traceMaxDistance * cfg_traceMaxDistance;
 	cfg_traceKeepDistanceRangePow2 = cfg_traceKeepDistanceRange * cfg_traceKeepDistanceRange;
 
+	// 初始化运行时变量
 	moveSpeed = 0;										// 速度为 0 表示休息
 	moveAngle = (uint8_t)scene().NextInteger(0, 256);	// 随机角度
 
@@ -59,9 +73,6 @@ Monster1::Monster1() : MonsterBase()
 	originalXY = xy;
 
 	hp = 100;
-
-	// 模拟 根据配置 创建技能
-	scene().Create<SkillFar>(this);
 
 
 	// 模拟 根据配置 载入初始AI
@@ -83,14 +94,35 @@ Monster2::Monster2() : MonsterBase()
 	cfg_moveBackInterval = 5;							// 随机移动 5 次来 1 次出生点方向的移动
 	cfg_traceMaxDistance = 30;							// 追杀到 30 米时不再追杀
 	cfg_traceMaxTimespan = 400;							// 追杀 20 秒后不再追杀
-	cfg_traceKeepDistanceRange = { 5.0f, 15.0f };		// 追杀时保持距离 5 ~ 15 米
 	cfg_moveSpeed = 0.1f;								// 每帧移动 0.1 米, 每秒移动 2 米
 	cfg_radius = 0.3f;									// 怪投影到地面的圆半径 0.3 米
+	cfg_traceKeepDistanceRange = { 0.0f, 0.0f };		// 不启用保持距离
+	cfg_enableTraceKeepDistanceRange = false;			// 不启用保持距离
 
+
+	// 模拟 根据配置 创建技能
+	scene().Create<SkillNear>(this);
+
+	// 根据遍历技能施放范围 计算 保持距离. 
+	assert(cfg_traceKeepDistanceRange.f <= cfg_traceKeepDistanceRange.t);
+	for (auto& skill : *this->skills)
+	{
+		if (skill->cfg_distanceRange.f > cfg_traceKeepDistanceRange.f)
+		{
+			cfg_traceKeepDistanceRange.f = skill->cfg_distanceRange.f;
+		}
+	}
+	// 最小值修正: 为确保玩家和怪的模型尽量不要重叠显示, 最小保持距离即为怪的半径
+	if (cfg_traceKeepDistanceRange.f < cfg_radius) cfg_traceKeepDistanceRange.f = cfg_radius;
+	if (cfg_traceKeepDistanceRange.t < cfg_radius) cfg_traceKeepDistanceRange.t = cfg_radius;
+
+	// 填充各种计算 cache 变量
 	cfg_moveSpeedPow2 = cfg_moveSpeed * cfg_moveSpeed;
 	cfg_alertDistancePow2 = cfg_alertDistance * cfg_alertDistance;
 	cfg_traceMaxDistancePow2 = cfg_traceMaxDistance * cfg_traceMaxDistance;
 	cfg_traceKeepDistanceRangePow2 = cfg_traceKeepDistanceRange * cfg_traceKeepDistanceRange;
+
+	// 初始化运行时变量
 
 	moveSpeed = 0;										// 速度为 0 表示休息
 	moveAngle = (uint8_t)scene().NextInteger(0, 256);	// 随机角度
@@ -100,9 +132,6 @@ Monster2::Monster2() : MonsterBase()
 	originalXY = xy;
 
 	hp = 100;
-
-	// 模拟 根据配置 创建技能
-	scene().Create<SkillNear>(this);
 
 	// 模拟 根据配置 载入初始AI
 	SetFSM(fsmAI);
@@ -148,143 +177,46 @@ void MonsterBase::SetTarget(MonsterBase* target)
 }
 
 
-int MonsterBase::TakeAvaliableSkillId()
+xx::MPtr<SkillBase> MonsterBase::TakeAvaliableSkill()
 {
 	// 先判断 gcd. 如果 gcd 中直接返回 -1. 避免因 gcd 导致无脑跳技能
-	if (skillsGcd > scene().ticks) return -1;
+	if (skillsGcd > scene().ticks) return nullptr;
 
 	// 循环移动 skillCursor, 并检测技能是否可用. 最多移动一圈. 返回第1个发现的可用技能
 	for (int i = 0; i < (int)skills->dataLen; ++i)
 	{
 		skillCursor++;
 		if (skillCursor >= (int)skills->dataLen) skillCursor = 0;
-		if (skills->At(skillCursor)->Avaliable()) return skillCursor;
+		auto& skill = skills->At(skillCursor);
+		if (skill->Avaliable()) return skill;
 	}
-	return -1;
+	return nullptr;
 }
 
-//xx::MPtr<FSMLua> MonsterBase::LuaCondition(char const* luacode)
-//{
-//	auto fsm = scene().Create<FSMLua>(this, luacode, false);
-//	fsmConds->AddDirect(fsm);
-//	return fsm;
-//}
-//
-//template<typename T, typename ... Args>
-//xx::MPtr<T> MonsterBase::Condition(Args&&...args)
-//{
-//	auto fsm = scene().Create<T>(this, std::forward<Args>(args)...);
-//	fsmConds->AddDirect(fsm);
-//	return fsm;
-//}
-
-//void MonsterBase::Idle(int64_t ticks, FSMBase* cond)
-//{
-//	fsmIdle->Init(ticks, cond);
-//	PushFSM(fsmIdle);
-//}
-//
-//void MonsterBase::Move(int xInc, int count, FSMBase* cond)
-//{
-//	fsmMove->Init(xInc, count, cond);
-//	PushFSM(fsmMove);
-//}
-
-//void MonsterBase::Cast(int skillIndex)
-//{
-//	fsmCast->Init(skillIndex);
-//	PushFSM(fsmCast);
-//}
-
-
-
-
-
-MonsterBase& MonsterFSMBase::ctx()
+MonsterFSM_AI::MonsterFSM_AI(SceneObjBase* owner) : FSMBase(owner)
 {
-	return *(MonsterBase*)owner;
+	auto& c = *(MonsterBase*)owner;
+	moveTicks = scene().ticks + c.cfg_moveInterval;		// 出生后先休息
 }
-MonsterFSMBase::MonsterFSMBase(SceneObjBase* owner) : FSMBase(owner)
+
+// 试警戒一把( 如果 cd 到了的话 ). 顺便把挨打检测也做在这
+bool MonsterFSM_AI::Alert()
 {
+	auto& c = *(MonsterBase*)owner;
+	auto& s = scene();
+	if (c.target) return true;
+	if (alertInterval <= s.ticks)
+	{
+		auto tar = c.SearchTarget();
+		if (tar)
+		{
+			c.target = tar;
+			c.originalXY = c.xy;
+			return true;
+		}
+	}
+	return false;
 }
-
-
-
-
-
-//MonsterFSM_Idle::MonsterFSM_Idle(SceneObjBase* owner) : MonsterFSMBase(owner)
-//{
-//}
-//void MonsterFSM_Idle::Init(int64_t ticks, FSMBase* breakCond)
-//{
-//	this->sleepToTicks = scene().ticks + ticks;
-//	this->breakCond = breakCond;
-//}
-//int MonsterFSM_Idle::Update()
-//{
-//	// 时间到或条件的 Update 返回非 0, 弹栈
-//	if (scene().ticks >= sleepToTicks
-//		|| (breakCond && breakCond->Update())) Pop();
-//	return 0;
-//}
-//
-//
-//
-//
-//MonsterFSM_Move::MonsterFSM_Move(SceneObjBase* owner) : MonsterFSMBase(owner)
-//{
-//}
-//void MonsterFSM_Move::Init(int xInc, int count, FSMBase* breakCond)
-//{
-//	this->xInc = xInc;
-//	this->toTicks = scene().ticks + count;
-//	this->breakCond = breakCond;
-//}
-//int MonsterFSM_Move::Update()
-//{
-//	if (scene().ticks >= toTicks
-//		|| (breakCond && breakCond->Update())) Pop();
-//	ctx().x += xInc;
-//	return 0;
-//}
-
-
-
-
-MonsterFSM_Cast::MonsterFSM_Cast(SceneObjBase* owner) : MonsterFSMBase(owner)
-{
-}
-void MonsterFSM_Cast::Init(int skillIndex)
-{
-	this->skillIndex = skillIndex;
-}
-int MonsterFSM_Cast::Update()
-{
-	assert(skillIndex >= 0
-		&& (int)ctx().skills->dataLen > skillIndex
-		&& ctx().skills->At(skillIndex)->Avaliable());
-	ctx().skills->At(skillIndex)->Cast();
-	Pop();
-	return 0;
-}
-
-
-
-//MonsterFSM_AlertCondition::MonsterFSM_AlertCondition(SceneObjBase* owner) : MonsterFSMBase(owner) {}
-//
-//// 有怪进入范围则条件满足, 填充 target 属性后返回非 0 ( 通知使用条件者退出 )
-//int MonsterFSM_AlertCondition::Update()
-//{
-//	assert(!ctx().target);
-//	auto tar = ctx().SearchTarget();
-//	if (tar)
-//	{
-//		ctx().target = tar;
-//		ctx().originalX = ctx().x;
-//		return 1;						// 作为条件使用, 通过 Update 返回值来达到结果告知的目的
-//	}
-//	return 0;
-//}
 
 
 
@@ -318,108 +250,31 @@ Label##n:					\
 goto Label##n
 
 
-//// 先来个 idle / move, 发现怪进入范围就不停追杀接近并持续循环放技能, 直到目标失效时返回原点
-//int MonsterFSM_AI::Update()
-//{
-//	auto& c = ctx();
-//	auto& s = scene();
-//	CORO_BEGIN();
-//	{
-//		if (c.target) CORO_GOTO(1);					// 如果有目标( 警戒条件类赋予 ), 切到追杀状态
-//		
-//		auto v = s.NextInteger(-1, 2);				// 根据随机值 -1, 0, 1 来决定是 idle 还是 move( v 值同时决定移动方向 )
-//		if (v == 0)
-//		{
-//			c.Idle(s.NextInteger(1, 3), c.fsmAlertCondition);		// 压入 Idle 状态机
-//		}
-//		else
-//		{
-//			c.Move(v, s.NextInteger(1, 3), c.fsmAlertCondition);	// 压入 Move 状态机
-//		}
-//		CORO_YIELDTO(0);								// 下次进入时从 CORO_BEGIN 处开始执行
-//	}
-//	CORO_(1);
-//	{
-//		// 如果有目标, 则表明先前的 idle 过程中判定条件达成, 目标被设置, 则追杀( 持续向目标移动, 有技能放时就放技能 )
-//		if (c.target)
-//		{
-//			auto skillid = c.AnyAvaliableSkillId();
-//			if (skillid == -1)
-//			{
-//				int xInc = c.target->x > c.x ? 1 : -1;
-//				c.Move(xInc, 3, nullptr);
-//			}
-//			else
-//			{
-//				c.Cast(skillid);
-//			}
-//			CORO_YIELDTO(1);							// 下次进入时从 CORO_(1) 处开始执行
-//		}
-//		else
-//		{
-//			// 如果目标丢失( 下线? 被打死? ), 执行回撤操作( 持续 move 到发现 target 瞬间记录的的坐标 )
-//			auto d = c.originalX - c.x;
-//			c.Move(d > 0 ? 1 : -1, std::abs(d), nullptr);	// 无条件回撤
-//
-//			CORO_YIELDTO(0);							// 下次进入时从 CORO_BEGIN 处开始执行
-//		}
-//	}
-//	CORO_END();
-//	return 0;
-//}
 
-MonsterFSM_AI::MonsterFSM_AI(SceneObjBase* owner) : MonsterFSMBase(owner)
-{
-	moveTicks = scene().ticks + ctx().cfg_moveInterval;		// 出生后先休息
-}
-
-// 试警戒一把( 如果 cd 到了的话 ). 顺便把挨打检测也做在这
-bool MonsterFSM_AI::Alert()
-{
-	auto& c = ctx();
-	auto& s = scene();
-	if (c.target) return true;
-	if (alertInterval <= s.ticks)
-	{
-		auto tar = c.SearchTarget();
-		if (tar)
-		{
-			c.target = tar;
-			c.originalXY = c.xy;
-			return true;
-		}
-	}
-	return false;
-}
-
-
-// 严格按照策划案来的 AI 代码. 整合了之前的 Idle, Move, Track, TurnBack 等状态. 只剩技能释放是 push 状态
+// 严格按照策划案来的 AI 代码. 整合了 Idle, Move, Track, TurnBack 等状态
 int MonsterFSM_AI::Update()
 {
-	auto& c = ctx();
+	auto& c = *(MonsterBase*)owner;
 	auto& s = scene();
 	CORO_BEGIN();														// idle
 	{
 		// 警戒一把. 如果成功( 选中 target ), 切到追杀代码
 		if (Alert())
 		{
-			stateIsChanged = true;
+			// 记录开始追杀的时间 for 超时检查
+			traceTicks = s.ticks + c.cfg_traceMaxTimespan;
 			CORO_GOTO(2);
 		}
 
-		// 判断是否为持续 idle. 如果是首次, 则需要同步
-		if (stateIsChanged)
+		// 判断要不要发数据
+		if (c.moveSpeed != 0.0f)
 		{
-			// todo: send msg to client ?
-			stateIsChanged = false;
+			c.moveSpeed = 0.0f;
+			// todo: send set pos msg to client ?
 		}
 
 		// 如果 idle 的时间到了, 就切到 move
-		if (moveTicks <= s.ticks)
-		{
-			stateIsChanged = true;
-			CORO_YIELDTO(1);
-		}
+		if (moveTicks <= s.ticks) CORO_YIELDTO(1);
 
 		// 循环
 		CORO_YIELDTO(0);
@@ -429,58 +284,65 @@ int MonsterFSM_AI::Update()
 		// 警戒一把. 如果成功( 选中 target ), 切到追杀代码
 		if (Alert())
 		{
-			stateIsChanged = true;
+			// 记录开始追杀的时间 for 超时检查
+			traceTicks = s.ticks + c.cfg_traceMaxTimespan;
 			CORO_GOTO(2);
 		}
 
-		// 判断是否持续相同方向移动中. 如果为刚开始移动, 或改变了方向 速度啥的, 则需要同步
-		if (stateIsChanged)
+		auto speed = c.cfg_moveSpeed;
+		uint8_t angle;
+
+		if (++moveCount >= c.cfg_moveBackInterval)
 		{
-			if (++moveCount >= c.cfg_moveBackInterval)
-			{
-				// 每 cfg_moveBackInterval 次移动之后, 总有一次移动方向是正对出生点的, 以确保怪不会随机跑太远
-				moveCount = 0;
-				c.moveAngle = xyMath.GetAngle(c.bornXY - c.xy);
-			}
-			else
-			{
-				// 随机出前进角度
-				c.moveAngle = (uint8_t)s.NextInteger(0, 256);
-			}
-			c.moveSpeed = c.cfg_moveSpeed;
+			// 每 cfg_moveBackInterval 次移动之后, 总有一次移动方向是正对出生点的, 以确保怪不会随机跑太远
+			moveCount = 0;
+			angle = xyMath.GetAngle(c.bornXY - c.xy);
+		}
+		else
+		{
+			// 随机出前进角度
+			angle = (uint8_t)s.NextInteger(0, 256);
+		}
+
+		bool needSync = false;
+		// 算增量
+		if (c.moveSpeed != speed || c.moveAngle != angle)
+		{
+			c.moveSpeed = speed;
+			c.moveAngle = angle;
 			xyInc = xyMath.GetXyInc(c.moveAngle) * c.moveSpeed;
 
-			// todo: send msg to client ?
-			stateIsChanged = false;
+			needSync = true;
 		}
 
-		// 向之前定的随机方向移动				// todo: 这里需要检测 xy + inc 之后的点是否合法. 如果非法, 还需要补反转 xyInc 的代码
-		c.xy.Add(xyInc);						// todo: 如果 moveCount == 0 期间移动被阻挡, 则启用导航功能返回出生点
+		// 移动		// todo: 需要检测 xy + inc 之后的点是否合法. 需要补反转 xyInc 代码
+		c.xy.Add(xyInc);				// todo: 如果 moveCount == 0 期间移动被阻挡, 则启用导航功能返回出生点
+
+		if (needSync)
+		{
+			// todo: send move msg to client ?
+		}
+
 
 		// 如果 move 的时间到了, 就切到 idle
-		if (moveTicks <= s.ticks)
-		{
-			stateIsChanged = true;
-			CORO_YIELDTO(0);
-		}
+		if (moveTicks <= s.ticks) CORO_YIELDTO(0);
 
 		// 循环
 		CORO_YIELDTO(1);
 	}
 	CORO_(2);													// 追杀( 先做无视地型无脑向目标前进的版本 )
 	{
-		// 判断目标是否失效, 如果已失效, 则开始返回出生点( 跳到返回状态 )
-		if (!c.target)
+		// 目标失效, 追出最远距离限定, 超时, 都将返回出生点( 跳到返回状态 )
+		if (!c.target
+			|| traceTicks <= s.ticks
+			|| xyMath.GetDistancePow2(c.bornXY - c.xy) > c.cfg_traceMaxDistancePow2)
 		{
-			stateIsChanged = true;
 			CORO_GOTO(3);
 		}
 
 		// 判断是否有可用技能. 有就用
-		auto sid = c.TakeAvaliableSkillId();
-		if (sid != -1)
+		if (auto skill = c.TakeAvaliableSkill())
 		{
-			auto& skill = c.skills->At(sid);
 			skill->Cast();
 			// send msg to client?
 			if (skill->cfg_castStunTimespan)
@@ -490,62 +352,95 @@ int MonsterFSM_AI::Update()
 			}
 		}
 
-		// 如果状态改变过或目标位置变化过, 重算一切
-		if (stateIsChanged || targetXyBak != c.target->xy)
+		// 先将计算结果存到下面的临时变量, 以便于最后判断变化 & 同步到客户端
+		uint8_t angle = 0;
+		auto speed = 0.0f;
+
+		// 保持距离
+
+		// 先算出与目标的距离pow2备用
+		auto tarDistPow2 = xyMath.GetDistancePow2(c.target->xy - c.xy);
+
+		// 判断 距离 是否已 小于 最小保持距离, 反向移动
+		if (c.cfg_traceKeepDistanceRangePow2.f > tarDistPow2)
 		{
-			if (stateIsChanged)
-			{
-				c.moveSpeed = c.cfg_moveSpeed;
-				stateIsChanged = false;
-			}
-
-			// 根据当前目标来得到角度, 算出帧移动增量
-			c.moveAngle = xyMath.GetAngle(c.target->xy - c.xy);
-			xyInc = xyMath.GetXyInc(c.moveAngle) * c.moveSpeed;
-
-			// 记录目标当前坐标. 如果目标未曾移动, 则不需要反复计算增量或是下发同步包
-			targetXyBak = c.target->xy;
-
-			// todo: send msg to client ?
+			angle = xyMath.GetAngle(c.xy - c.target->xy);
+			speed = c.cfg_moveSpeed;
+		}
+		// 判断 距离 是否明显大于 最小保持距离, 移动( 所谓明显大于是指距离大于一帧的移动距离 )
+		else if ((c.cfg_enableTraceKeepDistanceRange && c.cfg_traceKeepDistanceRangePow2.t > tarDistPow2)
+			|| ((c.cfg_traceKeepDistanceRange.f + c.cfg_moveSpeed) * (c.cfg_traceKeepDistanceRange.f + c.cfg_moveSpeed) < tarDistPow2))
+		{
+			angle = xyMath.GetAngle(c.target->xy - c.xy);
+			speed = c.cfg_moveSpeed;
+		}
+		// 不需要移动
+		else
+		{
+			angle = xyMath.GetAngle(c.target->xy - c.xy);
+			speed = 0.0f;
 		}
 
-		// todo: 坐标重叠检测 / 基本身位保持算法
+		bool needSync = false;
+		// 算增量
+		if (c.moveSpeed != speed || c.moveAngle != angle)
+		{
+			c.moveSpeed = speed;
+			c.moveAngle = angle;
+			xyInc = xyMath.GetXyInc(angle) * speed;
 
-		// todo: 保持距离
-		// 向目标移动				// todo: 这里需要接入 navMesh
+			needSync = true;
+		}
+
+		// 移动					
 		c.xy.Add(xyInc);
+
+		if (needSync)
+		{
+			// todo: send move msg to client ?
+		}
 
 		// 循环
 		CORO_YIELDTO(2);
 	}
 	CORO_(3);															// 返回出生点
 	{
-		// 判断是否持续相同方向移动中. 如果为刚开始移动, 或改变了方向 速度啥的, 则需要同步
-		if (stateIsChanged)
-		{
-			c.moveAngle = xyMath.GetAngle(c.bornXY - c.xy);
-			c.moveSpeed = c.cfg_moveSpeed;
-			xyInc = xyMath.GetXyInc(c.moveAngle) * c.moveSpeed;
-
-			// todo: send msg to client ?
-			stateIsChanged = false;
-		}
+		uint8_t angle = xyMath.GetAngle(c.bornXY - c.xy);
+		auto speed = c.cfg_moveSpeed;
 
 		// 判断是否已经回到了出生点( 距离小于一帧的移动增量 )
 		if (xyMath.GetDistancePow2(c.bornXY - c.xy) <= c.cfg_moveSpeedPow2)
 		{
 			// 将坐标设为初生点, 跳到休息状态
 			c.xy = c.bornXY;
-			stateIsChanged = true;
 			c.moveSpeed = 0;
+
+			// todo: send set pos msg to client ?
+
 			CORO_YIELDTO(0);
 		}
 
-		// 向之前定的方向移动					// todo: 导航
-		c.xy.Add(xyInc);
-		CORO_YIELDTO(3);
+		bool needSync = false;
+		// 算增量
+		if (c.moveSpeed != speed || c.moveAngle != angle)
+		{
+			c.moveSpeed = speed;
+			c.moveAngle = angle;
+			xyInc = xyMath.GetXyInc(c.moveAngle) * c.cfg_moveSpeed;
 
-		// todo: 超时检测? 始终跑不回去的异常情况处理 
+			needSync = true;
+		}
+
+		// 移动					
+		c.xy.Add(xyInc);					// todo: 导航
+
+		if (needSync)
+		{
+			// todo: send move msg to client ?
+		}
+
+		CORO_YIELDTO(3);
+		// todo: 超时检测?  
 	}
 	CORO_(4)															// 技能后僵直
 	{

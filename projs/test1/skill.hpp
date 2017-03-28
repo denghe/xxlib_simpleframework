@@ -11,7 +11,7 @@ bool SkillBase::Avaliable()
 	return owner->skillsGcd <= scene().ticks
 		&& this->cd <= scene().ticks
 		&& owner->target
-		&& cfg_distance.IntersectPow2(owner->DistancePow2(owner->target.pointer));
+		&& cfg_distanceRange.IntersectPow2(owner->DistancePow2(owner->target.pointer));
 }
 
 void SkillBase::Cast()
@@ -38,7 +38,7 @@ void SkillBase::Cast()
 SkillNear::SkillNear(MonsterBase* owner) : SkillBase(owner)
 {
 	// Ä£ÄâÔØÈëÅäÖÃ
-	this->cfg_distance = { 0, 3 };
+	this->cfg_distanceRange = { 0, 3 };
 	this->cfg_damage = 5;
 	this->cfg_cd = 3;
 	this->cfg_castStunTimespan = 5;
@@ -47,7 +47,7 @@ SkillNear::SkillNear(MonsterBase* owner) : SkillBase(owner)
 SkillFar::SkillFar(MonsterBase* owner) : SkillBase(owner)
 {
 	// Ä£ÄâÔØÈëÅäÖÃ
-	this->cfg_distance = { 15, 20 };
+	this->cfg_distanceRange = { 15, 20 };
 	this->cfg_damage = 10;
 	this->cfg_cd = 6;
 	this->cfg_castStunTimespan = 0;

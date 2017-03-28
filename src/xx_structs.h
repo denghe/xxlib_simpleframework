@@ -55,22 +55,32 @@ namespace xx
 		f1 += other.f1;												\
 		f2 += other.f2;												\
 	}																\
-	inline void Multiply(T ratio)									\
+	inline void Minus(CN const &other)								\
+	{																\
+		f1 -= other.f1;												\
+		f2 -= other.f2;												\
+	}																\
+	inline void Multiply(T const& ratio)							\
 	{																\
 		f1 *= ratio;												\
 		f2 *= ratio;												\
 	}																\
-	inline bool Intersect(T n)										\
+	inline void Devide(T const& ratio)								\
+	{																\
+		f1 /= ratio;												\
+		f2 /= ratio;												\
+	}																\
+	inline bool Intersect(T const& n)								\
 	{																\
 		assert(f1 <= f2);											\
 		return n >= f1 && n <= f2;									\
 	}																\
-	inline bool IntersectPow2(T n)									\
+	inline bool IntersectPow2(T const& n)							\
 	{																\
 		assert(f1 <= f2);											\
 		return n >= f1 * f1 && n <= f2 * f2;						\
 	}																\
-	inline bool IntersectOpen(T n)									\
+	inline bool IntersectOpen(T const& n)							\
 	{																\
 		assert(f1 <= f2);											\
 		return n >= f1 && n < f2;									\

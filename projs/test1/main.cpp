@@ -12,6 +12,7 @@ XyMath xyMath;
 typedef xx::MemPool<
 	SkillNear,
 	SkillFar,
+	SkillBase,
 	Monster1,
 	Monster2,
 	MonsterBase,

@@ -1,62 +1,18 @@
 struct MonsterBase;
-struct MonsterFSMBase : FSMBase
-{
-	MonsterBase& ctx();
-	MonsterFSMBase(SceneObjBase* owner);
-};
-
-//struct MonsterFSM_Idle : MonsterFSMBase
-//{
-//	int64_t sleepToTicks;
-//	FSMBase* breakCond = nullptr;
-//
-//	MonsterFSM_Idle(SceneObjBase* owner);
-//	void Init(int64_t ticks, FSMBase* breakCond);
-//	virtual int Update() override;
-//};
-//
-//struct MonsterFSM_Move : MonsterFSMBase
-//{
-//	int xInc;
-//	int64_t toTicks;
-//	FSMBase* breakCond;
-//
-//	MonsterFSM_Move(SceneObjBase* owner);
-//	void Init(int xInc, int count, FSMBase* breakCond);
-//	virtual int Update() override;
-//};
-
-struct MonsterFSM_Cast : MonsterFSMBase
-{
-	int skillIndex;
-
-	MonsterFSM_Cast(SceneObjBase* owner);
-	void Init(int skillIndex);
-	virtual int Update() override;
-};
-
-struct MonsterFSM_AI : MonsterFSMBase
+struct MonsterFSM_AI : FSMBase
 {
 	int64_t alertInterval = 0;				// 当前警戒 ticks. 出生后立即检测
 	int moveCount = 0;						// 移动次数计数 for 几次后必向出生点移动 1 次
 	int64_t moveTicks;						// 当前移动 / 休息 ticks( 构造函数中初始化 )
 	XY xyInc;								// 移动增量
-	XY targetXyBak;							// 备份目标坐标以方便移动判断
 	int64_t castStunTicks = 0;				// 使用技能造成的僵直 ticks 计数器
-
+	int64_t traceTicks = 0;					// 追杀超时 ticks( 状态切换时初始化 )
 	bool Alert();							// 试警戒一把( 如果 cd 到了的话 ), 如果发现目标就返回 true
-	bool stateIsChanged = false;			// 用来判断是否为首次move或idle
 
 	MonsterFSM_AI(SceneObjBase* owner);
 	int lineNumber = 0;						// stackless 协程行号
 	virtual int Update() override;
 };
-
-//struct MonsterFSM_AlertCondition : MonsterFSMBase
-//{
-//	MonsterFSM_AlertCondition(SceneObjBase* owner);
-//	virtual int Update() override;
-//};
 
 struct MonsterBase : SceneObjBase
 {
@@ -79,6 +35,7 @@ struct MonsterBase : SceneObjBase
 	float cfg_moveSpeed;									// 每帧移动米数
 	float cfg_radius;										// 身体半径( AI 向目标移动时 以身体有所重叠为最小距离保持 )
 	//bool cfg_retreatAlert = false;						// 逃离时警戒
+	bool cfg_enableTraceKeepDistanceRange;					// 是否启用 保持距离
 
 	// cfg 加载后期填充
 	float cfg_moveSpeedPow2;								// cfg_moveSpeedPow2 * cfg_moveSpeedPow2
@@ -99,42 +56,13 @@ struct MonsterBase : SceneObjBase
 	int hp;													// 怪的血量( LUA 只读 )
 	xx::MPtr<MonsterBase> target;							// 当前目标/焦点( LUA 只读 )
 
-	//xx::List_v<FSMBase*, true> fsmConds;					// 存储已创建出来的条件判断用 lua 状态机( 以便随着对象清掉 )
-
-	// 静态创建各种状态( 一部分通过 Init 初始化复用 )
-	//xx::MemHeaderBox<MonsterFSM_Idle> fsmIdle;
-	//xx::MemHeaderBox<MonsterFSM_Move> fsmMove;
-	//xx::MemHeaderBox<MonsterFSM_AlertCondition> fsmAlertCondition;
-	xx::MemHeaderBox<MonsterFSM_Cast> fsmCast;
-	xx::MemHeaderBox<MonsterFSM_AI> fsmAI;
+	xx::MemHeaderBox<MonsterFSM_AI> fsmAI;					// 以值类型方式来方便使用
 
 	float DistancePow2(MonsterBase* other);					// 计算与目标的距离的平方值
 	xx::MPtr<MonsterBase> SearchTarget();					// 搜索目标, 根据视距查找敌方并返回
 	void SetTarget(MonsterBase* target);					// 设置当前 target( 传入空指针就是清除 )
 	void Hurt(MonsterBase* attacker);						// 如果没有 target 将导致 set target. 并不具体执行减血的效果
-	int TakeAvaliableSkillId();								// 循环遍历技能, 找出一个可用的技能下标返回. 找一轮都找不到就返回 -1
-
-
-	//// 传入一段 lua 代码来创建一个 条件判断用状态机. 如果 Update 返回非 0 则表示执行完毕.
-	//// 主用于实现 Idle , Move 时的 "唤醒" 效果, 模拟事件发生. 
-	//// 状态机 Update 期间计算出来的结果, 这需要在 MonsterBase 中加结果容器变量用于持有 / 交互.
-	//xx::MPtr<FSMLua> LuaCondition(char const* luacode);
-
-	//// 创建状态机并放入 fsmConds 容器当中.
-	//template<typename T, typename ... Args>
-	//xx::MPtr<T> Condition(Args&&...args);
-
-	//// 创建一个 MonsterFSM_Idle 状态机并 Push. yield 函数.
-	//// ticks 为 idle 时长. cond 为当 Update 返回非 0 时, 认为条件达成
-	//void Idle(int64_t ticks, FSMBase* cond);
-
-	//// 创建一个 MonsterFSM_Move 状态机并 Push. yield 函数.
-	//// xInc 为 x 每帧递增值. cond 为当 Update 返回非 0 时, 认为条件达成
-	//void Move(int xInc, int count, FSMBase* cond);
-
-	//// 创建一个 MonsterFSM_Cast 状态机并 Push. yield 函数.
-	//// skillIndex 为 技能下标. 当技能播放完毕或终止时该状态将弹出
-	//void Cast(int skillIndex);
+	xx::MPtr<SkillBase> TakeAvaliableSkill();				// 循环遍历技能, 找出一个可用的技能下标返回. 找一轮都找不到就返回空
 };
 
 
