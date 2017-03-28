@@ -41,7 +41,7 @@ Monster1::Monster1() : MonsterBase()
 	cfg_radius = 0.5f;									// 怪投影到地面的圆半径 0.5 米
 	cfg_traceKeepDistanceRange = { 5.0f, 15.0f };		// 追杀时保持距离 5 ~ 15 米
 	cfg_enableTraceKeepDistanceRange = true;			// 启用保持距离
-	cfg_isInitiative = true;							// 主动怪( 主动警戒 )
+	cfg_isInitiative = true;							// 主动怪
 
 
 	// 模拟 根据配置 创建技能
@@ -100,7 +100,7 @@ Monster2::Monster2() : MonsterBase()
 	cfg_radius = 0.3f;									// 怪投影到地面的圆半径 0.3 米
 	cfg_traceKeepDistanceRange = { 0.0f, 0.0f };		// 不启用保持距离
 	cfg_enableTraceKeepDistanceRange = false;			// 不启用保持距离
-	isInitiative = true;								// 主动怪( 主动警戒 )
+	cfg_isInitiative = false;							// 被动怪
 
 
 	// 模拟 根据配置 创建技能
@@ -208,7 +208,7 @@ bool MonsterFSM_AI::Alert()
 	auto& c = *(MonsterBase*)owner;
 	auto& s = scene();
 	if (c.target) return true;
-	if (c.isInitiative && alertInterval <= s.ticks)
+	if (c.cfg_isInitiative && alertInterval <= s.ticks)
 	{
 		auto tar = c.SearchTarget();
 		if (tar)
