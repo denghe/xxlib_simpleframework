@@ -41,6 +41,8 @@ Monster1::Monster1() : MonsterBase()
 	cfg_radius = 0.5f;									// 怪投影到地面的圆半径 0.5 米
 	cfg_traceKeepDistanceRange = { 5.0f, 15.0f };		// 追杀时保持距离 5 ~ 15 米
 	cfg_enableTraceKeepDistanceRange = true;			// 启用保持距离
+	cfg_isInitiative = true;							// 主动怪( 主动警戒 )
+
 
 	// 模拟 根据配置 创建技能
 	scene().Create<SkillFar>(this);
@@ -98,6 +100,7 @@ Monster2::Monster2() : MonsterBase()
 	cfg_radius = 0.3f;									// 怪投影到地面的圆半径 0.3 米
 	cfg_traceKeepDistanceRange = { 0.0f, 0.0f };		// 不启用保持距离
 	cfg_enableTraceKeepDistanceRange = false;			// 不启用保持距离
+	isInitiative = true;								// 主动怪( 主动警戒 )
 
 
 	// 模拟 根据配置 创建技能
@@ -199,13 +202,13 @@ MonsterFSM_AI::MonsterFSM_AI(SceneObjBase* owner) : FSMBase(owner)
 	moveTicks = scene().ticks + c.cfg_moveInterval;		// 出生后先休息
 }
 
-// 试警戒一把( 如果 cd 到了的话 ). 顺便把挨打检测也做在这
+// 试警戒一把( 如果为主动怪, 且 cd 到了的话 ). 因 idle / move 状态挨打而设置目标也返回 true
 bool MonsterFSM_AI::Alert()
 {
 	auto& c = *(MonsterBase*)owner;
 	auto& s = scene();
 	if (c.target) return true;
-	if (alertInterval <= s.ticks)
+	if (c.isInitiative && alertInterval <= s.ticks)
 	{
 		auto tar = c.SearchTarget();
 		if (tar)
@@ -361,13 +364,14 @@ int MonsterFSM_AI::Update()
 		// 先算出与目标的距离pow2备用
 		auto tarDistPow2 = xyMath.GetDistancePow2(c.target->xy - c.xy);
 
-		// 判断 距离 是否已 小于 最小保持距离, 反向移动
+		// 判断 距离 是否已 小于 最小保持距离, 反向移动( 不管有没启用保持距离 )
 		if (c.cfg_traceKeepDistanceRangePow2.f > tarDistPow2)
 		{
 			angle = xyMath.GetAngle(c.xy - c.target->xy);
 			speed = c.cfg_moveSpeed;
 		}
-		// 判断 距离 是否明显大于 最小保持距离, 移动( 所谓明显大于是指距离大于一帧的移动距离 )
+		// 如果启用 保持距离, 判断 距离 是否大于 最大保持距离, 移动
+		// 否则判断  距离 是否明显大于 最小保持距离, 移动( 所谓明显大于是指距离大于一帧的移动距离 )
 		else if ((c.cfg_enableTraceKeepDistanceRange && c.cfg_traceKeepDistanceRangePow2.t > tarDistPow2)
 			|| ((c.cfg_traceKeepDistanceRange.f + c.cfg_moveSpeed) * (c.cfg_traceKeepDistanceRange.f + c.cfg_moveSpeed) < tarDistPow2))
 		{
@@ -411,8 +415,13 @@ int MonsterFSM_AI::Update()
 		// 判断是否已经回到了出生点( 距离小于一帧的移动增量 )
 		if (xyMath.GetDistancePow2(c.bornXY - c.xy) <= c.cfg_moveSpeedPow2)
 		{
-			// 将坐标设为初生点, 跳到休息状态
+			// 将坐标设为初生点
 			c.xy = c.bornXY;
+
+			// 如果在 返回出生点 路上被打, 会导致设置目标, 为避免 Alert 误判, 在这里清一把
+			c.target = nullptr;
+
+			// 跳到休息状态
 			CORO_GOTO(0);
 		}
 

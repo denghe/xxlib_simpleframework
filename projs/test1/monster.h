@@ -36,6 +36,7 @@ struct MonsterBase : SceneObjBase
 	float cfg_radius;										// 身体半径( AI 向目标移动时 以身体有所重叠为最小距离保持 )
 	//bool cfg_retreatAlert = false;						// 逃离时警戒
 	bool cfg_enableTraceKeepDistanceRange;					// 是否启用 保持距离
+	bool cfg_isInitiative = true;							// 是否为主动怪( 主动警戒 )
 
 	// cfg 加载后期填充
 	float cfg_moveSpeedPow2;								// cfg_moveSpeedPow2 * cfg_moveSpeedPow2
