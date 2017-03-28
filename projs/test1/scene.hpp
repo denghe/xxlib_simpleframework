@@ -160,7 +160,7 @@ Scene::Scene()
 	//xxLua_BindFunc(MP, L, MonsterBase, LuaCondition, false);
 	//xxLua_BindFunc(MP, L, MonsterBase, Idle, false);
 	//xxLua_BindFunc(MP, L, MonsterBase, Move, false);
-	xxLua_BindFunc(MP, L, MonsterBase, Cast, false);
+	//xxLua_BindFunc(MP, L, MonsterBase, Cast, false);
 
 	// todo: more bind
 	lua_pop(L, 1);

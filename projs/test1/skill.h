@@ -8,6 +8,7 @@ struct SkillBase : UpdateBase
 	xx::Range<float> cfg_distance;		// 施放距离范围
 	int cfg_damage;						// 伤害值
 	int cfg_cd;							// 瞬发后的延迟时长( 先这样简化 )
+	int cfg_castStunTimespan;			// 施放时导致停止移动的时间段( 当前为帧数 ). 为 0 表示完全不影响移动
 
 	// runtime
 	int64_t cd = 0;						// 用于计算 cd 的 timer

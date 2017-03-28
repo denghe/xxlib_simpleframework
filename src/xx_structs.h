@@ -46,6 +46,10 @@ namespace xx
 	{																\
 		return f1 == b.f1 && f2 == b.f2;							\
 	}																\
+	inline bool operator!=(CN const& b)								\
+	{																\
+		return f1 != b.f1 || f2 != b.f2;							\
+	}																\
 	inline void Add(CN const &other)								\
 	{																\
 		f1 += other.f1;												\

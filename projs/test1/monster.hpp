@@ -39,20 +39,22 @@ Monster1::Monster1() : MonsterBase()
 	cfg_alertDistance = 10;								// 警戒距离 10 米
 	cfg_moveTimespan = 20;								// 每次移动都坚持 1 秒
 	cfg_moveInterval = 20;								// 移动之后休息 1 秒
+	cfg_moveBackInterval = 5;							// 随机移动 5 次来 1 次出生点方向的移动
 	cfg_traceMaxDistance = 30;							// 追杀到 30 米时不再追杀
 	cfg_traceMaxTimespan = 400;							// 追杀 20 秒后不再追杀
 	cfg_traceKeepDistanceRange = { 5.0f, 15.0f };		// 追杀时保持距离 5 ~ 15 米
 	cfg_moveSpeed = 0.2f;								// 每帧移动 0.2 米, 每秒移动 4 米
+	cfg_radius = 0.5f;									// 怪投影到地面的圆半径 0.5 米
+
+	cfg_moveSpeedPow2 = cfg_moveSpeed * cfg_moveSpeed;
 	cfg_alertDistancePow2 = cfg_alertDistance * cfg_alertDistance;
 	cfg_traceMaxDistancePow2 = cfg_traceMaxDistance * cfg_traceMaxDistance;
 	cfg_traceKeepDistanceRangePow2 = cfg_traceKeepDistanceRange * cfg_traceKeepDistanceRange;
 
-	alertInterval = 0;									// 出生后立即检测
-	moveTicks = scene().ticks + cfg_moveInterval;		// 出生后先休息
 	moveSpeed = 0;										// 速度为 0 表示休息
 	moveAngle = (uint8_t)scene().NextInteger(0, 256);	// 随机角度
 
-	xy = { scene().NextDouble(0, 100), scene().NextDouble(0, 100) };
+	xy = { (float)scene().NextDouble(0, 100), (float)scene().NextDouble(0, 100) };
 	bornXY = xy;
 	originalXY = xy;
 
@@ -78,20 +80,22 @@ Monster2::Monster2() : MonsterBase()
 	cfg_alertDistance = 10;								// 警戒距离 10 米
 	cfg_moveTimespan = 20;								// 每次移动都坚持 1 秒
 	cfg_moveInterval = 20;								// 移动之后休息 1 秒
+	cfg_moveBackInterval = 5;							// 随机移动 5 次来 1 次出生点方向的移动
 	cfg_traceMaxDistance = 30;							// 追杀到 30 米时不再追杀
 	cfg_traceMaxTimespan = 400;							// 追杀 20 秒后不再追杀
 	cfg_traceKeepDistanceRange = { 5.0f, 15.0f };		// 追杀时保持距离 5 ~ 15 米
 	cfg_moveSpeed = 0.1f;								// 每帧移动 0.1 米, 每秒移动 2 米
+	cfg_radius = 0.3f;									// 怪投影到地面的圆半径 0.3 米
+
+	cfg_moveSpeedPow2 = cfg_moveSpeed * cfg_moveSpeed;
 	cfg_alertDistancePow2 = cfg_alertDistance * cfg_alertDistance;
 	cfg_traceMaxDistancePow2 = cfg_traceMaxDistance * cfg_traceMaxDistance;
 	cfg_traceKeepDistanceRangePow2 = cfg_traceKeepDistanceRange * cfg_traceKeepDistanceRange;
 
-	alertInterval = 0;									// 出生后立即检测
-	moveTicks = scene().ticks + cfg_moveInterval;		// 出生后先休息
 	moveSpeed = 0;										// 速度为 0 表示休息
 	moveAngle = (uint8_t)scene().NextInteger(0, 256);	// 随机角度
 
-	xy = { scene().NextDouble(0, 100), scene().NextDouble(0, 100) };
+	xy = { (float)scene().NextDouble(0, 100), (float)scene().NextDouble(0, 100) };
 	bornXY = xy;
 	originalXY = xy;
 
@@ -186,11 +190,11 @@ int MonsterBase::TakeAvaliableSkillId()
 //	PushFSM(fsmMove);
 //}
 
-void MonsterBase::Cast(int skillIndex)
-{
-	fsmCast->Init(skillIndex);
-	PushFSM(fsmCast);
-}
+//void MonsterBase::Cast(int skillIndex)
+//{
+//	fsmCast->Init(skillIndex);
+//	PushFSM(fsmCast);
+//}
 
 
 
@@ -304,7 +308,7 @@ Label##n:					\
 }							\
 }
 
-#define CORO_YIELD(n)		\
+#define CORO_YIELDTO(n)		\
 {							\
 	lineNumber = n;			\
 	return 0;				\
@@ -332,7 +336,7 @@ goto Label##n
 //		{
 //			c.Move(v, s.NextInteger(1, 3), c.fsmAlertCondition);	// 压入 Move 状态机
 //		}
-//		CORO_YIELD(0);								// 下次进入时从 CORO_BEGIN 处开始执行
+//		CORO_YIELDTO(0);								// 下次进入时从 CORO_BEGIN 处开始执行
 //	}
 //	CORO_(1);
 //	{
@@ -349,7 +353,7 @@ goto Label##n
 //			{
 //				c.Cast(skillid);
 //			}
-//			CORO_YIELD(1);							// 下次进入时从 CORO_(1) 处开始执行
+//			CORO_YIELDTO(1);							// 下次进入时从 CORO_(1) 处开始执行
 //		}
 //		else
 //		{
@@ -357,40 +361,202 @@ goto Label##n
 //			auto d = c.originalX - c.x;
 //			c.Move(d > 0 ? 1 : -1, std::abs(d), nullptr);	// 无条件回撤
 //
-//			CORO_YIELD(0);							// 下次进入时从 CORO_BEGIN 处开始执行
+//			CORO_YIELDTO(0);							// 下次进入时从 CORO_BEGIN 处开始执行
 //		}
 //	}
 //	CORO_END();
 //	return 0;
 //}
 
-MonsterFSM_AI::MonsterFSM_AI(SceneObjBase* owner) : MonsterFSMBase(owner) {}
+MonsterFSM_AI::MonsterFSM_AI(SceneObjBase* owner) : MonsterFSMBase(owner)
+{
+	moveTicks = scene().ticks + ctx().cfg_moveInterval;		// 出生后先休息
+}
 
-// 严格按照策划案来的 AI 代码
+// 试警戒一把( 如果 cd 到了的话 ). 顺便把挨打检测也做在这
+bool MonsterFSM_AI::Alert()
+{
+	auto& c = ctx();
+	auto& s = scene();
+	if (c.target) return true;
+	if (alertInterval <= s.ticks)
+	{
+		auto tar = c.SearchTarget();
+		if (tar)
+		{
+			c.target = tar;
+			c.originalXY = c.xy;
+			return true;
+		}
+	}
+	return false;
+}
+
+
+// 严格按照策划案来的 AI 代码. 整合了之前的 Idle, Move, Track, TurnBack 等状态. 只剩技能释放是 push 状态
 int MonsterFSM_AI::Update()
 {
 	auto& c = ctx();
 	auto& s = scene();
-	CORO_BEGIN();
+	CORO_BEGIN();														// idle
 	{
-		assert(c.moveSpeed == 0);
-		if (c.alertInterval <= s.ticks)
+		// 警戒一把. 如果成功( 选中 target ), 切到追杀代码
+		if (Alert())
 		{
-			//	assert(!ctx().target);
-			//	auto tar = ctx().SearchTarget();
-			//	if (tar)
-			//	{
-			//		ctx().target = tar;
-			//		ctx().originalX = ctx().x;
-			//		return 1;						// 作为条件使用, 通过 Update 返回值来达到结果告知的目的
-			//	}
-			//	return 0;
-
+			stateIsChanged = true;
+			CORO_GOTO(2);
 		}
+
+		// 判断是否为持续 idle. 如果是首次, 则需要同步
+		if (stateIsChanged)
+		{
+			// todo: send msg to client ?
+			stateIsChanged = false;
+		}
+
+		// 如果 idle 的时间到了, 就切到 move
+		if (moveTicks <= s.ticks)
+		{
+			stateIsChanged = true;
+			CORO_YIELDTO(1);
+		}
+
+		// 循环
+		CORO_YIELDTO(0);
 	}
-	CORO_(1);
+	CORO_(1);															// 随机移动
 	{
-		assert(c.moveSpeed != 0);
+		// 警戒一把. 如果成功( 选中 target ), 切到追杀代码
+		if (Alert())
+		{
+			stateIsChanged = true;
+			CORO_GOTO(2);
+		}
+
+		// 判断是否持续相同方向移动中. 如果为刚开始移动, 或改变了方向 速度啥的, 则需要同步
+		if (stateIsChanged)
+		{
+			if (++moveCount >= c.cfg_moveBackInterval)
+			{
+				// 每 cfg_moveBackInterval 次移动之后, 总有一次移动方向是正对出生点的, 以确保怪不会随机跑太远
+				moveCount = 0;
+				c.moveAngle = xyMath.GetAngle(c.bornXY - c.xy);
+			}
+			else
+			{
+				// 随机出前进角度
+				c.moveAngle = (uint8_t)s.NextInteger(0, 256);
+			}
+			c.moveSpeed = c.cfg_moveSpeed;
+			xyInc = xyMath.GetXyInc(c.moveAngle) * c.moveSpeed;
+
+			// todo: send msg to client ?
+			stateIsChanged = false;
+		}
+
+		// 向之前定的随机方向移动				// todo: 这里需要检测 xy + inc 之后的点是否合法. 如果非法, 还需要补反转 xyInc 的代码
+		c.xy.Add(xyInc);						// todo: 如果 moveCount == 0 期间移动被阻挡, 则启用导航功能返回出生点
+
+		// 如果 move 的时间到了, 就切到 idle
+		if (moveTicks <= s.ticks)
+		{
+			stateIsChanged = true;
+			CORO_YIELDTO(0);
+		}
+
+		// 循环
+		CORO_YIELDTO(1);
+	}
+	CORO_(2);													// 追杀( 先做无视地型无脑向目标前进的版本 )
+	{
+		// 判断目标是否失效, 如果已失效, 则开始返回出生点( 跳到返回状态 )
+		if (!c.target)
+		{
+			stateIsChanged = true;
+			CORO_GOTO(3);
+		}
+
+		// 判断是否有可用技能. 有就用
+		auto sid = c.TakeAvaliableSkillId();
+		if (sid != -1)
+		{
+			auto& skill = c.skills->At(sid);
+			skill->Cast();
+			// send msg to client?
+			if (skill->cfg_castStunTimespan)
+			{
+				castStunTicks = s.ticks + skill->cfg_castStunTimespan;
+				CORO_GOTO(4);
+			}
+		}
+
+		// 如果状态改变过或目标位置变化过, 重算一切
+		if (stateIsChanged || targetXyBak != c.target->xy)
+		{
+			if (stateIsChanged)
+			{
+				c.moveSpeed = c.cfg_moveSpeed;
+				stateIsChanged = false;
+			}
+
+			// 根据当前目标来得到角度, 算出帧移动增量
+			c.moveAngle = xyMath.GetAngle(c.target->xy - c.xy);
+			xyInc = xyMath.GetXyInc(c.moveAngle) * c.moveSpeed;
+
+			// 记录目标当前坐标. 如果目标未曾移动, 则不需要反复计算增量或是下发同步包
+			targetXyBak = c.target->xy;
+
+			// todo: send msg to client ?
+		}
+
+		// todo: 坐标重叠检测 / 基本身位保持算法
+
+		// todo: 保持距离
+		// 向目标移动				// todo: 这里需要接入 navMesh
+		c.xy.Add(xyInc);
+
+		// 循环
+		CORO_YIELDTO(2);
+	}
+	CORO_(3);															// 返回出生点
+	{
+		// 判断是否持续相同方向移动中. 如果为刚开始移动, 或改变了方向 速度啥的, 则需要同步
+		if (stateIsChanged)
+		{
+			c.moveAngle = xyMath.GetAngle(c.bornXY - c.xy);
+			c.moveSpeed = c.cfg_moveSpeed;
+			xyInc = xyMath.GetXyInc(c.moveAngle) * c.moveSpeed;
+
+			// todo: send msg to client ?
+			stateIsChanged = false;
+		}
+
+		// 判断是否已经回到了出生点( 距离小于一帧的移动增量 )
+		if (xyMath.GetDistancePow2(c.bornXY - c.xy) <= c.cfg_moveSpeedPow2)
+		{
+			// 将坐标设为初生点, 跳到休息状态
+			c.xy = c.bornXY;
+			stateIsChanged = true;
+			c.moveSpeed = 0;
+			CORO_YIELDTO(0);
+		}
+
+		// 向之前定的方向移动					// todo: 导航
+		c.xy.Add(xyInc);
+		CORO_YIELDTO(3);
+
+		// todo: 超时检测? 始终跑不回去的异常情况处理 
+	}
+	CORO_(4)															// 技能后僵直
+	{
+		if (castStunTicks > s.ticks)
+		{
+			CORO_YIELDTO(4);
+		}
+		else
+		{
+			CORO_YIELDTO(2);
+		}
 	}
 	CORO_END();
 	return 0;

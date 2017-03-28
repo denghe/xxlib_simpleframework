@@ -41,6 +41,7 @@ SkillNear::SkillNear(MonsterBase* owner) : SkillBase(owner)
 	this->cfg_distance = { 0, 3 };
 	this->cfg_damage = 5;
 	this->cfg_cd = 3;
+	this->cfg_castStunTimespan = 5;
 }
 
 SkillFar::SkillFar(MonsterBase* owner) : SkillBase(owner)
@@ -49,4 +50,5 @@ SkillFar::SkillFar(MonsterBase* owner) : SkillBase(owner)
 	this->cfg_distance = { 15, 20 };
 	this->cfg_damage = 10;
 	this->cfg_cd = 6;
+	this->cfg_castStunTimespan = 0;
 }
