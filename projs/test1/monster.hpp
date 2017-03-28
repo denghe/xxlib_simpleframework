@@ -413,11 +413,7 @@ int MonsterFSM_AI::Update()
 		{
 			// 将坐标设为初生点, 跳到休息状态
 			c.xy = c.bornXY;
-			c.moveSpeed = 0;
-
-			// todo: send set pos msg to client ?
-
-			CORO_YIELDTO(0);
+			CORO_GOTO(0);
 		}
 
 		bool needSync = false;
