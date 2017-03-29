@@ -2,7 +2,6 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="socket_sample.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="xx">
@@ -129,6 +128,9 @@
       <Filter>bak</Filter>
     </Text>
     <Text Include="bak12.txt">
+      <Filter>bak</Filter>
+    </Text>
+    <Text Include="bak13.txt">
       <Filter>bak</Filter>
     </Text>
   </ItemGroup>

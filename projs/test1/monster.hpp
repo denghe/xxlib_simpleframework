@@ -78,6 +78,7 @@ Monster1::Monster1() : MonsterBase()
 
 
 	// 模拟 根据配置 载入初始AI
+	fsmAI->Init();
 	SetFSM(fsmAI);
 
 	// 载入 LUA 版初始 AI
@@ -137,6 +138,7 @@ Monster2::Monster2() : MonsterBase()
 	hp = 100;
 
 	// 模拟 根据配置 载入初始AI
+	fsmAI->Init();
 	SetFSM(fsmAI);
 
 	// 载入 LUA 版初始 AI
@@ -158,7 +160,7 @@ xx::MPtr<MonsterBase> MonsterBase::SearchTarget()
 	{
 		if (m == this) continue;
 		auto d = DistancePow2(m);
-		if (d <= cfg_alertDistance && minDistance > d)
+		if (d <= cfg_alertDistancePow2 && minDistance > d)
 		{
 			minDistance = d;
 			r = m;
@@ -211,7 +213,9 @@ void MonsterBase::ToString(xx::String &str) const
 
 
 
-MonsterFSM_AI::MonsterFSM_AI(SceneObjBase* owner) : FSMBase(owner)
+MonsterFSM_AI::MonsterFSM_AI(SceneObjBase* owner) : FSMBase(owner) {}
+
+void MonsterFSM_AI::Init()
 {
 	auto& c = *(MonsterBase*)owner;
 	moveTicks = scene().ticks + c.cfg_moveInterval;		// 出生后先休息
@@ -289,10 +293,22 @@ int MonsterFSM_AI::Update()
 		{
 			c.moveSpeed = 0.0f;
 			// todo: send set pos msg to client ?
+			auto& str = *s.err;	// 拿来临时拼接发送内容
+			str.AppendFormat("mov {0} {1} {2} {3} {4} {5} {6} {7}", c.pureVersionNumber(), c.xy.x, 0, c.xy.y, c.cfg_radius, 0, 0, 0);
+			s.udp->SetAddress("10.1.1.99", 6066);
+			s.udp->Send(str.buf, str.dataLen);
+			str.Clear();
+			str.Append("act ", c.pureVersionNumber(), " idle");
+			s.udp->Send(str.buf, str.dataLen);
+			str.Clear();
 		}
 
 		// 如果 idle 的时间到了, 就切到 move
-		if (moveTicks <= s.ticks) CORO_YIELDTO(1);
+		if (moveTicks <= s.ticks)
+		{
+			moveTicks = s.ticks + c.cfg_moveTimespan;
+			CORO_YIELDTO(1);
+		}
 
 		// 循环
 		CORO_YIELDTO(0);
@@ -307,30 +323,35 @@ int MonsterFSM_AI::Update()
 			CORO_GOTO(2);
 		}
 
-		auto speed = c.cfg_moveSpeed;
-		uint8_t angle;
-
-		if (++moveCount >= c.cfg_moveBackInterval)
-		{
-			// 每 cfg_moveBackInterval 次移动之后, 总有一次移动方向是正对出生点的, 以确保怪不会随机跑太远
-			moveCount = 0;
-			angle = xyMath.GetAngle(c.bornXY - c.xy);
-		}
-		else
-		{
-			// 随机出前进角度
-			angle = (uint8_t)s.NextInteger(0, 256);
-		}
-
 		bool needSync = false;
-		// 算增量
-		if (c.moveSpeed != speed || c.moveAngle != angle)
-		{
-			c.moveSpeed = speed;
-			c.moveAngle = angle;
-			xyInc = xyMath.GetXyInc(c.moveAngle) * c.moveSpeed;
 
-			needSync = true;
+		// 刚从 idle 切过来? 确定未来 moveTicks 时间内的移动方针
+		if (c.moveSpeed == 0.0f)
+		{
+			auto speed = c.cfg_moveSpeed;
+			uint8_t angle;
+
+			if (++moveCount >= c.cfg_moveBackInterval)
+			{
+				// 每 cfg_moveBackInterval 次移动之后, 总有一次移动方向是正对出生点的, 以确保怪不会随机跑太远
+				moveCount = 0;
+				angle = xyMath.GetAngle(c.bornXY - c.xy);
+			}
+			else
+			{
+				// 随机出前进角度
+				angle = (uint8_t)s.NextInteger(0, 256);
+			}
+
+			// 算增量
+			if (c.moveSpeed != speed || c.moveAngle != angle)
+			{
+				c.moveSpeed = speed;
+				c.moveAngle = angle;
+				xyInc = xyMath.GetXyInc(c.moveAngle) * c.moveSpeed;
+
+				needSync = true;
+			}
 		}
 
 		// 移动		// todo: 需要检测 xy + inc 之后的点是否合法. 需要补反转 xyInc 代码
@@ -339,11 +360,22 @@ int MonsterFSM_AI::Update()
 		if (needSync)
 		{
 			// todo: send move msg to client ?
+			auto& str = *s.err;	// 拿来临时拼接发送内容
+			str.AppendFormat("mov {0} {1} {2} {3} {4} {5} {6} {7}", c.pureVersionNumber(), c.xy.x, 0, c.xy.y, c.cfg_radius, xyInc.x * 20, 0, xyInc.y * 20);
+			s.udp->SetAddress("10.1.1.99", 6066);
+			s.udp->Send(str.buf, str.dataLen);
+			str.Clear();
+			str.Append("act ", c.pureVersionNumber(), " move");
+			s.udp->Send(str.buf, str.dataLen);
+			str.Clear();
 		}
 
-
 		// 如果 move 的时间到了, 就切到 idle
-		if (moveTicks <= s.ticks) CORO_YIELDTO(0);
+		if (moveTicks <= s.ticks)
+		{
+			moveTicks = s.ticks + c.cfg_moveInterval;
+			CORO_YIELDTO(0);
+		}
 
 		// 循环
 		CORO_YIELDTO(1);
@@ -363,8 +395,18 @@ int MonsterFSM_AI::Update()
 		{
 			skill->Cast();
 			// send msg to client?
+
 			if (skill->cfg_castStunTimespan)
 			{
+				auto& str = *s.err;	// 拿来临时拼接发送内容
+				str.AppendFormat("mov {0} {1} {2} {3} {4} {5} {6} {7}", c.pureVersionNumber(), c.xy.x, 0, c.xy.y, c.cfg_radius, 0, 0, 0);
+				s.udp->SetAddress("10.1.1.99", 6066);
+				s.udp->Send(str.buf, str.dataLen);
+				str.Clear();
+				str.Append("act ", c.pureVersionNumber(), " cast_stun");
+				s.udp->Send(str.buf, str.dataLen);
+				str.Clear();
+
 				castStunTicks = s.ticks + skill->cfg_castStunTimespan;
 				CORO_GOTO(4);
 			}
@@ -417,6 +459,15 @@ int MonsterFSM_AI::Update()
 		if (needSync)
 		{
 			// todo: send move msg to client ?
+			auto& str = *s.err;	// 拿来临时拼接发送内容
+			str.AppendFormat("mov {0} {1} {2} {3} {4} {5} {6} {7}", c.pureVersionNumber(), c.xy.x, 0, c.xy.y, c.cfg_radius, xyInc.x * 20, 0, xyInc.y * 20);
+			s.udp->SetAddress("10.1.1.99", 6066);
+			s.udp->Send(str.buf, str.dataLen);
+			str.Clear();
+			str.Append("act ", c.pureVersionNumber(), " trace");
+			s.udp->Send(str.buf, str.dataLen);
+			str.Clear();
+
 		}
 
 		// 循环
@@ -457,6 +508,14 @@ int MonsterFSM_AI::Update()
 		if (needSync)
 		{
 			// todo: send move msg to client ?
+			auto& str = *s.err;	// 拿来临时拼接发送内容
+			str.AppendFormat("mov {0} {1} {2} {3} {4} {5} {6} {7}", c.pureVersionNumber(), c.xy.x, 0, c.xy.y, c.cfg_radius, xyInc.x * 20, 0, xyInc.y * 20);
+			s.udp->SetAddress("10.1.1.99", 6066);
+			s.udp->Send(str.buf, str.dataLen);
+			str.Clear();
+			str.Append("act ", c.pureVersionNumber(), " turnback");
+			s.udp->Send(str.buf, str.dataLen);
+			str.Clear();
 		}
 
 		CORO_YIELDTO(3);
@@ -470,6 +529,15 @@ int MonsterFSM_AI::Update()
 		}
 		else
 		{
+			auto& str = *s.err;	// 拿来临时拼接发送内容
+			str.AppendFormat("mov {0} {1} {2} {3} {4} {5} {6} {7}", c.pureVersionNumber(), c.xy.x, 0, c.xy.y, c.cfg_radius, xyInc.x * 20, 0, xyInc.y * 20);
+			s.udp->SetAddress("10.1.1.99", 6066);
+			s.udp->Send(str.buf, str.dataLen);
+			str.Clear();
+			str.Append("act ", c.pureVersionNumber(), " trace");
+			s.udp->Send(str.buf, str.dataLen);
+			str.Clear();
+
 			CORO_YIELDTO(2);
 		}
 	}

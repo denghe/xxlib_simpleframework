@@ -13,6 +13,8 @@
 
 namespace xx
 {
+	// todo: 排查所有 lua 函数的异常处理( lua 内部可能会使用 long jump 直接跳出函数, 导致 RAII 失效之类 )
+
 	// todo: Lua_BindFunc 之非类成员函数版. 考虑为 Lua_SetGlobal 增加函数指针重载
 	// todo: 考虑一下结构体中的子结构体的 lua userdata 包装( 就是说 ud 的说明部分可能需要移到 uservalue 中去, 或是用 uservalue 来延长 container 的生命周期? )
 

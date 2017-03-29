@@ -1,4 +1,4 @@
-
+#include <ctime>
 
 int Scene::Run()
 {
@@ -6,10 +6,23 @@ int Scene::Run()
 	timeBeginPeriod(1);
 #endif
 	int64_t accumulatMS = 0;
-	xx::Stopwatch sw;
+	auto lastMS = std::clock();
 	while (true)
 	{
-		auto durationMS = sw();
+		auto nowMS = std::clock();
+		auto durationMS = std::clock() - lastMS;
+		if (durationMS < 0)
+		{
+			lastMS = nowMS;
+			continue;
+		}
+		else if (!durationMS)
+		{
+			Sleep(1);
+			continue;
+		}
+		lastMS = nowMS;
+
 		if (durationMS > msPerFrame)
 		{
 			// todo: 日志超长帧
@@ -28,8 +41,7 @@ int Scene::Run()
 		}
 		if (!executed)
 		{
-			Sleep(1);     // 省点 cpu
-						  // todo: 日志清闲帧
+			Sleep(1);     // todo: 日志清闲帧
 		}
 	}
 #ifdef _WIN32
@@ -121,7 +133,8 @@ void Scene::LoadLuaFile(char const* fn)
 }
 
 Scene::Scene()
-	: rnd(*this)
+	: udp(*this)
+	, rnd(*this)
 	, deadMonsters(*this)
 	, monsters(*this)
 	, err(*this)
@@ -132,6 +145,7 @@ Scene::Scene()
 	// LuaBind: Scene
 	xx::Lua_PushMetatable<MP, Scene>(L);
 	xxLua_BindField(MP, L, Scene, ticks, false);
+	xxLua_BindFunc(MP, L, Scene, CreateXY, false);
 	xxLua_BindFunc(MP, L, Scene, CreateMonster, false);
 	xxLua_BindFunc(MP, L, Scene, NextInteger, false);
 	xxLua_BindFunc(MP, L, Scene, NextDouble, false);
@@ -141,8 +155,8 @@ Scene::Scene()
 
 	// LuaBind: XY
 	xx::Lua_PushMetatable<MP, XY>(L);
-	xxLua_BindField(MP, L, XY, x, false);
-	xxLua_BindField(MP, L, XY, y, false);
+	xxLua_BindField(MP, L, XY, x, true);
+	xxLua_BindField(MP, L, XY, y, true);
 	lua_pop(L, 1);
 
 	// LuaBind: SkillBase
@@ -152,8 +166,9 @@ Scene::Scene()
 
 	// LuaBind: MonsterBase
 	xx::Lua_PushMetatable<MP, MonsterBase>(L);
-	xxLua_BindField(MP, L, MonsterBase, xy, false);
-	xxLua_BindField(MP, L, MonsterBase, hp, false);
+	xxLua_BindField(MP, L, MonsterBase, xy, true);
+	xxLua_BindField(MP, L, MonsterBase, bornXY, true);
+	xxLua_BindField(MP, L, MonsterBase, hp, true);
 	xxLua_BindField(MP, L, MonsterBase, moveAngle, false);
 	xxLua_BindField(MP, L, MonsterBase, moveSpeed, false);
 	xxLua_BindField(MP, L, MonsterBase, target, false);
@@ -172,6 +187,12 @@ Scene::Scene()
 	// set global scene
 	xx::Lua_SetGlobal<MP>(L, "scene", this);
 }
+
+XY Scene::CreateXY(float x, float y)
+{
+	return XY{ x,y };
+}
+
 
 xx::MPtr<MonsterBase> Scene::CreateMonster(char const* classname)
 {

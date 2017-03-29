@@ -1,5 +1,8 @@
 struct Scene : MP
 {
+	// 上下文中用到的一个简易 udp 通讯库( 主用于向显示系统发送显示数据 )
+	xx::MemHeaderBox<UdpClient> udp;
+
 	// 帧控制相关
 	static const int64_t msPerFrame = 1000 / 20;
 	int64_t ticks = 0;
@@ -31,6 +34,9 @@ struct Scene : MP
 
 	// 以类名来创建怪类实例
 	xx::MPtr<MonsterBase> CreateMonster(char const* classname);
+
+	// for lua
+	XY CreateXY(float x, float y);
 
 	// 方便在 lua 中随机
 	int NextInteger(int min, int max);

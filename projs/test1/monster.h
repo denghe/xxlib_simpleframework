@@ -9,7 +9,8 @@ struct MonsterFSM_AI : FSMBase
 	int64_t traceTicks = 0;					// 追杀超时 ticks( 状态切换时初始化 )
 	bool Alert();							// 试警戒一把( 如果 cd 到了的话 ), 如果发现目标就返回 true
 
-	MonsterFSM_AI(SceneObjBase* owner);
+	MonsterFSM_AI(SceneObjBase* owner);		// 构造函数生命周期内还无法读取 owner 的成员( 未初始化 )
+	void Init();							// 于 SetFSM 前调用以初始化上面的一些变量值
 	int lineNumber = 0;						// stackless 协程行号
 	virtual int Update() override;
 };

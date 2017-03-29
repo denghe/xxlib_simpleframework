@@ -171,7 +171,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="socket_sample.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\snippets\lua_mempool.h" />
@@ -212,6 +211,7 @@
     <Text Include="bak10.txt" />
     <Text Include="bak11.txt" />
     <Text Include="bak12.txt" />
+    <Text Include="bak13.txt" />
     <Text Include="bak2.txt" />
     <Text Include="bak3.txt" />
     <Text Include="bak4.txt" />
