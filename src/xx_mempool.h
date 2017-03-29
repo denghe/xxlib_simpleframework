@@ -111,9 +111,16 @@ namespace xx
 		{
 			for (; typeId != baseTypeId; typeId = pids[typeId])
 			{
-				if (!typeId) return false;
+				if (!typeId || typeId == pids[typeId]) return false;
 			}
 			return true;
+		}
+
+		// 根据 类型 判断父子关系
+		template<typename BT>
+		bool IsBaseOf(uint32_t typeId)
+		{
+			return IsBaseOf(TupleIndexOf<BT, Tuple>::value, typeId);
 		}
 
 		// 根据 类型 判断父子关系
@@ -151,7 +158,9 @@ namespace xx
 				&& std::is_base_of<std::tuple_element_t<Indexs, Tuple>, T>::value
 				? (pid = Indexs) : 0
 				), 0)... };
-			pids[TupleIndexOf<T, Tuple>::value] = pid;
+
+			// 因为类型中有可能出现非 MPObject 派生类, 这些类的 parent 指向自己
+			pids[TupleIndexOf<T, Tuple>::value] = !pid ? (std::is_base_of<MPObject, T>::value ? 0 : TupleIndexOf<T, Tuple>::value) : pid;
 			//std::cout << "tid = " << TupleIndexOf<T, Tuple>::value << ", t = " << typeid(T).name() << ", pid = " << pid << std::endl;
 		}
 	};

@@ -18,6 +18,7 @@ struct MonsterBase : SceneObjBase
 {
 	MonsterBase();
 	~MonsterBase();
+	virtual void ToString(xx::String &str) const override;
 
 	xx::List_v<SkillBase*, true> skills;					// 怪的技能列表( 于怪创建时便固定创建了 )( LUA 不可见 )
 	int skillCursor = -1;									// AI 释放技能所使用的循环游标( LUA 不可见 )
@@ -64,6 +65,7 @@ struct MonsterBase : SceneObjBase
 	void SetTarget(MonsterBase* target);					// 设置当前 target( 传入空指针就是清除 )
 	void Hurt(MonsterBase* attacker);						// 如果没有 target 将导致 set target. 并不具体执行减血的效果
 	xx::MPtr<SkillBase> TakeAvaliableSkill();				// 循环遍历技能, 找出一个可用的技能下标返回. 找一轮都找不到就返回空
+
 };
 
 

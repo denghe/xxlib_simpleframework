@@ -196,6 +196,21 @@ xx::MPtr<SkillBase> MonsterBase::TakeAvaliableSkill()
 	return nullptr;
 }
 
+
+
+
+void MonsterBase::ToString(xx::String &str) const
+{
+	str.Append("{ id : ", pureVersionNumber(), ", hp : ", hp, ", xy : [ ");
+	str.Reserve(str.dataLen + 100);
+	str.dataLen += std::sprintf(str.buf + str.dataLen, "%.2f, %.2f", xy.x, xy.y);
+	str.Append(" ] }");
+}
+
+
+
+
+
 MonsterFSM_AI::MonsterFSM_AI(SceneObjBase* owner) : FSMBase(owner)
 {
 	auto& c = *(MonsterBase*)owner;

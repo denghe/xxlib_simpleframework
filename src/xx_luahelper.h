@@ -589,8 +589,6 @@ namespace xx
 		static inline void Push(lua_State* L, T const& v)
 		{
 			auto ud = (Lua_UD<T>*)lua_newuserdata(L, sizeof(Lua_UD<T>));	// ud
-			Lua_PushMetatable<MP, TT>(L);									// ud, mt
-			lua_setmetatable(L, -2);										// ud
 			if (std::is_base_of<MPObject, TT>::value && v)
 			{
 				ud->typeIndex = (decltype(ud->typeIndex))((MPObject*)v)->typeId();
@@ -602,6 +600,8 @@ namespace xx
 			ud->udType = Lua_UDTypes::Pointer;
 			ud->isMPObject = IsMPObject<TT>::value;
 			new (&ud->data) T(v);
+			Lua_PushMetatable<MP, TT>(L);									// ud, mt
+			lua_setmetatable(L, -2);										// ud
 		}
 		static inline void To(lua_State* L, T& v, int idx)
 		{
@@ -643,12 +643,12 @@ namespace xx
 		static inline void Push(lua_State* L, T const& v)
 		{
 			auto ud = (Lua_UD<T>*)lua_newuserdata(L, sizeof(Lua_UD<T>));	// ud
-			Lua_PushMetatable<MP, T>(L);									// ud, mt
-			lua_setmetatable(L, -2);										// ud
 			ud->typeIndex = TupleIndexOf<T, typename MP::Tuple>::value;
 			ud->udType = Lua_UDTypes::Struct;
 			ud->isMPObject = false;
 			new (&ud->data) T(v);
+			Lua_PushMetatable<MP, T>(L);									// ud, mt
+			lua_setmetatable(L, -2);										// ud
 		}
 		static inline void To(lua_State* L, T& v, int idx)
 		{
@@ -687,8 +687,6 @@ namespace xx
 		static inline void Push(lua_State* L, T const& v)
 		{
 			auto ud = (Lua_UD<T>*)lua_newuserdata(L, sizeof(Lua_UD<T>));	// ud
-			Lua_PushMetatable<MP, TT>(L);									// ud, mt
-			lua_setmetatable(L, -2);										// ud
 			if (std::is_base_of<MPObject, TT>::value && v)
 			{
 				ud->typeIndex = (decltype(ud->typeIndex))((MPObject*)v.pointer)->typeId();
@@ -700,6 +698,8 @@ namespace xx
 			ud->udType = Lua_UDTypes::MPtr;
 			ud->isMPObject = true;
 			new (&ud->data) T(v);
+			Lua_PushMetatable<MP, TT>(L);									// ud, mt
+			lua_setmetatable(L, -2);										// ud
 		}
 		static inline void To(lua_State* L, T& v, int idx)
 		{
@@ -942,6 +942,36 @@ namespace xx
 		lua_rawset(L, -3);
 	}
 
+	/************************************************************************************/
+	// Lua_BindFunc_ToString
+	/************************************************************************************/
+
+	// 生成 ud.ToString 函数( 和原始 ToString 接口不一样的地方在于, LUA 并不传入参数, 而是接收返回值 )
+	template<typename MP>
+	void Lua_BindFunc_ToString(lua_State* L, char const* fnName = "ToString")
+	{
+		lua_pushstring(L, fnName);
+		lua_pushcclosure(L, [](lua_State* L)
+		{
+			auto top = lua_gettop(L);
+			if (top != 1)
+			{
+				return Lua_Error(L, "error!!! func args num wrong.");
+			}
+			MPObject* self = nullptr;
+			auto b = xx::Lua_TryTo<MP>(L, self, 1) && self;
+			if (b)
+			{
+				auto& mp = Lua_GetMemPool<MP>(L);
+				String_v str(mp);
+				self->ToString(*str);
+				lua_pushlstring(L, str->buf, str->dataLen);
+				return 1;
+			}
+			return 0;
+		}, 0);
+		lua_rawset(L, -3);
+	}
 
 
 
@@ -971,6 +1001,10 @@ namespace xx
 				lua_pushstring(L, "__index");						// _G, mt, __index
 				lua_pushvalue(L, -2);								// _G, mt, __index, mt
 				lua_rawset(L, -3);									// _G, mt
+				if (mp.IsBaseOf<MPObject>(i))
+				{
+					Lua_BindFunc_ToString<MP>(L, "__tostring");
+				}
 				lua_rawseti(L, -2, i);								// _G
 			}
 			assert(lua_gettop(L) == 1);
@@ -989,6 +1023,7 @@ namespace xx
 			lua_rawgeti(L, -1, 0);									// _G, MPObject's mt
 			Lua_BindFunc_Ensure<MP>(L);								// _G, MPObject's mt
 			Lua_BindFunc_Release<MP>(L);							// _G, MPObject's mt
+			Lua_BindFunc_ToString<MP>(L);							// _G, MPObject's mt
 
 			lua_pop(L, 2);											//
 			assert(lua_gettop(L) == 0);

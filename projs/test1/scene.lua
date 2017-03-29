@@ -11,13 +11,16 @@ yield()
 
 local m1 = self:CreateMonster("Monster1")
 local m2 = self:CreateMonster("Monster2")
+
+print( m1, m2 )
+
 while true do
-	print( "ticks = "..self:ticks()..", lua mem = "..collectgarbage("count") )
+	print( "ticks = "..self:ticks() ) --..", lua mem = "..collectgarbage("count") )
 	if m1:Ensure() then
-		print( "m1 is alive", m1:x(), m1:hp() )
+		print( m1:ToString() )
 	end
 	if m2:Ensure() then
-		print( "m2 is alive", m2:x(), m2:hp() )
+		print( m2:ToString() )
 	end
 	yield()
 end

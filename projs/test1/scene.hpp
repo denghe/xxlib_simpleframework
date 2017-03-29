@@ -154,6 +154,8 @@ Scene::Scene()
 	xx::Lua_PushMetatable<MP, MonsterBase>(L);
 	xxLua_BindField(MP, L, MonsterBase, xy, false);
 	xxLua_BindField(MP, L, MonsterBase, hp, false);
+	xxLua_BindField(MP, L, MonsterBase, moveAngle, false);
+	xxLua_BindField(MP, L, MonsterBase, moveSpeed, false);
 	xxLua_BindField(MP, L, MonsterBase, target, false);
 	xxLua_BindFunc(MP, L, MonsterBase, DistancePow2, false);
 	xxLua_BindFunc(MP, L, MonsterBase, SearchTarget, false);
