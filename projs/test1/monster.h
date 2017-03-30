@@ -44,7 +44,6 @@ struct MonsterBase : SceneObjBase
 	float cfg_moveSpeedPow2;								// cfg_moveSpeedPow2 * cfg_moveSpeedPow2
 	float cfg_alertDistancePow2;							// cfg_alertDistance * cfg_alertDistance
 	float cfg_traceMaxDistancePow2;							// cfg_traceMaxDistance * cfg_traceMaxDistance
-	xx::Range<float> cfg_traceKeepDistanceRangePow2;		// cfg_traceKeepDistanceRange * cfg_traceKeepDistanceRange
 
 	// 向客户端同步的指令考虑这样: 只有一种移动包, 含有 怪起始坐标, 朝向, 速度( 距离每秒 ) 这三个参数. 速度为0 就是原地休息. 在收到下一条指令前, 客户端持续模拟.
 	// 也就是说, 下发数据的时机为: 怪的行为发生改变, 或是玩家格子同步

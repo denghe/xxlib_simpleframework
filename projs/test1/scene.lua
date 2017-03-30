@@ -9,24 +9,28 @@ local self, store = ...
 print( "scene.lua", self, store )
 yield()
 
---for i = 1, 100 do
+for i = 1, 50 do
 	local m1 = self:CreateMonster("Monster1")
 	local m2 = self:CreateMonster("Monster2")
---end
+end
 
+	--[[
 m1:xy( self:CreateXY(20, 20) )
 m1:bornXY( self:CreateXY(20, 20) )
 m2:xy( self:CreateXY(25, 25) )
 m2:bornXY( self:CreateXY(25, 25) )
+]]
 
 while true do
 	print( "ticks = "..self:ticks()..", monster count = "..self:Monsters_Count() ) --..", lua mem = "..collectgarbage("count") )
+	--[[
 	if m1:Ensure() then
 		print( m1 )
 	end
 	if m2:Ensure() then
 		print( m2 )
 	end
+	]]
 	yield()
 end
 

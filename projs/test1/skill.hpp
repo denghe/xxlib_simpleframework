@@ -16,6 +16,14 @@ bool SkillBase::Avaliable()
 
 void SkillBase::Cast()
 {
+	// 检查距离
+	auto tarDistPow2 = xyMath.GetDistancePow2(owner->target->xy - owner->xy);
+	if (!cfg_distanceRange.IntersectPow2(tarDistPow2))
+	{
+		std::cout << "cast range miss." << std::endl;
+		return;
+	}
+
 	// 更新cd, gcd
 	cd = scene().ticks + cfg_cd;
 	owner->skillsGcd = scene().ticks + this->cfg_gcd;
@@ -41,14 +49,14 @@ SkillNear::SkillNear(MonsterBase* owner) : SkillBase(owner)
 	this->cfg_distanceRange = { 0, 3 };
 	this->cfg_damage = 5;
 	this->cfg_cd = 3;
-	this->cfg_castStunTimespan = 5;
+	this->cfg_castStunTimespan = 8;
 }
 
 SkillFar::SkillFar(MonsterBase* owner) : SkillBase(owner)
 {
 	// 模拟载入配置
-	this->cfg_distanceRange = { 15, 20 };
-	this->cfg_damage = 10;
-	this->cfg_cd = 6;
-	this->cfg_castStunTimespan = 0;
+	this->cfg_distanceRange = { 3, 15 };
+	this->cfg_damage = 4;
+	this->cfg_cd = 8;
+	this->cfg_castStunTimespan = 1;
 }
