@@ -9,12 +9,12 @@ local self, store = ...
 print( "scene.lua", self, store )
 yield()
 
-for i = 1, 50 do
-	local m1 = self:CreateMonster("Monster1")
+for i = 1, 10000 do
+	local m1 = self:CreateMonster("Monster2")
 	local m2 = self:CreateMonster("Monster2")
 end
 
-	--[[
+--[[
 m1:xy( self:CreateXY(20, 20) )
 m1:bornXY( self:CreateXY(20, 20) )
 m2:xy( self:CreateXY(25, 25) )

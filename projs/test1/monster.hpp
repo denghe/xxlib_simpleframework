@@ -55,7 +55,7 @@ Monster1::Monster1() : MonsterBase()
 	moveSpeed = 0;										// 速度为 0 表示休息
 	moveAngle = (uint8_t)scene().NextInteger(0, 256);	// 随机角度
 
-	xy = { (float)scene().NextDouble(0, 100), (float)scene().NextDouble(0, 100) };
+	xy = { (float)scene().NextDouble(0, scene().mapSize.w), (float)scene().NextDouble(0, scene().mapSize.h) };
 	bornXY = xy;
 	originalXY = xy;
 
@@ -92,30 +92,16 @@ Monster2::Monster2() : MonsterBase()
 	// 模拟 根据配置 创建技能
 	scene().Create<SkillNear>(this);
 
-	// 根据遍历技能施放范围 计算 保持距离. 
-	assert(cfg_traceKeepDistanceRange.f <= cfg_traceKeepDistanceRange.t);
-	for (auto& skill : *this->skills)
-	{
-		if (skill->cfg_distanceRange.f > cfg_traceKeepDistanceRange.f)
-		{
-			cfg_traceKeepDistanceRange.f = skill->cfg_distanceRange.f;
-		}
-	}
-	// 最小值修正: 为确保玩家和怪的模型尽量不要重叠显示, 最小保持距离即为怪的半径
-	if (cfg_traceKeepDistanceRange.f < cfg_radius) cfg_traceKeepDistanceRange.f = cfg_radius;
-	if (cfg_traceKeepDistanceRange.t < cfg_radius) cfg_traceKeepDistanceRange.t = cfg_radius;
-
 	// 填充各种计算 cache 变量
 	cfg_moveSpeedPow2 = cfg_moveSpeed * cfg_moveSpeed;
 	cfg_alertDistancePow2 = cfg_alertDistance * cfg_alertDistance;
 	cfg_traceMaxDistancePow2 = cfg_traceMaxDistance * cfg_traceMaxDistance;
 
 	// 初始化运行时变量
-
 	moveSpeed = 0;										// 速度为 0 表示休息
 	moveAngle = (uint8_t)scene().NextInteger(0, 256);	// 随机角度
 
-	xy = { (float)scene().NextDouble(0, 100), (float)scene().NextDouble(0, 100) };
+	xy = { (float)scene().NextDouble(0, scene().mapSize.w), (float)scene().NextDouble(0, scene().mapSize.h) };
 	bornXY = xy;
 	originalXY = xy;
 
@@ -366,6 +352,12 @@ int MonsterFSM_AI::Update()
 	}
 	CORO_(2);													// 追杀( 先做无视地型无脑向目标前进的版本 )
 	{
+		// 技能后僵直
+		if (castStunTicks > s.ticks)
+		{
+			CORO_YIELDTO(2);
+		}
+
 		// 目标失效, 追出最远距离限定, 超时, 都将返回出生点( 跳到返回状态 )
 		if (!c.target
 			|| traceTicks <= s.ticks
@@ -382,17 +374,21 @@ int MonsterFSM_AI::Update()
 
 			if (skill->cfg_castStunTimespan)
 			{
-				auto& str = *s.err;	// 拿来临时拼接发送内容
-				str.AppendFormat("mov {0} {1} {2} {3} {4} {5} {6} {7}", c.pureVersionNumber(), c.xy.x, 0, c.xy.y, c.cfg_radius, 0, 0, 0);
-				s.udp->SetAddress("10.1.1.99", 6066);
-				s.udp->Send(str.buf, str.dataLen);
-				str.Clear();
-				str.Append("act ", c.pureVersionNumber(), " cast_stun");
-				s.udp->Send(str.buf, str.dataLen);
-				str.Clear();
+				if (c.moveSpeed != 0.0f)
+				{
+					auto& str = *s.err;	// 拿来临时拼接发送内容
+					str.AppendFormat("mov {0} {1} {2} {3} {4} {5} {6} {7}", c.pureVersionNumber(), c.xy.x, 0, c.xy.y, c.cfg_radius, 0, 0, 0);
+					s.udp->SetAddress("10.1.1.99", 6066);
+					s.udp->Send(str.buf, str.dataLen);
+					str.Clear();
+					str.Append("act ", c.pureVersionNumber(), " cast_stun");
+					s.udp->Send(str.buf, str.dataLen);
+					str.Clear();
+				}
+				c.moveSpeed = 0.0f;
 
 				castStunTicks = s.ticks + skill->cfg_castStunTimespan;
-				CORO_GOTO(4);
+				CORO_YIELDTO(2);
 			}
 		}
 
@@ -517,26 +513,6 @@ int MonsterFSM_AI::Update()
 
 		CORO_YIELDTO(3);
 		// todo: 超时检测?  
-	}
-	CORO_(4)															// 技能后僵直
-	{
-		if (castStunTicks > s.ticks)
-		{
-			CORO_YIELDTO(4);
-		}
-		else
-		{
-			auto& str = *s.err;	// 拿来临时拼接发送内容
-			str.AppendFormat("mov {0} {1} {2} {3} {4} {5} {6} {7}", c.pureVersionNumber(), c.xy.x, 0, c.xy.y, c.cfg_radius, xyInc.x * 20, 0, xyInc.y * 20);
-			s.udp->SetAddress("10.1.1.99", 6066);
-			s.udp->Send(str.buf, str.dataLen);
-			str.Clear();
-			str.Append("act ", c.pureVersionNumber(), " trace");
-			s.udp->Send(str.buf, str.dataLen);
-			str.Clear();
-
-			CORO_YIELDTO(2);
-		}
 	}
 	CORO_END();
 	return 0;
