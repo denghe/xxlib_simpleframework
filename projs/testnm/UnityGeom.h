@@ -59,9 +59,9 @@ public:
 	const std::vector<int>& GetIndices() { return m_indices; } // 获取到索引列表
 
 private:
-    std::vector<UnityVertex> m_vertices;
-    std::vector<int> m_indices;
-    std::vector<UnityTriangle> m_triangles;
+	std::vector<UnityVertex> m_vertices;
+	std::vector<int> m_indices;
+	std::vector<UnityTriangle> m_triangles;
 	float m_bmin[3];
 	float m_bmax[3];
 	dtNavMesh* m_pNavMesh;

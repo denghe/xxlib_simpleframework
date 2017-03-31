@@ -178,6 +178,8 @@ UnityGeom::UnityGeom()
 	m_pNavQuery = NULL;
 	m_filter.setIncludeFlags(0x01); // SAMPLE_POLYFLAGS_WALK
 	m_filter.setExcludeFlags(0);
+	memset(m_bmin, 0, sizeof(m_bmin));
+	memset(m_bmax, 0, sizeof(m_bmax));
 }
 
 UnityGeom::~UnityGeom()
@@ -244,6 +246,8 @@ bool UnityGeom::Load(const std::string& filepath)
 	int index = atoi(strIndices.c_str());
 	m_indices.push_back(index);
 
+	int a = m_vertices.size();
+	int b = m_indices.size();
 	if (m_vertices.size() == 0 || m_indices.size() == 0)
 	{
 		return false;
@@ -306,7 +310,7 @@ bool UnityGeom::Load(const std::string& filepath)
 	unsigned short* pPolys = new unsigned short[params.polyCount * 6];
 	for (int i = 0; i < params.polyCount; ++i)
 	{
-		auto& a = m_triangles[i].indices;
+		int* a = m_triangles[i].indices;
 
 		int v = i * 6;
 		pPolys[v + 0] = (unsigned short)a[0];
@@ -319,7 +323,7 @@ bool UnityGeom::Load(const std::string& filepath)
 		for (int k = 0; k < params.polyCount; ++k)
 		{
 			if (k == i) continue;
-			auto& b = m_triangles[k].indices;
+			int* b = m_triangles[k].indices;
 
 			if ((a[0] == b[0] || a[0] == b[1] || a[0] == b[2]) &&
 				(a[1] == b[0] || a[1] == b[1] || a[1] == b[2]))
@@ -409,20 +413,20 @@ bool UnityGeom::GetHeight(float x, float z, float& y)
 		return false;
 	}
 	dtStatus status;
-	float point[3] = { x, 500.0f, z };
-	float t[3] = { 0, 9999.0f, 0 };
-	float kkk[3];
+	float point[3] = { x, 0, z };
+	float t[3] = { 0, 1000, 0 };
+	float result[3] = { 0, 0, 0 };
 	dtPolyRef ref;
-	status = m_pNavQuery->findNearestPoly(point, t, &m_filter, &ref, kkk);
+	status = m_pNavQuery->findNearestPoly(point, t, &m_filter, &ref, result);
 	if (dtStatusFailed(status))
 	{
 		return false;
 	}
-	status = m_pNavQuery->getPolyHeight(ref, point, &y);
-	if (dtStatusFailed(status))
+	if (result[0] != x || result[2] != z)
 	{
 		return false;
 	}
+	y = result[1];
 	return true;
 }
 
