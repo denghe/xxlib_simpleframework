@@ -98,7 +98,7 @@ struct XyMath
 
 	float GetDistance(int x, int y)
 	{
-		return std::sqrtf((float)(x * x + y * y));
+		return sqrtf((float)(x * x + y * y));
 	}
 	float GetDistance(XY xy)
 	{

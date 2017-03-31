@@ -109,7 +109,7 @@ namespace xx
 	struct XZ
 	{
 		T x, z;
-		TWO_SAME_TYPE_FIELD_CLASS_ATTACHCODE(T, Position, x, z);
+		TWO_SAME_TYPE_FIELD_CLASS_ATTACHCODE(T, XZ, x, z);
 	};
 
 	template<typename T = double>

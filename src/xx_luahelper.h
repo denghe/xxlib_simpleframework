@@ -1003,7 +1003,7 @@ namespace xx
 				lua_pushstring(L, "__index");						// _G, mt, __index
 				lua_pushvalue(L, -2);								// _G, mt, __index, mt
 				lua_rawset(L, -3);									// _G, mt
-				if (mp.IsBaseOf<MPObject>(i))
+				if (mp.template IsBaseOf<MPObject>(i))
 				{
 					Lua_BindFunc_ToString<MP>(L, "__tostring");
 				}
