@@ -215,7 +215,7 @@ struct XyMath
 		for (auto i = 1; i <= segmentCount; ++i)
 		{
 			auto a = (uint8_t)(beginAngle + (float)fanAngle * i / segmentCount);
-			outPoints[i] =pos + (GetXyInc(a) * radius);
+			outPoints[i] = pos + (GetXyInc(a) * radius);
 		}
 	}
 
