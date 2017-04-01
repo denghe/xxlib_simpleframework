@@ -208,14 +208,14 @@ struct XyMath
 	// 填充扇形( 多边型 )的顶点
 	void FillFanPoints(XY pos, uint8_t directionAngle, uint8_t fanAngle, float radius, int segmentCount, xx::List<XY>& outPoints)
 	{
-		outPoints.Resize(segmentCount + 1);
+		outPoints.Resize(segmentCount + 2);
 		outPoints[0] = pos;
 		auto beginAngle = (uint8_t)(directionAngle - fanAngle / 2);
-		outPoints.Add(pos + (GetXyInc(beginAngle) * radius));
+		outPoints[1] = pos + (GetXyInc(beginAngle) * radius);
 		for (auto i = 1; i <= segmentCount; ++i)
 		{
 			auto a = (uint8_t)(beginAngle + (float)fanAngle * i / segmentCount);
-			outPoints[i] = pos + (GetXyInc(a) * radius);
+			outPoints[i + 1] = pos + (GetXyInc(a) * radius);
 		}
 	}
 
