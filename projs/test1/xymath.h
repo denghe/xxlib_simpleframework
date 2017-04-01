@@ -2,7 +2,9 @@
 #include <cassert>
 #include <cmath>
 #include <array>
+#include <limits>
 #include "xx_structs.h"
+#include "xx_list.h"
 
 using XY = xx::XY<float>;
 struct XyMath
@@ -24,6 +26,7 @@ struct XyMath
 		FillAngle();
 	}
 
+	// 填充角度对应的标准增量值
 	void FillXyIncs()
 	{
 		XY xyInc;
@@ -35,6 +38,8 @@ struct XyMath
 			xyIncs[i] = xyInc;
 		}
 	}
+
+	// 填充一个片区坐标与朝向角度的对应
 	void FillAngle()
 	{
 		for (int i = 0; i < xyTableDiameter; i++)
@@ -52,7 +57,6 @@ struct XyMath
 			}
 		}
 	}
-
 
 	uint8_t GetAngle(int x, int y)
 	{
@@ -75,13 +79,14 @@ struct XyMath
 		return angles[(y + xyTableRadius) * xyTableDiameter + (x + xyTableRadius)];
 	}
 
+	// 根据矢量算角度朝向( 通常传入 target.xy - this.xy )
 	// 将 "米" 放大到 "厘米" 来计算以确保精度
 	uint8_t GetAngle(XY xy)
 	{
 		return GetAngle((int)(xy.x * digiNum), (int)(xy.y * digiNum));
 	}
 
-
+	// 根据矢量获取标准增量
 	XY GetXyInc(XY xy)
 	{
 		return xyIncs[GetAngle(xy)];
@@ -95,7 +100,7 @@ struct XyMath
 		return xyIncs[a];
 	}
 
-
+	// 算距离相关
 	float GetDistance(int x, int y)
 	{
 		return sqrtf((float)(x * x + y * y));
@@ -110,9 +115,7 @@ struct XyMath
 	}
 
 
-	/*********************************************************************************************/
-	// others
-	/*********************************************************************************************/
+	// 就近往一个角度偏转. 返回角度结果
 	// a 每次产生不超过 inc 角度的变化, 就近向 b 角度接近, 最后完全等于
 	// a, b 的值范围为 0 - 255, 右侧逆时针方向转动. inc 必须为正整数
 	static uint8_t ChangeAngle(int a, int b, int inc)
@@ -159,6 +162,108 @@ struct XyMath
 		return XY{ pos.x * cosA - pos.y * sinA, pos.x * sinA + pos.y * cosA };
 	}
 
+	// 角度转为 360 度左手系 保留 2 位精度的整数
+	int ConvertToXZAngleForSend(uint8_t a)
+	{
+		return (int)(float((uint8_t)(-(int8_t)a + 64)) / 256.0f * 36000.0f);
+	}
+
+	// 从 360 度配置读入角度值
+	uint8_t ConvertFromXZ360Angle(int a)
+	{
+		return (uint8_t)(-(int8_t)(uint8_t)(a / 360.0f * 256.0f) + 64);
+	}
+
+	// 点乘
+	float Dot(XY const& p1, XY const& p2)
+	{
+		XY p = p1 * p2;
+		return p.x + p.y;
+	}
+
+	// 倒数开方
+	float Inversesqrt(float const& x)
+	{
+		return 1.0f / sqrtf(x);
+	}
+
+	// 标准化
+	XY Normalize(XY const& p)
+	{
+		return p * Inversesqrt(Dot(p, p));
+	}
+	// 填充矩形( 多边型 )的顶点
+	// todo
+
+	// 填充扇形( 多边型 )的顶点
+	void FillFanPoints(XY pos, uint8_t directionAngle, uint8_t fanAngle, float radius, int segmentCount, xx::List<XY>& outPoints)
+	{
+		outPoints.Clear();
+		outPoints.Add(pos);
+		auto beginAngle = (uint8_t)(directionAngle - fanAngle / 2);
+		for (auto i = 1; i <= segmentCount; ++i)
+		{
+			auto a = (uint8_t)(beginAngle + (float)fanAngle * i / segmentCount);
+			outPoints.Add(pos + (GetXyInc(a) * radius));
+		}
+	}
+
+	// 根据多边型顶点填充正交投影
+	void FillProjectionAxis(xx::List<XY> const& points, xx::List<XY>& projectionAxis)
+	{
+		auto count = (int)points.dataLen;
+		projectionAxis.Resize(count + 1);
+		for (auto i = 0; i < count; i++)
+		{
+			auto edge = ((i == count - 1) ? points[0] : points[i + 1]) - points[i];
+			projectionAxis[i] = Normalize({ edge.y, -edge.x });
+		}
+	}
+
+	// 判断圆与多边型是否相交
+	bool CirclePolygonIntersect(XY circleCenter, float radius, xx::List<XY> const& points, xx::List<XY>& projectionAxis)
+	{
+		auto count = (int)points.dataLen;
+
+		auto closedXY = circleCenter - points[0];
+		auto closedDis = GetDistancePow2(closedXY);
+		for (auto i = 0; i < count; i++)
+		{
+			// 找到多边形和圆形最近的点
+			auto deltaXy = circleCenter - points[i];
+			auto dis = GetDistancePow2(deltaXy);
+			if (dis < closedDis)
+			{
+				closedXY = deltaXy;
+				closedDis = dis;
+			}
+		}
+		projectionAxis[count] = Normalize(closedXY);
+
+		// 在每个投影轴上投影多边形和圆形,看是否有相交
+		for (auto j = 0; j <= count; j++)
+		{
+			auto axis = projectionAxis[j];
+			auto circleMaxProjection = Dot(circleCenter, axis) + radius;
+			auto circleMinProjection = circleMaxProjection - 2 * radius;
+
+			auto rectMaxProjection = std::numeric_limits<float>::min();
+			auto rectMinProjection = std::numeric_limits<float>::max();
+
+			for (auto i = 0; i < count; i++)
+			{
+				auto projection = Dot(points[i], axis);
+				rectMaxProjection = MAX(rectMaxProjection, projection);
+				rectMinProjection = MIN(rectMinProjection, projection);
+			}
+			if (MIN(circleMaxProjection, rectMaxProjection) <= MAX(circleMinProjection, rectMinProjection))
+			{
+				return false;
+			}
+		}
+
+		return true;
+	}
 };
 
 extern XyMath xyMath;			// 需要在某个 cpp 中实现
