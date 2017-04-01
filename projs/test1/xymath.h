@@ -192,8 +192,17 @@ struct XyMath
 	{
 		return p * Inversesqrt(Dot(p, p));
 	}
+
 	// 填充矩形( 多边型 )的顶点
-	// todo
+	void FillRectPoints(XY centPos, uint8_t directionAngle, float w, float h, xx::List<XY>& outPoints)
+	{
+		XY rectXyInc = GetXyInc(directionAngle);
+		XY rectYxInc{ rectXyInc.y, -rectXyInc.x };
+		outPoints[0] = centPos - (rectYxInc * w + rectXyInc * h) * 0.5f;
+		outPoints[1] = outPoints[0] + rectYxInc * w;
+		outPoints[2] = outPoints[1] + rectXyInc * h;
+		outPoints[3] = outPoints[0] + rectXyInc * h;
+	}
 
 	// 填充扇形( 多边型 )的顶点
 	void FillFanPoints(XY pos, uint8_t directionAngle, uint8_t fanAngle, float radius, int segmentCount, xx::List<XY>& outPoints)
@@ -201,6 +210,7 @@ struct XyMath
 		outPoints.Clear();
 		outPoints.Add(pos);
 		auto beginAngle = (uint8_t)(directionAngle - fanAngle / 2);
+		outPoints.Add(pos + (GetXyInc(beginAngle) * radius));
 		for (auto i = 1; i <= segmentCount; ++i)
 		{
 			auto a = (uint8_t)(beginAngle + (float)fanAngle * i / segmentCount);
@@ -209,13 +219,15 @@ struct XyMath
 	}
 
 	// 根据多边型顶点填充正交投影
-	void FillProjectionAxis(xx::List<XY> const& points, xx::List<XY>& projectionAxis)
+	void FillProjectionAxis(xx::List<XY>& points, xx::List<XY>& projectionAxis)
 	{
 		auto count = (int)points.dataLen;
+		points.Reserve(points.dataLen + 1);
+		points[count] = points[0];			// 营造一个闭合形状 避免循环内 if
 		projectionAxis.Resize(count + 1);
-		for (auto i = 0; i < count; i++)
+		for (auto i = 0; i < count - 1; i++)
 		{
-			auto edge = ((i == count - 1) ? points[0] : points[i + 1]) - points[i];
+			auto edge = points[i + 1] - points[i];
 			projectionAxis[i] = Normalize({ edge.y, -edge.x });
 		}
 	}
@@ -243,7 +255,7 @@ struct XyMath
 		// 在每个投影轴上投影多边形和圆形,看是否有相交
 		for (auto j = 0; j <= count; j++)
 		{
-			auto axis = projectionAxis[j];
+			auto& axis = projectionAxis[j];
 			auto circleMaxProjection = Dot(circleCenter, axis) + radius;
 			auto circleMinProjection = circleMaxProjection - 2 * radius;
 
