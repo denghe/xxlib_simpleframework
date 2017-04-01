@@ -196,6 +196,7 @@ struct XyMath
 	// 填充矩形( 多边型 )的顶点
 	void FillRectPoints(XY centPos, uint8_t directionAngle, float w, float h, xx::List<XY>& outPoints)
 	{
+		outPoints.Resize(4);
 		XY rectXyInc = GetXyInc(directionAngle);
 		XY rectYxInc{ rectXyInc.y, -rectXyInc.x };
 		outPoints[0] = centPos - (rectYxInc * w + rectXyInc * h) * 0.5f;
@@ -207,14 +208,14 @@ struct XyMath
 	// 填充扇形( 多边型 )的顶点
 	void FillFanPoints(XY pos, uint8_t directionAngle, uint8_t fanAngle, float radius, int segmentCount, xx::List<XY>& outPoints)
 	{
-		outPoints.Clear();
-		outPoints.Add(pos);
+		outPoints.Resize(segmentCount + 1);
+		outPoints[0] = pos;
 		auto beginAngle = (uint8_t)(directionAngle - fanAngle / 2);
 		outPoints.Add(pos + (GetXyInc(beginAngle) * radius));
 		for (auto i = 1; i <= segmentCount; ++i)
 		{
 			auto a = (uint8_t)(beginAngle + (float)fanAngle * i / segmentCount);
-			outPoints.Add(pos + (GetXyInc(a) * radius));
+			outPoints[i] =pos + (GetXyInc(a) * radius);
 		}
 	}
 
