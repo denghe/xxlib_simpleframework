@@ -102,20 +102,6 @@ struct XyMath
 	}
 
 
-	// unsafe 系列( 只适合一定满足查表范围的入参 )
-
-	inline uint8_t GetAngleUnsafe(XY const& xy)
-	{
-		assert(std::abs(xy.x) < xyTableRadius && std::abs(xy.y) < xyTableRadius);
-		return angles[(xy.y + xyTableRadius) * xyTableDiameter + (xy.x + xyTableRadius)];
-	}
-	inline XY GetXyIncUnsafe(XY const& xy)
-	{
-		return xyIncs[GetAngleUnsafe(xy)];
-	}
-
-
-
 	// 算距离相关
 	inline static float GetDistance(int x, int y)
 	{
@@ -203,7 +189,7 @@ struct XyMath
 		return 1.0f / sqrtf(x);
 	}
 
-	// 标准化
+	// 归一化( 理论上讲可以用 GetXyInc 来替代, 只不过精度较低, 恐出问题 )
 	inline static XY Normalize(XY const& p)
 	{
 		return p * Inversesqrt(Dot(p, p));
