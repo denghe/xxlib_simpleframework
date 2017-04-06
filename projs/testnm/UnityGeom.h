@@ -53,6 +53,7 @@ public:
 	void UnLoad(); // 卸载navmesh数据
 	bool FindPath(const UnityVertex& start, const UnityVertex& end, std::vector<UnityVertex>& path); // 寻路
 	bool GetHeight(float x, float z, float& y); // 获取到xz平面上一点在navmesh上的高度，如果该点不在navmesh上，那么返回false
+	void GetBound(UnityVertex& min, UnityVertex& max); // 获得包围盒最小点和最大点数据
 
 	const std::vector<UnityTriangle>& GetTriangles() { return m_triangles; } // 获取到三角型列表
 	const std::vector<UnityVertex>& GetVertices() { return m_vertices; } // 获取到顶点列表

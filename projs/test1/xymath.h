@@ -27,7 +27,7 @@ struct XyMath
 	}
 
 	// 填充角度对应的标准增量值
-	void FillXyIncs()
+	inline void FillXyIncs()
 	{
 		XY xyInc;
 		for (int i = 0; i < angleCount; i++)
@@ -40,7 +40,7 @@ struct XyMath
 	}
 
 	// 填充一个片区坐标与朝向角度的对应
-	void FillAngle()
+	inline void FillAngle()
 	{
 		for (int i = 0; i < xyTableDiameter; i++)
 		{
@@ -58,7 +58,7 @@ struct XyMath
 		}
 	}
 
-	uint8_t GetAngle(int x, int y)
+	inline uint8_t GetAngle(int x, int y)
 	{
 		// 如果 x 或 y 大于 hlen 则需要将 xy 等比缩小
 		auto x_ = std::abs(x);
@@ -80,36 +80,52 @@ struct XyMath
 	}
 
 	// 根据矢量算角度朝向( 通常传入 target.xy - this.xy )
-	// 将 "米" 放大到 "厘米" 来计算以确保精度
-	uint8_t GetAngle(XY xy)
+	// 将 "米" 放大到 "厘米" 来计算以确保精度( 通常用于矢量叠加判断受力方向的场合 )
+	inline uint8_t GetAngle(XY xy)
 	{
 		return GetAngle((int)(xy.x * digiNum), (int)(xy.y * digiNum));
 	}
 
+
 	// 根据矢量获取标准增量
-	XY GetXyInc(XY xy)
+	inline XY GetXyInc(XY xy)
 	{
 		return xyIncs[GetAngle(xy)];
 	}
-	XY GetXyInc(int x, int y)
+	inline XY GetXyInc(int x, int y)
 	{
 		return xyIncs[GetAngle(x, y)];
 	}
-	XY GetXyInc(uint8_t a)
+	inline XY GetXyInc(uint8_t a)
 	{
 		return xyIncs[a];
 	}
 
+
+	// unsafe 系列( 只适合一定满足查表范围的入参 )
+
+	inline uint8_t GetAngleUnsafe(XY const& xy)
+	{
+		assert(std::abs(xy.x) < xyTableRadius && std::abs(xy.y) < xyTableRadius);
+		return angles[(xy.y + xyTableRadius) * xyTableDiameter + (xy.x + xyTableRadius)];
+	}
+	inline XY GetXyIncUnsafe(XY const& xy)
+	{
+		return xyIncs[GetAngleUnsafe(xy)];
+	}
+
+
+
 	// 算距离相关
-	float GetDistance(int x, int y)
+	inline static float GetDistance(int x, int y)
 	{
 		return sqrtf((float)(x * x + y * y));
 	}
-	float GetDistance(XY xy)
+	inline static float GetDistance(XY xy)
 	{
 		return GetDistance((int)xy.x, (int)xy.y);
 	}
-	float GetDistancePow2(XY a)
+	inline static float GetDistancePow2(XY a)
 	{
 		return a.x * a.x + a.y * a.y;
 	}
@@ -118,7 +134,7 @@ struct XyMath
 	// 就近往一个角度偏转. 返回角度结果
 	// a 每次产生不超过 inc 角度的变化, 就近向 b 角度接近, 最后完全等于
 	// a, b 的值范围为 0 - 255, 右侧逆时针方向转动. inc 必须为正整数
-	static uint8_t ChangeAngle(int a, int b, int inc)
+	inline static uint8_t ChangeAngle(int a, int b, int inc)
 	{
 		if (a == b) return (uint8_t)a;
 		else if (a > b)
@@ -154,7 +170,7 @@ struct XyMath
 	}
 
 	// 计算 0 -> pos 旋转 a 之后的新的 pos
-	XY RotateXY(XY pos, uint8_t a)
+	inline XY RotateXY(XY pos, uint8_t a)
 	{
 		auto sincos = GetXyInc(a);
 		auto sinA = sincos.y;
@@ -163,38 +179,38 @@ struct XyMath
 	}
 
 	// 角度转为 360 度左手系 保留 2 位精度的整数
-	int ConvertToXZAngleForSend(uint8_t a)
+	inline static int ConvertToXZAngleForSend(uint8_t a)
 	{
 		return (int)(float((uint8_t)(-(int8_t)a + 64)) / 256.0f * 36000.0f);
 	}
 
 	// 从 360 度配置读入角度值
-	uint8_t ConvertFromXZ360Angle(int a)
+	inline static uint8_t ConvertFromXZ360Angle(int a)
 	{
 		return (uint8_t)(-(int8_t)(uint8_t)(a / 360.0f * 256.0f) + 64);
 	}
 
 	// 点乘
-	float Dot(XY const& p1, XY const& p2)
+	inline static float Dot(XY const& p1, XY const& p2)
 	{
 		XY p = p1 * p2;
 		return p.x + p.y;
 	}
 
 	// 倒数开方
-	float Inversesqrt(float const& x)
+	inline static float Inversesqrt(float const& x)
 	{
 		return 1.0f / sqrtf(x);
 	}
 
 	// 标准化
-	XY Normalize(XY const& p)
+	inline static XY Normalize(XY const& p)
 	{
 		return p * Inversesqrt(Dot(p, p));
 	}
 
 	// 填充矩形( 多边型 )的顶点
-	void FillRectPoints(XY centPos, uint8_t directionAngle, float w, float h, xx::List<XY>& outPoints)
+	inline void FillRectPoints(XY centPos, uint8_t directionAngle, float w, float h, xx::List<XY>& outPoints)
 	{
 		outPoints.Resize(4);
 		XY rectXyInc = GetXyInc(directionAngle);
@@ -206,7 +222,7 @@ struct XyMath
 	}
 
 	// 填充扇形( 多边型 )的顶点
-	void FillFanPoints(XY pos, uint8_t directionAngle, uint8_t fanAngle, float radius, int segmentCount, xx::List<XY>& outPoints)
+	inline void FillFanPoints(XY pos, uint8_t directionAngle, uint8_t fanAngle, float radius, int segmentCount, xx::List<XY>& outPoints)
 	{
 		outPoints.Resize(segmentCount + 2);
 		outPoints[0] = pos;
@@ -220,7 +236,7 @@ struct XyMath
 	}
 
 	// 根据多边型顶点填充正交投影
-	void FillProjectionAxis(xx::List<XY>& points, xx::List<XY>& projectionAxis)
+	inline static void FillProjectionAxis(xx::List<XY>& points, xx::List<XY>& projectionAxis)
 	{
 		auto count = (int)points.dataLen;
 		points.Reserve(points.dataLen + 1);
@@ -234,7 +250,7 @@ struct XyMath
 	}
 
 	// 判断圆与多边型是否相交
-	bool CirclePolygonIntersect(XY circleCenter, float radius, xx::List<XY> const& points, xx::List<XY>& projectionAxis)
+	inline static bool CirclePolygonIntersect(XY circleCenter, float radius, xx::List<XY> const& points, xx::List<XY>& projectionAxis)
 	{
 		auto count = (int)points.dataLen;
 

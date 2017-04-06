@@ -246,8 +246,6 @@ bool UnityGeom::Load(const std::string& filepath)
 	int index = atoi(strIndices.c_str());
 	m_indices.push_back(index);
 
-	int a = m_vertices.size();
-	int b = m_indices.size();
 	if (m_vertices.size() == 0 || m_indices.size() == 0)
 	{
 		return false;
@@ -404,6 +402,16 @@ void UnityGeom::UnLoad()
 {
 	if (m_pNavQuery != NULL) delete m_pNavQuery;
 	if (m_pNavMesh != NULL) delete m_pNavMesh;
+}
+
+void UnityGeom::GetBound(UnityVertex& min, UnityVertex& max)
+{
+	min.x = m_bmin[0];
+	min.y = m_bmin[1];
+	min.z = m_bmin[2];
+	max.x = m_bmax[0];
+	max.y = m_bmax[1];
+	max.z = m_bmax[2];
 }
 
 bool UnityGeom::GetHeight(float x, float z, float& y)
