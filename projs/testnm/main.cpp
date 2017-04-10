@@ -13,6 +13,8 @@ int main()
 		ug.Load("1006.bytes");
 		std::cout << "1006.bytes loaded." << std::endl;
 
+		// todo: 扫描所有三角型?
+
 		UnityVertex uvmin, uvmax;
 		ug.GetBound(uvmin, uvmax);
 		std::cout << "uvmin = " << uvmin.x << ", " << uvmin.y << ", " << uvmin.z << "";

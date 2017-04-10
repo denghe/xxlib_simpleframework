@@ -52,6 +52,9 @@ public:
 	bool Load(const std::string& filepath); // 加载地图navmesh数据
 	void UnLoad(); // 卸载navmesh数据
 	bool FindPath(const UnityVertex& start, const UnityVertex& end, std::vector<UnityVertex>& path); // 寻路
+	bool FindPath(const UnityVertex& start, const UnityVertex& end, std::vector<UnityVertex>& path, dtPolyRef& startPolyRef, dtPolyRef& endPolyRef); // 寻路
+	bool GetPolyRefOfPoint(float x, float z, dtPolyRef& polyRef); // 获取到xz平面上某点所在的navmesh的多边形索引
+	bool GetPolyHeight(float x, float z, const dtPolyRef& polyRef, float& y); // // 获取到xz平面上一点在多边形上的高度，如果该点不在多边形上，那么返回false
 	bool GetHeight(float x, float z, float& y); // 获取到xz平面上一点在navmesh上的高度，如果该点不在navmesh上，那么返回false
 	void GetBound(UnityVertex& min, UnityVertex& max); // 获得包围盒最小点和最大点数据
 

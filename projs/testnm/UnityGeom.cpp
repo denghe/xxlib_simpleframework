@@ -246,6 +246,8 @@ bool UnityGeom::Load(const std::string& filepath)
 	int index = atoi(strIndices.c_str());
 	m_indices.push_back(index);
 
+	int a = m_vertices.size();
+	int b = m_indices.size();
 	if (m_vertices.size() == 0 || m_indices.size() == 0)
 	{
 		return false;
@@ -414,6 +416,38 @@ void UnityGeom::GetBound(UnityVertex& min, UnityVertex& max)
 	max.z = m_bmax[2];
 }
 
+bool UnityGeom::GetPolyRefOfPoint(float x, float z, dtPolyRef& polyRef)
+{
+	if (m_pNavQuery == NULL)
+	{
+		return false;
+	}
+	dtStatus status;
+	float point[3] = { x, 0, z };
+	float t[3] = { 0, 1000, 0 };
+	status = m_pNavQuery->findNearestPoly(point, t, &m_filter, &polyRef, 0);
+	if (dtStatusFailed(status))
+	{
+		return false;
+	}
+	return true;
+}
+
+bool UnityGeom::GetPolyHeight(float x, float z, const dtPolyRef& polyRef, float& y)
+{
+	if (m_pNavQuery == NULL)
+	{
+		return false;
+	}
+	float point[3] = { x, 0, z };
+	dtStatus status = m_pNavQuery->getPolyHeight(polyRef, point, &y);
+	if (dtStatusFailed(status))
+	{
+		return false;
+	}
+	return true;
+}
+
 bool UnityGeom::GetHeight(float x, float z, float& y)
 {
 	if (m_pNavQuery == NULL)
@@ -438,7 +472,7 @@ bool UnityGeom::GetHeight(float x, float z, float& y)
 	return true;
 }
 
-bool UnityGeom::FindPath(const UnityVertex& start, const UnityVertex& end, std::vector<UnityVertex>& path)
+bool UnityGeom::FindPath(const UnityVertex& start, const UnityVertex& end, std::vector<UnityVertex>& path, dtPolyRef& startPolyRef, dtPolyRef& endPolyRef)
 {
 	if (m_pNavQuery == NULL)
 	{
@@ -450,21 +484,19 @@ bool UnityGeom::FindPath(const UnityVertex& start, const UnityVertex& end, std::
 	float s[3] = { start.x, start.y, start.z };
 	float e[3] = { end.x, end.y, end.z };
 	float t[3] = { 0, 1000, 0 };
-	dtPolyRef startRef;
-	status = m_pNavQuery->findNearestPoly(s, t, &m_filter, &startRef, 0);
+	status = m_pNavQuery->findNearestPoly(s, t, &m_filter, &startPolyRef, 0);
 	if (dtStatusFailed(status))
 	{
 		return false;
 	}
-	dtPolyRef endRef;
-	status = m_pNavQuery->findNearestPoly(e, t, &m_filter, &endRef, 0);
+	status = m_pNavQuery->findNearestPoly(e, t, &m_filter, &endPolyRef, 0);
 	if (dtStatusFailed(status))
 	{
 		return false;
 	}
 	dtPolyRef polys[MAX_POLYS];
 	int npolys;
-	status = m_pNavQuery->findPath(startRef, endRef, s, e, &m_filter, polys, &npolys, MAX_POLYS);
+	status = m_pNavQuery->findPath(startPolyRef, endPolyRef, s, e, &m_filter, polys, &npolys, MAX_POLYS);
 	if (dtStatusFailed(status))
 	{
 		return false;
@@ -482,7 +514,7 @@ bool UnityGeom::FindPath(const UnityVertex& start, const UnityVertex& end, std::
 	float smoothPath[MAX_SMOOTH * 3];
 
 	float iterPos[3], targetPos[3];
-	m_pNavQuery->closestPointOnPoly(startRef, s, iterPos, 0);
+	m_pNavQuery->closestPointOnPoly(startPolyRef, s, iterPos, 0);
 	m_pNavQuery->closestPointOnPoly(polys[npolys - 1], e, targetPos, 0);
 
 	memcpy(&smoothPath[nsmoothPath * 3], iterPos, sizeof(float) * 3);
@@ -619,5 +651,11 @@ bool UnityGeom::FindPath(const UnityVertex& start, const UnityVertex& end, std::
 		}
 	}
 	return true;
+}
+
+bool UnityGeom::FindPath(const UnityVertex& start, const UnityVertex& end, std::vector<UnityVertex>& path)
+{
+	dtPolyRef startRef, endRef;
+	return FindPath(start, end, path, startRef, endRef);
 }
 
