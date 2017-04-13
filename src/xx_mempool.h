@@ -75,7 +75,8 @@ namespace xx
 			}
 			catch (...)
 			{
-				this->Release(t);
+				ptrstacks[idx].Push(p);											// Èë³Ø
+				p->versionNumber = 0;											// Çå¿Õ°æ±¾ºÅ
 				return nullptr;
 			}
 			return t;
