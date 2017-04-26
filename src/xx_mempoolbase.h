@@ -127,6 +127,7 @@ namespace xx
 			p->mempoolbase = this;
 			p->refCount = 1;
 			p->typeId = -1;// (decltype(p->typeId))TupleIndexOf<T, Tuple>::value;
+			p->tsFlags = 0;
 
 			auto t = (T*)(p + 1);
 			try
@@ -135,7 +136,8 @@ namespace xx
 			}
 			catch (...)
 			{
-				this->Release(t);
+				ptrstacks[idx].Push(p);											// 入池
+				p->versionNumber = 0;											// 清空版本号
 				return nullptr;
 			}
 			return t;
@@ -151,7 +153,7 @@ namespace xx
 
 			auto h = (MemHeader_MPObject*)p - 1;								// 指到内存头
 			assert(h->versionNumber);											// 理论上讲 free 的时候其版本号不应该是 0. 否则就涉嫌重复 Free
-			ptrstacks[h->mpIndex].Push(h);											// 入池
+			ptrstacks[h->mpIndex].Push(h);										// 入池
 			h->versionNumber = 0;												// 清空版本号
 		}
 
