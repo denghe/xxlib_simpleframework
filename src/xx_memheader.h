@@ -24,7 +24,25 @@ namespace xx
 	struct MemHeader_MPObject : public MemHeader_VersionNumber
 	{
 		// 这个用于希望将 MPObject 对象以非指针方式使用时, 放在变量前面以提供内存头空间时使用( 实现在 xx_mempoolbase.h 属 )
-		MemHeader_MPObject(MemPoolBase& mempoolbase);
+		MemHeader_MPObject(MemPoolBase& mempoolbase)
+			: mempoolbase(&mempoolbase)
+		{
+			this->versionNumber = 0;
+			this->refCount = (uint32_t)-1;											// 防 Release
+		}
+		MemHeader_MPObject(MemHeader_MPObject&& o)
+			: mempoolbase(o.mempoolbase)
+			, refCount(o.refCount)
+			, typeId(o.typeId)
+			, tsFlags(o.tsFlags)
+		{
+			this->versionNumber = o.versionNumber;
+			o.versionNumber = 0;
+			o.mempoolbase = nullptr;
+			o.refCount = 0;
+			o.typeId = 0;
+			o.tsFlags = 0;
+		}
 
 		// 便于局部代码访问内存池( 使用 MP::Get(this) 来引用到内存池. MP 是内存池的 type )
 		MemPoolBase *mempoolbase;
@@ -58,6 +76,15 @@ namespace xx
 			, instance(std::forward<Args>(args)...)
 		{
 		}
+
+		MemHeaderBox(MemHeaderBox const&) = delete;
+		MemHeaderBox& operator=(MemHeaderBox const&) = delete;
+		MemHeaderBox(MemHeaderBox&& o)
+			: mh(std::move(o.mh))
+			, instance(std::move(o.instance))
+		{
+		}
+
 		T const* operator->() const
 		{
 			return &instance;

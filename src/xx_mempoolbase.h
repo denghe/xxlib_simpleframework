@@ -190,14 +190,6 @@ namespace xx
 		mempoolbase().Release(this);
 	}
 
-	inline MemHeader_MPObject::MemHeader_MPObject(MemPoolBase& mempoolbase)
-		: mempoolbase(&mempoolbase)
-	{
-		this->versionNumber = 0;
-		this->refCount = (uint32_t)-1;											// ·À Release
-	}
-
-
 
 
 

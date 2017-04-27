@@ -39,6 +39,10 @@ namespace xx
 		}
 
 		String(String const&o) = delete;
+		String(String &&o)
+			: BaseType(std::move(o))
+		{
+		}
 		String& operator=(String const&o) = delete;
 
 		inline void Assign(char const *buf, uint32_t dataLen)
@@ -324,6 +328,11 @@ namespace xx
 
 	using String_v = MemHeaderBox<String>;
 
+	template<>
+	struct MemmoveSupport<String_v>
+	{
+		static const bool value = true;
+	};
 
 
 

@@ -396,4 +396,10 @@ namespace xx
 
 	template <typename T, bool autoRelease = false>
 	using Links_v = MemHeaderBox<Links<T, autoRelease>>;
+
+	template <typename T, bool autoRelease>
+	struct MemmoveSupport<MemHeaderBox<Links<T, autoRelease>>>
+	{
+		static const bool value = true;
+	};
 }

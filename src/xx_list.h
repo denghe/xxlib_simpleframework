@@ -37,6 +37,15 @@ namespace xx
 			Clear(true);
 		}
 		List(List const&o) = delete;
+		List(List &&o)
+			: buf(o.buf)
+			, bufLen(o.bufLen)
+			, dataLen(o.dataLen)
+		{
+			o.buf = nullptr;
+			o.bufLen = 0;
+			o.dataLen = 0;
+		}
 		List& operator=(List const&o) = delete;
 
 		template<typename U = T> void ItemAddRef(std::enable_if_t<!autoRelease, U> &p) {}
@@ -499,4 +508,10 @@ namespace xx
 	template<typename T, bool autoRelease = false, uint32_t reservedHeaderLen = 0>
 	using List_v = MemHeaderBox<List<T, autoRelease, reservedHeaderLen>>;
 
+
+	template<typename T, bool autoRelease, uint32_t reservedHeaderLen>
+	struct MemmoveSupport<MemHeaderBox<List<T, autoRelease, reservedHeaderLen>>>
+	{
+		static const bool value = true;
+	};
 }

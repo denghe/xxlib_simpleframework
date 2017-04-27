@@ -5,7 +5,6 @@
 
 namespace xx
 {
-	// todo: is_pod, is_mptr
 	// todo: 从 C# 版同步新增函数
 
 	// ring buffer FIFO 队列
@@ -17,6 +16,8 @@ namespace xx
 	struct Queue : public MPObject
 	{
 		typedef T ChildType;
+		static const bool memmoveAble = std::is_pod<T>::value || IsMemHeaderBox_v<T>;
+
 		T*			buf;
 		uint32_t    bufLen;
 		uint32_t	head = 0, tail = 0;					// FR..............................
@@ -49,6 +50,18 @@ namespace xx
 	};
 
 
+	/*************************************************************************/
+	// 值类型使用形态包装
+	/*************************************************************************/
+
+	template<typename T>
+	using Queue_v = MemHeaderBox<Queue<T>>;
+
+	template<typename T>
+	struct MemmoveSupport<MemHeaderBox<Queue<T>>>
+	{
+		static const bool value = true;
+	};
 
 
 
@@ -110,7 +123,7 @@ namespace xx
 		}
 		if (tail == head)			// no more space
 		{
-			idx = bufLen;
+			idx = bufLen - 1;
 			Reserve(bufLen * 2, true);
 		}
 		return buf[idx];
@@ -135,7 +148,7 @@ namespace xx
 		//........HT......................
 		if (head == tail) return;
 
-		if (!std::is_pod<T>::value && !IsMPtr<T>::value)
+		if (!memmoveAble)
 		{
 			//......Head+++++++++++Tail......
 			if (head < tail)
@@ -169,7 +182,7 @@ namespace xx
 		//......Head+++++++++++Tail......
 		if (head < tail)
 		{
-			if (!std::is_pod<T>::value && !IsMPtr<T>::value)
+			if (!memmoveAble)
 			{
 				//......Head+++++++++++count......
 				for (auto i = head; i < head + count; ++i) buf[i].~T();
@@ -183,7 +196,7 @@ namespace xx
 			//...Head+++
 			if (count < frontDataLen)
 			{
-				if (!std::is_pod<T>::value && !IsMPtr<T>::value)
+				if (!memmoveAble)
 				{
 					for (auto i = head; i < head + count; ++i) buf[i].~T();
 				}
@@ -192,7 +205,7 @@ namespace xx
 			else
 			{
 				//...Head++++++
-				if (!std::is_pod<T>::value && !IsMPtr<T>::value)
+				if (!memmoveAble)
 				{
 					for (auto i = head; i < bufLen; ++i) buf[i].~T();
 				}
@@ -201,7 +214,7 @@ namespace xx
 				head = count - frontDataLen;
 
 				// ++++++Head...
-				if (!std::is_pod<T>::value && !IsMPtr<T>::value)
+				if (!memmoveAble)
 				{
 					for (uint32_t i = 0; i < head; ++i) buf[i].~T();
 				}
@@ -226,7 +239,7 @@ namespace xx
 		//......Head+++++++++++Tail.......
 		if (head < tail)
 		{
-			if (std::is_pod<T>::value || IsMPtr<T>::value)
+			if (memmoveAble)
 			{
 				std::memcpy(newBuf, buf + head, dataLen * sizeof(T));
 			}
@@ -246,7 +259,7 @@ namespace xx
 		{
 			//...Head++++++
 			auto frontDataLen = bufLen - head;
-			if (std::is_pod<T>::value || IsMPtr<T>::value)
+			if (memmoveAble)
 			{
 				std::memcpy(newBuf, buf + head, frontDataLen * sizeof(T));
 			}
@@ -260,7 +273,7 @@ namespace xx
 			}
 
 			// ++++++Tail...
-			if (std::is_pod<T>::value || IsMPtr<T>::value)
+			if (memmoveAble)
 			{
 				std::memcpy(newBuf + frontDataLen, buf, tail * sizeof(T));
 			}

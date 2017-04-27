@@ -426,4 +426,11 @@ namespace xx
 
 	template <typename TK, typename TV, bool autoReleaseKey = false, bool autoReleaseValue = false>
 	using Dict_v = MemHeaderBox<Dict<TK, TV, autoReleaseKey, autoReleaseValue>>;
+
+
+	template <typename TK, typename TV, bool autoReleaseKey, bool autoReleaseValue>
+	struct MemmoveSupport<MemHeaderBox<Dict<TK, TV, autoReleaseKey, autoReleaseValue>>>
+	{
+		static const bool value = true;
+	};
 }
