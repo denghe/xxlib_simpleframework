@@ -92,6 +92,9 @@
     <ClInclude Include="..\..\src\xx_structs.h">
       <Filter>xx</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\xx_queue.h">
+      <Filter>xx</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="bak1.txt">

@@ -178,6 +178,7 @@
     <ClInclude Include="..\..\src\xx_bbuffer.h" />
     <ClInclude Include="..\..\src\xx_bytesutils.h" />
     <ClInclude Include="..\..\src\xx_cursorpool.h" />
+    <ClInclude Include="..\..\src\xx_queue.h" />
     <ClInclude Include="..\..\src\xx_random.h" />
     <ClInclude Include="..\..\src\xx_structs.h" />
     <ClInclude Include="..\..\src\xx_timer.h" />
