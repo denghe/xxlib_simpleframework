@@ -17,7 +17,7 @@ namespace xx
 		uint32_t    bufLen;
 		uint32_t    dataLen;
 
-		explicit List(uint32_t capacity = 0)
+		explicit List(uint32_t const& capacity = 0)
 		{
 			if (capacity == 0)
 			{
@@ -44,7 +44,7 @@ namespace xx
 		template<typename U = T> void ItemRelease(std::enable_if_t<!autoRelease, U> &p) {}
 		template<typename U = T> void ItemRelease(std::enable_if_t< autoRelease, U> &p) { if (p) p->Release(); }
 
-		void Reserve(uint32_t capacity)
+		void Reserve(uint32_t const& capacity)
 		{
 			if (capacity <= bufLen) return;
 
@@ -71,7 +71,7 @@ namespace xx
 		}
 
 		// 返回扩容前的长度
-		uint32_t Resize(uint32_t len)
+		uint32_t Resize(uint32_t const& len)
 		{
 			if (len == dataLen) return dataLen;
 			else if (len < dataLen && !std::is_trivial<T>::value)
@@ -97,39 +97,39 @@ namespace xx
 			return rtv;
 		}
 
-		T const& operator[](uint32_t idx) const
+		T const& operator[](uint32_t const& idx) const
 		{
 			assert(idx < dataLen);
 			return buf[idx];
 		}
 
 		template<typename U = T>
-		std::enable_if_t<!autoRelease, U>& operator[](uint32_t idx)
+		std::enable_if_t<!autoRelease, U>& operator[](uint32_t const& idx)
 		{
 			assert(idx < dataLen);
 			return buf[idx];
 		}
 
-		T const& At(uint32_t idx) const
+		T const& At(uint32_t const& idx) const
 		{
 			assert(idx < dataLen);
 			return buf[idx];
 		}
 		template<typename U = T>
-		std::enable_if_t<!autoRelease, U>& At(uint32_t idx)
+		std::enable_if_t<!autoRelease, U>& At(uint32_t const& idx)
 		{
 			assert(idx < dataLen);
 			return buf[idx];
 		}
 
 		template<typename V = T>
-		void SetAt(uint32_t idx, std::enable_if_t<!autoRelease, V>&& v)
+		void SetAt(uint32_t const& idx, std::enable_if_t<!autoRelease, V>&& v)
 		{
 			assert(idx < dataLen);
 			buf[idx] = std::forward<V>(v);
 		}
 		template<typename V = T>
-		void SetAt(uint32_t idx, std::enable_if_t< autoRelease, V> const& v)
+		void SetAt(uint32_t const& idx, std::enable_if_t< autoRelease, V> const& v)
 		{
 			assert(idx < dataLen);
 			v->AddRef();
@@ -138,7 +138,7 @@ namespace xx
 		}
 
 		template<typename V = T>
-		void SetAtDirect(uint32_t idx, std::enable_if_t< autoRelease, V> const& v)
+		void SetAtDirect(uint32_t const& idx, std::enable_if_t< autoRelease, V> const& v)
 		{
 			assert(idx < dataLen);
 			if (buf[idx]) buf[idx]->Release();
@@ -177,7 +177,7 @@ namespace xx
 			return true;
 		}
 
-		void Clear(bool freeBuf = false)
+		void Clear(bool const& freeBuf = false)
 		{
 			if (!buf) return;
 			if (dataLen)
@@ -198,7 +198,7 @@ namespace xx
 		}
 
 		// 移除指定索引的元素. 为紧凑排列, 可能产生内存移动
-		void RemoveAt(uint32_t idx)
+		void RemoveAt(uint32_t const& idx)
 		{
 			assert(idx < dataLen);
 			--dataLen;
@@ -346,11 +346,11 @@ namespace xx
 			return p;
 		}
 
-		void InsertAt(uint32_t idx, T&& v)
+		void InsertAt(uint32_t const& idx, T&& v)
 		{
 			EmplaceAt(idx, (T&&)v);
 		}
-		void InsertAt(uint32_t idx, T const& v)
+		void InsertAt(uint32_t const& idx, T const& v)
 		{
 			EmplaceAt(idx, v);
 		}
