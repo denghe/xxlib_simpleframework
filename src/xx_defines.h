@@ -23,6 +23,7 @@ XX_LIKELY / UNLIKELY / INLINE / NOINLINE
 MIN / MAX
 XX_ENUM_OPERATOR_EXT
 XX_HAS_TYPEDEF
+XX_HAS_FUNC
 _countof
 Sleep
 TypeDeclare
@@ -172,6 +173,26 @@ inline EnumTypeName operator++(EnumTypeName &a)                                 
     a = EnumTypeName((std::underlying_type_t<EnumTypeName>)(a) + 1);											\
     return a;                                                                                                   \
 }
+
+
+
+/*
+SFINAE check menber function exists
+sample£º
+
+XX_HAS_FUNC( xxxxxxxxfunc_checker, FuncName, RT ( T::* )( params... ) const );
+*/
+#define XX_HAS_FUNC( CN, FN, FT )   \
+template<typename CT>                                                               \
+class CN                                                                            \
+{                                                                                   \
+    template<typename T, FT> struct FuncMatcher;                                    \
+    template<typename T> static char HasFunc( FuncMatcher<T, &T::FN>* );            \
+    template<typename T> static int HasFunc( ... );                                 \
+public:                                                                             \
+    static const bool value = sizeof( HasFunc<CT>( nullptr ) ) == sizeof(char);     \
+}
+
 
 
 
