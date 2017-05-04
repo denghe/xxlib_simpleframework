@@ -6,6 +6,7 @@
 namespace xx
 {
 	// todo: 从 C# 版同步新增函数
+	// todo: 移动后空指针状如果继续用的话 并未经过测试
 
 	// ring buffer FIFO 队列
 	// 能随机检索...能批量 pop
@@ -26,12 +27,23 @@ namespace xx
 		~Queue();
 
 		Queue(Queue const& o) = delete;
+		Queue(Queue && o)
+			: buf(o.buf)
+			, bufLen(o.bufLen)
+			, head(o.head)
+			, tail(o.tail)
+		{
+			o.buf = nullptr;
+			o.bufLen = o.head = o.tail = 0;
+		}
 		Queue& operator=(Queue const& o) = delete;
 
-		T const& operator[](uint32_t const& idx) const;	// [0] = Head()
+		T const& operator[](uint32_t const& idx) const;	// [0] = [ head ]
 		T& operator[](uint32_t const& idx);
-		T const& At(uint32_t const& idx) const;				// []
+		T const& At(uint32_t const& idx) const;			// []
 		T& At(uint32_t const& idx);
+		T const& Last() const;							// [ tail ]
+		T& Last();
 
 		uint32_t Count() const;
 		bool Empty() const;
@@ -78,10 +90,12 @@ namespace xx
 	template <class T>
 	Queue<T>::~Queue()
 	{
-		assert(buf);
-		Clear();
-		mempoolbase().Free(buf);
-		buf = nullptr;
+		if (buf)
+		{
+			Clear();
+			mempoolbase().Free(buf);
+			buf = nullptr;
+		}
 	}
 
 	template <class T>
@@ -334,6 +348,20 @@ namespace xx
 		{
 			return buf[head + idx - bufLen];
 		}
+	}
+
+
+	template<typename T>
+	T const& Queue<T>::Last() const
+	{
+		assert(first != last);
+		return buf[tail];
+	}
+	template<typename T>
+	T& Queue<T>::Last()
+	{
+		assert(first != last);
+		return buf[tail];
 	}
 
 
