@@ -42,8 +42,6 @@ namespace xx
 		T& operator[](uint32_t const& idx);
 		T const& At(uint32_t const& idx) const;			// []
 		T& At(uint32_t const& idx);
-		T const& Last() const;							// [ tail ]
-		T& Last();
 
 		uint32_t Count() const;
 		bool Empty() const;
@@ -51,14 +49,21 @@ namespace xx
 		void Reserve(uint32_t const& capacity, bool afterPush = false);
 
 		template<typename...PTS>
-		T& Emplace(PTS&&...ps);							// [ Tail++ ] = T( ps )
+		T& Emplace(PTS&&...ps);							// [ tail++ ] = T( ps )
 		void Enqueue(T const& v);
 		void Enqueue(T&& v);
-		T Dequeue();									// 会复制，不推荐（替代方案: 使用 Peek + Pop 或 TryDequeue）
+
+		T Dequeue();									// 会产生复制（替代方案: 使用 Top + Pop 或 TryDequeue）
 		bool TryDequeue(T& outVal);
-		T const& Peek() const;							// [ 0 ]
-		void Pop();										// ++Head
-		uint32_t PopMulti(uint32_t const& count);		// Head += count
+
+		T const& Top() const;							// [ head ]
+		T& Top();
+
+		T const& Last() const;							// [ tail ]
+		T& Last();
+
+		void Pop();										// ++head
+		uint32_t PopMulti(uint32_t const& count);		// head += count
 	};
 
 
@@ -330,11 +335,18 @@ namespace xx
 	}
 
 	template<typename T>
-	T const& Queue<T>::Peek() const
+	T const& Queue<T>::Top() const
 	{
 		assert(head != tail);
 		return buf[head];
 	}
+	template<typename T>
+	T& Queue<T>::Top()
+	{
+		assert(head != tail);
+		return buf[head];
+	}
+
 
 	template<typename T>
 	T& Queue<T>::At(uint32_t const& idx)
@@ -354,13 +366,13 @@ namespace xx
 	template<typename T>
 	T const& Queue<T>::Last() const
 	{
-		assert(first != last);
+		assert(head != tail);
 		return buf[tail];
 	}
 	template<typename T>
 	T& Queue<T>::Last()
 	{
-		assert(first != last);
+		assert(head != tail);
 		return buf[tail];
 	}
 

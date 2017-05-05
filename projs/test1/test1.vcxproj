@@ -175,6 +175,7 @@
   <ItemGroup>
     <ClInclude Include="..\..\snippets\lua_mempool.h" />
     <ClInclude Include="..\..\src\ajson.hpp" />
+    <ClInclude Include="..\..\src\xx_bbqueue.h" />
     <ClInclude Include="..\..\src\xx_bbuffer.h" />
     <ClInclude Include="..\..\src\xx_bytesutils.h" />
     <ClInclude Include="..\..\src\xx_cursorpool.h" />

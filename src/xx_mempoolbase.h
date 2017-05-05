@@ -99,7 +99,7 @@ namespace xx
 			if (oldSize >= newSize) return p;
 
 			auto np = Alloc(newSize);
-			memcpy(np, p, std::min(oldSize, dataLen));
+			memcpy(np, p, MIN(oldSize, dataLen));
 			Free(p);
 			return np;
 		}
