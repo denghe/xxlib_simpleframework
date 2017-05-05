@@ -71,7 +71,8 @@ namespace xx
 
 
 		// 将待发数据压入队列( 将同步相应的统计数值 )
-		void Push(BBuffer* const& bb)
+		// 也就是说 push 之后不可以再继续操作 bb
+		void Push(BBuffer* bb)
 		{
 			numPushLen += bb->dataLen;
 			this->Enqueue(bb);
@@ -82,9 +83,9 @@ namespace xx
 		// 下次调用时将清理上一次的内存 以确保数据持有到发送成功. 也就是说只有发送成功之后才能再次调用该函数.
 		// 如果发送失败, 要重试, outBufs 的值是可以反复使用的.
 		template<typename T, uint32_t maxBufsCount = 64>
-		uint32_t PopTo(List<T>* const& outBufs, uint32_t len)
+		uint32_t PopTo(List<T>& outBufs, uint32_t len)
 		{
-			outBufs->Clear();
+			outBufs.Clear();
 			if (!len) return 0;
 
 			if (bufIndex != numPopBufs)							// 清理内存
@@ -110,12 +111,12 @@ namespace xx
 				{
 					len -= left;
 					++idx;
-					outBufs->Add({ left, bb->buf + byteOffset });
+					outBufs.Add({ left, bb->buf + byteOffset });
 					byteOffset = 0;
 				}
 				else
 				{
-					outBufs->Add({ len, bb->buf + byteOffset });
+					outBufs.Add({ len, bb->buf + byteOffset });
 					byteOffset += len;
 					len = 0;
 				}

@@ -209,7 +209,7 @@ namespace xx
 			return rtv;
 		}
 	};
-	
+
 	// 适配 8 字节无符号整数( 变长读写 )
 	template<typename T>
 	struct BytesFunc<T, std::enable_if_t<std::is_integral<T>::value && sizeof(T) == 8 && std::is_unsigned<T>::value>>
@@ -393,6 +393,30 @@ namespace xx
 			return 0;
 		}
 	};
+
+	// 适配 literal string
+	template<size_t len>
+	struct BytesFunc<char [len], void>
+	{
+		typedef char (T)[len];
+		static inline uint32_t Calc(T const &in)
+		{
+			return len + 5;
+		}
+		static inline uint32_t WriteTo(char *dstBuf, T const &in)
+		{
+			auto offset = BytesFunc<size_t>::WriteTo(dstBuf, len);
+			std::memcpy(dstBuf + offset, in, len);
+			return offset + len;
+		}
+		static inline int ReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, T &out)
+		{
+			assert(false);
+			return 0;
+		}
+	};
+
+
 
 	/**************************************************************************************************/
 	// 将 BytesFunc 映射为全局函数以方便不借助 BBuffer 类来填充 buf
