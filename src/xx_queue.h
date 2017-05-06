@@ -50,20 +50,19 @@ namespace xx
 
 		template<typename...PTS>
 		T& Emplace(PTS&&...ps);							// [ tail++ ] = T( ps )
-		void Enqueue(T const& v);
-		void Enqueue(T&& v);
+		void Push(T const& v);
+		void Push(T&& v);
 
-		T Dequeue();									// 会产生复制（替代方案: 使用 Top + Pop 或 TryDequeue）
-		bool TryDequeue(T& outVal);
+		bool TryPop(T& outVal);
 
 		T const& Top() const;							// [ head ]
 		T& Top();
-
-		T const& Last() const;							// [ tail ]
-		T& Last();
-
 		void Pop();										// ++head
 		uint32_t PopMulti(uint32_t const& count);		// head += count
+
+		T const& Last() const;							// [ tail-1 ]
+		T& Last();
+		void PopLast();									// --tail
 	};
 
 
@@ -131,6 +130,18 @@ namespace xx
 	}
 
 	template <class T>
+	void Queue<T>::PopLast()
+	{
+		assert(head != tail);
+		buf[tail--].~T();
+		if (tail == (uint32_t)-1)
+		{
+			tail = bufLen - 1;
+		}
+	}
+
+
+	template <class T>
 	template<typename...PTS>
 	T& Queue<T>::Emplace(PTS&&...ps)
 	{
@@ -149,13 +160,13 @@ namespace xx
 	}
 
 	template <class T>
-	void Queue<T>::Enqueue(T const& v)
+	void Queue<T>::Push(T const& v)
 	{
 		Emplace(v);
 	}
 
 	template <class T>
-	void Queue<T>::Enqueue(T&& v)
+	void Queue<T>::Push(T&& v)
 	{
 		Emplace((T&&)v);
 	}
@@ -367,27 +378,18 @@ namespace xx
 	T const& Queue<T>::Last() const
 	{
 		assert(head != tail);
-		return buf[tail];
+		return buf[tail - 1 == (uint32_t)-1 ? bufLen - 1 : tail - 1];
 	}
 	template<typename T>
 	T& Queue<T>::Last()
 	{
 		assert(head != tail);
-		return buf[tail];
+		return buf[tail - 1 == (uint32_t)-1 ? bufLen - 1 : tail - 1];
 	}
 
 
 	template <typename T>
-	T Queue<T>::Dequeue()
-	{
-		assert(head != tail);
-		T rtv((T&&)buf[head]);
-		Pop();
-		return rtv;
-	}
-
-	template <typename T>
-	bool Queue<T>::TryDequeue(T& outVal)
+	bool Queue<T>::TryPop(T& outVal)
 	{
 		if (head == tail)
 		{

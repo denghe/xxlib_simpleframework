@@ -394,20 +394,20 @@ namespace xx
 		}
 	};
 
-	// 适配 literal string
-	template<size_t len>
+	// 适配 literal string( -1 是为了去掉尾部的 \0 )
+	template<uint32_t len>
 	struct BytesFunc<char [len], void>
 	{
 		typedef char (T)[len];
 		static inline uint32_t Calc(T const &in)
 		{
-			return len + 5;
+			return len - 1 + 5;
 		}
 		static inline uint32_t WriteTo(char *dstBuf, T const &in)
 		{
-			auto offset = BytesFunc<size_t>::WriteTo(dstBuf, len);
-			std::memcpy(dstBuf + offset, in, len);
-			return offset + len;
+			auto offset = BytesFunc<uint32_t>::WriteTo(dstBuf, len - 1);
+			std::memcpy(dstBuf + offset, in, len - 1);
+			return offset + len - 1;
 		}
 		static inline int ReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, T &out)
 		{

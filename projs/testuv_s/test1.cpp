@@ -21,9 +21,20 @@ int main()
 	bb->Write("123");
 	bbq->Push(bb);
 
-	while (auto n = bbq->PopTo(*outBufs, 1))
+	bb = bbq->PopLastBB();
+	if (!bb) bb = mp.CreateWithoutTypeId<xx::BBuffer>();
+	bb->Write("456");
+	bbq->Push(bb);
+
+	bb = bbq->PopLastBB();
+	if (!bb) bb = mp.CreateWithoutTypeId<xx::BBuffer>();
+	bb->Write("789");
+	bbq->Push(bb);
+
+	while (auto n = bbq->PopTo(*outBufs, 20))
 	{
-		Dump(*outBufs);
+		std::cout << "pop size = " << n << std::endl;
+		if (n) Dump(*outBufs);
 	}
 
 	return 0;
