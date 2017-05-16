@@ -34,57 +34,33 @@ namespace xx
 			Clear();
 		}
 
-
-		// 如果队列尾包( 存在的话 )，非正在发送状态 且 引用计数为 1, 就返回它( 可用于继续填充 ). 否则返回空.
-		// 使用完这个函数之后, 需要修正 numPushLen 的值. 示例:
-		/*
-		auto buf = q->TryRefLastBB();
-		auto bak_dataLen = 0;
-		if (buf)
-		{
-		bak_dataLen = buf->dataLen;
-		}
-		else
-		{
-		buf = mp.Create<BBuffer>();
-		}
-
-		// fill buf
-
-		if (bak_dataLen)
-		{
-		q->numPushLen += buf->dataLen - bak_dataLen;
-		}
-		else
-		{
-		q->Add(buf);
-		}
-		*/
-		BBuffer* const& TryRefLastBB()
+		// 如果队列尾包存在，且 非正在发送状态 且 引用计数为 1( 非群发 ), 就返回它用于继续填充. 否则返回空.
+		BBuffer* PopLastBB()
 		{
 			if (this->Count() + numPopBufs > bufIndex && this->Last()->refCount() == 1)
 			{
-				return this->Last();
+				numPushLen -= this->Last()->dataLen;
+				auto bb = this->Last();
+				this->PopLast();
+				return bb;
 			}
 			return nullptr;
 		}
 
-
-		// 将待发数据压入队列( 将同步相应的统计数值 )
+		// 将待发数据 bb 压入队列托管( 将同步相应的统计数值, PopTo 后将自动 Release ), 之后不可以再继续操作 bb
 		void Push(BBuffer* const& bb)
 		{
 			numPushLen += bb->dataLen;
-			this->Enqueue(bb);
+			this->BaseType::Push(bb);
 		}
 
-
-		// 弹出指定字节长度到指定容器( [ { buf, len }, ... ] 格式 )
+		// 弹出指定字节长度到指定容器( [ { len, bufPtr,  }, ... ] 格式 ), 返回实际弹出字节数
 		// 下次调用时将清理上一次的内存 以确保数据持有到发送成功. 也就是说只有发送成功之后才能再次调用该函数.
 		// 如果发送失败, 要重试, outBufs 的值是可以反复使用的.
 		template<typename T, uint32_t maxBufsCount = 64>
-		uint32_t PopTo(List<T>* const& outBufs, uint32_t len)
+		uint32_t PopTo(List<T>& outBufs, uint32_t len)
 		{
-			outBufs->Clear();
+			outBufs.Clear();
 			if (!len) return 0;
 
 			if (bufIndex != numPopBufs)							// 清理内存
@@ -110,12 +86,12 @@ namespace xx
 				{
 					len -= left;
 					++idx;
-					outBufs->Add({ left, bb->buf + byteOffset });
+					outBufs.Add({ left, bb->buf + byteOffset });
 					byteOffset = 0;
 				}
 				else
 				{
-					outBufs->Add({ len, bb->buf + byteOffset });
+					outBufs.Add({ len, bb->buf + byteOffset });
 					byteOffset += len;
 					len = 0;
 				}
