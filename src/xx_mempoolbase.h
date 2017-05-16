@@ -147,12 +147,11 @@ namespace xx
 		inline void Release(MPObject* p) noexcept
 		{
 			if (!p || p->refCount() > 0x7FFFFFFF) return;						// 如果空指针 或是用 MemHeaderBox 包裹则不执行 Release 操作
-			assert(p->versionNumber());
-			if (p->refCount() == 0 || --p->refCount()) return;
+			assert(p->versionNumber() && p->refCount());						// 理论上讲 free 的时候其版本号不应该是 0, 引用计数不该是 0. 否则就是 Release 次数过多
+			if (--p->refCount()) return;
 			p->~MPObject();
 
 			auto h = (MemHeader_MPObject*)p - 1;								// 指到内存头
-			assert(h->versionNumber);											// 理论上讲 free 的时候其版本号不应该是 0. 否则就涉嫌重复 Free
 			ptrstacks[h->mpIndex].Push(h);										// 入池
 			h->versionNumber = 0;												// 清空版本号
 		}
