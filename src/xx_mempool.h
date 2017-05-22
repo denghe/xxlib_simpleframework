@@ -7,15 +7,14 @@ namespace xx
 	/*
 	// 示例:
 
-	// headers ...
+	MemPool::Register< T >();
+	MemPool::Register< T >();
+	MemPool::Register< T >();
+	...
 
-	// 重点: type 排列顺序 须满足 子在前父在后. 彼此无关的无所谓
-	typedef xx::MemPool<C,B,A......> MP;
-
-	// impls ...
-
-	MP mp;
+	MemPool mp;
 	auto a = mp.Create<A>(.....);
+
 	*/
 
 
