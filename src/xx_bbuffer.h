@@ -2,13 +2,14 @@
 #include "xx_bytesutils.h"
 #include "xx_mempool.h"
 #include "xx_list.h"
+#include "xx_dict.h"
 
 namespace xx
 {
 	struct BBuffer : public List<char, false, 16>
 	{
 		typedef List<char, false, 16> BaseType;
-		uint32_t offset = 0;												// 读指针偏移量
+		uint32_t offset = 0;													// 读指针偏移量
 
 		explicit BBuffer(uint32_t capacity = 0) : BaseType(capacity) {}
 		BBuffer(BBuffer const&o) = delete;
@@ -18,27 +19,76 @@ namespace xx
 		// 传统 pod 读写系列( 通过 bytesutils 里的重载 / 特化 实现 )
 		/*************************************************************************/
 
-		template<typename ...TS>
-		void Write(TS const& ...vs)
+		template<typename T>
+		void Write(T const& v)
 		{
-			this->Reserve(this->dataLen + BBCalc(vs...));
-			this->dataLen += BBWriteTo(this->buf + this->dataLen, vs...);
+			this->Reserve(this->dataLen + BBCalc(v));
+			this->dataLen += BBWriteTo(this->buf + this->dataLen, v);
 			assert(this->dataLen <= this->bufLen);
 		}
-
 		template<typename T>
 		int Read(T &v)
 		{
 			return BBReadFrom(buf, dataLen, offset, v);
 		}
 
+		template<typename ...TS>
+		void WriteMulti(TS const& ...vs)
+		{
+			this->Reserve(this->dataLen + BBCalc(vs...));
+			this->dataLen += BBWriteTo(this->buf + this->dataLen, vs...);
+			assert(this->dataLen <= this->bufLen);
+		}
 		template<typename T, typename ...TS>
-		int Read(T &v, TS&...vs)
+		int ReadMulti(T &v, TS&...vs)
 		{
 			if (auto rtv = Read<T>(v)) return rtv;
 			return Read(vs...);
 		}
 		int Read() { return 0; }
+
+
+		/*************************************************************************/
+		//  MPObject 对象读写系列
+		/*************************************************************************/
+
+		// todo: 要实现这部分需要解决运行时向 MemPool 注册类型的问题
+
+		//Dict_v<void*, uint32_t>*						ptrStore = nullptr;		// 临时记录 key: 指针, value: offset
+		//Dict_v<uint32_t, std::pair<void*, uint16_t>>*	idxStore = nullptr;		// 临时记录 key: 读offset, value: pair<ptr, typeId>
+
+		//// todo: Begin End WriteRef ReadRef
+		//void BeginWrite()
+		//{
+		//	if (!ptrStore) this->mempool()->CreateTo(ptrStore, 16);
+		//}
+		//void EndWrite()
+		//{
+		//	assert(ptrStore);
+		//	ptrStore->Clear();
+		//}
+		//void BeginRead()
+		//{
+		//	if (!idxStore) mempool().CreateTo(idxStore, 16);
+		//}
+		//void EndRead()
+		//{
+		//	assert(idxStore);
+		//	idxStore->Clear();
+		//}
+
+		//void Write(MPObject* const& v)
+		//{
+		//	assert(ptrStore);
+		//}
+		//int Read(MPObject* &v)
+		//{
+		//	return 0;
+		//}
+
+		/*************************************************************************/
+		//  其他工具函数
+		/*************************************************************************/
 
 		// 读指定位置的数据( 不影响 offset )
 		template<typename ...TS>

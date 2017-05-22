@@ -13,27 +13,83 @@ namespace xx
 	/**************************************************************************************************/
 
 	// negative -> ZigZag positive.  效果：负数变正，正数 *= 2
-	inline uint32_t ZigZagEncode32(int32_t in)
+
+	inline uint16_t ZigZagEncode(int16_t in)
+	{
+		return (in << 1) ^ (in >> 15);
+	}
+	inline uint32_t ZigZagEncode(int32_t in)
 	{
 		return (in << 1) ^ (in >> 31);
 	}
-	inline uint64_t ZigZagEncode64(int64_t in)
+	inline uint64_t ZigZagEncode(int64_t in)
 	{
 		return (in << 1) ^ (in >> 63);
 	}
 
 	// ZigZag positive -> negative
-	inline int32_t ZigZagDecode32(uint32_t in)
+	inline int16_t ZigZagDecode(uint16_t in)
+	{
+		return (int16_t)(in >> 1) ^ (-(int16_t)(in & 1));
+	}
+	inline int32_t ZigZagDecode(uint32_t in)
 	{
 		return (int32_t)(in >> 1) ^ (-(int32_t)(in & 1));
 	}
-	inline int64_t ZigZagDecode64(uint64_t in)
+	inline int64_t ZigZagDecode(uint64_t in)
 	{
 		return (int64_t)(in >> 1) ^ (-(int64_t)(in & 1));
 	}
 
+	// uint16_t
+	inline uint32_t VarWrite7(char *dstBuf, uint16_t in)
+	{
+		uint32_t len = 0;
+	Lab1:
+		auto b7 = (unsigned char)in;
+		if ((in >>= 7))
+		{
+			dstBuf[len++] = b7 | 0x80u;
+			goto Lab1;
+		}
+		dstBuf[len++] = b7;
+		return len;
+	}
+
+	// uint16_t
+	inline int VarRead7(char const *srcBuf, uint32_t dataLen, uint32_t& offset, uint16_t &out)
+	{
+		if (offset >= dataLen) return -1;// NotEnoughData;
+		auto p = srcBuf + offset;
+		uint32_t i = 0, b7;
+		int32_t lshift = 0;
+		uint32_t idx = 0;
+		dataLen -= offset;
+	Lab1:
+		b7 = p[idx++];
+		if (b7 > 0x7F)
+		{
+			if (idx == 3) return -2;// Overflow;
+			if (idx >= dataLen) return -1;// NotEnoughData;
+			i |= (b7 & 0x7F) << lshift;
+			lshift += 7;
+			goto Lab1;
+		}
+		else
+		{
+			if (idx == 3 && b7 > 3) return -2;// Overflow;
+			else
+			{
+				i |= b7 << lshift;
+			}
+		}
+		out = (uint16_t)i;
+		offset += idx;
+		return 0;// Success;
+	}
+
 	// uint32_t
-	inline uint32_t VarWrite732(char *dstBuf, uint32_t in)
+	inline uint32_t VarWrite7(char *dstBuf, uint32_t in)
 	{
 		uint32_t len = 0;
 	Lab1:
@@ -48,7 +104,7 @@ namespace xx
 	}
 
 	// uint32_t
-	inline int VarRead732(char const *srcBuf, uint32_t dataLen, uint32_t& offset, uint32_t &out)
+	inline int VarRead7(char const *srcBuf, uint32_t dataLen, uint32_t& offset, uint32_t &out)
 	{
 		if (offset >= dataLen) return -1;// NotEnoughData;
 		auto p = srcBuf + offset;
@@ -80,7 +136,7 @@ namespace xx
 	}
 
 	// uint64_t
-	inline uint32_t VarWrite764(char *dstBuf, uint64_t in)
+	inline uint32_t VarWrite7(char *dstBuf, uint64_t in)
 	{
 		uint32_t len = 0;
 	Lab1:
@@ -102,7 +158,7 @@ namespace xx
 	}
 
 	// uint64_t
-	inline int VarRead764(char const *srcBuf, uint32_t dataLen, uint32_t &offset, uint64_t &out)
+	inline int VarRead7(char const *srcBuf, uint32_t dataLen, uint32_t &offset, uint64_t &out)
 	{
 		if (offset >= dataLen) return -1;// NotEnoughData;
 		auto p = srcBuf + offset;
@@ -149,9 +205,9 @@ namespace xx
 		static int ReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, T &out);
 	};
 
-	// 适配 2 字节以内长度的 数值 或 float( 这些类型直接 memcpy )
+	// 适配 1 字节长度的 数值 或 float( 这些类型直接 memcpy )
 	template<typename T>
-	struct BytesFunc<T, std::enable_if_t< (std::is_arithmetic<T>::value && sizeof(T) <= 2) || (std::is_floating_point<T>::value && sizeof(T) == 4) >>
+	struct BytesFunc<T, std::enable_if_t< (std::is_arithmetic<T>::value && sizeof(T) == 1) || (std::is_floating_point<T>::value && sizeof(T) == 4) >>
 	{
 		static inline uint32_t Calc(T const &in)
 		{
@@ -171,9 +227,9 @@ namespace xx
 		}
 	};
 
-	// 适配 4 字节无符号整数( 变长读写 )
+	// 适配 2+ 字节无符号整数( 变长读写 )
 	template<typename T>
-	struct BytesFunc<T, std::enable_if_t<std::is_integral<T>::value && sizeof(T) == 4 && std::is_unsigned<T>::value>>
+	struct BytesFunc<T, std::enable_if_t<std::is_integral<T>::value && sizeof(T) >= 2 && std::is_unsigned<T>::value>>
 	{
 		static inline uint32_t Calc(T const &in)
 		{
@@ -181,17 +237,17 @@ namespace xx
 		}
 		static inline uint32_t WriteTo(char *dstBuf, T const &in)
 		{
-			return VarWrite732(dstBuf, in);
+			return VarWrite7(dstBuf, in);
 		}
 		static inline int ReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, T &out)
 		{
-			return VarRead732(srcBuf, dataLen, offset, out);
+			return VarRead7(srcBuf, dataLen, offset, out);
 		}
 	};
 
-	// 适配 4 字节有符号整数( ZigZag 变长读写 )
+	// 适配 2+ 字节有符号整数( ZigZag 变长读写 )
 	template<typename T>
-	struct BytesFunc<T, std::enable_if_t<std::is_integral<T>::value && sizeof(T) == 4 && !std::is_unsigned<T>::value>>
+	struct BytesFunc<T, std::enable_if_t<std::is_integral<T>::value && sizeof(T) >= 2 && !std::is_unsigned<T>::value>>
 	{
 		static inline uint32_t Calc(T const &in)
 		{
@@ -199,52 +255,13 @@ namespace xx
 		}
 		static inline uint32_t WriteTo(char *dstBuf, T const &in)
 		{
-			return VarWrite732(dstBuf, ZigZagEncode32(in));
+			return VarWrite7(dstBuf, ZigZagEncode(in));
 		}
 		static inline int ReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, T &out)
 		{
-			uint32_t i = 0;
-			auto rtv = VarRead732(srcBuf, dataLen, offset, i);
-			out = ZigZagDecode32(i);
-			return rtv;
-		}
-	};
-
-	// 适配 8 字节无符号整数( 变长读写 )
-	template<typename T>
-	struct BytesFunc<T, std::enable_if_t<std::is_integral<T>::value && sizeof(T) == 8 && std::is_unsigned<T>::value>>
-	{
-		static inline uint32_t Calc(T const &in)
-		{
-			return sizeof(T) + 1;
-		}
-		static inline uint32_t WriteTo(char *dstBuf, T const &in)
-		{
-			return VarWrite764(dstBuf, in);
-		}
-		static inline int ReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, T &out)
-		{
-			return VarRead764(srcBuf, dataLen, offset, out);
-		}
-	};
-
-	// 适配 8 字节有符号整数( ZigZag 变长读写 )
-	template<typename T>
-	struct BytesFunc<T, std::enable_if_t<std::is_integral<T>::value && sizeof(T) == 8 && !std::is_unsigned<T>::value>>
-	{
-		static inline uint32_t Calc(T const &in)
-		{
-			return sizeof(T) + 1;
-		}
-		static inline uint32_t WriteTo(char *dstBuf, T const &in)
-		{
-			return VarWrite764(dstBuf, ZigZagEncode64(in));
-		}
-		static inline int ReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, T &out)
-		{
-			uint64_t i = 0;
-			auto rtv = VarRead764(srcBuf, dataLen, offset, i);
-			out = ZigZagDecode64(i);
+			std::make_unsigned_t<T> i = 0;
+			auto rtv = VarRead7(srcBuf, dataLen, offset, i);
+			out = ZigZagDecode(i);
 			return rtv;
 		}
 	};
