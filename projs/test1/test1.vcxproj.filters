@@ -7,15 +7,6 @@
     <Filter Include="xx">
       <UniqueIdentifier>{c0bd2e8f-e2ba-4c51-babb-4809b75bb96e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="bak">
-      <UniqueIdentifier>{79edfc69-daa0-496c-be6f-2244141ec2d5}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="lua">
-      <UniqueIdentifier>{2731c22a-0046-403a-83d8-4dbcfb812dc1}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="snippets">
-      <UniqueIdentifier>{2fdb1e02-1902-4ba6-90e9-7c1643d7b00e}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\xx_mempool.h">
@@ -60,23 +51,12 @@
     <ClInclude Include="..\..\src\xx_timer.h">
       <Filter>xx</Filter>
     </ClInclude>
-    <ClInclude Include="scene.h" />
-    <ClInclude Include="scene.hpp" />
-    <ClInclude Include="fsmlua.h" />
-    <ClInclude Include="fsmlua.hpp" />
-    <ClInclude Include="monster.h" />
-    <ClInclude Include="monster.hpp" />
     <ClInclude Include="..\..\src\xx_cursorpool.h">
       <Filter>xx</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\ajson.hpp">
       <Filter>xx</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\snippets\lua_mempool.h">
-      <Filter>snippets</Filter>
-    </ClInclude>
-    <ClInclude Include="bases.h" />
-    <ClInclude Include="bases.hpp" />
     <ClInclude Include="..\..\src\xx_random.h">
       <Filter>xx</Filter>
     </ClInclude>
@@ -86,9 +66,6 @@
     <ClInclude Include="..\..\src\xx_bytesutils.h">
       <Filter>xx</Filter>
     </ClInclude>
-    <ClInclude Include="skill.h" />
-    <ClInclude Include="skill.hpp" />
-    <ClInclude Include="xymath.h" />
     <ClInclude Include="..\..\src\xx_structs.h">
       <Filter>xx</Filter>
     </ClInclude>
@@ -100,63 +77,8 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="bak1.txt">
-      <Filter>bak</Filter>
-    </Text>
-    <Text Include="bak2.txt">
-      <Filter>bak</Filter>
-    </Text>
-    <Text Include="bak3.txt">
-      <Filter>bak</Filter>
-    </Text>
-    <Text Include="bak4.txt">
-      <Filter>bak</Filter>
-    </Text>
-    <Text Include="bak5.txt">
-      <Filter>bak</Filter>
-    </Text>
-    <Text Include="bak8.txt">
-      <Filter>bak</Filter>
-    </Text>
-    <Text Include="bak6.txt">
-      <Filter>bak</Filter>
-    </Text>
-    <Text Include="bak7.txt">
-      <Filter>bak</Filter>
-    </Text>
-    <Text Include="bak9.txt">
-      <Filter>bak</Filter>
-    </Text>
-    <Text Include="bak10.txt">
-      <Filter>bak</Filter>
-    </Text>
-    <Text Include="bak11.txt">
-      <Filter>bak</Filter>
-    </Text>
-    <Text Include="bak12.txt">
-      <Filter>bak</Filter>
-    </Text>
-    <Text Include="bak13.txt">
-      <Filter>bak</Filter>
-    </Text>
-  </ItemGroup>
-  <ItemGroup>
     <Natvis Include="..\..\src\xx.natvis">
       <Filter>xx</Filter>
     </Natvis>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="monster1.lua">
-      <Filter>lua</Filter>
-    </None>
-    <None Include="scene.lua">
-      <Filter>lua</Filter>
-    </None>
-    <None Include="init.lua">
-      <Filter>lua</Filter>
-    </None>
-    <None Include="monster2.lua">
-      <Filter>lua</Filter>
-    </None>
   </ItemGroup>
 </Project>

@@ -173,7 +173,6 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\snippets\lua_mempool.h" />
     <ClInclude Include="..\..\src\ajson.hpp" />
     <ClInclude Include="..\..\src\xx_bbqueue.h" />
     <ClInclude Include="..\..\src\xx_bbuffer.h" />
@@ -196,41 +195,9 @@
     <ClInclude Include="..\..\src\xx_mpobject.h" />
     <ClInclude Include="..\..\src\xx_mptr.h" />
     <ClInclude Include="..\..\src\xx_string.h" />
-    <ClInclude Include="bases.h" />
-    <ClInclude Include="bases.hpp" />
-    <ClInclude Include="skill.h" />
-    <ClInclude Include="skill.hpp" />
-    <ClInclude Include="fsmlua.h" />
-    <ClInclude Include="fsmlua.hpp" />
-    <ClInclude Include="monster.h" />
-    <ClInclude Include="monster.hpp" />
-    <ClInclude Include="scene.h" />
-    <ClInclude Include="scene.hpp" />
-    <ClInclude Include="xymath.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="bak1.txt" />
-    <Text Include="bak10.txt" />
-    <Text Include="bak11.txt" />
-    <Text Include="bak12.txt" />
-    <Text Include="bak13.txt" />
-    <Text Include="bak2.txt" />
-    <Text Include="bak3.txt" />
-    <Text Include="bak4.txt" />
-    <Text Include="bak5.txt" />
-    <Text Include="bak6.txt" />
-    <Text Include="bak7.txt" />
-    <Text Include="bak8.txt" />
-    <Text Include="bak9.txt" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="..\..\src\xx.natvis" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="init.lua" />
-    <None Include="monster1.lua" />
-    <None Include="monster2.lua" />
-    <None Include="scene.lua" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
