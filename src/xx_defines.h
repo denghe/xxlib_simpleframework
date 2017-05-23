@@ -364,7 +364,7 @@ template<typename T> struct HasTypedef_##typedefName<T, typename xx::Typedef_Voi
 
 
 	/***********************************************************************************/
-	// TypeId, TypeName Ó³Éä
+	// TypeId Ó³Éä
 	/***********************************************************************************/
 
 	template<typename T>
@@ -372,6 +372,9 @@ template<typename T> struct HasTypedef_##typedefName<T, typename xx::Typedef_Voi
 	{
 		static const uint16_t value = 0;
 	};
+
+	template<typename T>
+	constexpr uint16_t TypeId_v = TypeId<T>::value;
 
 
 	/***********************************************************************************/

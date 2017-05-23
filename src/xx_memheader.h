@@ -18,34 +18,34 @@ namespace xx
 		};
 	};
 
-	struct MemPoolBase;
+	struct MemPool;
 
 	// 经由 MemPool 分配的 针对 MPObject 派生类的内存都带有这样一个头部
 	struct MemHeader_MPObject : public MemHeader_VersionNumber
 	{
 		// 这个用于希望将 MPObject 对象以非指针方式使用时, 放在变量前面以提供内存头空间时使用( 实现在 xx_mempoolbase.h 属 )
-		MemHeader_MPObject(MemPoolBase& mempoolbase)
-			: mempoolbase(&mempoolbase)
+		MemHeader_MPObject(MemPool& mempool)
+			: mempool(&mempool)
 		{
 			this->versionNumber = 0;
 			this->refCount = (uint32_t)-1;											// 防 Release
 		}
 		MemHeader_MPObject(MemHeader_MPObject&& o)
-			: mempoolbase(o.mempoolbase)
+			: mempool(o.mempool)
 			, refCount(o.refCount)
 			, typeId(o.typeId)
 			, tsFlags(o.tsFlags)
 		{
 			this->versionNumber = o.versionNumber;
 			o.versionNumber = 0;
-			o.mempoolbase = nullptr;
+			o.mempool = nullptr;
 			o.refCount = 0;
 			o.typeId = 0;
 			o.tsFlags = 0;
 		}
 
 		// 便于局部代码访问内存池( 使用 MP::Get(this) 来引用到内存池. MP 是内存池的 type )
-		MemPoolBase *mempoolbase;
+		MemPool *mempool;
 
 		// 减到 0 就真正 Dispose
 		uint32_t refCount = 1;
@@ -71,8 +71,8 @@ namespace xx
 		T instance;
 
 		template<typename ...Args>
-		MemHeaderBox(MemPoolBase& mempoolbase, Args&& ... args)
-			: mh(mempoolbase)
+		MemHeaderBox(MemPool& mempool, Args&& ... args)
+			: mh(mempool)
 			, instance(std::forward<Args>(args)...)
 		{
 		}

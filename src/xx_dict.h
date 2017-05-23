@@ -49,17 +49,17 @@ namespace xx
 			freeCount = 0;
 			count = 0;
 			bucketsLen = (int)GetPrime(capacity, sizeof(Data));
-			buckets = (int*)mempoolbase().Alloc(bucketsLen * sizeof(int));
+			buckets = (int*)mempool().Alloc(bucketsLen * sizeof(int));
 			memset(buckets, -1, bucketsLen * sizeof(int));  // -1 代表 "空"
-			nodes = (Node*)mempoolbase().Alloc(bucketsLen * sizeof(Node));
-			items = (Data*)mempoolbase().Alloc(bucketsLen * sizeof(Data));
+			nodes = (Node*)mempool().Alloc(bucketsLen * sizeof(Node));
+			items = (Data*)mempool().Alloc(bucketsLen * sizeof(Data));
 		}
 		~Dict()
 		{
 			DeleteKVs();
-			mempoolbase().Free(buckets);
-			mempoolbase().Free(nodes);
-			mempoolbase().Free(items);
+			mempool().Free(buckets);
+			mempool().Free(nodes);
+			mempool().Free(items);
 		}
 
 		Dict(Dict const &o) = delete;
@@ -154,22 +154,22 @@ namespace xx
 			bucketsLen = (int)GetPrime(capacity, sizeof(Data));
 
 			// 桶扩容并全部初始化( 后面会重新映射一次 )
-			mempoolbase().Free(buckets);
-			buckets = (int*)mempoolbase().Alloc(bucketsLen * sizeof(int));
+			mempool().Free(buckets);
+			buckets = (int*)mempool().Alloc(bucketsLen * sizeof(int));
 			memset(buckets, -1, bucketsLen * sizeof(int));
 
 			// 节点数组扩容( 保留老数据 )
-			nodes = (Node*)mempoolbase().Realloc(nodes, bucketsLen * sizeof(Node));
+			nodes = (Node*)mempool().Realloc(nodes, bucketsLen * sizeof(Node));
 
 			// item 数组扩容
 			if ((std::is_trivial<TK>::value || MemmoveSupport_v<TK>)
 				&& (std::is_trivial<TV>::value || MemmoveSupport_v<TV>))
 			{
-				items = (Data*)mempoolbase().Realloc(items, bucketsLen * sizeof(Data));
+				items = (Data*)mempool().Realloc(items, bucketsLen * sizeof(Data));
 			}
 			else
 			{
-				auto newItems = (Data*)mempoolbase().Alloc(bucketsLen * sizeof(Data));
+				auto newItems = (Data*)mempool().Alloc(bucketsLen * sizeof(Data));
 				for (int i = 0; i < count; ++i)
 				{
 					new (&newItems[i].key) TK((TK&&)items[i].key);
@@ -177,7 +177,7 @@ namespace xx
 					new (&newItems[i].value) TV((TV&&)items[i].value);
 					items[i].value.TV::~TV();
 				}
-				mempoolbase().Free(items);
+				mempool().Free(items);
 				items = newItems;
 			}
 

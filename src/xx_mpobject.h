@@ -4,7 +4,7 @@
 namespace xx
 {
 	struct String;
-
+	struct BBuffer;
 
 	// 支持 MemPool 的类都应该从该基类派生
 	struct MPObject
@@ -24,6 +24,25 @@ namespace xx
 		tsFlags() = 0;
 		*/
 		virtual void ToString(String &str) const;
+
+		/*
+		this->BaseType::ToBBuffer(bb);
+		bb.Write(.............);
+		*/
+		inline virtual void ToBBuffer(BBuffer &bb) const
+		{
+			assert(false);
+		};
+
+		/*
+		if (auto rtv = this->BaseType::FromBBuffer(bb)) return rtv;
+		return bb.Read(.............);
+		*/
+		inline virtual int FromBBuffer(BBuffer &bb)
+		{
+			assert(false);
+			return 0;
+		};
 
 		// 减持 或 析构 + 回收变野( 代码的实现在 xx_mempoolbase.h 的尾部 )
 		void Release() noexcept;
@@ -46,19 +65,8 @@ namespace xx
 		inline uint16_t& tsFlags() { return memHeader().tsFlags; }
 		inline uint16_t const& tsFlags() const { return memHeader().tsFlags; }
 
-		inline MemPoolBase& mempoolbase() const { return *(memHeader().mempoolbase); }
-		inline MemPoolBase& mempoolbase() { return *(memHeader().mempoolbase); }
-
-		template<typename T> T& mempool()
-		{
-			static_assert(std::is_base_of<MemPoolBase, T>::value, "the T must be a MemPool<...>");
-			return *(T*)(memHeader().mempoolbase);
-		}
-		template<typename T> T& mempool() const
-		{
-			static_assert(std::is_base_of<MemPoolBase, T>::value, "the T must be a MemPool<...>");
-			return *(T*)(memHeader().mempoolbase);
-		}
+		inline MemPool& mempool() const { return *(memHeader().mempool); }
+		inline MemPool& mempool() { return *(memHeader().mempool); }
 	};
 
 
@@ -104,4 +112,6 @@ namespace xx
 		static constexpr bool value = TupleScaner<std::tuple<Types...>, sizeof...(Types)>::Exec();
 	};
 
+	// 生成 MPObject 的原始 typeId 映射
+	template<> struct TypeId<MPObject> { static const uint16_t value = 1; };
 }

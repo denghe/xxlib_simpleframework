@@ -4,14 +4,13 @@
 
 namespace xx
 {
+	struct BBuffer;
+
 	// 类似 std vector / .net List 的简化容器
-	// autoRelease 意思是当目标类型为 MPObject* 派生时, 构造时将 call 其 AddRef, 析构时将 call 其 Release
 	// reservedHeaderLen 为分配 buf 内存后在前面空出一段内存不用, 也不初始化, 扩容不复制( 为附加头部数据创造便利 )
-	template<typename T, bool autoRelease = false, uint32_t reservedHeaderLen = 0>
+	template<typename T, uint32_t reservedHeaderLen = 0>
 	struct List : public MPObject
 	{
-		static_assert(!autoRelease || (std::is_pointer<T>::value && IsMPObject_v<T>), "autoRelease == true cond is T* where T : MPObject");
-
 		typedef T ChildType;
 		T*			buf;
 		uint32_t    bufLen;
@@ -27,7 +26,7 @@ namespace xx
 			else
 			{
 				auto bufByteLen = Round2n((reservedHeaderLen + capacity) * sizeof(T) + sizeof(MemHeader_VersionNumber)) - sizeof(MemHeader_VersionNumber);
-				buf = (T*)mempoolbase().Alloc((uint32_t)bufByteLen) + reservedHeaderLen;
+				buf = (T*)mempool().Alloc((uint32_t)bufByteLen) + reservedHeaderLen;
 				bufLen = uint32_t(bufByteLen / sizeof(T)) - reservedHeaderLen;
 			}
 			dataLen = 0;
@@ -47,18 +46,15 @@ namespace xx
 			o.dataLen = 0;
 		}
 		List& operator=(List const&o) = delete;
+		List(BBuffer* bb);
 
-		template<typename U = T> void ItemAddRef(std::enable_if_t<!autoRelease, U> &p) {}
-		template<typename U = T> void ItemAddRef(std::enable_if_t< autoRelease, U> &p) { if (p) p->AddRef(); }
-		template<typename U = T> void ItemRelease(std::enable_if_t<!autoRelease, U> &p) {}
-		template<typename U = T> void ItemRelease(std::enable_if_t< autoRelease, U> &p) { if (p) p->Release(); }
 
 		void Reserve(uint32_t const& capacity)
 		{
 			if (capacity <= bufLen) return;
 
 			auto newBufByteLen = Round2n(reservedHeaderLen + capacity * sizeof(T) + sizeof(MemHeader_VersionNumber)) - sizeof(MemHeader_VersionNumber);
-			auto newBuf = (T*)mempoolbase().Alloc((uint32_t)newBufByteLen) + reservedHeaderLen;
+			auto newBuf = (T*)mempool().Alloc((uint32_t)newBufByteLen) + reservedHeaderLen;
 
 			if (std::is_trivial<T>::value || MemmoveSupport_v<T>)
 			{
@@ -74,7 +70,7 @@ namespace xx
 			}
 			// memcpy(newBuf - reservedHeaderLen, buf - reservedHeaderLen, reservedHeaderLen * sizeof(T));
 
-			if (buf) mempoolbase().Free(buf - reservedHeaderLen);
+			if (buf) mempool().Free(buf - reservedHeaderLen);
 			buf = newBuf;
 			bufLen = uint32_t(newBufByteLen / sizeof(T)) - reservedHeaderLen;
 		}
@@ -93,7 +89,7 @@ namespace xx
 			else // len > dataLen
 			{
 				Reserve(len);
-				if (!std::is_pod<T>::value || autoRelease)
+				if (!std::is_pod<T>::value)
 				{
 					for (uint32_t i = dataLen; i < len; ++i)
 					{
@@ -111,9 +107,7 @@ namespace xx
 			assert(idx < dataLen);
 			return buf[idx];
 		}
-
-		template<typename U = T>
-		std::enable_if_t<!autoRelease, U>& operator[](uint32_t const& idx)
+		T& operator[](uint32_t const& idx)
 		{
 			assert(idx < dataLen);
 			return buf[idx];
@@ -124,36 +118,11 @@ namespace xx
 			assert(idx < dataLen);
 			return buf[idx];
 		}
-		template<typename U = T>
-		std::enable_if_t<!autoRelease, U>& At(uint32_t const& idx)
+		T& At(uint32_t const& idx)
 		{
 			assert(idx < dataLen);
 			return buf[idx];
 		}
-
-		template<typename V = T>
-		void SetAt(uint32_t const& idx, std::enable_if_t<!autoRelease, V>&& v)
-		{
-			assert(idx < dataLen);
-			buf[idx] = std::forward<V>(v);
-		}
-		template<typename V = T>
-		void SetAt(uint32_t const& idx, std::enable_if_t< autoRelease, V> const& v)
-		{
-			assert(idx < dataLen);
-			v->AddRef();
-			if (buf[idx]) buf[idx]->Release();
-			buf[idx] = v;
-		}
-
-		template<typename V = T>
-		void SetAtDirect(uint32_t const& idx, std::enable_if_t< autoRelease, V> const& v)
-		{
-			assert(idx < dataLen);
-			if (buf[idx]) buf[idx]->Release();
-			buf[idx] = v;
-		}
-
 
 		uint32_t Count() const
 		{
@@ -169,7 +138,6 @@ namespace xx
 		{
 			assert(dataLen > 0);
 			--dataLen;
-			ItemRelease(buf[dataLen]);
 			buf[dataLen].~T();
 		}
 		T const& Top() const
@@ -181,7 +149,6 @@ namespace xx
 		{
 			if (!dataLen) return false;
 			output = (T&&)buf[--dataLen];
-			ItemRelease(buf[dataLen]);
 			buf[dataLen].~T();
 			return true;
 		}
@@ -193,14 +160,13 @@ namespace xx
 			{
 				for (uint32_t i = dataLen - 1; i != (uint32_t)-1; --i)
 				{
-					ItemRelease(buf[i]);
 					buf[i].~T();
 				}
 				dataLen = 0;
 			}
 			if (freeBuf)
 			{
-				mempoolbase().Free(buf - reservedHeaderLen);
+				mempool().Free(buf - reservedHeaderLen);
 				buf = nullptr;
 				bufLen = 0;
 			}
@@ -213,7 +179,6 @@ namespace xx
 			--dataLen;
 			if (std::is_trivial<T>::value || MemmoveSupport_v<T>)
 			{
-				ItemRelease(buf[idx]);
 				buf[idx].~T();
 				memmove(buf + idx, buf + idx + 1, (dataLen - idx) * sizeof(T));
 			}
@@ -240,49 +205,12 @@ namespace xx
 			}
 		}
 
-		//// 交换移除法, 返回是否产生过交换行为
-		//bool SwapRemoveAt(uint32_t idx)
-		//{
-		//	assert(idx < dataLen);
-
-		//	auto& o = buf[idx];
-		//	ItemRelease(o);
-		//	o.~T();
-
-		//	--dataLen;
-		//	if (dataLen == idx) return false;	// last one
-		//	else if (std::is_trivial_v<T> || MemmoveSupport_v<T>)
-		//	{
-		//		o = buf[dataLen];
-		//	}
-		//	else
-		//	{
-		//		new (&o) T((T&&)buf[dataLen]);
-		//		buf[dataLen].~T();
-		//	}
-		//	return true;
-		//}
-
 	protected:
-		// 不越界检查 不加持
-		void FastAddDirect(T const& v)
-		{
-			new (buf + dataLen) T(v);
-			++dataLen;
-		}
-
-		// 不越界检查( 右值版 ) 不加持
-		void FastAddDirect(T&& v)
-		{
-			new (buf + dataLen) T((T&&)v);
-			++dataLen;
-		}
 
 		// 不越界检查
 		void FastAdd(T const& v)
 		{
 			new (buf + dataLen) T(v);
-			ItemAddRef(buf[dataLen]);
 			++dataLen;
 		}
 
@@ -290,20 +218,10 @@ namespace xx
 		void FastAdd(T&& v)
 		{
 			new (buf + dataLen) T((T&&)v);
-			ItemAddRef(buf[dataLen]);
 			++dataLen;
 		}
 
 	public:
-
-		// 移动 / 复制添加一到多个( 不加持 )
-		template<typename...VS>
-		void AddMultiDirect(VS&&...vs)
-		{
-			static_assert(sizeof...(vs), "lost args ??");
-			Reserve(dataLen + sizeof...(vs));
-			std::initializer_list<int>{ (FastAddDirect(std::forward<VS>(vs)), 0)... };
-		}
 
 		// 移动 / 复制添加一到多个
 		template<typename...VS>
@@ -325,33 +243,13 @@ namespace xx
 			Emplace(v);
 		}
 
-		// 追加一个 item( 右值版 ). 不加持
-		void AddDirect(T&& v)
-		{
-			EmplaceDirect((T&&)v);
-		}
-		// 追加一个 item. 不加持
-		void AddDirect(T const& v)
-		{
-			EmplaceDirect(v);
-		}
-
 		// 用参数直接构造一个( 当前不支持直接经由 mempool Create MPObject* ) 不加持
 		template<typename...Args>
-		T& EmplaceDirect(Args &&... args)
+		T& Emplace(Args &&... args)
 		{
 			Reserve(dataLen + 1);
 			auto& p = buf[dataLen++];
 			new (&p) T(std::forward<Args>(args)...);
-			return p;
-		}
-
-		// 用参数直接构造一个( 当前不支持直接经由 mempool Create MPObject* )
-		template<typename...Args>
-		T& Emplace(Args &&... args)
-		{
-			auto& p = EmplaceDirect(std::forward<Args>(args)...);
-			ItemAddRef(p);
 			return p;
 		}
 
@@ -388,7 +286,6 @@ namespace xx
 			else idx = dataLen;
 			++dataLen;
 			new (buf + idx) T(std::forward<Args>(args)...);
-			ItemAddRef(buf[idx]);
 			return buf[idx];
 		}
 		void AddRange(T const* items, uint32_t count)
@@ -404,10 +301,6 @@ namespace xx
 				{
 					new (&buf[dataLen + i]) T((T&&)items[i]);
 				}
-			}
-			for (uint32_t i = 0; i < count; ++i)
-			{
-				ItemAddRef(buf[dataLen + i]);
 			}
 			dataLen += count;
 		}
@@ -496,8 +389,19 @@ namespace xx
 		// 实现 ToString 接口
 		/*************************************************************************/
 
+		// 实现代码在 xx_string.h
+
 		virtual void ToString(String &str) const override;
 
+		/*************************************************************************/
+		// 实现 BBuffer 接口
+		/*************************************************************************/
+
+		// 实现代码在 xx_bbuffer.h
+
+		virtual void ToBBuffer(BBuffer &bb) const override;
+
+		virtual int FromBBuffer(BBuffer &bb) override;
 	};
 
 
@@ -505,12 +409,12 @@ namespace xx
 	// 值类型使用形态包装
 	/*************************************************************************/
 
-	template<typename T, bool autoRelease = false, uint32_t reservedHeaderLen = 0>
-	using List_v = MemHeaderBox<List<T, autoRelease, reservedHeaderLen>>;
+	template<typename T, uint32_t reservedHeaderLen = 0>
+	using List_v = MemHeaderBox<List<T, reservedHeaderLen>>;
 
 
-	template<typename T, bool autoRelease, uint32_t reservedHeaderLen>
-	struct MemmoveSupport<MemHeaderBox<List<T, autoRelease, reservedHeaderLen>>>
+	template<typename T, uint32_t reservedHeaderLen>
+	struct MemmoveSupport<MemHeaderBox<List<T, reservedHeaderLen>>>
 	{
 		static const bool value = true;
 	};

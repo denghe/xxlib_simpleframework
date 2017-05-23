@@ -1,90 +1,219 @@
 #pragma once
 #include "xx_bytesutils.h"
 #include "xx_mempool.h"
+#include "xx_string.h"
 #include "xx_list.h"
 #include "xx_dict.h"
 
 namespace xx
 {
-	struct BBuffer : public List<char, false, 16>
+	/*************************************************************************/
+	// BBufferRWSwitcher( GCC 需要将这样的声明写在类外面 )
+	/*************************************************************************/
+
+	template<typename T, typename ENABLE = void>
+	struct BBufferRWSwitcher
 	{
-		typedef List<char, false, 16> BaseType;
+		static void Write(BBuffer* bb, T const& v);
+		static int Read(BBuffer* bb, T& v);
+	};
+
+	// non MPObject
+	template<typename T>
+	struct BBufferRWSwitcher<T, std::enable_if_t<!std::is_pointer<T>::value && !IsMPtr<T>::value>>
+	{
+		static void Write(BBuffer* bb, T const& v);
+		static int Read(BBuffer* bb, T& v);
+	};
+
+	// todo: Xxxxxx_v 以值类型写?
+	// MPObject* || MPtr
+	template<typename T>
+	struct BBufferRWSwitcher<T, std::enable_if_t<std::is_pointer<T>::value && std::is_base_of<MPObject, typename std::remove_pointer<T>::type>::value || IsMPtr<T>::value>>
+	{
+		static void Write(BBuffer* bb, T const& v);
+		static int Read(BBuffer* bb, T& v);
+	};
+
+
+	/*************************************************************************/
+	// BBuffer 本体
+	/*************************************************************************/
+
+	struct BBuffer : public List<char, 16>
+	{
+		typedef List<char, 16> BaseType;
 		uint32_t offset = 0;													// 读指针偏移量
 
-		explicit BBuffer(uint32_t capacity = 0) : BaseType(capacity) {}
 		BBuffer(BBuffer const&o) = delete;
 		BBuffer& operator=(BBuffer const&o) = delete;
+		explicit BBuffer(uint32_t capacity = 0) : BaseType(capacity) {}
+		BBuffer(BBuffer* bb);
 
 		/*************************************************************************/
-		// 传统 pod 读写系列( 通过 bytesutils 里的重载 / 特化 实现 )
+		// 路由为统一接口系列
 		/*************************************************************************/
 
 		template<typename T>
 		void Write(T const& v)
 		{
-			this->Reserve(this->dataLen + BBCalc(v));
-			this->dataLen += BBWriteTo(this->buf + this->dataLen, v);
-			assert(this->dataLen <= this->bufLen);
+			BBufferRWSwitcher<T>::Write(this, v);
 		}
 		template<typename T>
 		int Read(T &v)
 		{
-			return BBReadFrom(buf, dataLen, offset, v);
+			return BBufferRWSwitcher<T>::Read(this, v);
 		}
 
+
+		/*************************************************************************/
+		// 传统 pod 读写系列( 通过 bytesutils 里的重载 / 特化 实现 )
+		/*************************************************************************/
+
 		template<typename ...TS>
-		void WriteMulti(TS const& ...vs)
+		void WritePod(TS const& ...vs)
 		{
 			this->Reserve(this->dataLen + BBCalc(vs...));
 			this->dataLen += BBWriteTo(this->buf + this->dataLen, vs...);
 			assert(this->dataLen <= this->bufLen);
 		}
+
 		template<typename T, typename ...TS>
-		int ReadMulti(T &v, TS&...vs)
+		int ReadPod(T &v, TS&...vs)
 		{
-			if (auto rtv = Read<T>(v)) return rtv;
-			return Read(vs...);
+			return BBReadFrom(buf, dataLen, offset, vs...);
 		}
-		int Read() { return 0; }
+
+		int ReadPod() { return 0; }
 
 
 		/*************************************************************************/
 		//  MPObject 对象读写系列
 		/*************************************************************************/
 
-		// todo: 要实现这部分需要解决运行时向 MemPool 注册类型的问题
+		Dict<void*, uint32_t>*						ptrStore = nullptr;		// 临时记录 key: 指针, value: offset
+		Dict<uint32_t, std::pair<void*, uint16_t>>*	idxStore = nullptr;		// 临时记录 key: 读offset, value: pair<ptr, typeId>
 
-		//Dict_v<void*, uint32_t>*						ptrStore = nullptr;		// 临时记录 key: 指针, value: offset
-		//Dict_v<uint32_t, std::pair<void*, uint16_t>>*	idxStore = nullptr;		// 临时记录 key: 读offset, value: pair<ptr, typeId>
+		void BeginWrite()
+		{
+			if (!ptrStore) this->mempool().CreateTo(ptrStore, 16);
+			//else ptrStore->Clear();
+		}
+		void EndWrite()
+		{
+			assert(ptrStore);
+			ptrStore->Clear();
+		}
+		void BeginRead()
+		{
+			if (!idxStore) this->mempool().CreateTo(idxStore, 16);
+			//else idxStore->Clear();
+		}
+		void EndRead()
+		{
+			assert(idxStore);
+			idxStore->Clear();
+		}
 
-		//// todo: Begin End WriteRef ReadRef
-		//void BeginWrite()
-		//{
-		//	if (!ptrStore) this->mempool()->CreateTo(ptrStore, 16);
-		//}
-		//void EndWrite()
-		//{
-		//	assert(ptrStore);
-		//	ptrStore->Clear();
-		//}
-		//void BeginRead()
-		//{
-		//	if (!idxStore) mempool().CreateTo(idxStore, 16);
-		//}
-		//void EndRead()
-		//{
-		//	assert(idxStore);
-		//	idxStore->Clear();
-		//}
+		template<typename T>
+		void WriteRef(T const& v)
+		{
+			BeginWrite();
+			Write(v);
+			EndWrite();
+		}
 
-		//void Write(MPObject* const& v)
-		//{
-		//	assert(ptrStore);
-		//}
-		//int Read(MPObject* &v)
-		//{
-		//	return 0;
-		//}
+		template<typename T>
+		int ReadRef(T &v)
+		{
+			BeginRead();
+			auto rtv = Read(v);
+			EndRead();
+			return rtv;
+		}
+
+		template<typename T>
+		void WriteObj(T* const& v)
+		{
+			assert(ptrStore);
+			if (!v)
+			{
+				WritePod((uint8_t)0);
+				return;
+			}
+			WritePod(v->typeId());
+
+			auto rtv = ptrStore->Add((void*)v, dataLen);
+			WritePod(ptrStore->ValueAt(rtv.index));
+			if (rtv.success)
+			{
+				v->ToBBuffer(*this);
+			}
+		}
+		template<typename T>
+		int ReadObj(T* &v)
+		{
+			assert(idxStore);
+
+			// get typeid
+			uint16_t tid;
+			if (auto rtv = ReadPod(tid)) return rtv;
+
+			// isnull ?
+			if (tid == 0)
+			{
+				v = nullptr;
+				return 0;
+			}
+
+			// get offset
+			uint32_t ptr_offset = 0, bb_offset_bak = offset;
+			if (auto rtv = ReadPod(ptr_offset)) return rtv;
+
+			// fill or ref
+			if (ptr_offset == bb_offset_bak)
+			{
+				// ensure inherit
+				if (!mempool().IsBaseOf(TypeId<T>::value, tid)) return -2;
+
+				// try get creator func
+				auto f = MemPool::creators()[tid];
+				assert(f);
+
+				// try create & read from bb
+				v = f(mempool(), this, ptr_offset);
+				if (v == nullptr) return -3;
+			}
+			else
+			{
+				// try get ptr from dict
+				typename std::remove_pointer_t<decltype(idxStore)>::ValueType val;
+				if (!idxStore->TryGetValue(ptr_offset, val)) return -4;
+
+				// inherit validate
+				if (!mempool().IsBaseOf(TypeId<T>::value, std::get<1>(val))) return -2;
+
+				// set val
+				v = (T*)std::get<0>(val);
+			}
+			return 0;
+		}
+
+		template<typename T>
+		void WriteObj(MPtr<T> const& v)
+		{
+			Write(v.Ensure());
+		}
+		template<typename T>
+		int ReadObj(MPtr<T> &v)
+		{
+			T* t;
+			auto rtv = Read(t);
+			v = t;
+			return rtv;
+		}
+
+
 
 		/*************************************************************************/
 		//  其他工具函数
@@ -167,7 +296,39 @@ namespace xx
 			str.Append(" ] }");
 		}
 
+		/*************************************************************************/
+		// 实现 BBuffer 接口
+		/*************************************************************************/
+
+		virtual void ToBBuffer(BBuffer &bb) const override;
+
+		virtual int FromBBuffer(BBuffer &bb) override;
 	};
+
+	/*************************************************************************/
+	// BBufferRWSwitcher
+	/*************************************************************************/
+
+	template<typename T>
+	void BBufferRWSwitcher<T, std::enable_if_t<!std::is_pointer<T>::value && !IsMPtr<T>::value>>::Write(BBuffer* bb, T const& v)
+	{
+		bb->WritePod(v);
+	}
+	template<typename T>
+	int BBufferRWSwitcher<T, std::enable_if_t<!std::is_pointer<T>::value && !IsMPtr<T>::value>>::Read(BBuffer* bb, T& v)
+	{
+		return bb->ReadPod(v);
+	}
+	template<typename T>
+	void BBufferRWSwitcher<T, std::enable_if_t<std::is_pointer<T>::value && std::is_base_of<MPObject, typename std::remove_pointer<T>::type>::value || IsMPtr<T>::value>>::Write(BBuffer* bb, T const& v)
+	{
+		bb->WriteObj(v);
+	}
+	template<typename T>
+	int BBufferRWSwitcher<T, std::enable_if_t<std::is_pointer<T>::value && std::is_base_of<MPObject, typename std::remove_pointer<T>::type>::value || IsMPtr<T>::value>>::Read(BBuffer* bb, T& v)
+	{
+		return bb->ReadObj(v);
+	}
 
 
 	/*************************************************************************/
@@ -175,5 +336,140 @@ namespace xx
 	/*************************************************************************/
 
 	using BBuffer_v = MemHeaderBox<BBuffer>;
+
+
+	/*************************************************************************/
+	// 实现各种序列化接口
+	/*************************************************************************/
+
+	template<typename T, typename PT>
+	void MemPool::Register()
+	{
+		// 存父 pid
+		assert(!pids()[TypeId<T>::value]);
+		pids()[TypeId<T>::value] = TypeId<PT>::value;
+
+		// 在执行构造函数之前拿到指针 塞入 bb. 构造函数执行失败时从 bb 移除
+		creators()[TypeId<T>::value] = [](MemPool* mp, BBuffer* bb, uint32_t ptrOffset) ->void*
+		{
+			// 插入字典占位, 分配到实际指针后替换
+			auto addResult = bb->idxStore->Add(ptrOffset, std::make_pair(nullptr, TypeId<T>::value));
+
+			// 下列代码 复制自 Create 函数小改
+			auto siz = sizeof(T) + sizeof(MemHeader_MPObject);
+			auto idx = Calc2n(siz);
+			if (siz > (size_t(1) << idx)) siz = size_t(1) << ++idx;
+
+			void* rtv;
+			if (!mp->ptrstacks[idx].TryPop(rtv)) rtv = malloc(siz);
+			if (!rtv) return nullptr;
+
+			auto p = (MemHeader_MPObject*)rtv;
+			p->versionNumber = (++mp->versionNumber) | ((uint64_t)idx << 56);
+			p->mempool = mp;
+			p->refCount = 1;
+			p->typeId = TypeId<T>::value;
+			p->tsFlags = 0;
+
+			auto t = (T*)(p + 1);
+			bb->idxStore->ValueAt(addResult.index).first = t;	// 替换成真实字典
+			try
+			{
+				new (t) T(bb);
+			}
+			catch (...)
+			{
+				bb->idxStore->RemoveAt(addResult.index);		// 从字典移除( 理论上讲可以不管, 会层层失败出去最后 clear )
+				mp->ptrstacks[idx].Push(p);
+				p->versionNumber = 0;
+				return nullptr;
+			}
+			return t;
+		};
+	};
+
+	// todo: 每个类型的读写接口适与
+
+	BBuffer::BBuffer(BBuffer* bb)
+	{
+		// todo
+	}
+	void BBuffer::ToBBuffer(BBuffer &bb) const
+	{
+		// todo
+	}
+
+	int BBuffer::FromBBuffer(BBuffer &bb)
+	{
+		// todo
+		return 0;
+	}
+
+
+	// List 序列化 路由类
+	template<typename T, uint32_t reservedHeaderLen, typename ENABLE = void>
+	struct ListBBSwitcher
+	{
+		static void ToBBuffer(List<T, reservedHeaderLen>* const& list, BBuffer &bb);
+		static int FromBBuffer(List<T, reservedHeaderLen>* const& list, BBuffer &bb);
+		static void CreateFromBBuffer(List<T, reservedHeaderLen>* const& list, BBuffer &bb);
+	};
+
+	// 适配 1 字节长度的 数值 或枚举 或 float( 这些类型直接 memcpy )
+	template<typename T, uint32_t reservedHeaderLen>
+	struct ListBBSwitcher<T, reservedHeaderLen, std::enable_if_t< sizeof(T) == 1 || (std::is_floating_point<T>::value && sizeof(T) == 4) >>
+	{
+		static void ToBBuffer(List<T, reservedHeaderLen>* const& list, BBuffer &bb)
+		{
+			// todo
+		}
+		static int FromBBuffer(List<T, reservedHeaderLen>* const& list, BBuffer &bb)
+		{
+			// todo
+			return 0;
+		}
+		static void CreateFromBBuffer(List<T, reservedHeaderLen>* const& list, BBuffer &bb)
+		{
+			// todo
+		}
+	};
+
+	// 适配其他( 只能 foreach 一个个搞 )
+	template<typename T, uint32_t reservedHeaderLen>
+	struct ListBBSwitcher<T, reservedHeaderLen, std::enable_if_t< sizeof(T) != 1 && std::is_floating_point<T>::value && sizeof(T) != 4 >>
+	{
+		static void ToBBuffer(List<T, reservedHeaderLen>* const& list, BBuffer &bb)
+		{
+			// todo
+		}
+		static int FromBBuffer(List<T, reservedHeaderLen>* const& list, BBuffer &bb)
+		{
+			// todo
+			return 0;
+		}
+		static void CreateFromBBuffer(List<T, reservedHeaderLen>* const& list, BBuffer &bb)
+		{
+			// todo
+		}
+	};
+
+
+	template<typename T, uint32_t reservedHeaderLen>
+	List<T, reservedHeaderLen>::List(BBuffer* bb)
+	{
+		ListBBSwitcher<T, reservedHeaderLen>::CreateFromBBuffer(this, *bb);
+	}
+
+	template<typename T, uint32_t reservedHeaderLen>
+	void List<T, reservedHeaderLen>::ToBBuffer(BBuffer &bb) const
+	{
+		ListBBSwitcher<T, reservedHeaderLen>::ToBBuffer(this, *bb);
+	}
+
+	template<typename T, uint32_t reservedHeaderLen>
+	int List<T, reservedHeaderLen>::FromBBuffer(BBuffer &bb)
+	{
+		return ListBBSwitcher<T, reservedHeaderLen>::FromBBuffer(this, *bb);
+	}
 
 }

@@ -346,8 +346,8 @@ namespace xx
 	}
 
 	
-	template<typename T, bool autoRelease, uint32_t reservedHeaderLen>
-	void List<T, autoRelease, reservedHeaderLen>::ToString(String &str) const
+	template<typename T, uint32_t reservedHeaderLen>
+	void List<T, reservedHeaderLen>::ToString(String &str) const
 	{
 		str.Append("{ \"tn\" : \"List\", \"items\" : [ ");
 		for (size_t i = 0; i < dataLen; i++)
