@@ -227,15 +227,7 @@ namespace xx
 		// 注册类型的父子关系. 顺便生成创建函数. MPObject 不需要注册. T 需要提供相应构造函数 for 反序列化
 		template<typename T, typename PT>
 		static void Register();							// 实现在 xx_buffer.h 尾部
-		//{
-		//	assert(!pids()[TypeId<T>::value]);
-		//	pids()[TypeId<T>::value] = TypeId<PT>::value;
-		//	creators()[TypeId<T>::value] = [](MemPool* mp, BBuffer* bb) 
-		//	{
-		//		// todo: 需要在这里单独实现 Create, 以便在执行构造函数之前拿到指针 塞入 bb. 构造函数执行失败时从 bb 移除
-		//		return (MPObject*)mp->Create<T>(bb);
-		//	};
-		//}
+
 
 		// 根据 typeid 判断父子关系
 		inline static bool IsBaseOf(uint32_t baseTypeId, uint32_t typeId)
