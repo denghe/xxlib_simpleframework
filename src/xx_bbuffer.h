@@ -18,23 +18,29 @@ namespace xx
 		static int Read(BBuffer* bb, T& v);
 	};
 
-	// non MPObject
+	// !( MPObject* || MPtr || MemHeaderBox )
 	template<typename T>
-	struct BBufferRWSwitcher<T, std::enable_if_t<!std::is_pointer<T>::value && !IsMPtr<T>::value>>
+	struct BBufferRWSwitcher<T, std::enable_if_t< !(std::is_pointer<T>::value && IsMPObject_v<T> || IsMPtr_v<T> || IsMemHeaderBox_v<T>) >>
 	{
 		static void Write(BBuffer* bb, T const& v);
 		static int Read(BBuffer* bb, T& v);
 	};
 
-	// todo: Xxxxxx_v 以值类型写?
 	// MPObject* || MPtr
 	template<typename T>
-	struct BBufferRWSwitcher<T, std::enable_if_t<std::is_pointer<T>::value && std::is_base_of<MPObject, typename std::remove_pointer<T>::type>::value || IsMPtr<T>::value>>
+	struct BBufferRWSwitcher<T, std::enable_if_t< std::is_pointer<T>::value && IsMPObject_v<T> || IsMPtr<T>::value >>
 	{
 		static void Write(BBuffer* bb, T const& v);
 		static int Read(BBuffer* bb, T& v);
 	};
 
+	// MemHeaderBox
+	template<typename T>
+	struct BBufferRWSwitcher<T, std::enable_if_t< IsMemHeaderBox_v<T> >>
+	{
+		static void Write(BBuffer* bb, T const& v);
+		static int Read(BBuffer* bb, T& v);
+	};
 
 	/*************************************************************************/
 	// BBuffer 本体
@@ -48,7 +54,7 @@ namespace xx
 		BBuffer(BBuffer const&o) = delete;
 		BBuffer& operator=(BBuffer const&o) = delete;
 		explicit BBuffer(uint32_t capacity = 0) : BaseType(capacity) {}
-		BBuffer(BBuffer* bb);
+		BBuffer(BBuffer* bb) : BaseType(bb) {}
 
 		/*************************************************************************/
 		// 路由为统一接口系列
@@ -81,7 +87,7 @@ namespace xx
 		template<typename T, typename ...TS>
 		int ReadPod(T &v, TS&...vs)
 		{
-			return BBReadFrom(buf, dataLen, offset, vs...);
+			return BBReadFrom(this->buf, this->dataLen, this->offset, v, vs...);
 		}
 
 		int ReadPod() { return 0; }
@@ -116,7 +122,7 @@ namespace xx
 		}
 
 		template<typename T>
-		void WriteRef(T const& v)
+		void WriteRootPtr(T const& v)
 		{
 			BeginWrite();
 			Write(v);
@@ -124,7 +130,7 @@ namespace xx
 		}
 
 		template<typename T>
-		int ReadRef(T &v)
+		int ReadRootPtr(T &v)
 		{
 			BeginRead();
 			auto rtv = Read(v);
@@ -133,7 +139,7 @@ namespace xx
 		}
 
 		template<typename T>
-		void WriteObj(T* const& v)
+		void WritePtr(T* const& v)
 		{
 			assert(ptrStore);
 			if (!v)
@@ -151,7 +157,7 @@ namespace xx
 			}
 		}
 		template<typename T>
-		int ReadObj(T* &v)
+		int ReadPtr(T* &v)
 		{
 			assert(idxStore);
 
@@ -200,12 +206,12 @@ namespace xx
 		}
 
 		template<typename T>
-		void WriteObj(MPtr<T> const& v)
+		void WritePtr(MPtr<T> const& v)
 		{
 			Write(v.Ensure());
 		}
 		template<typename T>
-		int ReadObj(MPtr<T> &v)
+		int ReadPtr(MPtr<T> &v)
 		{
 			T* t;
 			auto rtv = Read(t);
@@ -213,6 +219,18 @@ namespace xx
 			return rtv;
 		}
 
+
+
+		template<typename T>
+		void WriteBox(MemHeaderBox<T> const& v)
+		{
+			v->ToBBuffer(*this);
+		}
+		template<typename T>
+		int ReadBox(MemHeaderBox<T> &v)
+		{
+			return v->FromBBuffer(*this);
+		}
 
 
 		/*************************************************************************/
@@ -309,27 +327,44 @@ namespace xx
 	// BBufferRWSwitcher
 	/*************************************************************************/
 
+	// !( MPObject* || MPtr || MemHeaderBox )
+
 	template<typename T>
-	void BBufferRWSwitcher<T, std::enable_if_t<!std::is_pointer<T>::value && !IsMPtr<T>::value>>::Write(BBuffer* bb, T const& v)
+	void BBufferRWSwitcher<T, std::enable_if_t< !(std::is_pointer<T>::value && IsMPObject_v<T> || IsMPtr_v<T> || IsMemHeaderBox_v<T>) >>::Write(BBuffer* bb, T const& v)
 	{
 		bb->WritePod(v);
 	}
 	template<typename T>
-	int BBufferRWSwitcher<T, std::enable_if_t<!std::is_pointer<T>::value && !IsMPtr<T>::value>>::Read(BBuffer* bb, T& v)
+	int BBufferRWSwitcher<T, std::enable_if_t< !(std::is_pointer<T>::value && IsMPObject_v<T> || IsMPtr_v<T> || IsMemHeaderBox_v<T>) >>::Read(BBuffer* bb, T& v)
 	{
 		return bb->ReadPod(v);
 	}
+
+	// MPObject* || MPtr
+
 	template<typename T>
-	void BBufferRWSwitcher<T, std::enable_if_t<std::is_pointer<T>::value && std::is_base_of<MPObject, typename std::remove_pointer<T>::type>::value || IsMPtr<T>::value>>::Write(BBuffer* bb, T const& v)
+	void BBufferRWSwitcher<T, std::enable_if_t< std::is_pointer<T>::value && IsMPObject_v<T> || IsMPtr<T>::value >>::Write(BBuffer* bb, T const& v)
 	{
-		bb->WriteObj(v);
+		bb->WritePtr(v);
 	}
 	template<typename T>
-	int BBufferRWSwitcher<T, std::enable_if_t<std::is_pointer<T>::value && std::is_base_of<MPObject, typename std::remove_pointer<T>::type>::value || IsMPtr<T>::value>>::Read(BBuffer* bb, T& v)
+	int BBufferRWSwitcher<T, std::enable_if_t< std::is_pointer<T>::value && IsMPObject_v<T> || IsMPtr<T>::value >>::Read(BBuffer* bb, T& v)
 	{
-		return bb->ReadObj(v);
+		return bb->ReadPtr(v);
 	}
 
+	// MemHeaderBox
+
+	template<typename T>
+	void BBufferRWSwitcher<T, std::enable_if_t< IsMemHeaderBox_v<T> >>::Write(BBuffer* bb, T const& v)
+	{
+		bb->WriteBox(v);
+	}
+	template<typename T>
+	int BBufferRWSwitcher<T, std::enable_if_t< IsMemHeaderBox_v<T> >>::Read(BBuffer* bb, T& v)
+	{
+		return bb->ReadBox(v);
+	}
 
 	/*************************************************************************/
 	// 实现值类型使用类型声明
@@ -388,20 +423,25 @@ namespace xx
 		};
 	};
 
-	// todo: 每个类型的读写接口适与
 
-	BBuffer::BBuffer(BBuffer* bb)
-	{
-		// todo
-	}
 	void BBuffer::ToBBuffer(BBuffer &bb) const
 	{
-		// todo
+		bb.Reserve(bb.dataLen + 5 + this->dataLen);
+		bb.Write(this->dataLen);
+		if (!this->dataLen) return;
+		memcpy(bb.buf + bb.dataLen, this->buf, this->dataLen);
+		bb.dataLen += this->dataLen;
 	}
 
 	int BBuffer::FromBBuffer(BBuffer &bb)
 	{
-		// todo
+		uint32_t len = 0;
+		if (auto rtv = bb.Read(len)) return rtv;
+		if (bb.offset + len > bb.dataLen) return -1;
+		this->Resize(len);
+		if (len == 0) return 0;
+		memcpy(this->buf, bb.buf + bb.offset, len);
+		bb.offset += len;
 		return 0;
 	}
 
@@ -410,52 +450,152 @@ namespace xx
 	template<typename T, uint32_t reservedHeaderLen, typename ENABLE = void>
 	struct ListBBSwitcher
 	{
-		static void ToBBuffer(List<T, reservedHeaderLen>* const& list, BBuffer &bb);
-		static int FromBBuffer(List<T, reservedHeaderLen>* const& list, BBuffer &bb);
-		static void CreateFromBBuffer(List<T, reservedHeaderLen>* const& list, BBuffer &bb);
+		static void ToBBuffer(List<T, reservedHeaderLen> const* list, BBuffer &bb);
+		static int FromBBuffer(List<T, reservedHeaderLen>* list, BBuffer &bb);
+		static void CreateFromBBuffer(List<T, reservedHeaderLen>* list, BBuffer &bb);
 	};
 
 	// 适配 1 字节长度的 数值 或枚举 或 float( 这些类型直接 memcpy )
 	template<typename T, uint32_t reservedHeaderLen>
-	struct ListBBSwitcher<T, reservedHeaderLen, std::enable_if_t< sizeof(T) == 1 || (std::is_floating_point<T>::value && sizeof(T) == 4) >>
+	struct ListBBSwitcher<T, reservedHeaderLen, std::enable_if_t< sizeof(T) == 1 || std::is_same<float, typename std::decay<T>::type>::value >>
 	{
-		static void ToBBuffer(List<T, reservedHeaderLen>* const& list, BBuffer &bb)
+		static void ToBBuffer(List<T, reservedHeaderLen> const* list, BBuffer &bb)
 		{
-			// todo
+			bb.Reserve(bb.dataLen + 5 + list->dataLen);
+			bb.Write(list->dataLen);
+			if (!list->dataLen) return;
+			memcpy(bb.buf + bb.dataLen, list->buf, list->dataLen);
+			bb.dataLen += list->dataLen;
 		}
-		static int FromBBuffer(List<T, reservedHeaderLen>* const& list, BBuffer &bb)
+		static int FromBBuffer(List<T, reservedHeaderLen>* list, BBuffer &bb)
 		{
-			// todo
+			uint32_t len = 0;
+			if (auto rtv = bb.Read(len)) return rtv;
+			if (bb.offset + len > bb.dataLen) return -1;
+			list->Resize(len);
+			if (len == 0) return 0;
+			memcpy(list->buf, bb.buf + bb.offset, len);
+			bb.offset += len;
 			return 0;
 		}
-		static void CreateFromBBuffer(List<T, reservedHeaderLen>* const& list, BBuffer &bb)
+		static void CreateFromBBuffer(List<T, reservedHeaderLen>* list, BBuffer &bb)
 		{
-			// todo
+			uint32_t len = 0;
+			if (auto rtv = bb.ReadPod(len)) throw rtv;
+			if (bb.offset + len * sizeof(T) > bb.dataLen) throw - 1;
+			if (len == 0) return;
+			list->Reserve(len);
+			memcpy(list->buf, bb.buf + bb.offset, len * sizeof(T));
+			bb.offset += len * sizeof(T);
+			list->dataLen = len;
 		}
 	};
 
-	// 适配其他( 只能 foreach 一个个搞 )
+	// 适配非 MPObject* / MPtr ( 只能 foreach 一个个搞, 含 MemHeaderBox )
 	template<typename T, uint32_t reservedHeaderLen>
-	struct ListBBSwitcher<T, reservedHeaderLen, std::enable_if_t< sizeof(T) != 1 && std::is_floating_point<T>::value && sizeof(T) != 4 >>
+	struct ListBBSwitcher<T, reservedHeaderLen, std::enable_if_t< !(sizeof(T) == 1 || std::is_same<float, typename std::decay<T>::type>::value) && !(IsMPtr_v<T> || (std::is_pointer<T>::value && IsMPObject_v<T>)) >>
 	{
-		static void ToBBuffer(List<T, reservedHeaderLen>* const& list, BBuffer &bb)
+		static void ToBBuffer(List<T, reservedHeaderLen> const* list, BBuffer &bb)
 		{
-			// todo
+			bb.Write(list->dataLen);
+			if (!list->dataLen) return;
+			for (uint32_t i = 0; i < list->dataLen; ++i)
+			{
+				bb.Write(list->At(i));
+			}
 		}
-		static int FromBBuffer(List<T, reservedHeaderLen>* const& list, BBuffer &bb)
+		static int FromBBuffer(List<T, reservedHeaderLen>* list, BBuffer &bb)
 		{
-			// todo
+			uint32_t len = 0;
+			if (auto rtv = bb.Read(len)) return rtv;
+			list->Resize(len);
+			if (len == 0) return 0;
+			for (uint32_t i = 0; i < len; ++i)
+			{
+				if (auto rtv = bb.Read(list->At(i)))
+				{
+					list->Resize(i);
+					return rtv;
+				}
+			}
 			return 0;
 		}
-		static void CreateFromBBuffer(List<T, reservedHeaderLen>* const& list, BBuffer &bb)
+		static void CreateFromBBuffer(List<T, reservedHeaderLen>* list, BBuffer &bb)
 		{
-			// todo
+			uint32_t len = 0;
+			if (auto rtv = bb.Read(len)) throw rtv;
+			list->Resize(len);
+			if (len == 0) return;
+			for (uint32_t i = 0; i < len; ++i)
+			{
+				if (auto rtv = bb.Read(list->At(i)))
+				{
+					list->Clear(true);
+					throw rtv;
+				}
+			}
 		}
 	};
 
+	// 适配 MPObject* / MPtr, 反序列化失败后会逐个 Release 已成功创建的 items
+	template<typename T, uint32_t reservedHeaderLen>
+	struct ListBBSwitcher<T, reservedHeaderLen, std::enable_if_t< IsMPtr_v<T> || (std::is_pointer<T>::value && IsMPObject_v<T>) >>
+	{
+		static void ToBBuffer(List<T, reservedHeaderLen> const* list, BBuffer &bb)
+		{
+			bb.Write(list->dataLen);
+			if (!list->dataLen) return;
+			for (uint32_t i = 0; i < list->dataLen; ++i)
+			{
+				bb.Write(list->At(i));
+			}
+		}
+		static int FromBBuffer(List<T, reservedHeaderLen>* list, BBuffer &bb)
+		{
+			uint32_t len = 0;
+			if (auto rtv = bb.Read(len)) return rtv;
+			list->Resize(len);
+			if (len == 0) return 0;
+			for (uint32_t i = 0; i < len; ++i)
+			{
+				if (auto rtv = bb.Read(list->At(i)))
+				{
+					for (uint32_t j = i - 1; j != (uint32)-1; --j)
+					{
+						if (list->At(j)) list->At(j)->Release();
+					}
+					list->Resize(0);
+					return rtv;
+				}
+			}
+			return 0;
+		}
+		static void CreateFromBBuffer(List<T, reservedHeaderLen>* list, BBuffer &bb)
+		{
+			uint32_t len = 0;
+			if (auto rtv = bb.Read(len)) throw rtv;
+			list->Resize(len);
+			if (len == 0) return;
+			for (uint32_t i = 0; i < len; ++i)
+			{
+				if (auto rtv = bb.Read(list->At(i)))
+				{
+					for (uint32_t j = i - 1; j != (uint32)-1; --j)
+					{
+						if (list->At(j)) list->At(j)->Release();
+					}
+					list->Clear(true);
+					throw rtv;
+				}
+			}
+		}
+	};
 
 	template<typename T, uint32_t reservedHeaderLen>
 	List<T, reservedHeaderLen>::List(BBuffer* bb)
+		: buf(nullptr)
+		, bufLen(0)
+		, dataLen(0)
 	{
 		ListBBSwitcher<T, reservedHeaderLen>::CreateFromBBuffer(this, *bb);
 	}
@@ -463,13 +603,13 @@ namespace xx
 	template<typename T, uint32_t reservedHeaderLen>
 	void List<T, reservedHeaderLen>::ToBBuffer(BBuffer &bb) const
 	{
-		ListBBSwitcher<T, reservedHeaderLen>::ToBBuffer(this, *bb);
+		ListBBSwitcher<T, reservedHeaderLen>::ToBBuffer(this, bb);
 	}
 
 	template<typename T, uint32_t reservedHeaderLen>
 	int List<T, reservedHeaderLen>::FromBBuffer(BBuffer &bb)
 	{
-		return ListBBSwitcher<T, reservedHeaderLen>::FromBBuffer(this, *bb);
+		return ListBBSwitcher<T, reservedHeaderLen>::FromBBuffer(this, bb);
 	}
 
 }

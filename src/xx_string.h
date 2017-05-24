@@ -74,7 +74,7 @@ namespace xx
 			str.Reserve(str.dataLen + thisDataLen + 2);
 			str.buf[str.dataLen] = '\"';
 			memcpy(str.buf + str.dataLen + 1, buf, thisDataLen);
-			str.buf[str.dataLen + thisDataLen + 2] = '\"';
+			str.buf[str.dataLen + thisDataLen + 1] = '\"';
 			str.dataLen += thisDataLen + 2;
 		}
 
@@ -101,13 +101,13 @@ namespace xx
 		friend StringAppendSwitcher<true>;
 		friend StringAppendSwitcher<false>;
 
-		void AppendPtr(MPObject* v)
+		void AppendPtr(MPObject const* const& v)
 		{
 			if (v) v->ToString(*this);
 			else Append("null");
 		}
 		template<typename T>
-		void AppendPtr(MPtr<T> v)
+		void AppendPtr(MPtr<T> const& v)
 		{
 			AppendPtr(v.Ensure());
 		}
@@ -303,12 +303,17 @@ namespace xx
 	struct StringAppendSwitcher<true>
 	{
 		template<typename T>
-		static void WriteTo(String& str, std::enable_if_t< IsMPObject<T>::value, T> const& v)
+		static void WriteTo(String& str, std::enable_if_t< IsMPObject_v<T>, T> const& v)
 		{
 			str.AppendPtr(v);
 		}
 		template<typename T>
-		static void WriteTo(String& str, std::enable_if_t<!IsMPObject<T>::value, T> const& v)
+		static void WriteTo(String& str, std::enable_if_t< IsMemHeaderBox_v<T>, T> const& v)
+		{
+			str.AppendPtr(&*v);
+		}
+		template<typename T>
+		static void WriteTo(String& str, std::enable_if_t<!(IsMPObject_v<T> || IsMemHeaderBox_v<T>), T> const& v)
 		{
 			str.Reserve(str.dataLen + StrCalc(v));
 			str.dataLen += StrWriteTo(str.buf + str.dataLen, v);

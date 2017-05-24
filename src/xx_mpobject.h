@@ -100,13 +100,13 @@ namespace xx
 		template<class Tuple, size_t N> struct TupleScaner {
 			static constexpr bool Exec()
 			{
-				return IsMPObject< std::tuple_element_t<N - 1, Tuple> >::value ? true : TupleScaner<Tuple, N - 1>::Exec();
+				return (IsMPObject_v< std::tuple_element_t<N - 1, Tuple> > || IsMemHeaderBox_v< std::tuple_element_t<N - 1, Tuple> >) ? true : TupleScaner<Tuple, N - 1>::Exec();
 			}
 		};
 		template<class Tuple> struct TupleScaner<Tuple, 1> {
 			static constexpr bool Exec()
 			{
-				return IsMPObject< std::tuple_element_t<0, Tuple> >::value;
+				return IsMPObject_v< std::tuple_element_t<0, Tuple> > || IsMemHeaderBox_v< std::tuple_element_t<0, Tuple> >;
 			}
 		};
 		static constexpr bool value = TupleScaner<std::tuple<Types...>, sizeof...(Types)>::Exec();

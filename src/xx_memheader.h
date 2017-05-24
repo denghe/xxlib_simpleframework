@@ -122,4 +122,12 @@ namespace xx
 	template<typename T>
 	constexpr bool IsMemHeaderBox_v = IsMemHeaderBox<T>::value;
 
+
+	// 标记在容器中可 memmove
+
+	template<typename T>
+	struct MemmoveSupport<MemHeaderBox<T>>
+	{
+		static const bool value = MemmoveSupport_v<T>;
+	};
 }

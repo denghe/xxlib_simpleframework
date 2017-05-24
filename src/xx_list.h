@@ -75,6 +75,20 @@ namespace xx
 			bufLen = uint32_t(newBufByteLen / sizeof(T)) - reservedHeaderLen;
 		}
 
+	private:
+		template<typename U = T, typename...Args>
+		void PlacementNew(std::enable_if_t< IsMemHeaderBox_v<U> > *p, Args &&... args)
+		{
+			new (p) U(mempool(), std::forward<Args>(args)...);
+		}
+		template<typename U = T, typename...Args>
+		void PlacementNew(std::enable_if_t< !IsMemHeaderBox_v<U> > *p, Args &&... args)
+		{
+			new (p) U(std::forward<Args>(args)...);
+		}
+
+	public:
+
 		// 返回扩容前的长度
 		uint32_t Resize(uint32_t const& len)
 		{
@@ -93,7 +107,7 @@ namespace xx
 				{
 					for (uint32_t i = dataLen; i < len; ++i)
 					{
-						new (buf + i) T();
+						PlacementNew(buf + i);		//new (buf + i) T();
 					}
 				}
 			}
@@ -249,6 +263,7 @@ namespace xx
 		{
 			Reserve(dataLen + 1);
 			auto& p = buf[dataLen++];
+			/*PlacementNew(&p, std::forward<Args>(args)...);	*/
 			new (&p) T(std::forward<Args>(args)...);
 			return p;
 		}
@@ -285,6 +300,7 @@ namespace xx
 			}
 			else idx = dataLen;
 			++dataLen;
+			/*PlacementNew(buf + idx, std::forward<Args>(args)...);*/
 			new (buf + idx) T(std::forward<Args>(args)...);
 			return buf[idx];
 		}
@@ -412,6 +428,7 @@ namespace xx
 	template<typename T, uint32_t reservedHeaderLen = 0>
 	using List_v = MemHeaderBox<List<T, reservedHeaderLen>>;
 
+	// 标记在容器中可 memmove
 
 	template<typename T, uint32_t reservedHeaderLen>
 	struct MemmoveSupport<MemHeaderBox<List<T, reservedHeaderLen>>>
