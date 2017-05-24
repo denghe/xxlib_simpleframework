@@ -121,16 +121,17 @@ namespace xx
 			idxStore->Clear();
 		}
 
+		// Ò»¼üË¬ write
 		template<typename T>
-		void WriteRootPtr(T const& v)
+		void WriteRoot(T const& v)
 		{
 			BeginWrite();
 			Write(v);
 			EndWrite();
 		}
-
+		// Ò»¼üË¬ read
 		template<typename T>
-		int ReadRootPtr(T &v)
+		int ReadRoot(T &v)
 		{
 			BeginRead();
 			auto rtv = Read(v);
@@ -187,7 +188,7 @@ namespace xx
 				assert(f);
 
 				// try create & read from bb
-				v = f(mempool(), this, ptr_offset);
+				v = (T*)f(&mempool(), this, ptr_offset);
 				if (v == nullptr) return -3;
 			}
 			else
@@ -560,7 +561,7 @@ namespace xx
 			{
 				if (auto rtv = bb.Read(list->At(i)))
 				{
-					for (uint32_t j = i - 1; j != (uint32)-1; --j)
+					for (uint32_t j = i - 1; j != (uint32_t)-1; --j)
 					{
 						if (list->At(j)) list->At(j)->Release();
 					}
