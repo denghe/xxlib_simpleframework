@@ -77,7 +77,7 @@ namespace xx
 		/*************************************************************************/
 
 		template<typename ...TS>
-		void WritePod(TS const& ...vs)
+		void WritePods(TS const& ...vs)
 		{
 			this->Reserve(this->dataLen + BBCalc(vs...));
 			this->dataLen += BBWriteTo(this->buf + this->dataLen, vs...);
@@ -85,12 +85,12 @@ namespace xx
 		}
 
 		template<typename T, typename ...TS>
-		int ReadPod(T &v, TS&...vs)
+		int ReadPods(T &v, TS&...vs)
 		{
 			return BBReadFrom(this->buf, this->dataLen, this->offset, v, vs...);
 		}
 
-		int ReadPod() { return 0; }
+		int ReadPods() { return 0; }
 
 
 		/*************************************************************************/
@@ -145,13 +145,13 @@ namespace xx
 			assert(ptrStore);
 			if (!v)
 			{
-				WritePod((uint8_t)0);
+				WritePods((uint8_t)0);
 				return;
 			}
-			WritePod(v->typeId());
+			WritePods(v->typeId());
 
 			auto rtv = ptrStore->Add((void*)v, dataLen);
-			WritePod(ptrStore->ValueAt(rtv.index));
+			WritePods(ptrStore->ValueAt(rtv.index));
 			if (rtv.success)
 			{
 				v->ToBBuffer(*this);
@@ -164,7 +164,7 @@ namespace xx
 
 			// get typeid
 			uint16_t tid;
-			if (auto rtv = ReadPod(tid)) return rtv;
+			if (auto rtv = ReadPods(tid)) return rtv;
 
 			// isnull ?
 			if (tid == 0)
@@ -175,7 +175,7 @@ namespace xx
 
 			// get offset
 			uint32_t ptr_offset = 0, bb_offset_bak = offset;
-			if (auto rtv = ReadPod(ptr_offset)) return rtv;
+			if (auto rtv = ReadPods(ptr_offset)) return rtv;
 
 			// fill or ref
 			if (ptr_offset == bb_offset_bak)
@@ -333,12 +333,12 @@ namespace xx
 	template<typename T>
 	void BBufferRWSwitcher<T, std::enable_if_t< !(std::is_pointer<T>::value && IsMPObject_v<T> || IsMPtr_v<T> || IsMemHeaderBox_v<T>) >>::Write(BBuffer* bb, T const& v)
 	{
-		bb->WritePod(v);
+		bb->WritePods(v);
 	}
 	template<typename T>
 	int BBufferRWSwitcher<T, std::enable_if_t< !(std::is_pointer<T>::value && IsMPObject_v<T> || IsMPtr_v<T> || IsMemHeaderBox_v<T>) >>::Read(BBuffer* bb, T& v)
 	{
-		return bb->ReadPod(v);
+		return bb->ReadPods(v);
 	}
 
 	// MPObject* || MPtr
@@ -482,7 +482,7 @@ namespace xx
 		static void CreateFromBBuffer(List<T, reservedHeaderLen>* list, BBuffer &bb)
 		{
 			uint32_t len = 0;
-			if (auto rtv = bb.ReadPod(len)) throw rtv;
+			if (auto rtv = bb.ReadPods(len)) throw rtv;
 			if (bb.offset + len * sizeof(T) > bb.dataLen) throw - 1;
 			if (len == 0) return;
 			list->Reserve(len);

@@ -194,6 +194,7 @@
     <ClInclude Include="..\..\src\xx_mpobject.h" />
     <ClInclude Include="..\..\src\xx_mptr.h" />
     <ClInclude Include="..\..\src\xx_string.h" />
+    <ClInclude Include="PKG_class.h" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="..\..\src\xx.natvis" />

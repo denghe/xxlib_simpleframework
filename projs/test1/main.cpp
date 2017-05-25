@@ -1,6 +1,7 @@
 ﻿#include <xx_mempool.h>
 #include <xx_bbuffer.h>
 #include <iostream>
+#include "PKG_class.h"
 
 // todo: 改造序列化相关
 // todo: 移除 autoRelease 的设计, 考虑增加对 Xxxxx_v 的进一步支持, 比如用于容器 item 时, call 默认构造函数传 mempool()
