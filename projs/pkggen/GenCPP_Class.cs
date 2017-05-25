@@ -232,6 +232,7 @@ namespace " + c.Namespace + @"
             bb.Read(this->" + f.Name + ");");
             }
             sb.Append(@"
+            return 0;
         }
 ");
 
@@ -281,7 +282,7 @@ namespace xx
         foreach (var kv in types)
         {
             var ct = kv.Key;
-            var ctn = ct._GetTypeDecl_Cpp(templateName);
+            var ctn = ct._GetTypeDecl_Cpp(templateName).CutLast();
             typeId = kv.Value;
 
             sb.Append(@"

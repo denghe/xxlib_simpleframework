@@ -31,6 +31,7 @@ namespace PKG
 
         inline virtual int FromBBuffer(xx::BBuffer &bb) override
         {
+            return 0;
         }
 
     };
@@ -63,6 +64,7 @@ namespace PKG
         {
             this->BaseType::FromBBuffer(bb);
             bb.Read(this->f6);
+            return 0;
         }
 
     };
@@ -97,6 +99,7 @@ namespace PKG
         {
             this->BaseType::FromBBuffer(bb);
             bb.Read(this->f10);
+            return 0;
         }
 
     };
@@ -122,6 +125,7 @@ namespace PKG
 
         inline virtual int FromBBuffer(xx::BBuffer &bb) override
         {
+            return 0;
         }
 
     };
@@ -231,23 +235,24 @@ namespace PKG
             bb.Read(this->f17);
             bb.Read(this->f18);
             bb.Read(this->f19);
+            return 0;
         }
 
     };
 }
 namespace xx
 {
-	template<> struct TypeId<PKG::Bar*> { static const uint16_t value = 2; };
-	template<> struct TypeId<PKG::Bar1*> { static const uint16_t value = 3; };
-	template<> struct TypeId<PKG::Bar2*> { static const uint16_t value = 4; };
-	template<> struct TypeId<PKG::FooBase*> { static const uint16_t value = 5; };
-	template<> struct TypeId<PKG::Foo*> { static const uint16_t value = 6; };
-	template<> struct TypeId<xx::List<PKG::E>*> { static const uint16_t value = 7; };
-	template<> struct TypeId<xx::List<PKG::Bar*>*> { static const uint16_t value = 8; };
-	template<> struct TypeId<xx::List<xx::List<PKG::E>*>*> { static const uint16_t value = 9; };
-	template<> struct TypeId<xx::List<xx::List<PKG::Bar*>*>*> { static const uint16_t value = 10; };
-	template<> struct TypeId<xx::List<xx::List<xx::List<PKG::E>*>*>*> { static const uint16_t value = 11; };
-	template<> struct TypeId<xx::List<xx::List<xx::List<PKG::Bar*>*>*>*> { static const uint16_t value = 12; };
+	template<> struct TypeId<PKG::Bar> { static const uint16_t value = 2; };
+	template<> struct TypeId<PKG::Bar1> { static const uint16_t value = 3; };
+	template<> struct TypeId<PKG::Bar2> { static const uint16_t value = 4; };
+	template<> struct TypeId<PKG::FooBase> { static const uint16_t value = 5; };
+	template<> struct TypeId<PKG::Foo> { static const uint16_t value = 6; };
+	template<> struct TypeId<xx::List<PKG::E>> { static const uint16_t value = 7; };
+	template<> struct TypeId<xx::List<PKG::Bar*>> { static const uint16_t value = 8; };
+	template<> struct TypeId<xx::List<xx::List<PKG::E>*>> { static const uint16_t value = 9; };
+	template<> struct TypeId<xx::List<xx::List<PKG::Bar*>*>> { static const uint16_t value = 10; };
+	template<> struct TypeId<xx::List<xx::List<xx::List<PKG::E>*>*>> { static const uint16_t value = 11; };
+	template<> struct TypeId<xx::List<xx::List<xx::List<PKG::Bar*>*>*>> { static const uint16_t value = 12; };
 }
 namespace PKG
 {
