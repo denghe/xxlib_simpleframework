@@ -38,7 +38,7 @@ namespace PKG
     struct Bar1 : PKG::Bar
     {
         typedef PKG::Bar BaseType;
-        int32_t f6;
+        int32_t f6 = 0;
 
 	    Bar1()
             : BaseType()
@@ -71,7 +71,7 @@ namespace PKG
     struct Bar2 : PKG::Bar
     {
         typedef PKG::Bar BaseType;
-        xx::String* f10;
+        xx::String* f10 = nullptr;
 
 	    Bar2()
             : BaseType()
@@ -132,24 +132,24 @@ namespace PKG
     struct Foo : PKG::FooBase
     {
         typedef PKG::FooBase BaseType;
-        uint8_t f1;
-        int8_t f2;
-        uint16_t f3;
-        int16_t f4;
-        uint32_t f5;
-        int32_t f6;
-        uint64_t f7;
-        int64_t f8;
-        xx::String* f10;
-        xx::BBuffer* f11;
-        PKG::E f12;
-        xx::List<PKG::E>* f13;
-        xx::List<PKG::Bar*>* f14;
-        xx::List<xx::List<PKG::E>*>* f15;
-        xx::List<xx::List<PKG::Bar*>*>* f16;
-        xx::List<xx::List<xx::List<PKG::E>*>*>* f17;
-        xx::List<xx::List<xx::List<PKG::Bar*>*>*>* f18;
-        PKG::FooBase* f19;
+        uint8_t f1 = 0;
+        int8_t f2 = 0;
+        uint16_t f3 = 0;
+        int16_t f4 = 0;
+        uint32_t f5 = 0;
+        int32_t f6 = 0;
+        uint64_t f7 = 0;
+        int64_t f8 = 0;
+        xx::String* f10 = nullptr;
+        xx::BBuffer* f11 = nullptr;
+        PKG::E f12 = (PKG::E)0;
+        xx::List<PKG::E>* f13 = nullptr;
+        xx::List<PKG::Bar*>* f14 = nullptr;
+        xx::List<xx::List<PKG::E>*>* f15 = nullptr;
+        xx::List<xx::List<PKG::Bar*>*>* f16 = nullptr;
+        xx::List<xx::List<xx::List<PKG::E>*>*>* f17 = nullptr;
+        xx::List<xx::List<xx::List<PKG::Bar*>*>*>* f18 = nullptr;
+        PKG::FooBase* f19 = nullptr;
 
 	    Foo()
             : BaseType()

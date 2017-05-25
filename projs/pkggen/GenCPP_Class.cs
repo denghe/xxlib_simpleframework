@@ -81,7 +81,7 @@ namespace " + c.Namespace + @"
 
             // 定位到基类
             var bt = c.BaseType;
-            var btn = c._HasBaseType() ? bt._GetTypeDecl_Cpp(templateName).CutLast() : "xx::MPObject";      // todo: C++ 版
+            var btn = c._HasBaseType() ? bt._GetTypeDecl_Cpp(templateName).CutLast() : "xx::MPObject";
 
             // desc
             // public T xxxxxxxxx = defaultValue
@@ -97,12 +97,12 @@ namespace " + c.Namespace + @"
             foreach (var f in fs)
             {
                 var ft = f.FieldType;
-                var ftn = ft._GetTypeDecl_Cpp(templateName);      // todo: C++ 版
+                var ftn = ft._GetTypeDecl_Cpp(templateName);
                 sb.Append(f._GetDesc(8) + @"
         " + (f.IsStatic ? "static const " : "") + ftn + " " + f.Name);  // todo: 生成函数包装
 
                 var v = f.GetValue(f.IsStatic ? null : o);
-                var dv = v._GetCSharpDefaultValueDecl();    // todo: C++ 版
+                var dv = v._GetDefaultValueDecl_Cpp(templateName);
                 if (dv != "")
                 {
                     sb.Append(" = " + dv + ";");
@@ -299,7 +299,7 @@ namespace " + templateName + @"
             var ct = kv.Key;
             var ctn = ct._GetTypeDecl_Cpp(templateName).CutLast();
             var bt = ct.BaseType;
-            var btn = ct._HasBaseType() ? bt._GetTypeDecl_Cpp(templateName).CutLast() : "xx::MPObject";      // todo: C++ 版
+            var btn = ct._HasBaseType() ? bt._GetTypeDecl_Cpp(templateName).CutLast() : "xx::MPObject";
 
             sb.Append(@"
 	    xx::MemPool::Register<" + ctn + @", " + btn + @">();");
