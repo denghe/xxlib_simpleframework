@@ -581,7 +581,7 @@ namespace xx
 			{
 				if (auto rtv = bb.Read(list->At(i)))
 				{
-					for (uint32_t j = i - 1; j != (uint32)-1; --j)
+					for (uint32_t j = i - 1; j != (uint32_t)-1; --j)
 					{
 						if (list->At(j)) list->At(j)->Release();
 					}

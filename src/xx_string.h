@@ -104,7 +104,7 @@ namespace xx
 		void AppendPtr(MPObject const* const& v)
 		{
 			if (v) v->ToString(*this);
-			else Append("null");
+			else Append("nil");
 		}
 		template<typename T>
 		void AppendPtr(MPtr<T> const& v)
@@ -347,13 +347,29 @@ namespace xx
 
 	inline void MPObject::ToString(String &str) const
 	{
-		str.Append("{ \"tn\" : \"MPObject\", \"tid\" : ", typeId(), ", \"refs\" : ", refCount(),", \"ver\" : ", pureVersionNumber(), " }");
+		if (tsFlags())
+		{
+			str.Append("{ ... }");
+			return;
+		}
+		else tsFlags() = 1;
+
+		str.Append("{ \"tn\" : \"MPObject\" }");
+
+		tsFlags() = 0;
 	}
 
 	
 	template<typename T, uint32_t reservedHeaderLen>
 	void List<T, reservedHeaderLen>::ToString(String &str) const
 	{
+		if (tsFlags())
+		{
+			str.Append("{ ... }");
+			return;
+		}
+		else tsFlags() = 1;
+
 		str.Append("{ \"tn\" : \"List\", \"items\" : [ ");
 		for (size_t i = 0; i < dataLen; i++)
 		{
@@ -361,12 +377,21 @@ namespace xx
 		}
 		if (dataLen) str.dataLen -= 2;
 		str.Append(" ] }");
+
+		tsFlags() = 0;
 	}
 	
 	
 	template <typename T, bool autoRelease>
 	void Links<T, autoRelease>::ToString(String &str) const
 	{
+		if (tsFlags())
+		{
+			str.Append("{ ... }");
+			return;
+		}
+		else tsFlags() = 1;
+
 		str.Append("{ \"tn\" : \"Links\", \"nodes\" : [ ");
 		for (int i = header; i != -1; i = nodes[i].next)
 		{
@@ -374,6 +399,8 @@ namespace xx
 		}
 		if (Count()) str.dataLen -= 2;
 		str.Append(" ] }");
+
+		tsFlags() = 0;
 	}
 
 

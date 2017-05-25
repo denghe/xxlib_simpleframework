@@ -175,6 +175,15 @@ namespace xx
 			h->versionNumber = 0;												// 清空版本号
 		}
 
+		// 释放由 Create 创建的类之 safe 版( 会清 0 )
+		template<typename T>
+		inline void SafeRelease(T* &p) noexcept
+		{
+			Release(p);
+			p = nullptr;
+		}
+
+
 		/***********************************************************************************/
 		// helpers
 		/***********************************************************************************/
@@ -184,6 +193,8 @@ namespace xx
 		{
 			return Create<T>(std::forward<Args>(args)...);
 		}
+
+		// 适合构造函数中创建成员
 
 		template<typename T, typename ...Args>
 		bool CreateTo(T*& outPtr, Args &&... args)
@@ -197,9 +208,6 @@ namespace xx
 			outPtr = CreateMPtr<T>(std::forward<Args>(args)...);
 			return outPtr.pointer != nullptr;
 		}
-
-
-
 
 
 

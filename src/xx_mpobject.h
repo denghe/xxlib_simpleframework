@@ -19,8 +19,13 @@ namespace xx
 		}
 
 		/*
-		if (!tsFlags()) return; else tsFlags() = 1;
-		// str.append( .......... )........
+		if (tsFlags())
+		{
+			str.Append("{ ... }");
+			return;
+		}
+		else tsFlags() = 1;
+		str.Append("{ \"field\" : ", field, " }");
 		tsFlags() = 0;
 		*/
 		virtual void ToString(String &str) const;
@@ -63,7 +68,7 @@ namespace xx
 		inline uint16_t const& typeId() const { return memHeader().typeId; }
 
 		inline uint16_t& tsFlags() { return memHeader().tsFlags; }
-		inline uint16_t const& tsFlags() const { return memHeader().tsFlags; }
+		inline uint16_t& tsFlags() const { return memHeader().tsFlags; }
 
 		inline MemPool& mempool() const { return *(memHeader().mempool); }
 		inline MemPool& mempool() { return *(memHeader().mempool); }

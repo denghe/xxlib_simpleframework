@@ -7,41 +7,59 @@
 
 struct Foo : xx::MPObject
 {
-	xx::List_v<Foo*> childs;
+	xx::List<Foo*>* childs = nullptr;
 
-	Foo() 
-		: childs(mempool()) 
+#pragma region ctor interfaces
+	Foo()
 	{
+		mempool().CreateTo(childs);
 	}
-
 	Foo(xx::BBuffer *bb)
-		: childs(mempool())
 	{
 		if (auto rtv = bb->Read(childs)) throw rtv;
+	}
+	~Foo()
+	{
+		mempool().SafeRelease(childs);
+	}
+
+	inline virtual void ToString(xx::String &str) const override
+	{
+		if (tsFlags())
+		{
+			str.Append("{ ... }");
+			return;
+		}
+		else tsFlags() = 1;
+
+		str.Append("{ \"childs\" : ", childs, " }");
+
+		tsFlags() = 0;
 	}
 
 	inline virtual void ToBBuffer(xx::BBuffer &bb) const override
 	{
+		//this->BaseType::ToBBuffer(bb);
 		bb.Write(childs);
 	};
 
 	inline virtual int FromBBuffer(xx::BBuffer &bb) override
 	{
 		//if (auto rtv = this->BaseType::FromBBuffer(bb)) return rtv;
-		return bb.Read(childs);
+		if (auto rtv = bb.Read(childs)) return rtv;
+		return 0;
 	};
+#pragma endregion
 };
 
 namespace xx
 {
-	template<> struct TypeId<BBuffer> { static const uint16_t value = 2; };
-	template<> struct TypeId<List<int>> { static const uint16_t value = 3; };
-	template<> struct TypeId<::Foo> { static const uint16_t value = 4; };
+	template<> struct TypeId<::Foo> { static const uint16_t value = 2; };
+	template<> struct TypeId<List<Foo*>> { static const uint16_t value = 3; };
 	inline void RegisterTypes()
 	{
-		xx::MemPool::Register<xx::BBuffer, xx::MPObject>();
-		xx::MemPool::Register<xx::List<int>, xx::MPObject>();
 		xx::MemPool::Register<::Foo, xx::MPObject>();
+		xx::MemPool::Register<xx::List<::Foo*>, xx::MPObject>();
 	}
 }
 
@@ -57,16 +75,20 @@ int main()
 {
 	xx::RegisterTypes();
 	xx::MemPool mp;
-	xx::BBuffer_v bb(mp);
-	auto foo = mp.Create<Foo>();
-	foo->childs->Add(foo);
-	bb->WriteRoot(foo);
-	Dump(bb);
-	Foo* foo2;
-	auto rtv = bb->ReadRoot(foo2);
-	assert(!rtv);
-	std::cout << (size_t)foo2 << std::endl;
-	std::cout << (size_t)foo2->childs->At(0) << std::endl;
+	{
+		xx::BBuffer_v bb(mp);
+		auto foo = mp.Create<Foo>();
+		foo->childs->Add(foo);
+		Dump(foo);
+		bb->WriteRoot(foo);
+		Dump(bb);
+		Foo* foo2;
+		auto rtv = bb->ReadRoot(foo2);
+		assert(!rtv);
+		Dump(foo2);
+		mp.Release(foo);
+		mp.Release(foo2);
+	}
 	return 0;
 }
 
