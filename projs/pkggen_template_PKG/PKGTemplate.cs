@@ -1,49 +1,42 @@
 ﻿#pragma warning disable 0169, 0414
 using TemplateLibrary;
 
-enum E : byte
+enum Color
 {
-    A, B, C
+    Red, Blue
 }
-class Bar
+
+struct Pos
+{
+    float x, y;
+}
+
+class SceneObj
+{
+    [Desc("所在场景")]
+    Scene scene;
+}
+
+class Monster : SceneObj
+{
+    [Desc("位于 scene monster 容器中的下标 for 交换快删")]
+    int scene_monsters_index;
+    [CreateInstance]
+    string name;
+    Color color;
+    Pos pos;
+}
+
+class Deamon : Monster
 {
 }
 
-class Bar1 : Bar
-{
-    int f6;
-}
-
-class Bar2 : Bar
-{
-    string f10;
-}
-
-class FooBase
+class Butcher : Monster
 {
 }
 
-class Foo : FooBase
+class Scene
 {
-    byte f1;
-    sbyte f2;
-    ushort f3;
-    short f4;
-    uint f5;
-    int f6;
-    ulong f7;
-    long f8;
-    //DateTime f9;
-    string f10;
-    [CreateDefaultInstance]
-    BBuffer f11;
-    E f12;
-    [CreateDefaultInstance]
-    List<E> f13;
-    List<Bar> f14;
-    List<List<E>> f15;
-    List<List<Bar>> f16;
-    List<List<List<E>>> f17;
-    List<List<List<Bar>>> f18;
-    FooBase f19;
+    [CreateInstance]
+    List<Monster> monsters;
 }

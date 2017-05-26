@@ -3,52 +3,81 @@
 
 namespace PKG
 {
-    enum class E : uint8_t
+    struct Pos;
+    struct SceneObj;
+    struct Monster;
+    struct Deamon;
+    struct Butcher;
+    struct Scene;
+    enum class Color : int32_t
     {
-        A = 0,
-        B = 1,
-        C = 2,
+        Red = 0,
+        Blue = 1,
     };
-    struct Bar : xx::MPObject
+    struct Pos
+    {
+        float x;
+        float y;
+    };
+    struct SceneObj : xx::MPObject
     {
         typedef xx::MPObject BaseType;
+        /// <summary>
+        /// 所在场景
+        /// </summary>
+        PKG::Scene* scene = nullptr;
+#pragma region ctor, interface impls
 
-	    Bar()
+	    SceneObj()
 	    {
 	    }
-	    Bar(xx::BBuffer *bb)
+	    SceneObj(xx::BBuffer *bb)
 	    {
+            if (auto rtv = bb->Read(scene)) throw rtv;
 	    }
-	    ~Bar()
+	    ~SceneObj()
 	    {
+            mempool().SafeRelease(scene);
 	    }
 
         // todo: inline virtual void ToString(xx::String &str) const override
 
         inline virtual void ToBBuffer(xx::BBuffer &bb) const override
         {
+            bb.Write(this->scene);
         }
 
         inline virtual int FromBBuffer(xx::BBuffer &bb) override
         {
+            bb.Read(this->scene);
             return 0;
         }
 
+#pragma endregion
     };
-    struct Bar1 : PKG::Bar
+    struct Monster : PKG::SceneObj
     {
-        typedef PKG::Bar BaseType;
-        int32_t f6 = 0;
+        typedef PKG::SceneObj BaseType;
+        /// <summary>
+        /// 位于 scene monster 容器中的下标 for 交换快删
+        /// </summary>
+        int32_t scene_monsters_index;
+        xx::String* name = nullptr;
+        PKG::Color color = (PKG::Color)0;
+        PKG::Pos pos;
+#pragma region ctor, interface impls
 
-	    Bar1()
+	    Monster()
             : BaseType()
 	    {
+            mempool().CreateTo(name);
 	    }
-	    Bar1(xx::BBuffer *bb)
+	    Monster(xx::BBuffer *bb)
             : BaseType(bb)
 	    {
+            if (auto rtv = bb->Read(name)) throw rtv;
 	    }
-	    ~Bar1()
+	    ~Monster()
 	    {
 	    }
 
@@ -57,32 +86,38 @@ namespace PKG
         inline virtual void ToBBuffer(xx::BBuffer &bb) const override
         {
             this->BaseType::ToBBuffer(bb);
-            bb.Write(this->f6);
+            bb.Write(this->scene_monsters_index);
+            bb.Write(this->name);
+            bb.Write(this->color);
+            bb.Write(this->pos);
         }
 
         inline virtual int FromBBuffer(xx::BBuffer &bb) override
         {
             this->BaseType::FromBBuffer(bb);
-            bb.Read(this->f6);
+            bb.Read(this->scene_monsters_index);
+            bb.Read(this->name);
+            bb.Read(this->color);
+            bb.Read(this->pos);
             return 0;
         }
 
+#pragma endregion
     };
-    struct Bar2 : PKG::Bar
+    struct Deamon : PKG::Monster
     {
-        typedef PKG::Bar BaseType;
-        xx::String* f10 = nullptr;
+        typedef PKG::Monster BaseType;
+#pragma region ctor, interface impls
 
-	    Bar2()
+	    Deamon()
             : BaseType()
 	    {
 	    }
-	    Bar2(xx::BBuffer *bb)
+	    Deamon(xx::BBuffer *bb)
             : BaseType(bb)
 	    {
-            if (auto rtv = bb->Read(f10)) throw rtv;
 	    }
-	    ~Bar2()
+	    ~Deamon()
 	    {
 	    }
 
@@ -91,175 +126,115 @@ namespace PKG
         inline virtual void ToBBuffer(xx::BBuffer &bb) const override
         {
             this->BaseType::ToBBuffer(bb);
-            bb.Write(this->f10);
         }
 
         inline virtual int FromBBuffer(xx::BBuffer &bb) override
         {
             this->BaseType::FromBBuffer(bb);
-            bb.Read(this->f10);
             return 0;
         }
 
+#pragma endregion
     };
-    struct FooBase : xx::MPObject
+    struct Butcher : PKG::Monster
+    {
+        typedef PKG::Monster BaseType;
+#pragma region ctor, interface impls
+
+	    Butcher()
+            : BaseType()
+	    {
+	    }
+	    Butcher(xx::BBuffer *bb)
+            : BaseType(bb)
+	    {
+	    }
+	    ~Butcher()
+	    {
+	    }
+
+        // todo: inline virtual void ToString(xx::String &str) const override
+
+        inline virtual void ToBBuffer(xx::BBuffer &bb) const override
+        {
+            this->BaseType::ToBBuffer(bb);
+        }
+
+        inline virtual int FromBBuffer(xx::BBuffer &bb) override
+        {
+            this->BaseType::FromBBuffer(bb);
+            return 0;
+        }
+
+#pragma endregion
+    };
+    struct Scene : xx::MPObject
     {
         typedef xx::MPObject BaseType;
+        xx::List<PKG::Monster*>* monsters = nullptr;
+#pragma region ctor, interface impls
 
-	    FooBase()
+	    Scene()
 	    {
+            mempool().CreateTo(monsters);
 	    }
-	    FooBase(xx::BBuffer *bb)
+	    Scene(xx::BBuffer *bb)
 	    {
+            if (auto rtv = bb->Read(monsters)) throw rtv;
 	    }
-	    ~FooBase()
+	    ~Scene()
 	    {
-	    }
-
-        // todo: inline virtual void ToString(xx::String &str) const override
-
-        inline virtual void ToBBuffer(xx::BBuffer &bb) const override
-        {
-        }
-
-        inline virtual int FromBBuffer(xx::BBuffer &bb) override
-        {
-            return 0;
-        }
-
-    };
-    struct Foo : PKG::FooBase
-    {
-        typedef PKG::FooBase BaseType;
-        uint8_t f1 = 0;
-        int8_t f2 = 0;
-        uint16_t f3 = 0;
-        int16_t f4 = 0;
-        uint32_t f5 = 0;
-        int32_t f6 = 0;
-        uint64_t f7 = 0;
-        int64_t f8 = 0;
-        xx::String* f10 = nullptr;
-        xx::BBuffer* f11 = nullptr;
-        PKG::E f12 = (PKG::E)0;
-        xx::List<PKG::E>* f13 = nullptr;
-        xx::List<PKG::Bar*>* f14 = nullptr;
-        xx::List<xx::List<PKG::E>*>* f15 = nullptr;
-        xx::List<xx::List<PKG::Bar*>*>* f16 = nullptr;
-        xx::List<xx::List<xx::List<PKG::E>*>*>* f17 = nullptr;
-        xx::List<xx::List<xx::List<PKG::Bar*>*>*>* f18 = nullptr;
-        PKG::FooBase* f19 = nullptr;
-
-	    Foo()
-            : BaseType()
-	    {
-            mempool().CreateTo(f11);
-            mempool().CreateTo(f13);
-	    }
-	    Foo(xx::BBuffer *bb)
-            : BaseType(bb)
-	    {
-            if (auto rtv = bb->Read(f10)) throw rtv;
-            if (auto rtv = bb->Read(f11)) throw rtv;
-            if (auto rtv = bb->Read(f13)) throw rtv;
-            if (auto rtv = bb->Read(f14)) throw rtv;
-            if (auto rtv = bb->Read(f15)) throw rtv;
-            if (auto rtv = bb->Read(f16)) throw rtv;
-            if (auto rtv = bb->Read(f17)) throw rtv;
-            if (auto rtv = bb->Read(f18)) throw rtv;
-            if (auto rtv = bb->Read(f19)) throw rtv;
-	    }
-	    ~Foo()
-	    {
-            mempool().SafeRelease(f11);
-            mempool().SafeRelease(f13);
-            mempool().SafeRelease(f14);
-            mempool().SafeRelease(f15);
-            mempool().SafeRelease(f16);
-            mempool().SafeRelease(f17);
-            mempool().SafeRelease(f18);
-            mempool().SafeRelease(f19);
+            mempool().SafeRelease(monsters);
 	    }
 
         // todo: inline virtual void ToString(xx::String &str) const override
 
         inline virtual void ToBBuffer(xx::BBuffer &bb) const override
         {
-            this->BaseType::ToBBuffer(bb);
-            bb.Write(this->f1);
-            bb.Write(this->f2);
-            bb.Write(this->f3);
-            bb.Write(this->f4);
-            bb.Write(this->f5);
-            bb.Write(this->f6);
-            bb.Write(this->f7);
-            bb.Write(this->f8);
-            bb.Write(this->f10);
-            bb.Write(this->f11);
-            bb.Write(this->f12);
-            bb.Write(this->f13);
-            bb.Write(this->f14);
-            bb.Write(this->f15);
-            bb.Write(this->f16);
-            bb.Write(this->f17);
-            bb.Write(this->f18);
-            bb.Write(this->f19);
+            bb.Write(this->monsters);
         }
 
         inline virtual int FromBBuffer(xx::BBuffer &bb) override
         {
-            this->BaseType::FromBBuffer(bb);
-            bb.Read(this->f1);
-            bb.Read(this->f2);
-            bb.Read(this->f3);
-            bb.Read(this->f4);
-            bb.Read(this->f5);
-            bb.Read(this->f6);
-            bb.Read(this->f7);
-            bb.Read(this->f8);
-            bb.Read(this->f10);
-            bb.Read(this->f11);
-            bb.Read(this->f12);
-            bb.Read(this->f13);
-            bb.Read(this->f14);
-            bb.Read(this->f15);
-            bb.Read(this->f16);
-            bb.Read(this->f17);
-            bb.Read(this->f18);
-            bb.Read(this->f19);
+            bb.Read(this->monsters);
             return 0;
         }
 
+#pragma endregion
     };
 }
 namespace xx
 {
-	template<> struct TypeId<PKG::Bar> { static const uint16_t value = 2; };
-	template<> struct TypeId<PKG::Bar1> { static const uint16_t value = 3; };
-	template<> struct TypeId<PKG::Bar2> { static const uint16_t value = 4; };
-	template<> struct TypeId<PKG::FooBase> { static const uint16_t value = 5; };
-	template<> struct TypeId<PKG::Foo> { static const uint16_t value = 6; };
-	template<> struct TypeId<xx::List<PKG::E>> { static const uint16_t value = 7; };
-	template<> struct TypeId<xx::List<PKG::Bar*>> { static const uint16_t value = 8; };
-	template<> struct TypeId<xx::List<xx::List<PKG::E>*>> { static const uint16_t value = 9; };
-	template<> struct TypeId<xx::List<xx::List<PKG::Bar*>*>> { static const uint16_t value = 10; };
-	template<> struct TypeId<xx::List<xx::List<xx::List<PKG::E>*>*>> { static const uint16_t value = 11; };
-	template<> struct TypeId<xx::List<xx::List<xx::List<PKG::Bar*>*>*>> { static const uint16_t value = 12; };
+	template<>
+	struct BytesFunc<PKG::Pos, void>
+	{
+		static inline uint32_t Calc(PKG::Pos const &in)
+		{
+			return BBCalc(in.x, in.y);
+		}
+		static inline uint32_t WriteTo(char *dstBuf, PKG::Pos const &in)
+		{
+			return BBWriteTo(dstBuf, in.x, in.y);
+		}
+		static inline int ReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, PKG::Pos &out)
+		{
+			return BBReadFrom(srcBuf, dataLen, offset, out.x, out.y);
+		}
+	};
+	template<> struct TypeId<PKG::SceneObj> { static const uint16_t value = 2; };
+	template<> struct TypeId<PKG::Scene> { static const uint16_t value = 3; };
+	template<> struct TypeId<PKG::Monster> { static const uint16_t value = 4; };
+	template<> struct TypeId<PKG::Deamon> { static const uint16_t value = 5; };
+	template<> struct TypeId<PKG::Butcher> { static const uint16_t value = 6; };
 }
 namespace PKG
 {
 	inline void RegisterTypes()
 	{
-	    xx::MemPool::Register<PKG::Bar, xx::MPObject>();
-	    xx::MemPool::Register<PKG::Bar1, PKG::Bar>();
-	    xx::MemPool::Register<PKG::Bar2, PKG::Bar>();
-	    xx::MemPool::Register<PKG::FooBase, xx::MPObject>();
-	    xx::MemPool::Register<PKG::Foo, PKG::FooBase>();
-	    xx::MemPool::Register<xx::List<PKG::E>, xx::MPObject>();
-	    xx::MemPool::Register<xx::List<PKG::Bar*>, xx::MPObject>();
-	    xx::MemPool::Register<xx::List<xx::List<PKG::E>*>, xx::MPObject>();
-	    xx::MemPool::Register<xx::List<xx::List<PKG::Bar*>*>, xx::MPObject>();
-	    xx::MemPool::Register<xx::List<xx::List<xx::List<PKG::E>*>*>, xx::MPObject>();
-	    xx::MemPool::Register<xx::List<xx::List<xx::List<PKG::Bar*>*>*>, xx::MPObject>();
+	    xx::MemPool::Register<PKG::SceneObj, xx::MPObject>();
+	    xx::MemPool::Register<PKG::Scene, xx::MPObject>();
+	    xx::MemPool::Register<PKG::Monster, PKG::SceneObj>();
+	    xx::MemPool::Register<PKG::Deamon, PKG::Monster>();
+	    xx::MemPool::Register<PKG::Butcher, PKG::Monster>();
 	}
 }

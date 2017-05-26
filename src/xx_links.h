@@ -35,14 +35,14 @@ namespace xx
 			tail = -1;
 			auto nodesByteLen = Round2n(capacity * sizeof(Node) + sizeof(MemHeader_VersionNumber)) - sizeof(MemHeader_VersionNumber);
 			nodesLen = (int)(nodesByteLen / sizeof(Node));
-			nodes = (Node*)mempoolbase().Alloc(nodesLen * sizeof(Node));
+			nodes = (Node*)mempool().Alloc(nodesLen * sizeof(Node));
 		}
 		~Links()
 		{
 			if (nodes)
 			{
 				DeleteNodes();
-				mempoolbase().Free(nodes);
+				mempool().Free(nodes);
 				nodes = nullptr;
 			}
 		}
@@ -201,17 +201,17 @@ namespace xx
 
 			if (std::is_trivial<T>::value || MemmoveSupport_v<T>)
 			{
-				nodes = (Node*)mempoolbase().Realloc(nodes, nodesByteLen);
+				nodes = (Node*)mempool().Realloc(nodes, nodesByteLen);
 			}
 			else
 			{
-				auto newNodes = (Node*)mempoolbase().Alloc(nodesByteLen);
+				auto newNodes = (Node*)mempool().Alloc(nodesByteLen);
 				for (int i = 0; i < count; ++i)
 				{
 					new (&newNodes[i].value) T((T&&)nodes[i].value);
 					nodes[i].value.T::~T();
 				}
-				mempoolbase().Free(nodes);
+				mempool().Free(nodes);
 				nodes = newNodes;
 			}
 		}

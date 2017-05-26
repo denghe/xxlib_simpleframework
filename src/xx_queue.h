@@ -87,7 +87,7 @@ namespace xx
 	{
 		if (capacity < 8) capacity = 8;
 		auto bufByteLen = Round2n(capacity * sizeof(T) + sizeof(MemHeader_VersionNumber)) - sizeof(MemHeader_VersionNumber);
-		buf = (T*)mempoolbase().Alloc((uint32_t)bufByteLen);
+		buf = (T*)mempool().Alloc((uint32_t)bufByteLen);
 		bufLen = uint32_t(bufByteLen / sizeof(T));
 	}
 
@@ -97,7 +97,7 @@ namespace xx
 		if (buf)
 		{
 			Clear();
-			mempoolbase().Free(buf);
+			mempool().Free(buf);
 			buf = nullptr;
 		}
 	}
@@ -260,7 +260,7 @@ namespace xx
 		if (capacity <= bufLen) return;
 
 		auto newBufByteLen = Round2n(capacity * sizeof(T) + sizeof(MemHeader_VersionNumber)) - sizeof(MemHeader_VersionNumber);
-		auto newBuf = (T*)mempoolbase().Alloc((uint32_t)newBufByteLen);
+		auto newBuf = (T*)mempool().Alloc((uint32_t)newBufByteLen);
 		auto newBufLen = uint32_t(newBufByteLen / sizeof(T));
 
 		// afterPush: ++++++++++++++TH++++++++++++++++
@@ -321,7 +321,7 @@ namespace xx
 		head = 0;
 		tail = dataLen;
 
-		mempoolbase().Free(buf);
+		mempool().Free(buf);
 		buf = newBuf;
 		bufLen = newBufLen;
 	}

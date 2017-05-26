@@ -40,7 +40,7 @@ namespace xx
 			if (timerss)
 			{
 				Clear();
-				mempoolbase().Free(timerss);
+				mempool().Free(timerss);
 				timerss = nullptr;
 			}
 		}
@@ -136,7 +136,7 @@ namespace xx
 			assert(timerssLen);
 			this->timerssLen = timerssLen;
 			auto bytesCount = sizeof(TimerBase*) * timerssLen;
-			timerss = (TimerBase**)mempoolbase().Alloc(bytesCount);
+			timerss = (TimerBase**)mempool().Alloc(bytesCount);
 			memset(timerss, 0, bytesCount);
 		}
 	};

@@ -15,10 +15,10 @@ int main()
 	xx::MemPool mp;
 	{
 		xx::BBuffer_v bb(mp);
-		auto foo = mp.Create<PKG::Foo>();
-		bb->WriteRoot(foo);
+		auto scene = mp.Create<PKG::Scene>();
+		bb->WriteRoot(scene);
 		Dump(bb);
-		mp.SafeRelease(foo);
+		mp.SafeRelease(scene);
 	}
 	return 0;
 }

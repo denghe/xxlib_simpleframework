@@ -53,6 +53,15 @@ public static class GenExtensions
     }
 
     /// <summary>
+    /// 从 types 中过滤出所有引用类型
+    /// </summary>
+    public static List<Type> _GetClasssStructs(this List<Type> ts)
+    {
+        return ts.Where(t => t.IsClass || t.IsValueType && !t.IsEnum).ToList();
+    }
+
+
+    /// <summary>
     /// 从 types 中过滤出所有含指定 T(Attribute) 的 interface
     /// </summary>
     public static List<Type> _GetInterfaces<T>(this List<Type> ts)
@@ -263,6 +272,7 @@ public static class GenExtensions
                     return "(" + _GetCSharpTypeDecl(t) + ")" + v._ToEnumInteger(t);
                 }
             }
+            else return "";
             return v.ToString();
         }
         else if (t._IsString())
@@ -396,7 +406,7 @@ public static class GenExtensions
             rtv += ">";
             return rtv;
         }
-        else if (t.IsEnum)
+        else if (t.IsEnum) // enum & struct
         {
             return templateName + "::" + t.FullName.Replace(".", "::");
         }
@@ -458,7 +468,7 @@ public static class GenExtensions
                 }
             }
 
-            return templateName + "::" + t.FullName.Replace(".", "::") + "*";
+            return templateName + "::" + t.FullName.Replace(".", "::") + (t.IsValueType ? "" : "*");
             //throw new Exception("unhandled data type");
         }
     }

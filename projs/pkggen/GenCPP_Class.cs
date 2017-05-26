@@ -22,6 +22,35 @@ namespace " + templateName + @"
 {");
 
         var ts = asm._GetTypes();
+
+        // predefines
+
+        var cs = ts._GetClasssStructs();
+        for (int i = 0; i < cs.Count; ++i)
+        {
+            var c = cs[i];
+
+            // namespace e_ns {
+            if (c.Namespace != null && (i == 0 || (i > 0 && cs[i - 1].Namespace != c.Namespace))) // namespace 去重
+            {
+                sb.Append(@"
+namespace " + c.Namespace + @"
+{");
+            }
+
+            // desc
+            // enum class xxxxxxxxx : underlyingType
+            sb.Append(c._GetDesc(4) + @"
+    struct " + c.Name + @";");
+
+            // namespace }
+            if (c.Namespace != null && ((i < cs.Count - 1 && cs[i + 1].Namespace != c.Namespace) || i == cs.Count - 1))
+            {
+                sb.Append(@"
+}");
+            }
+        }
+
         var es = ts._GetEnums();
         for (int i = 0; i < es.Count; ++i)
         {
@@ -36,7 +65,7 @@ namespace " + e.Namespace + @"
             }
 
             // desc
-            // public enum xxxxxxxxx : underlyingType
+            // enum class xxxxxxxxx : underlyingType
             sb.Append(e._GetDesc(4) + @"
     enum class " + e.Name + @" : " + e._GetEnumUnderlyingTypeName_Cpp() + @"
     {");
@@ -60,12 +89,68 @@ namespace " + e.Namespace + @"
                 sb.Append(@"
 }");
             }
-
         }
+
+        var ss = ts._GetStructs();
+        for (int i = 0; i < ss.Count; ++i)
+        {
+            var c = ss[i];
+            var o = asm.CreateInstance(c.FullName);
+
+            // namespace e_ns {
+            if (c.Namespace != null && (i == 0 || (i > 0 && es[i - 1].Namespace != c.Namespace))) // namespace 去重
+            {
+                sb.Append(@"
+namespace " + c.Namespace + @"
+{");
+            }
+
+            // desc
+            // struct xxxxxxxxx
+            sb.Append(c._GetDesc(4) + @"
+    struct " + c.Name + @"
+    {");
+
+            // desc
+            // T xxxxxx = val
+            // consts( static ) / fields
+            var fs = c._GetFieldsConsts();
+            foreach (var f in fs)
+            {
+                var ft = f.FieldType;
+                var ftn = ft._GetTypeDecl_Cpp(templateName);
+                sb.Append(f._GetDesc(8) + @"
+        " + (f.IsStatic ? "static const " : "") + ftn + " " + f.Name);  // todo: 生成函数包装
+
+                var v = f.GetValue(f.IsStatic ? null : o);
+                var dv = v._GetDefaultValueDecl_Cpp(templateName);
+                if (dv != "")
+                {
+                    sb.Append(" = " + dv + ";");
+                }
+                else
+                {
+                    sb.Append(";");
+                }
+            }
+
+            // struct /
+            sb.Append(@"
+    };");
+
+            // namespace }
+            if (c.Namespace != null && ((i < es.Count - 1 && es[i + 1].Namespace != c.Namespace) || i == es.Count - 1))
+            {
+                sb.Append(@"
+}");
+            }
+        }
+
+
 
         // todo: 生成 预声明 + 声明 + 实现 分离的三部分
 
-        var cs = ts._GetClasss();
+        cs = ts._GetClasss();
         for (int i = 0; i < cs.Count; ++i)
         {
             var c = cs[i];
@@ -84,8 +169,8 @@ namespace " + c.Namespace + @"
             var btn = c._HasBaseType() ? bt._GetTypeDecl_Cpp(templateName).CutLast() : "xx::MPObject";
 
             // desc
-            // public T xxxxxxxxx = defaultValue
-            // public const T xxxxxxxxx = defaultValue
+            // T xxxxxxxxx = defaultValue
+            // static const T xxxxxxxxx = defaultValue
 
             sb.Append(c._GetDesc(4) + @"
     struct " + c.Name + @" : " + btn + @"
@@ -114,6 +199,7 @@ namespace " + c.Namespace + @"
             }
 
             sb.Append(@"
+#pragma region ctor, interface impls
 
 	    " + c.Name + @"()");
             var isFirst = true;
@@ -141,7 +227,7 @@ namespace " + c.Namespace + @"
             foreach (var f in fs)
             {
                 var ft = f.FieldType;
-                if (ft.IsClass && f._Has<TemplateLibrary.CreateDefaultInstance>()) // todo: 跳过 _v
+                if (ft.IsClass && f._Has<TemplateLibrary.CreateInstance>()) // todo: 跳过 _v
                 {
                     sb.Append(@"
             mempool().CreateTo(" + f.Name + ");");
@@ -238,6 +324,7 @@ namespace " + c.Namespace + @"
 
             // class /
             sb.Append(@"
+#pragma endregion
     };");
 
             // namespace }
@@ -264,6 +351,12 @@ namespace " + c.Namespace + @"
             if (types.ContainsKey(c)) continue;
             types.Add(c, typeId++);
 
+            if (c._HasBaseType())
+            {
+                var bt = c.BaseType;
+                if (!types.ContainsKey(bt)) types.Add(bt, typeId++);
+            }
+
             var fs = c._GetFields();
             foreach (var f in fs)
             {
@@ -279,6 +372,47 @@ namespace " + c.Namespace + @"
         sb.Append(@"
 namespace xx
 {");
+        cs = ts._GetStructs();
+        foreach (var c in cs)
+        {
+            var ctn = c._GetTypeDecl_Cpp(templateName);
+            var fs = c._GetFields();
+
+            sb.Append(c._GetDesc(4) + @"
+	template<>
+	struct BytesFunc<" + ctn + @", void>
+	{
+		static inline uint32_t Calc(" + ctn + @" const &in)
+		{
+			return BBCalc(");
+            foreach (var f in fs)
+            {
+                sb.Append((f == fs[0] ? "" : ", ") + "in." + f.Name);
+            }
+            sb.Append(@");
+		}
+		static inline uint32_t WriteTo(char *dstBuf, " + ctn + @" const &in)
+		{
+			return BBWriteTo(dstBuf");
+            foreach (var f in fs)
+            {
+                sb.Append(@", " + "in." + f.Name);
+            }
+            sb.Append(@");
+		}
+		static inline int ReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, " + ctn + @" &out)
+		{
+			return BBReadFrom(srcBuf, dataLen, offset");
+            foreach (var f in fs)
+            {
+                sb.Append(@", " + "out." + f.Name);
+            }
+            sb.Append(@");
+		}
+	};");
+
+        }
+
         foreach (var kv in types)
         {
             var ct = kv.Key;
@@ -308,6 +442,8 @@ namespace " + templateName + @"
 	}
 }
 ");
+
+        // todo: 为 structs 生成序列化 / ToString 的适配
 
         sb._WriteToFile(Path.Combine(outDir, templateName + "_class.h"));
     }
