@@ -286,7 +286,7 @@ namespace " + c.Namespace + @"
         {
         	if (tsFlags())
         	{
-        		str.Append(""[ \""recursived\"" ]"");
+        		str.Append(""[ \""***** recursived *****\"" ]"");
         		return;
         	}
         	else tsFlags() = 1;
