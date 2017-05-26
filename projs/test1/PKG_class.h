@@ -63,7 +63,7 @@ namespace PKG
         /// </summary>
         int32_t scene_monsters_index;
         xx::String* name = nullptr;
-        PKG::Color color = (PKG::Color)0;
+        PKG::Color color = PKG::Color::Blue;
         PKG::Pos pos;
 #pragma region ctor, interface impls
 

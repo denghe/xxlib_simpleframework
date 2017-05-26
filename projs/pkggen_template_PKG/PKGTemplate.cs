@@ -23,7 +23,7 @@ class Monster : SceneObj
     int scene_monsters_index;
     [CreateInstance]
     string name;
-    Color color;
+    Color color = Color.Blue;
     Pos pos;
 }
 

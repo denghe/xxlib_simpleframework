@@ -265,7 +265,7 @@ public static class GenExtensions
                 var fs = t._GetEnumFields();
                 if (fs.Exists(f => f._GetEnumValue(t).ToString() == sv))
                 {
-                    return t.FullName + "." + v.ToString();
+                    return _GetTypeDecl_Cpp(t, templateName) + "::" + v.ToString();
                 }
                 else
                 {
