@@ -109,9 +109,18 @@ namespace TemplateLibrary
 
 
     /// <summary>
-    /// 标记当反列化 float / double 时, 如果值是 nan, 就设成 v
+    /// 针对指针类型成员, 于构造函数中创建默认实例
     /// </summary>
     [System.AttributeUsage(System.AttributeTargets.Field)]
+    public class CreateDefaultInstance : System.Attribute
+    {
+    }
+
+
+        /// <summary>
+        /// 标记当反列化 float / double 时, 如果值是 nan, 就设成 v
+        /// </summary>
+        [System.AttributeUsage(System.AttributeTargets.Field)]
     public class NaN : System.Attribute
     {
         public string value;

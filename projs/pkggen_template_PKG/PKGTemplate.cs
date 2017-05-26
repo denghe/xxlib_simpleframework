@@ -1,7 +1,7 @@
 ﻿#pragma warning disable 0169, 0414
 using TemplateLibrary;
 
-public enum E : byte
+enum E : byte
 {
     A, B, C
 }
@@ -35,8 +35,10 @@ class Foo : FooBase
     long f8;
     //DateTime f9;
     string f10;
+    [CreateDefaultInstance]
     BBuffer f11;
     E f12;
+    [CreateDefaultInstance]
     List<E> f13;
     List<Bar> f14;
     List<List<E>> f15;

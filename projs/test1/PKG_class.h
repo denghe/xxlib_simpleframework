@@ -76,7 +76,6 @@ namespace PKG
 	    Bar2()
             : BaseType()
 	    {
-            mempool().CreateTo(f10);
 	    }
 	    Bar2(xx::BBuffer *bb)
             : BaseType(bb)
@@ -154,15 +153,8 @@ namespace PKG
 	    Foo()
             : BaseType()
 	    {
-            mempool().CreateTo(f10);
             mempool().CreateTo(f11);
             mempool().CreateTo(f13);
-            mempool().CreateTo(f14);
-            mempool().CreateTo(f15);
-            mempool().CreateTo(f16);
-            mempool().CreateTo(f17);
-            mempool().CreateTo(f18);
-            mempool().CreateTo(f19);
 	    }
 	    Foo(xx::BBuffer *bb)
             : BaseType(bb)

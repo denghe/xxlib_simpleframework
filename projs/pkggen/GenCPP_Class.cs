@@ -141,7 +141,7 @@ namespace " + c.Namespace + @"
             foreach (var f in fs)
             {
                 var ft = f.FieldType;
-                if (ft.IsClass) // todo: 跳过 _v
+                if (ft.IsClass && f._Has<TemplateLibrary.CreateDefaultInstance>()) // todo: 跳过 _v
                 {
                     sb.Append(@"
             mempool().CreateTo(" + f.Name + ");");
