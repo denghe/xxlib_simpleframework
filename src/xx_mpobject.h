@@ -25,10 +25,20 @@ namespace xx
 			return;
 		}
 		else tsFlags() = 1;
-		str.Append("{ \"field\" : ", field, " }");
+
+		str.Append("{ \"type\" : \"SceneObj\"");
+		ToStringCore(str);
+		str.Append(" }");
+
 		tsFlags() = 0;
 		*/
 		virtual void ToString(String &str) const;
+
+		/*
+		this->BaseType::ToStringCore(str);
+		str.Append("{ \"field\" : ", field, " }");
+		*/
+		virtual void ToStringCore(String &str) const;
 
 		/*
 		this->BaseType::ToBBuffer(bb);

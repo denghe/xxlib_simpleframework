@@ -16,6 +16,13 @@ int main()
 	{
 		xx::BBuffer_v bb(mp);
 		auto scene = mp.Create<PKG::Scene>();
+		auto daemon = mp.Create<PKG::Deamon>();
+		daemon->scene = scene;
+		auto butcher = mp.Create<PKG::Butcher>();
+		butcher->scene = scene;
+		scene->monsters->Add(daemon);
+		scene->monsters->Add(butcher);
+		Dump(scene);
 		bb->WriteRoot(scene);
 		Dump(bb);
 		mp.SafeRelease(scene);

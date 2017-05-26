@@ -354,10 +354,17 @@ namespace xx
 		}
 		else tsFlags() = 1;
 
-		str.Append("{ \"tn\" : \"MPObject\" }");
+		str.Append("{ \"type\" : \"MPObject\"");
+		ToStringCore(str);
+		str.Append(" }");
 
 		tsFlags() = 0;
 	}
+
+	inline void MPObject::ToStringCore(String &str) const
+	{
+	}
+
 
 	
 	template<typename T, uint32_t reservedHeaderLen>
@@ -370,7 +377,7 @@ namespace xx
 		}
 		else tsFlags() = 1;
 
-		str.Append("{ \"tn\" : \"List\", \"items\" : [ ");
+		str.Append("{ \"type\" : \"List\", \"items\" : [ ");
 		for (size_t i = 0; i < dataLen; i++)
 		{
 			str.Append(buf[i], ", ");
@@ -392,10 +399,10 @@ namespace xx
 		}
 		else tsFlags() = 1;
 
-		str.Append("{ \"tn\" : \"Links\", \"nodes\" : [ ");
+		str.Append("{ \"type\" : \"Links\", \"nodes\" : [ ");
 		for (int i = header; i != -1; i = nodes[i].next)
 		{
-			str.Append("{ \"tn\" : \"Node\", \"idx\" : ", i, ", \"prev\" : ", nodes[i].prev, ", \"next\" : ", nodes[i].next, ", \"value\" : ", nodes[i].value, " }, ");
+			str.Append("{ \"type\" : \"Node\", \"idx\" : ", i, ", \"prev\" : ", nodes[i].prev, ", \"next\" : ", nodes[i].next, ", \"value\" : ", nodes[i].value, " }, ");
 		}
 		if (Count()) str.dataLen -= 2;
 		str.Append(" ] }");

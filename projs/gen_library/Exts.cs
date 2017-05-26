@@ -272,8 +272,8 @@ public static class GenExtensions
                     return "(" + _GetCSharpTypeDecl(t) + ")" + v._ToEnumInteger(t);
                 }
             }
+            if(t._IsNumeric()) return v.ToString();
             else return "";
-            return v.ToString();
         }
         else if (t._IsString())
         {

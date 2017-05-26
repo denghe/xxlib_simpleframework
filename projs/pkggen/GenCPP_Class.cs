@@ -148,8 +148,6 @@ namespace " + c.Namespace + @"
 
 
 
-        // todo: 生成 预声明 + 声明 + 实现 分离的三部分
-
         cs = ts._GetClasss();
         for (int i = 0; i < cs.Count; ++i)
         {
@@ -214,7 +212,7 @@ namespace " + c.Namespace + @"
             //foreach (var f in fs)
             //{
             //    var ft = f.FieldType;
-            //    if (ft.IsClass && ft._IsString())
+            //    if (ft.IsClass)
             //    {
             //        sb.Append(@"
             //" + (isFirst ? ":" : ",") + @" " + f.Name + "(mempool())");
@@ -248,7 +246,7 @@ namespace " + c.Namespace + @"
             //foreach (var f in fs)
             //{
             //    var ft = f.FieldType;
-            //    if (ft.IsClass && ft._IsString())
+            //    if (ft.IsClass)
             //    {
             //        sb.Append(@"
             //" + (isFirst ? ":" : ",") + @" " + f.Name + "(mempool(), bb)");
@@ -275,7 +273,7 @@ namespace " + c.Namespace + @"
             foreach (var f in fs)
             {
                 var ft = f.FieldType;
-                if (ft.IsClass && !ft._IsString())
+                if (ft.IsClass)
                 {
                     sb.Append(@"
             mempool().SafeRelease(" + f.Name + ");");
@@ -284,7 +282,32 @@ namespace " + c.Namespace + @"
             sb.Append(@"
 	    }
 
-        // todo: inline virtual void ToString(xx::String &str) const override
+        inline virtual void ToString(xx::String &str) const override
+        {
+        	if (tsFlags())
+        	{
+        		str.Append(""[ \""recursived\"" ]"");
+        		return;
+        	}
+        	else tsFlags() = 1;
+
+            str.Append(""{ \""type\"" : \""" + c.Name + @"\"""");
+            ToStringCore(str);
+            str.Append("" }"");
+        
+        	tsFlags() = 0;
+        }
+        inline virtual void ToStringCore(xx::String &str) const override
+        {
+            this->BaseType::ToStringCore(str);");
+            foreach (var f in fs)
+            {
+                sb.Append(@"
+            str.Append("", \""" + f.Name + @"\"" : "", this->" + f.Name + @");");
+            }
+            sb.Append(@"
+        }
+
 
         inline virtual void ToBBuffer(xx::BBuffer &bb) const override
         {");
@@ -409,7 +432,30 @@ namespace xx
             }
             sb.Append(@");
 		}
-	};");
+	};
+	template<>
+	struct StrFunc<" + ctn + @", void>
+	{
+		static inline uint32_t Calc(" + ctn + @" const &in)
+		{
+			return StrCalc(");
+            foreach (var f in fs)
+            {
+                sb.Append((f == fs[0] ? "" : ", ") + "in." + f.Name);
+            }
+            // todo: 这里先简单粗略的计算一下 json 格式消耗附加值
+            sb.Append(@" + " + fs.Count * 5 + 10 + @");
+		}
+		static inline uint32_t WriteTo(char *dstBuf, " + ctn + @" const &in)
+		{
+			return StrWriteTo(dstBuf, ""{ \""type\"" : \""" + c.Name + @"\""""");
+            foreach (var f in fs)
+            {
+                sb.Append(@", "", \""" + f.Name + @"\"" : "", in." + f.Name);
+            }
+            sb.Append(@", "" }"");
+        }
+    };");
 
         }
 

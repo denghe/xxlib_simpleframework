@@ -16,8 +16,8 @@ namespace PKG
     };
     struct Pos
     {
-        float x;
-        float y;
+        float x = 0;
+        float y = 0;
     };
     struct SceneObj : xx::MPObject
     {
@@ -38,7 +38,27 @@ namespace PKG
             mempool().SafeRelease(scene);
 	    }
 
-        // todo: inline virtual void ToString(xx::String &str) const override
+        inline virtual void ToString(xx::String &str) const override
+        {
+        	if (tsFlags())
+        	{
+        		str.Append("[ \"recursived\" ]");
+        		return;
+        	}
+        	else tsFlags() = 1;
+
+            str.Append("{ \"type\" : \"SceneObj\"");
+            ToStringCore(str);
+            str.Append(" }");
+        
+        	tsFlags() = 0;
+        }
+        inline virtual void ToStringCore(xx::String &str) const override
+        {
+            this->BaseType::ToStringCore(str);
+            str.Append(", \"scene\" : ", this->scene);
+        }
+
 
         inline virtual void ToBBuffer(xx::BBuffer &bb) const override
         {
@@ -57,7 +77,7 @@ namespace PKG
     {
         typedef PKG::SceneObj BaseType;
         // 位于 scene monster 容器中的下标 for 交换快删
-        int32_t scene_monsters_index;
+        int32_t scene_monsters_index = 0;
         xx::String* name = nullptr;
         PKG::Color color = PKG::Color::Blue;
         PKG::Pos pos;
@@ -75,9 +95,33 @@ namespace PKG
 	    }
 	    ~Monster()
 	    {
+            mempool().SafeRelease(name);
 	    }
 
-        // todo: inline virtual void ToString(xx::String &str) const override
+        inline virtual void ToString(xx::String &str) const override
+        {
+        	if (tsFlags())
+        	{
+        		str.Append("[ \"recursived\" ]");
+        		return;
+        	}
+        	else tsFlags() = 1;
+
+            str.Append("{ \"type\" : \"Monster\"");
+            ToStringCore(str);
+            str.Append(" }");
+        
+        	tsFlags() = 0;
+        }
+        inline virtual void ToStringCore(xx::String &str) const override
+        {
+            this->BaseType::ToStringCore(str);
+            str.Append(", \"scene_monsters_index\" : ", this->scene_monsters_index);
+            str.Append(", \"name\" : ", this->name);
+            str.Append(", \"color\" : ", this->color);
+            str.Append(", \"pos\" : ", this->pos);
+        }
+
 
         inline virtual void ToBBuffer(xx::BBuffer &bb) const override
         {
@@ -117,7 +161,26 @@ namespace PKG
 	    {
 	    }
 
-        // todo: inline virtual void ToString(xx::String &str) const override
+        inline virtual void ToString(xx::String &str) const override
+        {
+        	if (tsFlags())
+        	{
+        		str.Append("[ \"recursived\" ]");
+        		return;
+        	}
+        	else tsFlags() = 1;
+
+            str.Append("{ \"type\" : \"Deamon\"");
+            ToStringCore(str);
+            str.Append(" }");
+        
+        	tsFlags() = 0;
+        }
+        inline virtual void ToStringCore(xx::String &str) const override
+        {
+            this->BaseType::ToStringCore(str);
+        }
+
 
         inline virtual void ToBBuffer(xx::BBuffer &bb) const override
         {
@@ -149,7 +212,26 @@ namespace PKG
 	    {
 	    }
 
-        // todo: inline virtual void ToString(xx::String &str) const override
+        inline virtual void ToString(xx::String &str) const override
+        {
+        	if (tsFlags())
+        	{
+        		str.Append("[ \"recursived\" ]");
+        		return;
+        	}
+        	else tsFlags() = 1;
+
+            str.Append("{ \"type\" : \"Butcher\"");
+            ToStringCore(str);
+            str.Append(" }");
+        
+        	tsFlags() = 0;
+        }
+        inline virtual void ToStringCore(xx::String &str) const override
+        {
+            this->BaseType::ToStringCore(str);
+        }
+
 
         inline virtual void ToBBuffer(xx::BBuffer &bb) const override
         {
@@ -183,7 +265,27 @@ namespace PKG
             mempool().SafeRelease(monsters);
 	    }
 
-        // todo: inline virtual void ToString(xx::String &str) const override
+        inline virtual void ToString(xx::String &str) const override
+        {
+        	if (tsFlags())
+        	{
+        		str.Append("[ \"recursived\" ]");
+        		return;
+        	}
+        	else tsFlags() = 1;
+
+            str.Append("{ \"type\" : \"Scene\"");
+            ToStringCore(str);
+            str.Append(" }");
+        
+        	tsFlags() = 0;
+        }
+        inline virtual void ToStringCore(xx::String &str) const override
+        {
+            this->BaseType::ToStringCore(str);
+            str.Append(", \"monsters\" : ", this->monsters);
+        }
+
 
         inline virtual void ToBBuffer(xx::BBuffer &bb) const override
         {
@@ -217,6 +319,18 @@ namespace xx
 			return BBReadFrom(srcBuf, dataLen, offset, out.x, out.y);
 		}
 	};
+	template<>
+	struct StrFunc<PKG::Pos, void>
+	{
+		static inline uint32_t Calc(PKG::Pos const &in)
+		{
+			return StrCalc(in.x, in.y + 1010);
+		}
+		static inline uint32_t WriteTo(char *dstBuf, PKG::Pos const &in)
+		{
+			return StrWriteTo(dstBuf, "{ \"type\" : \"Pos\"", ", \"x\" : ", in.x, ", \"y\" : ", in.y, " }");
+        }
+    };
 	template<> struct TypeId<PKG::SceneObj> { static const uint16_t value = 2; };
 	template<> struct TypeId<PKG::Scene> { static const uint16_t value = 3; };
 	template<> struct TypeId<PKG::Monster> { static const uint16_t value = 4; };
