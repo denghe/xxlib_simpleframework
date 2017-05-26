@@ -22,9 +22,7 @@ namespace PKG
     struct SceneObj : xx::MPObject
     {
         typedef xx::MPObject BaseType;
-        /// <summary>
-        /// 所在场景
-        /// </summary>
+        // 所在场景
         PKG::Scene* scene = nullptr;
 #pragma region ctor, interface impls
 
@@ -58,9 +56,7 @@ namespace PKG
     struct Monster : PKG::SceneObj
     {
         typedef PKG::SceneObj BaseType;
-        /// <summary>
-        /// 位于 scene monster 容器中的下标 for 交换快删
-        /// </summary>
+        // 位于 scene monster 容器中的下标 for 交换快删
         int32_t scene_monsters_index;
         xx::String* name = nullptr;
         PKG::Color color = PKG::Color::Blue;

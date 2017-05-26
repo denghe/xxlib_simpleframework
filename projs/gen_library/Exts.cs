@@ -587,6 +587,20 @@ public static class GenExtensions
     }
 
 
+    /// <summary>
+    /// 获取 Cpp 风格的注释
+    /// </summary>
+    public static string _GetComment_Cpp(this string s, int space)
+    {
+        if (s.Trim() == "")
+            return "";
+        var sps = new string(' ', space);
+        s = s.Replace("\r\n", "\n")
+         .Replace("\r", "\n")
+         .Replace("\n", "\r\n" + sps + "// ");
+        return "\r\n"
+ + sps + @"// " + s;
+    }
 
 
 
@@ -740,6 +754,19 @@ public static class GenExtensions
         {
             if (r_attribute is TemplateLibrary.Desc)
                 return ((TemplateLibrary.Desc)r_attribute).value._GetCSharpComment(space);
+        }
+        return "";
+    }
+
+    /// <summary>
+    /// 获取 Attribute 之 Desc 注释. 未找到将返回 ""
+    /// </summary>
+    public static string _GetDesc_Cpp<T>(this T t, int space) where T : ICustomAttributeProvider
+    {
+        foreach (var r_attribute in t.GetCustomAttributes(false))
+        {
+            if (r_attribute is TemplateLibrary.Desc)
+                return ((TemplateLibrary.Desc)r_attribute).value._GetComment_Cpp(space);
         }
         return "";
     }
