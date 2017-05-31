@@ -200,9 +200,21 @@ namespace xx
 	template<typename T, typename ENABLE = void>
 	struct BytesFunc
 	{
-		static uint32_t Calc(T const &in);
-		static uint32_t WriteTo(char *dstBuf, T const &in);
-		static int ReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, T &out);
+		static uint32_t Calc(T const &in)
+		{
+			assert(false);
+			return 0;
+		}
+		static uint32_t WriteTo(char *dstBuf, T const &in)
+		{
+			assert(false);
+			return 0;
+		}
+		static int ReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, T &out)
+		{
+			assert(false);
+			return 0;
+		}
 	};
 
 	// 适配 1 字节长度的 数值 或 float( 这些类型直接 memcpy )

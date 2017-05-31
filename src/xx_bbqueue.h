@@ -34,8 +34,8 @@ namespace xx
 			Clear();
 		}
 
-		// 如果队列尾包存在，且 非正在发送状态 且 引用计数为 1( 非群发 ), 就返回它用于继续填充. 否则返回空.
-		BBuffer* PopLastBB()
+		// 如果队列尾包存在，且 非正在发送状态 且 引用计数为 1( 非群发 ), 就返回它用于继续填充. 否则用当前内存池新建一个返回.
+		BBuffer* PopLastBB(uint32_t const& capacity = 0)
 		{
 			if (this->Count() + numPopBufs > bufIndex && this->Last()->refCount() == 1)
 			{
@@ -44,7 +44,7 @@ namespace xx
 				this->PopLast();
 				return bb;
 			}
-			return nullptr;
+			return mempool().Create<BBuffer>(capacity);
 		}
 
 		// 将待发数据 bb 压入队列托管( 将同步相应的统计数值, PopTo 后将自动 Release ), 之后不可以再继续操作 bb
@@ -67,7 +67,7 @@ namespace xx
 			{
 				for (uint32_t i = 0; i < bufIndex - numPopBufs; i++)
 				{
-					this->At(0)->Release();
+					this->Top()->Release();
 					this->Pop();
 				}
 				numPopBufs = bufIndex;

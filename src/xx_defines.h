@@ -15,6 +15,15 @@
 #include <functional>
 using namespace std::placeholders;
 
+// minor fix
+#ifdef max
+#undef max
+#endif
+
+#ifdef min
+#undef min
+#endif
+
 /*
 XX_IA
 XX_64
