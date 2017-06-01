@@ -32,6 +32,7 @@ XX_LIKELY / UNLIKELY / INLINE / NOINLINE
 MIN / MAX
 XX_ENUM_OPERATOR_EXT
 XX_HAS_TYPEDEF
+XX_LIST_SWAP_REMOVE
 XX_HAS_FUNC
 _countof
 Sleep
@@ -255,6 +256,31 @@ namespace xx
 #define XX_HAS_TYPEDEF( typedefName )	\
 template<typename T, typename dummy = void> struct HasTypedef_##typedefName : std::false_type {};	\
 template<typename T> struct HasTypedef_##typedefName<T, typename xx::Typedef_Void<typename T::typedefName>::type> : std::true_type {};
+
+
+
+
+	/***********************************************************************************/
+	/* XX_LIST_SWAP_REMOVE
+	/***********************************************************************************/
+
+	// 交换删除 list 中的某元素
+
+#define XX_LIST_SWAP_REMOVE( listPtr, tarPtr, indexName )		\
+do																\
+{																\
+	auto& buf = listPtr->buf;									\
+	auto& dataLen = listPtr->dataLen;							\
+	--dataLen;													\
+	if (dataLen == tarPtr->indexName) break;					\
+	else														\
+	{															\
+		buf[tarPtr->indexName] = buf[dataLen];					\
+		buf[dataLen]->indexName = tarPtr->indexName;			\
+	}															\
+}																\
+while(false)
+
 
 
 

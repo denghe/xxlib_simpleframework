@@ -280,3 +280,6 @@ namespace xx
 		mempool().Release(this);
 	}
 }
+
+#include "xx_string.h"
+#include "xx_bbuffer.h"
