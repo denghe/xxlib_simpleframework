@@ -26,7 +26,8 @@ int main()
 	{
 		xx::MemPool mp;
 		xx::UV_v uv(mp);
-		uv->CreateListener<MyUVListener>(12345, SOMAXCONN);
+		uv->CreateListener<MyUVListener>(12345);
+		uv->CreateListener<MyUVListener>(12346);
 		uv->Run();
 	}
 	return 0;

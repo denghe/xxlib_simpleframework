@@ -121,7 +121,7 @@ namespace xx
 		auto self = container_of(handle, UVServerPeer, stream);
 		if (nread < 0)
 		{
-			assert(nread == UV_EOF);	/* Error or EOF */
+			//assert(nread == UV_EOF);	/* Error or EOF */
 
 			self->mempool().Free(buf->base);
 			auto rtv = uv_shutdown(&self->sreq, handle, ShutdownCB);
