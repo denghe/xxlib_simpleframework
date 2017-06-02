@@ -31,7 +31,7 @@ namespace xx
 		uint32_t uv_listeners_index;
 		xx::List_v<UVServerPeer*> peers;
 		virtual UVServerPeer* OnCreatePeer() = 0;		// 重写以提供创建具体 peer 类型的函数
-		UVListener(UV* uv, int backlog, int port);
+		UVListener(UV* uv, int port, int backlog = SOMAXCONN);
 		~UVListener();
 		// uv's
 		uv_tcp_t tcpServer;
@@ -69,6 +69,6 @@ namespace xx
 	};
 
 	using UV_v = xx::MemHeaderBox<UV>;
+}
 
 #include "xx_uv.hpp"
-}
