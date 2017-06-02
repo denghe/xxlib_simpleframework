@@ -35,6 +35,7 @@ XX_HAS_TYPEDEF
 XX_LIST_SWAP_REMOVE
 XX_HAS_FUNC
 _countof
+container_of
 Sleep
 TypeDeclare
 Calc2n
@@ -153,6 +154,16 @@ size_t _countof(T const (&arr)[N])
 {
 	return N;
 }
+#endif
+
+
+/***********************************************************************************/
+// container_of
+/***********************************************************************************/
+
+#ifndef container_of
+#define container_of(ptr, type, member) \
+  ((type *) ((char *) (ptr) - offsetof(type, member)))
 #endif
 
 
