@@ -1,14 +1,19 @@
 #include "xx_uv.h"
 
+void Dump(xx::MPObject const* o)
+{
+	if (!o) return;
+	xx::String_v str(o->mempool());
+	o->ToString(*str);
+	std::cout << str->C_str() << std::endl;
+}
+
 struct MyUVServerPeer : xx::UVServerPeer
 {
 	MyUVServerPeer(xx::UVListener* listener) : xx::UVServerPeer(listener) {}
-	virtual void OnReceive(char* buf, ssize_t len) override
+	virtual void OnReceivePackage(xx::BBuffer const& bb) override
 	{
-		for (ssize_t i = 0; i < len; ++i)
-		{
-			std::cout << buf[i];
-		}
+		Dump(&bb);
 	}
 };
 
@@ -27,7 +32,6 @@ int main()
 		xx::MemPool mp;
 		xx::UV_v uv(mp);
 		uv->CreateListener<MyUVListener>(12345);
-		uv->CreateListener<MyUVListener>(12346);
 		uv->Run();
 	}
 	return 0;
