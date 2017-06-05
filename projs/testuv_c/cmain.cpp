@@ -27,13 +27,13 @@ int main()
             return;
         }
 
-		xx::MemPool mp;
+		// Ëæ±ãÐ´µÄ. ÓÐÐ¹Â¶
+		auto& mp = *new xx::MemPool();
 		xx::BBQueue_v bbq(mp);
 		xx::List_v<uv_buf_t> bufs(mp);
 		auto bb = bbq->PopLastBB();
 		bb->WritePackage("abcd");
 		bbq->Push(bb);
-		bbq->PopTo(*bufs, 100);
 
 		//uv_read_start(conn->handle, [](uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf)
 		//{
@@ -58,17 +58,24 @@ int main()
 		//	// todo: close conn ?
 		//});
 
-        auto write_req = (uv_write_t *)malloc(sizeof(uv_write_t));
-        uv_write(write_req, conn->handle, bufs->buf, bufs->dataLen, [](uv_write_t *write_req, int status)
-        {
-            if (status < 0)
-            {
-                cout << "uv_write error " << uv_strerror(status) << endl;
-                return;
-            }
-            
-            free(write_req);
-        });
+		while (bbq->PopTo(*bufs, 1))
+		{
+			this_thread::sleep_for(chrono::milliseconds(500));
+
+			auto write_req = (uv_write_t *)mp.Alloc(sizeof(uv_write_t));
+			write_req->data = &mp;
+			uv_write(write_req, conn->handle, bufs->buf, bufs->dataLen, [](uv_write_t *write_req, int status)
+			{
+				if (status < 0)
+				{
+					cout << "uv_write error " << uv_strerror(status) << endl;
+					return;
+				}
+
+				//free(write_req);
+				((xx::MemPool*)write_req->data)->Free(write_req);
+			});
+		}
     });
 
     uv_run(loop, UV_RUN_DEFAULT);
