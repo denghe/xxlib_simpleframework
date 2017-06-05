@@ -99,6 +99,9 @@
     <ClInclude Include="xx_uv.h" />
     <ClInclude Include="xx_uv.hpp" />
   </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="..\..\src\xx.natvis" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

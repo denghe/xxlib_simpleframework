@@ -10,4 +10,7 @@
     <ClInclude Include="xx_uv.h" />
     <ClInclude Include="xx_uv.hpp" />
   </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="..\..\src\xx.natvis" />
+  </ItemGroup>
 </Project>

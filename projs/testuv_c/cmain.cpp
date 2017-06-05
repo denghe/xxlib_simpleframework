@@ -31,17 +31,11 @@ int main()
 		xx::BBQueue_v bbq(mp);
 		xx::List_v<uv_buf_t> bufs(mp);
 		auto bb = bbq->PopLastBB();
-		bb->Write("abcd");
+		bb->WritePackage("abcd");
 		bbq->Push(bb);
 		bbq->PopTo(*bufs, 100);
 
-        //uv_buf_t bufs[1];
-        //bufs[0].len = (int)strlen(message) + 1;
-        //bufs[0].base = message;
-
-        uv_stream_t* tcp = conn->handle;
-
-		//uv_read_start(tcp, [](uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf)
+		//uv_read_start(conn->handle, [](uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf)
 		//{
 		//	cout << "suggested_size = " << suggested_size << endl;
 		//	buf->base = (char*)malloc(suggested_size);
@@ -65,7 +59,7 @@ int main()
 		//});
 
         auto write_req = (uv_write_t *)malloc(sizeof(uv_write_t));
-        uv_write(write_req, tcp, bufs->buf, bufs->dataLen, [](uv_write_t *write_req, int status)
+        uv_write(write_req, conn->handle, bufs->buf, bufs->dataLen, [](uv_write_t *write_req, int status)
         {
             if (status < 0)
             {
