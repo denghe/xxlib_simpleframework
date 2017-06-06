@@ -156,6 +156,7 @@ namespace xx
 		// 如果 bbReceiveLeft 有数据, 则试从 bbReceive 补齐一个包的数据触发 OnReceivePackage 后清数据, 跳到 bbReceiveLeft 没数据的流程
 		else
 		{
+			bbReceiveLeft->offset = 0;
 			uint16_t dataLen = 0;
 
 			// 判断头长度. 如果不够长, 看看能不能补足
@@ -164,18 +165,21 @@ namespace xx
 				// 还差多少凑齐包头
 				auto left = bbReceiveLeft->offset + sizeof(dataLen) - bbReceiveLeft->dataLen;
 
-				// 如果剩余数据长度无法补足, 移动剩余数据到头部后追加刚收到的数据后退出
-				if (bbReceive->offset + left > bbReceive->dataLen) goto LabEnd;
+				// 如果剩余数据长度无法补足, 追加刚收到的数据后退出
+				if (bbReceive->offset + left > bbReceive->dataLen)
+				{
+					bbReceiveLeft->Write(bbReceive->buf[bbReceive->offset]);	// 这里只可能差1字节补足包头( 下同 )
+					return;
+				}
 				else
 				{
-					bbReceiveLeft->Write(bbReceive->buf[bbReceive->offset++]);		// 这里只可能差1字节补足包头
+					bbReceiveLeft->Write(bbReceive->buf[bbReceive->offset++]);
 				}
 			}
 
 			// 读包头, 得到长度
 			dataLen = bbReceiveLeft->buf[bbReceiveLeft->offset] + (bbReceiveLeft->buf[bbReceiveLeft->offset + 1] << 8);
 			bbReceiveLeft->offset += 2;
-			auto offset_bak = bbReceiveLeft->offset;
 
 			// 判断数据区长度. 如果不够长, 看看能不能补足
 			if (bbReceiveLeft->offset + dataLen > bbReceiveLeft->dataLen)
@@ -184,7 +188,12 @@ namespace xx
 				auto left = bbReceiveLeft->offset + dataLen - bbReceiveLeft->dataLen;
 
 				// 如果剩余数据长度无法补足, 移动剩余数据到头部后追加刚收到的数据后退出
-				if (bbReceive->offset + left > bbReceive->dataLen) goto LabEnd;
+				if (bbReceive->offset + left > bbReceive->dataLen)
+				{
+					bbReceiveLeft->WriteBuf(bbReceive->buf + bbReceive->offset, bbReceive->dataLen - bbReceive->offset);
+					return;
+				}
+				// 否则只补齐当前包的数据
 				else
 				{
 					bbReceiveLeft->WriteBuf(bbReceive->buf + bbReceive->offset, left);
@@ -202,17 +211,7 @@ namespace xx
 
 			// 清除 bbReceiveLeft 中的数据, 如果还有剩余数据, 跳到 bbReceive 处理代码段继续. 
 			bbReceiveLeft->dataLen = 0;
-			bbReceiveLeft->offset = 0;
 			if (bbReceive->dataLen > bbReceive->offset) goto LabBegin;
-
-		LabEnd:
-			// 移动 bbReceiveLeft 剩余数据到头部
-			auto left = bbReceiveLeft->dataLen - bbReceiveLeft->offset;
-			memmove(bbReceiveLeft->buf, bbReceiveLeft->buf + bbReceiveLeft->offset, left);
-			bbReceiveLeft->dataLen = left;
-			bbReceiveLeft->offset = 0;
-			// 追加 bbReceive 剩余数据到 bbReceiveLeft
-			bbReceiveLeft->WriteBuf(bbReceive->buf + bbReceive->offset, bbReceive->dataLen - bbReceive->offset);
 		}
 	}
 

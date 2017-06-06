@@ -33,6 +33,7 @@ int main()
 		xx::List_v<uv_buf_t> bufs(mp);
 		auto bb = bbq->PopLastBB();
 		bb->WritePackage("abcd");
+		bb->WritePackage("abcd");
 		bbq->Push(bb);
 
 		//uv_read_start(conn->handle, [](uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf)
@@ -58,9 +59,9 @@ int main()
 		//	// todo: close conn ?
 		//});
 
-		while (bbq->PopTo(*bufs, 1))
+		while (bbq->PopTo(*bufs, 10))
 		{
-			this_thread::sleep_for(chrono::milliseconds(500));
+			std::cin.get();
 
 			auto write_req = (uv_write_t *)mp.Alloc(sizeof(uv_write_t));
 			write_req->data = &mp;

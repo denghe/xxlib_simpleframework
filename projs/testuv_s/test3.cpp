@@ -11,6 +11,13 @@ void Dump(xx::MPObject const* o)
 struct MyUVServerPeer : xx::UVServerPeer
 {
 	MyUVServerPeer(xx::UVListener* listener) : xx::UVServerPeer(listener) {}
+	virtual void OnReceive() override
+	{
+		std::cout << "OnReceive" << std::endl;
+		Dump(bbReceive);
+		this->xx::UVServerPeer::OnReceive();
+		Dump(bbReceiveLeft);
+	}
 	virtual void OnReceivePackage(xx::BBuffer const& bb) override
 	{
 		Dump(&bb);
