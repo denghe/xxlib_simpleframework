@@ -254,7 +254,49 @@ namespace xx
 	{
 		uv_close((uv_handle_t*)req->handle, CloseCB);
 	}
+	void UVServerPeer::WriteCB(uv_write_t *req, int status)
+	{
+		auto self = container_of(req, UVServerPeer, writer);
+		self->writing = false;
+		if (status)
+		{
+			std::cout << "Write error " << uv_strerror(status) << std::endl;
+			self->Kill();
+		}
+		else
+		{
+			self->Write();  // 继续发, 直到发光
+		}
+	}
 
+	void UVServerPeer::Write()
+	{
+		if (writing) return;
+		auto len = sendBufs->PopTo(*writeBufs, 4096);
+		if (len)
+		{
+			uv_write(&writer, (uv_stream_t*)&socket, writeBufs->buf, (unsigned int)writeBufs->dataLen, WriteCB);
+			writing = true;
+		}
+	}
+
+	void UVServerPeer::Kill() // todo: type ?
+	{
+		//if (uvctx)
+		//{
+		//	uvctx->Remove(this);
+		//	uvctx = nullptr;
+		//	if (!uv_is_closing((uv_handle_t*)&socket))
+		//	{
+		//		uv_close((uv_handle_t*)&socket, [](uv_handle_t* handle)
+		//		{
+		//			auto self = container_of(handle, UVServerPeer, stream);
+		//			delete self;
+		//		});
+		//	}
+		//	//OnDisconnect(); // todo: type ?
+		//}
+	}
 
 
 

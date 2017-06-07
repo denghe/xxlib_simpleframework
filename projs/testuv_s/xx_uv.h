@@ -1,6 +1,7 @@
 #pragma once
 #include <uv.h>
 #include <xx_mempool.h>
+#include <xx_bbqueue.h>
 #include <assert.h>
 #include <memory>
 #include <iostream>
@@ -57,10 +58,19 @@ namespace xx
 		// Send, Disconnect, virtual OnDisconnect
 		uv_tcp_t stream;
 		uv_shutdown_t sreq;
+
+		uv_write_t writer;
+		bool writing = false;									// 写操作标记. 当前设计中只允许同时写一段数据, 待到写成功回调时才继续写下一段
+		xx::BBQueue_v sendBufs;									// 待发送数据队列. 所有 Send 操作都是将数据压入这里, 再取适当长度的一段来发送
+		xx::List_v<uv_buf_t> writeBufs;							// 复用的 uv 写操作 多段数据参数
+		void Write();
+		void Kill();
+
 		static void AllocCB(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf);
 		static void CloseCB(uv_handle_t* stream);
 		static void ReadCB(uv_stream_t* handle, ssize_t nread, const uv_buf_t* buf);
 		static void ShutdownCB(uv_shutdown_t* req, int status);
+		static void WriteCB(uv_write_t *req, int status);
 	};
 
 	struct UVClient : xx::MPObject
