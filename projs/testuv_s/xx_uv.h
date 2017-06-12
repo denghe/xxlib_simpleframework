@@ -57,9 +57,11 @@ namespace xx
 		virtual void OnReceive();								// 默认实现为读取包( 2 byte长度 + 数据 ), 并于凑齐完整包后 call OnReceivePackage
 		virtual void OnReceivePackage(BBuffer const& bb) = 0;	// OnReceive 凑齐一个包时将产生该调用
 
-		int Send();												// 内部函数, 开始发送 sendBufs 里的东西
+		BBuffer* GetSendBB(int capacity = 0);					// 获取或创建一个 send 用的 BBuffer( sendBufs->PopLastBB )
 		int Send(BBuffer* const& bb);							// 发送 或 将数据压入待发送队列, 立即返回是否成功( 失败原因可能是待发数据过多 )
-		void Disconnect(bool immediately = true);				// 断开( 接着会 Release ). immediately 为否就走 shutdown 模式( 延迟杀, 能尽可能确保数据发出去 )
+		virtual void Disconnect(bool immediately = true);		// 断开( 接着会 Release ). immediately 为否就走 shutdown 模式( 延迟杀, 能尽可能确保数据发出去 )
+
+		int Send();												// 内部函数, 开始发送 sendBufs 里的东西
 
 		// uv's
 		uv_tcp_t stream;
@@ -86,19 +88,25 @@ namespace xx
 	{
 		uint32_t uv_clientPeers_index;
 		bool connecting = false;
+		bool closing = false;
 		bool connected = false;
+		int lastStatus = 0;							// 最后状态( 连接, 断开 )
 
 		UVClientPeer(UV* uv);
-		~UVClientPeer();
+		~UVClientPeer();							// 如果析构时 connected 为 true 则表示已断线
+		virtual void Disconnect(bool immediately = true) override;
+
 		int SetAddress(char const* ip, int port);
 		int Connect();
-		virtual void OnConnect();
-		virtual void OnDisconnect(int status) = 0;
+		virtual void OnConnect() = 0;				// lastStatus 非 0 或 connected 为 false 表示没连上
+		virtual void OnDisconnect() = 0;
 
 		// uv's
 		sockaddr_in tarAddr;
 		uv_connect_t conn;
 		static void ConnectCB(uv_connect_t* conn, int status);
+		static void ClientCloseCB(uv_handle_t* stream);
+		static void ClientShutdownCB(uv_shutdown_t* req, int status);
 	};
 
 	using UV_v = xx::MemHeaderBox<UV>;

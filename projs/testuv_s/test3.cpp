@@ -11,14 +11,14 @@ void Dump(xx::MPObject const* o)
 struct MyUVServerPeer : xx::UVServerPeer
 {
 	MyUVServerPeer(xx::UVListener* listener) : xx::UVServerPeer(listener) {}
-	virtual void OnReceive() override
+	inline virtual void OnReceive() override
 	{
 		std::cout << "OnReceive" << std::endl;
 		Dump(bbReceive);
 		this->xx::UVServerPeer::OnReceive();
 		Dump(bbReceiveLeft);
 	}
-	virtual void OnReceivePackage(xx::BBuffer const& bb) override
+	inline virtual void OnReceivePackage(xx::BBuffer const& bb) override
 	{
 		Dump(&bb);
 	}
@@ -27,7 +27,7 @@ struct MyUVServerPeer : xx::UVServerPeer
 struct MyUVListener : xx::UVListener
 {
 	MyUVListener(xx::UV* uv, int port, int backlog) : xx::UVListener(uv, port, backlog) {}
-	virtual xx::UVServerPeer* OnCreatePeer() override
+	inline virtual xx::UVServerPeer* OnCreatePeer() override
 	{
 		return mempool().Create<MyUVServerPeer>(this);
 	}
@@ -38,7 +38,8 @@ int main()
 	{
 		xx::MemPool mp;
 		xx::UV_v uv(mp);
-		uv->CreateListener<MyUVListener>(12345);
+		auto rtv = uv->CreateListener<MyUVListener>(12345);
+		assert(rtv);
 		uv->Run();
 	}
 	return 0;
