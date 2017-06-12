@@ -11,7 +11,13 @@ namespace xx
 
 	inline UV::~UV()
 	{
-		// todo release container items
+		for (int i = (int)listeners->dataLen; i >= 0; --i)
+		{
+			listeners->At(i)->Release();	// todo: 传递 release 原因?
+		}
+		listeners->Clear();
+
+		// todo: more release
 	}
 
 	inline void UV::Run()
@@ -55,7 +61,11 @@ namespace xx
 
 	inline UVListener::~UVListener()
 	{
-		// todo release peers?
+		for (int i = (int)peers->dataLen; i >= 0; --i)
+		{
+			peers->At(i)->Release();	// todo: 传递 release 原因?
+		}
+		peers->Clear();
 
 		XX_LIST_SWAP_REMOVE(uv->listeners, this, uv_listeners_index);
 	}
@@ -76,42 +86,45 @@ namespace xx
 
 
 
-	inline UVServerPeer::UVServerPeer(UVListener* listener)
-		: uv(listener->uv)
-		, listener(listener)
-		, listener_peers_index(listener->peers->dataLen)
-		, bbReceive(mempool())
+	inline UVPeer::UVPeer()
+		: bbReceive(mempool())
 		, bbReceiveLeft(mempool())
 		, bbReceivePackage(mempool())
+		, sendBufs(mempool())
+		, writeBufs(mempool())
 	{
+	}
+
+
+	inline UVServerPeer::UVServerPeer(UVListener* listener)
+		: UVPeer()
+	{
+		this->uv = listener->uv;
 		if (uv_tcp_init(uv->loop, (uv_tcp_t*)&stream)) throw - 1;
-
 		listener->peers->Add(this);
-
 		if (uv_accept((uv_stream_t*)&listener->tcpServer, (uv_stream_t*)&stream))
 		{
 			uv_close((uv_handle_t*)&stream, CloseCB);
 			return;
 		}
-
 		if (uv_read_start((uv_stream_t*)&stream, AllocCB, ReadCB))
 		{
 			uv_close((uv_handle_t*)&stream, CloseCB);
 			return;
 		}
 	}
-
 	inline UVServerPeer::~UVServerPeer()
 	{
 		bbReceivePackage->buf = nullptr;
 		bbReceivePackage->bufLen = 0;
 		bbReceivePackage->dataLen = 0;
 		bbReceivePackage->offset = 0;
-
 		XX_LIST_SWAP_REMOVE(listener->peers, this, listener_peers_index);
 	}
 
-	inline void UVServerPeer::OnReceive()
+
+
+	inline void UVPeer::OnReceive()
 	{
 		// 先实现定长 2 字节包头的版本
 
@@ -215,7 +228,7 @@ namespace xx
 		}
 	}
 
-	void UVServerPeer::AllocCB(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf)
+	inline void UVPeer::AllocCB(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf)
 	{
 		auto self = container_of(handle, UVServerPeer, stream);
 		self->bbReceive->Reserve((uint32_t)suggested_size);
@@ -223,20 +236,19 @@ namespace xx
 		buf->len = self->bbReceive->bufLen;
 	}
 
-	void UVServerPeer::CloseCB(uv_handle_t* handle)
+	inline void UVPeer::CloseCB(uv_handle_t* handle)
 	{
 		auto self = container_of(handle, UVServerPeer, stream);
 		self->Release();
 	}
 
-	void UVServerPeer::ReadCB(uv_stream_t* handle, ssize_t nread, const uv_buf_t* buf)
+	inline void UVPeer::ReadCB(uv_stream_t* handle, ssize_t nread, const uv_buf_t* buf)
 	{
 		auto self = container_of(handle, UVServerPeer, stream);
 		if (nread < 0)
 		{
 			/* Error or EOF */
-			auto rtv = uv_shutdown(&self->sreq, handle, ShutdownCB);
-			assert(!rtv);
+			self->Disconnect();
 			return;
 		}
 		if (nread == 0)
@@ -250,73 +262,87 @@ namespace xx
 		self->OnReceive();
 	}
 
-	void UVServerPeer::ShutdownCB(uv_shutdown_t* req, int status)
+	inline void UVPeer::ShutdownCB(uv_shutdown_t* req, int status)
 	{
 		uv_close((uv_handle_t*)req->handle, CloseCB);
 	}
-	void UVServerPeer::WriteCB(uv_write_t *req, int status)
+	inline void UVPeer::SendCB(uv_write_t *req, int status)
 	{
 		auto self = container_of(req, UVServerPeer, writer);
-		self->writing = false;
+		self->sending = false;
 		if (status)
 		{
-			std::cout << "Write error " << uv_strerror(status) << std::endl;
-			self->Kill();
+			std::cout << "Send error " << uv_strerror(status) << std::endl;
+			self->Disconnect();
 		}
 		else
 		{
-			self->Write();  // 继续发, 直到发光
+			self->Send();  // 继续发, 直到发光	// todo: 如果返回错误, 存 last error?
 		}
 	}
-
-	void UVServerPeer::Write()
+	inline int UVPeer::Send()
 	{
-		if (writing) return;
-		auto len = sendBufs->PopTo(*writeBufs, 4096);
+		assert(!sending);
+		auto len = sendBufs->PopTo(*writeBufs, 4096);	// todo: 先写死. 这个值理论上讲可配
 		if (len)
 		{
-			uv_write(&writer, (uv_stream_t*)&socket, writeBufs->buf, (unsigned int)writeBufs->dataLen, WriteCB);
-			writing = true;
+			if (auto rtv = uv_write(&writer, (uv_stream_t*)&stream, writeBufs->buf, (unsigned int)writeBufs->dataLen, SendCB)) return rtv;
+			sending = true;
+			return 0;
+		}
+	}
+	inline int UVPeer::Send(BBuffer* const& bb)
+	{
+		//uv_is_writable check?
+		//if (sendBufs->BytesCount() + bb.dataLen > sendBufLimit) return false;
+		sendBufs->Push(bb);
+		if (!sending) return Send();
+		return 0;
+	}
+
+	inline void UVPeer::Disconnect(bool immediately)
+	{
+		// todo: save disconnect type ?
+		if (immediately														// 立即断开
+			|| !sending && ((uv_stream_t*)&stream)->write_queue_size == 0	// 没数据正在发
+			|| uv_shutdown(&sreq, (uv_stream_t*)&stream, ShutdownCB))		// shutdown 失败
+		{
+			if (!uv_is_closing((uv_handle_t*)&socket))
+			{
+				uv_close((uv_handle_t*)&socket, CloseCB);
+			}
 		}
 	}
 
-	void UVServerPeer::Kill() // todo: type ?
+
+
+	//inline UVServerPeer::~UVServerPeer()
+	//{
+	//	bbReceivePackage->buf = nullptr;
+	//	bbReceivePackage->bufLen = 0;
+	//	bbReceivePackage->dataLen = 0;
+	//	bbReceivePackage->offset = 0;
+	//	XX_LIST_SWAP_REMOVE(listener->peers, this, listener_peers_index);
+	//}
+
+	inline UVClientPeer::UVClientPeer(UV* uv)
 	{
-		//if (uvctx)
-		//{
-		//	uvctx->Remove(this);
-		//	uvctx = nullptr;
-		//	if (!uv_is_closing((uv_handle_t*)&socket))
-		//	{
-		//		uv_close((uv_handle_t*)&socket, [](uv_handle_t* handle)
-		//		{
-		//			auto self = container_of(handle, UVServerPeer, stream);
-		//			delete self;
-		//		});
-		//	}
-		//	//OnDisconnect(); // todo: type ?
-		//}
+		this->uv = uv;
+		// todo
 	}
 
-
-
-
-
-
-	inline UVClient::UVClient(UV* uv)
+	inline UVClientPeer::~UVClientPeer()
 	{
-
+		// todo
 	}
-	inline UVClient::~UVClient()
+	inline bool UVClientPeer::SetAddress(/*, addr */)
 	{
-
-	}
-	bool UVClient::SetAddress(/*, addr */)
-	{
+		// todo
 		return false;
 	}
-	bool UVClient::Connect()
+	inline bool UVClientPeer::Connect()
 	{
+		// todo
 		return false;
 	}
 
