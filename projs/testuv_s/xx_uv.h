@@ -17,12 +17,13 @@ namespace xx
 	struct UV : xx::MPObject									// 该类只能创建 1 份实例
 	{
 		xx::List_v<UVListener*> listeners;
-		xx::List_v<UVClientPeer*> clients;
+		xx::List_v<UVClientPeer*> clientPeers;
 		UV();
 		~UV();
 		void Run();
 		template<typename ListenerType> ListenerType* CreateListener(int port, int backlog = SOMAXCONN);
 		template<typename ClientType> ClientType* CreateClient();
+
 		// uv's
 		uv_loop_t* loop;
 	};
@@ -35,6 +36,7 @@ namespace xx
 		virtual UVServerPeer* OnCreatePeer() = 0;				// 重写以提供创建具体 peer 类型的函数
 		UVListener(UV* uv, int port, int backlog);
 		~UVListener();
+
 		// uv's
 		uv_tcp_t tcpServer;
 		static void OnConnect(uv_stream_t* server, int status);
@@ -59,6 +61,7 @@ namespace xx
 		int Send(BBuffer* const& bb);							// 发送 或 将数据压入待发送队列, 立即返回是否成功( 失败原因可能是待发数据过多 )
 		void Disconnect(bool immediately = true);				// 断开( 接着会 Release ). immediately 为否就走 shutdown 模式( 延迟杀, 能尽可能确保数据发出去 )
 
+		// uv's
 		uv_tcp_t stream;
 		uv_shutdown_t sreq;
 		uv_write_t writer;
@@ -81,11 +84,21 @@ namespace xx
 
 	struct UVClientPeer : UVPeer
 	{
-		uint32_t uv_clients_index;
+		uint32_t uv_clientPeers_index;
+		bool connecting = false;
+		bool connected = false;
+
 		UVClientPeer(UV* uv);
 		~UVClientPeer();
-		bool SetAddress(/* addr */);
-		bool Connect();
+		int SetAddress(char const* ip, int port);
+		int Connect();
+		virtual void OnConnect();
+		virtual void OnDisconnect(int status) = 0;
+
+		// uv's
+		sockaddr_in tarAddr;
+		uv_connect_t conn;
+		static void ConnectCB(uv_connect_t* conn, int status);
 	};
 
 	using UV_v = xx::MemHeaderBox<UV>;

@@ -4,7 +4,7 @@ namespace xx
 
 	inline UV::UV()
 		: listeners(mempool())
-		, clients(mempool())
+		, clientPeers(mempool())
 	{
 		loop = uv_default_loop();
 	}
@@ -316,16 +316,11 @@ namespace xx
 
 
 
-	//inline UVServerPeer::~UVServerPeer()
-	//{
-	//	bbReceivePackage->buf = nullptr;
-	//	bbReceivePackage->bufLen = 0;
-	//	bbReceivePackage->dataLen = 0;
-	//	bbReceivePackage->offset = 0;
-	//	XX_LIST_SWAP_REMOVE(listener->peers, this, listener_peers_index);
-	//}
+
+
 
 	inline UVClientPeer::UVClientPeer(UV* uv)
+		: UVPeer()
 	{
 		this->uv = uv;
 		// todo
@@ -333,17 +328,47 @@ namespace xx
 
 	inline UVClientPeer::~UVClientPeer()
 	{
-		// todo
-	}
-	inline bool UVClientPeer::SetAddress(/*, addr */)
-	{
-		// todo
-		return false;
-	}
-	inline bool UVClientPeer::Connect()
-	{
-		// todo
-		return false;
+		bbReceivePackage->buf = nullptr;
+		bbReceivePackage->bufLen = 0;
+		bbReceivePackage->dataLen = 0;
+		bbReceivePackage->offset = 0;
+		XX_LIST_SWAP_REMOVE(uv->clientPeers, this, uv_clientPeers_index);
 	}
 
+	inline int UVClientPeer::SetAddress(char const* ip, int port)
+	{
+		return uv_ip4_addr(ip, 12345, &tarAddr);
+	}
+
+	inline int UVClientPeer::Connect()
+	{
+		assert(!connecting);
+		connecting = true;
+		return uv_tcp_connect(&conn, &stream, (sockaddr*)&tarAddr, ConnectCB);
+	}
+
+	inline void UVClientPeer::OnConnect()
+	{
+		if (uv_read_start((uv_stream_t*)&stream, AllocCB, ReadCB))
+		{
+			uv_close((uv_handle_t*)&stream, CloseCB);
+			return;
+		}
+	}
+
+	inline void UVClientPeer::ConnectCB(uv_connect_t* conn, int status)
+	{
+		auto self = container_of(conn, UVClientPeer, conn);
+		self->connecting = false;
+		if (status < 0)
+		{
+			self->connected = false;
+			self->OnDisconnect(status);
+		}
+		else
+		{
+			self->connected = true;
+			self->OnConnect();
+		}
+	}
 }
