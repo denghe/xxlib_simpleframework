@@ -21,6 +21,11 @@ struct MyUVServerPeer : xx::UVServerPeer
 	inline virtual void OnReceivePackage(xx::BBuffer const& bb) override
 	{
 		Dump(&bb);
+		// 实现 echo 效果
+		auto sendBB = GetSendBB();
+		sendBB->WritePackageLength(bb.dataLen);
+		sendBB->WriteBuf(bb);
+		Send(sendBB);
 	}
 };
 

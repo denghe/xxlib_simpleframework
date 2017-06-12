@@ -11,13 +11,17 @@ namespace xx
 
 	inline UV::~UV()
 	{
-		for (int i = (int)listeners->dataLen; i >= 0; --i)
+		for (int i = (int)listeners->dataLen - 1; i >= 0; --i)
 		{
 			listeners->At(i)->Release();	// todo: 传递 release 原因?
 		}
 		listeners->Clear();
 
-		// todo: more release
+		for (int i = (int)clientPeers->dataLen - 1; i >= 0; --i)
+		{
+			clientPeers->At(i)->Release();	// todo: 传递 release 原因?
+		}
+		clientPeers->Clear();
 	}
 
 	inline void UV::Run()
@@ -61,7 +65,7 @@ namespace xx
 
 	inline UVListener::~UVListener()
 	{
-		for (int i = (int)peers->dataLen; i >= 0; --i)
+		for (int i = (int)peers->dataLen - 1; i >= 0; --i)
 		{
 			peers->At(i)->Release();	// todo: 传递 release 原因?
 		}

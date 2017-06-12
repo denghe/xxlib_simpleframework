@@ -138,23 +138,6 @@ namespace xx
 			EndRead();
 			return rtv;
 		}
-		// 一键爽 write 定长 字节长度 + root数据. 如果超过 长度最大计数, 将回滚 dataLen 并返回 false
-		template<typename SizeType = uint16_t, typename T>
-		bool WritePackage(T const& v)
-		{
-			auto bak_dataLen = dataLen;
-			Reserve(dataLen + sizeof(SizeType));
-			dataLen += sizeof(SizeType);
-			WriteRoot(v);
-			auto len = (SizeType)(dataLen - bak_dataLen - sizeof(SizeType));
-			if (dataLen - bak_dataLen > std::numeric_limits<SizeType>::max())
-			{
-				dataLen = bak_dataLen;
-				return false;
-			}
-			memcpy(buf + bak_dataLen, &len, sizeof(SizeType));
-			return true;
-		}
 
 		template<typename T>
 		void WritePtr(T* const& v)
@@ -285,6 +268,14 @@ namespace xx
 			std::memcpy(this->buf + this->dataLen, buf, len);
 			this->dataLen += len;
 		}
+		void WriteBuf(BBuffer const& bb)
+		{
+			WriteBuf(bb.buf, bb.dataLen);
+		}
+		void WriteBuf(BBuffer const* const& bb)
+		{
+			WriteBuf(bb->buf, bb->dataLen);
+		}
 
 		// 追加一个指定长度的空间, 返回当前 dataLen
 		uint32_t WriteSpace(uint32_t const& len)
@@ -314,6 +305,36 @@ namespace xx
 			this->dataLen = pos;
 			Write(vs...);
 			if (this->dataLen < bak) this->dataLen = bak;
+		}
+
+		// 一键爽 write 定长 字节长度 + root数据. 如果超过 长度最大计数, 将回滚 dataLen 并返回 false
+		template<typename SizeType = uint16_t, typename T>
+		bool WritePackage(T const& v)
+		{
+			auto bak_dataLen = dataLen;
+			Reserve(dataLen + sizeof(SizeType));
+			dataLen += sizeof(SizeType);
+			WriteRoot(v);
+			auto len = (SizeType)(dataLen - bak_dataLen - sizeof(SizeType));
+			if (dataLen - bak_dataLen > std::numeric_limits<SizeType>::max())
+			{
+				dataLen = bak_dataLen;
+				return false;
+			}
+			memcpy(buf + bak_dataLen, &len, sizeof(SizeType));
+			return true;
+		}
+
+		// 在已知数据长度的情况下, 直接以包头格式写入长度. 成功返回 true
+		template<typename SizeType = uint16_t, typename T>
+		bool WritePackageLength(T const& len)
+		{
+			if (len > std::numeric_limits<SizeType>::max()) return false;
+			Reserve(dataLen + sizeof(SizeType) + len);
+			auto tmp = (SizeType)len;
+			memcpy(buf + dataLen, &tmp, sizeof(SizeType));
+			dataLen += sizeof(SizeType);
+			return true;
 		}
 
 		/*************************************************************************/
