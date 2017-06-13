@@ -149,6 +149,8 @@ namespace xx
 	}
 	inline UVServerPeer::~UVServerPeer()
 	{
+		assert(!(uv_is_readable((uv_stream_t*)&stream) || uv_is_writable((uv_stream_t*)&stream)));
+
 		bbReceivePackage->buf = nullptr;
 		bbReceivePackage->bufLen = 0;
 		bbReceivePackage->dataLen = 0;
@@ -374,6 +376,8 @@ namespace xx
 
 	inline UVClientPeer::~UVClientPeer()
 	{
+		assert(!(uv_is_readable((uv_stream_t*)&stream) || uv_is_writable((uv_stream_t*)&stream)));
+
 		bbReceivePackage->buf = nullptr;
 		bbReceivePackage->bufLen = 0;
 		bbReceivePackage->dataLen = 0;
