@@ -44,7 +44,7 @@ int main()
 	{
 		xx::MemPool mp;
 		xx::UV_v uv(mp);
-		auto c = uv->CreateClient<MyClientPeer>();
+		auto c = uv->CreateClientPeer<MyClientPeer>();
 		c->SetAddress("127.0.0.1", 12345);
 		c->Connect();
 		uv->Run();

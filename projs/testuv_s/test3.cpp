@@ -1,4 +1,4 @@
-#include <xx_uv.h>
+ï»¿#include <xx_uv.h>
 #include <xx_helpers.h>
 
 struct MyUVServerPeer : xx::UVServerPeer
@@ -6,7 +6,7 @@ struct MyUVServerPeer : xx::UVServerPeer
 	MyUVServerPeer(xx::UVListener* listener) : xx::UVServerPeer(listener) {}
 	inline virtual void OnReceivePackage(xx::BBuffer& bb) override
 	{
-		// Ò»¶¨»áÊÕµ½Ò»¸ö uint64_t µÄÖµ, ¼Ó 1 ²¢·µ»Ø
+		// ä¸€å®šä¼šæ”¶åˆ°ä¸€ä¸ª uint64_t çš„å€¼, åŠ  1 å¹¶è¿”å›ž
 		uint64_t v = 0;
 		if (bb.Read(v)) 
 		{
@@ -28,13 +28,27 @@ struct MyUVListener : xx::UVListener
 	}
 };
 
+struct MyTimer : xx::UVTimer
+{
+	MyTimer(xx::UV* uv) : xx::UVTimer(uv) 
+	{
+		Start(0, 100);
+	}
+	inline virtual void OnFire() override
+	{
+		std::cout << ".";
+	}
+};
+
 int main()
 {
 	std::cout << "Server" << std::endl;
 	xx::MemPool mp;
 	xx::UV_v uv(mp);
-	auto rtv = uv->CreateListener<MyUVListener>(12345);
-	assert(rtv);
+	auto listener = uv->CreateListener<MyUVListener>(12345);
+	assert(listener);
+	auto timer = uv->CreateTimer<MyTimer>();
+	assert(timer);
 	uv->Run();
 	return 0;
 }
@@ -60,6 +74,26 @@ int main()
 
 
 
+//#include <time.h>
+//struct MyUV : xx::UV
+//{
+//	clock_t clockBegin;
+//	uint64_t counter = 0;
+//	
+//	MyUV() : xx::UV()
+//	{
+//		EnableIdle();
+//		clockBegin = clock();
+//	}
+//	virtual void OnIdle() override
+//	{
+//		++counter;
+//		if (counter % 65536 == 0)
+//		{
+//			std::cout << "counter = " << counter << ", elapsedMS = " << (clock() - clockBegin) << std::endl;
+//		}
+//	}
+//};
 
 
 
@@ -76,7 +110,7 @@ int main()
 //std::cout << "OnReceivePackage bb content = ";
 //xx::Dump(bb);
 
-//// ÊµÏÖ echo Ð§¹û
+//// å®žçŽ° echo æ•ˆæžœ
 //auto sendBB = GetSendBB();
 //sendBB->WritePackageLength(bb.dataLen);
 //sendBB->WriteBuf(bb);

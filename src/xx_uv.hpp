@@ -5,8 +5,10 @@ namespace xx
 	inline UV::UV()
 		: listeners(mempool())
 		, clientPeers(mempool())
+		, timers(mempool())
 	{
 		loop = uv_default_loop();
+		uv_idle_init(loop, &idler);
 	}
 
 	inline UV::~UV()
@@ -24,25 +26,53 @@ namespace xx
 		clientPeers->Clear();
 	}
 
+	inline int UV::EnableIdle()
+	{
+		return uv_idle_start(&idler, IdleCB);
+	}
+
+	inline void UV::DisableIdle()
+	{
+		uv_close((uv_handle_t*)&idler, nullptr);
+	}
+
+	inline void UV::OnIdle()
+	{
+	}
+
 	inline void UV::Run()
 	{
 		uv_run(loop, UV_RUN_DEFAULT);
 	}
 
 
-
 	template<typename ListenerType>
 	ListenerType* UV::CreateListener(int port, int backlog)
 	{
+		static_assert(std::is_base_of<UVListener, ListenerType>::value, "the ListenerType must inherit of UVListener.");
 		return mempool().Create<ListenerType>(this, port, backlog);
 	}
 
-	template<typename ClientType>
-	ClientType* UV::CreateClient()
+	template<typename ClientPeerType>
+	ClientPeerType* UV::CreateClientPeer()
 	{
-		return mempool().Create<ClientType>(this);
+		static_assert(std::is_base_of<UVClientPeer, ClientPeerType>::value, "the ClientPeerType must inherit of UVClientPeer.");
+		return mempool().Create<ClientPeerType>(this);
 	}
 
+	template<typename TimerType>
+	TimerType* UV::CreateTimer()
+	{
+		static_assert(std::is_base_of<UVTimer, TimerType>::value, "the TimerType must inherit of UVTimer.");
+		return mempool().Create<TimerType>(this);
+	}
+
+
+	inline void UV::IdleCB(uv_idle_t* handle)
+	{
+		auto self = container_of(handle, UV, idler);
+		self->OnIdle();
+	}
 
 
 
@@ -426,5 +456,44 @@ namespace xx
 			self->connected = false;
 			self->OnDisconnect();
 		}
+	}
+
+
+
+
+
+
+
+	inline UVTimer::UVTimer(UV* uv)
+		: uv(uv)
+	{
+		if (auto rtv = uv_timer_init(uv->loop, &timer_req)) throw rtv;
+		uv_timers_index = uv->timers->dataLen;
+	}
+	inline UVTimer::~UVTimer()
+	{
+		uv_close((uv_handle_t*)&timer_req, nullptr);
+		XX_LIST_SWAP_REMOVE(uv->timers, this, uv_timers_index);
+	}
+	inline int UVTimer::Start(uint64_t const& timeoutMS, uint64_t const& repeatIntervalMS)
+	{
+		return uv_timer_start(&timer_req, TimerCB, timeoutMS, repeatIntervalMS);
+	}
+	inline void UVTimer::SetRepeat(uint64_t const& repeatIntervalMS)
+	{
+		uv_timer_set_repeat(&timer_req, repeatIntervalMS);
+	}
+	inline int UVTimer::Again()
+	{
+		return uv_timer_again(&timer_req);
+	}
+	inline int UVTimer::Stop()
+	{
+		return uv_timer_stop(&timer_req);
+	}
+	inline void UVTimer::TimerCB(uv_timer_t* handle)
+	{
+		auto self = container_of(handle, UVTimer, timer_req);
+		self->OnFire();
 	}
 }
