@@ -34,6 +34,7 @@ XX_ENUM_OPERATOR_EXT
 XX_HAS_TYPEDEF
 XX_LIST_SWAP_REMOVE
 XX_HAS_FUNC
+XX_CORO_
 _countof
 container_of
 Sleep
@@ -127,6 +128,46 @@ TupleIndexOf
 #ifndef MAX
 #    define MAX( a, b )             ( (a) > (b) ? (a) : (b) )
 #endif
+
+
+
+
+/***********************************************************************************/
+// CORO_ BEGIN END YIELDTO GOTO
+/***********************************************************************************/
+// need define lineNumber var 
+
+#define XX_CORO_BEGIN()		\
+switch (lineNumber)			\
+{							\
+case 0:						\
+Label0:						\
+{
+
+#define XX_CORO_(n)			\
+}							\
+lineNumber = n;				\
+return 0;					\
+case n:						\
+Label##n:					\
+{
+
+#define XX_CORO_END()		\
+}							\
+}
+
+#define XX_CORO_YIELDTO(n)	\
+{							\
+	lineNumber = n;			\
+	return 0;				\
+}
+
+#define XX_CORO_GOTO(n)		\
+goto Label##n
+
+
+
+
 
 
 

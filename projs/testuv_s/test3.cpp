@@ -1,6 +1,8 @@
 ﻿#include <xx_uv.h>
 #include <xx_helpers.h>
 
+// todo: 模拟玩家上下文, 对于 UVServerPeer 会在断开时析构的特性做出处理. 初步考虑用双向指针与上下文类( 不会随着断线就删的 )建立关联, 在析构时从上下文清除并同步状态
+
 struct MyUVServerPeer : xx::UVServerPeer
 {
 	MyUVServerPeer(xx::UVListener* listener) : xx::UVServerPeer(listener) {}
