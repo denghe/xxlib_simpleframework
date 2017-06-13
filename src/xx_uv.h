@@ -54,7 +54,7 @@ namespace xx
 		bool sending = false;									// 发送操作标记. 当前设计中只同时发一段数据, 成功回调时才继续发下一段
 
 		virtual void OnReceive();								// 默认实现为读取包( 2 byte长度 + 数据 ), 并于凑齐完整包后 call OnReceivePackage
-		virtual void OnReceivePackage(BBuffer const& bb) = 0;	// OnReceive 凑齐一个包时将产生该调用
+		virtual void OnReceivePackage(BBuffer& bb) = 0;			// OnReceive 凑齐一个包时将产生该调用
 
 		BBuffer* GetSendBB(int capacity = 0);					// 获取或创建一个 send 用的 BBuffer( sendBufs->PopLastBB )
 		int Send(BBuffer* const& bb);							// 发送 或 将数据压入待发送队列, 立即返回是否成功( 失败原因可能是待发数据过多 )

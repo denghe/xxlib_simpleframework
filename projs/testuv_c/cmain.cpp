@@ -4,42 +4,52 @@
 
 struct MyClientPeer : xx::UVClientPeer
 {
+	xx::Stopwatch sw;
+	uint64_t v = 0;
 	MyClientPeer(xx::UV* uv) : xx::UVClientPeer(uv) {}
 	inline virtual void OnConnect() override
 	{
-		if (!connected)
+		assert(connected);
+		auto bb = GetSendBB();
+		bb->WritePackage(v);
+		Send(bb);
+	}
+	inline virtual void OnReceivePackage(xx::BBuffer& bb) override
+	{
+		uint64_t recv_v = 0;
+		if (bb.Read(recv_v) || v + 1 != recv_v)
 		{
-			std::cout << "OnConnect status = " << lastStatus << std::endl;
+			Disconnect();
 			return;
 		}
-		auto bb = GetSendBB();
-		bb->WritePackage("abcd");
-		bb->WritePackage("abcd");
-		Send(bb);
-
-		std::cout << "Send bb content = ";
-		xx::Dump(bb);
-	}
-	inline virtual void OnReceivePackage(xx::BBuffer const& bb) override
-	{
-		std::cout << "OnReceivePackage bb content = ";
-		xx::Dump(bb);
+		v += 2;
+		auto sendBB = GetSendBB();
+		sendBB->WritePackage(v);
+		Send(sendBB);
 	}
 	inline virtual void OnDisconnect() override
 	{
 		std::cout << "OnDisconnect status = " << lastStatus << std::endl;
 	}
+	~MyClientPeer()
+	{
+		std::cout << "v = " << v << ", sw = " << sw() << std::endl;
+	}
 };
 
 int main()
 {
-	Sleep(1000);
-	xx::MemPool mp;
-	xx::UV_v uv(mp);
-	auto c = uv->CreateClient<MyClientPeer>();
-	c->SetAddress("127.0.0.1", 12345);
-	c->Connect();
-	uv->Run();
+	std::cout << "Client" << std::endl;
+	Sleep(1);
+	{
+		xx::MemPool mp;
+		xx::UV_v uv(mp);
+		auto c = uv->CreateClient<MyClientPeer>();
+		c->SetAddress("127.0.0.1", 12345);
+		c->Connect();
+		uv->Run();
+	}
+	system("pause");
 }
 
 

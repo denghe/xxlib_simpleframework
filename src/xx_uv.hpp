@@ -132,7 +132,8 @@ namespace xx
 	{
 		// 先实现定长 2 字节包头的版本
 
-		// 如果 bbReceiveLeft 没数据, 则直接在 bbReceive 上进行包完整性判断. 如果内含完整包, 不断触发 OnReceivePackage 处理之, 最后将剩下的数据移到 bbReceiveLeft
+		// 如果 bbReceiveLeft 没数据, 则直接在 bbReceive 上进行包完整性判断. 
+		// 如果内含完整包, 不断触发 OnReceivePackage 处理之, 最后将剩下的数据移到 bbReceiveLeft
 		if (!bbReceiveLeft->dataLen)
 		{
 			// 开始处理
@@ -170,7 +171,8 @@ namespace xx
 				bbReceiveLeft->WriteBuf(bbReceive->buf + bbReceive->offset, bbReceive->dataLen - bbReceive->offset);
 			}
 		}
-		// 如果 bbReceiveLeft 有数据, 则试从 bbReceive 补齐一个包的数据触发 OnReceivePackage 后清数据, 跳到 bbReceiveLeft 没数据的流程
+		// 如果 bbReceiveLeft 有数据, 则试从 bbReceive 补齐一个包的数据
+		// 触发 OnReceivePackage 后清数据, 跳到 bbReceiveLeft 没数据的流程
 		else
 		{
 			bbReceiveLeft->offset = 0;
@@ -252,7 +254,7 @@ namespace xx
 		if (nread < 0)
 		{
 			/* Error or EOF */
-			self->Disconnect();
+			self->Disconnect(false);
 			return;
 		}
 		if (nread == 0)
@@ -278,7 +280,7 @@ namespace xx
 		if (status)
 		{
 			//std::cout << "Send error " << uv_strerror(status) << std::endl;
-			self->Disconnect();	// todo: 传原因?
+			self->Disconnect(false);	// todo: 传原因?
 		}
 		else
 		{
@@ -335,6 +337,7 @@ namespace xx
 		: UVPeer()
 	{
 		this->uv = uv;
+		uv_clientPeers_index = uv->clientPeers->dataLen;
 		if (uv_tcp_init(uv->loop, (uv_tcp_t*)&stream)) throw - 1;
 		uv->clientPeers->Add(this);
 	}
@@ -392,9 +395,19 @@ namespace xx
 			|| !sending && ((uv_stream_t*)&stream)->write_queue_size == 0	// 没数据正在发
 			|| uv_shutdown(&sreq, (uv_stream_t*)&stream, ClientShutdownCB))	// shutdown 失败
 		{
+			// todo: 发现当 server端杀掉时,  closing 正在发生
 			if (!uv_is_closing((uv_handle_t*)&socket))						// 非 正在关
 			{
 				uv_close((uv_handle_t*)&socket, ClientCloseCB);
+			}
+			else
+			{
+				closing = false;
+				if (connected)
+				{
+					connected = false;
+					OnDisconnect();
+				}
 			}
 		}
 	}
