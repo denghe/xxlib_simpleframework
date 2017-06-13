@@ -1,24 +1,22 @@
 #include "xx_uv.h"
-
-void Dump(xx::MPObject const* o)
-{
-	if (!o) return;
-	xx::String_v str(o->mempool());
-	o->ToString(*str);
-	std::cout << str->C_str() << std::endl;
-}
+#include "xx_helpers.h"
 
 struct MyUVServerPeer : xx::UVServerPeer
 {
 	MyUVServerPeer(xx::UVListener* listener) : xx::UVServerPeer(listener) {}
 	inline virtual void OnReceivePackage(xx::BBuffer const& bb) override
 	{
-		Dump(&bb);
+		std::cout << "OnReceivePackage bb content = ";
+		xx::Dump(bb);
+
 		// 实现 echo 效果
 		auto sendBB = GetSendBB();
 		sendBB->WritePackageLength(bb.dataLen);
 		sendBB->WriteBuf(bb);
 		Send(sendBB);
+
+		std::cout << "sendBB content = ";
+		xx::Dump(sendBB);
 	}
 };
 
@@ -33,13 +31,11 @@ struct MyUVListener : xx::UVListener
 
 int main()
 {
-	{
-		xx::MemPool mp;
-		xx::UV_v uv(mp);
-		auto rtv = uv->CreateListener<MyUVListener>(12345);
-		assert(rtv);
-		uv->Run();
-	}
+	xx::MemPool mp;
+	xx::UV_v uv(mp);
+	auto rtv = uv->CreateListener<MyUVListener>(12345);
+	assert(rtv);
+	uv->Run();
 	return 0;
 }
 

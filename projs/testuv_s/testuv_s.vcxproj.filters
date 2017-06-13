@@ -9,6 +9,7 @@
   <ItemGroup>
     <ClInclude Include="xx_uv.h" />
     <ClInclude Include="xx_uv.hpp" />
+    <ClInclude Include="xx_helpers.h" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="..\..\src\xx.natvis" />

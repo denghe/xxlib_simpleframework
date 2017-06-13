@@ -1,29 +1,29 @@
-#include <iostream>
-#include <chrono>
-#include <thread>
 #include "../testuv_s/xx_uv.h"
+#include "../testuv_s/xx_helpers.h"
+#include <windows.h>	// Sleep
 
 struct MyClientPeer : xx::UVClientPeer
 {
 	MyClientPeer(xx::UV* uv) : xx::UVClientPeer(uv) {}
 	inline virtual void OnConnect() override
 	{
-		std::cout << "OnConnect status = " << lastStatus << std::endl;
-		if (connected)
+		if (!connected)
 		{
-			auto bb = GetSendBB();
-			bb->WritePackage("abcd");
-			bb->WritePackage("abcd");
-			auto rtv = Send(bb);
-			if (rtv)
-			{
-				std::cout << "Send Error. rtv = " << rtv << std::endl;
-			}
+			std::cout << "OnConnect status = " << lastStatus << std::endl;
+			return;
 		}
+		auto bb = GetSendBB();
+		bb->WritePackage("abcd");
+		bb->WritePackage("abcd");
+		Send(bb);
+
+		std::cout << "Send bb content = ";
+		xx::Dump(bb);
 	}
-	inline virtual void OnReceivePackage(xx::BBuffer const & bb) override
+	inline virtual void OnReceivePackage(xx::BBuffer const& bb) override
 	{
-		std::cout << "OnReceivePackage bb dataLen = " << bb.dataLen << std::endl;
+		std::cout << "OnReceivePackage bb content = ";
+		xx::Dump(bb);
 	}
 	inline virtual void OnDisconnect() override
 	{
@@ -33,14 +33,12 @@ struct MyClientPeer : xx::UVClientPeer
 
 int main()
 {
-	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+	Sleep(1000);
 	xx::MemPool mp;
 	xx::UV_v uv(mp);
 	auto c = uv->CreateClient<MyClientPeer>();
-	assert(c);
 	c->SetAddress("127.0.0.1", 12345);
-	auto rtv = c->Connect();
-	assert(!rtv);
+	c->Connect();
 	uv->Run();
 }
 

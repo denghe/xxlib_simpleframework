@@ -4,7 +4,6 @@
 #include <xx_bbqueue.h>
 #include <assert.h>
 #include <memory>
-#include <iostream>
 
 namespace xx
 {
