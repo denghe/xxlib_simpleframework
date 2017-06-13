@@ -96,11 +96,6 @@
     <ClCompile Include="test3.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="xx_helpers.h" />
-    <ClInclude Include="xx_uv.h" />
-    <ClInclude Include="xx_uv.hpp" />
-  </ItemGroup>
-  <ItemGroup>
     <Natvis Include="..\..\src\xx.natvis" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

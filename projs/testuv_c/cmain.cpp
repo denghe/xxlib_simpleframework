@@ -1,5 +1,5 @@
-#include "../testuv_s/xx_uv.h"
-#include "../testuv_s/xx_helpers.h"
+#include <xx_uv.h>
+#include <xx_helpers.h>
 #include <windows.h>	// Sleep
 
 struct MyClientPeer : xx::UVClientPeer
