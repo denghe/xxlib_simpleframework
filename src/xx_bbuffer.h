@@ -55,6 +55,11 @@ namespace xx
 		BBuffer& operator=(BBuffer const&o) = delete;
 		explicit BBuffer(uint32_t capacity = 0) : BaseType(capacity) {}
 		BBuffer(BBuffer* bb) : BaseType(bb) {}
+		~BBuffer()
+		{
+			mempool().SafeRelease(ptrStore);
+			mempool().SafeRelease(idxStore);
+		}
 
 		/*************************************************************************/
 		// 路由为统一接口系列

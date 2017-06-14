@@ -249,21 +249,24 @@ namespace xx
 
 	inline void UVPeer::AllocCB(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf)
 	{
-		auto self = container_of(handle, UVServerPeer, stream);
-		self->bbReceive->Reserve((uint32_t)suggested_size);
+		auto self = container_of(handle, UVPeer, stream);
+		if (suggested_size > self->bbReceive->bufLen)
+		{
+			self->bbReceive->Reserve((uint32_t)suggested_size);
+		}
 		buf->base = self->bbReceive->buf;
 		buf->len = self->bbReceive->bufLen;
 	}
 
 	inline void UVPeer::CloseCB(uv_handle_t* handle)
 	{
-		auto self = container_of(handle, UVServerPeer, stream);
+		auto self = container_of(handle, UVPeer, stream);
 		self->Release();
 	}
 
 	inline void UVPeer::ReadCB(uv_stream_t* handle, ssize_t nread, const uv_buf_t* buf)
 	{
-		auto self = container_of(handle, UVServerPeer, stream);
+		auto self = container_of(handle, UVPeer, stream);
 		if (nread < 0)
 		{
 			/* Error or EOF */
@@ -283,17 +286,24 @@ namespace xx
 
 	inline void UVPeer::ShutdownCB(uv_shutdown_t* req, int status)
 	{
-		uv_close((uv_handle_t*)req->handle, CloseCB);
+		if (!uv_is_closing((uv_handle_t*)req->handle))
+		{
+			uv_close((uv_handle_t*)req->handle, CloseCB);
+		}
+		else
+		{
+			CloseCB((uv_handle_t*)req->handle);
+		}
 	}
 
 	inline void UVPeer::SendCB(uv_write_t *req, int status)
 	{
-		auto self = container_of(req, UVServerPeer, writer);
+		auto self = container_of(req, UVPeer, writer);
 		self->sending = false;
 		if (status)
 		{
 			//std::cout << "Send error " << uv_strerror(status) << std::endl;
-			self->Disconnect(false);	// todo: 传原因?
+			self->Disconnect();	// todo: 传原因?
 		}
 		else
 		{
@@ -304,10 +314,10 @@ namespace xx
 	inline int UVPeer::Send()
 	{
 		assert(!sending);
-		auto len = sendBufs->PopTo(*writeBufs, 4096);	// todo: 先写死. 这个值理论上讲可配
+		auto len = sendBufs->PopTo(*writeBufs, 65536);	// todo: 先写死. 这个值理论上讲可配
 		if (len)
 		{
-			if (auto rtv = uv_write(&writer, (uv_stream_t*)&stream, writeBufs->buf, (unsigned int)writeBufs->dataLen, SendCB)) return rtv;
+			if (auto rtv = uv_write(&writer, (uv_stream_t*)&stream, writeBufs->buf, writeBufs->dataLen, SendCB)) return rtv;
 			sending = true;
 		}
 		return 0;
@@ -322,6 +332,7 @@ namespace xx
 	{
 		//uv_is_writable check?
 		//if (sendBufs->BytesCount() + bb.dataLen > sendBufLimit) return false;
+
 		sendBufs->Push(bb);
 		if (!sending) return Send();
 		return 0;
@@ -356,7 +367,7 @@ namespace xx
 	{
 		sockaddr_in saddr;
 		int len = sizeof(saddr);
-		if (auto rtv = uv_tcp_getsockname(&stream, (sockaddr*)&saddr, &len))
+		if (auto rtv = uv_tcp_getpeername(&stream, (sockaddr*)&saddr, &len))
 		{
 			tmpStr->Clear();
 		}
@@ -501,7 +512,14 @@ namespace xx
 
 	inline void UVClientPeer::ClientShutdownCB(uv_shutdown_t* req, int status)
 	{
-		uv_close((uv_handle_t*)req->handle, ClientCloseCB);
+		if (!uv_is_closing((uv_handle_t*)req->handle))
+		{
+			uv_close((uv_handle_t*)req->handle, ClientCloseCB);
+		}
+		else
+		{
+			ClientCloseCB((uv_handle_t*)req->handle);
+		}
 	}
 
 	inline void UVClientPeer::ClientCloseCB(uv_handle_t* handle)

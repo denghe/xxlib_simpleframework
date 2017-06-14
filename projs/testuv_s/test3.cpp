@@ -7,7 +7,8 @@ struct MyUVServerPeer : xx::UVServerPeer
 {
 	MyUVServerPeer(xx::UVListener* listener) : xx::UVServerPeer(listener)
 	{
-		if (auto rtv = SetNoDelay(true)) throw rtv;
+		//auto rtv = SetNoDelay(true);
+		//assert(rtv);
 		std::cout << "\nAccepted client ip = " << GetPeerName().C_str() << std::endl;
 	}
 	~MyUVServerPeer()
@@ -15,18 +16,26 @@ struct MyUVServerPeer : xx::UVServerPeer
 		std::cout << "\nDisconnected client ip = " << tmpStr->C_str() << std::endl;
 	}
 
+	inline virtual void OnReceive() override
+	{
+		// 覆盖为 echo 模式, 废掉 OnReceivePackage
+		auto sendBB = GetSendBB();
+		sendBB->WriteBuf(this->bbReceive);
+		Send(sendBB);
+	}
+
 	inline virtual void OnReceivePackage(xx::BBuffer& bb) override
 	{
-		// 一定会收到一个 uint64_t 的值, 加 1 并返回
-		uint64_t v = 0;
-		if (bb.Read(v))
-		{
-			Disconnect();
-			return;
-		}
-		auto sendBB = GetSendBB();
-		sendBB->WritePackage(++v);
-		Send(sendBB);
+		//// 一定会收到一个 uint64_t 的值, 加 1 并返回
+		//uint64_t v = 0;
+		//if (bb.Read(v))
+		//{
+		//	Disconnect();
+		//	return;
+		//}
+		//auto sendBB = GetSendBB();
+		//sendBB->WritePackage(++v);
+		//Send(sendBB);
 	}
 };
 
@@ -36,14 +45,8 @@ struct MyUVListener : xx::UVListener
 	inline virtual xx::UVServerPeer* OnCreatePeer() override
 	{
 		auto peer = mempool().Create<MyUVServerPeer>(this);
-		if (peer)
-		{
-			if (auto rtv = peer->SetNoDelay(true))
-			{
-				assert(false);
-				// peer->Release() ?
-			}
-		}
+		//auto rtv = peer->SetNoDelay(true);
+		//assert(rtv);
 		return peer;
 	}
 };
@@ -52,19 +55,43 @@ struct MyTimer : xx::UVTimer
 {
 	MyTimer(xx::UV* uv) : xx::UVTimer(uv)
 	{
-		auto rtv = Start(0, 100);
+		auto rtv = Start(0, 1000);
 		assert(!rtv);
 	}
 	inline virtual void OnFire() override
 	{
 		std::cout << ".";
+		//for (auto& listener : *uv->listeners)
+		//{
+		//	for (auto& p : *listener->peers)
+		//	{
+		//		auto sendBB = p->GetSendBB();
+		//		sendBB->WritePackage(1);
+		//		p->Send(sendBB);
+		//	}
+		//}
 	}
 };
 
 int main()
 {
-	std::cout << "Server" << std::endl;
+	//std::cout << "+1 Server" << std::endl;
+	std::cout << "Echo Server" << std::endl;
 	xx::MemPool mp;
+
+	//xx::BBQueue_v bbq(mp);
+	//xx::List_v<uv_buf_t> bufs(mp);
+	//for (int i = 0; i < 99999; ++i)
+	//{
+	//	Sleep(1);
+	//	auto bb = bbq->PopLastBB();
+	//	bb->WritePackage(1);
+	//	bbq->Push(bb);
+	//	bbq->PopTo(*bufs, 4096);
+	//}
+
+
+
 	xx::UV_v uv(mp);
 	auto listener = uv->CreateListener<MyUVListener>(12345);
 	assert(listener);

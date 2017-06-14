@@ -23,34 +23,57 @@ namespace xx
 
 		explicit BBQueue(uint32_t capacity = 8)
 			: BaseType(capacity)
-		{}
+		{
+			mempool().CreateTo(ptrStore);
+			mempool().CreateTo(idxStore);
+		}
 
 		BBQueue(BBQueue &&o)
 			: BaseType((BaseType&&)o)
-		{}
+		{
+		}
 
 		~BBQueue()
 		{
 			Clear();
+			mempool().SafeRelease(ptrStore);
+			mempool().SafeRelease(idxStore);
+		}
+
+		// 公用, 移到新创建的 BB 中, Push 时移回.
+		Dict<void*, uint32_t>*						ptrStore = nullptr;
+		Dict<uint32_t, std::pair<void*, uint16_t>>*	idxStore = nullptr;
+
+		// 创建一个 BBuffer 返回( 将填充公用 ptrStore & idxStore )
+		BBuffer* CreateBB(uint32_t const& capacity = 0)
+		{
+			auto bb = mempool().Create<BBuffer>(capacity);
+			std::swap(bb->ptrStore, ptrStore);
+			std::swap(bb->idxStore, idxStore);
+			return bb;
 		}
 
 		// 如果队列尾包存在，且 非正在发送状态 且 引用计数为 1( 非群发 ), 就返回它用于继续填充. 否则用当前内存池新建一个返回.
 		BBuffer* PopLastBB(uint32_t const& capacity = 0)
 		{
-			if (this->Count() + numPopBufs > bufIndex && this->Last()->refCount() == 1)
+			if (Count() + numPopBufs > bufIndex && Last()->refCount() == 1)
 			{
-				numPushLen -= this->Last()->dataLen;
-				auto bb = this->Last();
-				this->PopLast();
+				numPushLen -= Last()->dataLen;
+				auto bb = Last();
+				PopLast();
+				std::swap(bb->ptrStore, ptrStore);
+				std::swap(bb->idxStore, idxStore);
 				return bb;
 			}
-			return mempool().Create<BBuffer>(capacity);
+			return CreateBB(capacity);
 		}
 
 		// 将待发数据 bb 压入队列托管( 将同步相应的统计数值, PopTo 后将自动 Release ), 之后不可以再继续操作 bb
 		void Push(BBuffer* const& bb)
 		{
 			numPushLen += bb->dataLen;
+			std::swap(bb->ptrStore, ptrStore);
+			std::swap(bb->idxStore, idxStore);
 			this->BaseType::Push(bb);
 		}
 
@@ -67,20 +90,20 @@ namespace xx
 			{
 				for (uint32_t i = 0; i < bufIndex - numPopBufs; i++)
 				{
-					this->Top()->Release();
-					this->Pop();
+					Top()->Release();
+					Pop();
 				}
 				numPopBufs = bufIndex;
 			}
 
-			auto maxIdx = MIN(maxBufsCount, this->Count());		// 听说批量发送指令一般只支持最多 64 段数据
+			auto maxIdx = MIN(maxBufsCount, Count());		// 听说批量发送指令一般只支持最多 64 段数据
 			auto idx = uint32_t(bufIndex - numPopBufs);
 			if (idx >= maxIdx) return 0;						// 没有数据要发
 
 			auto bak_len = len;
 			while (len > 0 && idx < maxIdx)
 			{
-				auto& bb = this->At(idx);
+				auto& bb = At(idx);
 				auto left = bb->dataLen - byteOffset;
 				if (left <= len)
 				{
@@ -104,10 +127,10 @@ namespace xx
 		// 清光所有数据, 释放所有 bb
 		void Clear()
 		{
-			while (!this->Empty())
+			while (!Empty())
 			{
-				this->Top()->Release();
-				this->Pop();
+				Top()->Release();
+				Pop();
 			}
 			numPopBufs = 0;
 			numPopLen = 0;

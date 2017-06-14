@@ -15,8 +15,8 @@ struct MyClientPeer : xx::UVClientPeer
 	inline virtual void OnConnect() override
 	{
 		assert(connected);
-		auto rtv = SetNoDelay(true);
-		assert(!rtv);
+		//auto rtv = SetNoDelay(true);
+		//assert(!rtv);
 		auto bb = GetSendBB();
 		bb->WritePackage(v);
 		Send(bb);
@@ -49,7 +49,7 @@ struct MyTimer : xx::UVTimer
 {
 	MyTimer(xx::UV* uv) : xx::UVTimer(uv)
 	{
-		auto rtv = Start(0, 100);
+		auto rtv = Start(0, 1000);
 		assert(!rtv);
 	}
 	inline virtual void OnFire() override
@@ -64,18 +64,26 @@ int main()
 	Sleep(1);
 	{
 		xx::MemPool mp;
-		xx::UV_v uv(mp);
-		auto c = uv->CreateClientPeer<MyClientPeer>();
-		assert(c);
-		auto timer = uv->CreateTimer<MyTimer>();
-		assert(timer);
-		auto rtv = c->SetAddress("10.1.1.98", 12345);
-		assert(!rtv);
-		rtv = c->SetNoDelay(true);
-		assert(!rtv);
-		rtv = c->Connect();
-		assert(!rtv);
-		uv->Run();
+		{
+			xx::UV_v uv(mp);
+
+			auto timer = uv->CreateTimer<MyTimer>();
+			assert(timer);
+
+			for (int i = 0; i < 1; ++i)
+			{
+				auto c = uv->CreateClientPeer<MyClientPeer>();
+				assert(c);
+				auto rtv = c->SetAddress("127.0.0.1", 12345);
+				//assert(!rtv);
+				//rtv = c->SetNoDelay(true);
+				assert(!rtv);
+				rtv = c->Connect();
+				assert(!rtv);
+			}
+			uv->Run();
+		}
+		system("pause");
 	}
 	system("pause");
 }

@@ -34,12 +34,18 @@ namespace xx
 		struct PtrStack
 		{
 			void* header = nullptr;
+#ifndef NDEBUG
+			uint32_t count = 0;
+#endif
 
 			inline bool TryPop(void*& output)
 			{
 				if (!header) return false;
 				output = header;
 				header = *(void**)((char*)header + sizeof(MemHeader_VersionNumber));
+#ifndef NDEBUG
+				--count;
+#endif
 				return true;
 			}
 
@@ -47,6 +53,9 @@ namespace xx
 			{
 				*(void**)((char*)v + sizeof(MemHeader_VersionNumber)) = header;
 				header = v;
+#ifndef NDEBUG
+				++count;
+#endif
 			}
 		};
 
