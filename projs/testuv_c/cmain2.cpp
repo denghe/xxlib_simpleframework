@@ -47,10 +47,7 @@ struct MyClientPeer : xx::UVClientPeer
 
 struct MyTimer : xx::UVTimer
 {
-	MyTimer(xx::UV* uv) : xx::UVTimer(uv)
-	{
-		Start(0, 100);
-	}
+	MyTimer(xx::UV* uv) : xx::UVTimer(uv, 0, 100) {}
 	inline virtual void OnFire() override
 	{
 		std::cout << ".";

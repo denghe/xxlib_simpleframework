@@ -35,10 +35,7 @@ struct MyUVListener : xx::UVListener
 
 struct MyTimer : xx::UVTimer
 {
-	MyTimer(xx::UV* uv) : xx::UVTimer(uv) 
-	{
-		if (auto rtv = Start(0, 100)) throw rtv;
-	}
+	MyTimer(xx::UV* uv) : xx::UVTimer(uv, 0, 100) {}
 	inline virtual void OnFire() override
 	{
 		std::cout << ".";
