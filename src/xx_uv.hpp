@@ -379,6 +379,7 @@ namespace xx
 		: UVPeer()
 	{
 		this->uv = listener->uv;
+		this->listener = listener;
 		if (auto rtv = uv_tcp_init(uv->loop, (uv_tcp_t*)&stream))
 		{
 			throw rtv;

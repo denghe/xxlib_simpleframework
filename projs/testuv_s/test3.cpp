@@ -5,16 +5,21 @@
 
 struct MyUVServerPeer : xx::UVServerPeer
 {
-	MyUVServerPeer(xx::UVListener* listener) : xx::UVServerPeer(listener) 
+	MyUVServerPeer(xx::UVListener* listener) : xx::UVServerPeer(listener)
 	{
 		if (auto rtv = SetNoDelay(true)) throw rtv;
-		std::cout << "client ip = " << GetPeerName().C_str() << std::endl;
+		std::cout << "\nAccepted client ip = " << GetPeerName().C_str() << std::endl;
 	}
+	~MyUVServerPeer()
+	{
+		std::cout << "\nDisconnected client ip = " << tmpStr->C_str() << std::endl;
+	}
+
 	inline virtual void OnReceivePackage(xx::BBuffer& bb) override
 	{
 		// 一定会收到一个 uint64_t 的值, 加 1 并返回
 		uint64_t v = 0;
-		if (bb.Read(v)) 
+		if (bb.Read(v))
 		{
 			Disconnect();
 			return;

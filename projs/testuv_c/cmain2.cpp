@@ -69,7 +69,7 @@ int main()
 		assert(c);
 		auto timer = uv->CreateTimer<MyTimer>();
 		assert(timer);
-		auto rtv = c->SetAddress("127.0.0.1", 12345);
+		auto rtv = c->SetAddress("10.1.1.98", 12345);
 		assert(!rtv);
 		rtv = c->SetNoDelay(true);
 		assert(!rtv);
