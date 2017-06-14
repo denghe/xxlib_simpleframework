@@ -5,7 +5,10 @@
 
 struct MyUVServerPeer : xx::UVServerPeer
 {
-	MyUVServerPeer(xx::UVListener* listener) : xx::UVServerPeer(listener) {}
+	MyUVServerPeer(xx::UVListener* listener) : xx::UVServerPeer(listener) 
+	{
+		if (auto rtv = SetNoDelay(true)) throw rtv;
+	}
 	inline virtual void OnReceivePackage(xx::BBuffer& bb) override
 	{
 		// 一定会收到一个 uint64_t 的值, 加 1 并返回
@@ -34,7 +37,7 @@ struct MyTimer : xx::UVTimer
 {
 	MyTimer(xx::UV* uv) : xx::UVTimer(uv) 
 	{
-		Start(0, 100);
+		if (auto rtv = Start(0, 100)) throw rtv;
 	}
 	inline virtual void OnFire() override
 	{

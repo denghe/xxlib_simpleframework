@@ -15,6 +15,8 @@ struct MyClientPeer : xx::UVClientPeer
 	inline virtual void OnConnect() override
 	{
 		assert(connected);
+		auto rtv = SetNoDelay(true);
+		assert(!rtv);
 		auto bb = GetSendBB();
 		bb->WritePackage(v);
 		Send(bb);

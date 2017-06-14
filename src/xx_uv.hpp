@@ -83,12 +83,23 @@ namespace xx
 		, uv_listeners_index(uv->listeners->dataLen)
 		, peers(mempool())
 	{
-		struct sockaddr_in addr;
+		sockaddr_in addr;
 		uv_ip4_addr("0.0.0.0", port, &addr);
 
-		if (uv_tcp_init(uv->loop, &tcpServer)) throw - 1;
-		if (uv_tcp_bind(&tcpServer, (const struct sockaddr*) &addr, 0)) throw - 2;
-		if (uv_listen((uv_stream_t*)&tcpServer, backlog, OnConnect)) throw - 3;
+		if (auto rtv = uv_tcp_init(uv->loop, &tcpServer))
+		{
+			throw rtv;
+		}
+		if (auto rtv = uv_tcp_bind(&tcpServer, (sockaddr const*) &addr, 0))
+		{
+			uv_close((uv_handle_t*)&tcpServer, nullptr);	// rollback
+			throw rtv;
+		}
+		if (auto rtv = uv_listen((uv_stream_t*)&tcpServer, backlog, OnConnect))
+		{
+			uv_close((uv_handle_t*)&tcpServer, nullptr);	// rollback
+			throw rtv;
+		}
 
 		uv->listeners->Add(this);
 	}
@@ -134,17 +145,20 @@ namespace xx
 		: UVPeer()
 	{
 		this->uv = listener->uv;
-		if (uv_tcp_init(uv->loop, (uv_tcp_t*)&stream)) throw - 1;
-		listener->peers->Add(this);
-		if (uv_accept((uv_stream_t*)&listener->tcpServer, (uv_stream_t*)&stream))
+		if (auto rtv = uv_tcp_init(uv->loop, (uv_tcp_t*)&stream))
 		{
-			uv_close((uv_handle_t*)&stream, CloseCB);
-			return;
+			throw rtv;
 		}
-		if (uv_read_start((uv_stream_t*)&stream, AllocCB, ReadCB))
+		listener->peers->Add(this);
+		if (auto rtv = uv_accept((uv_stream_t*)&listener->tcpServer, (uv_stream_t*)&stream))
 		{
-			uv_close((uv_handle_t*)&stream, CloseCB);
-			return;
+			uv_close((uv_handle_t*)&stream, nullptr);	// rollback
+			throw rtv;
+		}
+		if (auto rtv = uv_read_start((uv_stream_t*)&stream, AllocCB, ReadCB))
+		{
+			uv_close((uv_handle_t*)&stream, nullptr);	// rollback
+			throw rtv;
 		}
 	}
 	inline UVServerPeer::~UVServerPeer()
@@ -332,7 +346,7 @@ namespace xx
 		return 0;
 	}
 
-	inline BBuffer* UVPeer::GetSendBB(int capacity)
+	inline BBuffer* UVPeer::GetSendBB(int const& capacity)
 	{
 		return sendBufs->PopLastBB(capacity);
 	}
@@ -346,19 +360,30 @@ namespace xx
 		return 0;
 	}
 
-	inline void UVPeer::Disconnect(bool immediately)
+	inline void UVPeer::Disconnect(bool const& immediately)
 	{
 		// todo: save disconnect type ?
 		if (immediately														// 立即断开
 			|| !sending && ((uv_stream_t*)&stream)->write_queue_size == 0	// 没数据正在发
 			|| uv_shutdown(&sreq, (uv_stream_t*)&stream, ShutdownCB))		// shutdown 失败
 		{
-			if (!uv_is_closing((uv_handle_t*)&socket))						// 非 正在关
+			if (!uv_is_closing((uv_handle_t*)&stream))						// 非 正在关
 			{
-				uv_close((uv_handle_t*)&socket, CloseCB);
+				uv_close((uv_handle_t*)&stream, CloseCB);
 			}
 		}
 	}
+
+	int UVPeer::SetNoDelay(bool const& enable)
+	{
+		return uv_tcp_nodelay(&stream, enable ? 1 : 0);
+	}
+
+	int UVPeer::SetKeepAlive(bool const& enable, uint32_t const& delay)
+	{
+		return uv_tcp_keepalive(&stream, enable ? 1 : 0, delay);
+	}
+
 
 
 
@@ -370,7 +395,10 @@ namespace xx
 	{
 		this->uv = uv;
 		uv_clientPeers_index = uv->clientPeers->dataLen;
-		if (uv_tcp_init(uv->loop, (uv_tcp_t*)&stream)) throw - 1;
+		if (auto rtv = uv_tcp_init(uv->loop, (uv_tcp_t*)&stream))
+		{
+			throw rtv;
+		}
 		uv->clientPeers->Add(this);
 	}
 
@@ -420,7 +448,7 @@ namespace xx
 		}
 	}
 
-	inline void UVClientPeer::Disconnect(bool immediately)
+	inline void UVClientPeer::Disconnect(bool const& immediately)
 	{
 		closing = true;
 
@@ -430,9 +458,9 @@ namespace xx
 			|| uv_shutdown(&sreq, (uv_stream_t*)&stream, ClientShutdownCB))	// shutdown 失败
 		{
 			// todo: 发现当 server端杀掉时,  closing 正在发生
-			if (!uv_is_closing((uv_handle_t*)&socket))						// 非 正在关
+			if (!uv_is_closing((uv_handle_t*)&stream))						// 非 正在关
 			{
-				uv_close((uv_handle_t*)&socket, ClientCloseCB);
+				uv_close((uv_handle_t*)&stream, ClientCloseCB);
 			}
 			else
 			{
@@ -471,8 +499,20 @@ namespace xx
 	inline UVTimer::UVTimer(UV* uv)
 		: uv(uv)
 	{
-		if (auto rtv = uv_timer_init(uv->loop, &timer_req)) throw rtv;
+		if (auto rtv = uv_timer_init(uv->loop, &timer_req))
+		{
+			throw rtv;
+		}
 		uv_timers_index = uv->timers->dataLen;
+	}
+	inline UVTimer::UVTimer(UV* uv, uint64_t const& timeoutMS, uint64_t const& repeatIntervalMS)
+		: UVTimer(uv)
+	{
+		if (auto rtv = Start(timeoutMS, repeatIntervalMS))
+		{
+			uv_close((uv_handle_t*)&timer_req, nullptr);	// rollback
+			throw rtv;
+		}
 	}
 	inline UVTimer::~UVTimer()
 	{
