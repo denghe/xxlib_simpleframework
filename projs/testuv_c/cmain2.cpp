@@ -41,7 +41,10 @@ struct MyClientPeer : xx::UVClientPeer
 	}
 	~MyClientPeer()
 	{
-		std::cout << "v = " << v << ", sw = " << sw() << std::endl;
+		auto elapsedMS = sw();
+		auto elapsedSec = (double)elapsedMS / 1000;
+		std::cout << "v = " << v << ", sw = " << elapsedMS << std::endl;
+		std::cout << "qps = " << ((double)v / elapsedSec / 2) << std::endl;
 	}
 };
 
