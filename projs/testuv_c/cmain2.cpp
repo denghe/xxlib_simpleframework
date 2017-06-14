@@ -47,7 +47,11 @@ struct MyClientPeer : xx::UVClientPeer
 
 struct MyTimer : xx::UVTimer
 {
-	MyTimer(xx::UV* uv) : xx::UVTimer(uv, 0, 100) {}
+	MyTimer(xx::UV* uv) : xx::UVTimer(uv)
+	{
+		auto rtv = Start(0, 100);
+		assert(!rtv);
+	}
 	inline virtual void OnFire() override
 	{
 		std::cout << ".";
@@ -65,8 +69,12 @@ int main()
 		assert(c);
 		auto timer = uv->CreateTimer<MyTimer>();
 		assert(timer);
-		c->SetAddress("127.0.0.1", 12345);
-		c->Connect();
+		auto rtv = c->SetAddress("127.0.0.1", 12345);
+		assert(!rtv);
+		rtv = c->SetNoDelay(true);
+		assert(!rtv);
+		rtv = c->Connect();
+		assert(!rtv);
 		uv->Run();
 	}
 	system("pause");

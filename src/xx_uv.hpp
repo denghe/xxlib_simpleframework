@@ -90,7 +90,7 @@ namespace xx
 		{
 			throw rtv;
 		}
-		if (auto rtv = uv_tcp_bind(&tcpServer, (sockaddr const*) &addr, 0))
+		if (auto rtv = uv_tcp_bind(&tcpServer, (sockaddr const*)&addr, 0))
 		{
 			uv_close((uv_handle_t*)&tcpServer, nullptr);	// rollback
 			throw rtv;
@@ -137,42 +137,9 @@ namespace xx
 		, bbReceivePackage(mempool())
 		, sendBufs(mempool())
 		, writeBufs(mempool())
+		, tmpStr(mempool())
 	{
 	}
-
-
-	inline UVServerPeer::UVServerPeer(UVListener* listener)
-		: UVPeer()
-	{
-		this->uv = listener->uv;
-		if (auto rtv = uv_tcp_init(uv->loop, (uv_tcp_t*)&stream))
-		{
-			throw rtv;
-		}
-		listener->peers->Add(this);
-		if (auto rtv = uv_accept((uv_stream_t*)&listener->tcpServer, (uv_stream_t*)&stream))
-		{
-			uv_close((uv_handle_t*)&stream, nullptr);	// rollback
-			throw rtv;
-		}
-		if (auto rtv = uv_read_start((uv_stream_t*)&stream, AllocCB, ReadCB))
-		{
-			uv_close((uv_handle_t*)&stream, nullptr);	// rollback
-			throw rtv;
-		}
-	}
-	inline UVServerPeer::~UVServerPeer()
-	{
-		assert(!(uv_is_readable((uv_stream_t*)&stream) || uv_is_writable((uv_stream_t*)&stream)));
-
-		bbReceivePackage->buf = nullptr;
-		bbReceivePackage->bufLen = 0;
-		bbReceivePackage->dataLen = 0;
-		bbReceivePackage->offset = 0;
-		XX_LIST_SWAP_REMOVE(listener->peers, this, listener_peers_index);
-	}
-
-
 
 	inline void UVPeer::OnReceive()
 	{
@@ -385,6 +352,63 @@ namespace xx
 	}
 
 
+	String& UVPeer::GetPeerName()
+	{
+		sockaddr_in saddr;
+		int len = sizeof(saddr);
+		if (auto rtv = uv_tcp_getsockname(&stream, (sockaddr*)&saddr, &len))
+		{
+			tmpStr->Clear();
+		}
+		else
+		{
+			tmpStr->Reserve(16);
+			rtv = uv_inet_ntop(AF_INET, &saddr.sin_addr, tmpStr->buf, tmpStr->bufLen);
+			tmpStr->dataLen = (uint32_t)strlen(tmpStr->buf);
+			tmpStr->Append(':', ntohs(saddr.sin_port));
+		}
+		return *tmpStr;
+	}
+
+
+
+
+
+
+	inline UVServerPeer::UVServerPeer(UVListener* listener)
+		: UVPeer()
+	{
+		this->uv = listener->uv;
+		if (auto rtv = uv_tcp_init(uv->loop, (uv_tcp_t*)&stream))
+		{
+			throw rtv;
+		}
+		listener_peers_index = listener->peers->dataLen;
+		if (auto rtv = uv_accept((uv_stream_t*)&listener->tcpServer, (uv_stream_t*)&stream))
+		{
+			uv_close((uv_handle_t*)&stream, nullptr);	// rollback
+			throw rtv;
+		}
+		if (auto rtv = uv_read_start((uv_stream_t*)&stream, AllocCB, ReadCB))
+		{
+			uv_close((uv_handle_t*)&stream, nullptr);	// rollback
+			throw rtv;
+		}
+		listener->peers->Add(this);
+	}
+	inline UVServerPeer::~UVServerPeer()
+	{
+		assert(!(uv_is_readable((uv_stream_t*)&stream) || uv_is_writable((uv_stream_t*)&stream)));
+
+		bbReceivePackage->buf = nullptr;
+		bbReceivePackage->bufLen = 0;
+		bbReceivePackage->dataLen = 0;
+		bbReceivePackage->offset = 0;
+		XX_LIST_SWAP_REMOVE(listener->peers, this, listener_peers_index);
+	}
+
+
+
 
 
 
@@ -499,20 +523,12 @@ namespace xx
 	inline UVTimer::UVTimer(UV* uv)
 		: uv(uv)
 	{
+		uv_timers_index = uv->timers->dataLen;
 		if (auto rtv = uv_timer_init(uv->loop, &timer_req))
 		{
 			throw rtv;
 		}
-		uv_timers_index = uv->timers->dataLen;
-	}
-	inline UVTimer::UVTimer(UV* uv, uint64_t const& timeoutMS, uint64_t const& repeatIntervalMS)
-		: UVTimer(uv)
-	{
-		if (auto rtv = Start(timeoutMS, repeatIntervalMS))
-		{
-			uv_close((uv_handle_t*)&timer_req, nullptr);	// rollback
-			throw rtv;
-		}
+		uv->timers->Add(this);
 	}
 	inline UVTimer::~UVTimer()
 	{

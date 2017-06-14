@@ -8,6 +8,7 @@ struct MyUVServerPeer : xx::UVServerPeer
 	MyUVServerPeer(xx::UVListener* listener) : xx::UVServerPeer(listener) 
 	{
 		if (auto rtv = SetNoDelay(true)) throw rtv;
+		std::cout << "client ip = " << GetPeerName().C_str() << std::endl;
 	}
 	inline virtual void OnReceivePackage(xx::BBuffer& bb) override
 	{
@@ -29,13 +30,26 @@ struct MyUVListener : xx::UVListener
 	MyUVListener(xx::UV* uv, int port, int backlog) : xx::UVListener(uv, port, backlog) {}
 	inline virtual xx::UVServerPeer* OnCreatePeer() override
 	{
-		return mempool().Create<MyUVServerPeer>(this);
+		auto peer = mempool().Create<MyUVServerPeer>(this);
+		if (peer)
+		{
+			if (auto rtv = peer->SetNoDelay(true))
+			{
+				assert(false);
+				// peer->Release() ?
+			}
+		}
+		return peer;
 	}
 };
 
 struct MyTimer : xx::UVTimer
 {
-	MyTimer(xx::UV* uv) : xx::UVTimer(uv, 0, 100) {}
+	MyTimer(xx::UV* uv) : xx::UVTimer(uv)
+	{
+		auto rtv = Start(0, 100);
+		assert(!rtv);
+	}
 	inline virtual void OnFire() override
 	{
 		std::cout << ".";

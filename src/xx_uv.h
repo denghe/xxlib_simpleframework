@@ -61,6 +61,7 @@ namespace xx
 		BBuffer_v bbReceivePackage;									// for OnReceivePackage 传参, 引用 bbReceive 或 bbReceiveLeft 的内存
 		BBQueue_v sendBufs;											// 待发送数据队列. 所有 Send 操作都是将数据压入这里, 再取适当长度的一段来发送
 		List_v<uv_buf_t> writeBufs;									// 复用的 uv 写操作 多段数据参数
+		String_v tmpStr;
 		bool sending = false;										// 发送操作标记. 当前设计中只同时发一段数据, 成功回调时才继续发下一段
 
 		virtual void OnReceive();									// 默认实现为读取包( 2 byte长度 + 数据 ), 并于凑齐完整包后 call OnReceivePackage
@@ -72,6 +73,7 @@ namespace xx
 
 		int SetNoDelay(bool const& enable);
 		int SetKeepAlive(bool const& enable, uint32_t const& delay);
+		String& GetPeerName();
 
 		int Send();													// 内部函数, 开始发送 sendBufs 里的东西
 
@@ -127,7 +129,6 @@ namespace xx
 		uint32_t uv_timers_index;
 
 		UVTimer(UV* uv);
-		UVTimer(UV* uv, uint64_t const& timeoutMS, uint64_t const& repeatIntervalMS);
 		~UVTimer();
 
 		virtual void OnFire() = 0;
