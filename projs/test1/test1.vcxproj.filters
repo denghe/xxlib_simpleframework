@@ -73,6 +73,12 @@
       <Filter>xx</Filter>
     </ClInclude>
     <ClInclude Include="PKG_class.h" />
+    <ClInclude Include="..\..\src\xx_uv.h">
+      <Filter>xx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\xx_uv.hpp">
+      <Filter>xx</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="..\..\src\xx.natvis">
