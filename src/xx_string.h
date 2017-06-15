@@ -389,8 +389,8 @@ namespace xx
 	}
 	
 	
-	template <typename T, bool autoRelease>
-	void Links<T, autoRelease>::ToString(String &str) const
+	template <typename T>
+	void Links<T>::ToString(String &str) const
 	{
 		if (tsFlags())
 		{

@@ -97,7 +97,8 @@ namespace xx
 			if (!ptrstacks[idx].TryPop(p)) p = std::malloc(siz);
 
 			auto h = (MemHeader_VersionNumber*)p;								// 指到内存头
-			h->versionNumber = (++versionNumber) | ((uint64_t)idx << 56);		// 将数组下标附在最高位上, Free 要用
+			h->versionNumber = ++versionNumber;
+			h->ptrStackIndex() = (uint8_t)idx;									// 将数组下标附在最高位上, Free 要用
 			return h + 1;														// 指向 header 后面的区域返回
 		}
 
@@ -105,8 +106,8 @@ namespace xx
 		{
 			if (!p) return;
 			auto h = (MemHeader_VersionNumber*)p - 1;							// 指到内存头
-			assert(h->versionNumber && h->mpIndex < ptrstacks.size());				// 理论上讲 free 的时候其版本号不应该是 0. 否则就涉嫌重复 Free
-			ptrstacks[h->mpIndex].Push(h);											// 入池
+			assert(h->versionNumber && h->ptrStackIndex() < ptrstacks.size());	// 理论上讲 free 的时候其版本号不应该是 0. 否则就涉嫌重复 Free
+			ptrstacks[h->ptrStackIndex()].Push(h);								// 入池
 			h->versionNumber = 0;												// 清空版本号
 		}
 
@@ -121,8 +122,8 @@ namespace xx
 			if (!p) return Alloc(newSize);
 
 			auto h = (MemHeader_VersionNumber*)p - 1;
-			assert(h->versionNumber && h->mpIndex < ptrstacks.size());
-			auto oldSize = (size_t(1) << h->mpIndex) - sizeof(MemHeader_VersionNumber);
+			assert(h->versionNumber && h->ptrStackIndex() < ptrstacks.size());
+			auto oldSize = (size_t(1) << h->ptrStackIndex()) - sizeof(MemHeader_VersionNumber);
 			if (oldSize >= newSize) return p;
 
 			auto np = Alloc(newSize);
@@ -180,7 +181,7 @@ namespace xx
 			p->~MPObject();
 
 			auto h = (MemHeader_MPObject*)p - 1;								// 指到内存头
-			ptrstacks[h->mpIndex].Push(h);										// 入池
+			ptrstacks[h->ptrStackIndex()].Push(h);									// 入池
 			h->versionNumber = 0;												// 清空版本号
 		}
 

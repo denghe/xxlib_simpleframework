@@ -4,12 +4,10 @@
 
 namespace xx
 {
-	// 经由 Dict 简化而来的双向链表( 考虑到主要存池指针啥的, 就不做 链表和值的分离了 )
-	template <typename T, bool autoRelease = false>
+	// 经由 Dict 简化而来的双向链表
+	template <typename T>
 	struct Links : public MPObject
 	{
-		static_assert(!autoRelease || (std::is_pointer<T>::value && IsMPObject_v<T>), "autoRelease == true cond is T* where T : MPObject");
-
 		typedef T ValueType;
 		struct Node
 		{
@@ -46,25 +44,11 @@ namespace xx
 				nodes = nullptr;
 			}
 		}
+		// todo: 右值复制构造
 
 		Links(Links const &o) = delete;
 		Links& operator=(Links const &o) = delete;
 
-
-		template<typename U = T>
-		void ItemAddRef(std::enable_if_t<!autoRelease, U> &p) {}
-		template<typename U = T>
-		void ItemAddRef(std::enable_if_t< autoRelease, U> &p)
-		{
-			if (p) p->AddRef();
-		}
-		template<typename U = T>
-		void ItemRelease(std::enable_if_t<!autoRelease, U> &p) {}
-		template<typename U = T>
-		void ItemRelease(std::enable_if_t< autoRelease, U> &p)
-		{
-			if (p) p->Release();
-		}
 	public:
 
 		// 追加到尾部
@@ -168,7 +152,6 @@ namespace xx
 			}
 			if (index == tail) tail = nodes[index].prev;
 
-			ItemRelease(nodes[index].value);
 			nodes[index].value.T::~T();
 			*(int*)&nodes[index].value = freeList;     // 当前节点已被移出链表, 令其 value 存自由节点链表头下标
 			freeList = index;
@@ -251,20 +234,6 @@ namespace xx
 		{
 			return count == 0;
 		}
-
-		// 就该只读? 
-		//template<typename U = T>
-		//std::enable_if_t<!autoRelease, U>& At(int index)
-		//{
-		//	assert(index >= 0 && index < count && nodes[index].prev != -2);
-		//	return nodes[index].value;
-		//}
-		//template<typename U = Node>
-		//std::enable_if_t<!autoRelease, U>& NodeAt(int index)
-		//{
-		//	assert(index >= 0 && index < count && nodes[index].prev != -2);
-		//	return nodes[index];
-		//}
 
 		// todo: SetAt?
 
@@ -371,7 +340,6 @@ namespace xx
 			}
 
 			new (&nodes[index].value) T(std::forward<VPS>(vps)...);
-			ItemAddRef(nodes[index].value);
 			return index;
 		}
 
@@ -379,7 +347,6 @@ namespace xx
 		{
 			for (int i = header; i != -1; i = nodes[i].next)
 			{
-				ItemRelease(nodes[i].value);
 				nodes[i].value.T::~T();
 #ifndef NDEBUG
 				nodes[i].prev = -2;
@@ -394,11 +361,11 @@ namespace xx
 	// 实现值类型使用类型声明
 	/*************************************************************************/
 
-	template <typename T, bool autoRelease = false>
-	using Links_v = MemHeaderBox<Links<T, autoRelease>>;
+	template <typename T>
+	using Links_v = MemHeaderBox<Links<T>>;
 
-	template <typename T, bool autoRelease>
-	struct MemmoveSupport<MemHeaderBox<Links<T, autoRelease>>>
+	template <typename T>
+	struct MemmoveSupport<MemHeaderBox<Links<T>>>
 	{
 		static const bool value = true;
 	};

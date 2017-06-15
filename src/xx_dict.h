@@ -14,12 +14,9 @@ namespace xx
 
 	// 翻抄自 .net 的 Dictionary 的代码
 	// 内存优化原则: 内存集中以 亲和 cpu cache( hashCode, next 与 key value prev 分离 )
-	// autoReleaseXXX 意思是当目标类型为 MPObject* 派生时, 构造时将 call 其 AddRef, 析构时将 call 其 Release
-	template <typename TK, typename TV, bool autoReleaseKey = false, bool autoReleaseValue = false>
+	template <typename TK, typename TV>
 	struct Dict : public MPObject
 	{
-		static_assert(!autoReleaseKey || (std::is_pointer<TK>::value && IsMPObject_v<TK>), "autoReleaseKey == true cond is TK* where TK : MPObject");
-		static_assert(!autoReleaseValue || (std::is_pointer<TV>::value && IsMPObject_v<TV>), "autoReleaseValue == true cond is TV* where TV : MPObject");
 		typedef TK KeyType;
 		typedef TV ValueType;
 
@@ -65,18 +62,6 @@ namespace xx
 		Dict(Dict const &o) = delete;
 		Dict& operator=(Dict const &o) = delete;
 
-
-
-		template<typename U = TK> void KeyAddRef(std::enable_if_t<!autoReleaseKey, U> &p) {}
-		template<typename U = TK> void KeyAddRef(std::enable_if_t< autoReleaseKey, U> &p) { if (p) p->AddRef(); }
-		template<typename U = TK> void KeyRelease(std::enable_if_t<!autoReleaseKey, U> &p)  { p.~U(); }
-		template<typename U = TK> void KeyRelease(std::enable_if_t< autoReleaseKey, U> &p) { if (p) p->Release(); }
-
-		template<typename U = TV> void ValueAddRef(std::enable_if_t<!autoReleaseValue, U> &p) {}
-		template<typename U = TV> void ValueAddRef(std::enable_if_t< autoReleaseValue, U> &p) { if (p) p->AddRef(); }
-		template<typename U = TV> void ValueRelease(std::enable_if_t<!autoReleaseValue, U> &p) { p.~U(); }
-		template<typename U = TV> void ValueRelease(std::enable_if_t< autoReleaseValue, U> &p) { if (p) p->Release(); }
-
 		template<typename K, typename ...VPS>
 		DictAddResult Emplace(bool override, K &&key, VPS &&... vps)
 		{
@@ -91,9 +76,8 @@ namespace xx
 				{
 					if (override)                       // 允许覆盖 value
 					{
-						ValueRelease(items[i].value);
+						items[i].value.~TV();
 						new (&items[i].value) TV(std::forward<VPS>(vps)...);
-						ValueAddRef(items[i].value);
 						return DictAddResult{ true, i };
 					}
 					return DictAddResult{ false, i };
@@ -131,9 +115,7 @@ namespace xx
 
 			// 移动复制构造写 key, value
 			new (&items[index].key) TK(std::forward<K>(key));
-			KeyAddRef(items[index].key);
 			new (&items[index].value) TV(std::forward<VPS>(vps)...);
-			ValueAddRef(items[index].value);
 			items[index].prev = -1;
 
 			return DictAddResult{ true, index };
@@ -230,8 +212,8 @@ namespace xx
 			freeList = idx;
 			freeCount++;
 
-			KeyRelease(items[idx].key);		// 如果是 MPObject* 则 Release
-			ValueRelease(items[idx].value);	// 如果是 MPObject* 则 Release
+			items[idx].key.~TK();
+			items[idx].value.~TV();
 			items[idx].prev = -2;           // foreach 时的无效标志
 		}
 
@@ -283,8 +265,8 @@ namespace xx
 			{
 				if (items[i].prev != -2)
 				{
-					KeyRelease(items[i].key);
-					ValueRelease(items[i].value);
+					items[i].key.~TK();
+					items[i].value.~TV();
 					items[i].prev = -2;
 				}
 			}
@@ -424,12 +406,12 @@ namespace xx
 	// 实现值类型使用类型声明
 	/*************************************************************************/
 
-	template <typename TK, typename TV, bool autoReleaseKey = false, bool autoReleaseValue = false>
-	using Dict_v = MemHeaderBox<Dict<TK, TV, autoReleaseKey, autoReleaseValue>>;
+	template <typename TK, typename TV>
+	using Dict_v = MemHeaderBox<Dict<TK, TV>>;
 
 
-	template <typename TK, typename TV, bool autoReleaseKey, bool autoReleaseValue>
-	struct MemmoveSupport<MemHeaderBox<Dict<TK, TV, autoReleaseKey, autoReleaseValue>>>
+	template <typename TK, typename TV>
+	struct MemmoveSupport<MemHeaderBox<Dict<TK, TV>>>
 	{
 		static const bool value = true;
 	};

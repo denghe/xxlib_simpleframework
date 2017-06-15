@@ -10,12 +10,9 @@ namespace xx
 		union
 		{
 			uint64_t versionNumber;
-			struct
-			{
-				uint8_t vnArea[7];
-				uint8_t mpIndex;		// 分配 / 回收时的内存池数组 下标( 指向 versionNumber 的最高位字节 )
-			};
+			uint8_t vnArea[8];			// vnArea[7] 用于存放 内存池数组 下标( 指向 versionNumber 的最高位字节 )
 		};
+		uint8_t& ptrStackIndex() { return vnArea[7]; }
 	};
 
 	struct MemPool;
