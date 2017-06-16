@@ -200,12 +200,10 @@ namespace " + c.Namespace + @"
 #pragma region ctor, interface impls
 
 	    " + c.Name + @"()");
-            var isFirst = true;
             if (c._HasBaseType())
             {
                 sb.Append(@"
             : BaseType()");
-                isFirst = false;
             }
             //// 其他 _v 成员初始化
             //fs = c._GetFields();
@@ -234,12 +232,10 @@ namespace " + c.Namespace + @"
             sb.Append(@"
 	    }
 	    " + c.Name + @"(xx::BBuffer *bb)");
-            isFirst = true;
             if (c._HasBaseType())
             {
                 sb.Append(@"
             : BaseType(bb)");
-                isFirst = false;
             }
             //// 其他 _v 成员初始化
             //fs = c._GetFields();

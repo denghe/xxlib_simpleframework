@@ -59,16 +59,25 @@ namespace TemplateLibrary
     /// </summary>
     public class DateTime { }
 
-    /// <summary>
-    /// 模拟 xx.String_v
-    /// </summary>
-    public class String_v { }
+    ///// <summary>
+    ///// 模拟 xx.String_v
+    ///// </summary>
+    //public class String_v { }
+
+    ///// <summary>
+    ///// 模拟 xx.List_v
+    ///// </summary>
+    //public class List_v<T> { }
+
 
     /// <summary>
-    /// 模拟 xx.List_v
+    /// 标记一个枚举的内容用于 生成时的 项目分类( 与项目对应的 根命名空间 白名单 ), 以便做分类转发之类的功能
+    /// 该标记最多只可以出现一次
     /// </summary>
-    public class List_v<T> { }
-
+    [System.AttributeUsage(System.AttributeTargets.Enum)]
+    public class Namespaces : System.Attribute
+    {
+    }
 
     /// <summary>
     /// 备注。可用于类/枚举/函数 及其 成员
@@ -117,10 +126,10 @@ namespace TemplateLibrary
     }
 
 
-        /// <summary>
-        /// 标记当反列化 float / double 时, 如果值是 nan, 就设成 v
-        /// </summary>
-        [System.AttributeUsage(System.AttributeTargets.Field)]
+    /// <summary>
+    /// 标记当反列化 float / double 时, 如果值是 nan, 就设成 v
+    /// </summary>
+    [System.AttributeUsage(System.AttributeTargets.Field)]
     public class NaN : System.Attribute
     {
         public string value;
