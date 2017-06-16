@@ -109,12 +109,12 @@ namespace xx
 				{
 					len -= left;
 					++idx;
-					outBufs.Add({ left, bb->buf + byteOffset });
+					outBufs.Add(BufMaker<T>::Make(bb->buf + byteOffset, left));
 					byteOffset = 0;
 				}
 				else
 				{
-					outBufs.Add({ len, bb->buf + byteOffset });
+					outBufs.Add(BufMaker<T>::Make(bb->buf + byteOffset, len));
 					byteOffset += len;
 					len = 0;
 				}

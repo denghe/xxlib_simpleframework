@@ -13,6 +13,11 @@
 
 namespace xx
 {
+	// todo: 当前这个还用不了. 要去掉之前的 MP 模板参数设计
+
+
+
+
 	// todo: 排查所有 lua 函数的异常处理( lua 内部可能会使用 long jump 直接跳出函数, 导致 RAII 失效之类 )
 
 	// todo: Lua_BindFunc 之非类成员函数版. 考虑为 Lua_SetGlobal 增加函数指针重载
@@ -419,7 +424,7 @@ namespace xx
 	void Lua_PushMetatable(lua_State* L)
 	{
 		lua_rawgeti(L, LUA_REGISTRYINDEX, LUA_RIDX_GLOBALS);			// _G
-		lua_rawgeti(L, -1, TupleIndexOf<T, typename MP::Tuple>::value);	// _G, mt
+		lua_rawgeti(L, -1, TypeId<T>::value);							// _G, mt
 		lua_replace(L, -2);												// mt
 	}
 
@@ -619,7 +624,7 @@ namespace xx
 			}
 			if (!lua_isuserdata(L, idx)) return false;
 			auto ud = (Lua_UD<T>*)lua_touserdata(L, idx);
-			auto tid = TupleIndexOf<TT, typename MP::Tuple>::value;
+			auto tid = TypeId<TT>::value;
 			if (!Lua_GetMemPool<MP>(L).IsBaseOf(tid, ud->typeIndex)) return false;
 			switch (ud->udType)
 			{
@@ -645,7 +650,7 @@ namespace xx
 		static inline void Push(lua_State* L, T const& v)
 		{
 			auto ud = (Lua_UD<T>*)lua_newuserdata(L, sizeof(Lua_UD<T>));	// ud
-			ud->typeIndex = TupleIndexOf<T, typename MP::Tuple>::value;
+			ud->typeIndex = TypeId<T>::value;
 			ud->udType = Lua_UDTypes::Struct;
 			ud->isMPObject = false;
 			new (&ud->data) T(v);
@@ -660,7 +665,7 @@ namespace xx
 		{
 			if (!lua_isuserdata(L, idx)) return false;
 			auto ud = (Lua_UD<T>*)lua_touserdata(L, idx);
-			if (!Lua_GetMemPool<MP>(L).IsBaseOf(TupleIndexOf<T, typename MP::Tuple>::value, ud->typeIndex)) return false;
+			if (!Lua_GetMemPool<MP>(L).IsBaseOf(TypeId<T>::value, ud->typeIndex)) return false;
 			switch (ud->udType)
 			{
 			case Lua_UDTypes::Pointer:
@@ -717,7 +722,7 @@ namespace xx
 			}
 			if (!lua_isuserdata(L, idx)) return false;
 			auto ud = (Lua_UD<T>*)lua_touserdata(L, idx);
-			if (!Lua_GetMemPool<MP>(L).IsBaseOf(TupleIndexOf<TT, typename MP::Tuple>::value, ud->typeIndex)) return false;
+			if (!Lua_GetMemPool<MP>(L).IsBaseOf(TypeId<TT>::value, ud->typeIndex)) return false;
 			switch (ud->udType)
 			{
 			case Lua_UDTypes::Pointer:

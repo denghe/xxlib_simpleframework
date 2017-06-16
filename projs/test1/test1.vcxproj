@@ -44,12 +44,12 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(SolutionDir)..\src;$(SolutionDir)..\lua-5.3.4\src;$(SolutionDir)..\snippets;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)..\src;$(SolutionDir)..\libuv\include;$(SolutionDir)..\lua-5.3.4\src;$(SolutionDir)..\snippets;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)..\lua-5.3.4\src;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(SolutionDir)..\src;$(SolutionDir)..\lua-5.3.4\src;$(SolutionDir)..\snippets;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)..\src;$(SolutionDir)..\libuv\include;$(SolutionDir)..\lua-5.3.4\src;$(SolutionDir)..\snippets;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)..\lua-5.3.4\src;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">

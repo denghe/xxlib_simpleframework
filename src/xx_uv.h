@@ -1,7 +1,7 @@
 #pragma once
 #include <uv.h>
-#include <xx_mempool.h>
-#include <xx_bbqueue.h>
+#include "xx_mempool.h"
+#include "xx_bbqueue.h"
 #include <assert.h>
 #include <memory>
 #include <functional>
@@ -143,6 +143,19 @@ namespace xx
 	};
 
 	using UV_v = xx::MemHeaderBox<UV>;
+
+	template<>
+	struct BufMaker<uv_buf_t, void>
+	{
+		static uv_buf_t Make(char* buf, uint32_t len)
+		{
+			uv_buf_t rtv;
+			rtv.base = buf;
+			rtv.len = len;
+			return rtv;
+		}
+	};
+
 }
 
 #include "xx_uv.hpp"

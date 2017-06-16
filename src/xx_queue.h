@@ -201,7 +201,7 @@ namespace xx
 	{
 		if (count <= 0) return 0;
 
-		auto dataLen = Size();
+		auto dataLen = Count();
 		if (count >= dataLen)
 		{
 			Clear();

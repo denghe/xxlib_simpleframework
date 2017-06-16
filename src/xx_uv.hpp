@@ -440,7 +440,14 @@ namespace xx
 
 	inline UVClientPeer::~UVClientPeer()
 	{
-		assert(!(uv_is_readable((uv_stream_t*)&stream) || uv_is_writable((uv_stream_t*)&stream)));
+		// linux 下符合这种情况( 这样做之后似乎也不会退出 loop, 需要进一步测试 )
+		if (uv_is_readable((uv_stream_t*)&stream) || uv_is_writable((uv_stream_t*)&stream))
+		{
+			if (!uv_is_closing((uv_handle_t*)&stream))
+			{
+				uv_close((uv_handle_t*)&stream, nullptr);
+			}
+		}
 
 		bbReceivePackage->buf = nullptr;
 		bbReceivePackage->bufLen = 0;

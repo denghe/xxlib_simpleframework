@@ -1,12 +1,13 @@
-#pragma once
+ï»¿#pragma once
 #include "xx_mpobject.h"
 #include <array>
+#include <string.h>	// for linux memcpy
 
 namespace xx
 {
 
 	/*
-	// Ê¾Àı:
+	// ç¤ºä¾‹:
 	template<> struct TypeId<T> { static const uint16_t value = 2; };
 	template<> struct TypeId<T> { static const uint16_t value = 3; };
 	template<> struct TypeId<T> { static const uint16_t value = 4; };
@@ -25,12 +26,12 @@ namespace xx
 
 	struct BBuffer;
 
-	// ÕûÌ×¿âµÄºËĞÄÄÚ´æ·ÖÅä×é¼ş. °´ 2^N ³ß´ç»®·ÖÄÚ´æ·ÖÅäĞĞÎª, ½« free µÄÖ¸Õë·ÅÈë stack »º´æ¸´ÓÃ
-	// ¶ÔÓÚ·ÖÅä³öÀ´µÄÄÚ´æ, ×ÔÔö °æ±¾ºÅ ½«Ìî³äÔÚ Ö¸Õë -8 Çø( Alloc ). ÓÃÓÚÅĞ¶ÏÖ¸ÕëÊÇ·ñÒÑÊ§Ğ§
-	// MPObject ¶ÔÏóÊ¹ÓÃ Create / Release À´´´½¨ºÍÎö¹¹
+	// æ•´å¥—åº“çš„æ ¸å¿ƒå†…å­˜åˆ†é…ç»„ä»¶. æŒ‰ 2^N å°ºå¯¸åˆ’åˆ†å†…å­˜åˆ†é…è¡Œä¸º, å°† free çš„æŒ‡é’ˆæ”¾å…¥ stack ç¼“å­˜å¤ç”¨
+	// å¯¹äºåˆ†é…å‡ºæ¥çš„å†…å­˜, è‡ªå¢ ç‰ˆæœ¬å· å°†å¡«å……åœ¨ æŒ‡é’ˆ -8 åŒº( Alloc ). ç”¨äºåˆ¤æ–­æŒ‡é’ˆæ˜¯å¦å·²å¤±æ•ˆ
+	// MPObject å¯¹è±¡ä½¿ç”¨ Create / Release æ¥åˆ›å»ºå’Œææ„
 	struct MemPool
 	{
-		// µ¥Á´±í. Ö¸ÏòÏÂÒ»Ö¸ÕëµÄÄÚ´æÇøÓò±Ü¿ª°æ±¾ºÅÇøÓò²»Ğ´
+		// å•é“¾è¡¨. æŒ‡å‘ä¸‹ä¸€æŒ‡é’ˆçš„å†…å­˜åŒºåŸŸé¿å¼€ç‰ˆæœ¬å·åŒºåŸŸä¸å†™
 		struct PtrStack
 		{
 			void* header = nullptr;
@@ -59,10 +60,10 @@ namespace xx
 			}
 		};
 
-		// Êı×é³¤¶Èº­¸ÇËùÓĞ 2^n ¶ÔÆë·ÖÅä³¤¶È¹æÔò
+		// æ•°ç»„é•¿åº¦æ¶µç›–æ‰€æœ‰ 2^n å¯¹é½åˆ†é…é•¿åº¦è§„åˆ™
 		std::array<PtrStack, sizeof(size_t) * 8> ptrstacks;
 
-		// ×ÔÔö°æ±¾ºÅ( Ã¿´Î´´½¨Ê±ÏÈ ++ ÔÙÌî³ä )
+		// è‡ªå¢ç‰ˆæœ¬å·( æ¯æ¬¡åˆ›å»ºæ—¶å…ˆ ++ å†å¡«å…… )
 		uint64_t versionNumber = 0;
 
 
@@ -71,7 +72,7 @@ namespace xx
 		MemPool() {}
 		~MemPool()
 		{
-			// ³ØÄÚ´æ»ØÊÕ
+			// æ± å†…å­˜å›æ”¶
 			void* p;
 			for (auto& stack : ptrstacks)
 			{
@@ -80,38 +81,38 @@ namespace xx
 		}
 
 		/***********************************************************************************/
-		// ÄÚ´æ·ÖÅä( malloc / free ÏµÁĞ. Ö÷Òª¹©Ò»Ğ©ÈİÆ÷ÀàµÄ´úÂëÊ¹ÓÃ )
+		// å†…å­˜åˆ†é…( malloc / free ç³»åˆ—. ä¸»è¦ä¾›ä¸€äº›å®¹å™¨ç±»çš„ä»£ç ä½¿ç”¨ )
 		/***********************************************************************************/
 
 
-		// ¸Ã²Ù×÷½«»áÔÚÍ·²¿ÇøÓòÌî³ä MemHeader_VersionNumber ²¢Ìø¹ı, ·µ»ØÆ«ÒÆºóµÄÖ¸Õë
-		// ×î´ó»¯ÄÚ´æÀûÓÃÂÊµÄ size ¼ÆËã: Round2n(capacity * sizeof(T) + sizeof(MemHeader_VersionNumber)) - sizeof(MemHeader_VersionNumber)
+		// è¯¥æ“ä½œå°†ä¼šåœ¨å¤´éƒ¨åŒºåŸŸå¡«å…… MemHeader_VersionNumber å¹¶è·³è¿‡, è¿”å›åç§»åçš„æŒ‡é’ˆ
+		// æœ€å¤§åŒ–å†…å­˜åˆ©ç”¨ç‡çš„ size è®¡ç®—: Round2n(capacity * sizeof(T) + sizeof(MemHeader_VersionNumber)) - sizeof(MemHeader_VersionNumber)
 		inline void* Alloc(size_t siz)
 		{
 			assert(siz);
-			siz += sizeof(MemHeader_VersionNumber);								// ¿Õ³ö·ÅÖÃ MemHeader_VersionNumber µÄµØ¶ù
+			siz += sizeof(MemHeader_VersionNumber);								// ç©ºå‡ºæ”¾ç½® MemHeader_VersionNumber çš„åœ°å„¿
 			auto idx = Calc2n(siz);
 			if (siz > (size_t(1) << idx)) siz = size_t(1) << ++idx;
 
 			void* p;
 			if (!ptrstacks[idx].TryPop(p)) p = std::malloc(siz);
 
-			auto h = (MemHeader_VersionNumber*)p;								// Ö¸µ½ÄÚ´æÍ·
+			auto h = (MemHeader_VersionNumber*)p;								// æŒ‡åˆ°å†…å­˜å¤´
 			h->versionNumber = ++versionNumber;
-			h->ptrStackIndex() = (uint8_t)idx;									// ½«Êı×éÏÂ±ê¸½ÔÚ×î¸ßÎ»ÉÏ, Free ÒªÓÃ
-			return h + 1;														// Ö¸Ïò header ºóÃæµÄÇøÓò·µ»Ø
+			h->ptrStackIndex() = (uint8_t)idx;									// å°†æ•°ç»„ä¸‹æ ‡é™„åœ¨æœ€é«˜ä½ä¸Š, Free è¦ç”¨
+			return h + 1;														// æŒ‡å‘ header åé¢çš„åŒºåŸŸè¿”å›
 		}
 
 		inline void Free(void* p)
 		{
 			if (!p) return;
-			auto h = (MemHeader_VersionNumber*)p - 1;							// Ö¸µ½ÄÚ´æÍ·
-			assert(h->versionNumber && h->ptrStackIndex() < ptrstacks.size());	// ÀíÂÛÉÏ½² free µÄÊ±ºòÆä°æ±¾ºÅ²»Ó¦¸ÃÊÇ 0. ·ñÔò¾ÍÉæÏÓÖØ¸´ Free
-			ptrstacks[h->ptrStackIndex()].Push(h);								// Èë³Ø
-			h->versionNumber = 0;												// Çå¿Õ°æ±¾ºÅ
+			auto h = (MemHeader_VersionNumber*)p - 1;							// æŒ‡åˆ°å†…å­˜å¤´
+			assert(h->versionNumber && h->ptrStackIndex() < ptrstacks.size());	// ç†è®ºä¸Šè®² free çš„æ—¶å€™å…¶ç‰ˆæœ¬å·ä¸åº”è¯¥æ˜¯ 0. å¦åˆ™å°±æ¶‰å«Œé‡å¤ Free
+			ptrstacks[h->ptrStackIndex()].Push(h);								// å…¥æ± 
+			h->versionNumber = 0;												// æ¸…ç©ºç‰ˆæœ¬å·
 		}
 
-		// dataLen ±íÊ¾Òª¸´ÖÆ¶àÉÙ×Ö½ÚÊıµ½ĞÂµÄÄÚ´æ. ²¢²»´ú±í p µÄÔ­Ê¼³¤¶È
+		// dataLen è¡¨ç¤ºè¦å¤åˆ¶å¤šå°‘å­—èŠ‚æ•°åˆ°æ–°çš„å†…å­˜. å¹¶ä¸ä»£è¡¨ p çš„åŸå§‹é•¿åº¦
 		inline void* Realloc(void *p, size_t newSize, size_t dataLen = -1)
 		{
 			if (!newSize)
@@ -133,16 +134,16 @@ namespace xx
 		}
 
 		/***********************************************************************************/
-		// ÄÚ´æ·ÖÅä( Create / Release ÏµÁĞ ). ½öÕë¶ÔÅÉÉú×Ô MPObject µÄ¶ÔÏó
+		// å†…å­˜åˆ†é…( Create / Release ç³»åˆ— ). ä»…é’ˆå¯¹æ´¾ç”Ÿè‡ª MPObject çš„å¯¹è±¡
 		/***********************************************************************************/
 
-		// ¸Ã²Ù×÷½«»áÔÚÍ·²¿Ìî³ä MemHeader_MPObject
+		// è¯¥æ“ä½œå°†ä¼šåœ¨å¤´éƒ¨å¡«å…… MemHeader_MPObject
 		template<typename T, typename ...Args>
 		T* Create(Args &&... args) noexcept
 		{
 			static_assert(std::is_base_of<MPObject, T>::value, "the T must be inerit of MPObject.");
 
-			// ÏÂÁĞ´úÂë ¸´ÖÆ×Ô Alloc º¯ÊıĞ¡¸Ä
+			// ä¸‹åˆ—ä»£ç  å¤åˆ¶è‡ª Alloc å‡½æ•°å°æ”¹
 			auto siz = sizeof(T) + sizeof(MemHeader_MPObject);
 			auto idx = Calc2n(siz);
 			if (siz > (size_t(1) << idx)) siz = size_t(1) << ++idx;
@@ -165,27 +166,27 @@ namespace xx
 			}
 			catch (...)
 			{
-				ptrstacks[idx].Push(p);											// Èë³Ø
-				p->versionNumber = 0;											// Çå¿Õ°æ±¾ºÅ
+				ptrstacks[idx].Push(p);											// å…¥æ± 
+				p->versionNumber = 0;											// æ¸…ç©ºç‰ˆæœ¬å·
 				return nullptr;
 			}
 			return t;
 		}
 
-		// ÊÍ·ÅÓÉ Create ´´½¨µÄÀà
+		// é‡Šæ”¾ç”± Create åˆ›å»ºçš„ç±»
 		inline void Release(MPObject* p) noexcept
 		{
-			if (!p || p->refCount() > 0x7FFFFFFF) return;						// Èç¹û¿ÕÖ¸Õë »òÊÇÓÃ MemHeaderBox °ü¹üÔò²»Ö´ĞĞ Release ²Ù×÷
-			assert(p->versionNumber() && p->refCount());						// ÀíÂÛÉÏ½² free µÄÊ±ºòÆä°æ±¾ºÅ²»Ó¦¸ÃÊÇ 0, ÒıÓÃ¼ÆÊı²»¸ÃÊÇ 0. ·ñÔò¾ÍÊÇ Release ´ÎÊı¹ı¶à
+			if (!p || p->refCount() > 0x7FFFFFFF) return;						// å¦‚æœç©ºæŒ‡é’ˆ æˆ–æ˜¯ç”¨ MemHeaderBox åŒ…è£¹åˆ™ä¸æ‰§è¡Œ Release æ“ä½œ
+			assert(p->versionNumber() && p->refCount());						// ç†è®ºä¸Šè®² free çš„æ—¶å€™å…¶ç‰ˆæœ¬å·ä¸åº”è¯¥æ˜¯ 0, å¼•ç”¨è®¡æ•°ä¸è¯¥æ˜¯ 0. å¦åˆ™å°±æ˜¯ Release æ¬¡æ•°è¿‡å¤š
 			if (--p->refCount()) return;
 			p->~MPObject();
 
-			auto h = (MemHeader_MPObject*)p - 1;								// Ö¸µ½ÄÚ´æÍ·
-			ptrstacks[h->ptrStackIndex()].Push(h);									// Èë³Ø
-			h->versionNumber = 0;												// Çå¿Õ°æ±¾ºÅ
+			auto h = (MemHeader_MPObject*)p - 1;								// æŒ‡åˆ°å†…å­˜å¤´
+			ptrstacks[h->ptrStackIndex()].Push(h);									// å…¥æ± 
+			h->versionNumber = 0;												// æ¸…ç©ºç‰ˆæœ¬å·
 		}
 
-		// ÊÍ·ÅÓÉ Create ´´½¨µÄÀàÖ® safe °æ( »áÇå 0 )
+		// é‡Šæ”¾ç”± Create åˆ›å»ºçš„ç±»ä¹‹ safe ç‰ˆ( ä¼šæ¸… 0 )
 		template<typename T>
 		inline void SafeRelease(T* &p) noexcept
 		{
@@ -204,7 +205,7 @@ namespace xx
 			return Create<T>(std::forward<Args>(args)...);
 		}
 
-		// ÊÊºÏ¹¹Ôìº¯ÊıÖĞ´´½¨³ÉÔ±
+		// é€‚åˆæ„é€ å‡½æ•°ä¸­åˆ›å»ºæˆå‘˜
 
 		template<typename T, typename ...Args>
 		bool CreateTo(T*& outPtr, Args &&... args)
@@ -225,29 +226,29 @@ namespace xx
 
 
 		/***********************************************************************************/
-		// ÀàĞÍ´¦ÀíÏà¹Ø
+		// ç±»å‹å¤„ç†ç›¸å…³
 		/***********************************************************************************/
 
-		// ·ÅÖÃ type ¶ÔÓ¦µÄ parent µÄ type id. 1 : MPObject
+		// æ”¾ç½® type å¯¹åº”çš„ parent çš„ type id. 1 : MPObject
 		inline static std::array<uint16_t, std::numeric_limits<uint16_t>::max()>& pids()
 		{
 			static std::array<uint16_t, std::numeric_limits<uint16_t>::max()> _pids;
 			return _pids;
 		}
 
-		// ´æ typeId µ½ĞòÁĞ»¯¹¹Ôìº¯ÊıµÄÓ³Éä
+		// å­˜ typeId åˆ°åºåˆ—åŒ–æ„é€ å‡½æ•°çš„æ˜ å°„
 		inline static std::array<void*(*)(MemPool*, BBuffer*, uint32_t), 1 << sizeof(uint16_t) * 8>& creators()
 		{
 			static std::array<void*(*)(MemPool*, BBuffer*, uint32_t), 1 << sizeof(uint16_t) * 8> _creators;
 			return _creators;
 		}
 
-		// ×¢²áÀàĞÍµÄ¸¸×Ó¹ØÏµ. Ë³±ãÉú³É´´½¨º¯Êı. MPObject ²»ĞèÒª×¢²á. T ĞèÒªÌá¹©ÏàÓ¦¹¹Ôìº¯Êı for ·´ĞòÁĞ»¯
+		// æ³¨å†Œç±»å‹çš„çˆ¶å­å…³ç³». é¡ºä¾¿ç”Ÿæˆåˆ›å»ºå‡½æ•°. MPObject ä¸éœ€è¦æ³¨å†Œ. T éœ€è¦æä¾›ç›¸åº”æ„é€ å‡½æ•° for ååºåˆ—åŒ–
 		template<typename T, typename PT>
-		static void Register();							// ÊµÏÖÔÚ xx_buffer.h Î²²¿
+		static void Register();							// å®ç°åœ¨ xx_buffer.h å°¾éƒ¨
 
 
-		// ¸ù¾İ typeid ÅĞ¶Ï¸¸×Ó¹ØÏµ
+		// æ ¹æ® typeid åˆ¤æ–­çˆ¶å­å…³ç³»
 		inline static bool IsBaseOf(uint32_t baseTypeId, uint32_t typeId)
 		{
 			for (; typeId != baseTypeId; typeId = pids()[typeId])
@@ -257,32 +258,32 @@ namespace xx
 			return true;
 		}
 
-		// ¸ù¾İ ÀàĞÍ ÅĞ¶Ï¸¸×Ó¹ØÏµ
+		// æ ¹æ® ç±»å‹ åˆ¤æ–­çˆ¶å­å…³ç³»
 		template<typename BT>
 		static bool IsBaseOf(uint32_t typeId)
 		{
-			return IsBaseOf(TupleIndexOf<BT, Tuple>::value, typeId);
+			return IsBaseOf(TypeId<BT>::value, typeId);
 		}
 
-		// ¸ù¾İ ÀàĞÍ ÅĞ¶Ï¸¸×Ó¹ØÏµ
+		// æ ¹æ® ç±»å‹ åˆ¤æ–­çˆ¶å­å…³ç³»
 		template<typename BT, typename T>
 		static bool IsBaseOf()
 		{
-			return IsBaseOf(TupleIndexOf<BT, Tuple>::value, TupleIndexOf<T, Tuple>::value);
+			return IsBaseOf(TypeId<BT>::value, TypeId<T>::value);
 		}
 
-		// ÊÔ½«Ö¸Õë p ×ª³É T* ÀàĞÍ. È¡´ú dynamic_cast
+		// è¯•å°†æŒ‡é’ˆ p è½¬æˆ T* ç±»å‹. å–ä»£ dynamic_cast
 		template<typename T>
 		static T* TryCast(MPObject* p)
 		{
-			return IsBaseOf(TupleIndexOf<T, Tuple>::value, p->typeId()) ? (T*)p : nullptr;
+			return IsBaseOf(TypeId<T>::value, p->typeId()) ? (T*)p : nullptr;
 		}
 
 	};
 
 
 	/***********************************************************************************/
-	// Ò»Ğ©º¯ÊıÒªÓÃµ½ MemPool µÄ¹¦ÄÜ¹ÊÊµÏÖĞ´ÔÚÕâÀï
+	// ä¸€äº›å‡½æ•°è¦ç”¨åˆ° MemPool çš„åŠŸèƒ½æ•…å®ç°å†™åœ¨è¿™é‡Œ
 	/***********************************************************************************/
 
 	inline void MPObject::Release() noexcept

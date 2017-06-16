@@ -54,6 +54,7 @@ GetFuncReturnType
 GetFuncArgsCount
 FuncTupleCaller
 TupleIndexOf
+BufMaker
 */
 
 
@@ -202,9 +203,13 @@ size_t _countof(T const (&arr)[N])
 // container_of
 /***********************************************************************************/
 
+#ifndef _offsetof
+#define _offsetof(s,m) ((size_t)&reinterpret_cast<char const volatile&>((((s*)0)->m)))
+#endif
+
 #ifndef container_of
 #define container_of(ptr, type, member) \
-  ((type *) ((char *) (ptr) - offsetof(type, member)))
+  ((type *) ((char *) (ptr) - _offsetof(type, member)))
 #endif
 
 
@@ -582,4 +587,16 @@ while(false)
 
 	template<typename T, typename Tuple>
 	constexpr int TupleIndexOf_v = TupleIndexOf<T, Tuple>::value;
+
+
+	/************************************************************************************/
+	// BufMaker
+	/************************************************************************************/
+
+	template<typename T, typename ENABLE = void>
+	struct BufMaker
+	{
+		static T Make(char* buf, uint32_t len);
+	};
+
 }
