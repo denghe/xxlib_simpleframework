@@ -75,7 +75,7 @@ namespace TemplateLibrary
     /// 该标记最多只可以出现一次
     /// </summary>
     [System.AttributeUsage(System.AttributeTargets.Enum)]
-    public class Namespaces : System.Attribute
+    public class CategoryNamespaces : System.Attribute
     {
     }
 
