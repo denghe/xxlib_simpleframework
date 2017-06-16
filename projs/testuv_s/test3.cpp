@@ -1,5 +1,5 @@
-﻿#include <xx_uv.h>
-#include <xx_helpers.h>
+﻿#include "xx_uv.h"
+#include "xx_helpers.h"
 
 // todo: 模拟玩家上下文, 对于 UVServerPeer 会在断开时析构的特性做出处理. 初步考虑用双向指针与上下文类( 不会随着断线就删的 )建立关联, 在析构时从上下文清除并同步状态
 
@@ -16,13 +16,13 @@ struct MyUVServerPeer : xx::UVServerPeer
 		std::cout << "\nDisconnected client ip = " << tmpStr->C_str() << std::endl;
 	}
 
-	//inline virtual void OnReceive() override
-	//{
-	//	// 覆盖为 echo 模式, 废掉 OnReceivePackage
-	//	auto sendBB = GetSendBB();
-	//	sendBB->WriteBuf(this->bbReceive);
-	//	Send(sendBB);
-	//}
+	inline virtual void OnReceive() override
+	{
+		// 覆盖为 echo 模式, 废掉 OnReceivePackage
+		auto sendBB = GetSendBB();
+		sendBB->WriteBuf(this->bbReceive);
+		Send(sendBB);
+	}
 
 	inline virtual void OnReceivePackage(xx::BBuffer& bb) override
 	{
@@ -60,38 +60,16 @@ struct MyTimer : xx::UVTimer
 	}
 	inline virtual void OnFire() override
 	{
-		std::cout << ".";
-		//for (auto& listener : *uv->listeners)
-		//{
-		//	for (auto& p : *listener->peers)
-		//	{
-		//		auto sendBB = p->GetSendBB();
-		//		sendBB->WritePackage(1);
-		//		p->Send(sendBB);
-		//	}
-		//}
+		std::cout << "." << std::flush;
+		
 	}
 };
 
 int main()
 {
-	std::cout << "+1 Server" << std::endl;
-	//std::cout << "Echo Server" << std::endl;
+	//std::cout << "+1 Server" << std::endl;
+	std::cout << "Echo Server" << std::endl;
 	xx::MemPool mp;
-
-	//xx::BBQueue_v bbq(mp);
-	//xx::List_v<uv_buf_t> bufs(mp);
-	//for (int i = 0; i < 99999; ++i)
-	//{
-	//	Sleep(1);
-	//	auto bb = bbq->PopLastBB();
-	//	bb->WritePackage(1);
-	//	bbq->Push(bb);
-	//	bbq->PopTo(*bufs, 4096);
-	//}
-
-
-
 	xx::UV_v uv(mp);
 	auto listener = uv->CreateListener<MyUVListener>(12345);
 	assert(listener);
@@ -117,9 +95,26 @@ int main()
 
 
 
+//for (auto& listener : *uv->listeners)
+//{
+//	for (auto& p : *listener->peers)
+//	{
+//		auto sendBB = p->GetSendBB();
+//		sendBB->WritePackage(1);
+//		p->Send(sendBB);
+//	}
+//}
 
-
-
+//xx::BBQueue_v bbq(mp);
+//xx::List_v<uv_buf_t> bufs(mp);
+//for (int i = 0; i < 99999; ++i)
+//{
+//	Sleep(1);
+//	auto bb = bbq->PopLastBB();
+//	bb->WritePackage(1);
+//	bbq->Push(bb);
+//	bbq->PopTo(*bufs, 4096);
+//}
 
 
 //#include <time.h>

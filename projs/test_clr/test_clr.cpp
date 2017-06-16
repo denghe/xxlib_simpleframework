@@ -20,13 +20,13 @@ struct MyUVServerPeer : xx::UVServerPeer
 		std::cout << "\nDisconnected client ip = " << tmpStr->C_str() << std::endl;
 	}
 
-	//inline virtual void OnReceive() override
-	//{
-	//	// 覆盖为 echo 模式, 废掉 OnReceivePackage
-	//	auto sendBB = GetSendBB();
-	//	sendBB->WriteBuf(this->bbReceive);
-	//	Send(sendBB);
-	//}
+	inline virtual void OnReceive() override
+	{
+		// 覆盖为 echo 模式, 废掉 OnReceivePackage
+		auto sendBB = GetSendBB();
+		sendBB->WriteBuf(this->bbReceive);
+		Send(sendBB);
+	}
 
 	inline virtual void OnReceivePackage(xx::BBuffer& bb) override
 	{
@@ -93,6 +93,7 @@ public:
 
 int main(array<System::String ^> ^args)
 {
+	Console::WriteLine(L"CLR Echo Server");
 	auto uv = gcnew MyUVWrapper();
 	uv->Run();
 	return 0;
