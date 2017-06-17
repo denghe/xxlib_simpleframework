@@ -14,7 +14,7 @@
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{1EA768ED-D701-43E9-B614-2E83E8D8107D}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>server_agent</RootNamespace>
+    <RootNamespace>server_discovery</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.15063.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -86,7 +86,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="server_agent_main.cpp" />
+    <ClCompile Include="server_discovery_main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\test1\PKG_class.h" />
