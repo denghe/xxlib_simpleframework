@@ -63,7 +63,7 @@ namespace Proxy
 
 
 
-    基础结构( 不含 登录, 游戏, 聊天, 邮件, 查询, 排行, 日志, BOT, 后台...... )
+    基础结构( 不含 游戏, 登录 / 排队, 活动, 比赛, 商城, 仓储, 聊天, 邮件, 查询, 排行, 日志, BOT, 后台...... )
 
     Manage, Loader, Discovery, Navgate, Proxy, DB, DBCommit
 
