@@ -8,7 +8,7 @@
 
 基础结构( 不含 游戏, 登录 / 排队, 活动, 比赛, 商城, 仓储, 聊天, 邮件, 查询, 排行, 日志, BOT, 后台...... )
 
-Manage, Loader, Discovery, Navgate, Proxy, DB, DBCommit
+Manage, Loader, Discovery, Navigate, Proxy, DB, DBCommit
 
 
 
@@ -27,7 +27,7 @@ Discovery 为发现服务, 接受各 service 注册并拉已注册 service 清�
 
 Discovery 服务需要先于其他 service 启动( Manage, Loader 除外 )
 
-Navgate 为导航服务, 其结构本身可能是一个金字塔形, 有可能在多台机上开多份, 但共享相同数据.
+Navigate 为导航服务, 其结构本身可能是一个金字塔形, 有可能在多台机上开多份, 但共享相同数据.
 导航结果决定了 client 会去连哪个 或哪些 proxy
 
 Proxy 为数据代理, 具有 数据转发 / 汇聚 / 协议转换 / 限速 / QOS / 基础安全校验 / 分流抗攻击 / 确保物理连接不断 等功用
@@ -46,14 +46,14 @@ DB / DBCommit 需要不怕死, 不怕重启, 能动态恢复数据. 这需要 Re
 
 Manage 与 Loader 一对多
 Discovery 与 services 一对多
-Navgate 与 Proxy 一对多
+Navigate 与 Proxy 一对多
 Proxy 与 services 多对多
 
 
 
 通信流程与需求
  
-client 先从 navgate( 可能有多个, udp, 首包即含复杂校验信息 ) 得到要连接哪个 proxy 的信息, 然后去就去连指定 proxy
+client 先从 navigate( 可能有多个, udp, 首包即含复杂校验信息 ) 得到要连接哪个 proxy 的信息, 然后去就去连指定 proxy
     
 client 发送相应指令到 proxy. proxy 负责转发到相应 service, 并转发处理结果( 应答 / 推送均可 )
 对于断线重连的情况, proxy 应该告知 client, 连接到原有 proxy 上, 并与 context 重连.
