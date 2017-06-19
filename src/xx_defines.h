@@ -468,6 +468,8 @@ while(false)
 	template<typename T>
 	constexpr uint16_t TypeId_v = TypeId<T>::value;
 
+	typedef uint16_t TypeIdValueType;
+
 
 	/***********************************************************************************/
 	// EqualsTo( 重载后用于指针对象按内容对比 )

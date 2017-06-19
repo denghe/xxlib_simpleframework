@@ -3,161 +3,53 @@
 
 namespace PKG
 {
-    struct Pos;
-    struct SceneObj;
-    struct Monster;
-    struct Deamon;
-    struct Butcher;
-    struct Scene;
-    enum class Color : int32_t
+namespace Discovery
+{
+    // 服务启动后用该指令告知 Discovery
+    struct Register;
+    // 注册结果--成功
+    struct RegisterResult_Success;
+    // 注册结果--失败: 重复的实例id
+    struct RegisterResult_DupeInstanceId;
+}
+namespace Global
+{
+    // 服务信息描述
+    struct Service;
+    // 暂定用于包之附加描述
+    struct UserToken;
+}
+    enum class ServiceTypes : int32_t
     {
-        Red = 0,
-        Blue = 1,
+        Loader = 0,
+        Discovery = 1,
+        Navgate = 2,
+        Proxy = 3,
+        Login = 4,
+        Lobby = 5,
+        Room = 6,
+        DB = 7,
+        DBCommit = 8,
     };
-    struct Pos
-    {
-        float x = 0;
-        float y = 0;
-    };
-    struct SceneObj : xx::MPObject
+namespace Discovery
+{
+    // 服务启动后用该指令告知 Discovery
+    struct Register : xx::MPObject
     {
         typedef xx::MPObject BaseType;
-        // 所在场景
-        PKG::Scene* scene = nullptr;
+        // 实例id
+        uint16_t instanceId = 0;
+        // 端口号
+        int32_t port = 0;
 #pragma region ctor, interface impls
 
-	    SceneObj()
+	    Register()
 	    {
 	    }
-	    SceneObj(xx::BBuffer *bb)
-	    {
-            if (auto rtv = bb->Read(scene)) throw rtv;
-	    }
-	    ~SceneObj()
-	    {
-            mempool().SafeRelease(scene);
-	    }
-
-        inline virtual void ToString(xx::String &str) const override
-        {
-        	if (tsFlags())
-        	{
-        		str.Append("[ \"***** recursived *****\" ]");
-        		return;
-        	}
-        	else tsFlags() = 1;
-
-            str.Append("{ \"type\" : \"SceneObj\"");
-            ToStringCore(str);
-            str.Append(" }");
-        
-        	tsFlags() = 0;
-        }
-        inline virtual void ToStringCore(xx::String &str) const override
-        {
-            this->BaseType::ToStringCore(str);
-            str.Append(", \"scene\" : ", this->scene);
-        }
-
-
-        inline virtual void ToBBuffer(xx::BBuffer &bb) const override
-        {
-            bb.Write(this->scene);
-        }
-
-        inline virtual int FromBBuffer(xx::BBuffer &bb) override
-        {
-            bb.Read(this->scene);
-            return 0;
-        }
-
-#pragma endregion
-    };
-    struct Monster : PKG::SceneObj
-    {
-        typedef PKG::SceneObj BaseType;
-        // 位于 scene monster 容器中的下标 for 交换快删
-        int32_t scene_monsters_index = 0;
-        xx::String* name = nullptr;
-        PKG::Color color = PKG::Color::Blue;
-        PKG::Pos pos;
-#pragma region ctor, interface impls
-
-	    Monster()
-            : BaseType()
-	    {
-            mempool().CreateTo(name);
-	    }
-	    Monster(xx::BBuffer *bb)
-            : BaseType(bb)
-	    {
-            if (auto rtv = bb->Read(name)) throw rtv;
-	    }
-	    ~Monster()
-	    {
-            mempool().SafeRelease(name);
-	    }
-
-        inline virtual void ToString(xx::String &str) const override
-        {
-        	if (tsFlags())
-        	{
-        		str.Append("[ \"***** recursived *****\" ]");
-        		return;
-        	}
-        	else tsFlags() = 1;
-
-            str.Append("{ \"type\" : \"Monster\"");
-            ToStringCore(str);
-            str.Append(" }");
-        
-        	tsFlags() = 0;
-        }
-        inline virtual void ToStringCore(xx::String &str) const override
-        {
-            this->BaseType::ToStringCore(str);
-            str.Append(", \"scene_monsters_index\" : ", this->scene_monsters_index);
-            str.Append(", \"name\" : ", this->name);
-            str.Append(", \"color\" : ", this->color);
-            str.Append(", \"pos\" : ", this->pos);
-        }
-
-
-        inline virtual void ToBBuffer(xx::BBuffer &bb) const override
-        {
-            this->BaseType::ToBBuffer(bb);
-            bb.Write(this->scene_monsters_index);
-            bb.Write(this->name);
-            bb.Write(this->color);
-            bb.Write(this->pos);
-        }
-
-        inline virtual int FromBBuffer(xx::BBuffer &bb) override
-        {
-            this->BaseType::FromBBuffer(bb);
-            bb.Read(this->scene_monsters_index);
-            bb.Read(this->name);
-            bb.Read(this->color);
-            bb.Read(this->pos);
-            return 0;
-        }
-
-#pragma endregion
-    };
-    struct Deamon : PKG::Monster
-    {
-        typedef PKG::Monster BaseType;
-#pragma region ctor, interface impls
-
-	    Deamon()
-            : BaseType()
+	    Register(xx::BBuffer *bb)
 	    {
 	    }
-	    Deamon(xx::BBuffer *bb)
-            : BaseType(bb)
-	    {
-	    }
-	    ~Deamon()
+	    ~Register()
 	    {
 	    }
 
@@ -170,7 +62,7 @@ namespace PKG
         	}
         	else tsFlags() = 1;
 
-            str.Append("{ \"type\" : \"Deamon\"");
+            str.Append("{ \"type\" : \"Register\"");
             ToStringCore(str);
             str.Append(" }");
         
@@ -179,90 +71,44 @@ namespace PKG
         inline virtual void ToStringCore(xx::String &str) const override
         {
             this->BaseType::ToStringCore(str);
+            str.Append(", \"instanceId\" : ", this->instanceId);
+            str.Append(", \"port\" : ", this->port);
         }
 
 
         inline virtual void ToBBuffer(xx::BBuffer &bb) const override
         {
-            this->BaseType::ToBBuffer(bb);
+            bb.Write(this->instanceId);
+            bb.Write(this->port);
         }
 
         inline virtual int FromBBuffer(xx::BBuffer &bb) override
         {
-            this->BaseType::FromBBuffer(bb);
+            bb.Read(this->instanceId);
+            bb.Read(this->port);
             return 0;
         }
 
 #pragma endregion
     };
-    struct Butcher : PKG::Monster
-    {
-        typedef PKG::Monster BaseType;
-#pragma region ctor, interface impls
-
-	    Butcher()
-            : BaseType()
-	    {
-	    }
-	    Butcher(xx::BBuffer *bb)
-            : BaseType(bb)
-	    {
-	    }
-	    ~Butcher()
-	    {
-	    }
-
-        inline virtual void ToString(xx::String &str) const override
-        {
-        	if (tsFlags())
-        	{
-        		str.Append("[ \"***** recursived *****\" ]");
-        		return;
-        	}
-        	else tsFlags() = 1;
-
-            str.Append("{ \"type\" : \"Butcher\"");
-            ToStringCore(str);
-            str.Append(" }");
-        
-        	tsFlags() = 0;
-        }
-        inline virtual void ToStringCore(xx::String &str) const override
-        {
-            this->BaseType::ToStringCore(str);
-        }
-
-
-        inline virtual void ToBBuffer(xx::BBuffer &bb) const override
-        {
-            this->BaseType::ToBBuffer(bb);
-        }
-
-        inline virtual int FromBBuffer(xx::BBuffer &bb) override
-        {
-            this->BaseType::FromBBuffer(bb);
-            return 0;
-        }
-
-#pragma endregion
-    };
-    struct Scene : xx::MPObject
+    // 注册结果--成功
+    struct RegisterResult_Success : xx::MPObject
     {
         typedef xx::MPObject BaseType;
-        xx::List<PKG::Monster*>* monsters = nullptr;
+        // 现有服务实例列表
+        xx::List<PKG::Global::Service*>* services = nullptr;
 #pragma region ctor, interface impls
 
-	    Scene()
+	    RegisterResult_Success()
 	    {
-            mempool().CreateTo(monsters);
 	    }
-	    Scene(xx::BBuffer *bb)
+	    RegisterResult_Success(xx::BBuffer *bb)
 	    {
-            if (auto rtv = bb->Read(monsters)) throw rtv;
+            if (auto rtv = bb->Read(services)) throw rtv;
 	    }
-	    ~Scene()
+	    ~RegisterResult_Success()
 	    {
-            mempool().SafeRelease(monsters);
+            mempool().SafeRelease(services);
 	    }
 
         inline virtual void ToString(xx::String &str) const override
@@ -274,7 +120,7 @@ namespace PKG
         	}
         	else tsFlags() = 1;
 
-            str.Append("{ \"type\" : \"Scene\"");
+            str.Append("{ \"type\" : \"RegisterResult_Success\"");
             ToStringCore(str);
             str.Append(" }");
         
@@ -283,68 +129,212 @@ namespace PKG
         inline virtual void ToStringCore(xx::String &str) const override
         {
             this->BaseType::ToStringCore(str);
-            str.Append(", \"monsters\" : ", this->monsters);
+            str.Append(", \"services\" : ", this->services);
         }
 
 
         inline virtual void ToBBuffer(xx::BBuffer &bb) const override
         {
-            bb.Write(this->monsters);
+            bb.Write(this->services);
         }
 
         inline virtual int FromBBuffer(xx::BBuffer &bb) override
         {
-            bb.Read(this->monsters);
+            bb.Read(this->services);
+            return 0;
+        }
+
+#pragma endregion
+    };
+    // 注册结果--失败: 重复的实例id
+    struct RegisterResult_DupeInstanceId : xx::MPObject
+    {
+        typedef xx::MPObject BaseType;
+#pragma region ctor, interface impls
+
+	    RegisterResult_DupeInstanceId()
+	    {
+	    }
+	    RegisterResult_DupeInstanceId(xx::BBuffer *bb)
+	    {
+	    }
+	    ~RegisterResult_DupeInstanceId()
+	    {
+	    }
+
+        inline virtual void ToString(xx::String &str) const override
+        {
+        	if (tsFlags())
+        	{
+        		str.Append("[ \"***** recursived *****\" ]");
+        		return;
+        	}
+        	else tsFlags() = 1;
+
+            str.Append("{ \"type\" : \"RegisterResult_DupeInstanceId\"");
+            ToStringCore(str);
+            str.Append(" }");
+        
+        	tsFlags() = 0;
+        }
+        inline virtual void ToStringCore(xx::String &str) const override
+        {
+            this->BaseType::ToStringCore(str);
+        }
+
+
+        inline virtual void ToBBuffer(xx::BBuffer &bb) const override
+        {
+        }
+
+        inline virtual int FromBBuffer(xx::BBuffer &bb) override
+        {
             return 0;
         }
 
 #pragma endregion
     };
 }
+namespace Global
+{
+    // 服务信息描述
+    struct Service : xx::MPObject
+    {
+        typedef xx::MPObject BaseType;
+        PKG::ServiceTypes type = (PKG::ServiceTypes)0;
+        uint16_t instanceId = 0;
+        xx::String* ip = nullptr;
+        int32_t port = 0;
+#pragma region ctor, interface impls
+
+	    Service()
+	    {
+	    }
+	    Service(xx::BBuffer *bb)
+	    {
+            if (auto rtv = bb->Read(ip)) throw rtv;
+	    }
+	    ~Service()
+	    {
+            mempool().SafeRelease(ip);
+	    }
+
+        inline virtual void ToString(xx::String &str) const override
+        {
+        	if (tsFlags())
+        	{
+        		str.Append("[ \"***** recursived *****\" ]");
+        		return;
+        	}
+        	else tsFlags() = 1;
+
+            str.Append("{ \"type\" : \"Service\"");
+            ToStringCore(str);
+            str.Append(" }");
+        
+        	tsFlags() = 0;
+        }
+        inline virtual void ToStringCore(xx::String &str) const override
+        {
+            this->BaseType::ToStringCore(str);
+            str.Append(", \"type\" : ", this->type);
+            str.Append(", \"instanceId\" : ", this->instanceId);
+            str.Append(", \"ip\" : ", this->ip);
+            str.Append(", \"port\" : ", this->port);
+        }
+
+
+        inline virtual void ToBBuffer(xx::BBuffer &bb) const override
+        {
+            bb.Write(this->type);
+            bb.Write(this->instanceId);
+            bb.Write(this->ip);
+            bb.Write(this->port);
+        }
+
+        inline virtual int FromBBuffer(xx::BBuffer &bb) override
+        {
+            bb.Read(this->type);
+            bb.Read(this->instanceId);
+            bb.Read(this->ip);
+            bb.Read(this->port);
+            return 0;
+        }
+
+#pragma endregion
+    };
+    // 暂定用于包之附加描述
+    struct UserToken : xx::MPObject
+    {
+        typedef xx::MPObject BaseType;
+        uint64_t token = 0;
+#pragma region ctor, interface impls
+
+	    UserToken()
+	    {
+	    }
+	    UserToken(xx::BBuffer *bb)
+	    {
+	    }
+	    ~UserToken()
+	    {
+	    }
+
+        inline virtual void ToString(xx::String &str) const override
+        {
+        	if (tsFlags())
+        	{
+        		str.Append("[ \"***** recursived *****\" ]");
+        		return;
+        	}
+        	else tsFlags() = 1;
+
+            str.Append("{ \"type\" : \"UserToken\"");
+            ToStringCore(str);
+            str.Append(" }");
+        
+        	tsFlags() = 0;
+        }
+        inline virtual void ToStringCore(xx::String &str) const override
+        {
+            this->BaseType::ToStringCore(str);
+            str.Append(", \"token\" : ", this->token);
+        }
+
+
+        inline virtual void ToBBuffer(xx::BBuffer &bb) const override
+        {
+            bb.Write(this->token);
+        }
+
+        inline virtual int FromBBuffer(xx::BBuffer &bb) override
+        {
+            bb.Read(this->token);
+            return 0;
+        }
+
+#pragma endregion
+    };
+}
+}
 namespace xx
 {
-	template<>
-	struct BytesFunc<PKG::Pos, void>
-	{
-		static inline uint32_t Calc(PKG::Pos const &in)
-		{
-			return BBCalc(in.x, in.y);
-		}
-		static inline uint32_t WriteTo(char *dstBuf, PKG::Pos const &in)
-		{
-			return BBWriteTo(dstBuf, in.x, in.y);
-		}
-		static inline int ReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, PKG::Pos &out)
-		{
-			return BBReadFrom(srcBuf, dataLen, offset, out.x, out.y);
-		}
-	};
-	template<>
-	struct StrFunc<PKG::Pos, void>
-	{
-		static inline uint32_t Calc(PKG::Pos const &in)
-		{
-			return StrCalc(in.x, in.y + 1010);
-		}
-		static inline uint32_t WriteTo(char *dstBuf, PKG::Pos const &in)
-		{
-			return StrWriteTo(dstBuf, "{ \"type\" : \"Pos\"", ", \"x\" : ", in.x, ", \"y\" : ", in.y, " }");
-        }
-    };
-	template<> struct TypeId<PKG::SceneObj> { static const uint16_t value = 2; };
-	template<> struct TypeId<PKG::Scene> { static const uint16_t value = 3; };
-	template<> struct TypeId<PKG::Monster> { static const uint16_t value = 4; };
-	template<> struct TypeId<PKG::Deamon> { static const uint16_t value = 5; };
-	template<> struct TypeId<PKG::Butcher> { static const uint16_t value = 6; };
+	template<> struct TypeId<PKG::Discovery::Register> { static const uint16_t value = 2; };
+	template<> struct TypeId<PKG::Discovery::RegisterResult_Success> { static const uint16_t value = 3; };
+	template<> struct TypeId<xx::List<PKG::Global::Service*>> { static const uint16_t value = 4; };
+	template<> struct TypeId<PKG::Discovery::RegisterResult_DupeInstanceId> { static const uint16_t value = 5; };
+	template<> struct TypeId<PKG::Global::Service> { static const uint16_t value = 6; };
+	template<> struct TypeId<PKG::Global::UserToken> { static const uint16_t value = 7; };
 }
 namespace PKG
 {
 	inline void RegisterTypes()
 	{
-	    xx::MemPool::Register<PKG::SceneObj, xx::MPObject>();
-	    xx::MemPool::Register<PKG::Scene, xx::MPObject>();
-	    xx::MemPool::Register<PKG::Monster, PKG::SceneObj>();
-	    xx::MemPool::Register<PKG::Deamon, PKG::Monster>();
-	    xx::MemPool::Register<PKG::Butcher, PKG::Monster>();
+	    xx::MemPool::Register<PKG::Discovery::Register, xx::MPObject>();
+	    xx::MemPool::Register<PKG::Discovery::RegisterResult_Success, xx::MPObject>();
+	    xx::MemPool::Register<xx::List<PKG::Global::Service*>, xx::MPObject>();
+	    xx::MemPool::Register<PKG::Discovery::RegisterResult_DupeInstanceId, xx::MPObject>();
+	    xx::MemPool::Register<PKG::Global::Service, xx::MPObject>();
+	    xx::MemPool::Register<PKG::Global::UserToken, xx::MPObject>();
 	}
 }

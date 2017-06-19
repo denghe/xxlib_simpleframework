@@ -885,7 +885,11 @@ public static class GenExtensions
     /// </summary>
     public static void _Write(this string fn, StringBuilder sb, bool useBOM = true)
     {
-        File.Delete(fn);
+        try
+        {
+            File.Delete(fn);
+        }
+        catch { }
         using (var fs = File.OpenWrite(fn))
         {
             if (useBOM)

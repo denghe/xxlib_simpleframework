@@ -1,5 +1,6 @@
 #include "xx_uv.h"
 #include "xx_helpers.h"
+#include "../test1/PKG_class.h"
 
 struct MyUVServerPeer : xx::UVServerPeer
 {
@@ -14,7 +15,12 @@ struct MyUVServerPeer : xx::UVServerPeer
 
 	inline virtual void OnReceivePackage(xx::BBuffer& bb) override
 	{
-		//// 一定会收到一个 uint64_t 的值, 加 1 并返回
+		xx::TypeIdValueType typeId;
+		// todo: read
+
+		//xx::TypeId_v<PKG::Discovery::Register>
+		//typeId //PKG::Discovery::Register
+
 		//uint64_t v = 0;
 		//if (bb.Read(v))
 		//{
@@ -32,8 +38,7 @@ struct MyUVListener : xx::UVListener
 	MyUVListener(xx::UV* uv, int port, int backlog) : xx::UVListener(uv, port, backlog) {}
 	inline virtual xx::UVServerPeer* OnCreatePeer() override
 	{
-		auto peer = mempool().Create<MyUVServerPeer>(this);
-		return peer;
+		return mempool().Create<MyUVServerPeer>(this);
 	}
 };
 
@@ -47,12 +52,13 @@ struct MyTimer : xx::UVTimer
 	inline virtual void OnFire() override
 	{
 		std::cout << "." << std::flush;
-
 	}
 };
 
 int main()
 {
+	PKG::RegisterTypes();
+
 	xx::MemPool mp;
 	xx::UV_v uv(mp);
 	auto listener = uv->CreateListener<MyUVListener>(12345);

@@ -7,7 +7,7 @@ using System.Windows.Forms;
 public static class Program
 {
     public const string templatePrefix = "pkggen_template_";
-    public const string outputPath = "../../../test1";
+    public const string outputPath = "../../../../test1";
 
     static void Main(string[] args)
     {
