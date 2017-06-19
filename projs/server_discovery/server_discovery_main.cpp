@@ -15,18 +15,25 @@ struct MyUVServerPeer : xx::UVServerPeer
 
 	inline virtual void OnReceivePackage(xx::BBuffer& bb) override
 	{
-		xx::TypeIdValueType typeId;
-		// todo: read
+		xx::MPObject* pkg = nullptr;
+		if(bb.ReadRoot(pkg))
+		{
+			assert(!pkg);
+			// todo: Log ?
+			Disconnect();
+			return;
+		}
 
-		//xx::TypeId_v<PKG::Discovery::Register>
-		//typeId //PKG::Discovery::Register
+		auto parent = (MyUVListener*)listener;
+		switch (pkg->typeId())
+		{
+		case xx::TypeId_v<PKG::Discovery::Register>:
+		{
+			//if (parent->services->Exists([](auto& o) { return o->instanceId ==  });
+			break;
+		}
+		}
 
-		//uint64_t v = 0;
-		//if (bb.Read(v))
-		//{
-		//	Disconnect();
-		//	return;
-		//}
 		//auto sendBB = GetSendBB();
 		//sendBB->WritePackage(++v);
 		//Send(sendBB);
@@ -35,7 +42,13 @@ struct MyUVServerPeer : xx::UVServerPeer
 
 struct MyUVListener : xx::UVListener
 {
-	MyUVListener(xx::UV* uv, int port, int backlog) : xx::UVListener(uv, port, backlog) {}
+	// 先实现简单数组版的 已注册服务列表, 放在这以便于每个 peer 共享访问
+	xx::List_v<PKG::Global::Service*> services;
+
+	MyUVListener(xx::UV* uv, int port, int backlog)
+		: xx::UVListener(uv, port, backlog)
+		, services(mempool())
+	{}
 	inline virtual xx::UVServerPeer* OnCreatePeer() override
 	{
 		return mempool().Create<MyUVServerPeer>(this);
