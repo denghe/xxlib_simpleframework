@@ -15,24 +15,28 @@ struct MyUVServerPeer : xx::UVServerPeer
 
 	inline virtual void OnReceivePackage(xx::BBuffer& bb) override
 	{
-		xx::MPObject* pkg = nullptr;
-		if(bb.ReadRoot(pkg))
-		{
-			assert(!pkg);
-			// todo: Log ?
-			Disconnect();
-			return;
-		}
+		//xx::MPObject* pkg = nullptr;
+		//if(bb.ReadRoot(pkg))
+		//{
+		//	assert(!pkg);
+		//	// todo: Log ?
+		//	Disconnect();
+		//	return;
+		//}
 
-		auto parent = (MyUVListener*)listener;
-		switch (pkg->typeId())
-		{
-		case xx::TypeId_v<PKG::Discovery::Register>:
-		{
-			//if (parent->services->Exists([](auto& o) { return o->instanceId ==  });
-			break;
-		}
-		}
+		//auto parent = (MyUVListener*)listener;
+		//switch (pkg->typeId())
+		//{
+		//case xx::TypeId_v<PKG::Discovery::Register>:
+		//{
+		//	//if (parent->services->Exists([](auto& o) { return o->instanceId ==  });
+		//	break;
+		//}
+		//default:
+		//	// todo: Log ?
+		//	Disconnect();
+		//	return;
+		//}
 
 		//auto sendBB = GetSendBB();
 		//sendBB->WritePackage(++v);

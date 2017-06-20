@@ -85,9 +85,9 @@ namespace xx
 			return buf;
 		}
 
-		inline void AppendSpace(uint32_t num = 1)
+		inline void AppendChars(char const& c = ' ', uint32_t const& num = 1)
 		{
-			memset(buf + Resize(dataLen + num), ' ', num);
+			memset(buf + Resize(dataLen + num), c, num);
 		}
 
 		template<typename ...TS>
