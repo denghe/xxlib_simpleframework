@@ -321,7 +321,7 @@ namespace xx
 			dataLen += sizeof(SizeType);
 			WriteRoot(v);
 			auto len = (SizeType)(dataLen - bak_dataLen - sizeof(SizeType));
-			if (dataLen - bak_dataLen > std::numeric_limits<SizeType>::max())
+			if (len > std::numeric_limits<SizeType>::max())
 			{
 				dataLen = bak_dataLen;
 				return false;
