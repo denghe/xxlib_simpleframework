@@ -26,13 +26,14 @@ namespace xx
 		int EnableIdle();
 		void DisableIdle();
 		void Run();
+		void Stop();
 		virtual void OnIdle();
 		template<typename ListenerType> ListenerType* CreateListener(int port, int backlog = SOMAXCONN);
 		template<typename ClientPeerType> ClientPeerType* CreateClientPeer();
 		template<typename TimerType> TimerType* CreateTimer();
 
 		// uv's
-		uv_loop_t* loop;
+		uv_loop_t loop;
 		uv_idle_t idler;
 		static void IdleCB(uv_idle_t* handle);
 	};
@@ -51,9 +52,18 @@ namespace xx
 		static void OnConnect(uv_stream_t* server, int status);
 	};
 
+	enum class UVPeerStates
+	{
+		Disconnected,
+		Connecting,
+		Connected,
+		Disconnecting
+	};
+
 	struct UVPeer : MPObject										// 一些基础数据结构
 	{
 		UVPeer();
+		~UVPeer();
 
 		UV* uv;
 		BBuffer_v bbReceive;										// for ReadCB & OnReceive
@@ -63,12 +73,14 @@ namespace xx
 		List_v<uv_buf_t> writeBufs;									// 复用的 uv 写操作 多段数据参数
 		String_v tmpStr;
 		bool sending = false;										// 发送操作标记. 当前设计中只同时发一段数据, 成功回调时才继续发下一段
+		UVPeerStates state;											// 连接状态( server peer 初始为 Connected, client peer 为 Disconnected )
 
 		virtual void OnReceive();									// 默认实现为读取包( 2 byte长度 + 数据 ), 并于凑齐完整包后 call OnReceivePackage
 		virtual void OnReceivePackage(BBuffer& bb) = 0;				// OnReceive 凑齐一个包时将产生该调用
+		virtual void OnDisconnect() = 0;
 
 		BBuffer* GetSendBB(int const& capacity = 0);				// 获取或创建一个 send 用的 BBuffer( sendBufs->PopLastBB )
-		int Send(BBuffer* const& bb);								// 发送 或 将数据压入待发送队列, 立即返回是否成功( 失败原因可能是待发数据过多 )
+		int Send(BBuffer* const& bb);								// 发送 或 将数据压入待发送队列, 立即返回是否成功( 0 表示成功 )( 失败原因可能是待发数据过多 )
 		virtual void Disconnect(bool const& immediately = true);	// 断开( 接着会 Release ). immediately 为否就走 shutdown 模式( 延迟杀, 能尽可能确保数据发出去 )
 
 		int SetNoDelay(bool const& enable);
@@ -76,6 +88,7 @@ namespace xx
 		String& GetPeerName();
 
 		int Send();													// 内部函数, 开始发送 sendBufs 里的东西
+		void Clear();												// 内部函数, 于断开之后清理收发相关缓存
 
 		// uv's
 		uv_tcp_t stream;
@@ -101,26 +114,19 @@ namespace xx
 	struct UVClientPeer : UVPeer
 	{
 		uint32_t uv_clientPeers_index;
-		bool connecting = false;
-		bool closing = false;
-		bool connected = false;
 		int lastStatus = 0;											// 最后状态( 连接, 断开 )
 
 		UVClientPeer(UV* uv);
 		~UVClientPeer();											// 如果析构时 connected 为 true 则表示已断线
-		virtual void Disconnect(bool const& immediately = true) override;
 
 		int SetAddress(char const* ip, int port);
 		int Connect();
 		virtual void OnConnect() = 0;								// lastStatus 非 0 或 connected 为 false 表示没连上
-		virtual void OnDisconnect() = 0;
 
 		// uv's
 		sockaddr_in tarAddr;
 		uv_connect_t conn;
 		static void ConnectCB(uv_connect_t* conn, int status);
-		static void ClientCloseCB(uv_handle_t* stream);
-		static void ClientShutdownCB(uv_shutdown_t* req, int status);
 	};
 
 	struct UVTimer : MPObject

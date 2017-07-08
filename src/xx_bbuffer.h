@@ -49,7 +49,7 @@ namespace xx
 	struct BBuffer : public List<char, 16>
 	{
 		typedef List<char, 16> BaseType;
-		uint32_t offset = 0;													// 读指针偏移量
+		uint32_t offset = 0, offset_root = 0;		// 读指针偏移量, offset值写入修正
 
 		BBuffer(BBuffer const&o) = delete;
 		BBuffer& operator=(BBuffer const&o) = delete;
@@ -109,6 +109,7 @@ namespace xx
 		{
 			if (!ptrStore) this->mempool().CreateTo(ptrStore, 16);
 			//else ptrStore->Clear();
+			offset_root = dataLen;
 		}
 		void EndWrite()
 		{
@@ -119,6 +120,7 @@ namespace xx
 		{
 			if (!idxStore) this->mempool().CreateTo(idxStore, 16);
 			//else idxStore->Clear();
+			offset_root = offset;
 		}
 		void EndRead()
 		{
@@ -155,7 +157,7 @@ namespace xx
 			}
 			WritePods(v->typeId());
 
-			auto rtv = ptrStore->Add((void*)v, dataLen);
+			auto rtv = ptrStore->Add((void*)v, dataLen - offset_root);
 			WritePods(ptrStore->ValueAt(rtv.index));
 			if (rtv.success)
 			{
@@ -179,7 +181,7 @@ namespace xx
 			}
 
 			// get offset
-			uint32_t ptr_offset = 0, bb_offset_bak = offset;
+			uint32_t ptr_offset = 0, bb_offset_bak = offset - offset_root;
 			if (auto rtv = ReadPods(ptr_offset)) return rtv;
 
 			// fill or ref

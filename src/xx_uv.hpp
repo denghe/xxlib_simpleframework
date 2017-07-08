@@ -7,12 +7,19 @@ namespace xx
 		, clientPeers(mempool())
 		, timers(mempool())
 	{
-		loop = uv_default_loop();
-		uv_idle_init(loop, &idler);
+		//loop = uv_default_loop();
+		if (auto r = uv_loop_init(&loop)) throw r;
+		uv_idle_init(&loop, &idler);
 	}
 
 	inline UV::~UV()
 	{
+		for (int i = (int)timers->dataLen - 1; i >= 0; --i)
+		{
+			timers->At(i)->Release();
+		}
+		timers->Clear();
+
 		for (int i = (int)listeners->dataLen - 1; i >= 0; --i)
 		{
 			listeners->At(i)->Release();	// todo: 传递 release 原因?
@@ -24,6 +31,8 @@ namespace xx
 			clientPeers->At(i)->Release();	// todo: 传递 release 原因?
 		}
 		clientPeers->Clear();
+
+		uv_loop_close(&loop);
 	}
 
 	inline int UV::EnableIdle()
@@ -42,9 +51,13 @@ namespace xx
 
 	inline void UV::Run()
 	{
-		uv_run(loop, UV_RUN_DEFAULT);
+		uv_run(&loop, UV_RUN_DEFAULT);
 	}
 
+	inline void UV::Stop()
+	{
+		uv_stop(&loop);
+	}
 
 	template<typename ListenerType>
 	ListenerType* UV::CreateListener(int port, int backlog)
@@ -86,7 +99,7 @@ namespace xx
 		sockaddr_in addr;
 		uv_ip4_addr("0.0.0.0", port, &addr);
 
-		if (auto rtv = uv_tcp_init(uv->loop, &tcpServer))
+		if (auto rtv = uv_tcp_init(&uv->loop, &tcpServer))
 		{
 			throw rtv;
 		}
@@ -139,6 +152,86 @@ namespace xx
 		, writeBufs(mempool())
 		, tmpStr(mempool())
 	{
+	}
+
+	inline UVPeer::~UVPeer()
+	{
+		// 还需要进一步了解这样做的副作用
+		if (!uv_is_closing((uv_handle_t*)&stream))
+		{
+			uv_close((uv_handle_t*)&stream, nullptr);
+		}
+
+		bbReceivePackage->buf = nullptr;
+		bbReceivePackage->bufLen = 0;
+		bbReceivePackage->dataLen = 0;
+		bbReceivePackage->offset = 0;
+	}
+
+	inline void UVPeer::AllocCB(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf)
+	{
+		auto self = container_of(handle, UVPeer, stream);
+		if (suggested_size > self->bbReceive->bufLen)
+		{
+			self->bbReceive->Reserve((uint32_t)suggested_size);
+		}
+		buf->base = self->bbReceive->buf;
+		buf->len = self->bbReceive->bufLen;
+	}
+
+	inline void UVPeer::ShutdownCB(uv_shutdown_t* req, int status)
+	{
+		if (!uv_is_closing((uv_handle_t*)req->handle))
+		{
+			uv_close((uv_handle_t*)req->handle, CloseCB);
+		}
+		else
+		{
+			CloseCB((uv_handle_t*)req->handle);
+		}
+	}
+
+	inline void UVPeer::CloseCB(uv_handle_t* handle)
+	{
+		auto self = container_of(handle, UVPeer, stream);
+		self->state = UVPeerStates::Disconnected;
+		self->Clear();
+		self->OnDisconnect();	// 这里不再做 self->Release(); 需要自己 Release / Dispose
+	}
+
+	inline void UVPeer::ReadCB(uv_stream_t* handle, ssize_t nread, const uv_buf_t* buf)
+	{
+		auto self = container_of(handle, UVPeer, stream);
+		if (nread < 0)
+		{
+			/* Error or EOF */
+			self->Disconnect(false);
+			return;
+		}
+		if (nread == 0)
+		{
+			/* Everything OK, but nothing read. */
+			return;
+		}
+		assert(buf->base == self->bbReceive->buf && buf->len == self->bbReceive->bufLen);
+		self->bbReceive->dataLen = (uint32_t)nread;
+		self->bbReceive->offset = 0;
+		self->OnReceive();
+	}
+
+	inline void UVPeer::SendCB(uv_write_t *req, int status)
+	{
+		auto self = container_of(req, UVPeer, writer);
+		self->sending = false;
+		if (status)
+		{
+			//std::cout << "Send error " << uv_strerror(status) << std::endl;
+			self->Disconnect();	// todo: 传原因?
+		}
+		else
+		{
+			self->Send();  // 继续发, 直到发光	// todo: 如果返回错误, 存 last error?
+		}
 	}
 
 	inline void UVPeer::OnReceive()
@@ -247,70 +340,6 @@ namespace xx
 		}
 	}
 
-	inline void UVPeer::AllocCB(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf)
-	{
-		auto self = container_of(handle, UVPeer, stream);
-		if (suggested_size > self->bbReceive->bufLen)
-		{
-			self->bbReceive->Reserve((uint32_t)suggested_size);
-		}
-		buf->base = self->bbReceive->buf;
-		buf->len = self->bbReceive->bufLen;
-	}
-
-	inline void UVPeer::CloseCB(uv_handle_t* handle)
-	{
-		auto self = container_of(handle, UVPeer, stream);
-		self->Release();
-	}
-
-	inline void UVPeer::ReadCB(uv_stream_t* handle, ssize_t nread, const uv_buf_t* buf)
-	{
-		auto self = container_of(handle, UVPeer, stream);
-		if (nread < 0)
-		{
-			/* Error or EOF */
-			self->Disconnect(false);
-			return;
-		}
-		if (nread == 0)
-		{
-			/* Everything OK, but nothing read. */
-			return;
-		}
-		assert(buf->base == self->bbReceive->buf && buf->len == self->bbReceive->bufLen);
-		self->bbReceive->dataLen = (uint32_t)nread;
-		self->bbReceive->offset = 0;
-		self->OnReceive();
-	}
-
-	inline void UVPeer::ShutdownCB(uv_shutdown_t* req, int status)
-	{
-		if (!uv_is_closing((uv_handle_t*)req->handle))
-		{
-			uv_close((uv_handle_t*)req->handle, CloseCB);
-		}
-		else
-		{
-			CloseCB((uv_handle_t*)req->handle);
-		}
-	}
-
-	inline void UVPeer::SendCB(uv_write_t *req, int status)
-	{
-		auto self = container_of(req, UVPeer, writer);
-		self->sending = false;
-		if (status)
-		{
-			//std::cout << "Send error " << uv_strerror(status) << std::endl;
-			self->Disconnect();	// todo: 传原因?
-		}
-		else
-		{
-			self->Send();  // 继续发, 直到发光	// todo: 如果返回错误, 存 last error?
-		}
-	}
-
 	inline int UVPeer::Send()
 	{
 		assert(!sending);
@@ -323,6 +352,12 @@ namespace xx
 		return 0;
 	}
 
+	inline void UVPeer::Clear()
+	{
+		bbReceiveLeft->Clear();
+		sendBufs->Clear();
+	}
+
 	inline BBuffer* UVPeer::GetSendBB(int const& capacity)
 	{
 		return sendBufs->PopLastBB(capacity);
@@ -330,17 +365,18 @@ namespace xx
 
 	inline int UVPeer::Send(BBuffer* const& bb)
 	{
-		//uv_is_writable check?
+		sendBufs->Push(bb);			// 压入, 接管并移交上下文字典
 		//if (sendBufs->BytesCount() + bb.dataLen > sendBufLimit) return false;
-
-		sendBufs->Push(bb);
+		if (state != UVPeerStates::Connected) return -1;
 		if (!sending) return Send();
 		return 0;
 	}
 
 	inline void UVPeer::Disconnect(bool const& immediately)
 	{
-		// todo: save disconnect type ?
+		state = UVPeerStates::Disconnecting;
+
+		// todo: save reason ?
 		if (immediately														// 立即断开
 			|| !sending && ((uv_stream_t*)&stream)->write_queue_size == 0	// 没数据正在发
 			|| uv_shutdown(&sreq, (uv_stream_t*)&stream, ShutdownCB))		// shutdown 失败
@@ -348,6 +384,12 @@ namespace xx
 			if (!uv_is_closing((uv_handle_t*)&stream))						// 非 正在关
 			{
 				uv_close((uv_handle_t*)&stream, CloseCB);
+			}
+			else
+			{
+				state = UVPeerStates::Disconnected;
+				Clear();
+				OnDisconnect();
 			}
 		}
 	}
@@ -361,7 +403,6 @@ namespace xx
 	{
 		return uv_tcp_keepalive(&stream, enable ? 1 : 0, delay);
 	}
-
 
 	String& UVPeer::GetPeerName()
 	{
@@ -389,9 +430,10 @@ namespace xx
 	inline UVServerPeer::UVServerPeer(UVListener* listener)
 		: UVPeer()
 	{
+		state = UVPeerStates::Connected;
 		this->uv = listener->uv;
 		this->listener = listener;
-		if (auto rtv = uv_tcp_init(uv->loop, (uv_tcp_t*)&stream))
+		if (auto rtv = uv_tcp_init(&uv->loop, (uv_tcp_t*)&stream))
 		{
 			throw rtv;
 		}
@@ -410,16 +452,6 @@ namespace xx
 	}
 	inline UVServerPeer::~UVServerPeer()
 	{
-		// 还需要进一步了解这样做的副作用
-		if (!uv_is_closing((uv_handle_t*)&stream))
-		{
-			uv_close((uv_handle_t*)&stream, nullptr);
-		}
-
-		bbReceivePackage->buf = nullptr;
-		bbReceivePackage->bufLen = 0;
-		bbReceivePackage->dataLen = 0;
-		bbReceivePackage->offset = 0;
 		XX_LIST_SWAP_REMOVE(listener->peers, this, listener_peers_index);
 	}
 
@@ -433,9 +465,10 @@ namespace xx
 	inline UVClientPeer::UVClientPeer(UV* uv)
 		: UVPeer()
 	{
+		state = UVPeerStates::Disconnected;
 		this->uv = uv;
 		uv_clientPeers_index = uv->clientPeers->dataLen;
-		if (auto rtv = uv_tcp_init(uv->loop, (uv_tcp_t*)&stream))
+		if (auto rtv = uv_tcp_init(&uv->loop, (uv_tcp_t*)&stream))
 		{
 			throw rtv;
 		}
@@ -444,102 +477,47 @@ namespace xx
 
 	inline UVClientPeer::~UVClientPeer()
 	{
-		// 还需要进一步了解这样做的副作用
-		if (!uv_is_closing((uv_handle_t*)&stream))
-		{
-			uv_close((uv_handle_t*)&stream, nullptr);
-		}
-
-		bbReceivePackage->buf = nullptr;
-		bbReceivePackage->bufLen = 0;
-		bbReceivePackage->dataLen = 0;
-		bbReceivePackage->offset = 0;
 		XX_LIST_SWAP_REMOVE(uv->clientPeers, this, uv_clientPeers_index);
 	}
 
 	inline int UVClientPeer::SetAddress(char const* ip, int port)
 	{
-		return uv_ip4_addr(ip, 12345, &tarAddr);
+		return uv_ip4_addr(ip, port, &tarAddr);
 	}
 
 	inline int UVClientPeer::Connect()
 	{
-		assert(!connecting);
-		connecting = true;
-		return uv_tcp_connect(&conn, &stream, (sockaddr*)&tarAddr, ConnectCB);
+		assert(state == UVPeerStates::Disconnected);
+		state = UVPeerStates::Connecting;
+		if (auto rtv = uv_tcp_connect(&conn, &stream, (sockaddr*)&tarAddr, ConnectCB))
+		{
+			state = UVPeerStates::Disconnected;
+			return rtv;
+		}
+		return 0;
 	}
 
 	inline void UVClientPeer::ConnectCB(uv_connect_t* conn, int status)
 	{
 		auto self = container_of(conn, UVClientPeer, conn);
-		self->connecting = false;
 		self->lastStatus = status;
 		if (status < 0)
 		{
-			self->connected = false;
+			self->state = UVPeerStates::Disconnected;
 			self->OnConnect();
 		}
 		else
 		{
-			self->connected = true;
+			self->state = UVPeerStates::Connected;
 			if (uv_read_start((uv_stream_t*)&self->stream, self->AllocCB, self->ReadCB))
 			{
-				self->connected = false;
-				self->closing = true;
-				uv_close((uv_handle_t*)&self->stream, self->ClientCloseCB);
+				self->state = UVPeerStates::Disconnecting;
+				uv_close((uv_handle_t*)&self->stream, self->CloseCB);
 			}
 			self->OnConnect();
 		}
 	}
 
-	inline void UVClientPeer::Disconnect(bool const& immediately)
-	{
-		closing = true;
-
-		// todo: save disconnect type ?
-		if (immediately														// 立即断开
-			|| !sending && ((uv_stream_t*)&stream)->write_queue_size == 0	// 没数据正在发
-			|| uv_shutdown(&sreq, (uv_stream_t*)&stream, ClientShutdownCB))	// shutdown 失败
-		{
-			// todo: 发现当 server端杀掉时,  closing 正在发生
-			if (!uv_is_closing((uv_handle_t*)&stream))						// 非 正在关
-			{
-				uv_close((uv_handle_t*)&stream, ClientCloseCB);
-			}
-			else
-			{
-				closing = false;
-				if (connected)
-				{
-					connected = false;
-					OnDisconnect();
-				}
-			}
-		}
-	}
-
-	inline void UVClientPeer::ClientShutdownCB(uv_shutdown_t* req, int status)
-	{
-		if (!uv_is_closing((uv_handle_t*)req->handle))
-		{
-			uv_close((uv_handle_t*)req->handle, ClientCloseCB);
-		}
-		else
-		{
-			ClientCloseCB((uv_handle_t*)req->handle);
-		}
-	}
-
-	inline void UVClientPeer::ClientCloseCB(uv_handle_t* handle)
-	{
-		auto self = container_of(handle, UVClientPeer, stream);
-		self->closing = false;
-		if (self->connected)
-		{
-			self->connected = false;
-			self->OnDisconnect();
-		}
-	}
 
 
 
@@ -551,33 +529,39 @@ namespace xx
 		: uv(uv)
 	{
 		uv_timers_index = uv->timers->dataLen;
-		if (auto rtv = uv_timer_init(uv->loop, &timer_req))
+		if (auto rtv = uv_timer_init(&uv->loop, &timer_req))
 		{
 			throw rtv;
 		}
 		uv->timers->Add(this);
 	}
+
 	inline UVTimer::~UVTimer()
 	{
 		uv_close((uv_handle_t*)&timer_req, nullptr);
 		XX_LIST_SWAP_REMOVE(uv->timers, this, uv_timers_index);
 	}
+
 	inline int UVTimer::Start(uint64_t const& timeoutMS, uint64_t const& repeatIntervalMS)
 	{
 		return uv_timer_start(&timer_req, TimerCB, timeoutMS, repeatIntervalMS);
 	}
+
 	inline void UVTimer::SetRepeat(uint64_t const& repeatIntervalMS)
 	{
 		uv_timer_set_repeat(&timer_req, repeatIntervalMS);
 	}
+
 	inline int UVTimer::Again()
 	{
 		return uv_timer_again(&timer_req);
 	}
+
 	inline int UVTimer::Stop()
 	{
 		return uv_timer_stop(&timer_req);
 	}
+
 	inline void UVTimer::TimerCB(uv_timer_t* handle)
 	{
 		auto self = container_of(handle, UVTimer, timer_req);

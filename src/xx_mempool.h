@@ -177,7 +177,8 @@ namespace xx
 		inline void Release(MPObject* p) noexcept
 		{
 			if (!p || p->refCount() > 0x7FFFFFFF) return;						// 如果空指针 或是用 MemHeaderBox 包裹则不执行 Release 操作
-			assert(p->versionNumber() && p->refCount());						// 理论上讲 free 的时候其版本号不应该是 0, 引用计数不该是 0. 否则就是 Release 次数过多
+			assert(p->versionNumber());											// 版本号不应该是 0,
+			assert(p->refCount());												// 引用计数不该是 0. 否则就是 Release 次数过多
 			if (--p->refCount()) return;
 			p->~MPObject();
 
