@@ -11,9 +11,11 @@ struct MyUVServerPeer : xx::UVServerPeer
 		//assert(rtv);
 		std::cout << "\nAccepted client ip = " << GetPeerName().C_str() << std::endl;
 	}
-	~MyUVServerPeer()
+
+	inline virtual void OnDisconnect() override
 	{
 		std::cout << "\nDisconnected client ip = " << tmpStr->C_str() << std::endl;
+		Release();		// 释放资源
 	}
 
 	inline virtual void OnReceive() override

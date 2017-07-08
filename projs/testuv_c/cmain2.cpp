@@ -14,7 +14,7 @@ struct MyClientPeer : xx::UVClientPeer
 	MyClientPeer(xx::UV* uv) : xx::UVClientPeer(uv) {}
 	inline virtual void OnConnect() override
 	{
-		assert(connected);
+		assert(this->state == xx::UVPeerStates::Connected);
 		//auto rtv = SetNoDelay(true);
 		//assert(!rtv);
 		auto bb = GetSendBB();

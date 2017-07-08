@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26430.13
+VisualStudioVersion = 15.0.26430.15
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test1", "test1\test1.vcxproj", "{C0853121-A9FF-426C-BC02-A5AE3440D9C2}"
 EndProject
@@ -23,7 +23,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "server_login", "server_logi
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "server_discovery", "server_discovery\server_discovery.vcxproj", "{1EA768ED-D701-43E9-B614-2E83E8D8107D}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{A73C4BA4-77BA-4086-9EF9-8D7DCE1843CF}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{A73C4BA4-77BA-4086-9EF9-8D7DCE1843CF}"
 	ProjectSection(SolutionItems) = preProject
 		design.txt = design.txt
 	EndProjectSection
