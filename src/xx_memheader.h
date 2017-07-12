@@ -21,8 +21,9 @@ namespace xx
 	struct MemHeader_MPObject : public MemHeader_VersionNumber
 	{
 		// 这个用于希望将 MPObject 对象以非指针方式使用时, 放在变量前面以提供内存头空间时使用( 实现在 xx_mempoolbase.h 属 )
-		MemHeader_MPObject(MemPool& mempool)
+		MemHeader_MPObject(MemPool& mempool, uint16_t const& typeId)
 			: mempool(&mempool)
+			, typeId(typeId)
 		{
 			this->versionNumber = 0;
 			this->refCount = (uint32_t)-1;											// 防 Release
@@ -69,7 +70,7 @@ namespace xx
 
 		template<typename ...Args>
 		MemHeaderBox(MemPool& mempool, Args&& ... args)
-			: mh(mempool)
+			: mh(mempool, TypeId_v<T>)
 			, instance(std::forward<Args>(args)...)
 		{
 		}

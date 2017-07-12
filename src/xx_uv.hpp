@@ -151,6 +151,7 @@ namespace xx
 		, sendBufs(mempool())
 		, writeBufs(mempool())
 		, tmpStr(mempool())
+		, recvPkgs(mempool())
 	{
 	}
 
@@ -166,6 +167,8 @@ namespace xx
 		bbReceivePackage->bufLen = 0;
 		bbReceivePackage->dataLen = 0;
 		bbReceivePackage->offset = 0;
+
+		assert(!recvPkgs->dataLen);
 	}
 
 	inline void UVPeer::AllocCB(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf)
@@ -232,6 +235,10 @@ namespace xx
 		{
 			self->Send();  // 继续发, 直到发光	// todo: 如果返回错误, 存 last error?
 		}
+	}
+
+	inline void UVPeer::OnDisconnect()
+	{
 	}
 
 	inline void UVPeer::OnReceive()
@@ -422,6 +429,47 @@ namespace xx
 		return *tmpStr;
 	}
 
+	template<typename T>
+	int UVPeer::SendCore(T const& pkg)
+	{
+		auto bb = GetSendBB();
+		auto b = bb->WritePackage(pkg);
+		if (!b) return -1;
+		return Send(bb);
+	}
+	template<typename T, typename ...TS>
+	int UVPeer::SendCore(T const& pkg, TS const& ... pkgs)
+	{
+		if (auto rtv = SendCore(pkg)) return rtv;
+		return SendCore(pkg, pkgs...);
+	}
+	template<typename ...TS>
+	int UVPeer::SendPackages(TS const& ... pkgs)
+	{
+		return SendCore(pkgs...);
+	}
+
+	template<typename T>
+	void UVPeer::SendCombineCore(BBuffer& bb, T const& pkg)
+	{
+		bb.WriteRoot(pkg);
+	}
+	template<typename T, typename ...TS>
+	void UVPeer::SendCombineCore(BBuffer& bb, T const& pkg, TS const& ... pkgs)
+	{
+		bb.WriteRoot(pkg);
+		SendCombineCore(bb, pkg, pkgs...);
+	}
+	template<typename ...TS>
+	int UVPeer::SendCombine(TS const& ... pkgs)
+	{
+		auto bb = GetSendBB();
+		bb->BeginWritePackage();
+		SendCombineCore(*bb, pkgs...);
+		if (bb->EndWritePackage()) return -1;
+		return Send(bb);
+	}
+
 
 
 
@@ -518,6 +566,11 @@ namespace xx
 		}
 	}
 
+	inline void UVClientPeer::OnDisconnect()
+	{
+		auto rtv = uv_tcp_init(&uv->loop, (uv_tcp_t*)&stream);
+		assert(!rtv);
+	}
 
 
 

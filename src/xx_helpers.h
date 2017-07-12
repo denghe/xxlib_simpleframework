@@ -2,6 +2,7 @@
 #include <xx_mempool.h>
 #include <iostream>
 #include <type_traits>
+#include <time.h>						// for clock()
 namespace xx
 {
 	template<typename T, typename ENABLE = void>
@@ -36,5 +37,10 @@ namespace xx
 	void Dump(T const& o)
 	{
 		DumpCore<T>::Dump(o);
+	}
+
+	inline int64_t GetCurrentMS()
+	{
+		return (int64_t)clock();
 	}
 }

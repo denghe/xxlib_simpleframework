@@ -15,6 +15,7 @@ namespace xx
 	template<>
 	struct StringAppendSwitcher<true>;
 
+	struct BBuffer;
 
 	// ÀàËÆ std::string µÄÈÝÆ÷
 	struct String : public List<char>
@@ -38,6 +39,8 @@ namespace xx
 			AddRange(s.data(), (uint32_t)s.size());
 		}
 
+		String(BBuffer* bb);
+
 		String(String const&o) = delete;
 		String(String &&o)
 			: BaseType(std::move(o))
@@ -60,6 +63,14 @@ namespace xx
 			Clear();
 			if (in) in->ToString(*this);
 		}
+		inline void Assign(String const& in)
+		{
+			Clear();
+			Reserve(in.dataLen);
+			memcpy(buf, in.buf, in.dataLen);
+			dataLen = in.dataLen;
+		}
+
 		template<typename T>
 		void Assign(T const& in)
 		{

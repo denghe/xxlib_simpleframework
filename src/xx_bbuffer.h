@@ -49,7 +49,10 @@ namespace xx
 	struct BBuffer : public List<char, 16>
 	{
 		typedef List<char, 16> BaseType;
-		uint32_t offset = 0, offset_root = 0;		// 读指针偏移量, offset值写入修正
+		uint32_t offset = 0;					// 读指针偏移量
+		uint32_t offsetRoot = 0;				// offset值写入修正
+		uint32_t dataLenBak = 0;				// WritePackage 时用于备份当前数据写入偏移
+		uint32_t readLengthLimit = 0;			// 主用于传递给容器类进行长度合法校验
 
 		BBuffer(BBuffer const&o) = delete;
 		BBuffer& operator=(BBuffer const&o) = delete;
@@ -109,7 +112,7 @@ namespace xx
 		{
 			if (!ptrStore) this->mempool().CreateTo(ptrStore, 16);
 			//else ptrStore->Clear();
-			offset_root = dataLen;
+			offsetRoot = dataLen;
 		}
 		void EndWrite()
 		{
@@ -120,7 +123,7 @@ namespace xx
 		{
 			if (!idxStore) this->mempool().CreateTo(idxStore, 16);
 			//else idxStore->Clear();
-			offset_root = offset;
+			offsetRoot = offset;
 		}
 		void EndRead()
 		{
@@ -157,7 +160,7 @@ namespace xx
 			}
 			WritePods(v->typeId());
 
-			auto rtv = ptrStore->Add((void*)v, dataLen - offset_root);
+			auto rtv = ptrStore->Add((void*)v, dataLen - offsetRoot);
 			WritePods(ptrStore->ValueAt(rtv.index));
 			if (rtv.success)
 			{
@@ -181,7 +184,7 @@ namespace xx
 			}
 
 			// get offset
-			uint32_t ptr_offset = 0, bb_offset_bak = offset - offset_root;
+			uint32_t ptr_offset = 0, bb_offset_bak = offset - offsetRoot;
 			if (auto rtv = ReadPods(ptr_offset)) return rtv;
 
 			// fill or ref
@@ -222,7 +225,7 @@ namespace xx
 		int ReadPtr(MPtr<T> &v)
 		{
 			T* t;
-			auto rtv = Read(t);
+			auto rtv = ReadPtr(t);
 			v = t;
 			return rtv;
 		}
@@ -314,34 +317,77 @@ namespace xx
 			if (this->dataLen < bak) this->dataLen = bak;
 		}
 
+
+		// 开始写一个包( 特指 2 字节长度头的, 保留出包头区域 )
+		template<typename SizeType = uint16_t>
+		void BeginWritePackage()
+		{
+			dataLenBak = dataLen;
+			Reserve(dataLen + sizeof(SizeType));
+			dataLen += sizeof(SizeType);
+		}
+
+		// 结束写一个包, 返回长度是否在包头表达范围内( 如果 true 则会填充包头, false 则回滚长度 )
+		template<typename SizeType = uint16_t>
+		bool EndWritePackage()
+		{
+			auto pkgLen = dataLen - dataLenBak - sizeof(SizeType);
+			if (pkgLen > std::numeric_limits<SizeType>::max())
+			{
+				dataLen = dataLenBak;
+				return false;
+			}
+			memcpy(buf + dataLenBak, &pkgLen, sizeof(SizeType));
+			return true;
+		}
+
 		// 一键爽 write 定长 字节长度 + root数据. 如果超过 长度最大计数, 将回滚 dataLen 并返回 false
 		template<typename SizeType = uint16_t, typename T>
 		bool WritePackage(T const& v)
 		{
-			auto bak_dataLen = dataLen;
-			Reserve(dataLen + sizeof(SizeType));
-			dataLen += sizeof(SizeType);
+			BeginWritePackage<SizeType>();
 			WriteRoot(v);
-			auto len = (SizeType)(dataLen - bak_dataLen - sizeof(SizeType));
-			if (len > std::numeric_limits<SizeType>::max())
-			{
-				dataLen = bak_dataLen;
-				return false;
-			}
-			memcpy(buf + bak_dataLen, &len, sizeof(SizeType));
-			return true;
+			return EndWritePackage<SizeType>();
 		}
 
-		// 在已知数据长度的情况下, 直接以包头格式写入长度. 成功返回 true
-		template<typename SizeType = uint16_t, typename T>
-		bool WritePackageLength(T const& len)
+		//// 在已知数据长度的情况下, 直接以包头格式写入长度. 成功返回 true
+		//template<typename SizeType = uint16_t, typename T>
+		//bool WritePackageLength(T const& len)
+		//{
+		//	if (len > std::numeric_limits<SizeType>::max()) return false;
+		//	Reserve(dataLen + sizeof(SizeType) + len);
+		//	auto tmp = (SizeType)len;
+		//	memcpy(buf + dataLen, &tmp, sizeof(SizeType));
+		//	dataLen += sizeof(SizeType);
+		//	return true;
+		//}
+
+		// 尝试一次性反序列化一到多个包, 将结果填充到 outPkgs, 返回包个数 或 错误码
+		// outPkgs 中创建的对象, 应该正确的 Release 或转移到持有它们的容器中
+		// 注意: 即便返回错误码, outPkgs 中也可能存在数据( 可能是后面的包反序列化造成的问题 ), 需要正确处理
+		int ReadPackages(List<MPObject*>& outPkgs)
 		{
-			if (len > std::numeric_limits<SizeType>::max()) return false;
-			Reserve(dataLen + sizeof(SizeType) + len);
-			auto tmp = (SizeType)len;
-			memcpy(buf + dataLen, &tmp, sizeof(SizeType));
-			dataLen += sizeof(SizeType);
-			return true;
+			assert(outPkgs.dataLen == 0);	// 反复调用本函数时, 应该确保函数为空, 以避免内存泄露
+			while (offset < dataLen)
+			{
+				MPObject* ibb = nullptr;
+				if (auto rtv = ReadRoot(ibb)) return rtv;
+				if (ibb == nullptr) return -2;
+				outPkgs.Add(ibb);
+			}
+			return outPkgs.dataLen;
+		}
+
+		// 释放经由 ReadPackages 填充的 packages 的内存
+		void ReleasePackages(List<MPObject*>& recvPkgs)
+		{
+			mempool().DisableRefCountAssert();
+			for (auto& o : recvPkgs)
+			{
+				o->Release();
+			}
+			mempool().EnableRefCountAssert();
+			recvPkgs.Clear();
 		}
 
 		/*************************************************************************/
@@ -483,7 +529,8 @@ namespace xx
 	{
 		uint32_t len = 0;
 		if (auto rtv = bb.Read(len)) return rtv;
-		if (bb.offset + len > bb.dataLen) return -1;
+		if (bb.readLengthLimit != 0 && len > bb.readLengthLimit) return -1;
+		if (bb.offset + len > bb.dataLen) return -2;
 		this->Resize(len);
 		if (len == 0) return 0;
 		memcpy(this->buf, bb.buf + bb.offset, len);
@@ -517,7 +564,8 @@ namespace xx
 		{
 			uint32_t len = 0;
 			if (auto rtv = bb.Read(len)) return rtv;
-			if (bb.offset + len > bb.dataLen) return -1;
+			if (bb.readLengthLimit != 0 && len > bb.readLengthLimit) return -1;
+			if (bb.offset + len > bb.dataLen) return -2;
 			list->Resize(len);
 			if (len == 0) return 0;
 			memcpy(list->buf, bb.buf + bb.offset, len);
@@ -528,7 +576,8 @@ namespace xx
 		{
 			uint32_t len = 0;
 			if (auto rtv = bb.ReadPods(len)) throw rtv;
-			if (bb.offset + len * sizeof(T) > bb.dataLen) throw - 1;
+			if (bb.readLengthLimit != 0 && len > bb.readLengthLimit) throw - 1;
+			if (bb.offset + len * sizeof(T) > bb.dataLen) throw - 2;
 			if (len == 0) return;
 			list->Reserve(len);
 			memcpy(list->buf, bb.buf + bb.offset, len * sizeof(T));
@@ -554,6 +603,7 @@ namespace xx
 		{
 			uint32_t len = 0;
 			if (auto rtv = bb.Read(len)) return rtv;
+			if (bb.readLengthLimit != 0 && len > bb.readLengthLimit) return -1;
 			list->Resize(len);
 			if (len == 0) return 0;
 			for (uint32_t i = 0; i < len; ++i)
@@ -570,6 +620,7 @@ namespace xx
 		{
 			uint32_t len = 0;
 			if (auto rtv = bb.Read(len)) throw rtv;
+			if (bb.readLengthLimit != 0 && len > bb.readLengthLimit) throw - 1;
 			list->Resize(len);
 			if (len == 0) return;
 			for (uint32_t i = 0; i < len; ++i)
@@ -600,6 +651,7 @@ namespace xx
 		{
 			uint32_t len = 0;
 			if (auto rtv = bb.Read(len)) return rtv;
+			if (bb.readLengthLimit != 0 && len > bb.readLengthLimit) return -1;
 			list->Resize(len);
 			if (len == 0) return 0;
 			for (uint32_t i = 0; i < len; ++i)
@@ -620,6 +672,7 @@ namespace xx
 		{
 			uint32_t len = 0;
 			if (auto rtv = bb.Read(len)) throw rtv;
+			if (bb.readLengthLimit != 0 && len > bb.readLengthLimit) throw - 1;
 			list->Resize(len);
 			if (len == 0) return;
 			for (uint32_t i = 0; i < len; ++i)
@@ -658,4 +711,9 @@ namespace xx
 		return ListBBSwitcher<T, reservedHeaderLen>::FromBBuffer(this, bb);
 	}
 
+
+	inline String::String(BBuffer* bb)
+		: BaseType(bb)
+	{
+	}
 }

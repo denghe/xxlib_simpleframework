@@ -8,10 +8,11 @@ namespace xx
 
 	/*
 	// 示例:
+	template<> struct TypeId<T> { static const uint16_t value = 1; };
 	template<> struct TypeId<T> { static const uint16_t value = 2; };
 	template<> struct TypeId<T> { static const uint16_t value = 3; };
-	template<> struct TypeId<T> { static const uint16_t value = 4; };
 	...
+	注意生成器默认规则为 String 和 BBuffer 占掉 typeid 的 1, 2, 而 0 留给 mpobject
 
 	MemPool::Register< T, PT >();
 	MemPool::Register< T, PT >();
@@ -173,19 +174,45 @@ namespace xx
 			return t;
 		}
 
+
+		// 下面这组设计中为 package debug 状态 释放所设计, 可临时关闭 assert, 
+		// 以便于 package 类包的释放特性: 不会在释放时创建新对象, 可能递归 / 互引用但引用计数为 1
+#ifndef NDEBUG
+		bool enableRefCountAssert = true;
+#endif
+		inline void EnableRefCountAssert()
+		{
+#ifndef NDEBUG
+			enableRefCountAssert = true;
+#endif
+		}
+		inline void DisableRefCountAssert()
+		{
+#ifndef NDEBUG
+			enableRefCountAssert = false;
+#endif
+		}
+
+
 		// 释放由 Create 创建的类
 		inline void Release(MPObject* p) noexcept
 		{
 			if (!p || p->refCount() > 0x7FFFFFFF) return;						// 如果空指针 或是用 MemHeaderBox 包裹则不执行 Release 操作
 			assert(p->versionNumber());											// 版本号不应该是 0,
-			assert(p->refCount());												// 引用计数不该是 0. 否则就是 Release 次数过多
+#ifndef NDEBUG
+			if (enableRefCountAssert)
+			{
+				assert(p->refCount());											// 引用计数不该是 0. 否则就是 Release 次数过多
+			}
+#endif
 			if (--p->refCount()) return;
 			p->~MPObject();
 
 			auto h = (MemHeader_MPObject*)p - 1;								// 指到内存头
-			ptrstacks[h->ptrStackIndex()].Push(h);									// 入池
+			ptrstacks[h->ptrStackIndex()].Push(h);								// 入池
 			h->versionNumber = 0;												// 清空版本号
 		}
+
 
 		// 释放由 Create 创建的类之 safe 版( 会清 0 )
 		template<typename T>
