@@ -66,32 +66,32 @@ namespace xx
 		uv_stop(&loop);
 	}
 
-	template<typename ListenerType>
-	ListenerType* UV::CreateListener(int port, int backlog)
+	template<typename ListenerType, typename ...Args>
+	ListenerType* UV::CreateListener(int port, int backlog, Args &&... args)
 	{
 		static_assert(std::is_base_of<UVListener, ListenerType>::value, "the ListenerType must inherit of UVListener.");
-		return mempool().Create<ListenerType>(this, port, backlog);
+		return mempool().Create<ListenerType>(this, port, backlog, std::forward<Args>(args)...);
 	}
 
-	template<typename ClientPeerType>
-	ClientPeerType* UV::CreateClientPeer()
+	template<typename ClientPeerType, typename ...Args>
+	ClientPeerType* UV::CreateClientPeer(Args &&... args)
 	{
 		static_assert(std::is_base_of<UVClientPeer, ClientPeerType>::value, "the ClientPeerType must inherit of UVClientPeer.");
-		return mempool().Create<ClientPeerType>(this);
+		return mempool().Create<ClientPeerType>(this, std::forward<Args>(args)...);
 	}
 
-	template<typename TimerType>
-	TimerType* UV::CreateTimer()
+	template<typename TimerType, typename ...Args>
+	TimerType* UV::CreateTimer(Args &&... args)
 	{
 		static_assert(std::is_base_of<UVTimer, TimerType>::value, "the TimerType must inherit of UVTimer.");
-		return mempool().Create<TimerType>(this);
+		return mempool().Create<TimerType>(this, std::forward<Args>(args)...);
 	}
 
-	template<typename AsyncType>
-	AsyncType* UV::CreateAsync()
+	template<typename AsyncType, typename ...Args>
+	AsyncType* UV::CreateAsync(Args &&... args)
 	{
 		static_assert(std::is_base_of<UVAsync, AsyncType>::value, "the AsyncType must inherit of UVAsync.");
-		return mempool().Create<AsyncType>(this);
+		return mempool().Create<AsyncType>(this, std::forward<Args>(args)...);
 	}
 
 	inline void UV::IdleCB(uv_idle_t* handle)

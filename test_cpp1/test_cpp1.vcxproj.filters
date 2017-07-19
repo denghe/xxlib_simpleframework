@@ -71,6 +71,7 @@
       <Filter>xxlib</Filter>
     </ClInclude>
     <ClInclude Include="..\pkg_cpp\PKG_class.h" />
+    <ClInclude Include="main.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="xxlib">

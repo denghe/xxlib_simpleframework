@@ -30,10 +30,14 @@ namespace xx
 		void Run();
 		void Stop();
 		virtual void OnIdle();
-		template<typename ListenerType> ListenerType* CreateListener(int port, int backlog = SOMAXCONN);
-		template<typename ClientPeerType> ClientPeerType* CreateClientPeer();
-		template<typename TimerType> TimerType* CreateTimer();
-		template<typename AsyncType> AsyncType* CreateAsync();
+		template<typename ListenerType, typename ...Args>
+		ListenerType* CreateListener(int port, int backlog, Args &&... args);
+		template<typename ClientPeerType, typename ...Args>
+		ClientPeerType* CreateClientPeer(Args &&... args);
+		template<typename TimerType, typename ...Args>
+		TimerType* CreateTimer(Args &&... args);
+		template<typename AsyncType, typename ...Args>
+		AsyncType* CreateAsync(Args &&... args);
 
 		// uv's
 		uv_loop_t loop;

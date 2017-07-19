@@ -1,62 +1,75 @@
-#include "xx_uv.h"
-#include "xx_helpers.h"
+#include "main.h"
 #include <thread>
 #include <chrono>
 
-struct MyAsync : xx::UVAsync
-{
-	MyAsync(xx::UV* uv) : xx::UVAsync(uv) {}
-	inline virtual void OnFire() override
-	{
-		std::cout << "." << std::flush;
-	}
-};
+/*************************************************************************************/
 
-struct MyConnector : xx::UVClientPeer
+inline MyAsync::MyAsync(xx::UV* uv, MyClient* owner) : xx::UVAsync(uv) {}
+inline void MyAsync::OnFire()
 {
-	virtual void OnReceivePackage(xx::BBuffer & bb) override
-	{
-	}
-	virtual void OnConnect() override
-	{
-	}
-};
+	std::cout << "." << std::flush;
+}
 
-struct MyTimer : xx::UVTimer
+
+/*************************************************************************************/
+
+inline MyConnector::MyConnector(xx::UV* uv, MyClient* owner) : xx::UVClientPeer(uv) {}
+inline void MyConnector::OnReceivePackage(xx::BBuffer & bb)
 {
-	inline MyTimer(xx::UV* uv) : xx::UVTimer(uv)
-	{
-		Start(0, 1);
-	}
-	virtual void OnFire() override
-	{
-		if (Update()) Release();
-	}
+}
+inline void MyConnector::OnConnect()
+{
+}
 
-	int lineNumber = 0;
-	int Update()
-	{
-		XX_CORO_BEGIN();
-		XX_CORO_(1);
-		XX_CORO_(2);
-		XX_CORO_END();
-	}
-};
+
+/*************************************************************************************/
+
+inline MyTimer::MyTimer(xx::UV* uv, MyClient* owner) : xx::UVTimer(uv)
+{
+	Start(0, 1);
+}
+inline void MyTimer::OnFire()
+{
+	if (Update()) Release();
+}
+
+inline int MyTimer::Update()
+{
+	XX_CORO_BEGIN();
+	XX_CORO_(1);
+	XX_CORO_(2);
+	XX_CORO_END();
+	return -1;
+}
+
+
+/*************************************************************************************/
+
+inline MyClient::MyClient(xx::UV* uv)
+	: uv(uv)
+	, conn(mempool(), this)
+	, timer(mempool(), this)
+	, dispacher(mempool(), this)
+{
+}
+
+/*************************************************************************************/
 
 int main()
 {
 	xx::MemPool mp;
 	xx::UV_v uv(mp);
-	auto myAsync = uv->CreateAsync<MyAsync>();
-
-	std::thread t([=]
-	{
-		while (true)
-		{
-			std::this_thread::sleep_for(std::chrono::milliseconds(1));
-			myAsync->Fire();
-		}
-	});
+	MyClient c(uv);
 	uv->Run();
 	return 0;
 }
+
+//auto myAsync = uv->CreateAsync<MyAsync>();
+//std::thread t([=]
+//{
+//	while (true)
+//	{
+//		std::this_thread::sleep_for(std::chrono::milliseconds(1));
+//		myAsync->Fire();
+//	}
+//});

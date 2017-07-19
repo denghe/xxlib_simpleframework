@@ -113,6 +113,7 @@
     <ClInclude Include="..\xxlib_cpp\xx_timer.h" />
     <ClInclude Include="..\xxlib_cpp\xx_uv.h" />
     <ClInclude Include="..\xxlib_cpp\xx_uv.hpp" />
+    <ClInclude Include="main.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
