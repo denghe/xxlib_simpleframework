@@ -10,9 +10,11 @@ using System.Threading.Tasks;
 public class Peer : UVServerPeerWrapperEx
 {
     Service owner;
+    int threadId;
     public Peer(Service owner)
     {
         this.owner = owner;
+        this.threadId = Thread.CurrentThread.ManagedThreadId;
     }
 
     /// <summary>
@@ -94,6 +96,7 @@ public class Peer : UVServerPeerWrapperEx
                             // 向 uv 主循环线程压入 根据数据库查询返回结果
                             owner.PushResult(() =>
                             {
+                                if (threadId != Thread.CurrentThread.ManagedThreadId) throw new Exception("bad thread run result.");
                                 Console.WriteLine("handler: begin exec send result for: PKG.Client_Server.Join");
 
                                 // 如果连接已失效, 直接退出
@@ -116,7 +119,16 @@ public class Peer : UVServerPeerWrapperEx
                                             // 如果没找到: 创建并广播
                                             if (idx == -1)
                                             {
-                                                // 创建 user info 并放进字典, 将所在字典 index 存起来
+                                                // 在创建 user info 之前, 先构造广播人员名单和数据, 自然排除掉当前 user
+                                                // 如果要进一步纠结, 可以调用 Listener 上的 Send( peers, pkg ) 函数, 引用计数, 0 复制( 还没做 ))
+                                                var pushMsg = GetPackagesData(new PKG.Server_Client.PushJoin
+                                                {
+                                                    id = acc.id
+                                                });
+                                                // 创建要广播的人员名单( 并未过滤连接失效的人 )
+                                                var pushUsers = users.GetValues();
+
+                                                // 创建 user info 
                                                 user = new PKG.UserInfo
                                                 {
                                                     id = acc.id,
@@ -124,35 +136,30 @@ public class Peer : UVServerPeerWrapperEx
                                                     peer = this,
                                                     props = null
                                                 };
+
+                                                // 放进字典, 将所在字典 index 存起来
                                                 user.owner_users_index = users.Add(acc.id, user).index;
 
-                                                // 构造广播给所有人的数据( 除开当前正在 join 的 user )
-                                                // 如果要进一步纠结, 可以调用 Listener 上的 Send( peers, pkg ) 函数, 引用计数, 0 复制( 还没做 )
-                                                var buf = GetPackagesData(new PKG.Server_Client.PushJoin
+
+                                                // 向当前客户端发送 join 成功, 并附带自己和所有人的信息
+                                                SendPackages(new PKG.Server_Client.JoinSuccess
                                                 {
-                                                    id = acc.id
+                                                    requestSerial = o.serial,
+                                                    self = user,
+                                                    users = users.GetValues()
                                                 });
 
-                                                // 广播
-                                                users.ForEach((kv) =>
+                                                // 广播给其他人
+                                                for (int i = 0; i < pushUsers.dataLen; ++i)
                                                 {
-                                                    if (kv.key == user.id)
+                                                    var u = pushUsers[i];
+                                                    if (u.PeerAlive)
                                                     {
-                                                        // 向当前客户端发送 join 成功, 并附带自己和所有人的信息
-                                                        SendPackages(new PKG.Server_Client.JoinSuccess
-                                                        {
-                                                            requestSerial = o.serial,
-                                                            self = user,
-                                                            users = users.GetValues()
-                                                        });
+                                                        u.peer.Send(pushMsg, 0, pushMsg.Length);
                                                     }
-                                                    else
-                                                    {
-                                                        // 向其他在线用户 推送 有人join
-                                                        var u = kv.value;
-                                                        if (u.PeerAlive) u.peer.Send(buf, 0, buf.Length);
-                                                    }
-                                                });
+                                                }
+
+                                                // todo: 已知问题, 当前两个 client 时, 似乎无法确保优先收到自己的 JoinSuccess, PushJoin 不时的会先收到, 原因正在查
                                             }
                                             else
                                             {

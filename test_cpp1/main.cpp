@@ -10,7 +10,8 @@ int main()
 
 	xx::MemPool mp;
 	xx::UV_v uv(mp);
-	auto c = mp.CreateMPtr<MyClient>(uv);	// c 自持有, 自杀
+	auto c1 = mp.CreateMPtr<MyClient>(uv, "a", "a");	// 自持有, 自杀
+	auto c2 = mp.CreateMPtr<MyClient>(uv, "b", "b");	// 自持有, 自杀
 	uv->Run();
 	std::cout << "main: press any key to continue ..." << std::endl;
 	std::cin.get();
@@ -62,7 +63,7 @@ inline void MyTimer::OnFire()
 
 /*************************************************************************************/
 
-inline MyClient::MyClient(xx::UV* uv)
+inline MyClient::MyClient(xx::UV* uv, char const* un, char const* pw)
 	: uv(uv)
 {
 	Cout("MyClient::MyClient(xx::UV* uv)\n");
@@ -73,6 +74,8 @@ inline MyClient::MyClient(xx::UV* uv)
 	mempool().CreateTo(pkgJoin);
 	mempool().CreateTo(pkgJoin->username);
 	mempool().CreateTo(pkgJoin->password);
+	pkgJoin->username->Assign(un);
+	pkgJoin->password->Assign(pw);
 
 	mempool().CreateTo(pkgMessage);
 	mempool().CreateTo(pkgMessage->text);
@@ -134,8 +137,9 @@ inline int MyClient::Update()
 	{
 		Cout("MyClient: connected!\n");
 
-		pkgJoin->username->Assign("a");
-		pkgJoin->password->Assign("a");
+		// un & pw 在构造函数中填过了
+		//pkgJoin->username->Assign("a");
+		//pkgJoin->password->Assign("a");
 
 		if (auto rtv = conn->SendPackages(pkgJoin))
 		{
@@ -205,7 +209,7 @@ inline int MyClient::Update()
 		}
 		default:
 		{
-			Cout("MyClient: recv unhandled msg! typeId = ", typeId, '\n');
+			Cout("MyClient: recv unhandled msg!!! typeId = ", typeId, '\n');
 			return -1;
 		}
 		}

@@ -28,7 +28,7 @@ struct MyClient : xx::MPObject
 	xx::UV* uv;
 	MyConnector* conn;
 	MyTimer* timer;
-	MyClient(xx::UV* uv);
+	MyClient(xx::UV* uv, char const* un, char const* pw);
 	~MyClient();
 
 	// 预创建方便发包的容器
