@@ -6,15 +6,15 @@ namespace xx
 	struct String;
 	struct BBuffer;
 
-	// Ö§³Ö MemPool µÄÀà¶¼Ó¦¸Ã´Ó¸Ã»ùÀàÅÉÉú
+	// æ”¯æŒ MemPool çš„ç±»éƒ½åº”è¯¥ä»è¯¥åŸºç±»æ´¾ç”Ÿ
 	struct MPObject
 	{
 		virtual ~MPObject() {}
 
-		// ¼Ó³Ö
+		// åŠ æŒ
 		inline void AddRef()
 		{
-			assert(refCount() != 0xFFFFFFFF);		// ·ÀÖ¹³öÏÖÖµÀàĞÍ±»¼Ó³Ö
+			assert(refCount() != 0xFFFFFFFF);		// é˜²æ­¢å‡ºç°å€¼ç±»å‹è¢«åŠ æŒ
 			++refCount();
 		}
 
@@ -40,7 +40,7 @@ namespace xx
 		*/
 		virtual void ToStringCore(String &str) const;
 
-		// È¡´ú std::cout, ÓÃÆğÀ´·½±ãÒ»Ğ©. ÊµÏÖÔÚ xx_string.h
+		// å–ä»£ std::cout, ç”¨èµ·æ¥æ–¹ä¾¿ä¸€äº›. å®ç°åœ¨ xx_string.h
 		template<typename ...Args>
 		void Cout(Args const& ... args);
 
@@ -63,11 +63,11 @@ namespace xx
 			return 0;
 		};
 
-		// ¼õ³Ö »ò Îö¹¹ + »ØÊÕ±äÒ°( ´úÂëµÄÊµÏÖÔÚ xx_mempoolbase.h µÄÎ²²¿ )
+		// å‡æŒ æˆ– ææ„ + å›æ”¶å˜é‡( ä»£ç çš„å®ç°åœ¨ xx_mempoolbase.h çš„å°¾éƒ¨ )
 		void Release() noexcept;
 
 		/***********************************************************************************/
-		// ÏÂÃæÊÇ·ÃÎÊÍ·²¿Êı¾İµÄ¸÷ÖÖ helpers
+		// ä¸‹é¢æ˜¯è®¿é—®å¤´éƒ¨æ•°æ®çš„å„ç§ helpers
 		/***********************************************************************************/
 
 		inline MemHeader_MPObject& memHeader() { return *((MemHeader_MPObject*)this - 1); }
@@ -112,7 +112,7 @@ namespace xx
 	constexpr bool IsMPObject_v = IsMPObject<T>::value;
 
 
-	// É¨ÀàĞÍÁĞ±íÖĞÊÇ·ñº¬ÓĞ MPObject* »ò MPtr<MPObject> ÀàĞÍ
+	// æ‰«ç±»å‹åˆ—è¡¨ä¸­æ˜¯å¦å«æœ‰ MPObject* æˆ– MPtr<MPObject> ç±»å‹
 	template<typename ...Types>
 	struct ExistsMPObject
 	{
@@ -131,6 +131,6 @@ namespace xx
 		static constexpr bool value = TupleScaner<std::tuple<Types...>, sizeof...(Types)>::Exec();
 	};
 
-	// Éú³É MPObject µÄÔ­Ê¼ typeId Ó³Éä
+	// ç”Ÿæˆ MPObject çš„åŸå§‹ typeId æ˜ å°„
 	template<> struct TypeId<MPObject> { static const uint16_t value = 1; };
 }

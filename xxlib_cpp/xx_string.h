@@ -8,7 +8,7 @@
 
 namespace xx
 {
-	// Ò»Ğ© gcc ÒªÇó±ØĞëÉùÃ÷ÔÚÍâÃæµÄÂ·ÓÉÀà
+	// ä¸€äº› gcc è¦æ±‚å¿…é¡»å£°æ˜åœ¨å¤–é¢çš„è·¯ç”±ç±»
 	template<bool>
 	struct StringAppendSwitcher;
 	template<>
@@ -18,7 +18,7 @@ namespace xx
 
 	struct BBuffer;
 
-	// ÀàËÆ std::string µÄÈİÆ÷
+	// ç±»ä¼¼ std::string çš„å®¹å™¨
 	struct String : public List<char>
 	{
 		typedef List<char> BaseType;
@@ -143,7 +143,7 @@ namespace xx
 		}
 	public:
 
-		// ¸ñÊ½»¯×·¼Ó, {0} {1}... ÕâÖÖ. Õë¶ÔÖØ¸´³öÏÖµÄ²ÎÊı, ÊÇ´ÓÒÑ¾­×·¼Ó³öÀ´µÄ×Ö´®ÇøÓò¸´ÖÆ, ¹Ê×·¼Ó×Ô¼º²¢²»»áµ¼ÖÂÄÚÈİ·­±¶
+		// æ ¼å¼åŒ–è¿½åŠ , {0} {1}... è¿™ç§. é’ˆå¯¹é‡å¤å‡ºç°çš„å‚æ•°, æ˜¯ä»å·²ç»è¿½åŠ å‡ºæ¥çš„å­—ä¸²åŒºåŸŸå¤åˆ¶, æ•…è¿½åŠ è‡ªå·±å¹¶ä¸ä¼šå¯¼è‡´å†…å®¹ç¿»å€
 		template<typename...TS>
 		void AppendFormat(char const* format, TS const&...vs)
 		{
@@ -340,7 +340,7 @@ namespace xx
 
 
 	/*************************************************************************/
-	// ÊµÏÖÖµÀàĞÍÊ¹ÓÃÀàĞÍÉùÃ÷
+	// å®ç°å€¼ç±»å‹ä½¿ç”¨ç±»å‹å£°æ˜
 	/*************************************************************************/
 
 	using String_v = MemHeaderBox<String>;
@@ -355,7 +355,7 @@ namespace xx
 
 
 
-	// MPObject Ä¬ÈÏµÄ ToString µÄÊµÏÖ´úÂë
+	// MPObject é»˜è®¤çš„ ToString çš„å®ç°ä»£ç 
 
 	inline void MPObject::ToString(String &str) const
 	{
@@ -432,7 +432,7 @@ namespace xx
 
 
 
-	// ¸÷ÖÖÊÊÅäº¯ÊıµÄÊµÏÖ
+	// å„ç§é€‚é…å‡½æ•°çš„å®ç°
 
 	inline uint32_t GetHashCode(String const &in)
 	{
