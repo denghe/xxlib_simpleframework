@@ -436,6 +436,47 @@ namespace xx
         }
 
 
+        /// <summary>
+        /// 将所有 values 填充到 List
+        /// </summary>
+        public void GetValues(ref List<V> outVals)
+        {
+            outVals.Clear();
+            for (int i = 0; i < count; ++i)
+            {
+                if (items[i].prev != -2)
+                {
+                    outVals.Add(items[i].value);
+                }
+            }
+        }
+
+        /// <summary>
+        /// 将所有 values 填充到 List
+        /// </summary>
+        public void GetValues(ref System.Collections.Generic.List<V> outVals)
+        {
+            outVals.Clear();
+            for (int i = 0; i < count; ++i)
+            {
+                if (items[i].prev != -2)
+                {
+                    outVals.Add(items[i].value);
+                }
+            }
+        }
+
+        /// <summary>
+        /// 将所有 values 填充到 xx.List 并返回
+        /// </summary>
+        public List<V> GetValues()
+        {
+            var rtv = new List<V>();
+            GetValues(ref rtv);
+            return rtv;
+        }
+
+
 
         protected void Resize()
         {

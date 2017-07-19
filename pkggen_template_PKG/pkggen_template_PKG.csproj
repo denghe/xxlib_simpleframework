@@ -41,24 +41,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="_.bak" />
-    <Compile Include="DB_Lobby.cs" />
-    <Compile Include="Game1.cs" />
-    <Compile Include="Lobby_DB.cs" />
-    <Compile Include="_Poker.cs" />
-    <Compile Include="_Global.cs" />
-    <Compile Include="Client_Login.cs" />
-    <Compile Include="Login_DB.cs" />
-    <Compile Include="DB_Login.cs" />
-    <Compile Include="Login_Client.cs" />
-    <Compile Include="Login_Lobby.cs" />
-    <Compile Include="Lobby_Login.cs" />
-    <Compile Include="Lobby_Game1.cs" />
-    <Compile Include="Game1_Lobby.cs" />
-    <Compile Include="Lobby_Client.cs" />
-    <Compile Include="Client_Game1.cs" />
-    <Compile Include="Game1_Client.cs" />
-    <Compile Include="Client_Lobby.cs" />
+    <Compile Include="All.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

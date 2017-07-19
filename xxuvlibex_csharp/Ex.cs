@@ -67,7 +67,9 @@ public class SerialContextManager
 }
 
 
-
+/// <summary>
+/// 附上易于使用的一些扩展( 这些东西当前在 wrapper 层不方便实现 )
+/// </summary>
 public abstract class UVServerPeerWrapperEx : UVServerPeerWrapper
 {
     /// <summary>
@@ -92,8 +94,8 @@ public abstract class UVServerPeerWrapperEx : UVServerPeerWrapper
     {
         if (pkgs == null || pkgs.Length == 0) throw new Exception("can't be send null");
         var sum = 0;
-        var ibbsLength = pkgs.Length;
-        for (int i = 0; i < ibbsLength; ++i)
+        var len = pkgs.Length;
+        for (int i = 0; i < len; ++i)
         {
             var pkg = pkgs[i];
             bbSend.Clear();
@@ -109,14 +111,14 @@ public abstract class UVServerPeerWrapperEx : UVServerPeerWrapper
     /// <summary>
     /// 批量发包( 合并成一个包发出, 要小心超出尺寸 ), 返回发出的总字节数( 含包头 )
     /// </summary>
-    public int SendCombine(params xx.IBBuffer[] ibbs)
+    public int SendCombine(params xx.IBBuffer[] pkgs)
     {
         bbSend.Clear();
         bbSend.BeginWritePackage();
-        var ibbsLength = ibbs.Length;
-        for (int i = 0; i < ibbsLength; ++i)
+        var len = pkgs.Length;
+        for (int i = 0; i < len; ++i)
         {
-            var ibb = ibbs[i];
+            var ibb = pkgs[i];
             bbSend.WriteRoot(ibb);
         }
         if (!bbSend.EndWritePackage()) return -1;
@@ -124,6 +126,23 @@ public abstract class UVServerPeerWrapperEx : UVServerPeerWrapper
         return bbSend.dataLen;
     }
 
+    /// <summary>
+    /// 返回非 combine 规则的多个包的序列化结果 byte[] for 广播 / 缓存
+    /// </summary>
+    public byte[] GetPackagesData(params xx.IBBuffer[] pkgs)
+    {
+        if (pkgs == null || pkgs.Length == 0) throw new Exception("can't be send null");
+        bbSend.Clear();
+        var len = pkgs.Length;
+        for (int i = 0; i < len; ++i)
+        {
+            var pkg = pkgs[i];
+            bbSend.BeginWritePackage();
+            bbSend.WriteRoot(pkg);
+            if (!bbSend.EndWritePackage()) return null;
+        }
+        return bbSend.DumpData();
+    }
 }
 
 public abstract class UVClientPeerWrapperEx : UVClientPeerWrapper
@@ -150,8 +169,8 @@ public abstract class UVClientPeerWrapperEx : UVClientPeerWrapper
     {
         if (pkgs == null || pkgs.Length == 0) throw new Exception("can't be send null");
         var sum = 0;
-        var ibbsLength = pkgs.Length;
-        for (int i = 0; i < ibbsLength; ++i)
+        var len = pkgs.Length;
+        for (int i = 0; i < len; ++i)
         {
             var pkg = pkgs[i];
             bbSend.Clear();
@@ -167,19 +186,38 @@ public abstract class UVClientPeerWrapperEx : UVClientPeerWrapper
     /// <summary>
     /// 批量发包( 合并成一个包发出, 要小心超出尺寸 ), 返回发出的总字节数( 含包头 )
     /// </summary>
-    public int SendCombine(params xx.IBBuffer[] ibbs)
+    public int SendCombine(params xx.IBBuffer[] pkgs)
     {
         bbSend.Clear();
         bbSend.BeginWritePackage();
-        var ibbsLength = ibbs.Length;
-        for (int i = 0; i < ibbsLength; ++i)
+        var len = pkgs.Length;
+        for (int i = 0; i < len; ++i)
         {
-            var ibb = ibbs[i];
+            var ibb = pkgs[i];
             bbSend.WriteRoot(ibb);
         }
         if (!bbSend.EndWritePackage()) return -1;
         if (!Send(bbSend.buf, 0, bbSend.dataLen)) return -2;
         return bbSend.dataLen;
+    }
+
+
+    /// <summary>
+    /// 返回非 combine 规则的多个包的序列化结果 byte[] for 广播 / 缓存
+    /// </summary>
+    public byte[] GetPackagesData(params xx.IBBuffer[] pkgs)
+    {
+        if (pkgs == null || pkgs.Length == 0) throw new Exception("can't be send null");
+        bbSend.Clear();
+        var len = pkgs.Length;
+        for (int i = 0; i < len; ++i)
+        {
+            var pkg = pkgs[i];
+            bbSend.BeginWritePackage();
+            bbSend.WriteRoot(pkg);
+            if (!bbSend.EndWritePackage()) return null;
+        }
+        return bbSend.DumpData();
     }
 
 }

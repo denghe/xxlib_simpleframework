@@ -85,7 +85,4 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
   </ItemGroup>
-  <ItemGroup>
-    <None Include="main.bak" />
-  </ItemGroup>
 </Project>
