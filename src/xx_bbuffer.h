@@ -1,4 +1,5 @@
 #pragma once
+#include <functional>
 #include "xx_bytesutils.h"
 #include "xx_mempool.h"
 #include "xx_string.h"
@@ -247,6 +248,17 @@ namespace xx
 		/*************************************************************************/
 		//  其他工具函数
 		/*************************************************************************/
+
+		// 根据数据类型往当前位置写入默认值
+		template<typename T>
+		void WriteDefaultValue()
+		{
+			Write(T());
+		}
+
+		// 自定义 Write 函数
+		std::function<void(BBuffer& bb, void* owner, size_t fieldOffset)> CustomWrite;
+
 
 		// 读指定位置的数据( 不影响 offset )
 		template<typename ...TS>

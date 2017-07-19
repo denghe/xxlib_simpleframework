@@ -14,12 +14,14 @@ namespace xx
 	struct UVServerPeer;
 	struct UVClientPeer;
 	struct UVTimer;
+	struct UVAsync;
 
 	struct UV : MPObject											// 该类只能创建 1 份实例
 	{
 		List_v<UVListener*> listeners;
 		List_v<UVClientPeer*> clientPeers;
 		List_v<UVTimer*> timers;
+		List_v<UVAsync*> asyncs;
 
 		UV();
 		~UV();
@@ -31,6 +33,7 @@ namespace xx
 		template<typename ListenerType> ListenerType* CreateListener(int port, int backlog = SOMAXCONN);
 		template<typename ClientPeerType> ClientPeerType* CreateClientPeer();
 		template<typename TimerType> TimerType* CreateTimer();
+		template<typename AsyncType> AsyncType* CreateAsync();
 
 		// uv's
 		uv_loop_t loop;
@@ -167,6 +170,22 @@ namespace xx
 		// uv's
 		uv_timer_t timer_req;
 		static void TimerCB(uv_timer_t* handle);
+	};
+
+	struct UVAsync : MPObject
+	{
+		UV* uv;
+		uint32_t uv_asyncs_index;
+
+		UVAsync(UV* uv);
+		~UVAsync();
+
+		void Fire();
+		virtual void OnFire() = 0;
+
+		// uv's
+		uv_async_t async_req;
+		static void AsyncCB(uv_async_t* handle);
 	};
 
 	using UV_v = MemHeaderBox<UV>;

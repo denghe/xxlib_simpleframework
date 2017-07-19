@@ -5,6 +5,8 @@
 
 namespace xx
 {
+	// todo: 用宏的方式 开/关 基于 interlocked_compare_exchange 改链表的内存 请求/释放 操作, 以提供部分情况下所需线程安全的特性
+	// todo2: 提供 1 producer 1 consumer 安全的队列 / 无序bag, 理论上讲似乎和上面这种内存搞法差不多
 
 	/*
 	// 示例:
@@ -206,11 +208,10 @@ namespace xx
 			}
 #endif
 			if (--p->refCount()) return;
+			auto stackIdx = p->memHeader().ptrStackIndex();						// 提前清空版本号以提供析构过程中针对当前对象的 Ensure() 返回空
+			p->memHeader().versionNumber = 0;
 			p->~MPObject();
-
-			auto h = (MemHeader_MPObject*)p - 1;								// 指到内存头
-			ptrstacks[h->ptrStackIndex()].Push(h);								// 入池
-			h->versionNumber = 0;												// 清空版本号
+			ptrstacks[stackIdx].Push((MemHeader_MPObject*)p - 1);				// 入池
 		}
 
 

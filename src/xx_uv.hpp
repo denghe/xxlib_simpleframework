@@ -6,6 +6,7 @@ namespace xx
 		: listeners(mempool())
 		, clientPeers(mempool())
 		, timers(mempool())
+		, asyncs(mempool())
 	{
 		//loop = uv_default_loop();
 		if (auto r = uv_loop_init(&loop)) throw r;
@@ -14,6 +15,12 @@ namespace xx
 
 	inline UV::~UV()
 	{
+		for (int i = (int)asyncs->dataLen - 1; i >= 0; --i)
+		{
+			asyncs->At(i)->Release();
+		}
+		asyncs->Clear();
+
 		for (int i = (int)timers->dataLen - 1; i >= 0; --i)
 		{
 			timers->At(i)->Release();
@@ -80,6 +87,12 @@ namespace xx
 		return mempool().Create<TimerType>(this);
 	}
 
+	template<typename AsyncType>
+	AsyncType* UV::CreateAsync()
+	{
+		static_assert(std::is_base_of<UVAsync, AsyncType>::value, "the AsyncType must inherit of UVAsync.");
+		return mempool().Create<AsyncType>(this);
+	}
 
 	inline void UV::IdleCB(uv_idle_t* handle)
 	{
@@ -535,7 +548,7 @@ namespace xx
 
 	inline int UVClientPeer::Connect()
 	{
-		assert(state == UVPeerStates::Disconnected);
+		if (state != UVPeerStates::Disconnected) return -1;
 		state = UVPeerStates::Connecting;
 		if (auto rtv = uv_tcp_connect(&conn, &stream, (sockaddr*)&tarAddr, ConnectCB))
 		{
@@ -618,6 +631,41 @@ namespace xx
 	inline void UVTimer::TimerCB(uv_timer_t* handle)
 	{
 		auto self = container_of(handle, UVTimer, timer_req);
+		self->OnFire();
+	}
+
+
+
+
+
+
+
+
+	inline UVAsync::UVAsync(UV* uv)
+		: uv(uv)
+	{
+		uv_asyncs_index = uv->asyncs->dataLen;
+		if (auto rtv = uv_async_init(&uv->loop, &async_req, AsyncCB))
+		{
+			throw rtv;
+		}
+		uv->asyncs->Add(this);
+	}
+
+	inline UVAsync::~UVAsync()
+	{
+		uv_close((uv_handle_t*)&async_req, nullptr);
+		XX_LIST_SWAP_REMOVE(uv->asyncs, this, uv_asyncs_index);
+	}
+
+	inline void UVAsync::Fire()
+	{
+		uv_async_send(&async_req);
+	}
+
+	inline void UVAsync::AsyncCB(uv_async_t* handle)
+	{
+		auto self = container_of(handle, UVAsync, async_req);
 		self->OnFire();
 	}
 }
