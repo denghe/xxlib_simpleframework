@@ -1,0 +1,1186 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+
+namespace xx
+{
+    // 抄自 MS 代码并删除小改加料
+
+    public class List<T> : IBBuffer
+    {
+        public T[] buf;
+        public int bufLen { get { return buf.Length; } }
+
+        /// <summary>
+        /// 数据长, 同原 List 的 Count
+        /// </summary>
+        public int dataLen;
+
+        private const int defaultCapacity = 4;
+        static readonly T[] emptyBuf = new T[0];
+
+        /// <summary>
+        /// 空数据构造
+        /// </summary>
+        public List()
+        {
+            buf = emptyBuf;
+        }
+
+        /// <summary>
+        /// 元素直接构造函数
+        /// </summary>
+        public List(params T[] items)
+        {
+            buf = items;
+            dataLen = buf.Length;
+        }
+
+        public T this[int index]
+        {
+            get
+            {
+                Debug.Assert(index >= 0 && index < dataLen);
+                return buf[index];
+            }
+
+            set
+            {
+                Debug.Assert(index >= 0 && index < dataLen);
+                buf[index] = value;
+            }
+        }
+
+        public void Add(T item)
+        {
+            if (dataLen == buf.Length) Reserve(dataLen + 1);
+            buf[dataLen++] = item;
+        }
+        public void AddRange(IEnumerable<T> collection)
+        {
+            InsertRange(dataLen, collection);
+        }
+
+        public void Clear()
+        {
+            if (dataLen > 0)
+            {
+                Array.Clear(buf, 0, dataLen); // Don't need to doc this but we clear the elements so that the gc can reclaim the references.
+                dataLen = 0;
+            }
+        }
+        public void CopyTo(int index, T[] array, int arrayIndex, int count)
+        {
+            Debug.Assert(dataLen - index >= count);
+            Array.Copy(buf, index, array, arrayIndex, count);
+        }
+        public void Reserve(int min)
+        {
+            if (buf.Length < min)
+            {
+                int newCapacity = buf.Length == 0 ? defaultCapacity : buf.Length * 2;
+                if (newCapacity < min) newCapacity = min;
+                if (newCapacity < buf.Length) return;
+                T[] newItems = new T[newCapacity];
+                if (dataLen > 0)
+                {
+                    Array.Copy(buf, 0, newItems, 0, dataLen);
+                }
+                buf = newItems;
+            }
+        }
+
+
+        public bool Contains(T item)
+        {
+            return Find(item) != -1;
+        }
+        public bool Exists(Predicate<T> match)
+        {
+            return Find(match) != -1;
+        }
+        /// <summary>
+        /// 查找首个并返回下标. -1 表示没找到
+        /// </summary>
+        public int Find(Predicate<T> match)
+        {
+            Debug.Assert(match != null);
+            for (int i = 0; i < dataLen; i++)
+            {
+                if (match(buf[i]))
+                {
+                    return i;
+                }
+            }
+            return -1;
+        }
+        /// <summary>
+        /// 查找首个并返回下标. -1 表示没找到
+        /// </summary>
+        public int Find(T item)
+        {
+            if ((Object)item == null)
+            {
+                for (int i = 0; i < dataLen; i++)
+                    if ((Object)buf[i] == null)
+                        return i;
+            }
+            else
+            {
+                var c = EqualityComparer<T>.Default;
+                for (int i = 0; i < dataLen; i++)
+                {
+                    if (c.Equals(buf[i], item)) return i;
+                }
+            }
+            return -1;
+        }
+        public void ForEach(Action<T> action)
+        {
+            Debug.Assert(action != null);
+            for (int i = 0; i < dataLen; i++)
+            {
+                action(buf[i]);
+            }
+        }
+
+        public void Insert(int index, T item)
+        {
+            Debug.Assert((uint)index <= (uint)dataLen);
+            if (dataLen == buf.Length) Reserve(dataLen + 1);
+            if (index < dataLen)
+            {
+                Array.Copy(buf, index, buf, index + 1, dataLen - index);
+            }
+            buf[index] = item;
+            dataLen++;
+        }
+        public void InsertRange(int index, IEnumerable<T> collection)
+        {
+            Debug.Assert(collection == null);
+            Debug.Assert((uint)index <= (uint)dataLen);
+            ICollection<T> c = collection as ICollection<T>;
+            if (c != null)
+            {    // if collection is ICollection<T>
+                int count = c.Count;
+                if (count > 0)
+                {
+                    Reserve(dataLen + count);
+                    if (index < dataLen)
+                    {
+                        Array.Copy(buf, index, buf, index + count, dataLen - index);
+                    }
+
+                    // If we're inserting a List into itself, we want to be able to deal with that.
+                    if (this == c)
+                    {
+                        // Copy first part of _items to insert location
+                        Array.Copy(buf, 0, buf, index, index);
+                        // Copy last part of _items back to inserted location
+                        Array.Copy(buf, index + count, buf, index * 2, dataLen - index);
+                    }
+                    else
+                    {
+                        T[] itemsToInsert = new T[count];
+                        c.CopyTo(itemsToInsert, 0);
+                        itemsToInsert.CopyTo(buf, index);
+                    }
+                    dataLen += count;
+                }
+            }
+            else
+            {
+                using (IEnumerator<T> en = collection.GetEnumerator())
+                {
+                    while (en.MoveNext())
+                    {
+                        Insert(index++, en.Current);
+                    }
+                }
+            }
+        }
+
+        public bool Remove(T item)
+        {
+            int index = Find(item);
+            if (index >= 0)
+            {
+                RemoveAt(index);
+                return true;
+            }
+
+            return false;
+        }
+        public void RemoveAt(int index)
+        {
+            Debug.Assert((uint)index < (uint)dataLen);
+            dataLen--;
+            if (index < dataLen)
+            {
+                Array.Copy(buf, index + 1, buf, index, dataLen - index);
+            }
+            buf[dataLen] = default(T);
+        }
+        public void RemoveRange(int index, int count)
+        {
+            Debug.Assert(index >= 0);
+            Debug.Assert(count >= 0);
+            Debug.Assert(dataLen - index >= count);
+
+            if (count > 0)
+            {
+                int i = dataLen;
+                dataLen -= count;
+                if (index < dataLen)
+                {
+                    Array.Copy(buf, index + count, buf, index, dataLen - index);
+                }
+                Array.Clear(buf, dataLen, count);
+            }
+        }
+
+
+        public void Sort()
+        {
+            Sort(0, dataLen, null);
+        }
+        public void Sort(IComparer<T> comparer)
+        {
+            Sort(0, dataLen, comparer);
+        }
+        public void Sort(int index, int count, IComparer<T> comparer)
+        {
+            Debug.Assert(index >= 0);
+            Debug.Assert(count >= 0);
+            Debug.Assert(dataLen - index >= count);
+
+            Array.Sort<T>(buf, index, count, comparer);
+        }
+
+
+        /****************************************************************/
+        // 为方便加的料
+        /****************************************************************/
+
+        public void Resize(int len)
+        {
+            if (len == dataLen) return;
+            else if (len < dataLen)
+            {
+                Array.Clear(buf, len, dataLen - len);
+            }
+            else // len > dataLen
+            {
+                Reserve(len);
+            }
+            dataLen = len;
+        }
+        public T Top()
+        {
+            Debug.Assert(dataLen > 0);
+            return buf[dataLen - 1];
+        }
+        public void Pop()
+        {
+            Debug.Assert(dataLen > 0);
+            buf[--dataLen] = default(T);
+        }
+        public T PopOne()
+        {
+            Debug.Assert(dataLen > 0);
+            try
+            {
+                return buf[--dataLen];
+            }
+            finally
+            {
+                buf[dataLen] = default(T);
+            }
+        }
+
+        /****************************************************************/
+        // ToString, IBBuffer 相关适配
+        /****************************************************************/
+
+        public override string ToString()
+        {
+            // todo: 考虑在这生成 json 长相的东西
+            throw new NotImplementedException();
+        }
+
+        public ushort GetPackageId()
+        {
+            return TypeIdMaps<List<T>>.typeId;
+        }
+
+        public void ToBBuffer(BBuffer bb)
+        {
+            ListIBBufferImpl<T>.instance.ToBBuffer(bb, this);
+        }
+
+        public void FromBBuffer(BBuffer bb)
+        {
+            ListIBBufferImpl<T>.instance.FromBBuffer(bb, this);
+        }
+    }
+
+    public abstract partial class ListIBBufferImpl<T>
+    {
+        public abstract void ToBBuffer(BBuffer bb, List<T> vs);
+        public abstract void FromBBuffer(BBuffer bb, List<T> vs);
+
+        public static ListIBBufferImpl<T> instance;
+
+        static ListIBBufferImpl()
+        {
+            if (typeof(T).IsEnum)
+            {
+                var et = Enum.GetUnderlyingType(typeof(T));
+                if (et == typeof(byte)) instance = new ListIBBufferImpl_Enum_Byte<T>() as ListIBBufferImpl<T>;
+                else if (et == typeof(sbyte)) instance = new ListIBBufferImpl_Enum_SByte<T>() as ListIBBufferImpl<T>;
+                else if (et == typeof(ushort)) instance = new ListIBBufferImpl_Enum_UInt16<T>() as ListIBBufferImpl<T>;
+                else if (et == typeof(short)) instance = new ListIBBufferImpl_Enum_Int16<T>() as ListIBBufferImpl<T>;
+                else if (et == typeof(uint)) instance = new ListIBBufferImpl_Enum_UInt32<T>() as ListIBBufferImpl<T>;
+                else if (et == typeof(int)) instance = new ListIBBufferImpl_Enum_Int32<T>() as ListIBBufferImpl<T>;
+                else if (et == typeof(ulong)) instance = new ListIBBufferImpl_Enum_UInt64<T>() as ListIBBufferImpl<T>;
+                else if (et == typeof(long)) instance = new ListIBBufferImpl_Enum_Int64<T>() as ListIBBufferImpl<T>;
+                return;
+            }
+            if (typeof(IBBuffer).IsAssignableFrom(typeof(T)))
+            {
+                instance = new ListIBBufferImpl_IBBuffer<T>() as ListIBBufferImpl<T>;
+                return;
+            }
+            switch (Type.GetTypeCode(typeof(T)))
+            {
+                //case TypeCode.Empty:
+                //case TypeCode.Object:
+                //case TypeCode.DBNull:
+                //case TypeCode.Char:
+                //case TypeCode.Decimal:
+
+                case TypeCode.Boolean:
+                    instance = new ListIBBufferImpl_Boolean() as ListIBBufferImpl<T>;
+                    break;
+                case TypeCode.SByte:
+                    instance = new ListIBBufferImpl_SByte() as ListIBBufferImpl<T>;
+                    break;
+                case TypeCode.Byte:
+                    instance = new ListIBBufferImpl_Byte() as ListIBBufferImpl<T>;
+                    break;
+                case TypeCode.Int16:
+                    instance = new ListIBBufferImpl_Int16() as ListIBBufferImpl<T>;
+                    break;
+                case TypeCode.UInt16:
+                    instance = new ListIBBufferImpl_UInt16() as ListIBBufferImpl<T>;
+                    break;
+                case TypeCode.Int32:
+                    instance = new ListIBBufferImpl_Int32() as ListIBBufferImpl<T>;
+                    break;
+                case TypeCode.UInt32:
+                    instance = new ListIBBufferImpl_UInt32() as ListIBBufferImpl<T>;
+                    break;
+                case TypeCode.Int64:
+                    instance = new ListIBBufferImpl_Int64() as ListIBBufferImpl<T>;
+                    break;
+                case TypeCode.UInt64:
+                    instance = new ListIBBufferImpl_UInt64() as ListIBBufferImpl<T>;
+                    break;
+                case TypeCode.Single:
+                    instance = new ListIBBufferImpl_Single() as ListIBBufferImpl<T>;
+                    break;
+                case TypeCode.Double:
+                    instance = new ListIBBufferImpl_Double() as ListIBBufferImpl<T>;
+                    break;
+                case TypeCode.DateTime:
+                    instance = new ListIBBufferImpl_DateTime() as ListIBBufferImpl<T>;
+                    break;
+                case TypeCode.String:
+                    instance = new ListIBBufferImpl_String() as ListIBBufferImpl<T>;
+                    break;
+                default:
+                    break;// throw new NotSupportedException(); // 似乎可以在运行时手工初始化 instance 以实现 xx.List< enum type > 的支持
+            }
+        }
+    }
+
+    public partial class ListIBBufferImpl_Enum_Byte<T> : ListIBBufferImpl<T>
+    {
+        public override void ToBBuffer(BBuffer bb, List<T> vs)
+        {
+            var vsDataLen = vs.dataLen;
+            bb.WriteLength(vsDataLen);
+            if (vsDataLen == 0) return;
+
+            bb.Reserve(bb.dataLen + vsDataLen);
+            var bbBuf = bb.buf;
+            var bbDataLen = bb.dataLen;
+            for (int i = 0; i < vsDataLen; i++)
+            {
+                bbBuf[bbDataLen + i] = (byte)(object)vs[i];
+            }
+            bb.dataLen += vsDataLen;
+        }
+        public override void FromBBuffer(BBuffer bb, List<T> vs)
+        {
+            int len = bb.ReadLength();
+            if (bb.readLengthLimit != 0 && len > bb.readLengthLimit) throw new Exception("overflow of limit");
+            vs.Resize(len);
+            if (len == 0) return;
+
+            var bbBuf = bb.buf;
+            var vsBuf = vs.buf;
+            var bbOffset = bb.offset;
+            for (int i = 0; i < len; i++)
+            {
+                vsBuf[i] = (T)(object)bbBuf[bbOffset + i];
+            }
+            bb.offset += len;
+        }
+    }
+    public partial class ListIBBufferImpl_Enum_SByte<T> : ListIBBufferImpl<T>
+    {
+        public override void ToBBuffer(BBuffer bb, List<T> vs)
+        {
+            var vsDataLen = vs.dataLen;
+            bb.WriteLength(vsDataLen);
+            if (vsDataLen == 0) return;
+
+            bb.Reserve(bb.dataLen + vsDataLen);
+            var bbBuf = bb.buf;
+            var bbDataLen = bb.dataLen;
+            for (int i = 0; i < vsDataLen; i++)
+            {
+                bbBuf[bbDataLen + i] = (byte)(sbyte)(object)vs[i];
+            }
+            bb.dataLen += vsDataLen;
+        }
+        public override void FromBBuffer(BBuffer bb, List<T> vs)
+        {
+            int len = bb.ReadLength();
+            if (bb.readLengthLimit != 0 && len > bb.readLengthLimit) throw new Exception("overflow of limit");
+            vs.Resize(len);
+            if (len == 0) return;
+
+            var bbBuf = bb.buf;
+            var vsBuf = vs.buf;
+            var bbOffset = bb.offset;
+            for (int i = 0; i < len; i++)
+            {
+                vsBuf[i] = (T)(object)(sbyte)bbBuf[bbOffset + i];
+            }
+            bb.offset += len;
+        }
+    }
+    public partial class ListIBBufferImpl_Enum_UInt16<T> : ListIBBufferImpl<T>
+    {
+        public override void ToBBuffer(BBuffer bb, List<T> vs)
+        {
+            var vsDataLen = vs.dataLen;
+            bb.WriteLength(vsDataLen);
+            if (vsDataLen == 0) return;
+
+            bb.Reserve(bb.dataLen + vsDataLen * 3);
+            var bbBuf = bb.buf;
+            var vsBuf = vs.buf;
+            var bbDataLen = bb.dataLen;
+            for (int i = 0; i < vsDataLen; i++)
+            {
+                BBuffer.Bit7Write(bbBuf, ref bbDataLen, (ushort)(object)vsBuf[i]);
+            }
+        }
+        public override void FromBBuffer(BBuffer bb, List<T> vs)
+        {
+            int len = bb.ReadLength();
+            if (bb.readLengthLimit != 0 && len > bb.readLengthLimit) throw new Exception("overflow of limit");
+            vs.Resize(len);
+            if (len == 0) return;
+
+            ushort tmp = 0;
+            var vsBuf = vs.buf;
+            for (int i = 0; i < len; i++)
+            {
+                bb.Read(ref tmp);
+                vsBuf[i] = (T)(object)tmp;
+            }
+        }
+    }
+    public partial class ListIBBufferImpl_Enum_Int16<T> : ListIBBufferImpl<T>
+    {
+        public override void ToBBuffer(BBuffer bb, List<T> vs)
+        {
+            var vsDataLen = vs.dataLen;
+            bb.WriteLength(vsDataLen);
+            if (vsDataLen == 0) return;
+
+            bb.Reserve(bb.dataLen + vsDataLen * 3);
+            var bbBuf = bb.buf;
+            var vsBuf = vs.buf;
+            var bbDataLen = bb.dataLen;
+            for (int i = 0; i < vsDataLen; i++)
+            {
+                BBuffer.Bit7Write(bbBuf, ref bbDataLen, BBuffer.ZigZagEncode((short)(object)vsBuf[i]));
+            }
+        }
+        public override void FromBBuffer(BBuffer bb, List<T> vs)
+        {
+            int len = bb.ReadLength();
+            if (bb.readLengthLimit != 0 && len > bb.readLengthLimit) throw new Exception("overflow of limit");
+            vs.Resize(len);
+            if (len == 0) return;
+
+            short tmp = 0;
+            var vsBuf = vs.buf;
+            for (int i = 0; i < len; i++)
+            {
+                bb.Read(ref tmp);
+                vsBuf[i] = (T)(object)tmp;
+            }
+        }
+    }
+    public partial class ListIBBufferImpl_Enum_UInt32<T> : ListIBBufferImpl<T>
+    {
+        public override void ToBBuffer(BBuffer bb, List<T> vs)
+        {
+            var vsDataLen = vs.dataLen;
+            bb.WriteLength(vsDataLen);
+            if (vsDataLen == 0) return;
+
+            bb.Reserve(bb.dataLen + vsDataLen * 5);
+            var bbBuf = bb.buf;
+            var vsBuf = vs.buf;
+            var bbDataLen = bb.dataLen;
+            for (int i = 0; i < vsDataLen; i++)
+            {
+                BBuffer.Bit7Write(bbBuf, ref bbDataLen, (uint)(object)vsBuf[i]);
+            }
+        }
+        public override void FromBBuffer(BBuffer bb, List<T> vs)
+        {
+            int len = bb.ReadLength();
+            if (bb.readLengthLimit != 0 && len > bb.readLengthLimit) throw new Exception("overflow of limit");
+            vs.Resize(len);
+            if (len == 0) return;
+
+            uint tmp = 0;
+            var vsBuf = vs.buf;
+            for (int i = 0; i < len; i++)
+            {
+                bb.Read(ref tmp);
+                vsBuf[i] = (T)(object)tmp;
+            }
+        }
+    }
+    public partial class ListIBBufferImpl_Enum_Int32<T> : ListIBBufferImpl<T>
+    {
+        public override void ToBBuffer(BBuffer bb, List<T> vs)
+        {
+            var vsDataLen = vs.dataLen;
+            bb.WriteLength(vsDataLen);
+            if (vsDataLen == 0) return;
+
+            bb.Reserve(bb.dataLen + vsDataLen * 5);
+            var bbBuf = bb.buf;
+            var vsBuf = vs.buf;
+            var bbDataLen = bb.dataLen;
+            for (int i = 0; i < vsDataLen; i++)
+            {
+                BBuffer.Bit7Write(bbBuf, ref bbDataLen, BBuffer.ZigZagEncode((int)(object)vs[i]));
+            }
+        }
+        public override void FromBBuffer(BBuffer bb, List<T> vs)
+        {
+            int len = bb.ReadLength();
+            if (bb.readLengthLimit != 0 && len > bb.readLengthLimit) throw new Exception("overflow of limit");
+            vs.Resize(len);
+            if (len == 0) return;
+
+            int tmp = 0;
+            var vsBuf = vs.buf;
+            for (int i = 0; i < len; i++)
+            {
+                bb.Read(ref tmp);
+                vsBuf[i] = (T)(object)tmp;
+            }
+        }
+    }
+    public partial class ListIBBufferImpl_Enum_UInt64<T> : ListIBBufferImpl<T>
+    {
+        public override void ToBBuffer(BBuffer bb, List<T> vs)
+        {
+            var vsDataLen = vs.dataLen;
+            bb.WriteLength(vsDataLen);
+            if (vsDataLen == 0) return;
+
+            bb.Reserve(bb.dataLen + vsDataLen * 9);
+            var bbBuf = bb.buf;
+            var vsBuf = vs.buf;
+            var bbDataLen = bb.dataLen;
+            for (int i = 0; i < vsDataLen; i++)
+            {
+                BBuffer.Bit7Write(bbBuf, ref bbDataLen, (ulong)(object)vsBuf[i]);
+            }
+        }
+        public override void FromBBuffer(BBuffer bb, List<T> vs)
+        {
+            int len = bb.ReadLength();
+            if (bb.readLengthLimit != 0 && len > bb.readLengthLimit) throw new Exception("overflow of limit");
+            vs.Resize(len);
+            if (len == 0) return;
+
+            ulong tmp = 0;
+            var vsBuf = vs.buf;
+            for (int i = 0; i < len; i++)
+            {
+                bb.Read(ref tmp);
+                vsBuf[i] = (T)(object)tmp;
+            }
+        }
+    }
+    public partial class ListIBBufferImpl_Enum_Int64<T> : ListIBBufferImpl<T>
+    {
+        public override void ToBBuffer(BBuffer bb, List<T> vs)
+        {
+            var vsDataLen = vs.dataLen;
+            bb.WriteLength(vsDataLen);
+            if (vsDataLen == 0) return;
+
+            bb.Reserve(bb.dataLen + vsDataLen * 9);
+            var bbBuf = bb.buf;
+            var vsBuf = vs.buf;
+            var bbDataLen = bb.dataLen;
+            for (int i = 0; i < vsDataLen; i++)
+            {
+                BBuffer.Bit7Write(bbBuf, ref bbDataLen, BBuffer.ZigZagEncode((long)(object)vsBuf[i]));
+            }
+        }
+        public override void FromBBuffer(BBuffer bb, List<T> vs)
+        {
+            int len = bb.ReadLength();
+            if (bb.readLengthLimit != 0 && len > bb.readLengthLimit) throw new Exception("overflow of limit");
+            vs.Resize(len);
+            if (len == 0) return;
+
+            long tmp = 0;
+            var vsBuf = vs.buf;
+            for (int i = 0; i < len; i++)
+            {
+                bb.Read(ref tmp);
+                vsBuf[i] = (T)(object)tmp;
+            }
+        }
+    }
+
+    public partial class ListIBBufferImpl_IBBuffer<T> : ListIBBufferImpl<T>
+    {
+        public override void ToBBuffer(BBuffer bb, List<T> vs)
+        {
+            var vsDataLen = vs.dataLen;
+            bb.WriteLength(vsDataLen);
+            if (vsDataLen == 0) return;
+
+            if (typeof(T).IsValueType)
+            {
+                for (int i = 0; i < vsDataLen; i++)
+                {
+                    ((IBBuffer)vs[i]).ToBBuffer(bb);
+                }
+            }
+            else
+            {
+                for (int i = 0; i < vsDataLen; i++)
+                {
+                    bb.Write((IBBuffer)vs[i]);
+                }
+            }
+        }
+        public override void FromBBuffer(BBuffer bb, List<T> vs)
+        {
+            int len = bb.ReadLength();
+            if (bb.readLengthLimit != 0 && len > bb.readLengthLimit) throw new Exception("overflow of limit");
+            vs.Clear();
+            vs.Resize(len);
+            if (len == 0) return;
+
+            if (typeof(T).IsValueType)
+            {
+                for (int i = 0; i < len; i++)
+                {
+                    var tmp = (IBBuffer)default(T);
+                    tmp.FromBBuffer(bb);
+                    vs[i] = (T)tmp;
+                }
+            }
+            else
+            {
+                for (int i = 0; i < len; i++)
+                {
+                    IBBuffer tmp = null;
+                    bb.Read(ref tmp);
+                    vs[i] = (T)tmp;
+                }
+            }
+        }
+    }
+
+    public partial class ListIBBufferImpl_Boolean : ListIBBufferImpl<bool>
+    {
+        public override void ToBBuffer(BBuffer bb, List<bool> vs)
+        {
+            var bits = vs.dataLen;
+            bb.WriteLength(bits);
+            if (bits == 0) return;
+
+            var bytes = (bits + 7) >> 3;
+            bb.Reserve(bb.dataLen + bytes);
+            var bbBuf = bb.buf;
+
+            var mod = bits % 8;
+            if (mod > 0)
+            {
+                --bytes;
+            }
+            byte n = 0;
+            for (var i = 0; i < bytes; ++i)
+            {
+                var p = i << 3;
+                if (vs[p + 0]) n |= 1;
+                if (vs[p + 1]) n |= 2;
+                if (vs[p + 2]) n |= 4;
+                if (vs[p + 3]) n |= 8;
+                if (vs[p + 4]) n |= 16;
+                if (vs[p + 5]) n |= 32;
+                if (vs[p + 6]) n |= 64;
+                if (vs[p + 7]) n |= 128;
+                bbBuf[bb.dataLen++] = n;
+            }
+            if (mod > 0)
+            {
+                n = 0;
+                var offset = bytes << 3;
+                for (var i = 0; i < mod; ++i)
+                {
+                    if (vs[offset + i])
+                    {
+                        n |= (byte)(1 << i);
+                    }
+                }
+                bbBuf[bb.dataLen++] = n;
+            }
+        }
+        public override void FromBBuffer(BBuffer bb, List<bool> vs)
+        {
+            int len = bb.ReadLength();
+            if (bb.readLengthLimit != 0 && len > bb.readLengthLimit) throw new Exception("overflow of limit");
+            var bytes = (len + 7) >> 3;
+            vs.Resize(len);
+            if (len == 0) return;
+
+            var bbOffset = bb.offset;
+            var bbBuf = bb.buf;
+
+            var mod = len % 8;
+            if (mod > 0)
+            {
+                --bytes;
+            }
+            for (var i = 0; i < bytes; ++i)
+            {
+                var n = bbBuf[bbOffset + i];
+                vs.Add((n & 1) > 0);
+                vs.Add((n & 2) > 0);
+                vs.Add((n & 4) > 0);
+                vs.Add((n & 8) > 0);
+                vs.Add((n & 16) > 0);
+                vs.Add((n & 32) > 0);
+                vs.Add((n & 64) > 0);
+                vs.Add((n & 128) > 0);
+            }
+            if (mod > 0)
+            {
+                var n = bbBuf[bbOffset + bytes];
+                for (var i = 0; i < mod; ++i)
+                {
+                    vs.Add((n & (1 << i)) > 0);
+                }
+            }
+            bb.offset += bytes;
+        }
+    }
+    public partial class ListIBBufferImpl_SByte : ListIBBufferImpl<sbyte>
+    {
+        public override void ToBBuffer(BBuffer bb, List<sbyte> vs)
+        {
+            var vsDataLen = vs.dataLen;
+            bb.WriteLength(vsDataLen);
+            if (vsDataLen == 0) return;
+
+            bb.Reserve(bb.dataLen + vsDataLen * 1);
+            var bbBuf = bb.buf;
+            var vsBuf = vs.buf;
+            var bbDataLen = bb.dataLen;
+            for (int i = 0; i < vsDataLen; i++)
+            {
+                bbBuf[bbDataLen + i] = (byte)vsBuf[i];
+            }
+            bb.dataLen += vsDataLen;
+        }
+        public override void FromBBuffer(BBuffer bb, List<sbyte> vs)
+        {
+            int len = bb.ReadLength();
+            if (bb.readLengthLimit != 0 && len > bb.readLengthLimit) throw new Exception("overflow of limit");
+            vs.Resize(len);
+            if (len == 0) return;
+
+            var bbBuf = bb.buf;
+            var vsBuf = vs.buf;
+            var bbOffset = bb.offset;
+            for (int i = 0; i < len; i++)
+            {
+                vsBuf[i] = (sbyte)bbBuf[bbOffset + i];
+            }
+            bb.offset += len;
+        }
+    }
+    public partial class ListIBBufferImpl_Byte : ListIBBufferImpl<byte>
+    {
+        public override void ToBBuffer(BBuffer bb, List<byte> vs)
+        {
+            var vsDataLen = vs.dataLen;
+            bb.WriteLength(vsDataLen);
+            if (vsDataLen == 0) return;
+
+            bb.Reserve(bb.dataLen + vsDataLen * 1);
+            Array.Copy(vs.buf, 0, bb.buf, bb.dataLen, vsDataLen);
+            bb.dataLen += vsDataLen;
+        }
+        public override void FromBBuffer(BBuffer bb, List<byte> vs)
+        {
+            int len = bb.ReadLength();
+            if (bb.readLengthLimit != 0 && len > bb.readLengthLimit) throw new Exception("overflow of limit");
+            vs.Resize(len);
+            if (len == 0) return;
+
+            Array.Copy(bb.buf, bb.offset, vs.buf, 0, len);
+            bb.offset += len;
+        }
+    }
+    public partial class ListIBBufferImpl_Int16 : ListIBBufferImpl<short>
+    {
+        public override void ToBBuffer(BBuffer bb, List<short> vs)
+        {
+            var vsDataLen = vs.dataLen;
+            bb.WriteLength(vsDataLen);
+            if (vsDataLen == 0) return;
+
+            bb.Reserve(bb.dataLen + vsDataLen * 3);
+            var bbBuf = bb.buf;
+            var vsBuf = vs.buf;
+            var bbDataLen = bb.dataLen;
+            for (int i = 0; i < vsDataLen; i++)
+            {
+                BBuffer.Bit7Write(bbBuf, ref bbDataLen, BBuffer.ZigZagEncode(vsBuf[i]));
+            }
+        }
+        public override void FromBBuffer(BBuffer bb, List<short> vs)
+        {
+            int len = bb.ReadLength();
+            if (bb.readLengthLimit != 0 && len > bb.readLengthLimit) throw new Exception("overflow of limit");
+            vs.Resize(len);
+            if (len == 0) return;
+
+            short tmp = 0;
+            var vsBuf = vs.buf;
+            for (int i = 0; i < len; i++)
+            {
+                bb.Read(ref tmp);
+                vsBuf[i] = tmp;
+            }
+        }
+    }
+    public partial class ListIBBufferImpl_UInt16 : ListIBBufferImpl<ushort>
+    {
+        public override void ToBBuffer(BBuffer bb, List<ushort> vs)
+        {
+            var vsDataLen = vs.dataLen;
+            bb.WriteLength(vsDataLen);
+            if (vsDataLen == 0) return;
+
+            bb.Reserve(bb.dataLen + vsDataLen * 3);
+            var bbBuf = bb.buf;
+            var vsBuf = vs.buf;
+            var bbDataLen = bb.dataLen;
+            for (int i = 0; i < vsDataLen; i++)
+            {
+                BBuffer.Bit7Write(bbBuf, ref bbDataLen, vsBuf[i]);
+            }
+        }
+        public override void FromBBuffer(BBuffer bb, List<ushort> vs)
+        {
+            int len = bb.ReadLength();
+            if (bb.readLengthLimit != 0 && len > bb.readLengthLimit) throw new Exception("overflow of limit");
+            vs.Resize(len);
+            if (len == 0) return;
+
+            ushort tmp = 0;
+            var vsBuf = vs.buf;
+            for (int i = 0; i < len; i++)
+            {
+                bb.Read(ref tmp);
+                vsBuf[i] = tmp;
+            }
+        }
+    }
+    public partial class ListIBBufferImpl_Int32 : ListIBBufferImpl<int>
+    {
+        public override void ToBBuffer(BBuffer bb, List<int> vs)
+        {
+            var vsDataLen = vs.dataLen;
+            bb.WriteLength(vsDataLen);
+            if (vsDataLen == 0) return;
+
+            bb.Reserve(bb.dataLen + vsDataLen * 5);
+            var bbBuf = bb.buf;
+            var vsBuf = vs.buf;
+            var bbDataLen = bb.dataLen;
+            for (int i = 0; i < vsDataLen; i++)
+            {
+                BBuffer.Bit7Write(bbBuf, ref bbDataLen, BBuffer.ZigZagEncode(vsBuf[i]));
+            }
+        }
+        public override void FromBBuffer(BBuffer bb, List<int> vs)
+        {
+            int len = bb.ReadLength();
+            if (bb.readLengthLimit != 0 && len > bb.readLengthLimit) throw new Exception("overflow of limit");
+            vs.Resize(len);
+            if (len == 0) return;
+
+            int tmp = 0;
+            var vsBuf = vs.buf;
+            for (int i = 0; i < len; i++)
+            {
+                bb.Read(ref tmp);
+                vsBuf[i] = tmp;
+            }
+        }
+    }
+    public partial class ListIBBufferImpl_UInt32 : ListIBBufferImpl<uint>
+    {
+        public override void ToBBuffer(BBuffer bb, List<uint> vs)
+        {
+            var vsDataLen = vs.dataLen;
+            bb.WriteLength(vsDataLen);
+            if (vsDataLen == 0) return;
+
+            bb.Reserve(bb.dataLen + vsDataLen * 5);
+            var bbBuf = bb.buf;
+            var vsBuf = vs.buf;
+            var bbDataLen = bb.dataLen;
+            for (int i = 0; i < vsDataLen; i++)
+            {
+                BBuffer.Bit7Write(bbBuf, ref bbDataLen, vsBuf[i]);
+            }
+        }
+        public override void FromBBuffer(BBuffer bb, List<uint> vs)
+        {
+            int len = bb.ReadLength();
+            if (bb.readLengthLimit != 0 && len > bb.readLengthLimit) throw new Exception("overflow of limit");
+            vs.Resize(len);
+            if (len == 0) return;
+
+            uint tmp = 0;
+            var vsBuf = vs.buf;
+            for (int i = 0; i < len; i++)
+            {
+                bb.Read(ref tmp);
+                vsBuf[i] = tmp;
+            }
+        }
+    }
+    public partial class ListIBBufferImpl_Int64 : ListIBBufferImpl<long>
+    {
+        public override void ToBBuffer(BBuffer bb, List<long> vs)
+        {
+            var vsDataLen = vs.dataLen;
+            bb.WriteLength(vsDataLen);
+            if (vsDataLen == 0) return;
+
+            bb.Reserve(bb.dataLen + vsDataLen * 9);
+            var bbBuf = bb.buf;
+            var vsBuf = vs.buf;
+            var bbDataLen = bb.dataLen;
+            for (int i = 0; i < vsDataLen; i++)
+            {
+                BBuffer.Bit7Write(bbBuf, ref bbDataLen, BBuffer.ZigZagEncode(vsBuf[i]));
+            }
+        }
+        public override void FromBBuffer(BBuffer bb, List<long> vs)
+        {
+            int len = bb.ReadLength();
+            if (bb.readLengthLimit != 0 && len > bb.readLengthLimit) throw new Exception("overflow of limit");
+            vs.Resize(len);
+            if (len == 0) return;
+
+            long tmp = 0;
+            var vsBuf = vs.buf;
+            for (int i = 0; i < len; i++)
+            {
+                bb.Read(ref tmp);
+                vsBuf[i] = tmp;
+            }
+        }
+    }
+    public partial class ListIBBufferImpl_UInt64 : ListIBBufferImpl<ulong>
+    {
+        public override void ToBBuffer(BBuffer bb, List<ulong> vs)
+        {
+            var vsDataLen = vs.dataLen;
+            bb.WriteLength(vsDataLen);
+            if (vsDataLen == 0) return;
+
+            bb.Reserve(bb.dataLen + vsDataLen * 9);
+            var bbBuf = bb.buf;
+            var vsBuf = vs.buf;
+            var bbDataLen = bb.dataLen;
+            for (int i = 0; i < vsDataLen; i++)
+            {
+                BBuffer.Bit7Write(bbBuf, ref bbDataLen, vsBuf[i]);
+            }
+        }
+        public override void FromBBuffer(BBuffer bb, List<ulong> vs)
+        {
+            int len = bb.ReadLength();
+            if (bb.readLengthLimit != 0 && len > bb.readLengthLimit) throw new Exception("overflow of limit");
+            vs.Resize(len);
+            if (len == 0) return;
+
+            ulong tmp = 0;
+            var vsBuf = vs.buf;
+            for (int i = 0; i < len; i++)
+            {
+                bb.Read(ref tmp);
+                vsBuf[i] = tmp;
+            }
+        }
+    }
+    public partial class ListIBBufferImpl_Single : ListIBBufferImpl<float>
+    {
+        public override void ToBBuffer(BBuffer bb, List<float> vs)
+        {
+            var vsDataLen = vs.dataLen;
+            bb.WriteLength(vsDataLen);
+            if (vsDataLen == 0) return;
+
+            bb.Reserve(bb.dataLen + vsDataLen * 4);
+            for (int i = 0; i < vsDataLen; i++)
+            {
+                bb.WriteDirect(vs[i]);
+            }
+        }
+        public override void FromBBuffer(BBuffer bb, List<float> vs)
+        {
+            int len = bb.ReadLength();
+            if (bb.readLengthLimit != 0 && len > bb.readLengthLimit) throw new Exception("overflow of limit");
+            vs.Resize(len);
+            if (len == 0) return;
+
+            var bbBuf = bb.buf;
+            var bbOffset = bb.offset;
+            var vsBuf = vs.buf;
+            for (int i = 0; i < len; i++)
+            {
+                vsBuf[i] = BitConverter.ToSingle(bbBuf, bbOffset + i * 4);
+            }
+            bb.offset += len * 4;
+        }
+    }
+    public partial class ListIBBufferImpl_Double : ListIBBufferImpl<double>
+    {
+        public override void ToBBuffer(BBuffer bb, List<double> vs)
+        {
+            var vsDataLen = vs.dataLen;
+            bb.WriteLength(vsDataLen);
+            if (vsDataLen == 0) return;
+
+            bb.Reserve(bb.dataLen + vsDataLen * 9);
+            for (int i = 0; i < vsDataLen; i++)
+            {
+                bb.WriteDirect(vs[i]);
+            }
+        }
+        public override void FromBBuffer(BBuffer bb, List<double> vs)
+        {
+            int len = bb.ReadLength();
+            if (bb.readLengthLimit != 0 && len > bb.readLengthLimit) throw new Exception("overflow of limit");
+            vs.Resize(len);
+            if (len == 0) return;
+
+            double tmp = 0;
+            var vsBuf = vs.buf;
+            for (int i = 0; i < len; i++)
+            {
+                bb.Read(ref tmp);
+                vsBuf[i] = tmp;
+            }
+        }
+    }
+    public partial class ListIBBufferImpl_DateTime : ListIBBufferImpl<DateTime>
+    {
+        public override void ToBBuffer(BBuffer bb, List<DateTime> vs)
+        {
+            var vsDataLen = vs.dataLen;
+            bb.WriteLength(vsDataLen);
+            if (vsDataLen == 0) return;
+
+            bb.Reserve(bb.dataLen + vsDataLen * 8);
+            for (int i = 0; i < vsDataLen; i++)
+            {
+                bb.WriteDirect(vs[i]);
+            }
+        }
+        public override void FromBBuffer(BBuffer bb, List<DateTime> vs)
+        {
+            int len = bb.ReadLength();
+            if (bb.readLengthLimit != 0 && len > bb.readLengthLimit) throw new Exception("overflow of limit");
+            vs.Resize(len);
+            if (len == 0) return;
+
+            var tmp = DateTime.MinValue;
+            var vsBuf = vs.buf;
+            for (int i = 0; i < len; i++)
+            {
+                bb.Read(ref tmp);
+                vsBuf[i] = tmp;
+            }
+        }
+    }
+    public partial class ListIBBufferImpl_String : ListIBBufferImpl<string>
+    {
+        public override void ToBBuffer(BBuffer bb, List<string> vs)
+        {
+            var vsDataLen = vs.dataLen;
+            bb.WriteLength(vsDataLen);
+            if (vsDataLen == 0) return;
+
+            for (int i = 0; i < vsDataLen; i++)
+            {
+                bb.Write(vs[i]);
+            }
+        }
+        public override void FromBBuffer(BBuffer bb, List<string> vs)
+        {
+            int len = bb.ReadLength();
+            if (bb.readLengthLimit != 0 && len > bb.readLengthLimit) throw new Exception("overflow of limit");
+            vs.Resize(len);
+            if (len == 0) return;
+
+            string tmp = null;
+            var vsBuf = vs.buf;
+            for (int i = 0; i < len; i++)
+            {
+                bb.Read(ref tmp);
+                vsBuf[i] = tmp;
+            }
+        }
+    }
+}
