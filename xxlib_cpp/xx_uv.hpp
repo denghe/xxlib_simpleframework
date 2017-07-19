@@ -170,7 +170,7 @@ namespace xx
 
 	inline UVPeer::~UVPeer()
 	{
-		// 还需要进一步了解这样做的副作用
+		// 还需要进一步了解这样做的副作用( 已知会导致回调发生, 但此时正在析构, 应该拦截 )
 		if (!uv_is_closing((uv_handle_t*)&stream))
 		{
 			uv_close((uv_handle_t*)&stream, nullptr);
@@ -181,7 +181,7 @@ namespace xx
 		bbReceivePackage->dataLen = 0;
 		bbReceivePackage->offset = 0;
 
-		assert(!recvPkgs->dataLen);
+		if (recvPkgs->dataLen) bbReceivePackage->ReleasePackages(*recvPkgs);
 	}
 
 	inline void UVPeer::AllocCB(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf)
@@ -414,17 +414,17 @@ namespace xx
 		}
 	}
 
-	int UVPeer::SetNoDelay(bool const& enable)
+	inline int UVPeer::SetNoDelay(bool const& enable)
 	{
 		return uv_tcp_nodelay(&stream, enable ? 1 : 0);
 	}
 
-	int UVPeer::SetKeepAlive(bool const& enable, uint32_t const& delay)
+	inline int UVPeer::SetKeepAlive(bool const& enable, uint32_t const& delay)
 	{
 		return uv_tcp_keepalive(&stream, enable ? 1 : 0, delay);
 	}
 
-	String& UVPeer::GetPeerName()
+	inline String& UVPeer::GetPeerName()
 	{
 		sockaddr_in saddr;
 		int len = sizeof(saddr);
@@ -440,6 +440,11 @@ namespace xx
 			tmpStr->Append(':', ntohs(saddr.sin_port));
 		}
 		return *tmpStr;
+	}
+
+	inline void UVPeer::ReleaseRecvPkgs()
+	{
+		bbReceivePackage->ReleasePackages(*recvPkgs);
 	}
 
 	template<typename T>
@@ -561,6 +566,8 @@ namespace xx
 	inline void UVClientPeer::ConnectCB(uv_connect_t* conn, int status)
 	{
 		auto self = container_of(conn, UVClientPeer, conn);
+		if (!self->versionNumber()) return;			// 拦截因主动析构导致的回调( 当前还不确定有没有其他 CB 也需要拦截 )
+
 		self->lastStatus = status;
 		if (status < 0)
 		{

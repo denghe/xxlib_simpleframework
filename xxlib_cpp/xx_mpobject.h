@@ -40,6 +40,10 @@ namespace xx
 		*/
 		virtual void ToStringCore(String &str) const;
 
+		// 取代 std::cout, 用起来方便一些. 实现在 xx_string.h
+		template<typename ...Args>
+		void Cout(Args const& ... args);
+
 		/*
 		this->BaseType::ToBBuffer(bb);
 		bb.Write(.............);

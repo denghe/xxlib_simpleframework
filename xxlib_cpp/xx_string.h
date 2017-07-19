@@ -4,6 +4,7 @@
 #include "xx_charsutils.h"
 #include "xx_hashutils.h"
 #include <string>
+#include <iostream>
 
 namespace xx
 {
@@ -376,6 +377,14 @@ namespace xx
 	{
 	}
 
+
+	template<typename ...Args>
+	void MPObject::Cout(Args const& ... args)
+	{
+		xx::String_v s(mempool());
+		s->Append(args...);
+		std::cout << s->C_str() << std::flush;
+	}
 
 	
 	template<typename T, uint32_t reservedHeaderLen>

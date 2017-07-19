@@ -375,11 +375,11 @@ namespace xx
 		//}
 
 		// 尝试一次性反序列化一到多个包, 将结果填充到 outPkgs, 返回包个数 或 错误码
-		// outPkgs 中创建的对象, 应该正确的 Release 或转移到持有它们的容器中
-		// 注意: 即便返回错误码, outPkgs 中也可能存在数据( 可能是后面的包反序列化造成的问题 ), 需要正确处理
+		// 注意: 注意其元素的 引用计数, 通通为 1( 即便是递归互引 )
+		// 注意: 即便返回错误码, outPkgs 中也可能存在残留数据
 		int ReadPackages(List<MPObject*>& outPkgs)
 		{
-			assert(outPkgs.dataLen == 0);	// 反复调用本函数时, 应该确保函数为空, 以避免内存泄露
+			if (outPkgs.dataLen) ReleasePackages(outPkgs);
 			while (offset < dataLen)
 			{
 				MPObject* ibb = nullptr;

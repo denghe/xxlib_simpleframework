@@ -1,21 +1,15 @@
 #pragma once
 #include "xx_uv.h"
 #include "xx_helpers.h"
+#include "pkg_cpp\PKG_class.h"
 
 struct MyClient;
-
-struct MyAsync : xx::UVAsync
-{
-	MyClient* owner;
-	MyAsync(xx::UV* uv, MyClient* owner);
-	virtual void OnFire() override;
-};
-
 
 struct MyConnector : xx::UVClientPeer
 {
 	MyClient* owner;
 	MyConnector(xx::UV* uv, MyClient* owner);
+	~MyConnector();
 	virtual void OnReceivePackage(xx::BBuffer & bb) override;
 	virtual void OnConnect() override;
 };
@@ -26,17 +20,30 @@ struct MyTimer : xx::UVTimer
 	MyClient* owner;
 	MyTimer(xx::UV* uv, MyClient* owner);
 	virtual void OnFire() override;
-
-	int lineNumber = 0;
-	int Update();
 };
 
 
 struct MyClient : xx::MPObject
 {
 	xx::UV* uv;
-	xx::MemHeaderBox<MyConnector> conn;
-	xx::MemHeaderBox<MyTimer> timer;
-	xx::MemHeaderBox<MyAsync> dispacher;
+	MyConnector* conn;
+	MyTimer* timer;
 	MyClient(xx::UV* uv);
+	~MyClient();
+
+	// 预创建方便发包的容器
+	PKG::Client_Server::Join* pkgJoin;
+	PKG::Client_Server::Message* pkgMessage;
+
+	// 运行时上下文
+	xx::MPtr<PKG::UserInfo> self;
+	xx::List<PKG::UserInfo*>* users = nullptr;
+
+	int lineNumber = 0;					    // stackless 协程行号
+	int Update();
+
+	int64_t lastMS = 0;						// 用于各种超时判断
+	bool connecting = false;				// 产生 OnConnect 回调的标志
+	int i = 0;								// for 索引
+
 };

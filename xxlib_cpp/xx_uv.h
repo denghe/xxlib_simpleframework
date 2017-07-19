@@ -16,7 +16,7 @@ namespace xx
 	struct UVTimer;
 	struct UVAsync;
 
-	struct UV : MPObject											// 该类只能创建 1 份实例
+	struct UV : MPObject											// 该类可能只能创建 1 份实例
 	{
 		List_v<UVListener*> listeners;
 		List_v<UVClientPeer*> clientPeers;
@@ -102,6 +102,7 @@ namespace xx
 
 		// 方便使用的一些扩展( 当前并不直接映射到 C# )
 		List_v<MPObject*> recvPkgs;									// 可于 OnReceivePackage 时用 bb.ReadPackages(*recvPkgs) 来填充它. 须用 bb.ReleasePackages 释放.
+		void ReleaseRecvPkgs();										// 主动回收 recvPkgs 的数据
 	protected:
 		template<typename T>
 		int SendCore(T const& pkg);
