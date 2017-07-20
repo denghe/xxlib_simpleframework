@@ -7,20 +7,19 @@ using System.Threading.Tasks;
 /// <summary>
 /// 客户端接入时会创建一份
 /// </summary>
-public class Peer : UVServerPeerWrapperEx
+public class Peer : xx.UVServerPeerWrapperEx
 {
     Service owner;
-    int threadId;
     public Peer(Service owner)
     {
         this.owner = owner;
-        this.threadId = Thread.CurrentThread.ManagedThreadId;
     }
 
     /// <summary>
     /// 与用户上下文双向 bind 的变量
     /// </summary>
     PKG.UserInfo user = null;
+
 
     string addr;
     public override void OnConnect()
@@ -116,107 +115,106 @@ public class Peer : UVServerPeerWrapperEx
 
                             // 向 uv 主循环线程压入 根据数据库查询返回结果
                             owner.PushResult(() =>
-                        {
-                            if (threadId != Thread.CurrentThread.ManagedThreadId) throw new Exception("bad thread run result.");
-                            Console.WriteLine("handler: begin exec send result for: PKG.Client_Server.Join");
-
-                            // 如果连接已失效, 直接退出
-                            if (!Alive)
                             {
-                                Console.WriteLine("handler: end exec send result for: PKG.Client_Server.Join");
-                                return;
-                            }
+                                Console.WriteLine("handler: begin exec send result for: PKG.Client_Server.Join");
 
-                            // 如果 SQL 执行成功
-                            if (err == null)
-                            {
-                                // 如果 acc 已得到( username 对得上 )
-                                if (acc != null)
+                                // 如果连接已失效, 直接退出
+                                if (!Alive)
                                 {
-                                    // 如果密码一致: 顶掉 或创建 user
-                                    if (acc.password == o.password)
+                                    Console.WriteLine("handler: end exec send result for: PKG.Client_Server.Join");
+                                    return;
+                                }
+
+                                // 如果 SQL 执行成功
+                                if (err == null)
+                                {
+                                    // 如果 acc 已得到( username 对得上 )
+                                    if (acc != null)
                                     {
-                                        var idx = users.Find(acc.id);
-                                        // 如果没找到: 创建并广播
-                                        if (idx == -1)
+                                        // 如果密码一致: 顶掉 或创建 user
+                                        if (acc.password == o.password)
                                         {
-                                            // 在创建 user info 之前, 先构造广播人员名单和数据, 自然排除掉当前 user
-                                            // 如果要进一步纠结, 可以调用 Listener 上的 Send( peers, pkg ) 函数, 引用计数, 0 复制( 还没做 ))
-                                            var pushMsg = GetPackagesData(new PKG.Server_Client.PushJoin
+                                            var idx = users.Find(acc.id);
+                                            // 如果没找到: 创建并广播
+                                            if (idx == -1)
                                             {
-                                                id = acc.id
+                                                // 在创建 user info 之前, 先构造广播人员名单和数据, 自然排除掉当前 user
+                                                // 如果要进一步纠结, 可以调用 Listener 上的 Send( peers, pkg ) 函数, 引用计数, 0 复制( 还没做 ))
+                                                var pushMsg = GetPackagesData(new PKG.Server_Client.PushJoin
+                                                {
+                                                    id = acc.id
+                                                });
+
+                                                // 广播给其他人
+                                                users.ForEach((kv) =>
+                                            {
+                                                var u = kv.value;
+                                                if (u.PeerAlive)
+                                                {
+                                                    u.peer.Send(pushMsg, 0, pushMsg.Length);
+                                                }
                                             });
 
-                                            // 广播给其他人
-                                            users.ForEach((kv) =>
-                                        {
-                                            var u = kv.value;
-                                            if (u.PeerAlive)
-                                            {
-                                                u.peer.Send(pushMsg, 0, pushMsg.Length);
+                                                // 创建 user info 
+                                                user = new PKG.UserInfo
+                                                {
+                                                    id = acc.id,
+                                                    owner = owner,
+                                                    peer = this,
+                                                    props = null
+                                                };
+                                                // 放进字典, 将所在字典 index 存起来
+                                                user.owner_users_index = users.Add(acc.id, user).index;
+
+
+                                                // 向当前客户端发送 join 成功, 并附带自己和所有人的信息
+                                                SendPackages(new PKG.Server_Client.JoinSuccess
+                                                {
+                                                    requestSerial = o.serial,
+                                                    self = user,
+                                                    users = users.GetValues()
+                                                });
+
                                             }
-                                        });
-
-                                            // 创建 user info 
-                                            user = new PKG.UserInfo
+                                            else
                                             {
-                                                id = acc.id,
-                                                owner = owner,
-                                                peer = this,
-                                                props = null
-                                            };
-                                            // 放进字典, 将所在字典 index 存起来
-                                            user.owner_users_index = users.Add(acc.id, user).index;
+                                                // 如果有找到: 顶下线
+                                                user = users.ValueAt(idx);
+                                                user.peer.user = null;              // 解绑
+                                                user.peer.Disconnect(true);         // 断开
+                                                user.peer = this;                   // 重新绑定
 
-
-                                            // 向当前客户端发送 join 成功, 并附带自己和所有人的信息
-                                            SendPackages(new PKG.Server_Client.JoinSuccess
-                                            {
-                                                requestSerial = o.serial,
-                                                self = user,
-                                                users = users.GetValues()
-                                            });
-
+                                                // 向当前客户端发送 join 成功
+                                                SendPackages(new PKG.Server_Client.JoinSuccess
+                                                {
+                                                    requestSerial = o.serial,
+                                                    self = user,
+                                                    users = users.GetValues()
+                                                });
+                                            }
                                         }
-                                        else
+                                    }
+                                    else
+                                    {
+                                        // acc 未找到: 用户名对不上
+                                        SendPackages(new PKG.Server_Client.JoinFail
                                         {
-                                            // 如果有找到: 顶下线
-                                            user = users.ValueAt(idx);
-                                            user.peer.user = null;              // 解绑
-                                            user.peer.Disconnect(true);         // 断开
-                                            user.peer = this;                   // 重新绑定
-
-                                            // 向当前客户端发送 join 成功
-                                            SendPackages(new PKG.Server_Client.JoinSuccess
-                                            {
-                                                requestSerial = o.serial,
-                                                self = user,
-                                                users = users.GetValues()
-                                            });
-                                        }
+                                            requestSerial = o.serial,
+                                            reason = "bad username"
+                                        });
                                     }
                                 }
                                 else
                                 {
-                                    // acc 未找到: 用户名对不上
+                                    // SQL 执行异常
                                     SendPackages(new PKG.Server_Client.JoinFail
                                     {
                                         requestSerial = o.serial,
-                                        reason = "bad username"
+                                        reason = err
                                     });
                                 }
-                            }
-                            else
-                            {
-                                // SQL 执行异常
-                                SendPackages(new PKG.Server_Client.JoinFail
-                                {
-                                    requestSerial = o.serial,
-                                    reason = err
-                                });
-                            }
-                            Console.WriteLine("handler: end exec send result for: PKG.Client_Server.Join");
-                        });
+                                Console.WriteLine("handler: end exec send result for: PKG.Client_Server.Join");
+                            });
 
                         }).Start();
 

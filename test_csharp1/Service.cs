@@ -9,7 +9,7 @@ public class Service
     /// <summary>
     /// uv 上下文
     /// </summary>
-    public UVWrapper uv;
+    public xx.UVWrapper uv;
 
     /// <summary>
     /// 监听器 for server
@@ -40,7 +40,7 @@ public class Service
     /// </summary>
     public xx.Dict<int, PKG.UserInfo> users = new xx.Dict<int, PKG.UserInfo>();
 
-    public Service(UVWrapper uv)
+    public Service(xx.UVWrapper uv)
     {
         this.uv = uv;
         dispatcher = uv.CreateAsync(new Async(this));

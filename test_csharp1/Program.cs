@@ -7,7 +7,7 @@
     {
         PKG.AllTypes.Register();
 
-        var uv = new UVWrapper();
+        var uv = new xx.UVWrapper();
         service = new Service(uv);
         uv.Run();
     }
