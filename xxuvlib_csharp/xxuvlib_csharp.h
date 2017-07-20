@@ -11,12 +11,12 @@
 // MyUVAsync
 /********************************************************************************************************************/
 
-// ¿É´´½¨¶à·İµÄ async ¿çÏß³ÌĞÅºÅÁ¿. Ê¹ÓÃ UVWrapper µÄ CreateAsync À´´´½¨. 
+// å¯åˆ›å»ºå¤šä»½çš„ async è·¨çº¿ç¨‹ä¿¡å·é‡. ä½¿ç”¨ UVWrapper çš„ CreateAsync æ¥åˆ›å»º. 
 
 typedef void(*Func_OnFire)();
 struct MyUVAsync : xx::UVAsync
 {
-	// ´´½¨ºóÌî³ä
+	// åˆ›å»ºåå¡«å……
 	Func_OnFire onFire = nullptr;
 
 	MyUVAsync(xx::UV* uv) : xx::UVAsync(uv) {}
@@ -33,12 +33,12 @@ struct MyUVAsync : xx::UVAsync
 // MyUVTimer
 /********************************************************************************************************************/
 
-// ¿É´´½¨¶à·İµÄ timer. Ê¹ÓÃ UVWrapper µÄ CreateTimer À´´´½¨. Start Æô¶¯. Release Îö¹¹.
+// å¯åˆ›å»ºå¤šä»½çš„ timer. ä½¿ç”¨ UVWrapper çš„ CreateTimer æ¥åˆ›å»º. Start å¯åŠ¨. Release ææ„.
 
 typedef void(*Func_OnTicks)();
 struct MyUVTimer : xx::UVTimer
 {
-	// ´´½¨ºóÌî³ä
+	// åˆ›å»ºåå¡«å……
 	Func_OnTicks onTicks = nullptr;
 
 	MyUVTimer(xx::UV* uv) : xx::UVTimer(uv) {}
@@ -55,14 +55,14 @@ struct MyUVTimer : xx::UVTimer
 // MyUVClientPeer
 /********************************************************************************************************************/
 
-// ¿É´´½¨¶à·İµÄ client peer. Ê¹ÓÃ UVWrapper µÄ CreateClientPeer À´´´½¨
+// å¯åˆ›å»ºå¤šä»½çš„ client peer. ä½¿ç”¨ UVWrapper çš„ CreateClientPeer æ¥åˆ›å»º
 
 typedef void(*Func_OnReceivePackage)(char* buf, int dataLen);
 typedef void(*Func_OnConnect)();
 typedef void(*Func_OnDisconnect)();
 struct MyUVClientPeer : xx::UVClientPeer
 {
-	// ´´½¨ºóÌî³ä
+	// åˆ›å»ºåå¡«å……
 	Func_OnReceivePackage onReceivePackage = nullptr;
 	Func_OnConnect onConnect = nullptr;
 	Func_OnDisconnect onDisconnect = nullptr;
@@ -95,12 +95,12 @@ struct MyUVClientPeer : xx::UVClientPeer
 // MyUVListener
 /********************************************************************************************************************/
 
-// ¿É´´½¨¶à·İµÄ listener. Ê¹ÓÃ UVWrapper µÄ CreateListener À´´´½¨
+// å¯åˆ›å»ºå¤šä»½çš„ listener. ä½¿ç”¨ UVWrapper çš„ CreateListener æ¥åˆ›å»º
 
 typedef xx::UVServerPeer*(*Func_OnCreatePeer)();
 struct MyUVListener : xx::UVListener
 {
-	// ´´½¨ºóÌî³ä
+	// åˆ›å»ºåå¡«å……
 	Func_OnCreatePeer onCreatePeer = nullptr;
 
 	MyUVListener(xx::UV* uv, int port, int backlog) : xx::UVListener(uv, port, backlog) {}
@@ -118,19 +118,19 @@ struct MyUVListener : xx::UVListener
 // MyUVServerPeer
 /********************************************************************************************************************/
 
-// ¿É´´½¨¶à·İµÄ listener. Ê¹ÓÃ UVWrapper µÄ CreateListener À´´´½¨
+// å¯åˆ›å»ºå¤šä»½çš„ listener. ä½¿ç”¨ UVWrapper çš„ CreateListener æ¥åˆ›å»º
 
 struct MyUVServerPeer;
 typedef void(*Func_OnAccept)(char* addr, int addrLen);
 struct MyUVServerPeer : xx::UVServerPeer
 {
-	// ´´½¨ºóÌî³ä
+	// åˆ›å»ºåå¡«å……
 	Func_OnDisconnect onDisconnect = nullptr;
 	Func_OnReceivePackage onReceivePackage = nullptr;
 
 	MyUVServerPeer(MyUVListener* listener) : xx::UVServerPeer(listener)
 	{
-		GetPeerName();	// Ìî³ä peer name µ½ tmpStr, ÒÔ±ãÏÂÃæµÄ C# ´úÂëÓÚ´´½¨Ö®ºóÄ£Äâ Accept ÊÂ¼şÊ±´«²Î
+		GetPeerName();	// å¡«å…… peer name åˆ° tmpStr, ä»¥ä¾¿ä¸‹é¢çš„ C# ä»£ç äºåˆ›å»ºä¹‹åæ¨¡æ‹Ÿ Accept äº‹ä»¶æ—¶ä¼ å‚
 	}
 
 	void OnReceivePackage(xx::BBuffer& bb) override
@@ -157,7 +157,7 @@ struct MyUVServerPeer : xx::UVServerPeer
 
 #pragma managed
 
-// ½»»»É¾³ı·¨
+// äº¤æ¢åˆ é™¤æ³•
 #define SYSTEM_LIST_SWAP_REMOVE( listPtr, tarPtr, indexName )	\
 do																\
 {																\
@@ -274,15 +274,15 @@ namespace xx
 			auto p = (MyUVServerPeer*)ptr->ToPointer();
 			if (p->state != xx::UVPeerStates::Connected) return false;
 
-			// »ñµÃÒ»¸ö·¢ËÍÓÃµÄ bb( ¿ÉÄÜÀïÃæÒÑ¾­ÓĞÊı¾İÁË )
+			// è·å¾—ä¸€ä¸ªå‘é€ç”¨çš„ bb( å¯èƒ½é‡Œé¢å·²ç»æœ‰æ•°æ®äº† )
 			auto bb = p->GetSendBB(dataLen);
 
-			// ¸´ÖÆ×·¼Ó. Î´À´¿¼ÂÇ¶ÔÍâ±©Â¶ BBuffer Ô­Éú¶ÔÏó ´Ó¶øÊµÏÖ 0 copy
+			// å¤åˆ¶è¿½åŠ . æœªæ¥è€ƒè™‘å¯¹å¤–æš´éœ² BBuffer åŸç”Ÿå¯¹è±¡ ä»è€Œå®ç° 0 copy
 			pin_ptr<System::Byte> pin = &buf[0];
 			unsigned char* pinbuf = pin;
 			bb->WriteBuf((char*)pinbuf + offset, dataLen);
 
-			// ·¢³ö( Ñ¹µ½·¢ËÍ¶ÓÁĞ )
+			// å‘å‡º( å‹åˆ°å‘é€é˜Ÿåˆ— )
 			return p->Send(bb) == 0;
 		}
 		property UVPeerStates State
@@ -304,7 +304,7 @@ namespace xx
 				return gcnew System::String((const char*)s.buf, 0, s.dataLen);
 			}
 		}
-		// Õâ¸öÊôĞÔ¿É²»ĞèÒª Ensure Ö±½ÓÓÃ ÒÔ·½±ã ÅĞ¶Ï peer µÄ×´Ì¬
+		// è¿™ä¸ªå±æ€§å¯ä¸éœ€è¦ Ensure ç›´æ¥ç”¨ ä»¥æ–¹ä¾¿ åˆ¤æ–­ peer çš„çŠ¶æ€
 		property bool Alive
 		{
 			bool get()
@@ -319,9 +319,9 @@ namespace xx
 	public ref class UVClientPeerWrapper abstract : UVPeerWrapper
 	{
 	public:
-		UVWrapper^ creator = nullptr;				// ¼Ó³ÖÒÔ·À uv ±È this ËÀµÄÔç
+		UVWrapper^ creator = nullptr;				// åŠ æŒä»¥é˜² uv æ¯” this æ­»çš„æ—©
 
-		// Î»ÓÚ¸¸ÈİÆ÷µÄÏÂ±ê
+		// ä½äºçˆ¶å®¹å™¨çš„ä¸‹æ ‡
 		int uv_clientPeers_index = -1;
 
 		~UVClientPeerWrapper();
@@ -354,9 +354,9 @@ namespace xx
 	public ref class UVServerPeerWrapper abstract : UVPeerWrapper
 	{
 	public:
-		UVListenerWrapper^ creator = nullptr;				// ¼Ó³ÖÒÔ·À listener ±È this ËÀµÄÔç
+		UVListenerWrapper^ creator = nullptr;				// åŠ æŒä»¥é˜² listener æ¯” this æ­»çš„æ—©
 
-		// Î»ÓÚ¸¸ÈİÆ÷µÄÏÂ±ê
+		// ä½äºçˆ¶å®¹å™¨çš„ä¸‹æ ‡
 		int listener_serverPeers_index = -1;
 
 		~UVServerPeerWrapper();
@@ -372,7 +372,7 @@ namespace xx
 	public ref class UVListenerWrapper abstract : MPtrWrapper
 	{
 	public:
-		UVWrapper^ creator = nullptr;				// ¼Ó³ÖÒÔ·À uv ±È this ËÀµÄÔç
+		UVWrapper^ creator = nullptr;				// åŠ æŒä»¥é˜² uv æ¯” this æ­»çš„æ—©
 		System::Collections::Generic::List<UVServerPeerWrapper^>^ serverPeers;
 	protected:
 		Delegate_OnCreatePeer^ onCreatePeer;
@@ -387,7 +387,7 @@ namespace xx
 	public:
 		virtual UVServerPeerWrapper^ OnCreatePeer() = 0;	// return CreateServerPeer<T>();
 
-		// Î»ÓÚ¸¸ÈİÆ÷µÄÏÂ±ê
+		// ä½äºçˆ¶å®¹å™¨çš„ä¸‹æ ‡
 		int uv_listeners_index = -1;
 
 		UVListenerWrapper()
@@ -398,7 +398,7 @@ namespace xx
 		~UVListenerWrapper();
 		virtual void InitPtr(xx::MPObject* ptr) override;
 
-		// ½öÓÃ×÷ OnCreatePeer ÄÚ²¿´´½¨ server peer ·µ»Ø
+		// ä»…ç”¨ä½œ OnCreatePeer å†…éƒ¨åˆ›å»º server peer è¿”å›
 		generic<typename T> where T : UVServerPeerWrapper
 			T CreateServerPeer(T wrapper)
 		{
@@ -427,14 +427,14 @@ namespace xx
 	public ref class UVTimerWrapper abstract : MPtrWrapper
 	{
 	public:
-		UVWrapper^ creator = nullptr;				// ¼Ó³ÖÒÔ·À uv ±È this ËÀµÄÔç
+		UVWrapper^ creator = nullptr;				// åŠ æŒä»¥é˜² uv æ¯” this æ­»çš„æ—©
 	protected:
 		Delegate_OnTicks^ onTicks;
 	public:
 		virtual void OnCreated() = 0;
 		virtual void OnTicks() = 0;
 
-		// Î»ÓÚ¸¸ÈİÆ÷µÄÏÂ±ê
+		// ä½äºçˆ¶å®¹å™¨çš„ä¸‹æ ‡
 		int uv_timers_index = -1;
 
 		UVTimerWrapper()
@@ -460,13 +460,13 @@ namespace xx
 	public ref class UVAsyncWrapper abstract : MPtrWrapper
 	{
 	public:
-		UVWrapper^ creator = nullptr;				// ¼Ó³ÖÒÔ·À uv ±È this ËÀµÄÔç
+		UVWrapper^ creator = nullptr;				// åŠ æŒä»¥é˜² uv æ¯” this æ­»çš„æ—©
 	protected:
 		Delegate_OnFire^ onFire;
 	public:
 		virtual void OnFire() = 0;
 
-		// Î»ÓÚ¸¸ÈİÆ÷µÄÏÂ±ê
+		// ä½äºçˆ¶å®¹å™¨çš„ä¸‹æ ‡
 		int uv_asyncs_index = -1;
 
 		UVAsyncWrapper()
@@ -622,7 +622,7 @@ namespace xx
 
 	UVListenerWrapper::~UVListenerWrapper()
 	{
-		// ´Ó¸¸ÈİÆ÷ÖĞÒÆ³ı
+		// ä»çˆ¶å®¹å™¨ä¸­ç§»é™¤
 		SYSTEM_LIST_SWAP_REMOVE(creator->listeners, this, uv_listeners_index);
 	}
 	void UVListenerWrapper::InitPtr(xx::MPObject* ptr)
@@ -632,7 +632,7 @@ namespace xx
 		auto p = (MyUVListener*)ptr;
 		p->onCreatePeer = Func_OnCreatePeer(Marshal::GetFunctionPointerForDelegate(onCreatePeer).ToPointer());
 
-		// ·Å½ø¸¸ÈİÆ÷ÒÔ¼Ó³Ö
+		// æ”¾è¿›çˆ¶å®¹å™¨ä»¥åŠ æŒ
 		uv_listeners_index = creator->listeners->Count;
 		creator->listeners->Add(this);
 	}
@@ -641,7 +641,7 @@ namespace xx
 
 	UVTimerWrapper::~UVTimerWrapper()
 	{
-		// ´Ó¸¸ÈİÆ÷ÖĞÒÆ³ı
+		// ä»çˆ¶å®¹å™¨ä¸­ç§»é™¤
 		SYSTEM_LIST_SWAP_REMOVE(creator->timers, this, uv_timers_index);
 	}
 	void UVTimerWrapper::InitPtr(xx::MPObject* ptr)
@@ -651,7 +651,7 @@ namespace xx
 		auto p = (MyUVTimer*)ptr;
 		p->onTicks = Func_OnTicks(Marshal::GetFunctionPointerForDelegate(onTicks).ToPointer());
 
-		// ·Å½ø¸¸ÈİÆ÷ÒÔ¼Ó³Ö
+		// æ”¾è¿›çˆ¶å®¹å™¨ä»¥åŠ æŒ
 		uv_timers_index = creator->timers->Count;
 		creator->timers->Add(this);
 	}
@@ -660,7 +660,7 @@ namespace xx
 
 	UVAsyncWrapper::~UVAsyncWrapper()
 	{
-		// ´Ó¸¸ÈİÆ÷ÖĞÒÆ³ı
+		// ä»çˆ¶å®¹å™¨ä¸­ç§»é™¤
 		SYSTEM_LIST_SWAP_REMOVE(creator->asyncs, this, uv_asyncs_index);
 	}
 	void UVAsyncWrapper::InitPtr(xx::MPObject* ptr)
@@ -670,7 +670,7 @@ namespace xx
 		auto p = (MyUVAsync*)ptr;
 		p->onFire = Func_OnFire(Marshal::GetFunctionPointerForDelegate(onFire).ToPointer());
 
-		// ·Å½ø¸¸ÈİÆ÷ÒÔ¼Ó³Ö
+		// æ”¾è¿›çˆ¶å®¹å™¨ä»¥åŠ æŒ
 		uv_asyncs_index = creator->asyncs->Count;
 		creator->asyncs->Add(this);
 	}
@@ -687,7 +687,7 @@ namespace xx
 
 	UVClientPeerWrapper::~UVClientPeerWrapper()
 	{
-		// ´Ó¸¸ÈİÆ÷ÖĞÒÆ³ı
+		// ä»çˆ¶å®¹å™¨ä¸­ç§»é™¤
 		SYSTEM_LIST_SWAP_REMOVE(creator->clientPeers, this, uv_clientPeers_index);
 	}
 	void UVClientPeerWrapper::InitPtr(xx::MPObject* ptr)
@@ -699,7 +699,7 @@ namespace xx
 		p->onConnect = Func_OnConnect(Marshal::GetFunctionPointerForDelegate(onConnect).ToPointer());
 		p->onDisconnect = Func_OnDisconnect(Marshal::GetFunctionPointerForDelegate(onDisconnect).ToPointer());
 
-		// ·Å½ø¸¸ÈİÆ÷ÒÔ¼Ó³Ö
+		// æ”¾è¿›çˆ¶å®¹å™¨ä»¥åŠ æŒ
 		uv_clientPeers_index = creator->clientPeers->Count;
 		creator->clientPeers->Add(this);
 	}
@@ -709,7 +709,7 @@ namespace xx
 
 	UVServerPeerWrapper::~UVServerPeerWrapper()
 	{
-		// ´Ó¸¸ÈİÆ÷ÖĞÒÆ³ı
+		// ä»çˆ¶å®¹å™¨ä¸­ç§»é™¤
 		SYSTEM_LIST_SWAP_REMOVE(creator->serverPeers, this, listener_serverPeers_index);
 	}
 
@@ -721,7 +721,7 @@ namespace xx
 		p->onReceivePackage = Func_OnReceivePackage(Marshal::GetFunctionPointerForDelegate(onReceivePackage).ToPointer());
 		p->onDisconnect = Func_OnDisconnect(Marshal::GetFunctionPointerForDelegate(onDisconnect).ToPointer());
 
-		// ·Å½ø¸¸ÈİÆ÷ÒÔ¼Ó³Ö
+		// æ”¾è¿›çˆ¶å®¹å™¨ä»¥åŠ æŒ
 		listener_serverPeers_index = creator->serverPeers->Count;
 		creator->serverPeers->Add(this);
 	}
