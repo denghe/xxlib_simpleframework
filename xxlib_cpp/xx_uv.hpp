@@ -385,8 +385,7 @@ namespace xx
 
 	inline int UVPeer::Send(BBuffer* const& bb)
 	{
-		sendBufs->Push(bb);			// 压入, 接管并移交上下文字典
-		//if (sendBufs->BytesCount() + bb.dataLen > sendBufLimit) return false;
+		sendBufs->Push(bb);			// 压入, 接管并移交上下文字典		//if (sendBufs->BytesCount() + bb.dataLen > sendBufLimit) return false;
 		if (state != UVPeerStates::Connected) return -1;
 		if (!sending) return Send();
 		return 0;
@@ -459,7 +458,7 @@ namespace xx
 	int UVPeer::SendCore(T const& pkg, TS const& ... pkgs)
 	{
 		if (auto rtv = SendCore(pkg)) return rtv;
-		return SendCore(pkg, pkgs...);
+		return SendCore(pkgs...);
 	}
 	template<typename ...TS>
 	int UVPeer::SendPackages(TS const& ... pkgs)
@@ -476,7 +475,7 @@ namespace xx
 	void UVPeer::SendCombineCore(BBuffer& bb, T const& pkg, TS const& ... pkgs)
 	{
 		bb.WriteRoot(pkg);
-		SendCombineCore(bb, pkg, pkgs...);
+		SendCombineCore(bb, pkgs...);
 	}
 	template<typename ...TS>
 	int UVPeer::SendCombine(TS const& ... pkgs)

@@ -12,6 +12,9 @@ struct MyConnector : xx::UVClientPeer
 	~MyConnector();
 	virtual void OnReceivePackage(xx::BBuffer & bb) override;
 	virtual void OnConnect() override;
+
+	// 将所有收到的数据移进这里来放着以免 AI 来不及处理冲掉
+	xx::Queue_v<xx::MPObject*> recvMsgs;
 };
 
 
@@ -44,6 +47,4 @@ struct MyClient : xx::MPObject
 
 	int64_t lastMS = 0;						// 用于各种超时判断
 	bool connecting = false;				// 产生 OnConnect 回调的标志
-	int i = 0;								// for 索引
-
 };

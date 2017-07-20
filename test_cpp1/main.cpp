@@ -24,10 +24,11 @@ int main()
 inline MyConnector::MyConnector(xx::UV* uv, MyClient* owner)
 	: xx::UVClientPeer(uv)
 	, owner(owner)
+	, recvMsgs(mempool())
 {}
 inline MyConnector::~MyConnector()
 {
-	Cout("MyConnector: ~MyConnector()\n");
+	Cout(owner->pkgJoin->username, " MyConnector: ~MyConnector()\n");
 }
 inline void MyConnector::OnReceivePackage(xx::BBuffer & bb)
 {
@@ -37,10 +38,17 @@ inline void MyConnector::OnReceivePackage(xx::BBuffer & bb)
 		Disconnect(true);
 		return;
 	}
+
+	// 将数据转移并追加到持续收到的数据队列中
+	for (uint32_t i = 0; i < recvPkgs->dataLen; ++i)
+	{
+		recvMsgs->Push(recvPkgs->At(i));
+	}
+	recvPkgs->Clear();
 }
 inline void MyConnector::OnConnect()
 {
-	Cout("MyConnector: ", (state == xx::UVPeerStates::Connected
+	Cout(owner->pkgJoin->username, " MyConnector: ", (state == xx::UVPeerStates::Connected
 		? "state == xx::UVPeerStates::Connected\n"
 		: "state != xx::UVPeerStates::Connected\n"));
 	owner->connecting = false;
@@ -66,7 +74,6 @@ inline void MyTimer::OnFire()
 inline MyClient::MyClient(xx::UV* uv, char const* un, char const* pw)
 	: uv(uv)
 {
-	Cout("MyClient::MyClient(xx::UV* uv)\n");
 	conn = uv->CreateClientPeer<MyConnector>(this);
 	timer = uv->CreateTimer<MyTimer>(this);
 
@@ -79,11 +86,13 @@ inline MyClient::MyClient(xx::UV* uv, char const* un, char const* pw)
 
 	mempool().CreateTo(pkgMessage);
 	mempool().CreateTo(pkgMessage->text);
+
+	Cout("MyClient::MyClient(uv, ", un, ", ", pw, ")\n");
 }
 
 inline MyClient::~MyClient()
 {
-	Cout("MyClient:~MyClient()\n");
+	Cout(pkgJoin->username, " MyClient:~MyClient()\n");
 	auto& mp = mempool();
 	mp.SafeRelease(timer);
 	mp.SafeRelease(conn);
@@ -103,7 +112,7 @@ inline int MyClient::Update()
 		connecting = true;
 		if (auto rtv = conn->Connect())
 		{
-			Cout("MyClient: conn->Connect() error! rtv = ", rtv, '\n');
+			Cout(pkgJoin->username, " MyClient: conn->Connect() error! rtv = ", rtv, '\n');
 			return -1;
 		}
 
@@ -121,7 +130,7 @@ inline int MyClient::Update()
 		}
 		else
 		{
-			Cout("MyClient: connect to server timeout!\n");
+			Cout(pkgJoin->username, " MyClient: connect to server timeout!\n");
 			return -1;
 		}
 	}
@@ -129,13 +138,13 @@ inline int MyClient::Update()
 	{
 		if (conn->state != xx::UVPeerStates::Connected)
 		{
-			Cout("MyClient: can't connect to server!\n");
+			Cout(pkgJoin->username, " MyClient: can't connect to server!\n");
 			return -1;
 		}
 	}
 	XX_CORO_(3);
 	{
-		Cout("MyClient: connected!\n");
+		Cout(pkgJoin->username, " MyClient: connected!\n");
 
 		// un & pw 在构造函数中填过了
 		//pkgJoin->username->Assign("a");
@@ -143,7 +152,7 @@ inline int MyClient::Update()
 
 		if (auto rtv = conn->SendPackages(pkgJoin))
 		{
-			Cout("MyClient: conn->SendPackages(pkgJoin) error! rtv = ", rtv, '\n');
+			Cout(pkgJoin->username, " MyClient: conn->SendPackages(pkgJoin) error! rtv = ", rtv, '\n');
 			return -1;
 		}
 
@@ -153,10 +162,10 @@ inline int MyClient::Update()
 	{
 		if (conn->state != xx::UVPeerStates::Connected)
 		{
-			Cout("MyClient: wait conn Recv disconnected!\n");
+			Cout(pkgJoin->username, " MyClient: wait conn Recv disconnected!\n");
 			return -1;
 		}
-		else if (conn->recvPkgs->dataLen)
+		else if (!conn->recvMsgs->Empty())
 		{
 			XX_CORO_GOTO(5);
 		}
@@ -166,16 +175,19 @@ inline int MyClient::Update()
 		}
 		else
 		{
-			Cout("MyClient: wait recv timeout!\n");
+			Cout(pkgJoin->username, " MyClient: wait recv timeout!\n");
 			return -1;
 		}
 	}
 	XX_CORO_(5);
 	{
-		assert(conn->recvPkgs->dataLen);
+		assert(!conn->recvMsgs->Empty());
 
-		// 先处理第 1 个包, 必然是 JoinSuccess 或 JoinFail
-		auto& o_ = conn->recvPkgs->Top();
+		// 取出第 1 个包处理. 必然是 JoinSuccess 或 JoinFail
+		auto o_ = conn->recvMsgs->Top();
+		xx::ScopeGuard sg_o_killer([&] { o_->Release(); });		// 跳出这层大扩号就删
+		conn->recvMsgs->Pop();
+
 		auto& typeId = o_->typeId();
 		switch (typeId)
 		{
@@ -183,33 +195,29 @@ inline int MyClient::Update()
 		{
 			auto o = (PKG::Server_Client::JoinSuccess*)o_;
 
-			// todo: 校验收到的内容
-
-			// 转移收到的内容
+			// 转移包成员继续用
 			self = o->self;			// 转为 MPtr
 			users = o->users;		// 作为持有容器, 所有包引用计数都为1, 刚好
 			o->self = nullptr;		// 避免析构到移走的数据
 			o->users = nullptr;		// 避免析构到移走的数据
 
 			// 显示点收到的内容
-			Cout("MyClient: recv msg == PKG::Server_Client::JoinSuccess!\n"
+			Cout(pkgJoin->username, " MyClient: recv msg == PKG::Server_Client::JoinSuccess!\n"
 				"users->dataLen = ", users->dataLen, "\n"
 				"self->id = ", self->id, '\n');
 
-			// for 索引 跳过第 1 个包
-			i = 1;
 			lastMS = currMS;		// 重置计时器为下一环节超时判断作准备
 			XX_CORO_GOTO(6);
 		}
 		case xx::TypeId_v<PKG::Server_Client::JoinFail>:
 		{
 			auto o = (PKG::Server_Client::JoinFail*)o_;
-			Cout("MyClient: recv msg == PKG::Server_Client::JoinFail!\n    reason = ", o->reason, '\n');
+			Cout(pkgJoin->username, " MyClient: recv msg == PKG::Server_Client::JoinFail!\n    reason = ", o->reason, '\n');
 			return -1;
 		}
 		default:
 		{
-			Cout("MyClient: recv unhandled msg!!! typeId = ", typeId, '\n');
+			Cout(pkgJoin->username, " MyClient: recv unhandled msg!!! typeId = ", typeId, '\n');
 			return -1;
 		}
 		}
@@ -218,45 +226,43 @@ inline int MyClient::Update()
 	{
 		if (conn->state != xx::UVPeerStates::Connected)
 		{
-			Cout("MyClient: wait conn Recv disconnected! ( joined )\n");
+			Cout(pkgJoin->username, " MyClient: wait conn Recv disconnected! ( joined )\n");
 			return -1;
 		}
 
-		// 继续处理剩下的包
-		for (; i < (int)conn->recvPkgs->dataLen; ++i)
+		// 继续处理后续收到的包
+		xx::MPObject* o_;
+		if (conn->recvMsgs->TryPop(o_))
 		{
-			auto& o_ = conn->recvPkgs->At(i);
+			xx::ScopeGuard sg_o_killer([&] { o_->Release(); });		// 跳出这层大扩号就删
 			auto& typeId = o_->typeId();
 			switch (typeId)
 			{
 			case xx::TypeId_v<PKG::Server_Client::PushJoin>:
 			{
 				auto o = (PKG::Server_Client::PushJoin*)o_;
-				Cout("MyClient: recv msg == PKG::Server_Client::PushJoin! id = ", o->id, '\n');
+				Cout(pkgJoin->username, " MyClient: recv msg == PKG::Server_Client::PushJoin! id = ", o->id, '\n');
 				break;
 			}
 			case xx::TypeId_v<PKG::Server_Client::PushLogout>:
 			{
 				auto o = (PKG::Server_Client::PushLogout*)o_;
-				Cout("MyClient: recv msg == PKG::Server_Client::PushLogout! id & reason = ", o->id, ' ', o->reason, '\n');
+				Cout(pkgJoin->username, " MyClient: recv msg == PKG::Server_Client::PushLogout! id & reason = ", o->id, ' ', o->reason, '\n');
 				break;
 			}
 			case xx::TypeId_v<PKG::Server_Client::PushMessage>:
 			{
 				auto o = (PKG::Server_Client::PushMessage*)o_;
-				Cout("MyClient: recv msg == PKG::Server_Client::PushMessage! id & text = ", o->id, ' ', o->text, '\n');
+				Cout(pkgJoin->username, " MyClient: recv msg == PKG::Server_Client::PushMessage! id & text = ", o->id, ' ', o->text, '\n');
 				break;
 			}
 			default:
 			{
-				Cout("MyClient: recv unhandled msg! typeId = ", typeId, '\n');
+				Cout(pkgJoin->username, " MyClient: recv unhandled msg! typeId = ", typeId, '\n');
 				return -1;
 			}
 			}
 		}
-
-		// 清掉已经处理过的包, 准备下一次接收
-		conn->ReleaseRecvPkgs();
 
 		// todo: 通过另外一个线程, 从 Console 接收字符以产生 PKG::Client_Server::Message 消息
 
@@ -272,13 +278,12 @@ inline int MyClient::Update()
 			// 发 Message
 			if (auto rtv = conn->SendPackages(pkgMessage))
 			{
-				Cout("MyClient: conn->SendPackages(pkgMessage) error! rtv = ", rtv, '\n');
+				Cout(pkgJoin->username, " MyClient: conn->SendPackages(pkgMessage) error! rtv = ", rtv, '\n');
 				return -1;
 			}
 		}
 
-		// 坐等后续包的到来
-		i = 0;
+		// 继续本状态循环
 		XX_CORO_YIELDTO(6);
 	}
 	XX_CORO_END();

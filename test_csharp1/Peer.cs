@@ -125,8 +125,16 @@ public class Peer : UVServerPeerWrapperEx
                                                 {
                                                     id = acc.id
                                                 });
-                                                // 创建要广播的人员名单( 并未过滤连接失效的人 )
-                                                var pushUsers = users.GetValues();
+
+                                                // 广播给其他人
+                                                users.ForEach((kv) =>
+                                                {
+                                                    var u = kv.value;
+                                                    if (u.PeerAlive)
+                                                    {
+                                                        u.peer.Send(pushMsg, 0, pushMsg.Length);
+                                                    }
+                                                });
 
                                                 // 创建 user info 
                                                 user = new PKG.UserInfo
@@ -136,7 +144,6 @@ public class Peer : UVServerPeerWrapperEx
                                                     peer = this,
                                                     props = null
                                                 };
-
                                                 // 放进字典, 将所在字典 index 存起来
                                                 user.owner_users_index = users.Add(acc.id, user).index;
 
@@ -149,17 +156,6 @@ public class Peer : UVServerPeerWrapperEx
                                                     users = users.GetValues()
                                                 });
 
-                                                // 广播给其他人
-                                                for (int i = 0; i < pushUsers.dataLen; ++i)
-                                                {
-                                                    var u = pushUsers[i];
-                                                    if (u.PeerAlive)
-                                                    {
-                                                        u.peer.Send(pushMsg, 0, pushMsg.Length);
-                                                    }
-                                                }
-
-                                                // todo: 已知问题, 当前两个 client 时, 似乎无法确保优先收到自己的 JoinSuccess, PushJoin 不时的会先收到, 原因正在查
                                             }
                                             else
                                             {
@@ -218,7 +214,7 @@ public class Peer : UVServerPeerWrapperEx
             {
                 case PKG.Client_Server.Message o:
                     {
-                        Console.WriteLine("listener: receive PKG.Client_Server.Message, text = " + o.text);
+                        Console.WriteLine("listener: receive user id = " + user.id + " PKG.Client_Server.Message, text = " + o.text);
 
                         // 先准备广播数据
                         var buf = GetPackagesData(new PKG.Server_Client.PushMessage
@@ -240,7 +236,7 @@ public class Peer : UVServerPeerWrapperEx
 
                 case PKG.Client_Server.Logout o:
                     {
-                        Console.WriteLine("listener: receive PKG.Client_Server.Logout");
+                        Console.WriteLine("listener: receive user id = " + user.id + " PKG.Client_Server.Logout");
 
                         // 先准备广播数据
                         var buf = GetPackagesData(new PKG.Server_Client.PushLogout
