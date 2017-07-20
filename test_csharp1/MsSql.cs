@@ -12,7 +12,7 @@ public static class MsSql
     public static void Exec(Action<DB.MsSqlFuncs> a)
     {
         // todo: get conn str from cfg file
-        using (var conn = new SqlConnection("Data Source=192.168.1.54;Initial Catalog=xxqp;User ID=sa;Password=1"))
+        using (var conn = new SqlConnection("Data Source=192.168.1.1;Initial Catalog=xxqp;User ID=sa;Password=1"))
         {
             conn.Open();
             var fs = new DB.MsSqlFuncs(conn);

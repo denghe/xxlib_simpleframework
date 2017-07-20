@@ -169,7 +169,7 @@ inline int MyClient::Update()
 		{
 			XX_CORO_GOTO(5);
 		}
-		if (currMS - lastMS < 5000)
+		if (currMS - lastMS < 50000)		// 等久点. 如果没 SQL 连, 这步有点久
 		{
 			XX_CORO_YIELDTO(4);
 		}
