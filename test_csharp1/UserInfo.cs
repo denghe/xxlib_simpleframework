@@ -31,8 +31,5 @@ namespace PKG
         }
 
         // todo: 其他
-
-        // 拿来除下 bug
-        public xx.List<object> sentMsgs = new xx.List<object>();
     }
 }

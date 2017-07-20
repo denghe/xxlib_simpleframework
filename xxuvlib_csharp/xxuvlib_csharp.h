@@ -219,13 +219,13 @@ namespace xx
 	// UVClientPeerWrapper
 	/********************************************************************************************************************/
 
-	//public enum class UVPeerStates
-	//{
-	//	Disconnected,
-	//	Connecting,
-	//	Connected,
-	//	Disconnecting
-	//};
+	public enum class NetStates
+	{
+		Disconnected,
+		Connecting,
+		Connected,
+		Disconnecting
+	};
 
 	public delegate void(Delegate_OnConnect)();
 	public delegate void(Delegate_OnDisconnect)();
@@ -285,13 +285,13 @@ namespace xx
 			// 发出( 压到发送队列 )
 			return p->Send(bb) == 0;
 		}
-		property UVPeerStates State
+		property NetStates State
 		{
-			UVPeerStates get()
+			NetStates get()
 			{
 				AssertEnsure();
 				auto p = (MyUVServerPeer*)ptr->ToPointer();
-				return (UVPeerStates)(int)p->state;
+				return (NetStates)(int)p->state;
 			}
 		}
 		property System::String^ PeerName
@@ -309,7 +309,7 @@ namespace xx
 		{
 			bool get()
 			{
-				return Ensure() && State == UVPeerStates::Connected;
+				return Ensure() && State == NetStates::Connected;
 			}
 		}
 	};
