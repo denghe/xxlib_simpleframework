@@ -6,8 +6,6 @@ using System.Reflection;
 using System.Text;
 
 
-// todo: struct support
-
 public static class GenCS_Class
 {
     public static void Gen(Assembly asm, string outDir, string templateName)
@@ -111,6 +109,10 @@ namespace " + c.Namespace + @"
                 {
                     sb.Append(" = " + dv + ";");
                 }
+                else if (f._Has<TemplateLibrary.CreateInstance>())
+                {
+                    sb.Append(" = new " + ftn + "();");
+                }
                 else
                 {
                     sb.Append(";");
@@ -208,6 +210,9 @@ namespace " + c.Namespace + @"
             sb.Append(@"
         }
 ");
+
+            // todo: ToString support
+
 
             // class /
             sb.Append(@"

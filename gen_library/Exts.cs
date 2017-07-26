@@ -92,7 +92,7 @@ public static class GenExtensions
         var dict = new Dictionary<Type, TypeParentCount>();
         foreach (var t in ts)
         {
-            dict.Add(t, new TypeParentCount { parent = ts.FirstOrDefault(a => t.IsSubclassOf(a)) });
+            dict.Add(t, new TypeParentCount { parent = t._HasBaseType() ? t.BaseType : null });
         }
         foreach (var t in ts)
         {
@@ -929,7 +929,7 @@ public static class GenExtensions
     /// </summary>
     public static bool _HasBaseType(this Type t)
     {
-        return t.BaseType != typeof(object);
+        return t.BaseType != typeof(object) && t.BaseType != typeof(System.ValueType);
     }
 
 

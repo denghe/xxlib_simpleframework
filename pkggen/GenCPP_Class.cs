@@ -149,6 +149,8 @@ namespace " + c.Namespace + @"
 
 
         cs = ts._GetClasss()._SortByInheritRelation();
+
+        // 预声明
         for (int i = 0; i < cs.Count; ++i)
         {
             var c = cs[i];
@@ -172,9 +174,7 @@ namespace " + c.Namespace + @"
 
             sb.Append(c._GetDesc_Cpp(4) + @"
     struct " + c.Name + @" : " + btn + @"
-    {
-        typedef " + c.Name + @" ThisType;
-        typedef " + btn + @" BaseType;");
+    {");
 
             // consts( static ) / fields
             var fs = c._GetFieldsConsts();
@@ -198,45 +198,72 @@ namespace " + c.Namespace + @"
             }
 
             sb.Append(@"
-#pragma region ctor, interface impls
 
-	    " + c.Name + @"()");
+        typedef " + c.Name + @" ThisType;
+        typedef " + btn + @" BaseType;
+	    " + c.Name + @"();
+	    " + c.Name + @"(xx::BBuffer *bb);
+	    ~" + c.Name + @"();
+        virtual void ToString(xx::String &str) const override;
+        virtual void ToStringCore(xx::String &str) const override;
+        virtual void ToBBuffer(xx::BBuffer &bb) const override;
+        virtual int FromBBuffer(xx::BBuffer &bb) override;
+    };");   // class }
+
+            // namespace }
+            if (c.Namespace != null && ((i < cs.Count - 1 && cs[i + 1].Namespace != c.Namespace) || i == cs.Count - 1))
+            {
+                sb.Append(@"
+}");
+            }
+
+        }
+
+        cs = ts._GetClasss();   //._SortByInheritRelation();
+        // 实现
+        for (int i = 0; i < cs.Count; ++i)
+        {
+            var c = cs[i];
+            var o = asm.CreateInstance(c.FullName);
+
+            // namespace c_ns {
+            if (c.Namespace != null && (i == 0 || (i > 0 && cs[i - 1].Namespace != c.Namespace))) // namespace 去重
+            {
+                sb.Append(@"
+namespace " + c.Namespace + @"
+{");
+            }
+
+            // 定位到基类
+            var bt = c.BaseType;
+            var btn = c._HasBaseType() ? bt._GetTypeDecl_Cpp(templateName).CutLast() : "xx::MPObject";
+
+            sb.Append(@"
+	inline " + c.Name + @"::" + c.Name + @"()");
             if (c._HasBaseType())
             {
                 sb.Append(@"
-            : BaseType()");
+        : " + btn + @"()");
             }
-            //// 其他 _v 成员初始化
-            //fs = c._GetFields();
-            //foreach (var f in fs)
-            //{
-            //    var ft = f.FieldType;
-            //    if (ft.IsClass)
-            //    {
-            //        sb.Append(@"
-            //" + (isFirst ? ":" : ",") + @" " + f.Name + "(mempool())");
-            //        isFirst = false;
-            //    }
-            //}
             sb.Append(@"
-	    {");
-            fs = c._GetFields();
+	{");
+            var fs = c._GetFields();
             foreach (var f in fs)
             {
                 var ft = f.FieldType;
-                if (ft.IsClass && f._Has<TemplateLibrary.CreateInstance>()) // todo: 跳过 _v
+                if (ft.IsClass && f._Has<TemplateLibrary.CreateInstance>())
                 {
                     sb.Append(@"
-            mempool().CreateTo(" + f.Name + ");");
+        mempool().CreateTo(" + f.Name + ");");
                 }
             }
             sb.Append(@"
-	    }
-	    " + c.Name + @"(xx::BBuffer *bb)");
+	}
+	inline " + c.Name + @"::" + c.Name + @"(xx::BBuffer *bb)");
             if (c._HasBaseType())
             {
                 sb.Append(@"
-            : BaseType(bb)");
+        : " + btn + @"(bb)");
             }
             //// 其他 _v 成员初始化
             //fs = c._GetFields();
@@ -251,12 +278,12 @@ namespace " + c.Namespace + @"
             //    }
             //}
             sb.Append(@"
-	    {");
+	{");
             fs = c._GetFields();
             if (fs.Count > 0)
             {
                 sb.Append(@"
-	        int rtv = 0;");
+	    int rtv = 0;");
             }
             foreach (var f in fs)
             {
@@ -264,15 +291,15 @@ namespace " + c.Namespace + @"
                 if (ft.IsClass && f.FieldType._IsContainer())
                 {
                     sb.Append(@"
-            bb->readLengthLimit = " + f._GetLimit() + ";");
+        bb->readLengthLimit = " + f._GetLimit() + ";");
                 }
                 sb.Append(@"
-            if (rtv = bb->Read(" + f.Name + ")) throw rtv;");
+        if (rtv = bb->Read(" + f.Name + ")) throw rtv;");
             }
             sb.Append(@"
-	    }
-	    ~" + c.Name + @"()
-	    {");
+	}
+	inline " + c.Name + @"::~" + c.Name + @"()
+	{");
             fs = c._GetFields();
             foreach (var f in fs)
             {
@@ -280,46 +307,46 @@ namespace " + c.Namespace + @"
                 if (ft.IsClass)
                 {
                     sb.Append(@"
-            mempool().SafeRelease(" + f.Name + ");");
+        mempool().SafeRelease(" + f.Name + ");");
                 }
             }
             sb.Append(@"
-	    }
+	}
 
-        inline virtual void ToString(xx::String &str) const override
+    inline void " + c.Name + @"::ToString(xx::String &str) const
+    {
+        if (tsFlags())
         {
-        	if (tsFlags())
-        	{
-        		str.Append(""[ \""***** recursived *****\"" ]"");
-        		return;
-        	}
-        	else tsFlags() = 1;
-
-            str.Append(""{ \""type\"" : \""" + c.Name + @"\"""");
-            ToStringCore(str);
-            str.Append("" }"");
-        
-        	tsFlags() = 0;
+        	str.Append(""[ \""***** recursived *****\"" ]"");
+        	return;
         }
-        inline virtual void ToStringCore(xx::String &str) const override
-        {
-            this->BaseType::ToStringCore(str);");
+        else tsFlags() = 1;
+
+        str.Append(""{ \""type\"" : \""" + c.Name + @"\"""");
+        ToStringCore(str);
+        str.Append("" }"");
+        
+        tsFlags() = 0;
+    }
+    inline void " + c.Name + @"::ToStringCore(xx::String &str) const
+    {
+        this->BaseType::ToStringCore(str);");
             foreach (var f in fs)
             {
                 sb.Append(@"
-            str.Append("", \""" + f.Name + @"\"" : "", this->" + f.Name + @");");
+        str.Append("", \""" + f.Name + @"\"" : "", this->" + f.Name + @");");
             }
             sb.Append(@"
-        }
+    }
 
 
-        inline virtual void ToBBuffer(xx::BBuffer &bb) const override
-        {");
+    inline void " + c.Name + @"::ToBBuffer(xx::BBuffer &bb) const
+    {");
 
             if (c._HasBaseType())
             {
                 sb.Append(@"
-            this->BaseType::ToBBuffer(bb);");
+        this->BaseType::ToBBuffer(bb);");
             }
             fs = c._GetFields();
             foreach (var f in fs)
@@ -327,30 +354,30 @@ namespace " + c.Namespace + @"
                 if (f._Has<TemplateLibrary.NotSerialize>())
                 {
                     sb.Append(@"
-            bb.WriteDefaultValue<" + f.FieldType._GetTypeDecl_Cpp(templateName) + ">();");
+        bb.WriteDefaultValue<" + f.FieldType._GetTypeDecl_Cpp(templateName) + ">();");
                 }
                 else if (f._Has<TemplateLibrary.CustomSerialize>())
                 {
                     sb.Append(@"
-            bb.CustomWrite(bb, (void*)this, _offsetof(ThisType, " + f.Name + "));");
+        bb.CustomWrite(bb, (void*)this, _offsetof(ThisType, " + f.Name + "));");
                 }
                 else
                 {
                     sb.Append(@"
-            bb.Write(this->" + f.Name + ");");
+        bb.Write(this->" + f.Name + ");");
                 }
             }
 
             sb.Append(@"
-        }
+    }
 
-        inline virtual int FromBBuffer(xx::BBuffer &bb) override
-        {
-            int rtv = 0;");
+    inline int " + c.Name + @"::FromBBuffer(xx::BBuffer &bb)
+    {
+        int rtv = 0;");
             if (c._HasBaseType())
             {
                 sb.Append(@"
-            if (rtv = this->BaseType::FromBBuffer(bb)) return rtv;");
+        if (rtv = this->BaseType::FromBBuffer(bb)) return rtv;");
             }
             fs = c._GetFields();
             foreach (var f in fs)
@@ -358,21 +385,16 @@ namespace " + c.Namespace + @"
                 if (f.FieldType._IsContainer())
                 {
                     sb.Append(@"
-            bb.readLengthLimit = " + f._GetLimit() + ";");
+        bb.readLengthLimit = " + f._GetLimit() + ";");
                 }
 
                 sb.Append(@"
-            if (rtv = bb.Read(this->" + f.Name + @")) return rtv;");
+        if (rtv = bb.Read(this->" + f.Name + @")) return rtv;");
             }
             sb.Append(@"
-            return rtv;
-        }
+        return rtv;
+    }
 ");
-
-            // class /
-            sb.Append(@"
-#pragma endregion
-    };");
 
             // namespace }
             if (c.Namespace != null && ((i < cs.Count - 1 && cs[i + 1].Namespace != c.Namespace) || i == cs.Count - 1))
@@ -386,6 +408,7 @@ namespace " + c.Namespace + @"
         sb.Append(@"
 }");
 
+        // 泛型接口适配
         sb.Append(@"
 namespace xx
 {");

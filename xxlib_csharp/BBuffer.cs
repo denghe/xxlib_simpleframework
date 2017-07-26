@@ -13,6 +13,14 @@ namespace xx
 
         // 序列化接口之从 bb 还原 /  填充数据( 这个需要 try )
         void FromBBuffer(BBuffer bb);
+
+        // todo
+
+        //// 方便 Dump 对象数据的高速 ToString 接口1 之输出 type 和外包围用
+        //void ToStringBuilder(ref StringBuilder sb);
+
+        //// 方便 Dump 对象数据的高速 ToString 接口2 之继承的情况下填充内容用
+        //void ToStringBuilderCore(ref StringBuilder sb);
     }
 
     // C# safe 版的 BBuffer 并不方便在 buf 前面空出一片填充包头的区域

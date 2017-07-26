@@ -1,4 +1,4 @@
-// xxuvlib_csharp.h
+﻿// xxuvlib_csharp.h
 
 #pragma once
 
@@ -263,9 +263,7 @@ namespace xx
 		{
 			AssertEnsure();
 			auto p = (MyUVServerPeer*)ptr->ToPointer();
-			if (p->state != xx::UVPeerStates::Connected) return -1;
-			p->Disconnect(immediately);
-			return 0;
+			return p->Disconnect(immediately);
 		}
 		bool Send(array<System::Byte>^ buf, int offset, int dataLen)
 		{

@@ -285,7 +285,7 @@ namespace xx
             Debug.Assert(dataLen > 0);
             buf[--dataLen] = default(T);
         }
-        public T PopOne()
+        public T TopPop()
         {
             Debug.Assert(dataLen > 0);
             try
@@ -296,6 +296,19 @@ namespace xx
             {
                 buf[dataLen] = default(T);
             }
+        }
+
+        /// <summary>
+        /// 将最后一个覆盖至当前 index, 并令 dataLen--
+        /// </summary>
+        public void SwapRemoveAt(int index)
+        {
+            if (index + 1 < dataLen)
+            {
+                buf[index] = buf[dataLen - 1];
+            }
+            dataLen--;
+            buf[dataLen] = default(T);
         }
 
         /****************************************************************/

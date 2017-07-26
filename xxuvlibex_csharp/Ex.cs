@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 
 namespace xx
 {
@@ -7,6 +8,22 @@ namespace xx
         public static long GetCurrentMS()
         {
             return (System.DateTime.Now.Ticks - 621355968000000000) / 10000;
+        }
+
+        public static void Swap<T>(xx.List<T> container, int a, int b)
+        {
+            if (a == b) return;
+            var tmp = container[a];
+            container[a] = container[b];
+            container[b] = tmp;
+        }
+
+        public static void Swap<T>(System.Collections.Generic.List<T> container, int a, int b)
+        {
+            if (a == b) return;
+            var tmp = container[a];
+            container[a] = container[b];
+            container[b] = tmp;
         }
     }
 

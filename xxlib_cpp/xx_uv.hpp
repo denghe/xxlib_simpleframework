@@ -363,6 +363,7 @@ namespace xx
 	inline int UVPeer::Send()
 	{
 		assert(!sending);
+		if (state != UVPeerStates::Connected) return -1;
 		auto len = sendBufs->PopTo(*writeBufs, 65536);	// todo: 先写死. 这个值理论上讲可配
 		if (len)
 		{
@@ -391,8 +392,9 @@ namespace xx
 		return 0;
 	}
 
-	inline void UVPeer::Disconnect(bool const& immediately)
+	inline int UVPeer::Disconnect(bool const& immediately)
 	{
+		if (state == UVPeerStates::Disconnecting || state == UVPeerStates::Disconnected) return -1;
 		state = UVPeerStates::Disconnecting;
 
 		// todo: save reason ?
@@ -411,6 +413,7 @@ namespace xx
 				OnDisconnect();
 			}
 		}
+		return 0;
 	}
 
 	inline int UVPeer::SetNoDelay(bool const& enable)

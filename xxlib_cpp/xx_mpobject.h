@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "xx_mptr.h"
 
 namespace xx

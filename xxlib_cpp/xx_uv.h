@@ -89,7 +89,7 @@ namespace xx
 
 		BBuffer* GetSendBB(int const& capacity = 0);				// 获取或创建一个发送用的 BBuffer( 里面可能已经有部分数据 ), 不要自己持有, 填完传给 Send( 不管是否断开 )
 		int Send(BBuffer* const& bb);								// 将数据"移入"待发送队列, 可能立即发送, 立即返回是否成功( 0 表示成功 )( 失败原因可能是待发数据过多 )
-		virtual void Disconnect(bool const& immediately = true);	// 断开( 接着会 Release ). immediately 为否就走 shutdown 模式( 延迟杀, 能尽可能确保数据发出去 )
+		virtual int Disconnect(bool const& immediately = true);		// 断开( 接着会 Release ). immediately 为否就走 shutdown 模式( 延迟杀, 能尽可能确保数据发出去 )
 
 		int SetNoDelay(bool const& enable);							// 开关 tcp 延迟发送以积攒数据的功能
 		int SetKeepAlive(bool const& enable, uint32_t const& delay);// 设置 tcp 保持活跃的时长
