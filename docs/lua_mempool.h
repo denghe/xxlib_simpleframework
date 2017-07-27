@@ -77,12 +77,11 @@ struct Lua_MemPool
 		}
 		if (!p) return Alloc(newSize);
 
-		auto idx = *((void**)p - 1);
-		auto oldSize = (size_t(1) << idx) - sizeof(size_t);
-		if (oldSize >= newSize) return p;
+		auto originalSize = (size_t(1) << *((void**)p - 1)) - sizeof(void*);
+		if (originalSize >= newSize) return p;
 
 		auto np = Alloc(newSize);
-		std::memcpy(np, p, std::min(oldSize, dataLen));
+		std::memcpy(np, p, std::min(originalSize, dataLen));
 		Free(p);
 		return np;
 	}
