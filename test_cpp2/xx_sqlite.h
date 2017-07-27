@@ -5,18 +5,16 @@
 namespace xx
 {
 	struct SQLite;
+	struct SQLiteQuery;
 	struct SQLiteReader;
 
-	struct SQLiteQuery : MPObject
+	enum SQLiteDataTypes : uint8_t
 	{
-		SQLite* owner;
-		uint32_t owner_queries_index = -1;
-		sqlite3_stmt* stmt = nullptr;
-		int numParams = 0;
-		typedef std::function<void(SQLiteReader& sr)> ReadFunc;
-
-		SQLiteQuery(SQLite* owner, char const* const& sql, int const& sqlLen);
-		bool Execute(ReadFunc && rf);
+		Integer = 1,
+		Float = 2,
+		Text = 3,
+		Blob = 4,
+		Null = 5
 	};
 
 	struct SQLite : MPObject
@@ -34,13 +32,28 @@ namespace xx
 		int Execute(char const* const& sql);
 	};
 
-	enum SQLiteDataTypes : uint8_t
+	struct SQLiteQuery : MPObject
 	{
-		Integer = 1,
-		Float = 2,
-		Text = 3,
-		Blob = 4,
-		Null = 5
+		SQLite* owner;
+		uint32_t owner_queries_index = -1;
+		sqlite3_stmt* stmt = nullptr;
+		int numParams = 0;
+		typedef std::function<void(SQLiteReader& sr)> ReadFunc;
+
+		SQLiteQuery(SQLite* owner, char const* const& sql, int const& sqlLen);
+
+		int SetParameter(int parmIdx, int const& v);
+		int SetParameter(int parmIdx, sqlite_int64 const& v);
+		int SetParameter(int parmIdx, double const& v);
+		int SetParameter(int parmIdx, char const* const& str, int strLen = 0, bool makeCopy = false);
+		int SetParameter(int parmIdx, char const* const& buf, size_t const& len, bool makeCopy = false);
+
+		template<typename ... Parameters>
+		int SetParameters(Parameters ... const& ps);
+		template<typename Parameter, typename ... Parameters>
+		int SetParametersCore(int& parmIdx, Parameter const& p, Parameters ... const& ps);
+
+		bool Execute(ReadFunc && rf);
 	};
 
 	struct SQLiteReader
@@ -51,10 +64,11 @@ namespace xx
 		SQLiteDataTypes GetColumnDataType(int colIdx);
 		char const* GetColumnName(int colIdx);
 		bool IsNull(int colIdx);
-		char const* ReadString(int colIdx);
-		int32_t ReadInt32(int colIdx);
-		int64_t ReadInt64(int colIdx);
+		int ReadInt32(int colIdx);
+		sqlite_int64 ReadInt64(int colIdx);
 		double ReadDouble(int colIdx);
+		char const* ReadString(int colIdx);
+		std::pair<char const*, int> ReadText(int colIdx);
 		std::pair<char const*, int> ReadBlob(int colIdx);
 	};
 
@@ -100,7 +114,7 @@ namespace xx
 	{
 		return sqlite3_exec(db, sql, nullptr, nullptr, (char**)&lastErrorMessage);
 	}
-	
+
 
 
 
@@ -126,7 +140,44 @@ namespace xx
 		XX_LIST_SWAP_REMOVE(owner->queries, this, owner_queries_index);
 	}
 
-	bool SQLiteQuery::Execute(ReadFunc && rf)
+	inline int SQLiteQuery::SetParameter(int parmIdx, int const& v)
+	{
+		return sqlite3_bind_int(stmt, parmIdx, v);
+	}
+	inline int SQLiteQuery::SetParameter(int parmIdx, sqlite_int64 const& v)
+	{
+		return sqlite3_bind_int64(stmt, parmIdx, v);
+	}
+	inline int SQLiteQuery::SetParameter(int parmIdx, double const& v)
+	{
+		return sqlite3_bind_double(stmt, parmIdx, v);
+	}
+	inline int SQLiteQuery::SetParameter(int parmIdx, char const* const& str, int strLen = 0, bool makeCopy)
+	{
+		if (!str) sqlite3_bind_null(stmt, parmIdx);
+		return sqlite3_bind_text(stmt, parmIdx, str, strLen ? strLen : (int)strlen(str), makeCopy ? SQLITE_TRANSIENT : SQLITE_STATIC);
+	}
+	inline int SQLiteQuery::SetParameter(int parmIdx, char const* const& buf, size_t const& len, bool makeCopy)
+	{
+		if (!buf) sqlite3_bind_null(stmt, parmIdx);
+		return sqlite3_bind_blob(stmt, parmIdx, buf, (int)len, makeCopy ? SQLITE_TRANSIENT : SQLITE_STATIC);
+	}
+
+	template<typename ... Parameters>
+	int SQLiteQuery::SetParameters(Parameters ... const& ps)
+	{
+		int parmIdx = 0;
+		return SetParametersCore(parmIdx, ps...);
+	}
+
+	template<typename Parameter, typename ... Parameters>
+	int SQLiteQuery::SetParametersCore(int& parmIdx, Parameter const& p, Parameters ... const& ps)
+	{
+		if (int r = SetParameter(parmIdx, p)) return r;
+		return SetParametersCore(++parmIdx, ps...);
+	}
+
+	inline bool SQLiteQuery::Execute(ReadFunc && rf)
 	{
 		int r = sqlite3_step(stmt);
 		if (!(r == SQLITE_OK || r == SQLITE_DONE || r == SQLITE_ROW))
@@ -155,7 +206,7 @@ namespace xx
 
 	/***************************************************************/
 	// SQLiteReader
-	
+
 	inline SQLiteReader::SQLiteReader(sqlite3_stmt* stmt) : stmt(stmt) {}
 
 	inline int SQLiteReader::GetColumnCount()
@@ -188,13 +239,13 @@ namespace xx
 		return (char const*)sqlite3_column_text(stmt, colIdx);
 	}
 
-	inline int32_t SQLiteReader::ReadInt32(int colIdx)
+	inline int SQLiteReader::ReadInt32(int colIdx)
 	{
 		assert(colIdx >= 0 && colIdx < GetColumnCount() && !IsNull(colIdx));
 		return sqlite3_column_int(stmt, colIdx);
 	}
 
-	inline int64_t SQLiteReader::ReadInt64(int colIdx)
+	inline sqlite_int64 SQLiteReader::ReadInt64(int colIdx)
 	{
 		assert(colIdx >= 0 && colIdx < GetColumnCount() && !IsNull(colIdx));
 		return sqlite3_column_int64(stmt, colIdx);
@@ -206,10 +257,17 @@ namespace xx
 		return sqlite3_column_double(stmt, colIdx);
 	}
 
-	inline std::pair<char const*, int> SQLiteReader::ReadBlob(int colIdx)
+	inline std::pair<char const*, int> SQLiteReader::ReadText(int colIdx)
 	{
-		//sqlite3_column_blob(stmt, colIdx)
-		// todo
+		auto ptr = (char const*)sqlite3_column_text(stmt, colIdx);
+		auto len = sqlite3_column_bytes(stmt, colIdx);
+		return std::make_pair(ptr, len);
 	}
 
+	inline std::pair<char const*, int> SQLiteReader::ReadBlob(int colIdx)
+	{
+		auto ptr = (char const*)sqlite3_column_blob(stmt, colIdx);
+		auto len = sqlite3_column_bytes(stmt, colIdx);
+		return std::make_pair(ptr, len);
+	}
 }
