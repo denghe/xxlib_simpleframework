@@ -19,13 +19,12 @@ namespace xx
 
 	struct SQLite : MPObject
 	{
-		sqlite3* db = nullptr;
-		bool readOnly;
 		xx::List_v<SQLiteQuery*> queries;
+		sqlite3* db = nullptr;
 		int lastErrorCode = 0;
 		const char* lastErrorMessage = nullptr;
 
-		SQLite(char const* const& fn, bool readOnly = false);
+		SQLite(char const* const& fn, bool readOnly = false, bool enableWAL = true, bool normalSynchronous = true);
 		~SQLite();
 
 		SQLiteQuery* CreateQuery(char const* const& sql, int const& sqlLen = 0);
@@ -41,6 +40,7 @@ namespace xx
 		typedef std::function<void(SQLiteReader& sr)> ReadFunc;
 
 		SQLiteQuery(SQLite* owner, char const* const& sql, int const& sqlLen);
+		~SQLiteQuery();
 
 		int SetParameter(int parmIdx, int const& v);
 		int SetParameter(int parmIdx, sqlite_int64 const& v);
@@ -49,11 +49,12 @@ namespace xx
 		int SetParameter(int parmIdx, char const* const& buf, size_t const& len, bool makeCopy = false);
 
 		template<typename ... Parameters>
-		int SetParameters(Parameters ... const& ps);
+		int SetParameters(Parameters const& ... ps);
 		template<typename Parameter, typename ... Parameters>
-		int SetParametersCore(int& parmIdx, Parameter const& p, Parameters ... const& ps);
+		int SetParametersCore(int& parmIdx, Parameter const& p, Parameters const& ... ps);
+		int SetParametersCore(int& parmIdx);
 
-		bool Execute(ReadFunc && rf);
+		bool Execute(ReadFunc && rf = nullptr);
 	};
 
 	struct SQLiteReader
@@ -72,6 +73,8 @@ namespace xx
 		std::pair<char const*, int> ReadBlob(int colIdx);
 	};
 
+	using SQLite_v = MemHeaderBox<SQLite>;
+
 	/******************************************************************************************************/
 	// impls
 	/******************************************************************************************************/
@@ -79,9 +82,8 @@ namespace xx
 	/***************************************************************/
 	// SQLite
 
-	inline SQLite::SQLite(char const* const& fn, bool readOnly)
-		: readOnly(readOnly)
-		, queries(mempool())
+	inline SQLite::SQLite(char const* const& fn, bool readOnly, bool enableWAL, bool normalSynchronous)
+		: queries(mempool())
 	{
 		int r = 0;
 		if (readOnly)
@@ -92,7 +94,27 @@ namespace xx
 		{
 			r = sqlite3_open_v2(fn, &db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, nullptr);
 		}
-		if (r != SQLITE_OK) throw r;
+		if (r) throw r;
+
+		if (enableWAL)
+		{
+			if (r = Execute("PRAGMA journal_mode = WAL"))
+			{
+				sqlite3_close(db);
+				db = nullptr;
+				throw r;
+			}
+		}
+
+		if (normalSynchronous)
+		{
+			if (r = Execute("PRAGMA synchronous = NORMAL"))
+			{
+				sqlite3_close(db);
+				db = nullptr;
+				throw r;
+			}
+		}
 	}
 
 	inline SQLite::~SQLite()
@@ -107,7 +129,7 @@ namespace xx
 
 	inline SQLiteQuery* SQLite::CreateQuery(char const* const& sql, int const& sqlLen)
 	{
-		return mempool().Create<SQLiteQuery>(this, sql, sqlLen ? sqlLen : strlen(sql));
+		return mempool().Create<SQLiteQuery>(this, sql, sqlLen ? sqlLen : (int)strlen(sql));
 	}
 
 	inline int SQLite::Execute(char const* const& sql)
@@ -125,10 +147,15 @@ namespace xx
 		: owner(owner)
 	{
 		auto r = sqlite3_prepare_v2(owner->db, sql, sqlLen, &stmt, nullptr);
-		if (r != SQLITE_OK) throw r;
+		if (r != SQLITE_OK)
+		{
+			owner->lastErrorCode = r;
+			owner->lastErrorMessage = sqlite3_errmsg(owner->db);
+			throw r;
+		}
 
 		auto s = sql;
-		while (s = strchr(s, '?')) ++numParams;
+		while (s = strchr(s + 1, '?')) ++numParams;	// numParams = std::count(sql, sql + sqlLen, '?');
 
 		owner_queries_index = owner->queries->dataLen;
 		owner->queries->Add(this);
@@ -152,7 +179,7 @@ namespace xx
 	{
 		return sqlite3_bind_double(stmt, parmIdx, v);
 	}
-	inline int SQLiteQuery::SetParameter(int parmIdx, char const* const& str, int strLen = 0, bool makeCopy)
+	inline int SQLiteQuery::SetParameter(int parmIdx, char const* const& str, int strLen, bool makeCopy)
 	{
 		if (!str) sqlite3_bind_null(stmt, parmIdx);
 		return sqlite3_bind_text(stmt, parmIdx, str, strLen ? strLen : (int)strlen(str), makeCopy ? SQLITE_TRANSIENT : SQLITE_STATIC);
@@ -164,18 +191,26 @@ namespace xx
 	}
 
 	template<typename ... Parameters>
-	int SQLiteQuery::SetParameters(Parameters ... const& ps)
+	int SQLiteQuery::SetParameters(Parameters const& ... ps)
 	{
-		int parmIdx = 0;
-		return SetParametersCore(parmIdx, ps...);
+		int parmIdx = 1;
+		if (auto r = SetParametersCore(parmIdx, ps...))
+		{
+			owner->lastErrorCode = r;
+			owner->lastErrorMessage = sqlite3_errmsg(owner->db);
+			return r;
+		}
+		return 0;
 	}
 
 	template<typename Parameter, typename ... Parameters>
-	int SQLiteQuery::SetParametersCore(int& parmIdx, Parameter const& p, Parameters ... const& ps)
+	int SQLiteQuery::SetParametersCore(int& parmIdx, Parameter const& p, Parameters const& ... ps)
 	{
 		if (int r = SetParameter(parmIdx, p)) return r;
 		return SetParametersCore(++parmIdx, ps...);
 	}
+
+	int SQLiteQuery::SetParametersCore(int& parmIdx) { return 0; }
 
 	inline bool SQLiteQuery::Execute(ReadFunc && rf)
 	{

@@ -31,8 +31,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{03B66A93-3
 	ProjectSection(SolutionItems) = preProject
 		docs\lua_mempool.h = docs\lua_mempool.h
 		README.md = README.md
-		docs\xx_sqlite.cpp = docs\xx_sqlite.cpp
-		docs\xx_sqlite.h = docs\xx_sqlite.h
+		docs\test1.db = docs\test1.db
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test_cpp2", "test_cpp2\test_cpp2.vcxproj", "{948020E2-764E-462B-A8A8-2C48422570A2}"
