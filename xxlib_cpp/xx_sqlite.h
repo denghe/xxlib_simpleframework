@@ -8,7 +8,8 @@ namespace xx
 	struct SQLiteQuery;
 	struct SQLiteReader;
 
-	enum SQLiteDataTypes : uint8_t
+	// 保持与 SQLite 的宏一致
+	enum class SQLiteDataTypes : uint8_t
 	{
 		Integer = 1,
 		Float = 2,
@@ -17,15 +18,105 @@ namespace xx
 		Null = 5
 	};
 
+	// 由慢及快
+	// 数据写盘模式
+	enum class SQLiteSynchronousTypes : uint8_t
+	{
+		// 等完全写入磁盘
+		Full,
+		// 阶段性等写磁盘
+		Normal,
+		// 完全不等
+		Off,
+		MAX
+	};
+
+	static const char* SQLiteSynchronousTypes_ss[] =
+	{
+		"FULL", "NORMAL", "OFF"
+	};
+
+	// 由慢及快
+	// 事务数据记录模式
+	enum class SQLiteJournalModes : uint8_t
+	{
+		// 终止事务时删掉 journal 文件
+		Delete,
+		// 不删, 字节清 0 ( 可能比删快 )
+		Truncate,
+		// 在文件头打标记( 可能比字节清 0 快 )
+		Persist,
+		// 内存模式( 可能丢数据 )
+		Memory,
+		// write-ahead 模式( 似乎比上面都快, 不会丢数据 )
+		WAL,
+		// 无事务支持( 最快 )
+		Off,
+		MAX
+	};
+
+	static const char* SQLiteJournalModes_ss[] =
+	{
+		"DELETE", "TRUNCATE", "PERSIST", "MEMORY", "WAL", "OFF"
+	};
+
+	// 由慢及快
+	// 临时表处理模式
+	enum class SQLiteTempStoreTypes : uint8_t
+	{
+		// 默认( 视 C TEMP_STORE 宏而定 )
+		Default,
+		// 在文件中建临时表
+		File,
+		// 在内存中建临时表
+		Memory,
+		MAX
+	};
+
+	static const char* SQLiteTempStoreTypes_ss[] =
+	{
+		"DEFAULT", "FILE", "MEMORY"
+	};
+
+	// 由慢及快
+	// 释放排它锁，仅当关闭数据库连接，或者将锁模式改回为NORMAL时，再次访问数据库文件（读或写）才会放掉
+	enum class SQLiteLockingModes : uint8_t
+	{
+		// 数据库连接在每一个读或写事务终点的时候放掉文件锁
+		Normal,
+		// 连接永远不会释放文件锁. 第一次执行读操作时，会获取并持有共享锁，第一次写，会获取并持有排它锁
+		Exclusive,
+		MAX
+	};
+
+	static const char* SQLiteLockingModes_ss[] =
+	{
+		"NORMAL", "EXCLUSIVE"
+	};
+
 	struct SQLite : MPObject
 	{
 		xx::List_v<SQLiteQuery*> queries;
+		xx::String_v sqlBuilder;
 		sqlite3* db = nullptr;
 		int lastErrorCode = 0;
 		const char* lastErrorMessage = nullptr;
 
-		SQLite(char const* const& fn, bool readOnly = false, bool enableWAL = true, bool normalSynchronous = true);
+		SQLite(char const* const& fn, bool readOnly = false);
 		~SQLite();
+
+		int SetPragma(SQLiteSynchronousTypes st);
+		int SetPragma(SQLiteJournalModes jm);
+		int SetPragma(SQLiteTempStoreTypes tst);
+		int SetPragma(SQLiteLockingModes lm);
+		int SetPragma(int cacheSize);
+
+		template<typename ... Parameters>
+		int SetPragmas(Parameters const& ... ps);
+		template<typename Parameter, typename ... Parameters>
+		int SetPragmasCore(Parameter const& p, Parameters const& ... ps);
+		int SetPragmasCore();
+
 
 		SQLiteQuery* CreateQuery(char const* const& sql, int const& sqlLen = 0);
 		int Execute(char const* const& sql);
@@ -82,8 +173,9 @@ namespace xx
 	/***************************************************************/
 	// SQLite
 
-	inline SQLite::SQLite(char const* const& fn, bool readOnly, bool enableWAL, bool normalSynchronous)
+	inline SQLite::SQLite(char const* const& fn, bool readOnly)
 		: queries(mempool())
+		, sqlBuilder(mempool())
 	{
 		int r = 0;
 		if (readOnly)
@@ -95,27 +187,90 @@ namespace xx
 			r = sqlite3_open_v2(fn, &db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, nullptr);
 		}
 		if (r) throw r;
-
-		if (enableWAL)
-		{
-			if (r = Execute("PRAGMA journal_mode = WAL"))
-			{
-				sqlite3_close(db);
-				db = nullptr;
-				throw r;
-			}
-		}
-
-		if (normalSynchronous)
-		{
-			if (r = Execute("PRAGMA synchronous = NORMAL"))
-			{
-				sqlite3_close(db);
-				db = nullptr;
-				throw r;
-			}
-		}
 	}
+
+	int SQLite::SetPragma(SQLiteSynchronousTypes st)
+	{
+		if ((int)st < 0 || (int)st >(int)SQLiteSynchronousTypes::MAX)
+		{
+			lastErrorCode = -1;
+			lastErrorMessage = "bad SQLiteSynchronousTypes";
+			return lastErrorCode;
+		}
+		sqlBuilder->Clear();
+		sqlBuilder->Append("PRAGMA synchronous = ", SQLiteSynchronousTypes_ss[(int)st]);
+		return Execute(sqlBuilder->C_str());
+	}
+	int SQLite::SetPragma(SQLiteJournalModes jm)
+	{
+		if ((int)jm < 0 || (int)jm >(int)SQLiteJournalModes::MAX)
+		{
+			lastErrorCode = -1;
+			lastErrorMessage = "bad SQLiteJournalModes";
+			return lastErrorCode;
+		}
+		sqlBuilder->Clear();
+		sqlBuilder->Append("PRAGMA journal_mode = ", SQLiteJournalModes_ss[(int)jm]);
+		return Execute(sqlBuilder->C_str());
+	}
+	int SQLite::SetPragma(SQLiteTempStoreTypes tst)
+	{
+		if ((int)tst < 0 || (int)tst >(int)SQLiteTempStoreTypes::MAX)
+		{
+			lastErrorCode = -1;
+			lastErrorMessage = "bad SQLiteTempStoreTypes";
+			return lastErrorCode;
+		}
+		sqlBuilder->Clear();
+		sqlBuilder->Append("PRAGMA temp_store = ", SQLiteTempStoreTypes_ss[(int)tst]);
+		return Execute(sqlBuilder->C_str());
+	}
+	int SQLite::SetPragma(SQLiteLockingModes lm)
+	{
+		if ((int)lm < 0 || (int)lm >(int)SQLiteLockingModes::MAX)
+		{
+			lastErrorCode = -1;
+			lastErrorMessage = "bad SQLiteLockingModes";
+			return lastErrorCode;
+		}
+		sqlBuilder->Clear();
+		sqlBuilder->Append("PRAGMA locking_mode = ", SQLiteLockingModes_ss[(int)lm]);
+		return Execute(sqlBuilder->C_str());
+	}
+
+	template<typename ... Parameters>
+	int SQLite::SetPragmas(Parameters const& ... ps)
+	{
+		return SetPragmasCore(ps...);
+	}
+
+	template<typename Parameter, typename ... Parameters>
+	int SQLite::SetPragmasCore(Parameter const& p, Parameters const& ... ps)
+	{
+		if (auto r = SetPragma(p)) return r;
+		return SetPragmasCore(ps...);
+	}
+	int SQLite::SetPragmasCore() { return 0; }
+
+
+	int SQLite::SetPragma(int cacheSize)
+	{
+		if (cacheSize < 1)
+		{
+			lastErrorCode = -1;
+			lastErrorMessage = "bad cacheSize( default is 2000 )";
+			return lastErrorCode;
+		}
+		sqlBuilder->Clear();
+		sqlBuilder->Append("PRAGMA default_cache_size = ", cacheSize);
+		if (auto r = Execute(sqlBuilder->C_str())) return r;
+
+		sqlBuilder->Clear();
+		sqlBuilder->Append("PRAGMA cache_size = ", cacheSize);
+		if (auto r = Execute(sqlBuilder->C_str())) return r;
+		return 0;
+	}
+
 
 	inline SQLite::~SQLite()
 	{
@@ -134,7 +289,7 @@ namespace xx
 
 	inline int SQLite::Execute(char const* const& sql)
 	{
-		return sqlite3_exec(db, sql, nullptr, nullptr, (char**)&lastErrorMessage);
+		return lastErrorCode = sqlite3_exec(db, sql, nullptr, nullptr, (char**)&lastErrorMessage);
 	}
 
 
@@ -154,7 +309,7 @@ namespace xx
 			throw r;
 		}
 
-		auto s = sql;
+		auto s = sql;	// 已知问题: s + 1 会导致第 1 个字符检测不到. 但 sql 中第 1 个字符不可能是 ?
 		while (s = strchr(s + 1, '?')) ++numParams;	// numParams = std::count(sql, sql + sqlLen, '?');
 
 		owner_queries_index = owner->queries->dataLen;

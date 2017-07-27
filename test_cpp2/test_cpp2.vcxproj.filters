@@ -70,9 +70,11 @@
     <ClInclude Include="..\xxlib_cpp\xx_uv.hpp">
       <Filter>xxlib</Filter>
     </ClInclude>
-    <ClInclude Include="xx_sqlite.h" />
     <ClInclude Include="sqlite3.h" />
     <ClInclude Include="sqlite3ext.h" />
+    <ClInclude Include="..\xxlib_cpp\xx_sqlite.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="xxlib">

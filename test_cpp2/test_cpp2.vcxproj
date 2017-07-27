@@ -107,6 +107,7 @@
     <ClInclude Include="..\xxlib_cpp\xx_mptr.h" />
     <ClInclude Include="..\xxlib_cpp\xx_queue.h" />
     <ClInclude Include="..\xxlib_cpp\xx_random.h" />
+    <ClInclude Include="..\xxlib_cpp\xx_sqlite.h" />
     <ClInclude Include="..\xxlib_cpp\xx_string.h" />
     <ClInclude Include="..\xxlib_cpp\xx_structs.h" />
     <ClInclude Include="..\xxlib_cpp\xx_timer.h" />
@@ -114,7 +115,6 @@
     <ClInclude Include="..\xxlib_cpp\xx_uv.hpp" />
     <ClInclude Include="sqlite3.h" />
     <ClInclude Include="sqlite3ext.h" />
-    <ClInclude Include="xx_sqlite.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
