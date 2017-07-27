@@ -311,6 +311,43 @@ namespace xx
             buf[dataLen] = default(T);
         }
 
+
+        /// <summary>
+        /// 查找所有满足条件的元素塞到新 List 并返回. 未找到返回元素个数为 0 的 List
+        /// </summary>
+        public List<T> Where(Predicate<T> match)
+        {
+            var rtv = new List<T>();
+            Debug.Assert(match != null);
+            for (int i = 0; i < dataLen; i++)
+            {
+                if (match(buf[i]))
+                {
+                    rtv.Add(buf[i]);
+                }
+            }
+            return rtv;
+        }
+
+        /// <summary>
+        /// 查找首个满足条件的元素并返回. 未返回将返回 T 的默认值
+        /// </summary>
+        public T FirstOrDefault(Predicate<T> match)
+        {
+            Debug.Assert(match != null);
+            for (int i = 0; i < dataLen; i++)
+            {
+                if (match(buf[i]))
+                {
+                    return buf[i];
+                }
+            }
+            return default(T);
+        }
+
+
+
+
         /****************************************************************/
         // ToString, IBBuffer 相关适配
         /****************************************************************/
