@@ -12,7 +12,7 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
-    <ProjectGuid>{948020E2-764E-462B-A8A8-2C48422570A2}</ProjectGuid>
+    <ProjectGuid>{948020E2-764E-462B-A8A8-2C48422570A3}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>test_cpp1</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
@@ -89,6 +89,7 @@
     <Natvis Include="..\xxlib_cpp\xx.natvis" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\pkg_cpp\PKG_class.h" />
     <ClInclude Include="..\sqlite3\sqlite3.h" />
     <ClInclude Include="..\sqlite3\sqlite3ext.h" />
     <ClInclude Include="..\xxlib_cpp\xx_bbqueue.h" />

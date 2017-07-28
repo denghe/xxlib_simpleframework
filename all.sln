@@ -36,6 +36,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{03B66A93-3
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test_cpp2", "test_cpp2\test_cpp2.vcxproj", "{948020E2-764E-462B-A8A8-2C48422570A2}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "server_db", "server_db\server_db.vcxproj", "{948020E2-764E-462B-A8A8-2C48422570A3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -94,6 +96,10 @@ Global
 		{948020E2-764E-462B-A8A8-2C48422570A2}.Debug|x64.Build.0 = Debug|x64
 		{948020E2-764E-462B-A8A8-2C48422570A2}.Release|x64.ActiveCfg = Release|x64
 		{948020E2-764E-462B-A8A8-2C48422570A2}.Release|x64.Build.0 = Release|x64
+		{948020E2-764E-462B-A8A8-2C48422570A3}.Debug|x64.ActiveCfg = Debug|x64
+		{948020E2-764E-462B-A8A8-2C48422570A3}.Debug|x64.Build.0 = Debug|x64
+		{948020E2-764E-462B-A8A8-2C48422570A3}.Release|x64.ActiveCfg = Release|x64
+		{948020E2-764E-462B-A8A8-2C48422570A3}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

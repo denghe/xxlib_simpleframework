@@ -1,6 +1,6 @@
 #pragma once
 #include <xx_mempool.h>
-#include "sqlite3.h"
+#include <sqlite3.h>
 
 namespace xx
 {
