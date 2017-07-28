@@ -98,7 +98,7 @@ namespace xx
 	{
 		xx::List_v<SQLiteQuery*> queries;
 		xx::String_v sqlBuilder;
-		sqlite3* db = nullptr;
+		sqlite3* dbctx = nullptr;
 		int lastErrorCode = 0;
 		const char* lastErrorMessage = nullptr;
 		SQLiteQuery* qExists = nullptr;
@@ -188,11 +188,11 @@ namespace xx
 		int r = 0;
 		if (readOnly)
 		{
-			r = sqlite3_open_v2(fn, &db, SQLITE_OPEN_READONLY, nullptr);
+			r = sqlite3_open_v2(fn, &dbctx, SQLITE_OPEN_READONLY, nullptr);
 		}
 		else
 		{
-			r = sqlite3_open_v2(fn, &db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, nullptr);
+			r = sqlite3_open_v2(fn, &dbctx, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, nullptr);
 		}
 		if (r) throw r;
 	}
@@ -286,8 +286,8 @@ namespace xx
 		{
 			mempool().Release(queries->At(i));
 		}
-		sqlite3_close(db);
-		db = nullptr;
+		sqlite3_close(dbctx);
+		dbctx = nullptr;
 	}
 
 	inline SQLiteQuery* SQLite::CreateQuery(char const* const& sql, int const& sqlLen)
@@ -297,7 +297,7 @@ namespace xx
 
 	inline int SQLite::Execute(char const* const& sql)
 	{
-		return lastErrorCode = sqlite3_exec(db, sql, nullptr, nullptr, (char**)&lastErrorMessage);
+		return lastErrorCode = sqlite3_exec(dbctx, sql, nullptr, nullptr, (char**)&lastErrorMessage);
 	}
 
 
@@ -347,11 +347,11 @@ namespace xx
 	inline SQLiteQuery::SQLiteQuery(SQLite* owner, char const* const& sql, int const& sqlLen)
 		: owner(owner)
 	{
-		auto r = sqlite3_prepare_v2(owner->db, sql, sqlLen, &stmt, nullptr);
+		auto r = sqlite3_prepare_v2(owner->dbctx, sql, sqlLen, &stmt, nullptr);
 		if (r != SQLITE_OK)
 		{
 			owner->lastErrorCode = r;
-			owner->lastErrorMessage = sqlite3_errmsg(owner->db);
+			owner->lastErrorMessage = sqlite3_errmsg(owner->dbctx);
 			throw r;
 		}
 
@@ -398,7 +398,7 @@ namespace xx
 		if (auto r = SetParametersCore(parmIdx, ps...))
 		{
 			owner->lastErrorCode = r;
-			owner->lastErrorMessage = sqlite3_errmsg(owner->db);
+			owner->lastErrorMessage = sqlite3_errmsg(owner->dbctx);
 			return r;
 		}
 		return 0;
@@ -419,7 +419,7 @@ namespace xx
 		if (!(r == SQLITE_OK || r == SQLITE_DONE || r == SQLITE_ROW))
 		{
 			owner->lastErrorCode = r;
-			owner->lastErrorMessage = sqlite3_errmsg(owner->db);
+			owner->lastErrorMessage = sqlite3_errmsg(owner->dbctx);
 			return false;
 		}
 		if (rf)
@@ -434,7 +434,7 @@ namespace xx
 		r = sqlite3_reset(stmt);
 		if (r == SQLITE_OK || r == SQLITE_DONE) return true;
 		owner->lastErrorCode = r;
-		owner->lastErrorMessage = sqlite3_errmsg(owner->db);
+		owner->lastErrorMessage = sqlite3_errmsg(owner->dbctx);
 		return false;
 	}
 
