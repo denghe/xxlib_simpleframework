@@ -381,7 +381,13 @@ namespace xx
 	template<typename ...Args>
 	void MPObject::Cout(Args const& ... args)
 	{
-		xx::String_v s(mempool());
+		mempool().Cout(args...);
+	}
+
+	template<typename ...Args>
+	void MemPool::Cout(Args const& ... args)
+	{
+		xx::String_v s(*this);
 		s->Append(args...);
 		std::cout << s->C_str() << std::flush;
 	}

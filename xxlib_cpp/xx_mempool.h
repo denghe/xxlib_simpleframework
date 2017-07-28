@@ -308,6 +308,10 @@ namespace xx
 			return IsBaseOf(TypeId<T>::value, p->typeId()) ? (T*)p : nullptr;
 		}
 
+
+		// 取代 std::cout, 用起来方便一些. 实现在 xx_string.h
+		template<typename ...Args>
+		void Cout(Args const& ... args);
 	};
 
 
@@ -323,3 +327,40 @@ namespace xx
 
 #include "xx_string.h"
 #include "xx_bbuffer.h"
+
+
+
+
+/*
+
+// todo: 对于线程安全的改造, 只是这样还不得行. 还要令 versionNumber 变为 atomic 类型( mempool 中的 与 内存头 中的 )
+// 这样的话就不方便用一个变量来运行时切换, 似乎只有用宏来切换
+
+// 线程安全的单链表
+struct SafePtrStack
+{
+	std::atomic<void*> header = nullptr;
+
+	inline bool TryPop(void*& output)
+	{
+		if (!header) return false;
+		for (;;)
+		{
+			output = header;
+			if (header.compare_exchange_weak(output, *(void**)((char*)output + sizeof(MemHeader_VersionNumber)))) break;
+		}
+		return true;
+	}
+
+	inline void Push(void* const& v)
+	{
+		auto& next = *(void**)((char*)v + sizeof(MemHeader_VersionNumber));
+		for (;;)
+		{
+			next = header;
+			if (header.compare_exchange_weak(next, v)) break;
+		}
+	}
+};
+
+*/

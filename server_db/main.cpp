@@ -199,16 +199,18 @@ Peer::Peer(Listener* listener, Service* service)
 void Peer::OnReceivePackage(xx::BBuffer& bb)
 {
 	// todo: 收到包, 解析, 向任务容器压函数, 转到后台线程执行
-	service->tm->AddTask([service = this->service, mp = xx::MPtr<Peer>(this)]
+	service->tm->AddTask([service = this->service, peer = xx::MPtr<Peer>(this)]
 	{
-		// 执行 SQL 语句
-		//service->sqldb->Execute("...........")
+		// todo: SQLite 走独立的内存池, 和主线程的分离
 
-		if (mp)	// 如果 mp 还活着
+		// 执行 SQL 语句
+		// 
+
+		if (peer && peer->state == xx::UVPeerStates::Connected)	// 如果 peer 还活着
 		{
-			service->tm->AddResult([service, mp]	// 向结果容器压函数, 转到 uv 线程执行
+			service->tm->AddResult([service, peer]	// 向结果容器压函数, 转到 uv 线程执行
 			{
-				if (mp)	// 如果 mp 还活着
+				if (peer)	// 如果 peer 还活着
 				{
 					//mp->SendPackages
 				}
@@ -228,9 +230,9 @@ namespace xx
 
 	// 基础适配模板
 	template<typename T, typename ENABLE = void>
-	struct SQLiteFunc
+	struct SQLiteAppend
 	{
-		static uint32_t SQLAppend(SQLiteString* ss, T const &in, bool ignoreReadOnly)
+		static uint32_t Exec(SQLiteString* ss, T const &in, bool ignoreReadOnly)
 		{
 			assert(false);
 			return 0;
@@ -296,7 +298,7 @@ namespace xx
 		{
 			assert(v);
 			static_assert(IsMPObject_v<T>, "");
-			SQLiteFunc<T>::SQLAppend(this, *v, ignoreReadOnly);
+			SQLiteAppend<T>::Exec(this, *v, ignoreReadOnly);
 		}
 	};
 }
@@ -305,9 +307,9 @@ namespace xx
 namespace xx
 {
 	template<>
-	struct SQLiteFunc<DB::Account, void>
+	struct SQLiteAppend<DB::Account, void>
 	{
-		static inline void WriteTo(SQLiteString* ss, DB::Account const &in, bool ignoreReadOnly)
+		static inline void Exec(SQLiteString* ss, DB::Account const &in, bool ignoreReadOnly)
 		{
 			ss->Append("(");
 			if (!ignoreReadOnly)
@@ -327,7 +329,12 @@ namespace xx
 
 namespace DB
 {
-	// todo: 模拟生成的函数长相. 函数执行需要 try
+	// 模拟生成的函数长相. 函数执行需要 try
+
+	// todo: 去掉 try 改为执行完后判断 lastErrorNumber
+
+	
+
 
 	struct SQLiteFuncs		// interface name
 	{
@@ -426,7 +433,6 @@ select [id], [username], [password]
 int main()
 {
 	PKG::AllTypesRegister();
-
 
 	xx::MemPool mp;
 	xx::SQLite_v sql(mp, "data.db");
