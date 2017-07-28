@@ -46,28 +46,43 @@ struct Rand
 int main()
 {
 	xx::MemPool mp;
-	xx::SQLite_v lite(mp, "C:/DB/test1.db");
-
-	// 测试一下暴力变态的优化参数. 这样搞下来, insert 能达到 50万次一秒
-	lite->SetPragmas(
-		xx::SQLiteSynchronousTypes::Off, xx::SQLiteJournalModes::Off,
-		xx::SQLiteTempStoreTypes::Memory, xx::SQLiteLockingModes::Exclusive);
-
-	lite->Execute("delete from UserOnline");
-	auto q = lite->CreateQuery("insert into UserOnline (UserID, UserName, SessionId, Action, CreateIP, CreateTime, UpdateTime) values (?, ?, ?, ?, ?, ?, ?)");
 
 	Rand rnd;
 	xx::String_v str(mp);
 	str->Resize(8);
 	str->C_str();
+
+	xx::SQLite_v lite(mp, "C:/DB/test1.db");
+
+	// 配合事务, insert 能达到 90万次一秒. 死系统大概率坏数据, 须配合备份方案.
+	//lite->SetPragmas(
+	//	xx::SQLiteSynchronousTypes::Off, xx::SQLiteJournalModes::Off,
+	//	xx::SQLiteTempStoreTypes::Memory/*, xx::SQLiteLockingModes::Exclusive*/);
+
+	// 折中的方案, 随机 insert 一万多次一秒, 死系统小概率坏数据
+	lite->SetPragmas(xx::SQLiteSynchronousTypes::Normal, xx::SQLiteJournalModes::WAL);
+
+	// 默认配置, insert 百把次一秒, 通常不会坏数据.
+	//lite->SetPragmas(xx::SQLiteSynchronousTypes::Full, xx::SQLiteJournalModes::Delete);
+
+
+	lite->Execute("delete from UserOnline");
+
+	//lite->BeginTransaction();
+
+	auto q = lite->CreateQuery("insert into UserOnline (UserID, UserName, SessionId, Action, CreateIP, CreateTime, UpdateTime) values (?, ?, ?, ?, ?, ?, ?)");
+
 	xx::Stopwatch sw;
-	int64_t count = 100000;
+	int64_t count = 10000;
 	for (int64_t i = 0; i < count; i++)
 	{
 		rnd.FillVisibleChars(str->buf, 8);
 		q->SetParameters((int)rnd.Next(), str->buf, (int)rnd.Next(), str->buf, str->buf, str->buf, str->buf);
 		q->Execute();
 	}
+
+	//lite->Commit();
+
 	auto elapsedMS = sw() + 1;
 	lite->Cout("insert ", count, " rows success! elapsed MS = ", elapsedMS, ", QPS = ", (count * 1000 / elapsedMS), "\n");
 

@@ -101,6 +101,7 @@ namespace xx
 		sqlite3* db = nullptr;
 		int lastErrorCode = 0;
 		const char* lastErrorMessage = nullptr;
+		SQLiteQuery* qExists = nullptr;
 
 		SQLite(char const* const& fn, bool readOnly = false);
 		~SQLite();
@@ -117,6 +118,13 @@ namespace xx
 		int SetPragmasCore(Parameter const& p, Parameters const& ... ps);
 		int SetPragmasCore();
 
+
+		int BeginTransaction();
+		int Commit();
+		int Rollback();
+		int EndTransaction();
+
+		int TableExists(char const* const& tn);
 
 		SQLiteQuery* CreateQuery(char const* const& sql, int const& sqlLen = 0);
 		int Execute(char const* const& sql);
@@ -292,6 +300,44 @@ namespace xx
 		return lastErrorCode = sqlite3_exec(db, sql, nullptr, nullptr, (char**)&lastErrorMessage);
 	}
 
+
+	int SQLite::BeginTransaction()
+	{
+		return Execute("BEGIN TRANSACTION");
+	}
+
+	int SQLite::Commit()
+	{
+		return Execute("COMMIT TRANSACTION");
+	}
+
+	int SQLite::Rollback()
+	{
+		return Execute("ROLLBACK TRANSACTION");
+	}
+
+	int SQLite::EndTransaction()
+	{
+		return Execute("END TRANSACTION");
+	}
+
+	int SQLite::TableExists(char const* const& tn)
+	{
+		int rtv = 0;
+		if (!qExists)
+		{
+			qExists = CreateQuery("SELECT count(*) FROM sqlite_master WHERE type = 'table' AND name = ?");
+		}
+		if (!qExists) return -1;
+		if (rtv = qExists->SetParameters(tn)) return -2;
+		bool exists;
+		rtv = qExists->Execute([&](SQLiteReader& dr)
+		{
+			exists = dr.ReadInt32(0) > 0;
+		});
+		if (rtv) return -3;
+		return exists ? 1 : 0;
+	}
 
 
 
