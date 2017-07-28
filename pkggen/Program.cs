@@ -7,8 +7,7 @@ using System.Windows.Forms;
 public static class Program
 {
     public const string templatePrefix = "pkggen_template_";
-    public const string outputPath_cpp = "../../../../pkg_cpp";
-    public const string outputPath_csharp = "../../../../pkg";
+    public const string outputPath = "../../../../pkg";
 
     static void Main(string[] args)
     {
@@ -18,18 +17,11 @@ public static class Program
             var asm = Assembly.LoadFile(fn);
             var shortfn = new FileInfo(fn).Name;
             shortfn = shortfn.Substring(0, shortfn.LastIndexOf('.'));
+            var path = Path.Combine(Application.StartupPath, outputPath);
+            var tn = shortfn.Substring(templatePrefix.Length);
 
-            {
-                var path = Path.Combine(Application.StartupPath, outputPath_cpp);
-                var tn = shortfn.Substring(templatePrefix.Length);
-                GenCPP_Class.Gen(asm, path, tn);
-            }
-
-            {
-                var path = Path.Combine(Application.StartupPath, outputPath_csharp);
-                var tn = shortfn.Substring(templatePrefix.Length);
-                GenCS_Class.Gen(asm, path, tn);
-            }
+            GenCPP_Class.Gen(asm, path, tn);
+            GenCS_Class.Gen(asm, path, tn);
         }
     }
 

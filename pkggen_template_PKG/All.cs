@@ -39,7 +39,7 @@ class Properties : Property
 
 class UserInfo
 {
-    int id;
+    long id;
     List<Property> props;
 }
 
@@ -84,18 +84,18 @@ namespace Server_Client
     [Desc("推送文字消息")]
     class PushJoin
     {
-        int id;
+        long id;
     }
     [Desc("推送文字消息")]
     class PushMessage
     {
-        int id;
+        long id;
         string text;
     }
     [Desc("推送退出消息")]
     class PushLogout
     {
-        int id;
+        long id;
         [Desc("退出原因( 主动? 掉线?")]
         string reason;
     }

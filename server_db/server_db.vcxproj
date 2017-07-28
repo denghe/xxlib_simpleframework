@@ -89,6 +89,7 @@
     <Natvis Include="..\xxlib_cpp\xx.natvis" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\db\DB_class.h" />
     <ClInclude Include="..\pkg_cpp\PKG_class.h" />
     <ClInclude Include="..\sqlite3\sqlite3.h" />
     <ClInclude Include="..\sqlite3\sqlite3ext.h" />

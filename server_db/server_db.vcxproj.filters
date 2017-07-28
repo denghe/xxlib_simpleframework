@@ -80,6 +80,7 @@
       <Filter>sqlite3</Filter>
     </ClInclude>
     <ClInclude Include="..\pkg_cpp\PKG_class.h" />
+    <ClInclude Include="..\db\DB_class.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="xxlib">

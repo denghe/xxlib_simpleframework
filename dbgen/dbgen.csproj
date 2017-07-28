@@ -45,6 +45,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="GenCPP_Class.cs" />
+    <Compile Include="GenCPP_SQLite.cs" />
     <Compile Include="GenCS_MsSql.cs" />
     <Compile Include="GenCS_Class.cs" />
     <Compile Include="GenCS_MultiKeyDict.cs" />

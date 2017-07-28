@@ -161,7 +161,7 @@ namespace PKG
     }
     public partial class UserInfo : IBBuffer
     {
-        public int id;
+        public long id;
         public List<Property> props;
 
         public virtual ushort GetPackageId()
@@ -245,7 +245,7 @@ namespace Server_Client
     /// </summary>
     public partial class PushJoin : IBBuffer
     {
-        public int id;
+        public long id;
 
         public virtual ushort GetPackageId()
         {
@@ -268,7 +268,7 @@ namespace Server_Client
     /// </summary>
     public partial class PushMessage : IBBuffer
     {
-        public int id;
+        public long id;
         public string text;
 
         public virtual ushort GetPackageId()
@@ -295,7 +295,7 @@ namespace Server_Client
     /// </summary>
     public partial class PushLogout : IBBuffer
     {
-        public int id;
+        public long id;
         /// <summary>
         /// 退出原因( 主动? 掉线?
         /// </summary>

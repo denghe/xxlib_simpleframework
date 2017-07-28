@@ -72,25 +72,25 @@ public class Peer : xx.UVServerPeerWrapperEx
                         // 向后台任务线程压入 数据库查询
                         new Task(() =>
                         {
-                            string err = null;
+                            string err = "no mssql";  // null
                             DB.Account acc = null;
-                            Console.WriteLine("handler: begin exec SQL: Account_GetByUsername");
-                            try
-                            {
-                                MsSql.Exec(funcs =>
-                                {
-                                    acc = funcs.Account_GetByUsername(o.username);
-                                });
-                            }
-                            catch (Exception ex)
-                            {
-                                err = ex.Message;
-                            }
-                            Console.WriteLine("handler: end exec SQL: Account_GetByUsername");
-                            if (err != null)
-                            {
-                                Console.WriteLine("handler: exec SQL err = " + err);
-                            }
+                            //Console.WriteLine("handler: begin exec SQL: Account_GetByUsername");
+                            //try
+                            //{
+                            //    MsSql.Exec(funcs =>
+                            //    {
+                            //        acc = funcs.Account_GetByUsername(o.username);
+                            //    });
+                            //}
+                            //catch (Exception ex)
+                            //{
+                            //    err = ex.Message;
+                            //}
+                            //Console.WriteLine("handler: end exec SQL: Account_GetByUsername");
+                            //if (err != null)
+                            //{
+                            //    Console.WriteLine("handler: exec SQL err = " + err);
+                            //}
 
 #if true
                             /***********************************************************/

@@ -286,6 +286,14 @@ namespace TemplateLibrary
     }
 
     /// <summary>
+    /// 标记 interface 对应 sqlite 的连接对象
+    /// </summary>
+    [System.AttributeUsage(System.AttributeTargets.Interface)]
+    public class SQLite : System.Attribute
+    {
+    }
+
+    /// <summary>
     /// 标记 TSQL 语句的内容. 用于参数时表示 "不转义" 的字串直接拼接
     /// </summary>
     [System.AttributeUsage(System.AttributeTargets.Method)]

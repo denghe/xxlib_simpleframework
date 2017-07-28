@@ -38,7 +38,7 @@ public class Service
     /// <summary>
     /// 在线用户列表. key 为 id
     /// </summary>
-    public xx.Dict<int, PKG.UserInfo> users = new xx.Dict<int, PKG.UserInfo>();
+    public xx.Dict<long, PKG.UserInfo> users = new xx.Dict<long, PKG.UserInfo>();
 
     public Service(xx.UVWrapper uv)
     {

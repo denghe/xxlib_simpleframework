@@ -101,7 +101,7 @@ namespace xx
 		sqlite3* dbctx = nullptr;
 		int lastErrorCode = 0;
 		const char* lastErrorMessage = nullptr;
-		SQLiteQuery* qExists = nullptr;
+		SQLiteQuery* query_Exists = nullptr;
 
 		SQLite(char const* const& fn, bool readOnly = false);
 		~SQLite();
@@ -146,6 +146,8 @@ namespace xx
 		int SetParameter(int parmIdx, double const& v);
 		int SetParameter(int parmIdx, char const* const& str, int strLen = 0, bool makeCopy = false);
 		int SetParameter(int parmIdx, char const* const& buf, size_t const& len, bool makeCopy = false);
+		int SetParameter(int parmIdx, String* const& str, bool makeCopy = false);
+		int SetParameter(int parmIdx, BBuffer* const& buf, bool makeCopy = false);
 
 		template<typename ... Parameters>
 		int SetParameters(Parameters const& ... ps);
@@ -323,19 +325,18 @@ namespace xx
 
 	int SQLite::TableExists(char const* const& tn)
 	{
-		int rtv = 0;
-		if (!qExists)
+		if (!query_Exists)
 		{
-			qExists = CreateQuery("SELECT count(*) FROM sqlite_master WHERE type = 'table' AND name = ?");
+			query_Exists = CreateQuery("SELECT count(*) FROM sqlite_master WHERE type = 'table' AND name = ?");
 		}
-		if (!qExists) return -1;
-		if (rtv = qExists->SetParameters(tn)) return -2;
+		if (!query_Exists) return -1;
+		if (query_Exists->SetParameters(tn)) return -2;
 		bool exists;
-		rtv = qExists->Execute([&](SQLiteReader& dr)
+		bool success = query_Exists->Execute([&](SQLiteReader& dr)
 		{
 			exists = dr.ReadInt32(0) > 0;
 		});
-		if (rtv) return -3;
+		if (!success) return -3;
 		return exists ? 1 : 0;
 	}
 
@@ -390,6 +391,17 @@ namespace xx
 		if (!buf) sqlite3_bind_null(stmt, parmIdx);
 		return sqlite3_bind_blob(stmt, parmIdx, buf, (int)len, makeCopy ? SQLITE_TRANSIENT : SQLITE_STATIC);
 	}
+	inline int SQLiteQuery::SetParameter(int parmIdx, String* const& str, bool makeCopy)
+	{
+		if (!str) sqlite3_bind_null(stmt, parmIdx);
+		return sqlite3_bind_text(stmt, parmIdx, str->C_str(), str->dataLen, makeCopy ? SQLITE_TRANSIENT : SQLITE_STATIC);
+	}
+	inline int SQLiteQuery::SetParameter(int parmIdx, BBuffer* const& buf, bool makeCopy)
+	{
+		if (!buf) sqlite3_bind_null(stmt, parmIdx);
+		return sqlite3_bind_blob(stmt, parmIdx, buf->buf, buf->dataLen, makeCopy ? SQLITE_TRANSIENT : SQLITE_STATIC);
+	}
+
 
 	template<typename ... Parameters>
 	int SQLiteQuery::SetParameters(Parameters const& ... ps)
