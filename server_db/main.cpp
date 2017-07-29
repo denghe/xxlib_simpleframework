@@ -45,8 +45,8 @@ struct TaskManager : xx::MPObject
 
 	TaskManager(Service* service);
 	~TaskManager();
-	bool running = true;
-	bool stoped = false;
+	volatile bool running = true;
+	volatile bool stoped = false;
 	void ThreadProcess();
 };
 
@@ -201,7 +201,14 @@ void Peer::OnReceivePackage(xx::BBuffer& bb)
 	// todo: 收到包, 解析, 向任务容器压函数, 转到后台线程执行
 	service->tm->AddTask([service = this->service, peer = xx::MPtr<Peer>(this)]
 	{
-		// todo: SQLite 走独立的内存池, 和主线程的分离
+		// SQLite 走独立的内存池, 和主线程的分离
+
+		// 内存分配流程: 
+		// 1. uv线程 分配 SQL线程 需要的数据, 后将处理函数压入 tasks
+		// 2. SQL线程 执行期间, 分配供 uv线程 处理结果所需数据, 后将处理函数压入 results
+		// 3. uv线程 读取结果数据, 回收 第1步分配的内存, 后将 第2步的内存回收函数压入 tasks
+		// 4. tasks 执行第2步分配的内存回收
+
 
 		// 执行 SQL 语句
 		// 
