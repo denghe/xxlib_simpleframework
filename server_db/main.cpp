@@ -201,11 +201,20 @@ void Peer::OnReceivePackage(xx::BBuffer& bb)
 	// todo: 收到包, 解析, 向任务容器压函数, 转到后台线程执行
 	// SQLite 走独立的内存池, 和主线程的分离
 
-	// 内存分配流程: 
+	// 内存分配 & 回收流程( 基于 SQLite 只占 1 线, 使用 mempool 的情况 ): 
 	// 1. uv线程 分配 SQL线程 需要的数据, 后将处理函数压入 tasks
 	// 2. SQL线程 执行期间, 分配供 uv线程 处理结果所需数据, 后将处理函数压入 results
 	// 3. uv线程 读取结果数据, 回收 第1步分配的内存, 后将 第2步的内存回收函数压入 tasks
 	// 4. tasks 执行第2步分配的内存回收
+
+	// 上述流程的 多 work thread 的补充:
+	// 1. 做一个线程私有 tasks 队列及 mempool, 标记为 TLS
+	// 2. 上述流程第 2 步 记录私有 tasks 指针 并向下传递
+	// 3. 上述流程第 3 步 向 私有 tasks 压内存回收函数
+	// 4. 工作线程除了扫公共 tasks 以外, 还扫私有 tasks, 扫到就执行
+
+	// 这套方案的问题在于, 多线内存池会损耗比较大, 复用率低下. 
+
 
 	
 	service->tm->AddTask([service = this->service, peer = xx::MPtr<Peer>(this)/*, args*/]	// 转到 SQL 线程
