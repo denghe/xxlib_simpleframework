@@ -1,6 +1,6 @@
 基于 libuv C++ 轮子封装 再进行 CLI 封装的, 适合用 C# 开发服务器端的基础框架
 
-运行需要 vs2017 并勾安 旧crt 支持和 win81 sdk, 打开 all.sln, 同时设置两个 test 为启动项目
+运行需要 vs2017 并勾安 CLI/C++ 旧crt 支持和 win81 sdk, 打开 all.sln, 同时设置 test_cpp1, test_csharp1 为启动项目
 
 技术讨论群: 125081098
 
@@ -52,3 +52,7 @@ xxuvlibex_csharp
 为 c# 项目服务的库, 引用 xxuvlib_csharp, 继承 Peer 相关类以提供 send pkg 等便利功能
 
 
+
+下列项目为实验性质, 未竣工
+test_cpp2
+server_db
