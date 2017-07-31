@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 namespace xx
 {
 
@@ -29,13 +29,13 @@ namespace xx
 
 		for (int i = (int)listeners->dataLen - 1; i >= 0; --i)
 		{
-			listeners->At(i)->Release();	// todo: ´«µİ release Ô­Òò?
+			listeners->At(i)->Release();	// todo: ä¼ é€’ release åŸå› ?
 		}
 		listeners->Clear();
 
 		for (int i = (int)clientPeers->dataLen - 1; i >= 0; --i)
 		{
-			clientPeers->At(i)->Release();	// todo: ´«µİ release Ô­Òò?
+			clientPeers->At(i)->Release();	// todo: ä¼ é€’ release åŸå› ?
 		}
 		clientPeers->Clear();
 
@@ -134,7 +134,7 @@ namespace xx
 	{
 		for (int i = (int)peers->dataLen - 1; i >= 0; --i)
 		{
-			peers->At(i)->Release();	// todo: ´«µİ release Ô­Òò?
+			peers->At(i)->Release();	// todo: ä¼ é€’ release åŸå› ?
 		}
 		peers->Clear();
 
@@ -170,7 +170,7 @@ namespace xx
 
 	inline UVPeer::~UVPeer()
 	{
-		// »¹ĞèÒª½øÒ»²½ÁË½âÕâÑù×öµÄ¸±×÷ÓÃ( ÒÑÖª»áµ¼ÖÂ»Øµ÷·¢Éú, µ«´ËÊ±ÕıÔÚÎö¹¹, Ó¦¸ÃÀ¹½Ø )
+		// è¿˜éœ€è¦è¿›ä¸€æ­¥äº†è§£è¿™æ ·åšçš„å‰¯ä½œç”¨( å·²çŸ¥ä¼šå¯¼è‡´å›è°ƒå‘ç”Ÿ, ä½†æ­¤æ—¶æ­£åœ¨ææ„, åº”è¯¥æ‹¦æˆª )
 		if (!uv_is_closing((uv_handle_t*)&stream))
 		{
 			uv_close((uv_handle_t*)&stream, nullptr);
@@ -212,7 +212,7 @@ namespace xx
 		auto self = container_of(handle, UVPeer, stream);
 		self->state = UVPeerStates::Disconnected;
 		self->Clear();
-		self->OnDisconnect();	// ÕâÀï²»ÔÙ×ö self->Release(); ĞèÒª×Ô¼º Release / Dispose
+		self->OnDisconnect();	// è¿™é‡Œä¸å†åš self->Release(); éœ€è¦è‡ªå·± Release / Dispose
 	}
 
 	inline void UVPeer::ReadCB(uv_stream_t* handle, ssize_t nread, const uv_buf_t* buf)
@@ -242,11 +242,11 @@ namespace xx
 		if (status)
 		{
 			//std::cout << "Send error " << uv_strerror(status) << std::endl;
-			self->Disconnect();	// todo: ´«Ô­Òò?
+			self->Disconnect();	// todo: ä¼ åŸå› ?
 		}
 		else
 		{
-			self->Send();  // ¼ÌĞø·¢, Ö±µ½·¢¹â	// todo: Èç¹û·µ»Ø´íÎó, ´æ last error?
+			self->Send();  // ç»§ç»­å‘, ç›´åˆ°å‘å…‰	// todo: å¦‚æœè¿”å›é”™è¯¯, å­˜ last error?
 		}
 	}
 
@@ -256,28 +256,28 @@ namespace xx
 
 	inline void UVPeer::OnReceive()
 	{
-		// ÏÈÊµÏÖ¶¨³¤ 2 ×Ö½Ú°üÍ·µÄ°æ±¾
+		// å…ˆå®ç°å®šé•¿ 2 å­—èŠ‚åŒ…å¤´çš„ç‰ˆæœ¬
 
-		// Èç¹û bbReceiveLeft Ã»Êı¾İ, ÔòÖ±½ÓÔÚ bbReceive ÉÏ½øĞĞ°üÍêÕûĞÔÅĞ¶Ï. 
-		// Èç¹ûÄÚº¬ÍêÕû°ü, ²»¶Ï´¥·¢ OnReceivePackage ´¦ÀíÖ®, ×îºó½«Ê£ÏÂµÄÊı¾İÒÆµ½ bbReceiveLeft
+		// å¦‚æœ bbReceiveLeft æ²¡æ•°æ®, åˆ™ç›´æ¥åœ¨ bbReceive ä¸Šè¿›è¡ŒåŒ…å®Œæ•´æ€§åˆ¤æ–­. 
+		// å¦‚æœå†…å«å®Œæ•´åŒ…, ä¸æ–­è§¦å‘ OnReceivePackage å¤„ç†ä¹‹, æœ€åå°†å‰©ä¸‹çš„æ•°æ®ç§»åˆ° bbReceiveLeft
 		if (!bbReceiveLeft->dataLen)
 		{
-			// ¿ªÊ¼´¦Àí
+			// å¼€å§‹å¤„ç†
 		LabBegin:
 			uint16_t dataLen = 0;
 
-			// ÅĞ¶ÏÍ·³¤¶È. Èç¹û²»¹»³¤, ½«Ê£ÓàÊı¾İ×·¼Óµ½ bbReceiveLeft ºóÍË³ö
+			// åˆ¤æ–­å¤´é•¿åº¦. å¦‚æœä¸å¤Ÿé•¿, å°†å‰©ä½™æ•°æ®è¿½åŠ åˆ° bbReceiveLeft åé€€å‡º
 			if (bbReceive->dataLen < bbReceive->offset + sizeof(dataLen))
 			{
-				bbReceiveLeft->Write(bbReceive->buf[bbReceive->offset++]);		// ÕâÀïÖ»¿ÉÄÜÊÇ1×Ö½Ú
+				bbReceiveLeft->Write(bbReceive->buf[bbReceive->offset++]);		// è¿™é‡Œåªå¯èƒ½æ˜¯1å­—èŠ‚
 				return;
 			}
 
-			// ¶Á³öÍ·
+			// è¯»å‡ºå¤´
 			dataLen = bbReceive->buf[bbReceive->offset] + (bbReceive->buf[bbReceive->offset + 1] << 8);
 			bbReceive->offset += 2;
 
-			// Èç¹ûÊı¾İÇø³¤¶È×ã¹», À´Ò»·¢ OnReceivePackage ²¢ÖØ¸´½âÎöÍ· + Êı¾İµÄ¹ı³Ì
+			// å¦‚æœæ•°æ®åŒºé•¿åº¦è¶³å¤Ÿ, æ¥ä¸€å‘ OnReceivePackage å¹¶é‡å¤è§£æå¤´ + æ•°æ®çš„è¿‡ç¨‹
 			if (bbReceive->offset + dataLen <= bbReceive->dataLen)
 			{
 				bbReceivePackage->buf = bbReceive->buf + bbReceive->offset;
@@ -287,33 +287,33 @@ namespace xx
 
 				OnReceivePackage(*bbReceivePackage);
 
-				// Ìø¹ıÒÑ´¦Àí¹ıµÄÊı¾İ¶Î²¢¼ÌĞø½âÎöÁ÷³Ì
+				// è·³è¿‡å·²å¤„ç†è¿‡çš„æ•°æ®æ®µå¹¶ç»§ç»­è§£ææµç¨‹
 				bbReceive->offset += dataLen;
 				if (bbReceive->dataLen > bbReceive->offset) goto LabBegin;
 			}
-			// ·ñÔò½«Ê£ÓàÊı¾İ×·¼Óµ½ bbReceiveLeft ºóÍË³ö
+			// å¦åˆ™å°†å‰©ä½™æ•°æ®è¿½åŠ åˆ° bbReceiveLeft åé€€å‡º
 			else
 			{
 				bbReceiveLeft->WriteBuf(bbReceive->buf + bbReceive->offset, bbReceive->dataLen - bbReceive->offset);
 			}
 		}
-		// Èç¹û bbReceiveLeft ÓĞÊı¾İ, ÔòÊÔ´Ó bbReceive ²¹ÆëÒ»¸ö°üµÄÊı¾İ
-		// ´¥·¢ OnReceivePackage ºóÇåÊı¾İ, Ìøµ½ bbReceiveLeft Ã»Êı¾İµÄÁ÷³Ì
+		// å¦‚æœ bbReceiveLeft æœ‰æ•°æ®, åˆ™è¯•ä» bbReceive è¡¥é½ä¸€ä¸ªåŒ…çš„æ•°æ®
+		// è§¦å‘ OnReceivePackage åæ¸…æ•°æ®, è·³åˆ° bbReceiveLeft æ²¡æ•°æ®çš„æµç¨‹
 		else
 		{
 			bbReceiveLeft->offset = 0;
 			uint16_t dataLen = 0;
 
-			// ÅĞ¶ÏÍ·³¤¶È. Èç¹û²»¹»³¤, ¿´¿´ÄÜ²»ÄÜ²¹×ã
+			// åˆ¤æ–­å¤´é•¿åº¦. å¦‚æœä¸å¤Ÿé•¿, çœ‹çœ‹èƒ½ä¸èƒ½è¡¥è¶³
 			if (bbReceiveLeft->offset + sizeof(dataLen) > bbReceiveLeft->dataLen)
 			{
-				// »¹²î¶àÉÙ´ÕÆë°üÍ·
+				// è¿˜å·®å¤šå°‘å‡‘é½åŒ…å¤´
 				auto left = bbReceiveLeft->offset + sizeof(dataLen) - bbReceiveLeft->dataLen;
 
-				// Èç¹ûÊ£ÓàÊı¾İ³¤¶ÈÎŞ·¨²¹×ã, ×·¼Ó¸ÕÊÕµ½µÄÊı¾İºóÍË³ö
+				// å¦‚æœå‰©ä½™æ•°æ®é•¿åº¦æ— æ³•è¡¥è¶³, è¿½åŠ åˆšæ”¶åˆ°çš„æ•°æ®åé€€å‡º
 				if (bbReceive->offset + left > bbReceive->dataLen)
 				{
-					bbReceiveLeft->Write(bbReceive->buf[bbReceive->offset]);	// ÕâÀïÖ»¿ÉÄÜ²î1×Ö½Ú²¹×ã°üÍ·( ÏÂÍ¬ )
+					bbReceiveLeft->Write(bbReceive->buf[bbReceive->offset]);	// è¿™é‡Œåªå¯èƒ½å·®1å­—èŠ‚è¡¥è¶³åŒ…å¤´( ä¸‹åŒ )
 					return;
 				}
 				else
@@ -322,23 +322,23 @@ namespace xx
 				}
 			}
 
-			// ¶Á°üÍ·, µÃµ½³¤¶È
+			// è¯»åŒ…å¤´, å¾—åˆ°é•¿åº¦
 			dataLen = bbReceiveLeft->buf[bbReceiveLeft->offset] + (bbReceiveLeft->buf[bbReceiveLeft->offset + 1] << 8);
 			bbReceiveLeft->offset += 2;
 
-			// ÅĞ¶ÏÊı¾İÇø³¤¶È. Èç¹û²»¹»³¤, ¿´¿´ÄÜ²»ÄÜ²¹×ã
+			// åˆ¤æ–­æ•°æ®åŒºé•¿åº¦. å¦‚æœä¸å¤Ÿé•¿, çœ‹çœ‹èƒ½ä¸èƒ½è¡¥è¶³
 			if (bbReceiveLeft->offset + dataLen > bbReceiveLeft->dataLen)
 			{
-				// »¹²î¶àÉÙ´ÕÆëÊı¾İÇø
+				// è¿˜å·®å¤šå°‘å‡‘é½æ•°æ®åŒº
 				auto left = bbReceiveLeft->offset + dataLen - bbReceiveLeft->dataLen;
 
-				// Èç¹ûÊ£ÓàÊı¾İ³¤¶ÈÎŞ·¨²¹×ã, ÒÆ¶¯Ê£ÓàÊı¾İµ½Í·²¿ºó×·¼Ó¸ÕÊÕµ½µÄÊı¾İºóÍË³ö
+				// å¦‚æœå‰©ä½™æ•°æ®é•¿åº¦æ— æ³•è¡¥è¶³, ç§»åŠ¨å‰©ä½™æ•°æ®åˆ°å¤´éƒ¨åè¿½åŠ åˆšæ”¶åˆ°çš„æ•°æ®åé€€å‡º
 				if (bbReceive->offset + left > bbReceive->dataLen)
 				{
 					bbReceiveLeft->WriteBuf(bbReceive->buf + bbReceive->offset, bbReceive->dataLen - bbReceive->offset);
 					return;
 				}
-				// ·ñÔòÖ»²¹Æëµ±Ç°°üµÄÊı¾İ
+				// å¦åˆ™åªè¡¥é½å½“å‰åŒ…çš„æ•°æ®
 				else
 				{
 					bbReceiveLeft->WriteBuf(bbReceive->buf + bbReceive->offset, left);
@@ -346,7 +346,7 @@ namespace xx
 				}
 			}
 
-			// Êı¾İÇø³¤¶È×ã¹», À´Ò»·¢ OnReceivePackage
+			// æ•°æ®åŒºé•¿åº¦è¶³å¤Ÿ, æ¥ä¸€å‘ OnReceivePackage
 			bbReceivePackage->buf = bbReceiveLeft->buf + bbReceiveLeft->offset;
 			bbReceivePackage->bufLen = dataLen;
 			bbReceivePackage->dataLen = dataLen;
@@ -354,7 +354,7 @@ namespace xx
 
 			OnReceivePackage(*bbReceivePackage);
 
-			// Çå³ı bbReceiveLeft ÖĞµÄÊı¾İ, Èç¹û»¹ÓĞÊ£ÓàÊı¾İ, Ìøµ½ bbReceive ´¦Àí´úÂë¶Î¼ÌĞø. 
+			// æ¸…é™¤ bbReceiveLeft ä¸­çš„æ•°æ®, å¦‚æœè¿˜æœ‰å‰©ä½™æ•°æ®, è·³åˆ° bbReceive å¤„ç†ä»£ç æ®µç»§ç»­. 
 			bbReceiveLeft->dataLen = 0;
 			if (bbReceive->dataLen > bbReceive->offset) goto LabBegin;
 		}
@@ -364,7 +364,7 @@ namespace xx
 	{
 		assert(!sending);
 		if (state != UVPeerStates::Connected) return -1;
-		auto len = sendBufs->PopTo(*writeBufs, 65536);	// todo: ÏÈĞ´ËÀ. Õâ¸öÖµÀíÂÛÉÏ½²¿ÉÅä
+		auto len = sendBufs->PopTo(*writeBufs, 65536);	// todo: å…ˆå†™æ­». è¿™ä¸ªå€¼ç†è®ºä¸Šè®²å¯é…
 		if (len)
 		{
 			if (auto rtv = uv_write(&writer, (uv_stream_t*)&stream, writeBufs->buf, writeBufs->dataLen, SendCB)) return rtv;
@@ -386,7 +386,7 @@ namespace xx
 
 	inline int UVPeer::Send(BBuffer* const& bb)
 	{
-		sendBufs->Push(bb);			// Ñ¹Èë, ½Ó¹Ü²¢ÒÆ½»ÉÏÏÂÎÄ×Öµä		//if (sendBufs->BytesCount() + bb.dataLen > sendBufLimit) return false;
+		sendBufs->Push(bb);			// å‹å…¥, æ¥ç®¡å¹¶ç§»äº¤ä¸Šä¸‹æ–‡å­—å…¸		//if (sendBufs->BytesCount() + bb.dataLen > sendBufLimit) return false;
 		if (state != UVPeerStates::Connected) return -1;
 		if (!sending) return Send();
 		return 0;
@@ -398,11 +398,11 @@ namespace xx
 		state = UVPeerStates::Disconnecting;
 
 		// todo: save reason ?
-		if (immediately														// Á¢¼´¶Ï¿ª
-			|| !sending && ((uv_stream_t*)&stream)->write_queue_size == 0	// Ã»Êı¾İÕıÔÚ·¢
-			|| uv_shutdown(&sreq, (uv_stream_t*)&stream, ShutdownCB))		// shutdown Ê§°Ü
+		if (immediately														// ç«‹å³æ–­å¼€
+			|| !sending && ((uv_stream_t*)&stream)->write_queue_size == 0	// æ²¡æ•°æ®æ­£åœ¨å‘
+			|| uv_shutdown(&sreq, (uv_stream_t*)&stream, ShutdownCB))		// shutdown å¤±è´¥
 		{
-			if (!uv_is_closing((uv_handle_t*)&stream))						// ·Ç ÕıÔÚ¹Ø
+			if (!uv_is_closing((uv_handle_t*)&stream))						// é æ­£åœ¨å…³
 			{
 				uv_close((uv_handle_t*)&stream, CloseCB);
 			}
@@ -568,7 +568,7 @@ namespace xx
 	inline void UVClientPeer::ConnectCB(uv_connect_t* conn, int status)
 	{
 		auto self = container_of(conn, UVClientPeer, conn);
-		if (!self->versionNumber()) return;			// À¹½ØÒòÖ÷¶¯Îö¹¹µ¼ÖÂµÄ»Øµ÷( µ±Ç°»¹²»È·¶¨ÓĞÃ»ÓĞÆäËû CB Ò²ĞèÒªÀ¹½Ø )
+		if (!self->versionNumber()) return;			// æ‹¦æˆªå› ä¸»åŠ¨ææ„å¯¼è‡´çš„å›è°ƒ( å½“å‰è¿˜ä¸ç¡®å®šæœ‰æ²¡æœ‰å…¶ä»– CB ä¹Ÿéœ€è¦æ‹¦æˆª )
 
 		self->lastStatus = status;
 		if (status < 0)

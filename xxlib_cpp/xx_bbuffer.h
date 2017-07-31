@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include <functional>
 #include "xx_bytesutils.h"
 #include "xx_mempool.h"
@@ -9,7 +9,7 @@
 namespace xx
 {
 	/*************************************************************************/
-	// BBufferRWSwitcher( GCC ĞèÒª½«ÕâÑùµÄÉùÃ÷Ğ´ÔÚÀàÍâÃæ )
+	// BBufferRWSwitcher( GCC éœ€è¦å°†è¿™æ ·çš„å£°æ˜å†™åœ¨ç±»å¤–é¢ )
 	/*************************************************************************/
 
 	template<typename T, typename ENABLE = void>
@@ -44,16 +44,16 @@ namespace xx
 	};
 
 	/*************************************************************************/
-	// BBuffer ±¾Ìå
+	// BBuffer æœ¬ä½“
 	/*************************************************************************/
 
 	struct BBuffer : public List<char, 16>
 	{
 		typedef List<char, 16> BaseType;
-		uint32_t offset = 0;					// ¶ÁÖ¸ÕëÆ«ÒÆÁ¿
-		uint32_t offsetRoot = 0;				// offsetÖµĞ´ÈëĞŞÕı
-		uint32_t dataLenBak = 0;				// WritePackage Ê±ÓÃÓÚ±¸·İµ±Ç°Êı¾İĞ´ÈëÆ«ÒÆ
-		uint32_t readLengthLimit = 0;			// Ö÷ÓÃÓÚ´«µİ¸øÈİÆ÷Àà½øĞĞ³¤¶ÈºÏ·¨Ğ£Ñé
+		uint32_t offset = 0;					// è¯»æŒ‡é’ˆåç§»é‡
+		uint32_t offsetRoot = 0;				// offsetå€¼å†™å…¥ä¿®æ­£
+		uint32_t dataLenBak = 0;				// WritePackage æ—¶ç”¨äºå¤‡ä»½å½“å‰æ•°æ®å†™å…¥åç§»
+		uint32_t readLengthLimit = 0;			// ä¸»ç”¨äºä¼ é€’ç»™å®¹å™¨ç±»è¿›è¡Œé•¿åº¦åˆæ³•æ ¡éªŒ
 
 		BBuffer(BBuffer const&o) = delete;
 		BBuffer& operator=(BBuffer const&o) = delete;
@@ -66,7 +66,7 @@ namespace xx
 		}
 
 		/*************************************************************************/
-		// Â·ÓÉÎªÍ³Ò»½Ó¿ÚÏµÁĞ
+		// è·¯ç”±ä¸ºç»Ÿä¸€æ¥å£ç³»åˆ—
 		/*************************************************************************/
 
 		template<typename T>
@@ -82,7 +82,7 @@ namespace xx
 
 
 		/*************************************************************************/
-		// ´«Í³ pod ¶ÁĞ´ÏµÁĞ( Í¨¹ı bytesutils ÀïµÄÖØÔØ / ÌØ»¯ ÊµÏÖ )
+		// ä¼ ç»Ÿ pod è¯»å†™ç³»åˆ—( é€šè¿‡ bytesutils é‡Œçš„é‡è½½ / ç‰¹åŒ– å®ç° )
 		/*************************************************************************/
 
 		template<typename ...TS>
@@ -103,11 +103,11 @@ namespace xx
 
 
 		/*************************************************************************/
-		//  MPObject ¶ÔÏó¶ÁĞ´ÏµÁĞ
+		//  MPObject å¯¹è±¡è¯»å†™ç³»åˆ—
 		/*************************************************************************/
 
-		Dict<void*, uint32_t>*						ptrStore = nullptr;		// ÁÙÊ±¼ÇÂ¼ key: Ö¸Õë, value: offset
-		Dict<uint32_t, std::pair<void*, uint16_t>>*	idxStore = nullptr;		// ÁÙÊ±¼ÇÂ¼ key: ¶Áoffset, value: pair<ptr, typeId>
+		Dict<void*, uint32_t>*						ptrStore = nullptr;		// ä¸´æ—¶è®°å½• key: æŒ‡é’ˆ, value: offset
+		Dict<uint32_t, std::pair<void*, uint16_t>>*	idxStore = nullptr;		// ä¸´æ—¶è®°å½• key: è¯»offset, value: pair<ptr, typeId>
 
 		void BeginWrite()
 		{
@@ -132,7 +132,7 @@ namespace xx
 			idxStore->Clear();
 		}
 
-		// Ò»¼üË¬ write
+		// ä¸€é”®çˆ½ write
 		template<typename T>
 		void WriteRoot(T const& v)
 		{
@@ -140,7 +140,7 @@ namespace xx
 			Write(v);
 			EndWrite();
 		}
-		// Ò»¼üË¬ read
+		// ä¸€é”®çˆ½ read
 		template<typename T>
 		int ReadRoot(T &v)
 		{
@@ -246,21 +246,21 @@ namespace xx
 
 
 		/*************************************************************************/
-		//  ÆäËû¹¤¾ßº¯Êı
+		//  å…¶ä»–å·¥å…·å‡½æ•°
 		/*************************************************************************/
 
-		// ¸ù¾İÊı¾İÀàĞÍÍùµ±Ç°Î»ÖÃĞ´ÈëÄ¬ÈÏÖµ
+		// æ ¹æ®æ•°æ®ç±»å‹å¾€å½“å‰ä½ç½®å†™å…¥é»˜è®¤å€¼
 		template<typename T>
 		void WriteDefaultValue()
 		{
 			Write(T());
 		}
 
-		// ×Ô¶¨Òå Write º¯Êı
+		// è‡ªå®šä¹‰ Write å‡½æ•°
 		std::function<void(BBuffer& bb, void* owner, size_t fieldOffset)> CustomWrite;
 
 
-		// ¶ÁÖ¸¶¨Î»ÖÃµÄÊı¾İ( ²»Ó°Ïì offset )
+		// è¯»æŒ‡å®šä½ç½®çš„æ•°æ®( ä¸å½±å“ offset )
 		template<typename ...TS>
 		int ReadAt(uint32_t const& pos, TS&...vs)
 		{
@@ -272,7 +272,7 @@ namespace xx
 			return 0;
 		}
 
-		// ´Óµ±Ç°Î»ÖÃ¶ÁÊı¾İµ«ÊÂºó offset Æ«ÒÆÖ¸¶¨³¤¶È
+		// ä»å½“å‰ä½ç½®è¯»æ•°æ®ä½†äº‹å offset åç§»æŒ‡å®šé•¿åº¦
 		template<typename ...TS>
 		int ReadJump(uint32_t const& len, TS&...vs)
 		{
@@ -283,7 +283,7 @@ namespace xx
 			return 0;
 		}
 
-		// Ö±½Ó×·¼ÓĞ´ÈëÒ»¶Î buf ( ²¢²»¼ÇÂ¼³¤¶È )
+		// ç›´æ¥è¿½åŠ å†™å…¥ä¸€æ®µ buf ( å¹¶ä¸è®°å½•é•¿åº¦ )
 		void WriteBuf(char const* buf, uint32_t const& len)
 		{
 			this->Reserve(this->dataLen + len);
@@ -299,7 +299,7 @@ namespace xx
 			WriteBuf(bb->buf, bb->dataLen);
 		}
 
-		// ×·¼ÓÒ»¸öÖ¸¶¨³¤¶ÈµÄ¿Õ¼ä, ·µ»Øµ±Ç° dataLen
+		// è¿½åŠ ä¸€ä¸ªæŒ‡å®šé•¿åº¦çš„ç©ºé—´, è¿”å›å½“å‰ dataLen
 		uint32_t WriteSpace(uint32_t const& len)
 		{
 			auto rtv = this->dataLen;
@@ -308,17 +308,17 @@ namespace xx
 			return rtv;
 		}
 
-		// ÔÚ pos Î»ÖÃĞ´ÈëÒ»¶Î buf ( ²¢²»¼ÇÂ¼³¤¶È ). dataLen ¿ÉÄÜ³Å´ó.
+		// åœ¨ pos ä½ç½®å†™å…¥ä¸€æ®µ buf ( å¹¶ä¸è®°å½•é•¿åº¦ ). dataLen å¯èƒ½æ’‘å¤§.
 		void WriteBufAt(uint32_t const& pos, char const* buf, uint32_t const& len)
 		{
 			assert(pos < this->dataLen);
-			auto bak = this->dataLen;		// ±¸·İÔ­Ê¼Êı¾İ³¤¶È, ¿ªÊ¼×·¼Ó. ×·¼ÓÍêÖ®ºó, ¶Ô±ÈÔ­Ê¼Êı¾İ³¤¶È. Èç¹ûÃ»³¬³ö, »¹Òª»¹Ô­.
+			auto bak = this->dataLen;		// å¤‡ä»½åŸå§‹æ•°æ®é•¿åº¦, å¼€å§‹è¿½åŠ . è¿½åŠ å®Œä¹‹å, å¯¹æ¯”åŸå§‹æ•°æ®é•¿åº¦. å¦‚æœæ²¡è¶…å‡º, è¿˜è¦è¿˜åŸ.
 			this->dataLen = pos;
 			WriteBuf(buf, len);
 			if (this->dataLen < bak) this->dataLen = bak;
 		}
 
-		// ÔÚ pos Î»ÖÃ×ö Write ²Ù×÷. dataLen ¿ÉÄÜ³Å´ó.
+		// åœ¨ pos ä½ç½®åš Write æ“ä½œ. dataLen å¯èƒ½æ’‘å¤§.
 		template<typename ...TS>
 		void WriteAt(uint32_t const& pos, TS const&...vs)
 		{
@@ -330,7 +330,7 @@ namespace xx
 		}
 
 
-		// ¿ªÊ¼Ğ´Ò»¸ö°ü( ÌØÖ¸ 2 ×Ö½Ú³¤¶ÈÍ·µÄ, ±£Áô³ö°üÍ·ÇøÓò )
+		// å¼€å§‹å†™ä¸€ä¸ªåŒ…( ç‰¹æŒ‡ 2 å­—èŠ‚é•¿åº¦å¤´çš„, ä¿ç•™å‡ºåŒ…å¤´åŒºåŸŸ )
 		template<typename SizeType = uint16_t>
 		void BeginWritePackage()
 		{
@@ -339,7 +339,7 @@ namespace xx
 			dataLen += sizeof(SizeType);
 		}
 
-		// ½áÊøĞ´Ò»¸ö°ü, ·µ»Ø³¤¶ÈÊÇ·ñÔÚ°üÍ·±í´ï·¶Î§ÄÚ( Èç¹û true Ôò»áÌî³ä°üÍ·, false Ôò»Ø¹ö³¤¶È )
+		// ç»“æŸå†™ä¸€ä¸ªåŒ…, è¿”å›é•¿åº¦æ˜¯å¦åœ¨åŒ…å¤´è¡¨è¾¾èŒƒå›´å†…( å¦‚æœ true åˆ™ä¼šå¡«å……åŒ…å¤´, false åˆ™å›æ»šé•¿åº¦ )
 		template<typename SizeType = uint16_t>
 		bool EndWritePackage()
 		{
@@ -353,7 +353,7 @@ namespace xx
 			return true;
 		}
 
-		// Ò»¼üË¬ write ¶¨³¤ ×Ö½Ú³¤¶È + rootÊı¾İ. Èç¹û³¬¹ı ³¤¶È×î´ó¼ÆÊı, ½«»Ø¹ö dataLen ²¢·µ»Ø false
+		// ä¸€é”®çˆ½ write å®šé•¿ å­—èŠ‚é•¿åº¦ + rootæ•°æ®. å¦‚æœè¶…è¿‡ é•¿åº¦æœ€å¤§è®¡æ•°, å°†å›æ»š dataLen å¹¶è¿”å› false
 		template<typename SizeType = uint16_t, typename T>
 		bool WritePackage(T const& v)
 		{
@@ -362,7 +362,7 @@ namespace xx
 			return EndWritePackage<SizeType>();
 		}
 
-		//// ÔÚÒÑÖªÊı¾İ³¤¶ÈµÄÇé¿öÏÂ, Ö±½ÓÒÔ°üÍ·¸ñÊ½Ğ´Èë³¤¶È. ³É¹¦·µ»Ø true
+		//// åœ¨å·²çŸ¥æ•°æ®é•¿åº¦çš„æƒ…å†µä¸‹, ç›´æ¥ä»¥åŒ…å¤´æ ¼å¼å†™å…¥é•¿åº¦. æˆåŠŸè¿”å› true
 		//template<typename SizeType = uint16_t, typename T>
 		//bool WritePackageLength(T const& len)
 		//{
@@ -374,9 +374,9 @@ namespace xx
 		//	return true;
 		//}
 
-		// ³¢ÊÔÒ»´ÎĞÔ·´ĞòÁĞ»¯Ò»µ½¶à¸ö°ü, ½«½á¹ûÌî³äµ½ outPkgs, ·µ»Ø°ü¸öÊı »ò ´íÎóÂë
-		// ×¢Òâ: ×¢ÒâÆäÔªËØµÄ ÒıÓÃ¼ÆÊı, Í¨Í¨Îª 1( ¼´±ãÊÇµİ¹é»¥Òı )
-		// ×¢Òâ: ¼´±ã·µ»Ø´íÎóÂë, outPkgs ÖĞÒ²¿ÉÄÜ´æÔÚ²ĞÁôÊı¾İ
+		// å°è¯•ä¸€æ¬¡æ€§ååºåˆ—åŒ–ä¸€åˆ°å¤šä¸ªåŒ…, å°†ç»“æœå¡«å……åˆ° outPkgs, è¿”å›åŒ…ä¸ªæ•° æˆ– é”™è¯¯ç 
+		// æ³¨æ„: æ³¨æ„å…¶å…ƒç´ çš„ å¼•ç”¨è®¡æ•°, é€šé€šä¸º 1( å³ä¾¿æ˜¯é€’å½’äº’å¼• )
+		// æ³¨æ„: å³ä¾¿è¿”å›é”™è¯¯ç , outPkgs ä¸­ä¹Ÿå¯èƒ½å­˜åœ¨æ®‹ç•™æ•°æ®
 		int ReadPackages(List<MPObject*>& outPkgs)
 		{
 			if (outPkgs.dataLen) ReleasePackages(outPkgs);
@@ -390,7 +390,7 @@ namespace xx
 			return outPkgs.dataLen;
 		}
 
-		// ÊÍ·Å¾­ÓÉ ReadPackages Ìî³äµÄ packages µÄÄÚ´æ
+		// é‡Šæ”¾ç»ç”± ReadPackages å¡«å……çš„ packages çš„å†…å­˜
 		void ReleasePackages(List<MPObject*>& recvPkgs)
 		{
 			mempool().DisableRefCountAssert();
@@ -403,10 +403,10 @@ namespace xx
 		}
 
 		/*************************************************************************/
-		// ÊµÏÖ ToString ½Ó¿Ú
+		// å®ç° ToString æ¥å£
 		/*************************************************************************/
 
-		// ÏÈ¼òµ¥À´µã
+		// å…ˆç®€å•æ¥ç‚¹
 		virtual void ToString(String &str) const override
 		{
 			str.Append("{ \"len\" : ", dataLen, ", \"data\" : [ ");
@@ -419,7 +419,7 @@ namespace xx
 		}
 
 		/*************************************************************************/
-		// ÊµÏÖ BBuffer ½Ó¿Ú
+		// å®ç° BBuffer æ¥å£
 		/*************************************************************************/
 
 		virtual void ToBBuffer(BBuffer &bb) const override;
@@ -471,30 +471,30 @@ namespace xx
 	}
 
 	/*************************************************************************/
-	// ÊµÏÖÖµÀàĞÍÊ¹ÓÃÀàĞÍÉùÃ÷
+	// å®ç°å€¼ç±»å‹ä½¿ç”¨ç±»å‹å£°æ˜
 	/*************************************************************************/
 
 	using BBuffer_v = MemHeaderBox<BBuffer>;
 
 
 	/*************************************************************************/
-	// ÊµÏÖ¸÷ÖÖĞòÁĞ»¯½Ó¿Ú
+	// å®ç°å„ç§åºåˆ—åŒ–æ¥å£
 	/*************************************************************************/
 
 	template<typename T, typename PT>
 	void MemPool::Register()
 	{
-		// ´æ¸¸ pid
+		// å­˜çˆ¶ pid
 		assert(!pids()[TypeId<T>::value]);
 		pids()[TypeId<T>::value] = TypeId<PT>::value;
 
-		// ÔÚÖ´ĞĞ¹¹Ôìº¯ÊıÖ®Ç°ÄÃµ½Ö¸Õë ÈûÈë bb. ¹¹Ôìº¯ÊıÖ´ĞĞÊ§°ÜÊ±´Ó bb ÒÆ³ı
+		// åœ¨æ‰§è¡Œæ„é€ å‡½æ•°ä¹‹å‰æ‹¿åˆ°æŒ‡é’ˆ å¡å…¥ bb. æ„é€ å‡½æ•°æ‰§è¡Œå¤±è´¥æ—¶ä» bb ç§»é™¤
 		creators()[TypeId<T>::value] = [](MemPool* mp, BBuffer* bb, uint32_t ptrOffset) ->void*
 		{
-			// ²åÈë×ÖµäÕ¼Î», ·ÖÅäµ½Êµ¼ÊÖ¸ÕëºóÌæ»»
+			// æ’å…¥å­—å…¸å ä½, åˆ†é…åˆ°å®é™…æŒ‡é’ˆåæ›¿æ¢
 			auto addResult = bb->idxStore->Add(ptrOffset, std::make_pair(nullptr, TypeId<T>::value));
 
-			// ÏÂÁĞ´úÂë ¸´ÖÆ×Ô Create º¯ÊıĞ¡¸Ä
+			// ä¸‹åˆ—ä»£ç  å¤åˆ¶è‡ª Create å‡½æ•°å°æ”¹
 			auto siz = sizeof(T) + sizeof(MemHeader_MPObject);
 			auto idx = Calc2n(siz);
 			if (siz > (size_t(1) << idx)) siz = size_t(1) << ++idx;
@@ -511,14 +511,14 @@ namespace xx
 			p->tsFlags = 0;
 
 			auto t = (T*)(p + 1);
-			bb->idxStore->ValueAt(addResult.index).first = t;	// Ìæ»»³ÉÕæÊµ×Öµä
+			bb->idxStore->ValueAt(addResult.index).first = t;	// æ›¿æ¢æˆçœŸå®å­—å…¸
 			try
 			{
 				new (t) T(bb);
 			}
 			catch (...)
 			{
-				bb->idxStore->RemoveAt(addResult.index);		// ´Ó×ÖµäÒÆ³ı( ÀíÂÛÉÏ½²¿ÉÒÔ²»¹Ü, »á²ã²ãÊ§°Ü³öÈ¥×îºó clear )
+				bb->idxStore->RemoveAt(addResult.index);		// ä»å­—å…¸ç§»é™¤( ç†è®ºä¸Šè®²å¯ä»¥ä¸ç®¡, ä¼šå±‚å±‚å¤±è´¥å‡ºå»æœ€å clear )
 				mp->ptrstacks[idx].Push(p);
 				p->versionNumber = 0;
 				return nullptr;
@@ -551,7 +551,7 @@ namespace xx
 	}
 
 
-	// List ĞòÁĞ»¯ Â·ÓÉÀà
+	// List åºåˆ—åŒ– è·¯ç”±ç±»
 	template<typename T, uint32_t reservedHeaderLen, typename ENABLE = void>
 	struct ListBBSwitcher
 	{
@@ -560,7 +560,7 @@ namespace xx
 		static void CreateFromBBuffer(List<T, reservedHeaderLen>* list, BBuffer &bb);
 	};
 
-	// ÊÊÅä 1 ×Ö½Ú³¤¶ÈµÄ ÊıÖµ »òÃ¶¾Ù »ò float( ÕâĞ©ÀàĞÍÖ±½Ó memcpy )
+	// é€‚é… 1 å­—èŠ‚é•¿åº¦çš„ æ•°å€¼ æˆ–æšä¸¾ æˆ– float( è¿™äº›ç±»å‹ç›´æ¥ memcpy )
 	template<typename T, uint32_t reservedHeaderLen>
 	struct ListBBSwitcher<T, reservedHeaderLen, std::enable_if_t< sizeof(T) == 1 || std::is_same<float, typename std::decay<T>::type>::value >>
 	{
@@ -598,7 +598,7 @@ namespace xx
 		}
 	};
 
-	// ÊÊÅä·Ç MPObject* / MPtr ( Ö»ÄÜ foreach Ò»¸ö¸ö¸ã, º¬ MemHeaderBox )
+	// é€‚é…é MPObject* / MPtr ( åªèƒ½ foreach ä¸€ä¸ªä¸ªæ, å« MemHeaderBox )
 	template<typename T, uint32_t reservedHeaderLen>
 	struct ListBBSwitcher<T, reservedHeaderLen, std::enable_if_t< !(sizeof(T) == 1 || std::is_same<float, typename std::decay<T>::type>::value) && !(IsMPtr_v<T> || (std::is_pointer<T>::value && IsMPObject_v<T>)) >>
 	{
@@ -646,7 +646,7 @@ namespace xx
 		}
 	};
 
-	// ÊÊÅä MPObject* / MPtr, ·´ĞòÁĞ»¯Ê§°Üºó»áÖğ¸ö Release ÒÑ³É¹¦´´½¨µÄ items
+	// é€‚é… MPObject* / MPtr, ååºåˆ—åŒ–å¤±è´¥åä¼šé€ä¸ª Release å·²æˆåŠŸåˆ›å»ºçš„ items
 	template<typename T, uint32_t reservedHeaderLen>
 	struct ListBBSwitcher<T, reservedHeaderLen, std::enable_if_t< IsMPtr_v<T> || (std::is_pointer<T>::value && IsMPObject_v<T>) >>
 	{

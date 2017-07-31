@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #pragma execution_character_set("utf-8")
 #pragma warning(disable:4819)
 
@@ -245,7 +245,7 @@ inline EnumTypeName operator++(EnumTypeName &a)                                 
 
 /*
 SFINAE check menber function exists
-sample£º
+sampleï¼š
 
 XX_HAS_FUNC( xxxxxxxxfunc_checker, FuncName, RT ( T::* )( params... ) const );
 */
@@ -265,7 +265,7 @@ public:                                                                         
 
 namespace xx
 {
-	// ¼ÆËã n ÊÇ 2 µÄ¼¸´Î·½
+	// è®¡ç®— n æ˜¯ 2 çš„å‡ æ¬¡æ–¹
 	inline static int Calc2n(size_t n)
 	{
 		assert(n);
@@ -286,14 +286,14 @@ namespace xx
 #endif
 	}
 
-	// ·µ»Ø n °´ 2^n ¶ÔÆëµÄÖµ
+	// è¿”å› n æŒ‰ 2^n å¯¹é½çš„å€¼
 	inline static size_t Round2n(size_t n)
 	{
 		auto rtv = size_t(1) << Calc2n(n);
 		if (rtv == n) return n;
 		else return rtv << 1;
 	}
-	//// Õâ¸öĞ´·¨¸üÂı
+	//// è¿™ä¸ªå†™æ³•æ›´æ…¢
 	//inline static size_t Round2n_2(size_t n)
 	//{
 	//	if (n <= 1) return 1;
@@ -321,7 +321,7 @@ template<typename T> struct HasTypedef_##typedefName<T, typename xx::Typedef_Voi
 	/* XX_LIST_SWAP_REMOVE
 	/***********************************************************************************/
 
-	// ½»»»É¾³ı list ÖĞµÄÄ³ÔªËØ
+	// äº¤æ¢åˆ é™¤ list ä¸­çš„æŸå…ƒç´ 
 
 #define XX_LIST_SWAP_REMOVE( listPtr, tarPtr, indexName )		\
 do																\
@@ -386,7 +386,7 @@ while(false)
 	// MemmoveSupport
 	/***********************************************************************************/
 
-	// ÓÃÓÚ±ê¼Ç ´æÔÚÓÚ×Ô¼ºÂÖµÄÈİÆ÷ÀàÖĞÊ±ÊÇ·ñÖ§³ÖÖ±½Ó memcpy memmove ²Ù×÷¶ø²»ÉËÓïÒå
+	// ç”¨äºæ ‡è®° å­˜åœ¨äºè‡ªå·±è½®çš„å®¹å™¨ç±»ä¸­æ—¶æ˜¯å¦æ”¯æŒç›´æ¥ memcpy memmove æ“ä½œè€Œä¸ä¼¤è¯­ä¹‰
 	template<typename T>
 	struct MemmoveSupport
 	{
@@ -456,7 +456,7 @@ while(false)
 
 
 	/***********************************************************************************/
-	// TypeId Ó³Éä
+	// TypeId æ˜ å°„
 	/***********************************************************************************/
 
 	template<typename T>
@@ -472,7 +472,7 @@ while(false)
 
 
 	/***********************************************************************************/
-	// EqualsTo( ÖØÔØºóÓÃÓÚÖ¸Õë¶ÔÏó°´ÄÚÈİ¶Ô±È )
+	// EqualsTo( é‡è½½åç”¨äºæŒ‡é’ˆå¯¹è±¡æŒ‰å†…å®¹å¯¹æ¯” )
 	/***********************************************************************************/
 
 	template<typename T>
@@ -518,14 +518,14 @@ while(false)
 	// GetFuncReturnType
 	/***********************************************************************************/
 
-	// ÓÃÀ´È¡³ÉÔ±º¯Êı·µ»ØÖµµÄÀàĞÍ( decltype(GetFuncReturnType(&Type::Func)) )
+	// ç”¨æ¥å–æˆå‘˜å‡½æ•°è¿”å›å€¼çš„ç±»å‹( decltype(GetFuncReturnType(&Type::Func)) )
 	template<typename T, typename R, typename ...Args>
 	R GetFuncReturnType(R(T::*)(Args...))
 	{
 		return *(R*)nullptr;
 	}
 
-	// ÓÃÀ´È¡¾²Ì¬º¯Êı·µ»ØÖµµÄÀàĞÍ( decltype(GetFuncReturnType(&Func)) )
+	// ç”¨æ¥å–é™æ€å‡½æ•°è¿”å›å€¼çš„ç±»å‹( decltype(GetFuncReturnType(&Func)) )
 	template<typename R, typename ...Args>
 	R GetFuncReturnType(R(*)(Args...))
 	{

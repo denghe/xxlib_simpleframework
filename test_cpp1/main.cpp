@@ -1,4 +1,4 @@
-#include "main.h"
+ï»¿#include "main.h"
 #include <thread>
 #include <chrono>
 
@@ -10,8 +10,8 @@ int main()
 
 	xx::MemPool mp;
 	xx::UV_v uv(mp);
-	auto c1 = mp.CreateMPtr<MyClient>(uv, "a", "a");	// ×Ô³ÖÓĞ, ×ÔÉ±
-	auto c2 = mp.CreateMPtr<MyClient>(uv, "b", "b");	// ×Ô³ÖÓĞ, ×ÔÉ±
+	auto c1 = mp.CreateMPtr<MyClient>(uv, "a", "a");	// è‡ªæŒæœ‰, è‡ªæ€
+	auto c2 = mp.CreateMPtr<MyClient>(uv, "b", "b");	// è‡ªæŒæœ‰, è‡ªæ€
 	uv->Run();
 	std::cout << "main: press any key to continue ..." << std::endl;
 	std::cin.get();
@@ -32,14 +32,14 @@ inline MyConnector::~MyConnector()
 }
 inline void MyConnector::OnReceivePackage(xx::BBuffer & bb)
 {
-	// ÊÔ½«ÊÕµ½µÄ°ü½â³öÀ´
+	// è¯•å°†æ”¶åˆ°çš„åŒ…è§£å‡ºæ¥
 	if (bb.ReadPackages(*recvPkgs) != 1)
 	{
 		Disconnect(true);
 		return;
 	}
 
-	// ½«Êı¾İ×ªÒÆ²¢×·¼Óµ½³ÖĞøÊÕµ½µÄÊı¾İ¶ÓÁĞÖĞ
+	// å°†æ•°æ®è½¬ç§»å¹¶è¿½åŠ åˆ°æŒç»­æ”¶åˆ°çš„æ•°æ®é˜Ÿåˆ—ä¸­
 	for (uint32_t i = 0; i < recvPkgs->dataLen; ++i)
 	{
 		recvMsgs->Push(recvPkgs->At(i));
@@ -77,7 +77,7 @@ inline MyClient::MyClient(xx::UV* uv, char const* un, char const* pw)
 	conn = uv->CreateClientPeer<MyConnector>(this);
 	timer = uv->CreateTimer<MyTimer>(this);
 
-	// Ô¤¹¹Ôì´ı·¢Êı¾İ°ü
+	// é¢„æ„é€ å¾…å‘æ•°æ®åŒ…
 	mempool().CreateTo(pkgJoin);
 	mempool().CreateTo(pkgJoin->username);
 	mempool().CreateTo(pkgJoin->password);
@@ -116,7 +116,7 @@ inline int MyClient::Update()
 			return -1;
 		}
 
-		lastMS = currMS;		// ÖØÖÃ¼ÆÊ±Æ÷ÎªÏÂÒ»»·½Ú³¬Ê±ÅĞ¶Ï×÷×¼±¸
+		lastMS = currMS;		// é‡ç½®è®¡æ—¶å™¨ä¸ºä¸‹ä¸€ç¯èŠ‚è¶…æ—¶åˆ¤æ–­ä½œå‡†å¤‡
 	}
 	XX_CORO_(1);
 	{
@@ -146,7 +146,7 @@ inline int MyClient::Update()
 	{
 		Cout(pkgJoin->username, " MyClient: connected!\n");
 
-		// un & pw ÔÚ¹¹Ôìº¯ÊıÖĞÌî¹ıÁË
+		// un & pw åœ¨æ„é€ å‡½æ•°ä¸­å¡«è¿‡äº†
 		//pkgJoin->username->Assign("a");
 		//pkgJoin->password->Assign("a");
 
@@ -156,7 +156,7 @@ inline int MyClient::Update()
 			return -1;
 		}
 
-		lastMS = currMS;		// ÖØÖÃ¼ÆÊ±Æ÷ÎªÏÂÒ»»·½Ú³¬Ê±ÅĞ¶Ï×÷×¼±¸
+		lastMS = currMS;		// é‡ç½®è®¡æ—¶å™¨ä¸ºä¸‹ä¸€ç¯èŠ‚è¶…æ—¶åˆ¤æ–­ä½œå‡†å¤‡
 	}
 	XX_CORO_(4);
 	{
@@ -169,7 +169,7 @@ inline int MyClient::Update()
 		{
 			XX_CORO_GOTO(5);
 		}
-		if (currMS - lastMS < 50000)		// µÈ¾Ãµã. Èç¹ûÃ» SQL Á¬, Õâ²½ÓĞµã¾Ã
+		if (currMS - lastMS < 50000)		// ç­‰ä¹…ç‚¹. å¦‚æœæ²¡ SQL è¿, è¿™æ­¥æœ‰ç‚¹ä¹…
 		{
 			XX_CORO_YIELDTO(4);
 		}
@@ -183,9 +183,9 @@ inline int MyClient::Update()
 	{
 		assert(!conn->recvMsgs->Empty());
 
-		// È¡³öµÚ 1 ¸ö°ü´¦Àí. ±ØÈ»ÊÇ JoinSuccess »ò JoinFail
+		// å–å‡ºç¬¬ 1 ä¸ªåŒ…å¤„ç†. å¿…ç„¶æ˜¯ JoinSuccess æˆ– JoinFail
 		auto o_ = conn->recvMsgs->Top();
-		xx::ScopeGuard sg_o_killer([&] { o_->Release(); });		// Ìø³öÕâ²ã´óÀ©ºÅ¾ÍÉ¾
+		xx::ScopeGuard sg_o_killer([&] { o_->Release(); });		// è·³å‡ºè¿™å±‚å¤§æ‰©å·å°±åˆ 
 		conn->recvMsgs->Pop();
 
 		auto& typeId = o_->typeId();
@@ -195,18 +195,18 @@ inline int MyClient::Update()
 		{
 			auto o = (PKG::Server_Client::JoinSuccess*)o_;
 
-			// ×ªÒÆ°ü³ÉÔ±¼ÌĞøÓÃ
-			self = o->self;			// ×ªÎª MPtr
-			users = o->users;		// ×÷Îª³ÖÓĞÈİÆ÷, ËùÓĞ°üÒıÓÃ¼ÆÊı¶¼Îª1, ¸ÕºÃ
-			o->self = nullptr;		// ±ÜÃâÎö¹¹µ½ÒÆ×ßµÄÊı¾İ
-			o->users = nullptr;		// ±ÜÃâÎö¹¹µ½ÒÆ×ßµÄÊı¾İ
+			// è½¬ç§»åŒ…æˆå‘˜ç»§ç»­ç”¨
+			self = o->self;			// è½¬ä¸º MPtr
+			users = o->users;		// ä½œä¸ºæŒæœ‰å®¹å™¨, æ‰€æœ‰åŒ…å¼•ç”¨è®¡æ•°éƒ½ä¸º1, åˆšå¥½
+			o->self = nullptr;		// é¿å…ææ„åˆ°ç§»èµ°çš„æ•°æ®
+			o->users = nullptr;		// é¿å…ææ„åˆ°ç§»èµ°çš„æ•°æ®
 
-			// ÏÔÊ¾µãÊÕµ½µÄÄÚÈİ
+			// æ˜¾ç¤ºç‚¹æ”¶åˆ°çš„å†…å®¹
 			Cout(pkgJoin->username, " MyClient: recv msg == PKG::Server_Client::JoinSuccess!\n"
 				"users->dataLen = ", users->dataLen, "\n"
 				"self->id = ", self->id, '\n');
 
-			lastMS = currMS;		// ÖØÖÃ¼ÆÊ±Æ÷ÎªÏÂÒ»»·½Ú³¬Ê±ÅĞ¶Ï×÷×¼±¸
+			lastMS = currMS;		// é‡ç½®è®¡æ—¶å™¨ä¸ºä¸‹ä¸€ç¯èŠ‚è¶…æ—¶åˆ¤æ–­ä½œå‡†å¤‡
 			XX_CORO_GOTO(6);
 		}
 		case xx::TypeId_v<PKG::Server_Client::JoinFail>:
@@ -230,11 +230,11 @@ inline int MyClient::Update()
 			return -1;
 		}
 
-		// ¼ÌĞø´¦ÀíºóĞøÊÕµ½µÄ°ü
+		// ç»§ç»­å¤„ç†åç»­æ”¶åˆ°çš„åŒ…
 		xx::MPObject* o_;
 		if (conn->recvMsgs->TryPop(o_))
 		{
-			xx::ScopeGuard sg_o_killer([&] { o_->Release(); });		// Ìø³öÕâ²ã´óÀ©ºÅ¾ÍÉ¾
+			xx::ScopeGuard sg_o_killer([&] { o_->Release(); });		// è·³å‡ºè¿™å±‚å¤§æ‰©å·å°±åˆ 
 			auto& typeId = o_->typeId();
 			switch (typeId)
 			{
@@ -264,18 +264,18 @@ inline int MyClient::Update()
 			}
 		}
 
-		// todo: Í¨¹ıÁíÍâÒ»¸öÏß³Ì, ´Ó Console ½ÓÊÕ×Ö·ûÒÔ²úÉú PKG::Client_Server::Message ÏûÏ¢
+		// todo: é€šè¿‡å¦å¤–ä¸€ä¸ªçº¿ç¨‹, ä» Console æ¥æ”¶å­—ç¬¦ä»¥äº§ç”Ÿ PKG::Client_Server::Message æ¶ˆæ¯
 
-		// Ã¿ÃëÖÓ·¢Ò»´Îµ±Ç° ms
+		// æ¯ç§’é’Ÿå‘ä¸€æ¬¡å½“å‰ ms
 		if (currMS - lastMS > 1000)
 		{
 			lastMS = currMS;
 
-			// ÏÈÄ£ÄâÒ»ÏÂ¼üÅÌÊäÈë
+			// å…ˆæ¨¡æ‹Ÿä¸€ä¸‹é”®ç›˜è¾“å…¥
 			pkgMessage->text->Clear();
 			pkgMessage->text->Append("currMS = ", currMS);
 
-			// ·¢ Message
+			// å‘ Message
 			if (auto rtv = conn->SendPackages(pkgMessage))
 			{
 				Cout(pkgJoin->username, " MyClient: conn->SendPackages(pkgMessage) error! rtv = ", rtv, '\n');
@@ -283,7 +283,7 @@ inline int MyClient::Update()
 			}
 		}
 
-		// ¼ÌĞø±¾×´Ì¬Ñ­»·
+		// ç»§ç»­æœ¬çŠ¶æ€å¾ªç¯
 		XX_CORO_YIELDTO(6);
 	}
 	XX_CORO_END();

@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include <uv.h>
 #include "xx_mempool.h"
 #include "xx_bbqueue.h"
@@ -16,7 +16,7 @@ namespace xx
 	struct UVTimer;
 	struct UVAsync;
 
-	struct UV : MPObject											// ¸ÃÀà¿ÉÄÜÖ»ÄÜ´´½¨ 1 ·İÊµÀı
+	struct UV : MPObject											// è¯¥ç±»å¯èƒ½åªèƒ½åˆ›å»º 1 ä»½å®ä¾‹
 	{
 		List_v<UVListener*> listeners;
 		List_v<UVClientPeer*> clientPeers;
@@ -45,12 +45,12 @@ namespace xx
 		static void IdleCB(uv_idle_t* handle);
 	};
 
-	struct UVListener : MPObject									// µ±Ç°Îª ipv4, ip Îª 0.0.0.0
+	struct UVListener : MPObject									// å½“å‰ä¸º ipv4, ip ä¸º 0.0.0.0
 	{
 		UV* uv;
 		uint32_t uv_listeners_index;
 		List_v<UVServerPeer*> peers;
-		virtual UVServerPeer* OnCreatePeer() = 0;					// ÖØĞ´ÒÔÌá¹©´´½¨¾ßÌå peer ÀàĞÍµÄº¯Êı
+		virtual UVServerPeer* OnCreatePeer() = 0;					// é‡å†™ä»¥æä¾›åˆ›å»ºå…·ä½“ peer ç±»å‹çš„å‡½æ•°
 		UVListener(UV* uv, int port, int backlog);
 		~UVListener();
 
@@ -67,42 +67,42 @@ namespace xx
 		Disconnecting
 	};
 
-	struct UVPeer : MPObject										// Ò»Ğ©»ù´¡Êı¾İ½á¹¹
+	struct UVPeer : MPObject										// ä¸€äº›åŸºç¡€æ•°æ®ç»“æ„
 	{
 		UVPeer();
 		~UVPeer();
 
 		UV* uv;
 		BBuffer_v bbReceive;										// for ReadCB & OnReceive
-		BBuffer_v bbReceiveLeft;									// »ıÔÜ OnReceive ´¦ÀíÊ±Ê£ÏÂµÄÊı¾İ
-		BBuffer_v bbReceivePackage;									// for OnReceivePackage ´«²Î, ÒıÓÃ bbReceive »ò bbReceiveLeft µÄÄÚ´æ
+		BBuffer_v bbReceiveLeft;									// ç§¯æ”’ OnReceive å¤„ç†æ—¶å‰©ä¸‹çš„æ•°æ®
+		BBuffer_v bbReceivePackage;									// for OnReceivePackage ä¼ å‚, å¼•ç”¨ bbReceive æˆ– bbReceiveLeft çš„å†…å­˜
 
-		BBQueue_v sendBufs;											// ´ı·¢ËÍÊı¾İ¶ÓÁĞ. ËùÓĞ Send ²Ù×÷¶¼ÊÇ½«Êı¾İÑ¹ÈëÕâÀï, ÔÙÈ¡ÊÊµ±³¤¶ÈµÄÒ»¶ÎÀ´·¢ËÍ
-		List_v<uv_buf_t> writeBufs;									// ¸´ÓÃµÄ uv Ğ´²Ù×÷ ¶à¶ÎÊı¾İ²ÎÊı
+		BBQueue_v sendBufs;											// å¾…å‘é€æ•°æ®é˜Ÿåˆ—. æ‰€æœ‰ Send æ“ä½œéƒ½æ˜¯å°†æ•°æ®å‹å…¥è¿™é‡Œ, å†å–é€‚å½“é•¿åº¦çš„ä¸€æ®µæ¥å‘é€
+		List_v<uv_buf_t> writeBufs;									// å¤ç”¨çš„ uv å†™æ“ä½œ å¤šæ®µæ•°æ®å‚æ•°
 
-		bool sending = false;										// ·¢ËÍ²Ù×÷±ê¼Ç. µ±Ç°Éè¼ÆÖĞÖ»Í¬Ê±·¢Ò»¶ÎÊı¾İ, ³É¹¦»Øµ÷Ê±²Å¼ÌĞø·¢ÏÂÒ»¶Î
-		UVPeerStates state;											// Á¬½Ó×´Ì¬( server peer ³õÊ¼Îª Connected, client peer Îª Disconnected )
+		bool sending = false;										// å‘é€æ“ä½œæ ‡è®°. å½“å‰è®¾è®¡ä¸­åªåŒæ—¶å‘ä¸€æ®µæ•°æ®, æˆåŠŸå›è°ƒæ—¶æ‰ç»§ç»­å‘ä¸‹ä¸€æ®µ
+		UVPeerStates state;											// è¿æ¥çŠ¶æ€( server peer åˆå§‹ä¸º Connected, client peer ä¸º Disconnected )
 
-		virtual void OnReceive();									// Ä¬ÈÏÊµÏÖÎª¶ÁÈ¡°ü( 2 byte³¤¶È + Êı¾İ ), ²¢ÓÚ´ÕÆëÍêÕû°üºó call OnReceivePackage
-		virtual void OnReceivePackage(BBuffer& bb) = 0;				// OnReceive ´ÕÆëÒ»¸ö°üÊ±½«²úÉú¸Ãµ÷ÓÃ
-		virtual void OnDisconnect();								// Client Peer ÔÚÕâÀï×ö init stream µÄÊÂÇé ÒÔ±ã¿ÉÒÔ·´¸´Ê¹ÓÃ client peer
+		virtual void OnReceive();									// é»˜è®¤å®ç°ä¸ºè¯»å–åŒ…( 2 byteé•¿åº¦ + æ•°æ® ), å¹¶äºå‡‘é½å®Œæ•´åŒ…å call OnReceivePackage
+		virtual void OnReceivePackage(BBuffer& bb) = 0;				// OnReceive å‡‘é½ä¸€ä¸ªåŒ…æ—¶å°†äº§ç”Ÿè¯¥è°ƒç”¨
+		virtual void OnDisconnect();								// Client Peer åœ¨è¿™é‡Œåš init stream çš„äº‹æƒ… ä»¥ä¾¿å¯ä»¥åå¤ä½¿ç”¨ client peer
 
-		BBuffer* GetSendBB(int const& capacity = 0);				// »ñÈ¡»ò´´½¨Ò»¸ö·¢ËÍÓÃµÄ BBuffer( ÀïÃæ¿ÉÄÜÒÑ¾­ÓĞ²¿·ÖÊı¾İ ), ²»Òª×Ô¼º³ÖÓĞ, ÌîÍê´«¸ø Send( ²»¹ÜÊÇ·ñ¶Ï¿ª )
-		int Send(BBuffer* const& bb);								// ½«Êı¾İ"ÒÆÈë"´ı·¢ËÍ¶ÓÁĞ, ¿ÉÄÜÁ¢¼´·¢ËÍ, Á¢¼´·µ»ØÊÇ·ñ³É¹¦( 0 ±íÊ¾³É¹¦ )( Ê§°ÜÔ­Òò¿ÉÄÜÊÇ´ı·¢Êı¾İ¹ı¶à )
-		virtual int Disconnect(bool const& immediately = true);		// ¶Ï¿ª( ½Ó×Å»á Release ). immediately Îª·ñ¾Í×ß shutdown Ä£Ê½( ÑÓ³ÙÉ±, ÄÜ¾¡¿ÉÄÜÈ·±£Êı¾İ·¢³öÈ¥ )
+		BBuffer* GetSendBB(int const& capacity = 0);				// è·å–æˆ–åˆ›å»ºä¸€ä¸ªå‘é€ç”¨çš„ BBuffer( é‡Œé¢å¯èƒ½å·²ç»æœ‰éƒ¨åˆ†æ•°æ® ), ä¸è¦è‡ªå·±æŒæœ‰, å¡«å®Œä¼ ç»™ Send( ä¸ç®¡æ˜¯å¦æ–­å¼€ )
+		int Send(BBuffer* const& bb);								// å°†æ•°æ®"ç§»å…¥"å¾…å‘é€é˜Ÿåˆ—, å¯èƒ½ç«‹å³å‘é€, ç«‹å³è¿”å›æ˜¯å¦æˆåŠŸ( 0 è¡¨ç¤ºæˆåŠŸ )( å¤±è´¥åŸå› å¯èƒ½æ˜¯å¾…å‘æ•°æ®è¿‡å¤š )
+		virtual int Disconnect(bool const& immediately = true);		// æ–­å¼€( æ¥ç€ä¼š Release ). immediately ä¸ºå¦å°±èµ° shutdown æ¨¡å¼( å»¶è¿Ÿæ€, èƒ½å°½å¯èƒ½ç¡®ä¿æ•°æ®å‘å‡ºå» )
 
-		int SetNoDelay(bool const& enable);							// ¿ª¹Ø tcp ÑÓ³Ù·¢ËÍÒÔ»ıÔÜÊı¾İµÄ¹¦ÄÜ
-		int SetKeepAlive(bool const& enable, uint32_t const& delay);// ÉèÖÃ tcp ±£³Ö»îÔ¾µÄÊ±³¤
+		int SetNoDelay(bool const& enable);							// å¼€å…³ tcp å»¶è¿Ÿå‘é€ä»¥ç§¯æ”’æ•°æ®çš„åŠŸèƒ½
+		int SetKeepAlive(bool const& enable, uint32_t const& delay);// è®¾ç½® tcp ä¿æŒæ´»è·ƒçš„æ—¶é•¿
 
 		String_v tmpStr;
 		String& GetPeerName();
 
-		int Send();													// ÄÚ²¿º¯Êı, ¿ªÊ¼·¢ËÍ sendBufs ÀïµÄ¶«Î÷
-		void Clear();												// ÄÚ²¿º¯Êı, ÓÚ¶Ï¿ªÖ®ºóÇåÀíÊÕ·¢Ïà¹Ø»º´æ
+		int Send();													// å†…éƒ¨å‡½æ•°, å¼€å§‹å‘é€ sendBufs é‡Œçš„ä¸œè¥¿
+		void Clear();												// å†…éƒ¨å‡½æ•°, äºæ–­å¼€ä¹‹åæ¸…ç†æ”¶å‘ç›¸å…³ç¼“å­˜
 
-		// ·½±ãÊ¹ÓÃµÄÒ»Ğ©À©Õ¹( µ±Ç°²¢²»Ö±½ÓÓ³Éäµ½ C# )
-		List_v<MPObject*> recvPkgs;									// ¿ÉÓÚ OnReceivePackage Ê±ÓÃ bb.ReadPackages(*recvPkgs) À´Ìî³äËü. ĞëÓÃ bb.ReleasePackages ÊÍ·Å.
-		void ReleaseRecvPkgs();										// Ö÷¶¯»ØÊÕ recvPkgs µÄÊı¾İ
+		// æ–¹ä¾¿ä½¿ç”¨çš„ä¸€äº›æ‰©å±•( å½“å‰å¹¶ä¸ç›´æ¥æ˜ å°„åˆ° C# )
+		List_v<MPObject*> recvPkgs;									// å¯äº OnReceivePackage æ—¶ç”¨ bb.ReadPackages(*recvPkgs) æ¥å¡«å……å®ƒ. é¡»ç”¨ bb.ReleasePackages é‡Šæ”¾.
+		void ReleaseRecvPkgs();										// ä¸»åŠ¨å›æ”¶ recvPkgs çš„æ•°æ®
 	protected:
 		template<typename T>
 		int SendCore(T const& pkg);
@@ -114,9 +114,9 @@ namespace xx
 		void SendCombineCore(BBuffer& bb, T const& pkg, TS const& ... pkgs);
 	public:
 		template<typename ...TS>
-		int SendPackages(TS const& ... pkgs);						// Óï·¨ÌÇ, µÈÍ¬ÓÚĞ´¶àĞĞµÄ Send Õë¶ÔÃ¿¸ö²ÎÊı. »á·¢³ö pkgs ¸öÊı¸ö [head] + [data]
+		int SendPackages(TS const& ... pkgs);						// è¯­æ³•ç³–, ç­‰åŒäºå†™å¤šè¡Œçš„ Send é’ˆå¯¹æ¯ä¸ªå‚æ•°. ä¼šå‘å‡º pkgs ä¸ªæ•°ä¸ª [head] + [data]
 		template<typename ...TS>
-		int SendCombine(TS const& ... pkgs);						// »áÔÚÎïÀíÉÏ½«¶à¸ö°üºÏ²¢³É 1 ¸ö [head] + [data] ÖĞµÄ [data] ·¢³ö
+		int SendCombine(TS const& ... pkgs);						// ä¼šåœ¨ç‰©ç†ä¸Šå°†å¤šä¸ªåŒ…åˆå¹¶æˆ 1 ä¸ª [head] + [data] ä¸­çš„ [data] å‘å‡º
 
 		// uv's
 		uv_tcp_t stream;
@@ -130,7 +130,7 @@ namespace xx
 		static void SendCB(uv_write_t *req, int status);
 	};
 
-	struct UVServerPeer : UVPeer									// µ±Ç°Îª ipv4, Î´À´¿¼ÂÇ v4 v6 Í¬Ê±Ö§³Ö
+	struct UVServerPeer : UVPeer									// å½“å‰ä¸º ipv4, æœªæ¥è€ƒè™‘ v4 v6 åŒæ—¶æ”¯æŒ
 	{
 		UVListener* listener;
 		uint32_t listener_peers_index;
@@ -142,15 +142,15 @@ namespace xx
 	struct UVClientPeer : UVPeer
 	{
 		uint32_t uv_clientPeers_index;
-		int lastStatus = 0;											// ×îºó×´Ì¬( Á¬½Ó, ¶Ï¿ª )
+		int lastStatus = 0;											// æœ€åçŠ¶æ€( è¿æ¥, æ–­å¼€ )
 
 		UVClientPeer(UV* uv);
-		~UVClientPeer();											// Èç¹ûÎö¹¹Ê± connected Îª true Ôò±íÊ¾ÒÑ¶ÏÏß
+		~UVClientPeer();											// å¦‚æœææ„æ—¶ connected ä¸º true åˆ™è¡¨ç¤ºå·²æ–­çº¿
 
 		int SetAddress(char const* ip, int port);
 		int Connect();
-		virtual void OnConnect() = 0;								// lastStatus ·Ç 0 »ò connected Îª false ±íÊ¾Ã»Á¬ÉÏ
-		virtual void OnDisconnect() override;						// Õâ¸öÖØĞ´Ê±Èç¹ûÒª¸´ÓÃ client peer, ±ØĞëµ÷»ùÀàµÄÕâ¸öº¯ÊıÒÔ init stream
+		virtual void OnConnect() = 0;								// lastStatus é 0 æˆ– connected ä¸º false è¡¨ç¤ºæ²¡è¿ä¸Š
+		virtual void OnDisconnect() override;						// è¿™ä¸ªé‡å†™æ—¶å¦‚æœè¦å¤ç”¨ client peer, å¿…é¡»è°ƒåŸºç±»çš„è¿™ä¸ªå‡½æ•°ä»¥ init stream
 
 		// uv's
 		sockaddr_in tarAddr;

@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include <cstdint>
 #include <type_traits>
 #include <limits>
@@ -9,10 +9,10 @@
 namespace xx
 {
 	/**************************************************************************************************/
-	// Ò»Ğ©´¦Àí±ä³¤¶ÁĞ´µÄ»ù´¡º¯Êı
+	// ä¸€äº›å¤„ç†å˜é•¿è¯»å†™çš„åŸºç¡€å‡½æ•°
 	/**************************************************************************************************/
 
-	// negative -> ZigZag positive.  Ğ§¹û£º¸ºÊı±äÕı£¬ÕıÊı *= 2
+	// negative -> ZigZag positive.  æ•ˆæœï¼šè´Ÿæ•°å˜æ­£ï¼Œæ­£æ•° *= 2
 
 	inline uint16_t ZigZagEncode(int16_t in)
 	{
@@ -193,10 +193,10 @@ namespace xx
 
 
 	/**************************************************************************************************/
-	// ÀàĞÍ--²Ù×÷ÊÊÅäÄ£°åÇø
+	// ç±»å‹--æ“ä½œé€‚é…æ¨¡æ¿åŒº
 	/**************************************************************************************************/
 
-	// »ù´¡ÊÊÅäÄ£°å
+	// åŸºç¡€é€‚é…æ¨¡æ¿
 	template<typename T, typename ENABLE = void>
 	struct BytesFunc
 	{
@@ -217,7 +217,7 @@ namespace xx
 		}
 	};
 
-	// ÊÊÅä 1 ×Ö½Ú³¤¶ÈµÄ ÊıÖµ »ò float( ÕâĞ©ÀàĞÍÖ±½Ó memcpy )
+	// é€‚é… 1 å­—èŠ‚é•¿åº¦çš„ æ•°å€¼ æˆ– float( è¿™äº›ç±»å‹ç›´æ¥ memcpy )
 	template<typename T>
 	struct BytesFunc<T, std::enable_if_t< (std::is_arithmetic<T>::value && sizeof(T) == 1) || (std::is_floating_point<T>::value && sizeof(T) == 4) >>
 	{
@@ -239,7 +239,7 @@ namespace xx
 		}
 	};
 
-	// ÊÊÅä 2+ ×Ö½ÚÎŞ·ûºÅÕûÊı( ±ä³¤¶ÁĞ´ )
+	// é€‚é… 2+ å­—èŠ‚æ— ç¬¦å·æ•´æ•°( å˜é•¿è¯»å†™ )
 	template<typename T>
 	struct BytesFunc<T, std::enable_if_t<std::is_integral<T>::value && sizeof(T) >= 2 && std::is_unsigned<T>::value>>
 	{
@@ -257,7 +257,7 @@ namespace xx
 		}
 	};
 
-	// ÊÊÅä 2+ ×Ö½ÚÓĞ·ûºÅÕûÊı( ZigZag ±ä³¤¶ÁĞ´ )
+	// é€‚é… 2+ å­—èŠ‚æœ‰ç¬¦å·æ•´æ•°( ZigZag å˜é•¿è¯»å†™ )
 	template<typename T>
 	struct BytesFunc<T, std::enable_if_t<std::is_integral<T>::value && sizeof(T) >= 2 && !std::is_unsigned<T>::value>>
 	{
@@ -278,7 +278,7 @@ namespace xx
 		}
 	};
 
-	// ÊÊÅä enum( ¸ù¾İÔ­Ê¼Êı¾İÀàĞÍµ÷ÉÏÃæµÄÊÊÅä )
+	// é€‚é… enum( æ ¹æ®åŸå§‹æ•°æ®ç±»å‹è°ƒä¸Šé¢çš„é€‚é… )
 	template<typename T>
 	struct BytesFunc<T, std::enable_if_t<std::is_enum<T>::value>>
 	{
@@ -297,7 +297,7 @@ namespace xx
 		}
 	};
 
-	// ÊÊÅä double
+	// é€‚é… double
 	template<>
 	struct BytesFunc<double, void>
 	{
@@ -345,8 +345,8 @@ namespace xx
 		}
 		static inline int ReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, double &out)
 		{
-			if (offset >= dataLen) return -1;	    // È·±£»¹ÓĞ 1 ×Ö½Ú¿É¶Á
-			switch (srcBuf[offset++])				// Ìø¹ı 1 ×Ö½Ú
+			if (offset >= dataLen) return -1;	    // ç¡®ä¿è¿˜æœ‰ 1 å­—èŠ‚å¯è¯»
+			switch (srcBuf[offset++])				// è·³è¿‡ 1 å­—èŠ‚
 			{
 			case 0:
 				out = 0;
@@ -381,7 +381,7 @@ namespace xx
 		}
 	};
 
-	// ÊÊÅä std::array Êı×é
+	// é€‚é… std::array æ•°ç»„
 	template<typename T, size_t len>
 	struct BytesFunc<std::array<T, len>, void>
 	{
@@ -423,7 +423,7 @@ namespace xx
 		}
 	};
 
-	// ÊÊÅä literal string( -1 ÊÇÎªÁËÈ¥µôÎ²²¿µÄ \0 )
+	// é€‚é… literal string( -1 æ˜¯ä¸ºäº†å»æ‰å°¾éƒ¨çš„ \0 )
 	template<uint32_t len>
 	struct BytesFunc<char [len], void>
 	{
@@ -448,7 +448,7 @@ namespace xx
 
 
 	/**************************************************************************************************/
-	// ½« BytesFunc Ó³ÉäÎªÈ«¾Öº¯ÊıÒÔ·½±ã²»½èÖú BBuffer ÀàÀ´Ìî³ä buf
+	// å°† BytesFunc æ˜ å°„ä¸ºå…¨å±€å‡½æ•°ä»¥æ–¹ä¾¿ä¸å€ŸåŠ© BBuffer ç±»æ¥å¡«å…… buf
 	/**************************************************************************************************/
 
 	template<typename T> uint32_t BBCalc(T const &in)
@@ -465,7 +465,7 @@ namespace xx
 	}
 
 	/**************************************************************************************************/
-	// ±ä²ÎÄ£°åÖ§³Ö
+	// å˜å‚æ¨¡æ¿æ”¯æŒ
 	/**************************************************************************************************/
 
 	template<typename T, typename...TS>

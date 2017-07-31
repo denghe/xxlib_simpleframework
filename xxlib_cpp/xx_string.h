@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "xx_list.h"
 #include "xx_links.h"
 #include "xx_charsutils.h"

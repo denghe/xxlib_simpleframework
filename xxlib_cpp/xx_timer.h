@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include "xx_mempool.h"
 
 namespace xx
@@ -8,24 +8,24 @@ namespace xx
 	struct TimerManager;
 	struct TimerBase : MPObject
 	{
-		// TimerManager ÓÚ Register Ê±Ìî³äÏÂÁĞ³ÉÔ±
-		TimerManager* timerManager = nullptr;	// Ö¸Ïò¹ÜÀíÆ÷
-		TimerBase* prevTimer = nullptr;			// Ö¸ÏòÍ¬Ò» ticks ÏÂµÄÉÏÒ» timer
-		TimerBase* nextTimer = nullptr;			// Ö¸ÏòÍ¬Ò» ticks ÏÂµÄÏÂÒ» timer
-		int	timerssIndex = -1;					// Î»ÓÚ¹ÜÀíÆ÷ timerss Êı×éµÄÏÂ±ê
+		// TimerManager äº Register æ—¶å¡«å……ä¸‹åˆ—æˆå‘˜
+		TimerManager* timerManager = nullptr;	// æŒ‡å‘ç®¡ç†å™¨
+		TimerBase* prevTimer = nullptr;			// æŒ‡å‘åŒä¸€ ticks ä¸‹çš„ä¸Šä¸€ timer
+		TimerBase* nextTimer = nullptr;			// æŒ‡å‘åŒä¸€ ticks ä¸‹çš„ä¸‹ä¸€ timer
+		int	timerssIndex = -1;					// ä½äºç®¡ç†å™¨ timerss æ•°ç»„çš„ä¸‹æ ‡
 
-		virtual void Execute() = 0;				// Ê±¼äµ½´ïºóÒªÖ´ĞĞµÄÄÚÈİ( Ö´ĞĞºóÂß¼­ÉÏ»á´¥·¢ RemoveFromManager ĞĞÎª )
-		void RemoveFromManager();				// ´Ó¹ÜÀíÆ÷ÖĞÒÆ³ı( »á´¥·¢ Release ĞĞÎª )
+		virtual void Execute() = 0;				// æ—¶é—´åˆ°è¾¾åè¦æ‰§è¡Œçš„å†…å®¹( æ‰§è¡Œåé€»è¾‘ä¸Šä¼šè§¦å‘ RemoveFromManager è¡Œä¸º )
+		void RemoveFromManager();				// ä»ç®¡ç†å™¨ä¸­ç§»é™¤( ä¼šè§¦å‘ Release è¡Œä¸º )
 	};
 
-	// »ùÓÚÄÚ´æ³ØµÄ timer ¹ÜÀíÆ÷, Ö»Ö§³Ö´«Èë¼Ì³ĞÖÁ TimerBase µÄ·Âº¯ÊıÀà
+	// åŸºäºå†…å­˜æ± çš„ timer ç®¡ç†å™¨, åªæ”¯æŒä¼ å…¥ç»§æ‰¿è‡³ TimerBase çš„ä»¿å‡½æ•°ç±»
 	struct TimerManager : MPObject
 	{
-		TimerBase**				timerss;		// timer Á´±íÊı×é
-		int						timerssLen;		// timer Á´±íÊı×é ³¤¶È
-		int						cursor = 0;		// »·ĞÎÓÎ±ê
+		TimerBase**				timerss;		// timer é“¾è¡¨æ•°ç»„
+		int						timerssLen;		// timer é“¾è¡¨æ•°ç»„ é•¿åº¦
+		int						cursor = 0;		// ç¯å½¢æ¸¸æ ‡
 
-		// Éè¶¨Ê±¼ä×Ü¿Ì¶È
+		// è®¾å®šæ—¶é—´æ€»åˆ»åº¦
 		explicit TimerManager(int timerssLen = 60)
 		{
 			Init(timerssLen);
@@ -46,33 +46,33 @@ namespace xx
 		}
 		inline void Clear()
 		{
-			// ±éÀúËùÓĞ ticks Á´±í²¢ Release
+			// éå†æ‰€æœ‰ ticks é“¾è¡¨å¹¶ Release
 			for (int i = 0; i < timerssLen; ++i)
 			{
 				auto t = timerss[i];
 				while (t)
 				{
-					auto nt = t->nextTimer;	// ÏÈ°ÑÖ¸ÏòÏÂÒ»½ÚµãµÄÖ¸ÕëÈ¡µ½, ÃâµÃÏÂÃæ Release ÁË¿ÉÄÜ¾ÍÈ¡²»µ½ÁË
-					t->Release();			// ¼õ³Ö / Îö¹¹
-					t = nt;					// ¼ÌĞø±éÀúÏÂÒ»½Úµã
+					auto nt = t->nextTimer;	// å…ˆæŠŠæŒ‡å‘ä¸‹ä¸€èŠ‚ç‚¹çš„æŒ‡é’ˆå–åˆ°, å…å¾—ä¸‹é¢ Release äº†å¯èƒ½å°±å–ä¸åˆ°äº†
+					t->Release();			// å‡æŒ / ææ„
+					t = nt;					// ç»§ç»­éå†ä¸‹ä¸€èŠ‚ç‚¹
 				};
 			}
 		}
 
-		// ÓÚÖ¸¶¨ interval ËùÔÚ timers Á´±í´¦·ÅÈëÒ»¸ö timer( ²»¼Ó³Ö )
+		// äºæŒ‡å®š interval æ‰€åœ¨ timers é“¾è¡¨å¤„æ”¾å…¥ä¸€ä¸ª timer( ä¸åŠ æŒ )
 		inline void AddDirect(int interval, TimerBase* t)
 		{
 			assert(t && interval >= 0 && interval < timerssLen);
 
-			// »·ĞÎ¶¨Î»µ½ timers ÏÂ±ê
+			// ç¯å½¢å®šä½åˆ° timers ä¸‹æ ‡
 			interval += cursor;
 			if (interval >= timerssLen) interval -= timerssLen;
 
-			// Ìî³ä¹ÜÀíÆ÷ & Á´±íĞÅÏ¢
+			// å¡«å……ç®¡ç†å™¨ & é“¾è¡¨ä¿¡æ¯
 			t->timerManager = this;
 			t->prevTimer = nullptr;
 			t->timerssIndex = interval;
-			if (timerss[interval])				// ÓĞ¾ÍÁ´ÆğÀ´
+			if (timerss[interval])				// æœ‰å°±é“¾èµ·æ¥
 			{
 				t->nextTimer = timerss[interval];
 				timerss[interval]->prevTimer = t;
@@ -81,17 +81,17 @@ namespace xx
 			{
 				t->nextTimer = nullptr;
 			}
-			timerss[interval] = t;				// ³ÉÎªÁ´±íÍ·
+			timerss[interval] = t;				// æˆä¸ºé“¾è¡¨å¤´
 		}
 
-		// ÓÚÖ¸¶¨ interval ËùÔÚ timers Á´±í´¦·ÅÈëÒ»¸ö timer
+		// äºæŒ‡å®š interval æ‰€åœ¨ timers é“¾è¡¨å¤„æ”¾å…¥ä¸€ä¸ª timer
 		inline void Add(int interval, TimerBase* t)
 		{
 			t->AddRef();
 			AddDirect(interval, t);
 		}
 
-		// ÒÆ³ıÒ»¸ö timer
+		// ç§»é™¤ä¸€ä¸ª timer
 		inline void Remove(TimerBase* t)
 		{
 			assert(t->timerManager && (t->prevTimer || timerss[t->timerssIndex] == t));
@@ -102,14 +102,14 @@ namespace xx
 			t->Release();
 		}
 
-		// ´¥·¢ µ±Ç°cursor µÄ timers Ö®ºó cursor++
+		// è§¦å‘ å½“å‰cursor çš„ timers ä¹‹å cursor++
 		inline void Update()
 		{
-			// ±éÀúµ±Ç° ticks Á´±í²¢Ö´ĞĞ
+			// éå†å½“å‰ ticks é“¾è¡¨å¹¶æ‰§è¡Œ
 			auto t = timerss[cursor];
 			while (t)
 			{
-				t->Execute();					// Ö´ĞĞ
+				t->Execute();					// æ‰§è¡Œ
 
 				//t->timerManager = nullptr;
 				auto nt = t->nextTimer;
@@ -118,12 +118,12 @@ namespace xx
 				t = nt;
 			};
 
-			timerss[cursor] = 0;				// Çå¿ÕÁ´±íÍ·
-			cursor++;							// »·ÒÆÓÎ±ê
+			timerss[cursor] = 0;				// æ¸…ç©ºé“¾è¡¨å¤´
+			cursor++;							// ç¯ç§»æ¸¸æ ‡
 			if (cursor == timerssLen) cursor = 0;
 		}
 
-		// ´¥·¢¶à¸ö ticks µÄ timerss
+		// è§¦å‘å¤šä¸ª ticks çš„ timerss
 		void Update(int ticks)
 		{
 			for (int i = 0; i < ticks; ++i) Update();

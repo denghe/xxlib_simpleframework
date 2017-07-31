@@ -1,22 +1,22 @@
-#pragma once
+ï»¿#pragma once
 #include "xx_mempool.h"
 #include "xx_bbuffer.h"
 #include "xx_queue.h"
 
 namespace xx
 {
-	// °ü¶ÓÁĞ¡£Ìá¹©°´×Ö½ÚÊıÁãÉ¢ pop µÄ¹¦ÄÜ
-	// °üÖ±½ÓÊ¹ÓÃ BBuffer À´ÊµÏÖ, Ö¸Õë·½Ê½Ê¹ÓÃ, ×ßÒıÓÃ¼ÆÊıÉ¾³ı
+	// åŒ…é˜Ÿåˆ—ã€‚æä¾›æŒ‰å­—èŠ‚æ•°é›¶æ•£ pop çš„åŠŸèƒ½
+	// åŒ…ç›´æ¥ä½¿ç”¨ BBuffer æ¥å®ç°, æŒ‡é’ˆæ–¹å¼ä½¿ç”¨, èµ°å¼•ç”¨è®¡æ•°åˆ é™¤
 	struct BBQueue : protected Queue<BBuffer*>
 	{
 		typedef Queue<BBuffer*> BaseType;
-		uint32_t numPopBufs = 0;          // ÒÑ pop buf ¸öÊı
+		uint32_t numPopBufs = 0;          // å·² pop buf ä¸ªæ•°
 
-		uint32_t numPushLen = 0;          // ÒÑ push ×Ö½ÚÊı for Í³¼Æ / ÏŞËÙÉ¶µÄ
-		uint32_t numPopLen = 0;           // ÒÑ pop ×Ö½ÚÊı for Í³¼Æ / ÏŞËÙÉ¶µÄ
+		uint32_t numPushLen = 0;          // å·² push å­—èŠ‚æ•° for ç»Ÿè®¡ / é™é€Ÿå•¥çš„
+		uint32_t numPopLen = 0;           // å·² pop å­—èŠ‚æ•° for ç»Ÿè®¡ / é™é€Ÿå•¥çš„
 
-		uint32_t bufIndex = 0;            // ´ı·¢ buf Ë÷Òı( ¼õÈ¥ numPopBufs ²ÅÊÇ bufs ÏÂ±ê )
-		uint32_t byteOffset = 0;          // ´ı·¢ buf µÄ´ı·¢ÄÚÈİÆğÊ¼Ë÷Òı
+		uint32_t bufIndex = 0;            // å¾…å‘ buf ç´¢å¼•( å‡å» numPopBufs æ‰æ˜¯ bufs ä¸‹æ ‡ )
+		uint32_t byteOffset = 0;          // å¾…å‘ buf çš„å¾…å‘å†…å®¹èµ·å§‹ç´¢å¼•
 
 		BBQueue(BBQueue const& o) = delete;
 		BBQueue& operator=(BBQueue const& o) = delete;
@@ -40,11 +40,11 @@ namespace xx
 			mempool().SafeRelease(idxStore);
 		}
 
-		// ¹«ÓÃ, ÒÆµ½ĞÂ´´½¨µÄ BB ÖĞ, Push Ê±ÒÆ»Ø.
+		// å…¬ç”¨, ç§»åˆ°æ–°åˆ›å»ºçš„ BB ä¸­, Push æ—¶ç§»å›.
 		Dict<void*, uint32_t>*						ptrStore = nullptr;
 		Dict<uint32_t, std::pair<void*, uint16_t>>*	idxStore = nullptr;
 
-		// ´´½¨Ò»¸ö BBuffer ·µ»Ø( ½«Ìî³ä¹«ÓÃ ptrStore & idxStore )
+		// åˆ›å»ºä¸€ä¸ª BBuffer è¿”å›( å°†å¡«å……å…¬ç”¨ ptrStore & idxStore )
 		BBuffer* CreateBB(uint32_t const& capacity = 0)
 		{
 			auto bb = mempool().Create<BBuffer>(capacity);
@@ -53,7 +53,7 @@ namespace xx
 			return bb;
 		}
 
-		// Èç¹û¶ÓÁĞÎ²°ü´æÔÚ£¬ÇÒ ·ÇÕıÔÚ·¢ËÍ×´Ì¬ ÇÒ ÒıÓÃ¼ÆÊıÎª 1( ·ÇÈº·¢ ), ¾Í·µ»ØËüÓÃÓÚ¼ÌĞøÌî³ä. ·ñÔòÓÃµ±Ç°ÄÚ´æ³ØĞÂ½¨Ò»¸ö·µ»Ø.
+		// å¦‚æœé˜Ÿåˆ—å°¾åŒ…å­˜åœ¨ï¼Œä¸” éæ­£åœ¨å‘é€çŠ¶æ€ ä¸” å¼•ç”¨è®¡æ•°ä¸º 1( éç¾¤å‘ ), å°±è¿”å›å®ƒç”¨äºç»§ç»­å¡«å……. å¦åˆ™ç”¨å½“å‰å†…å­˜æ± æ–°å»ºä¸€ä¸ªè¿”å›.
 		BBuffer* PopLastBB(uint32_t const& capacity = 0)
 		{
 			if (Count() + numPopBufs > bufIndex && Last()->refCount() == 1)
@@ -68,7 +68,7 @@ namespace xx
 			return CreateBB(capacity);
 		}
 
-		// ½«´ı·¢Êı¾İ bb Ñ¹Èë¶ÓÁĞÍĞ¹Ü( ½«Í¬²½ÏàÓ¦µÄÍ³¼ÆÊıÖµ, PopTo ºó½«×Ô¶¯ Release ), Ö®ºó²»¿ÉÒÔÔÙ¼ÌĞø²Ù×÷ bb
+		// å°†å¾…å‘æ•°æ® bb å‹å…¥é˜Ÿåˆ—æ‰˜ç®¡( å°†åŒæ­¥ç›¸åº”çš„ç»Ÿè®¡æ•°å€¼, PopTo åå°†è‡ªåŠ¨ Release ), ä¹‹åä¸å¯ä»¥å†ç»§ç»­æ“ä½œ bb
 		void Push(BBuffer* const& bb)
 		{
 			numPushLen += bb->dataLen;
@@ -77,16 +77,16 @@ namespace xx
 			this->BaseType::Push(bb);
 		}
 
-		// µ¯³öÖ¸¶¨×Ö½Ú³¤¶Èµ½Ö¸¶¨ÈİÆ÷( [ { len, bufPtr,  }, ... ] ¸ñÊ½ ), ·µ»ØÊµ¼Êµ¯³ö×Ö½ÚÊı
-		// ÏÂ´Îµ÷ÓÃÊ±½«ÇåÀíÉÏÒ»´ÎµÄÄÚ´æ ÒÔÈ·±£Êı¾İ³ÖÓĞµ½·¢ËÍ³É¹¦. Ò²¾ÍÊÇËµÖ»ÓĞ·¢ËÍ³É¹¦Ö®ºó²ÅÄÜÔÙ´Îµ÷ÓÃ¸Ãº¯Êı.
-		// Èç¹û·¢ËÍÊ§°Ü, ÒªÖØÊÔ, outBufs µÄÖµÊÇ¿ÉÒÔ·´¸´Ê¹ÓÃµÄ.
+		// å¼¹å‡ºæŒ‡å®šå­—èŠ‚é•¿åº¦åˆ°æŒ‡å®šå®¹å™¨( [ { len, bufPtr,  }, ... ] æ ¼å¼ ), è¿”å›å®é™…å¼¹å‡ºå­—èŠ‚æ•°
+		// ä¸‹æ¬¡è°ƒç”¨æ—¶å°†æ¸…ç†ä¸Šä¸€æ¬¡çš„å†…å­˜ ä»¥ç¡®ä¿æ•°æ®æŒæœ‰åˆ°å‘é€æˆåŠŸ. ä¹Ÿå°±æ˜¯è¯´åªæœ‰å‘é€æˆåŠŸä¹‹åæ‰èƒ½å†æ¬¡è°ƒç”¨è¯¥å‡½æ•°.
+		// å¦‚æœå‘é€å¤±è´¥, è¦é‡è¯•, outBufs çš„å€¼æ˜¯å¯ä»¥åå¤ä½¿ç”¨çš„.
 		template<typename T, uint32_t maxBufsCount = 64>
 		uint32_t PopTo(List<T>& outBufs, uint32_t len)
 		{
 			outBufs.Clear();
 			if (!len) return 0;
 
-			if (bufIndex != numPopBufs)							// ÇåÀíÄÚ´æ
+			if (bufIndex != numPopBufs)							// æ¸…ç†å†…å­˜
 			{
 				for (uint32_t i = 0; i < bufIndex - numPopBufs; i++)
 				{
@@ -96,9 +96,9 @@ namespace xx
 				numPopBufs = bufIndex;
 			}
 
-			auto maxIdx = MIN(maxBufsCount, Count());		// ÌıËµÅúÁ¿·¢ËÍÖ¸ÁîÒ»°ãÖ»Ö§³Ö×î¶à 64 ¶ÎÊı¾İ
+			auto maxIdx = MIN(maxBufsCount, Count());		// å¬è¯´æ‰¹é‡å‘é€æŒ‡ä»¤ä¸€èˆ¬åªæ”¯æŒæœ€å¤š 64 æ®µæ•°æ®
 			auto idx = uint32_t(bufIndex - numPopBufs);
-			if (idx >= maxIdx) return 0;						// Ã»ÓĞÊı¾İÒª·¢
+			if (idx >= maxIdx) return 0;						// æ²¡æœ‰æ•°æ®è¦å‘
 
 			auto bak_len = len;
 			while (len > 0 && idx < maxIdx)
@@ -124,7 +124,7 @@ namespace xx
 			return bak_len - len;
 		}
 
-		// Çå¹âËùÓĞÊı¾İ, ÊÍ·ÅËùÓĞ bb
+		// æ¸…å…‰æ‰€æœ‰æ•°æ®, é‡Šæ”¾æ‰€æœ‰ bb
 		void Clear()
 		{
 			while (!Empty())
@@ -138,7 +138,7 @@ namespace xx
 			byteOffset = 0;
 		}
 
-		// »ñÈ¡µ±Ç°»¹ÓĞ¶àÉÙ×Ö½ÚµÄÊı¾İ´ı·¢
+		// è·å–å½“å‰è¿˜æœ‰å¤šå°‘å­—èŠ‚çš„æ•°æ®å¾…å‘
 		uint32_t BytesCount()
 		{
 			return numPushLen - numPopLen;
@@ -149,7 +149,7 @@ namespace xx
 
 
 	/*************************************************************************/
-	// ÖµÀàĞÍÊ¹ÓÃĞÎÌ¬°ü×°
+	// å€¼ç±»å‹ä½¿ç”¨å½¢æ€åŒ…è£…
 	/*************************************************************************/
 
 	using BBQueue_v = MemHeaderBox<BBQueue>;

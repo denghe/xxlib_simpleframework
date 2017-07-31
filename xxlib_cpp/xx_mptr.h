@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include "xx_defines.h"
 #include "xx_memheader.h"
 
@@ -6,7 +6,7 @@ namespace xx
 {
 	struct MPObject;
 
-	// Óë MemPool µÄ°æ±¾ºÅÏàÅäºÏµÄÖÇÄÜÖ¸ÕëÖ®Ä£°åÅÉÉúÀà
+	// ä¸ MemPool çš„ç‰ˆæœ¬å·ç›¸é…åˆçš„æ™ºèƒ½æŒ‡é’ˆä¹‹æ¨¡æ¿æ´¾ç”Ÿç±»
 	template<typename T>
 	struct MPtr
 	{
@@ -52,7 +52,7 @@ namespace xx
 		{
 			return Ensure() != nullptr;
 		}
-		// ÕâÑùÖ±½ÓÓÃÊÇ²»°²È«µÄ
+		// è¿™æ ·ç›´æ¥ç”¨æ˜¯ä¸å®‰å…¨çš„
 		T* operator->() const
 		{
 			return (T*)pointer;

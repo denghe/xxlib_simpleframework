@@ -1,32 +1,32 @@
-#pragma once
+ï»¿#pragma once
 #include <cstdint>
 
 namespace xx
 {
-	// ¾­ÓÉ MemPool ·ÖÅäµÄÄÚ´æ¶¼´øÓĞÕâÑùÒ»¸öÍ·²¿
+	// ç»ç”± MemPool åˆ†é…çš„å†…å­˜éƒ½å¸¦æœ‰è¿™æ ·ä¸€ä¸ªå¤´éƒ¨
 	struct MemHeader_VersionNumber
 	{
-		// ×ÔÔö°æ±¾ºÅ, ×÷ÎªÊ¶±ğµ±Ç°Ö¸ÕëÊÇ·ñÓĞĞ§µÄÖØÒª±êÊ¶
+		// è‡ªå¢ç‰ˆæœ¬å·, ä½œä¸ºè¯†åˆ«å½“å‰æŒ‡é’ˆæ˜¯å¦æœ‰æ•ˆçš„é‡è¦æ ‡è¯†
 		union
 		{
 			uint64_t versionNumber;
-			uint8_t vnArea[8];			// vnArea[7] ÓÃÓÚ´æ·Å ÄÚ´æ³ØÊı×é ÏÂ±ê( Ö¸Ïò versionNumber µÄ×î¸ßÎ»×Ö½Ú )
+			uint8_t vnArea[8];			// vnArea[7] ç”¨äºå­˜æ”¾ å†…å­˜æ± æ•°ç»„ ä¸‹æ ‡( æŒ‡å‘ versionNumber çš„æœ€é«˜ä½å­—èŠ‚ )
 		};
 		uint8_t& ptrStackIndex() { return vnArea[7]; }
 	};
 
 	struct MemPool;
 
-	// ¾­ÓÉ MemPool ·ÖÅäµÄ Õë¶Ô MPObject ÅÉÉúÀàµÄÄÚ´æ¶¼´øÓĞÕâÑùÒ»¸öÍ·²¿
+	// ç»ç”± MemPool åˆ†é…çš„ é’ˆå¯¹ MPObject æ´¾ç”Ÿç±»çš„å†…å­˜éƒ½å¸¦æœ‰è¿™æ ·ä¸€ä¸ªå¤´éƒ¨
 	struct MemHeader_MPObject : public MemHeader_VersionNumber
 	{
-		// Õâ¸öÓÃÓÚÏ£Íû½« MPObject ¶ÔÏóÒÔ·ÇÖ¸Õë·½Ê½Ê¹ÓÃÊ±, ·ÅÔÚ±äÁ¿Ç°ÃæÒÔÌá¹©ÄÚ´æÍ·¿Õ¼äÊ±Ê¹ÓÃ( ÊµÏÖÔÚ xx_mempoolbase.h Êô )
+		// è¿™ä¸ªç”¨äºå¸Œæœ›å°† MPObject å¯¹è±¡ä»¥éæŒ‡é’ˆæ–¹å¼ä½¿ç”¨æ—¶, æ”¾åœ¨å˜é‡å‰é¢ä»¥æä¾›å†…å­˜å¤´ç©ºé—´æ—¶ä½¿ç”¨( å®ç°åœ¨ xx_mempoolbase.h å± )
 		MemHeader_MPObject(MemPool& mempool, uint16_t const& typeId)
 			: mempool(&mempool)
 			, typeId(typeId)
 		{
 			this->versionNumber = 0;
-			this->refCount = (uint32_t)-1;											// ·À Release
+			this->refCount = (uint32_t)-1;											// é˜² Release
 		}
 		MemHeader_MPObject(MemHeader_MPObject&& o)
 			: mempool(o.mempool)
@@ -42,26 +42,26 @@ namespace xx
 			o.tsFlags = 0;
 		}
 
-		// ±ãÓÚ¾Ö²¿´úÂë·ÃÎÊÄÚ´æ³Ø( Ê¹ÓÃ MP::Get(this) À´ÒıÓÃµ½ÄÚ´æ³Ø. MP ÊÇÄÚ´æ³ØµÄ type )
+		// ä¾¿äºå±€éƒ¨ä»£ç è®¿é—®å†…å­˜æ± ( ä½¿ç”¨ MP::Get(this) æ¥å¼•ç”¨åˆ°å†…å­˜æ± . MP æ˜¯å†…å­˜æ± çš„ type )
 		MemPool *mempool;
 
-		// ¼õµ½ 0 ¾ÍÕæÕı Dispose
+		// å‡åˆ° 0 å°±çœŸæ­£ Dispose
 		uint32_t refCount = 1;
 
-		// MemPool ´´½¨Ê±Ìî³äÀàĞÍID
+		// MemPool åˆ›å»ºæ—¶å¡«å……ç±»å‹ID
 		uint16_t typeId = 0;
 
-		// µ±Ç°¿ÉÓÃÓÚ ToString ·ÀÖØÈë( »òÊÇ´æ¿Õ¸ñËõ½øÖµ )
+		// å½“å‰å¯ç”¨äº ToString é˜²é‡å…¥( æˆ–æ˜¯å­˜ç©ºæ ¼ç¼©è¿›å€¼ )
 		uint16_t tsFlags = 0;
 	};
 
 
 
 	/************************************************************************************/
-	// ÖµÀàĞÍÊ¹ÓÃÏà¹Ø
+	// å€¼ç±»å‹ä½¿ç”¨ç›¸å…³
 	/************************************************************************************/
 
-	// Îª MPObject ¸½¼ÓÄÚ´æÍ·ÒÔ±ãÌá¹©ÖµÀàĞÍµÄÎïÀí½á¹¹( ÕâÖÖÄ£Ê½ÏÂ mh ³ıÁËÌî³äÄÚ´æ³ØÖ¸ÕëÒÔÏÂ, ²»ÔÙÌî³ä°æ±¾ºÅ, ÀàĞÍµÈĞÅÏ¢ )
+	// ä¸º MPObject é™„åŠ å†…å­˜å¤´ä»¥ä¾¿æä¾›å€¼ç±»å‹çš„ç‰©ç†ç»“æ„( è¿™ç§æ¨¡å¼ä¸‹ mh é™¤äº†å¡«å……å†…å­˜æ± æŒ‡é’ˆä»¥ä¸‹, ä¸å†å¡«å……ç‰ˆæœ¬å·, ç±»å‹ç­‰ä¿¡æ¯ )
 	template<typename T>
 	struct MemHeaderBox
 	{
@@ -121,7 +121,7 @@ namespace xx
 	constexpr bool IsMemHeaderBox_v = IsMemHeaderBox<T>::value;
 
 
-	// ±ê¼ÇÔÚÈİÆ÷ÖĞ¿É memmove
+	// æ ‡è®°åœ¨å®¹å™¨ä¸­å¯ memmove
 
 	template<typename T>
 	struct MemmoveSupport<MemHeaderBox<T>>

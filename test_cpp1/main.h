@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include "xx_uv.h"
 #include "xx_helpers.h"
 #include "pkg\PKG_class.h"
@@ -13,7 +13,7 @@ struct MyConnector : xx::UVClientPeer
 	virtual void OnReceivePackage(xx::BBuffer & bb) override;
 	virtual void OnConnect() override;
 
-	// ½«ËùÓĞÊÕµ½µÄÊı¾İÒÆ½øÕâÀïÀ´·Å×ÅÒÔÃâ AI À´²»¼°´¦Àí³åµô
+	// å°†æ‰€æœ‰æ”¶åˆ°çš„æ•°æ®ç§»è¿›è¿™é‡Œæ¥æ”¾ç€ä»¥å… AI æ¥ä¸åŠå¤„ç†å†²æ‰
 	xx::Queue_v<xx::MPObject*> recvMsgs;
 };
 
@@ -34,17 +34,17 @@ struct MyClient : xx::MPObject
 	MyClient(xx::UV* uv, char const* un, char const* pw);
 	~MyClient();
 
-	// Ô¤´´½¨·½±ã·¢°üµÄÈİÆ÷
+	// é¢„åˆ›å»ºæ–¹ä¾¿å‘åŒ…çš„å®¹å™¨
 	PKG::Client_Server::Join* pkgJoin;
 	PKG::Client_Server::Message* pkgMessage;
 
-	// ÔËĞĞÊ±ÉÏÏÂÎÄ
+	// è¿è¡Œæ—¶ä¸Šä¸‹æ–‡
 	xx::MPtr<PKG::UserInfo> self;
 	xx::List<PKG::UserInfo*>* users = nullptr;
 
-	int lineNumber = 0;					    // stackless Ğ­³ÌĞĞºÅ
+	int lineNumber = 0;					    // stackless åç¨‹è¡Œå·
 	int Update();
 
-	int64_t lastMS = 0;						// ÓÃÓÚ¸÷ÖÖ³¬Ê±ÅĞ¶Ï
-	bool connecting = false;				// ²úÉú OnConnect »Øµ÷µÄ±êÖ¾
+	int64_t lastMS = 0;						// ç”¨äºå„ç§è¶…æ—¶åˆ¤æ–­
+	bool connecting = false;				// äº§ç”Ÿ OnConnect å›è°ƒçš„æ ‡å¿—
 };

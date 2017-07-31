@@ -1,10 +1,10 @@
-#pragma once
+ï»¿#pragma once
 #include "xx_mempool.h"
 #include <memory>
 
 namespace xx
 {
-	// ¾­ÓÉ Dict ¼ò»¯¶øÀ´µÄË«ÏòÁ´±í
+	// ç»ç”± Dict ç®€åŒ–è€Œæ¥çš„åŒå‘é“¾è¡¨
 	template <typename T>
 	struct Links : public MPObject
 	{
@@ -13,16 +13,16 @@ namespace xx
 		{
 			int             prev;
 			int             next;
-			T               value;					// Í¬Ê±Ò²ÓÃÓÚ´æ¿ÕÄÚ´æµ¥ÔªÏÂ±ê( ±ÜÃâÊ¹ÓÃ next ÒÔ±ãÓÚ RemoveAt ºó next »¹ÄÜ¶Á ·½±ã foreach ÖĞÉ¾ )
+			T               value;					// åŒæ—¶ä¹Ÿç”¨äºå­˜ç©ºå†…å­˜å•å…ƒä¸‹æ ‡( é¿å…ä½¿ç”¨ next ä»¥ä¾¿äº RemoveAt å next è¿˜èƒ½è¯» æ–¹ä¾¿ foreach ä¸­åˆ  )
 		};
 
-		int                 freeList;               // ×ÔÓÉ¿Õ¼äÁ´±íÍ·( *(int*)&nodes[index].value Ö¸ÏòÏÂÒ»¸öÎ´Ê¹ÓÃµ¥Ôª )
-		int                 freeCount;              // ×ÔÓÉ¿Õ¼äÁ´³¤
-		int                 count;                  // ÒÑÊ¹ÓÃ¿Õ¼äÊı
-		int					header;					// ´æµÚ1¸ö½ÚµãµÄÏÂ±ê
-		int					tail;					// Î²°ÍÏÂ±ê
-		int                 nodesLen;				// ½ÚµãÊı×é³¤¶È
-		Node               *nodes;                  // ½ÚµãÊı×é
+		int                 freeList;               // è‡ªç”±ç©ºé—´é“¾è¡¨å¤´( *(int*)&nodes[index].value æŒ‡å‘ä¸‹ä¸€ä¸ªæœªä½¿ç”¨å•å…ƒ )
+		int                 freeCount;              // è‡ªç”±ç©ºé—´é“¾é•¿
+		int                 count;                  // å·²ä½¿ç”¨ç©ºé—´æ•°
+		int					header;					// å­˜ç¬¬1ä¸ªèŠ‚ç‚¹çš„ä¸‹æ ‡
+		int					tail;					// å°¾å·´ä¸‹æ ‡
+		int                 nodesLen;				// èŠ‚ç‚¹æ•°ç»„é•¿åº¦
+		Node               *nodes;                  // èŠ‚ç‚¹æ•°ç»„
 
 		explicit Links(int capacity = 16)
 		{
@@ -44,14 +44,14 @@ namespace xx
 				nodes = nullptr;
 			}
 		}
-		// todo: ÓÒÖµ¸´ÖÆ¹¹Ôì
+		// todo: å³å€¼å¤åˆ¶æ„é€ 
 
 		Links(Links const &o) = delete;
 		Links& operator=(Links const &o) = delete;
 
 	public:
 
-		// ×·¼Óµ½Î²²¿
+		// è¿½åŠ åˆ°å°¾éƒ¨
 		template<typename ...VPS>
 		int EmplaceBack(VPS &&... vps)
 		{
@@ -69,7 +69,7 @@ namespace xx
 			return index;
 		}
 
-		// ²åÈëµ½Í·²¿
+		// æ’å…¥åˆ°å¤´éƒ¨
 		template<typename ...VPS>
 		int EmplaceFront(VPS &&... vps)
 		{
@@ -105,7 +105,7 @@ namespace xx
 			return EmplaceFront(v);
 		}
 
-		// ½« v ²åÈëµ½ tarIdx µÄºóÃæ( tarIdx Îª -1 Ôò²åÈëµ½×îÇ°Ãæ ), ·µ»ØÄÚ´æ¿éµØÖ·Ë÷Òı
+		// å°† v æ’å…¥åˆ° tarIdx çš„åé¢( tarIdx ä¸º -1 åˆ™æ’å…¥åˆ°æœ€å‰é¢ ), è¿”å›å†…å­˜å—åœ°å€ç´¢å¼•
 		template<typename VT>
 		int InsertAt(int tarIdx, VT && v)
 		{
@@ -153,13 +153,13 @@ namespace xx
 			if (index == tail) tail = nodes[index].prev;
 
 			nodes[index].value.T::~T();
-			*(int*)&nodes[index].value = freeList;     // µ±Ç°½ÚµãÒÑ±»ÒÆ³öÁ´±í, ÁîÆä value ´æ×ÔÓÉ½ÚµãÁ´±íÍ·ÏÂ±ê
+			*(int*)&nodes[index].value = freeList;     // å½“å‰èŠ‚ç‚¹å·²è¢«ç§»å‡ºé“¾è¡¨, ä»¤å…¶ value å­˜è‡ªç”±èŠ‚ç‚¹é“¾è¡¨å¤´ä¸‹æ ‡
 			freeList = index;
 			freeCount++;
 
 		}
 
-		// ±éÀú²éÕÒÒÆ³ı
+		// éå†æŸ¥æ‰¾ç§»é™¤
 		int Remove(T const& v)
 		{
 			for (int i = header; i != -1; i = nodes[i].next)
@@ -173,13 +173,13 @@ namespace xx
 			return -1;
 		}
 
-		// Ö»Ö§³ÖÃ»Êı¾İÊ±À©Èİ»ò¿Õ¼äÓÃ¾¡À©Èİ( Èç¹û²»ÕâÑùÏŞÖÆ, À©ÈİÊ±µÄ ±éÀúËğºÄ ÂÔ´ó )
+		// åªæ”¯æŒæ²¡æ•°æ®æ—¶æ‰©å®¹æˆ–ç©ºé—´ç”¨å°½æ‰©å®¹( å¦‚æœä¸è¿™æ ·é™åˆ¶, æ‰©å®¹æ—¶çš„ éå†æŸè€— ç•¥å¤§ )
 		void Reserve(int capacity = 0)
 		{
-			assert(count == 0 || count == nodesLen);          // È·±£À©Èİº¯ÊıÊ¹ÓÃÇéĞÍ
-			if (capacity == 0) capacity = count * 2;            // 2±¶À©Èİ
+			assert(count == 0 || count == nodesLen);          // ç¡®ä¿æ‰©å®¹å‡½æ•°ä½¿ç”¨æƒ…å‹
+			if (capacity == 0) capacity = count * 2;            // 2å€æ‰©å®¹
 			if (capacity <= nodesLen) return;
-			auto nodesByteLen = Round2n(capacity * sizeof(Node) + sizeof(MemHeader_VersionNumber)) - sizeof(MemHeader_VersionNumber);	// ¹æ±ÜĞ´ versionNumber µÄÇøÓò
+			auto nodesByteLen = Round2n(capacity * sizeof(Node) + sizeof(MemHeader_VersionNumber)) - sizeof(MemHeader_VersionNumber);	// è§„é¿å†™ versionNumber çš„åŒºåŸŸ
 			nodesLen = (int)(nodesByteLen / sizeof(Node));
 
 			if (std::is_trivial<T>::value || MemmoveSupport_v<T>)
@@ -211,7 +211,7 @@ namespace xx
 			return -1;
 		}
 
-		// ¿É´«ÈëÒ»¸ö×ÊÔ´»ØÊÕº¯ÊıÀ´¸ãÊÂ
+		// å¯ä¼ å…¥ä¸€ä¸ªèµ„æºå›æ”¶å‡½æ•°æ¥æäº‹
 		void Clear()
 		{
 			if (!count) return;
@@ -255,15 +255,15 @@ namespace xx
 
 
 		/*******************************************************************************/
-		// Ö»ÊÇÎªÁËÄÜ for( auto &c : 
+		// åªæ˜¯ä¸ºäº†èƒ½ for( auto &c : 
 		/*******************************************************************************/
 
-		// ×¢Òâ: Èç¹ûÒªÔÚ for µÄ¹ı³ÌÖĞ RemoveAt + Push, Ö±½ÓÓÃ iter ²¢²»°²È«.
-		// Áí: Èç¹û freeCount Îª 0, Ôò±íÊ¾ÄÚ´æÎŞ¿Õ¶´. ÎŞĞò±éÀúµÄ»°¿ÉÖ±½ÓÉ¨Êı×é. ÒÔ count Îª¸öÊıÏŞ¶¨
+		// æ³¨æ„: å¦‚æœè¦åœ¨ for çš„è¿‡ç¨‹ä¸­ RemoveAt + Push, ç›´æ¥ç”¨ iter å¹¶ä¸å®‰å…¨.
+		// å¦: å¦‚æœ freeCount ä¸º 0, åˆ™è¡¨ç¤ºå†…å­˜æ— ç©ºæ´. æ— åºéå†çš„è¯å¯ç›´æ¥æ‰«æ•°ç»„. ä»¥ count ä¸ºä¸ªæ•°é™å®š
 		/*
 		if (!list->freeCount)
 		{
-			// ÂÒĞòµ«É¨µÃ×î¿ì. ÊÊºÏÉ¨ÕÒÖ®Àà.
+			// ä¹±åºä½†æ‰«å¾—æœ€å¿«. é€‚åˆæ‰«æ‰¾ä¹‹ç±».
 			for( int i = 0; i < list->count; ++i )
 			{
 				list->nodes[i].....
@@ -271,16 +271,16 @@ namespace xx
 		}
 		else
 		{
-			// Ë³Ğò, É¾ + Ôö °²È«
+			// é¡ºåº, åˆ  + å¢ å®‰å…¨
 			auto i = list->header;
 			while (i != -1)
 			{
-				auto nexti = list->nodes[i].next;	// ÏÈ¶Á³ö next ÒÔ±ÜÃâµ±Ç°½ÚµãÊ§Ğ§
+				auto nexti = list->nodes[i].next;	// å…ˆè¯»å‡º next ä»¥é¿å…å½“å‰èŠ‚ç‚¹å¤±æ•ˆ
 				// remove at ? add ? ...
-				i = nexti;							// ¼ÌĞøÉ¨
+				i = nexti;							// ç»§ç»­æ‰«
 			}
 		}
-		// ÔÊĞí RemoveAt(i) µ«²»¿ÉÒÔÁ¢¼´ÔÙ Push/Insert É¶µÄ
+		// å…è®¸ RemoveAt(i) ä½†ä¸å¯ä»¥ç«‹å³å† Push/Insert å•¥çš„
 		for (auto& i : *list) list->nodes[i]........
 		*/
 
@@ -310,7 +310,7 @@ namespace xx
 
 
 		/*************************************************************************/
-		// ÊµÏÖ ToString ½Ó¿Ú
+		// å®ç° ToString æ¥å£
 		/*************************************************************************/
 
 		virtual void ToString(String &str) const override;
@@ -323,19 +323,19 @@ namespace xx
 		int EmplaceCore(VPS &&... vps)
 		{
 			int index;
-			if (freeCount > 0)                          // Èç¹û ×ÔÓÉ½ÚµãÁ´±í ²»¿Õ, È¡Ò»¸öÀ´µ±ÈİÆ÷
-			{                                           // ÕâĞ©½ÚµãÀ´×Ô Remove ²Ù×÷. value Ö¸ÏòÏÂÒ»¸ö
+			if (freeCount > 0)                          // å¦‚æœ è‡ªç”±èŠ‚ç‚¹é“¾è¡¨ ä¸ç©º, å–ä¸€ä¸ªæ¥å½“å®¹å™¨
+			{                                           // è¿™äº›èŠ‚ç‚¹æ¥è‡ª Remove æ“ä½œ. value æŒ‡å‘ä¸‹ä¸€ä¸ª
 				index = freeList;
 				freeList = *(int*)&nodes[index].value;
 				freeCount--;
 			}
 			else
 			{
-				if (count == nodesLen)					// ËùÓĞ¿Õ½Úµã¶¼ÓÃ¹âÁË, Resize
+				if (count == nodesLen)					// æ‰€æœ‰ç©ºèŠ‚ç‚¹éƒ½ç”¨å…‰äº†, Resize
 				{
 					Reserve();
 				}
-				index = count;							// Ö¸Ïò Resize ºóÃæµÄ¿Õ¼äÆğµã
+				index = count;							// æŒ‡å‘ Resize åé¢çš„ç©ºé—´èµ·ç‚¹
 				count++;
 			}
 
@@ -343,7 +343,7 @@ namespace xx
 			return index;
 		}
 
-		void DeleteNodes()                                    // ÓÃÓÚ Îö¹¹, Clear
+		void DeleteNodes()                                    // ç”¨äº ææ„, Clear
 		{
 			for (int i = header; i != -1; i = nodes[i].next)
 			{
@@ -358,7 +358,7 @@ namespace xx
 
 
 	/*************************************************************************/
-	// ÊµÏÖÖµÀàĞÍÊ¹ÓÃÀàĞÍÉùÃ÷
+	// å®ç°å€¼ç±»å‹ä½¿ç”¨ç±»å‹å£°æ˜
 	/*************************************************************************/
 
 	template <typename T>

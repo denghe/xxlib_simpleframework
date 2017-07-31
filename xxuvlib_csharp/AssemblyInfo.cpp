@@ -1,4 +1,4 @@
-#include "stdafx.h"
+ï»¿#include "stdafx.h"
 
 using namespace System;
 using namespace System::Reflection;
@@ -7,9 +7,9 @@ using namespace System::Runtime::InteropServices;
 using namespace System::Security::Permissions;
 
 //
-// ÓĞ¹Ø³ÌĞò¼¯µÄÒ»°ãĞÅÏ¢ÓÉÒÔÏÂ
-// ¿ØÖÆ¡£¸ü¸ÄÕâĞ©ÌØĞÔÖµ¿ÉĞŞ¸Ä
-// Óë³ÌĞò¼¯¹ØÁªµÄĞÅÏ¢¡£
+// æœ‰å…³ç¨‹åºé›†çš„ä¸€èˆ¬ä¿¡æ¯ç”±ä»¥ä¸‹
+// æ§åˆ¶ã€‚æ›´æ”¹è¿™äº›ç‰¹æ€§å€¼å¯ä¿®æ”¹
+// ä¸ç¨‹åºé›†å…³è”çš„ä¿¡æ¯ã€‚
 //
 [assembly:AssemblyTitleAttribute(L"xxuvlib_csharp")];
 [assembly:AssemblyDescriptionAttribute(L"")];
@@ -21,15 +21,15 @@ using namespace System::Security::Permissions;
 [assembly:AssemblyCultureAttribute(L"")];
 
 //
-// ³ÌĞò¼¯µÄ°æ±¾ĞÅÏ¢ÓÉÏÂÁĞËÄ¸öÖµ×é³É: 
+// ç¨‹åºé›†çš„ç‰ˆæœ¬ä¿¡æ¯ç”±ä¸‹åˆ—å››ä¸ªå€¼ç»„æˆ: 
 //
-//      Ö÷°æ±¾
-//      ´Î°æ±¾
-//      Éú³ÉºÅ
-//      ĞŞ¶©ºÅ
+//      ä¸»ç‰ˆæœ¬
+//      æ¬¡ç‰ˆæœ¬
+//      ç”Ÿæˆå·
+//      ä¿®è®¢å·
 //
-// Äú¿ÉÒÔÖ¸¶¨ËùÓĞÖµ£¬Ò²¿ÉÒÔÊ¹ÓÃ¡°ĞŞ¶©ºÅ¡±ºÍ¡°Éú³ÉºÅ¡±µÄÄ¬ÈÏÖµ£¬
-// ·½·¨ÊÇ°´ÈçÏÂËùÊ¾Ê¹ÓÃ¡°*¡±: :
+// æ‚¨å¯ä»¥æŒ‡å®šæ‰€æœ‰å€¼ï¼Œä¹Ÿå¯ä»¥ä½¿ç”¨â€œä¿®è®¢å·â€å’Œâ€œç”Ÿæˆå·â€çš„é»˜è®¤å€¼ï¼Œ
+// æ–¹æ³•æ˜¯æŒ‰å¦‚ä¸‹æ‰€ç¤ºä½¿ç”¨â€œ*â€: :
 
 [assembly:AssemblyVersionAttribute("1.0.*")];
 

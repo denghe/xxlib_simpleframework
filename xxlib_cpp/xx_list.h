@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include "xx_mempool.h"
 #include <cstring>
 
@@ -6,8 +6,8 @@ namespace xx
 {
 	struct BBuffer;
 
-	// ÀàËÆ std vector / .net List µÄ¼ò»¯ÈİÆ÷
-	// reservedHeaderLen Îª·ÖÅä buf ÄÚ´æºóÔÚÇ°Ãæ¿Õ³öÒ»¶ÎÄÚ´æ²»ÓÃ, Ò²²»³õÊ¼»¯, À©Èİ²»¸´ÖÆ( Îª¸½¼ÓÍ·²¿Êı¾İ´´Ôì±ãÀû )
+	// ç±»ä¼¼ std vector / .net List çš„ç®€åŒ–å®¹å™¨
+	// reservedHeaderLen ä¸ºåˆ†é… buf å†…å­˜ååœ¨å‰é¢ç©ºå‡ºä¸€æ®µå†…å­˜ä¸ç”¨, ä¹Ÿä¸åˆå§‹åŒ–, æ‰©å®¹ä¸å¤åˆ¶( ä¸ºé™„åŠ å¤´éƒ¨æ•°æ®åˆ›é€ ä¾¿åˆ© )
 	template<typename T, uint32_t reservedHeaderLen = 0>
 	struct List : public MPObject
 	{
@@ -89,7 +89,7 @@ namespace xx
 
 	public:
 
-		// ·µ»ØÀ©ÈİÇ°µÄ³¤¶È
+		// è¿”å›æ‰©å®¹å‰çš„é•¿åº¦
 		uint32_t Resize(uint32_t const& len)
 		{
 			if (len == dataLen) return dataLen;
@@ -186,7 +186,7 @@ namespace xx
 			}
 		}
 
-		// ÒÆ³ıÖ¸¶¨Ë÷ÒıµÄÔªËØ. Îª½ô´ÕÅÅÁĞ, ¿ÉÄÜ²úÉúÄÚ´æÒÆ¶¯
+		// ç§»é™¤æŒ‡å®šç´¢å¼•çš„å…ƒç´ . ä¸ºç´§å‡‘æ’åˆ—, å¯èƒ½äº§ç”Ÿå†…å­˜ç§»åŠ¨
 		void RemoveAt(uint32_t const& idx)
 		{
 			assert(idx < dataLen);
@@ -206,7 +206,7 @@ namespace xx
 			}
 		}
 
-		// ±éÀú²éÕÒ²¢ÒÆ³ı
+		// éå†æŸ¥æ‰¾å¹¶ç§»é™¤
 		void Remove(T const& v)
 		{
 			for (uint32_t i = 0; i < dataLen; ++i)
@@ -221,14 +221,14 @@ namespace xx
 
 	protected:
 
-		// ²»Ô½½ç¼ì²é
+		// ä¸è¶Šç•Œæ£€æŸ¥
 		void FastAdd(T const& v)
 		{
 			new (buf + dataLen) T(v);
 			++dataLen;
 		}
 
-		// ²»Ô½½ç¼ì²é( ÓÒÖµ°æ )
+		// ä¸è¶Šç•Œæ£€æŸ¥( å³å€¼ç‰ˆ )
 		void FastAdd(T&& v)
 		{
 			new (buf + dataLen) T((T&&)v);
@@ -237,7 +237,7 @@ namespace xx
 
 	public:
 
-		// ÒÆ¶¯ / ¸´ÖÆÌí¼ÓÒ»µ½¶à¸ö
+		// ç§»åŠ¨ / å¤åˆ¶æ·»åŠ ä¸€åˆ°å¤šä¸ª
 		template<typename...VS>
 		void AddMulti(VS&&...vs)
 		{
@@ -246,18 +246,18 @@ namespace xx
 			std::initializer_list<int>{ (FastAdd(std::forward<VS>(vs)), 0)... };
 		}
 
-		// ×·¼ÓÒ»¸ö item( ÓÒÖµ°æ )
+		// è¿½åŠ ä¸€ä¸ª item( å³å€¼ç‰ˆ )
 		void Add(T&& v)
 		{
 			Emplace((T&&)v);
 		}
-		// ×·¼ÓÒ»¸ö item
+		// è¿½åŠ ä¸€ä¸ª item
 		void Add(T const& v)
 		{
 			Emplace(v);
 		}
 
-		// ÓÃ²ÎÊıÖ±½Ó¹¹ÔìÒ»¸ö( µ±Ç°²»Ö§³ÖÖ±½Ó¾­ÓÉ mempool Create MPObject* ) ²»¼Ó³Ö
+		// ç”¨å‚æ•°ç›´æ¥æ„é€ ä¸€ä¸ª( å½“å‰ä¸æ”¯æŒç›´æ¥ç»ç”± mempool Create MPObject* ) ä¸åŠ æŒ
 		template<typename...Args>
 		T& Emplace(Args &&... args)
 		{
@@ -277,7 +277,7 @@ namespace xx
 			EmplaceAt(idx, v);
 		}
 
-		// ÓÃ²ÎÊıÖ±½Ó¹¹ÔìÒ»¸öµ½Ö¸¶¨Î»ÖÃ( µ±Ç°²»Ö§³Ö¾­ÓÉ mempool ´´½¨ MPObject* )
+		// ç”¨å‚æ•°ç›´æ¥æ„é€ ä¸€ä¸ªåˆ°æŒ‡å®šä½ç½®( å½“å‰ä¸æ”¯æŒç»ç”± mempool åˆ›å»º MPObject* )
 		template<typename...Args>
 		T& EmplaceAt(uint32_t idx, Args&&...args)
 		{
@@ -323,7 +323,7 @@ namespace xx
 
 
 
-		// Èç¹ûÕÒµ½¾Í·µ»ØË÷Òı. ÕÒ²»µ½½«·µ»Ø uint32_t(-1)
+		// å¦‚æœæ‰¾åˆ°å°±è¿”å›ç´¢å¼•. æ‰¾ä¸åˆ°å°†è¿”å› uint32_t(-1)
 		uint32_t Find(T const& v)
 		{
 			for (uint32_t i = 0; i < dataLen; ++i)
@@ -333,7 +333,7 @@ namespace xx
 			return uint32_t(-1);
 		}
 
-		// Èç¹ûÕÒµ½¾Í·µ»ØË÷Òı. ÕÒ²»µ½½«·µ»Ø uint32_t(-1)
+		// å¦‚æœæ‰¾åˆ°å°±è¿”å›ç´¢å¼•. æ‰¾ä¸åˆ°å°†è¿”å› uint32_t(-1)
 		uint32_t Find(std::function<bool(T&)> cond)
 		{
 			for (uint32_t i = 0; i < dataLen; ++i)
@@ -343,7 +343,7 @@ namespace xx
 			return uint32_t(-1);
 		}
 
-		// ·µ»ØÊÇ·ñ´æÔÚ
+		// è¿”å›æ˜¯å¦å­˜åœ¨
 		bool Exists(std::function<bool(T&)> cond)
 		{
 			return Find(cond) != uint32_t(-1);
@@ -358,7 +358,7 @@ namespace xx
 		}
 
 
-		// handler ·µ»Ø false Ôò foreach ÖÕÖ¹
+		// handler è¿”å› false åˆ™ foreach ç»ˆæ­¢
 		void ForEach(std::function<bool(T&)> handler)
 		{
 			for (uint32_t i = 0; i < dataLen; ++i)
@@ -370,7 +370,7 @@ namespace xx
 
 
 
-		// Ö»ÊÇÎªÁËÄÜ for( auto c : 
+		// åªæ˜¯ä¸ºäº†èƒ½ for( auto c : 
 		struct Iter
 		{
 			T *ptr;
@@ -402,18 +402,18 @@ namespace xx
 
 
 		/*************************************************************************/
-		// ÊµÏÖ ToString ½Ó¿Ú
+		// å®ç° ToString æ¥å£
 		/*************************************************************************/
 
-		// ÊµÏÖ´úÂëÔÚ xx_string.h
+		// å®ç°ä»£ç åœ¨ xx_string.h
 
 		virtual void ToString(String &str) const override;
 
 		/*************************************************************************/
-		// ÊµÏÖ BBuffer ½Ó¿Ú
+		// å®ç° BBuffer æ¥å£
 		/*************************************************************************/
 
-		// ÊµÏÖ´úÂëÔÚ xx_bbuffer.h
+		// å®ç°ä»£ç åœ¨ xx_bbuffer.h
 
 		virtual void ToBBuffer(BBuffer &bb) const override;
 
@@ -422,13 +422,13 @@ namespace xx
 
 
 	/*************************************************************************/
-	// ÖµÀàĞÍÊ¹ÓÃĞÎÌ¬°ü×°
+	// å€¼ç±»å‹ä½¿ç”¨å½¢æ€åŒ…è£…
 	/*************************************************************************/
 
 	template<typename T, uint32_t reservedHeaderLen = 0>
 	using List_v = MemHeaderBox<List<T, reservedHeaderLen>>;
 
-	// ±ê¼ÇÔÚÈİÆ÷ÖĞ¿É memmove
+	// æ ‡è®°åœ¨å®¹å™¨ä¸­å¯ memmove
 
 	template<typename T, uint32_t reservedHeaderLen>
 	struct MemmoveSupport<MemHeaderBox<List<T, reservedHeaderLen>>>

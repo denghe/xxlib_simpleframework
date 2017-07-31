@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #pragma warning(disable:4996)
 #include <cstdint>
 #include <cstring>
@@ -13,11 +13,11 @@
 namespace xx
 {
 	/**************************************************************************************************/
-	// ÕûÊı×ª string ÓÃµ½µÄÒ»Ğ©»ù´¡º¯Êı
+	// æ•´æ•°è½¬ string ç”¨åˆ°çš„ä¸€äº›åŸºç¡€å‡½æ•°
 	/**************************************************************************************************/
 
-	// ÏÂÁĞ´úÂë³­×Ô https://github.com/miloyip/itoa-benchmark/blob/master/src/branchlut.cpp
-	// ¾­¸ÄÔì, Ôö¼ÓÁË·µ»ØÌî³ä³¤¶ÈµÄ¹¦ÄÜ
+	// ä¸‹åˆ—ä»£ç æŠ„è‡ª https://github.com/miloyip/itoa-benchmark/blob/master/src/branchlut.cpp
+	// ç»æ”¹é€ , å¢åŠ äº†è¿”å›å¡«å……é•¿åº¦çš„åŠŸèƒ½
 
 	constexpr char gDigitsLut[200] = {
 		'0', '0', '0', '1', '0', '2', '0', '3', '0', '4', '0', '5', '0', '6', '0', '7', '0', '8', '0', '9',
@@ -36,7 +36,7 @@ namespace xx
 	// Use lookup table of two digits
 
 	inline uint32_t u32toa_branchlut(uint32_t value, char* buffer) {
-		auto bak = buffer;											// Îª¼ÆËã³¤¶È¶ø¼Ó
+		auto bak = buffer;											// ä¸ºè®¡ç®—é•¿åº¦è€ŒåŠ 
 		if (value < 10000) {
 			const uint32_t d1 = (value / 100) << 1;
 			const uint32_t d2 = (value % 100) << 1;
@@ -106,7 +106,7 @@ namespace xx
 			*buffer++ = gDigitsLut[d4 + 1];
 		}
 		//*buffer++ = '\0';
-		return uint32_t(buffer - bak);							// ·µ»ØÌî³äÁË¶à³¤
+		return uint32_t(buffer - bak);							// è¿”å›å¡«å……äº†å¤šé•¿
 	}
 
 	inline uint32_t i32toa_branchlut(int32_t value, char* buffer) {
@@ -114,13 +114,13 @@ namespace xx
 		if (value < 0) {
 			*buffer++ = '-';
 			u = ~u + 1;
-			return u32toa_branchlut(u, buffer) + 1;				// ·µ»ØÌî³äÁË¶à³¤
+			return u32toa_branchlut(u, buffer) + 1;				// è¿”å›å¡«å……äº†å¤šé•¿
 		}
-		return u32toa_branchlut(u, buffer);						// ·µ»ØÌî³äÁË¶à³¤
+		return u32toa_branchlut(u, buffer);						// è¿”å›å¡«å……äº†å¤šé•¿
 	}
 
 	inline uint32_t u64toa_branchlut(uint64_t value, char* buffer) {
-		auto bak = buffer;										// Îª¼ÆËã³¤¶È¶ø¼Ó
+		auto bak = buffer;										// ä¸ºè®¡ç®—é•¿åº¦è€ŒåŠ 
 		if (value < 100000000) {
 			uint32_t v = static_cast<uint32_t>(value);
 			if (v < 10000) {
@@ -275,7 +275,7 @@ namespace xx
 		}
 
 		//*buffer = '\0';
-		return uint32_t(buffer - bak);							// ·µ»ØÌî³äÁË¶à³¤
+		return uint32_t(buffer - bak);							// è¿”å›å¡«å……äº†å¤šé•¿
 	}
 
 	inline uint32_t i64toa_branchlut(int64_t value, char* buffer) {
@@ -283,17 +283,17 @@ namespace xx
 		if (value < 0) {
 			*buffer++ = '-';
 			u = ~u + 1;
-			return u64toa_branchlut(u, buffer) + 1;				// ·µ»ØÌî³äÁË¶à³¤
+			return u64toa_branchlut(u, buffer) + 1;				// è¿”å›å¡«å……äº†å¤šé•¿
 		}
-		return u64toa_branchlut(u, buffer);						// ·µ»ØÌî³äÁË¶à³¤
+		return u64toa_branchlut(u, buffer);						// è¿”å›å¡«å……äº†å¤šé•¿
 	}
 
 
 	/**************************************************************************************************/
-	// ÀàĞÍ--²Ù×÷ÊÊÅäÄ£°åÇø
+	// ç±»å‹--æ“ä½œé€‚é…æ¨¡æ¿åŒº
 	/**************************************************************************************************/
 
-	// »ù´¡ÊÊÅäÄ£°å
+	// åŸºç¡€é€‚é…æ¨¡æ¿
 	template<typename T, typename ENABLE = void>
 	struct StrFunc
 	{
@@ -309,7 +309,7 @@ namespace xx
 		}
 	};
 
-	// Æ¥ÅäÎŞ·ûºÅÕûÊı 32bit
+	// åŒ¹é…æ— ç¬¦å·æ•´æ•° 32bit
 	template<typename T>
 	struct StrFunc<T, std::enable_if_t<std::is_integral<T>::value && std::is_unsigned<T>::value && sizeof(T) <= 4>>
 	{
@@ -323,7 +323,7 @@ namespace xx
 		}
 	};
 
-	// Æ¥ÅäÓĞ·ûºÅÕûÊı 32bit
+	// åŒ¹é…æœ‰ç¬¦å·æ•´æ•° 32bit
 	template<typename T>
 	struct StrFunc<T, std::enable_if_t<std::is_integral<T>::value && !std::is_unsigned<T>::value && sizeof(T) <= 4>>
 	{
@@ -337,7 +337,7 @@ namespace xx
 		}
 	};
 
-	// Æ¥ÅäÎŞ·ûºÅÕûÊı 64bit
+	// åŒ¹é…æ— ç¬¦å·æ•´æ•° 64bit
 	template<typename T>
 	struct StrFunc<T, std::enable_if_t<std::is_integral<T>::value && std::is_unsigned<T>::value && sizeof(T) == 8>>
 	{
@@ -351,7 +351,7 @@ namespace xx
 		}
 	};
 
-	// Æ¥ÅäÓĞ·ûºÅÕûÊı 64bit
+	// åŒ¹é…æœ‰ç¬¦å·æ•´æ•° 64bit
 	template<typename T>
 	struct StrFunc<T, std::enable_if_t<std::is_integral<T>::value && !std::is_unsigned<T>::value && sizeof(T) == 8>>
 	{
@@ -365,7 +365,7 @@ namespace xx
 		}
 	};
 
-	// Æ¥ÅäÃ¶¾Ù
+	// åŒ¹é…æšä¸¾
 	template<typename T>
 	struct StrFunc<T, std::enable_if_t<std::is_enum<T>::value>>
 	{
@@ -379,7 +379,7 @@ namespace xx
 		}
 	};
 
-	// Æ¥Åä¸¡µã
+	// åŒ¹é…æµ®ç‚¹
 	template<typename T>
 	struct StrFunc<T, std::enable_if_t<std::is_floating_point<T>::value>>
 	{
@@ -440,7 +440,7 @@ namespace xx
 		}
 	};
 
-	// ¶¨³¤Êı×éÖ§³Ö
+	// å®šé•¿æ•°ç»„æ”¯æŒ
 	template<uint32_t len>
 	struct StrFunc<char [len], void>
 	{
@@ -455,7 +455,7 @@ namespace xx
 		}
 	};
 
-	// std::array Ö§³Ö
+	// std::array æ”¯æŒ
 	template<typename T, size_t len>
 	struct StrFunc<std::array<T, len>, void>
 	{
@@ -481,7 +481,7 @@ namespace xx
 	// todo: more
 
 	/**************************************************************************************************/
-	// ½« StrFunc Ó³ÉäÎªÈ«¾Öº¯ÊıÒÔ·½±ã²»½èÖú String ÀàÀ´Ìî³ä buf
+	// å°† StrFunc æ˜ å°„ä¸ºå…¨å±€å‡½æ•°ä»¥æ–¹ä¾¿ä¸å€ŸåŠ© String ç±»æ¥å¡«å…… buf
 	/**************************************************************************************************/
 
 	template<typename T>
@@ -497,7 +497,7 @@ namespace xx
 	}
 
 	/**************************************************************************************************/
-	// ±ä²ÎÄ£°åÖ§³Ö
+	// å˜å‚æ¨¡æ¿æ”¯æŒ
 	/**************************************************************************************************/
 
 	template<typename T, typename...TS>
@@ -518,10 +518,10 @@ namespace xx
 
 
 	/**************************************************************************************************/
-	// c-style char* ×ªÎª¸÷ÖÖÊıÖµ
+	// c-style char* è½¬ä¸ºå„ç§æ•°å€¼
 	/**************************************************************************************************/
 
-	// c-style char* ×ªÎª¸÷ÖÖ³¤¶ÈµÄ ÓĞ·ûºÅÕûÊı. Out È¡Öµ·¶Î§£º int8~64
+	// c-style char* è½¬ä¸ºå„ç§é•¿åº¦çš„ æœ‰ç¬¦å·æ•´æ•°. Out å–å€¼èŒƒå›´ï¼š int8~64
 	template <typename OutType>
 	void ToInt(char const * in, OutType & out)
 	{
@@ -544,7 +544,7 @@ namespace xx
 		out = b ? -r : r;
 	}
 
-	// c-style char* (²»ÄÜÓĞ¼õºÅ´òÍ·) ×ªÎª¸÷ÖÖ³¤¶ÈµÄ ÎŞ·ûºÅÕûÊı. Out È¡Öµ·¶Î§£º uint8, uint16, uint32, uint64
+	// c-style char* (ä¸èƒ½æœ‰å‡å·æ‰“å¤´) è½¬ä¸ºå„ç§é•¿åº¦çš„ æ— ç¬¦å·æ•´æ•°. Out å–å€¼èŒƒå›´ï¼š uint8, uint16, uint32, uint64
 	template <typename OutType>
 	void ToUInt(char const * in, OutType & out)
 	{
@@ -577,14 +577,14 @@ namespace xx
 
 
 	/**************************************************************************************************/
-	// Utf8 ×ªÎª char16_t* µÄÀà
+	// Utf8 è½¬ä¸º char16_t* çš„ç±»
 	/**************************************************************************************************/
 
 	struct Utf8Converter
 	{
 		std::vector<std::u16string> bufs;
 		uint32_t idx = 0;
-		Utf8Converter(uint32_t bufCount = 16)			// Èç¹û±»ÓÃÓÚ¶à²ÎÊı»·¾³Ê±±ÜÃâÖØ¸´Ê¹ÓÃµ½Ò»¸ö buf
+		Utf8Converter(uint32_t bufCount = 16)			// å¦‚æœè¢«ç”¨äºå¤šå‚æ•°ç¯å¢ƒæ—¶é¿å…é‡å¤ä½¿ç”¨åˆ°ä¸€ä¸ª buf
 		{
 			assert(bufCount);
 			bufs.resize(bufCount);

@@ -1,14 +1,14 @@
-#pragma once
+ï»¿#pragma once
 namespace xx
 {
-	// Ñ­»·ÀûÓÃ³Ø. Í¨³£ÓÃÓÚ¹ÜÀíº¯Êı·µ»Ø list / buf Ö®ÀàµÄ, µ«ÓĞ¿ÉÄÜ²¢·¢¶à¸öµ÷ÓÃ¸Ãº¯Êı
+	// å¾ªç¯åˆ©ç”¨æ± . é€šå¸¸ç”¨äºç®¡ç†å‡½æ•°è¿”å› list / buf ä¹‹ç±»çš„, ä½†æœ‰å¯èƒ½å¹¶å‘å¤šä¸ªè°ƒç”¨è¯¥å‡½æ•°
 	template<typename T, size_t Size>
 	struct CursorPool
 	{
 		static_assert(Size > 0 && !(Size & (Size - 1)), "the Size must be 2^n");	// 2^n ensure
 		std::array<T, Size> pool;
 		size_t cursor = 0;
-		// Ã¿Ö´ĞĞÒ»´Î, ÒÔ cursor ÎªÏÂ±ê·µ»Ø pool ÖĞ¶ÔÏóµÄÒıÓÃ. cursor ÎªÑ­»·Ôö¼Ó
+		// æ¯æ‰§è¡Œä¸€æ¬¡, ä»¥ cursor ä¸ºä¸‹æ ‡è¿”å› pool ä¸­å¯¹è±¡çš„å¼•ç”¨. cursor ä¸ºå¾ªç¯å¢åŠ 
 		T& GetOne()
 		{
 			auto& rtv = pool[cursor];
@@ -18,7 +18,7 @@ namespace xx
 	};
 
 	/*
-	// Ê¾Àı:
+	// ç¤ºä¾‹:
 
 	MP mp;
 	CursorPool<xx::List<int>*, 4> p;

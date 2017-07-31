@@ -1,4 +1,4 @@
-#include "xx_sqlite.h"
+ï»¿#include "xx_sqlite.h"
 
 struct Rand
 {
@@ -54,15 +54,15 @@ int main()
 
 	xx::SQLite_v lite(mp, "C:/DB/test1.db");
 
-	// ÅäºÏÊÂÎñ, insert ÄÜ´ïµ½ 90Íò´ÎÒ»Ãë. ËÀÏµÍ³´ó¸ÅÂÊ»µÊı¾İ, ĞëÅäºÏ±¸·İ·½°¸.
+	// é…åˆäº‹åŠ¡, insert èƒ½è¾¾åˆ° 90ä¸‡æ¬¡ä¸€ç§’. æ­»ç³»ç»Ÿå¤§æ¦‚ç‡åæ•°æ®, é¡»é…åˆå¤‡ä»½æ–¹æ¡ˆ.
 	//lite->SetPragmas(
 	//	xx::SQLiteSynchronousTypes::Off, xx::SQLiteJournalModes::Off,
 	//	xx::SQLiteTempStoreTypes::Memory/*, xx::SQLiteLockingModes::Exclusive*/);
 
-	// ÕÛÖĞµÄ·½°¸, Ëæ»ú insert Ò»Íò¶à´ÎÒ»Ãë, ËÀÏµÍ³Ğ¡¸ÅÂÊ»µÊı¾İ
+	// æŠ˜ä¸­çš„æ–¹æ¡ˆ, éšæœº insert ä¸€ä¸‡å¤šæ¬¡ä¸€ç§’, æ­»ç³»ç»Ÿå°æ¦‚ç‡åæ•°æ®
 	lite->SetPragmas(xx::SQLiteSynchronousTypes::Normal, xx::SQLiteJournalModes::WAL);
 
-	// Ä¬ÈÏÅäÖÃ, insert °Ù°Ñ´ÎÒ»Ãë, Í¨³£²»»á»µÊı¾İ.
+	// é»˜è®¤é…ç½®, insert ç™¾æŠŠæ¬¡ä¸€ç§’, é€šå¸¸ä¸ä¼šåæ•°æ®.
 	//lite->SetPragmas(xx::SQLiteSynchronousTypes::Full, xx::SQLiteJournalModes::Delete);
 
 
@@ -110,7 +110,7 @@ int main()
 
 /*
 
-ÏÂÃæÊÇÍêÕû°²È«µÄĞ´·¨
+ä¸‹é¢æ˜¯å®Œæ•´å®‰å…¨çš„å†™æ³•
 
 #include "xx_sqlite.h"
 

@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include <tuple>
 #include <type_traits>
 #include <utility>
@@ -13,39 +13,39 @@
 
 namespace xx
 {
-	// todo: µ±Ç°Õâ¸ö»¹ÓÃ²»ÁË. ÒªÈ¥µôÖ®Ç°µÄ MP Ä£°å²ÎÊıÉè¼Æ
+	// todo: å½“å‰è¿™ä¸ªè¿˜ç”¨ä¸äº†. è¦å»æ‰ä¹‹å‰çš„ MP æ¨¡æ¿å‚æ•°è®¾è®¡
 
 
 
 
-	// todo: ÅÅ²éËùÓĞ lua º¯ÊıµÄÒì³£´¦Àí( lua ÄÚ²¿¿ÉÄÜ»áÊ¹ÓÃ long jump Ö±½ÓÌø³öº¯Êı, µ¼ÖÂ RAII Ê§Ğ§Ö®Àà )
+	// todo: æ’æŸ¥æ‰€æœ‰ lua å‡½æ•°çš„å¼‚å¸¸å¤„ç†( lua å†…éƒ¨å¯èƒ½ä¼šä½¿ç”¨ long jump ç›´æ¥è·³å‡ºå‡½æ•°, å¯¼è‡´ RAII å¤±æ•ˆä¹‹ç±» )
 
-	// todo: Lua_BindFunc Ö®·ÇÀà³ÉÔ±º¯Êı°æ. ¿¼ÂÇÎª Lua_SetGlobal Ôö¼Óº¯ÊıÖ¸ÕëÖØÔØ
-	// todo: ¿¼ÂÇÒ»ÏÂ½á¹¹ÌåÖĞµÄ×Ó½á¹¹ÌåµÄ lua userdata °ü×°( ¾ÍÊÇËµ ud µÄËµÃ÷²¿·Ö¿ÉÄÜĞèÒªÒÆµ½ uservalue ÖĞÈ¥, »òÊÇÓÃ uservalue À´ÑÓ³¤ container µÄÉúÃüÖÜÆÚ? )
+	// todo: Lua_BindFunc ä¹‹éç±»æˆå‘˜å‡½æ•°ç‰ˆ. è€ƒè™‘ä¸º Lua_SetGlobal å¢åŠ å‡½æ•°æŒ‡é’ˆé‡è½½
+	// todo: è€ƒè™‘ä¸€ä¸‹ç»“æ„ä½“ä¸­çš„å­ç»“æ„ä½“çš„ lua userdata åŒ…è£…( å°±æ˜¯è¯´ ud çš„è¯´æ˜éƒ¨åˆ†å¯èƒ½éœ€è¦ç§»åˆ° uservalue ä¸­å», æˆ–æ˜¯ç”¨ uservalue æ¥å»¶é•¿ container çš„ç”Ÿå‘½å‘¨æœŸ? )
 
 
-	// ¿É·ÅÈë LUA µÄÊı¾İÀàĞÍÓĞ: float, double, int64, ¸÷Ê½ string, ÒÔ¼° T, T*
-	// ÆäÖĞ T ÓÖ·ÖÎª Ò»°ã½á¹¹Ìå ÒÔ¼° MPtr<T> ( T Îª MPObject ÅÉÉúÀà )
-	// T* ·ÖÎªÒ»°ãÖ¸Õë »ò MPObject* ÅÉÉúÀàÖ¸Õë
-	// String* ¿ÕÖ¸ÕëÓÚ lua ÖĞµ±Ç°ÓÃ nil À´±í´ï
-	// ²»Ö§³Ö¸´ÔÓ½á¹¹Ìå´´½¨Îª ud( ¿ÉÒÔÓĞ¹¹Ôìº¯Êıµ«²»ÒªÓĞÎö¹¹º¯Êı. ×îºÃ¾ÍÊÇ¸ö pod )
-	// Ö»Ö§³Öµ¥¼Ì³Ğ
+	// å¯æ”¾å…¥ LUA çš„æ•°æ®ç±»å‹æœ‰: float, double, int64, å„å¼ string, ä»¥åŠ T, T*
+	// å…¶ä¸­ T åˆåˆ†ä¸º ä¸€èˆ¬ç»“æ„ä½“ ä»¥åŠ MPtr<T> ( T ä¸º MPObject æ´¾ç”Ÿç±» )
+	// T* åˆ†ä¸ºä¸€èˆ¬æŒ‡é’ˆ æˆ– MPObject* æ´¾ç”Ÿç±»æŒ‡é’ˆ
+	// String* ç©ºæŒ‡é’ˆäº lua ä¸­å½“å‰ç”¨ nil æ¥è¡¨è¾¾
+	// ä¸æ”¯æŒå¤æ‚ç»“æ„ä½“åˆ›å»ºä¸º ud( å¯ä»¥æœ‰æ„é€ å‡½æ•°ä½†ä¸è¦æœ‰ææ„å‡½æ•°. æœ€å¥½å°±æ˜¯ä¸ª pod )
+	// åªæ”¯æŒå•ç»§æ‰¿
 
 
 
 
 
 	/************************************************************************************/
-	// lua Öµ ĞòÁĞ»¯ Ïà¹Ø
+	// lua å€¼ åºåˆ—åŒ– ç›¸å…³
 	/************************************************************************************/
 
-	// ĞòÁĞ»¯ lua ÖµÖ§³ÖµÄÊı¾İÀàĞÍ
+	// åºåˆ—åŒ– lua å€¼æ”¯æŒçš„æ•°æ®ç±»å‹
 	enum class LuaTypes : uint8_t
 	{
 		Nil, True, False, Integer, Double, String, Bytes, Table, TableEnd
 	};
 
-	// ĞòÁĞ»¯ idx ´¦µÄ lua Öµ( Õë¶Ô String / Userdata / Table, ÓÃ pd À´È¥ÖØ )( idx ĞëÎª¾ø¶ÔÖµ ). ·µ»Ø·Ç 0 ¾ÍÊÇ³ö´í. Óöµ½ÁË²»ÄÜ´¦ÀíµÄÊı¾İÀàĞÍ.
+	// åºåˆ—åŒ– idx å¤„çš„ lua å€¼( é’ˆå¯¹ String / Userdata / Table, ç”¨ pd æ¥å»é‡ )( idx é¡»ä¸ºç»å¯¹å€¼ ). è¿”å›é 0 å°±æ˜¯å‡ºé”™. é‡åˆ°äº†ä¸èƒ½å¤„ç†çš„æ•°æ®ç±»å‹.
 	inline int Lua_ToBBufferCore(xx::Dict<void*, uint32_t>& pd, xx::BBuffer& bb, lua_State* const& L, int idx)
 	{
 		assert(idx > 0);
@@ -120,18 +120,18 @@ namespace xx
 	inline int Lua_ToBBuffer(xx::Dict<void*, uint32_t>& pd, xx::BBuffer& bb, lua_State* const& L, int idx)
 	{
 		pd.Clear();
-		auto countPos = bb.WriteSpace(2);				// Áô¸öĞ´ÒıÓÃÀàĞÍ¸öÊıµÄ¿Õ¼ä
+		auto countPos = bb.WriteSpace(2);				// ç•™ä¸ªå†™å¼•ç”¨ç±»å‹ä¸ªæ•°çš„ç©ºé—´
 		auto rtv = xx::Lua_ToBBufferCore(pd, bb, L, idx);
 		if (pd.Count() > 65536) return -65536;
-		bb.WriteAt(countPos, (uint16_t)pd.Count());		// Ğ´ÈëÒıÓÃÀàĞÍ¸öÊı
+		bb.WriteAt(countPos, (uint16_t)pd.Count());		// å†™å…¥å¼•ç”¨ç±»å‹ä¸ªæ•°
 		return rtv;
 	}
 
 
 
-	// ·´ĞòÁĞ»¯²¢ push 1 ¸ö lua Öµ( Í¨¹ı bb Ìî³ä, Óöµ½ String / Userdata / Table ¾ÍÍ¨¹ı od È¥²é idx ). ·µ»Ø·Ç 0 ¾ÍÊÇ³ö´í. 
-	// top ¸º¿Õ¼ä ÓÃÓÚ·ÅÖÃËùÓĞ³öÏÖ¹ıµÄÒıÓÃÊı¾İµÄ¸±±¾. ¹Êµ÷¸Ãº¯ÊıÇ°, top Ó¦´«Èë settop( gettop(L) + ÒıÓÃÊı¾İ¸öÊı ) ºóµÄ top Öµ
-	// Ñ¹ÈëµÄÖµ½«³öÏÖÔÚÕ»¶¥. ¹Ê»¹ĞèÒª×Ô¼º½«Æä replace µ½×î³õ top Öµ, ÔÙ settop( ×î³õ top Öµ )
+	// ååºåˆ—åŒ–å¹¶ push 1 ä¸ª lua å€¼( é€šè¿‡ bb å¡«å……, é‡åˆ° String / Userdata / Table å°±é€šè¿‡ od å»æŸ¥ idx ). è¿”å›é 0 å°±æ˜¯å‡ºé”™. 
+	// top è´Ÿç©ºé—´ ç”¨äºæ”¾ç½®æ‰€æœ‰å‡ºç°è¿‡çš„å¼•ç”¨æ•°æ®çš„å‰¯æœ¬. æ•…è°ƒè¯¥å‡½æ•°å‰, top åº”ä¼ å…¥ settop( gettop(L) + å¼•ç”¨æ•°æ®ä¸ªæ•° ) åçš„ top å€¼
+	// å‹å…¥çš„å€¼å°†å‡ºç°åœ¨æ ˆé¡¶. æ•…è¿˜éœ€è¦è‡ªå·±å°†å…¶ replace åˆ°æœ€åˆ top å€¼, å† settop( æœ€åˆ top å€¼ )
 	inline int Lua_PushFromBBuffer(xx::Dict<uint32_t, std::pair<int, LuaTypes>>& od, xx::BBuffer& bb, lua_State* const& L, int const& top, int const& numRefVals, int& index /* = 0*/)
 	{
 		LuaTypes lt;
@@ -174,7 +174,7 @@ namespace xx
 				if (auto rtv = bb.Read(len)) return rtv;
 				if (len > bb.dataLen - bb.offset) return -2;
 				lua_pushlstring(L, bb.buf + bb.offset, len);
-				lua_copy(L, -1, top - index);					// ¸´ÖÆµ½ÒıÓÃ´æ´¢Çø
+				lua_copy(L, -1, top - index);					// å¤åˆ¶åˆ°å¼•ç”¨å­˜å‚¨åŒº
 				++index;
 				bb.offset += len;
 				return 0;
@@ -201,7 +201,7 @@ namespace xx
 				if (len > bb.dataLen - bb.offset) return -6;
 				auto ptr = lua_newuserdata(L, len);
 				memcpy(ptr, bb.buf + bb.offset, len);
-				lua_copy(L, -1, top - index);					// ¸´ÖÆµ½ÒıÓÃ´æ´¢Çø
+				lua_copy(L, -1, top - index);					// å¤åˆ¶åˆ°å¼•ç”¨å­˜å‚¨åŒº
 				++index;
 				bb.offset += len;
 				return 0;
@@ -225,7 +225,7 @@ namespace xx
 				if (!od.Add(ptr_offset, std::make_pair(top - index, lt)).success) return -9;
 				if (bb.offset == bb.dataLen) return -10;
 				lua_newtable(L);
-				lua_copy(L, -1, top - index);					// ¸´ÖÆµ½ÒıÓÃ´æ´¢Çø
+				lua_copy(L, -1, top - index);					// å¤åˆ¶åˆ°å¼•ç”¨å­˜å‚¨åŒº
 				++index;
 				while (true)
 				{
@@ -259,21 +259,21 @@ namespace xx
 	inline int Lua_PushFromBBuffer(xx::Dict<uint32_t, std::pair<int, LuaTypes>>& od, xx::BBuffer& bb, lua_State* const& L)
 	{
 		uint16_t refValsCount = 0;
-		if (auto r = bb.Read(refValsCount)) return r;	// ¶Á³ö ÒıÓÃÖµ¸öÊı
-		auto topbak = lua_gettop(L);					// ¼ÇÂ¼Ô­Ê¼ top
-		lua_settop(L, topbak + refValsCount);			// ¿Õ³öÒıÓÃÀàĞÍ´æ·ÅÎ»
+		if (auto r = bb.Read(refValsCount)) return r;	// è¯»å‡º å¼•ç”¨å€¼ä¸ªæ•°
+		auto topbak = lua_gettop(L);					// è®°å½•åŸå§‹ top
+		lua_settop(L, topbak + refValsCount);			// ç©ºå‡ºå¼•ç”¨ç±»å‹å­˜æ”¾ä½
 		int index = 0;
 		od.Clear();
 		auto rtv = xx::Lua_PushFromBBuffer(od, bb, L, topbak + refValsCount, refValsCount, index);
 		if (rtv)
 		{
-			lua_settop(L, topbak);						// »¹Ô­Õ»¶¥
+			lua_settop(L, topbak);						// è¿˜åŸæ ˆé¡¶
 			return rtv;
 		}
 		else
 		{
-			lua_replace(L, topbak + 1);					// ½«»¹Ô­³öÀ´µÄÊı¾İ·Åµ½ÀíÂÛÕ»¶¥
-			lua_settop(L, topbak + 1);					// ĞŞÕıÕ»¶¥
+			lua_replace(L, topbak + 1);					// å°†è¿˜åŸå‡ºæ¥çš„æ•°æ®æ”¾åˆ°ç†è®ºæ ˆé¡¶
+			lua_settop(L, topbak + 1);					// ä¿®æ­£æ ˆé¡¶
 			return 0;
 		}
 	}
@@ -299,7 +299,7 @@ namespace xx
 	// Lua_GetMainThread
 	/************************************************************************************/
 
-	// »ñÈ¡ÄÚ´æ³Ø. ½öÏŞÓÚÓÃ Lua_NewState ´´½¨µÄ L ¿ÉÓÃ
+	// è·å–å†…å­˜æ± . ä»…é™äºç”¨ Lua_NewState åˆ›å»ºçš„ L å¯ç”¨
 	template<typename MP>
 	MP& Lua_GetMemPool(lua_State* L)
 	{
@@ -314,7 +314,7 @@ namespace xx
 	// Lua_CloneParentMetatables
 	/************************************************************************************/
 
-	// Õë¶ÔËùÓĞ mt, ¼¶Áª¸´ÖÆ¸¸µÄÔªËØµ½×ÔÉí, ±ÜÃâÖğ¼¶ÏòÉÏ²éÕÒ( Ã¿¶àÒ»¼¶²éÑ¯ËÆºõ¾Í»áÂı 1/5, Ò»Ö±µş¼Ó )
+	// é’ˆå¯¹æ‰€æœ‰ mt, çº§è”å¤åˆ¶çˆ¶çš„å…ƒç´ åˆ°è‡ªèº«, é¿å…é€çº§å‘ä¸ŠæŸ¥æ‰¾( æ¯å¤šä¸€çº§æŸ¥è¯¢ä¼¼ä¹å°±ä¼šæ…¢ 1/5, ä¸€ç›´å åŠ  )
 	template<typename MP>
 	inline void Lua_CloneParentMetatables(MP& mp, lua_State* L)
 	{
@@ -354,8 +354,8 @@ namespace xx
 	// Lua_RegisterCoroutine
 	/************************************************************************************/
 
-	// Îª×´Ì¬»ú( »ùÀàÊÇ MPObject )½¨Ğ­³Ì·ÅÖÁ LUA_REGISTRYINDEX ²¢·µ»ØÖ¸Õë
-	// Ö÷Òª¹©×´Ì¬»ú¹¹Ôìº¯Êı´¦µ÷ÓÃ. o ´«Èë this
+	// ä¸ºçŠ¶æ€æœº( åŸºç±»æ˜¯ MPObject )å»ºåç¨‹æ”¾è‡³ LUA_REGISTRYINDEX å¹¶è¿”å›æŒ‡é’ˆ
+	// ä¸»è¦ä¾›çŠ¶æ€æœºæ„é€ å‡½æ•°å¤„è°ƒç”¨. o ä¼ å…¥ this
 	inline lua_State* Lua_RegisterCoroutine(lua_State* L, void* key)
 	{
 		auto co = lua_newthread(L);							// key, co
@@ -369,10 +369,10 @@ namespace xx
 	// Lua_ReleaseCoroutine
 	/************************************************************************************/
 
-	// ÒÆ³ıÒ»¸öĞ­³Ì ( Î»ÓÚ LUA_REGISTRYINDEX ±í )
+	// ç§»é™¤ä¸€ä¸ªåç¨‹ ( ä½äº LUA_REGISTRYINDEX è¡¨ )
 	inline void Lua_UnregisterCoroutine(lua_State* L, void* key)
 	{
-		if (!L) return;										// Èç¹ûÊÇ scene Îö¹¹( L ÒÑËÀ )¾Í»áµ¼ÖÂÕâ¸öÇé¿ö
+		if (!L) return;										// å¦‚æœæ˜¯ scene ææ„( L å·²æ­» )å°±ä¼šå¯¼è‡´è¿™ä¸ªæƒ…å†µ
 		lua_pushnil(L);
 		lua_rawsetp(L, LUA_REGISTRYINDEX, key);
 	}
@@ -388,7 +388,7 @@ namespace xx
 		int status = lua_resume(co, nullptr, narg);
 		if (status == LUA_YIELD)
 		{
-			return 0;	// todo: Ôİ´æº¯ÊıµÄ·µ»ØÖµ? 
+			return 0;	// todo: æš‚å­˜å‡½æ•°çš„è¿”å›å€¼? 
 		}
 		else if (status == LUA_ERRRUN && lua_isstring(co, -1))
 		{
@@ -406,7 +406,7 @@ namespace xx
 	// LuaError
 	/************************************************************************************/
 
-	// ¼ò»¯³ö´íº¯Êıµ÷ÓÃ. ÓÃ·¨: return LuaError("...");
+	// ç®€åŒ–å‡ºé”™å‡½æ•°è°ƒç”¨. ç”¨æ³•: return LuaError("...");
 	inline int Lua_Error(lua_State* L, char const* errmsg)
 	{
 		lua_pushstring(L, errmsg);
@@ -419,7 +419,7 @@ namespace xx
 	// Lua_PushMetatable
 	/************************************************************************************/
 
-	// ´Ó _G[ TypeId ] È¡³öÔª±íÑ¹ÈëÕ»¶¥
+	// ä» _G[ TypeId ] å–å‡ºå…ƒè¡¨å‹å…¥æ ˆé¡¶
 	template<typename MP, typename T>
 	void Lua_PushMetatable(lua_State* L)
 	{
@@ -436,21 +436,21 @@ namespace xx
 	// auto ud = (Lua_UD*)lua_touserdata(L, -1);
 	// auto t = (T*)(ud + 1)
 
-	// Ñ¹Èë lua µÄ userdata µÄÊı¾İĞÎÌ¬
+	// å‹å…¥ lua çš„ userdata çš„æ•°æ®å½¢æ€
 	enum class Lua_UDTypes : uint8_t
 	{
-		Pointer,					// Ö¸Õë( ¿ÉÄÜÊÇ MPObject ÅÉÉú )
-		MPtr,						// MPtr<T>( ±ØÈ»ÊÇ MPObject ÅÉÉú )
-		Struct						// ½á¹¹Ìå( Ò»¶¨²»ÊÇ MPObject ÅÉÉú )
+		Pointer,					// æŒ‡é’ˆ( å¯èƒ½æ˜¯ MPObject æ´¾ç”Ÿ )
+		MPtr,						// MPtr<T>( å¿…ç„¶æ˜¯ MPObject æ´¾ç”Ÿ )
+		Struct						// ç»“æ„ä½“( ä¸€å®šä¸æ˜¯ MPObject æ´¾ç”Ÿ )
 	};
 
-	// Ñ¹Èë lua µÄ userdata µÄÊı¾İÍ·. Ó¦¸ÃÊÇÕ¼ 8 ×Ö½Ú. ºóÃæ½ô¸úÊı¾İÇø
+	// å‹å…¥ lua çš„ userdata çš„æ•°æ®å¤´. åº”è¯¥æ˜¯å  8 å­—èŠ‚. åé¢ç´§è·Ÿæ•°æ®åŒº
 	template<typename T>
 	struct Lua_UD
 	{
-		int typeIndex;				// MP ÖĞµÄÀàĞÍË÷Òı( Ö÷ÓÃÓÚÅĞ¶Ï¼Ì³Ğ¹ØÏµ, ×ö dynamic_cast )
-		Lua_UDTypes udType;			// Êı¾İĞÎÌ¬
-		bool isMPObject;			// ÊÇ·ñ´Ó MPObject ÅÉÉú( ×÷ÎªÖ¸ÕëÊı¾İĞÎÌ¬µÄÒ»¸ö²¹³äËµÃ÷ )
+		int typeIndex;				// MP ä¸­çš„ç±»å‹ç´¢å¼•( ä¸»ç”¨äºåˆ¤æ–­ç»§æ‰¿å…³ç³», åš dynamic_cast )
+		Lua_UDTypes udType;			// æ•°æ®å½¢æ€
+		bool isMPObject;			// æ˜¯å¦ä» MPObject æ´¾ç”Ÿ( ä½œä¸ºæŒ‡é’ˆæ•°æ®å½¢æ€çš„ä¸€ä¸ªè¡¥å……è¯´æ˜ )
 		T data;
 	};
 
@@ -462,13 +462,13 @@ namespace xx
 	template<typename MP, typename T, typename ENABLE = void>
 	struct LuaFunc
 	{
-		// ½« v Ñ¹ÈëÕ»¶¥( L µÃÊÇ¸ù )
+		// å°† v å‹å…¥æ ˆé¡¶( L å¾—æ˜¯æ ¹ )
 		static void Push(lua_State* L, T const& v);
 
-		// ´Ó idx ¶Á³öÊı¾İÌîµ½ v
+		// ä» idx è¯»å‡ºæ•°æ®å¡«åˆ° v
 		static void To(lua_State* L, T& v, int idx);
 
-		// ÊÔ´Ó idx ¶Á³öÊı¾İÌîµ½ v. ³É¹¦·µ»Ø true
+		// è¯•ä» idx è¯»å‡ºæ•°æ®å¡«åˆ° v. æˆåŠŸè¿”å› true
 		static bool TryTo(lua_State* L, T& v, int idx);
 	};
 
@@ -635,7 +635,7 @@ namespace xx
 				v = ((MPtr<TT>*)&ud->data)->Ensure();
 				return true;
 			case Lua_UDTypes::Struct:
-				v = (TT*)&ud->data;			// ÀíÂÛÉÏ½²Õâ¸öÖµÊÇÎ£ÏÕµÄ. Èç¹û±» lua »ØÊÕ¾ÍÃ»ÁË. ĞèÒªÁ¢¼´Ê¹ÓÃ
+				v = (TT*)&ud->data;			// ç†è®ºä¸Šè®²è¿™ä¸ªå€¼æ˜¯å±é™©çš„. å¦‚æœè¢« lua å›æ”¶å°±æ²¡äº†. éœ€è¦ç«‹å³ä½¿ç”¨
 				return true;
 			}
 			return false;
@@ -646,7 +646,7 @@ namespace xx
 	template<typename MP, typename T>
 	struct LuaFunc<MP, T, std::enable_if_t<std::is_class<T>::value && !IsMPtr<T>::value>>
 	{
-		// todo: ÓÒÖµ°æ, ½á¹¹ÌåÎö¹¹º¯Êı
+		// todo: å³å€¼ç‰ˆ, ç»“æ„ä½“ææ„å‡½æ•°
 		static inline void Push(lua_State* L, T const& v)
 		{
 			auto ud = (Lua_UD<T>*)lua_newuserdata(L, sizeof(Lua_UD<T>));	// ud
@@ -676,7 +676,7 @@ namespace xx
 					return true;
 				}
 			case Lua_UDTypes::MPtr:
-				return false;				// MPObject ²»Ö§³ÖÒÔÖµ·½Ê½Ê¹ÓÃ
+				return false;				// MPObject ä¸æ”¯æŒä»¥å€¼æ–¹å¼ä½¿ç”¨
 			case Lua_UDTypes::Struct:
 				v = ud->data;
 				return true;
@@ -759,7 +759,7 @@ namespace xx
 	// Lua_SetGlobal
 	/************************************************************************************/
 
-	// ÔÚÈ«¾ÖÒÔÏÂ±ê·½Ê½Ñ¹ÈëÖµ
+	// åœ¨å…¨å±€ä»¥ä¸‹æ ‡æ–¹å¼å‹å…¥å€¼
 	template<typename MP, typename T>
 	void Lua_SetGlobal(lua_State* L, lua_Integer const& key, T const& v)
 	{
@@ -769,7 +769,7 @@ namespace xx
 		lua_pop(L, 1);											//
 	}
 
-	// ÔÚÈ«¾ÖÒÔ×Ö´® key ·½Ê½Ñ¹ÈëÖµ
+	// åœ¨å…¨å±€ä»¥å­—ä¸² key æ–¹å¼å‹å…¥å€¼
 	template<typename MP, typename T>
 	void Lua_SetGlobal(lua_State* L, char const* const& key, T const& v)
 	{
@@ -783,7 +783,7 @@ namespace xx
 	// Lua_SetGlobalNil
 	/************************************************************************************/
 
-	// ´ÓÈ«¾ÖÇå³ı key( integer ) Ïî
+	// ä»å…¨å±€æ¸…é™¤ key( integer ) é¡¹
 	inline void Lua_SetGlobalNil(lua_State* L, lua_Integer const& key)
 	{
 		if (!L) return;
@@ -793,7 +793,7 @@ namespace xx
 		lua_pop(L, 1);											//
 	}
 
-	// ´ÓÈ«¾ÖÇå³ı key( string ) Ïî
+	// ä»å…¨å±€æ¸…é™¤ key( string ) é¡¹
 	inline void Lua_SetGlobalNil(lua_State* L, char const* key)
 	{
 		if (!L) return;
@@ -835,8 +835,8 @@ namespace xx
 	// Lua_CallFunc
 	/************************************************************************************/
 
-	// ÒÑÖªÎÊÌâ: ±ê¼ÇÎª YIELD ·½Ê½Ö´ĞĞµÄº¯Êı, ½«ºöÂÔÖ±½Ó·µ»ØÖµ.
-	// ÓĞ²ÎÊı ÓĞ·µ»ØÖµ
+	// å·²çŸ¥é—®é¢˜: æ ‡è®°ä¸º YIELD æ–¹å¼æ‰§è¡Œçš„å‡½æ•°, å°†å¿½ç•¥ç›´æ¥è¿”å›å€¼.
+	// æœ‰å‚æ•° æœ‰è¿”å›å€¼
 	template<typename MP, bool YIELD, typename T, typename R, typename ...Args>
 	int Lua_CallFunc(std::enable_if_t<sizeof...(Args) && !std::is_void<R>::value, lua_State*> L, T* o, R(T::* f)(Args...))
 	{
@@ -850,7 +850,7 @@ namespace xx
 		}
 		return Lua_Error(L, "error!!! bad arg data type? type cast fail?");
 	}
-	// ÎŞ²ÎÊı ÓĞ·µ»ØÖµ
+	// æ— å‚æ•° æœ‰è¿”å›å€¼
 	template<typename MP, bool YIELD, typename T, typename R, typename ...Args>
 	int Lua_CallFunc(std::enable_if_t<!sizeof...(Args) && !std::is_void<R>::value, lua_State*> L, T* o, R(T::* f)(Args...))
 	{
@@ -859,7 +859,7 @@ namespace xx
 		Lua_Push<MP>(L, rtv);
 		return 1;
 	}
-	// ÓĞ²ÎÊı ÎŞ·µ»ØÖµ
+	// æœ‰å‚æ•° æ— è¿”å›å€¼
 	template<typename MP, bool YIELD, typename T, typename R, typename ...Args>
 	int Lua_CallFunc(std::enable_if_t<sizeof...(Args) && std::is_void<R>::value, lua_State*> L, T* o, R(T::* f)(Args...))
 	{
@@ -872,7 +872,7 @@ namespace xx
 		}
 		return Lua_Error(L, "error!!! bad arg data type? type cast fail?");
 	}
-	// ÎŞ²ÎÊı ÎŞ·µ»ØÖµ
+	// æ— å‚æ•° æ— è¿”å›å€¼
 	template<typename MP, bool YIELD, typename T, typename R, typename ...Args>
 	int Lua_CallFunc(std::enable_if_t<!sizeof...(Args) && std::is_void<R>::value, lua_State*> L, T* o, R(T::* f)(Args...))
 	{
@@ -893,7 +893,7 @@ namespace xx
 	{
 		lua_pushcclosure(L, [](lua_State* L)
 		{
-			// todo: ±éÀú²¢»ñÈ¡ËùÓĞÈë²Î, ¼ÇÂ¼µ½Ä³´¦. µ±Ç°Ö÷ÓÃÓÚ´ò¶Ïµã
+			// todo: éå†å¹¶è·å–æ‰€æœ‰å…¥å‚, è®°å½•åˆ°æŸå¤„. å½“å‰ä¸»ç”¨äºæ‰“æ–­ç‚¹
 			return 0;
 		}, 0);
 		lua_setglobal(L, "Log");
@@ -905,7 +905,7 @@ namespace xx
 	// Lua_BindFunc_Ensure
 	/************************************************************************************/
 
-	// Éú³É ud.Ensure º¯Êı
+	// ç”Ÿæˆ ud.Ensure å‡½æ•°
 	template<typename MP>
 	void Lua_BindFunc_Ensure(lua_State* L)
 	{
@@ -929,7 +929,7 @@ namespace xx
 	// Lua_BindFunc_Release
 	/************************************************************************************/
 
-	// Éú³É ud.Release º¯Êı
+	// ç”Ÿæˆ ud.Release å‡½æ•°
 	template<typename MP>
 	void Lua_BindFunc_Release(lua_State* L)
 	{
@@ -953,7 +953,7 @@ namespace xx
 	// Lua_BindFunc_ToString
 	/************************************************************************************/
 
-	// Éú³É ud.ToString º¯Êı( ºÍÔ­Ê¼ ToString ½Ó¿Ú²»Ò»ÑùµÄµØ·½ÔÚÓÚ, LUA ²¢²»´«Èë²ÎÊı, ¶øÊÇ½ÓÊÕ·µ»ØÖµ )
+	// ç”Ÿæˆ ud.ToString å‡½æ•°( å’ŒåŸå§‹ ToString æ¥å£ä¸ä¸€æ ·çš„åœ°æ–¹åœ¨äº, LUA å¹¶ä¸ä¼ å…¥å‚æ•°, è€Œæ˜¯æ¥æ”¶è¿”å›å€¼ )
 	template<typename MP>
 	void Lua_BindFunc_ToString(lua_State* L, char const* fnName = "ToString")
 	{
@@ -986,8 +986,8 @@ namespace xx
 	// Lua_NewState
 	/************************************************************************************/
 
-	// ´´½¨²¢·µ»ØÒ»¸ö lua_State*, ÒÔÄÚ´æ³ØÎªÄÚ´æ·ÖÅä·½Ê½, Ä¬ÈÏ openLibs ÒÔ¼°´´½¨ mt
-	// ¿ÉÒÔÓÃ lua_getallocf º¯ÊıÀ´µÃµ½ mp Ö¸Õë
+	// åˆ›å»ºå¹¶è¿”å›ä¸€ä¸ª lua_State*, ä»¥å†…å­˜æ± ä¸ºå†…å­˜åˆ†é…æ–¹å¼, é»˜è®¤ openLibs ä»¥åŠåˆ›å»º mt
+	// å¯ä»¥ç”¨ lua_getallocf å‡½æ•°æ¥å¾—åˆ° mp æŒ‡é’ˆ
 	template<typename MP>
 	inline lua_State* Lua_NewState(MP& mp, bool openLibs = true, bool registerMetatables = true)
 	{
@@ -1001,7 +1001,7 @@ namespace xx
 		{
 			lua_rawgeti(L, LUA_REGISTRYINDEX, LUA_RIDX_GLOBALS);	// _G
 
-			// ÏÈÔì³öËùÓĞÀàĞÍµÄ ¿Õmt ( __index Ö¸Ïò×Ô¼º )
+			// å…ˆé€ å‡ºæ‰€æœ‰ç±»å‹çš„ ç©ºmt ( __index æŒ‡å‘è‡ªå·± )
 			for (int i = 0; i < MP::typesSize; ++i)
 			{
 				lua_newtable(L);									// _G, mt
@@ -1016,7 +1016,7 @@ namespace xx
 			}
 			assert(lua_gettop(L) == 1);
 
-			// ±éÀúÉèÆä mt Ö¸Ïò¸¸ mt
+			// éå†è®¾å…¶ mt æŒ‡å‘çˆ¶ mt
 			for (int i = 0; i < MP::typesSize; ++i)
 			{
 				if (i == mp.pids[i]) continue;
@@ -1044,7 +1044,7 @@ namespace xx
 // xxLua_BindFunc
 /************************************************************************************/
 
-// º¯Êı°ó¶¨
+// å‡½æ•°ç»‘å®š
 #define xxLua_BindFunc(MPTYPE, LUA, T, F, YIELD)										\
 lua_pushstring(LUA, #F);																\
 lua_pushcclosure(LUA, [](lua_State* L)													\
@@ -1069,7 +1069,7 @@ lua_rawset(LUA, -3);
 // xxLua_BindField
 /************************************************************************************/
 
-// ³ÉÔ±±äÁ¿°ó¶¨
+// æˆå‘˜å˜é‡ç»‘å®š
 #define xxLua_BindField(MPTYPE, LUA, T, F, writeable)									\
 lua_pushstring(LUA, #F);																\
 lua_pushcclosure(LUA, [](lua_State* L)													\

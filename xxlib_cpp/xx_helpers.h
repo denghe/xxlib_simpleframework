@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <xx_mempool.h>
 #include <iostream>
 #include <type_traits>
