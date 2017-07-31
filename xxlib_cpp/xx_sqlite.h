@@ -323,6 +323,7 @@ namespace xx
 		return Execute("END TRANSACTION");
 	}
 
+	// 返回值 -n: 执行出错  0: 未找到   1: 找到
 	int SQLite::TableExists(char const* const& tn)
 	{
 		if (!query_Exists)

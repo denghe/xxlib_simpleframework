@@ -5,6 +5,7 @@
 #include <xx_sqlite.h>
 #include <mutex>
 #include <thread>
+#include <optional>
 
 struct Peer;
 struct Service;
@@ -216,7 +217,7 @@ void Peer::OnReceivePackage(xx::BBuffer& bb)
 	// 这套方案的问题在于, 多线内存池会损耗比较大, 复用率低下. 
 
 
-	
+
 	service->tm->AddTask([service = this->service, peer = xx::MPtr<Peer>(this)/*, args*/]	// 转到 SQL 线程
 	{
 		// 执行 SQL 语句, 得到结果
@@ -224,14 +225,14 @@ void Peer::OnReceivePackage(xx::BBuffer& bb)
 
 		service->tm->AddResult([service, peer/*, args, rtv */]	// 转到 uv 线程
 		{
-			// args->Release();
-			// handle( rtv )
-			if (peer && peer->state == xx::UVPeerStates::Connected)	// 如果 peer 还活着, 做一些回发功能
-			{
-				//mp->SendPackages
-			}
-			// service->tm->AddTask([rtv]{ rtv->Release(); })	// 转到 SQL 线程
-		});
+		// args->Release();
+		// handle( rtv )
+		if (peer && peer->state == xx::UVPeerStates::Connected)	// 如果 peer 还活着, 做一些回发功能
+		{
+			//mp->SendPackages
+		}
+		// service->tm->AddTask([rtv]{ rtv->Release(); })	// 转到 SQL 线程
+	});
 	});
 }
 
@@ -275,8 +276,22 @@ namespace xx
 				Append("null");
 				return;
 			}
-			// todo: 转义
-			//Append("'" + v.Replace("'", "''") + "'");
+			// 转义 '	// todo: 感觉有必要直接找到 sqlite 的转义函数抄一段. 这个先用着
+			auto len = strlen(v);
+			Reserve(dataLen + len * 2);
+			for (size_t i = 0; i < len; ++i)
+			{
+				if (v[i] != '\'')
+				{
+					buf[dataLen++] = v[i];
+				}
+				else
+				{
+					buf[dataLen] = '\'';
+					buf[dataLen + 1] = '\'';
+					dataLen += 2;
+				}
+			}
 		}
 
 		void SQLAppend(String* const& v)
@@ -291,7 +306,7 @@ namespace xx
 				Append("null");
 				return;
 			}
-			// todo: 将 v 转成 0xXX ( 这个有待进一步研究, 或许不需要转? )
+			// todo: 将 v 转成 x'11aa22bb....' (  sqlite3.c  71051 行 )
 		}
 
 		// List 的重载
@@ -317,6 +332,9 @@ namespace xx
 			SQLiteAppend<T>::Exec(this, *v, ignoreReadOnly);
 		}
 	};
+
+	using SQLiteString_v = xx::MemHeaderBox<SQLiteString>;
+
 }
 
 // 模拟生成物
@@ -343,21 +361,21 @@ namespace xx
 	};
 }
 
+
 namespace DB
 {
 	// 模拟生成的函数长相. 函数执行需要 try
 
-	// todo: 去掉 try 改为执行完后判断 lastErrorNumber
-
-	
-
-
-	struct SQLiteFuncs		// interface name
+	struct SQLiteFuncs
 	{
 		xx::SQLite* sqlite;
 		xx::MemPool& mp;
+		xx::SQLiteString_v s;
+		bool hasError = false;
+		int const& lastErrorCode() { return sqlite->lastErrorCode; }
+		const char* const& lastErrorMessage() { return sqlite->lastErrorMessage; }
 
-		SQLiteFuncs(xx::SQLite* sqlite) : sqlite(sqlite), mp(sqlite->mempool()) {}
+		SQLiteFuncs(xx::SQLite* sqlite) : sqlite(sqlite), mp(sqlite->mempool()), s(mp) {}
 		~SQLiteFuncs()
 		{
 			if (query_CreateAccountTable) query_CreateAccountTable->Release();
@@ -368,6 +386,7 @@ namespace DB
 		xx::SQLiteQuery* query_CreateAccountTable = nullptr;
 		void CreateAccountTable()
 		{
+			hasError = true;
 			auto& q = query_CreateAccountTable;
 			if (!q)
 			{
@@ -380,40 +399,33 @@ create table [account]
 )
 )=-=");
 			}
-			if (!q) throw - 1;
-
-			if (!q->Execute())
-			{
-				throw - 3;
-			}
+			if (!q) return;
+			if (!q->Execute()) return;
+			hasError = false;
 		}
 
 
 		xx::SQLiteQuery* query_AddAccount = nullptr;
-		void AddAccount(char const* const& username, char const* const& password)
+		void AddAccount(DB::Account const* const& a)
 		{
-			auto& q = query_AddAccount;
-			if (!q)
-			{
-				q = sqlite->CreateQuery(R"=-=(
+			hasError = true;
+			s->Clear();
+			s->Append(R"=-=(
 insert into [account] ([username], [password])
-values (?, ?)
-)=-=");
-			}
-			if (!q) throw - 1;
-			if (q->SetParameters(username, password))
-			{
-				throw - 2;
-			}
-			if (!q->Execute())
-			{
-				throw - 3;
-			}
+values )=-=");
+			s->SQLAppend(a, true);
+
+			auto q = sqlite->CreateQuery(s->C_str(), s->dataLen);
+			if (!q) return;
+			if (!q->Execute()) return;
+			hasError = false;
 		}
 
 		xx::SQLiteQuery* query_GetAccountByUsername = nullptr;
 		Account* GetAccountByUsername(char const* const& username)
 		{
+			hasError = true;
+			Account* rtv = nullptr;
 			auto& q = query_GetAccountByUsername;
 			if (!q)
 			{
@@ -423,22 +435,16 @@ select [id], [username], [password]
  where [username] = ?
 )=-=");
 			}
-			if (!q) throw - 1;
-			if (q->SetParameters(username))
-			{
-				throw - 2;
-			}
-			Account* rtv = nullptr;
+			if (!q) return rtv;
+			if (q->SetParameters(username)) return rtv;
 			if (!q->Execute([&](xx::SQLiteReader& sr)
 			{
 				rtv = mp.Create<Account>();
 				rtv->id = sr.ReadInt64(0);
 				mp.CreateTo(rtv->username, sr.ReadString(1));
 				mp.CreateTo(rtv->password, sr.ReadString(2));
-			}))
-			{
-				throw - 3;
-			}
+			})) return rtv;
+			hasError = false;
 			return rtv;
 		}
 
@@ -449,54 +455,59 @@ select [id], [username], [password]
 int main()
 {
 	PKG::AllTypesRegister();
+	//xx::MemHeaderBox<Service> s(mp);
+	//s->Run();
+
+
+
+
+
 
 	xx::MemPool mp;
 	xx::SQLite_v sql(mp, "data.db");
-	DB::SQLiteFuncs sqlfs(sql);
+	DB::SQLiteFuncs fs(sql);
 
 	auto r = sql->TableExists("account");
 	if (r < 0)
 	{
-		sql->Cout("sql exec err! last errno = ", sql->lastErrorCode, ", last errmsg = ", sql->lastErrorMessage, "\n");
+		mp.Cout("errCode = ", sql->lastErrorCode, "errMsg = ", sql->lastErrorMessage, "\n");
 		goto LabEnd;
 	}
 	else if (r == 0)
 	{
-		try
-		{
-			sqlfs.CreateAccountTable();
-			sqlfs.AddAccount("a", "1");
-			sqlfs.AddAccount("b", "2");
-		}
-		catch (int errCode)
-		{
-			sql->Cout("errCode = ", errCode);
-			goto LabEnd;
-		}
-	}
-	else
-	{
-		try
-		{
-			auto a = sqlfs.GetAccountByUsername("a");
-			if (a == nullptr)
-			{
-				sql->Cout("can't find account a!\n");
-			}
-			else
-			{
-				sql->Cout("found account a! id = ", a->id, " password = ", a->password, "\n");
-			}
-		}
-		catch (int errCode)
-		{
-			sql->Cout("errCode = ", errCode);
-			goto LabEnd;
-		}
+		fs.CreateAccountTable();
+		assert(!fs.hasError);
+
+		xx::MemHeaderBox<DB::Account> a(mp);
+
+		a->username->Assign("a");
+		a->password->Assign("1");
+		fs.AddAccount(a);
+		assert(!fs.hasError);
+
+		a->username->Assign("b");
+		a->password->Assign("2");
+		fs.AddAccount(a);
+		assert(!fs.hasError);
 	}
 
-	//xx::MemHeaderBox<Service> s(mp);
-	//s->Run();
+	{
+		auto a = fs.GetAccountByUsername("a");
+		if (fs.hasError)
+		{
+			mp.Cout("errCode = ", fs.lastErrorCode(), "errMsg = ", fs.lastErrorMessage(), "\n");
+			goto LabEnd;
+		}
+		if (a == nullptr)
+		{
+			mp.Cout("can't find account a!\n");
+		}
+		else
+		{
+			mp.Cout("found account a! id = ", a->id, " password = ", a->password, "\n");
+			a->Release();
+		}
+	}
 
 LabEnd:
 	std::cin.get();

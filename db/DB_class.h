@@ -10,7 +10,7 @@ namespace DB
     {
         // 自增主键
         int64_t id = 0;
-        // 用户名( 有索引 )
+        // 用户名( 唯一索引 )
         xx::String* username = nullptr;
         // 密码( 无索引 )
         xx::String* password = nullptr;
@@ -24,6 +24,8 @@ namespace DB
     };
 	inline Account::Account()
 	{
+        mempool().CreateTo(username);
+        mempool().CreateTo(password);
 	}
 	inline Account::~Account()
 	{

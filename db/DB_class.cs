@@ -11,12 +11,12 @@ namespace DB
         /// </summary>
         public long id;
         /// <summary>
-        /// 用户名( 有索引 )
+        /// 用户名( 唯一索引 )
         /// </summary>
-        public string username;
+        public string username = new string();
         /// <summary>
         /// 密码( 无索引 )
         /// </summary>
-        public string password;
+        public string password = new string();
     }
 }
