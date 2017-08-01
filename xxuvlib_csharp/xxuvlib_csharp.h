@@ -187,6 +187,7 @@ namespace xx
 	protected:
 		System::IntPtr^ ptr = nullptr;
 		uint64_t versionNumber = 0;
+		bool disposed = false;
 	public:
 
 		virtual void InitPtr(xx::MPObject* ptr)
@@ -205,12 +206,19 @@ namespace xx
 			System::Diagnostics::Debug::Assert(versionNumber != 0 && ptr->ToPointer() != nullptr && ((xx::MPObject*)ptr->ToPointer())->versionNumber() == versionNumber);
 		}
 
-		~MPtrWrapper()
+		!MPtrWrapper()
 		{
 			AssertEnsure();
 			((xx::MPObject*)ptr->ToPointer())->Release();
 			this->ptr = nullptr;
 			versionNumber = 0;
+		}
+
+		~MPtrWrapper()
+		{
+			if (disposed) return;
+			this->!MPtrWrapper();
+			disposed = true;
 		}
 	};
 	ref class UVWrapper;
@@ -316,6 +324,7 @@ namespace xx
 
 	public ref class UVClientPeerWrapper abstract : UVPeerWrapper
 	{
+		bool disposed = false;
 	public:
 		UVWrapper^ creator = nullptr;				// 加持以防 uv 比 this 死的早
 
@@ -351,6 +360,7 @@ namespace xx
 	ref class UVListenerWrapper;
 	public ref class UVServerPeerWrapper abstract : UVPeerWrapper
 	{
+		bool disposed = false;
 	public:
 		UVListenerWrapper^ creator = nullptr;				// 加持以防 listener 比 this 死的早
 
@@ -369,6 +379,7 @@ namespace xx
 	public delegate xx::UVServerPeer*(Delegate_OnCreatePeer)();
 	public ref class UVListenerWrapper abstract : MPtrWrapper
 	{
+		bool disposed = false;
 	public:
 		UVWrapper^ creator = nullptr;				// 加持以防 uv 比 this 死的早
 		System::Collections::Generic::List<UVServerPeerWrapper^>^ serverPeers;
@@ -424,6 +435,7 @@ namespace xx
 	public delegate void(Delegate_OnTicks)();
 	public ref class UVTimerWrapper abstract : MPtrWrapper
 	{
+		bool disposed = false;
 	public:
 		UVWrapper^ creator = nullptr;				// 加持以防 uv 比 this 死的早
 	protected:
@@ -457,6 +469,7 @@ namespace xx
 	public delegate void(Delegate_OnFire)();
 	public ref class UVAsyncWrapper abstract : MPtrWrapper
 	{
+		bool disposed = false;
 	public:
 		UVWrapper^ creator = nullptr;				// 加持以防 uv 比 this 死的早
 	protected:
@@ -483,6 +496,7 @@ namespace xx
 
 	public ref class UVWrapper
 	{
+		bool disposed = false;
 	public:
 		xx::MemPool* mp;
 		xx::UV* uv;
@@ -500,15 +514,20 @@ namespace xx
 			timers = gcnew System::Collections::Generic::List<UVTimerWrapper^>();
 			asyncs = gcnew System::Collections::Generic::List<UVAsyncWrapper^>();
 		}
-		~UVWrapper()
+		!UVWrapper()
 		{
-			// todo: foreach clientPeers, listeners, timers, syncs Dispose ?
-
 			uv->Stop();
 			uv->Release();
 			uv = nullptr;
 			delete mp;
 			mp = nullptr;
+		}
+		~UVWrapper()
+		{
+			if (disposed) return;
+			// todo: foreach clientPeers, listeners, timers, syncs Dispose ?
+			this->!UVWrapper();
+			disposed = true;
 		}
 
 
@@ -620,8 +639,10 @@ namespace xx
 
 	UVListenerWrapper::~UVListenerWrapper()
 	{
+		if (disposed) return;
 		// 从父容器中移除
 		SYSTEM_LIST_SWAP_REMOVE(creator->listeners, this, uv_listeners_index);
+		disposed = true;
 	}
 	void UVListenerWrapper::InitPtr(xx::MPObject* ptr)
 	{
@@ -639,8 +660,10 @@ namespace xx
 
 	UVTimerWrapper::~UVTimerWrapper()
 	{
+		if (disposed) return;
 		// 从父容器中移除
 		SYSTEM_LIST_SWAP_REMOVE(creator->timers, this, uv_timers_index);
+		disposed = true;
 	}
 	void UVTimerWrapper::InitPtr(xx::MPObject* ptr)
 	{
@@ -658,8 +681,10 @@ namespace xx
 
 	UVAsyncWrapper::~UVAsyncWrapper()
 	{
+		if (disposed) return;
 		// 从父容器中移除
 		SYSTEM_LIST_SWAP_REMOVE(creator->asyncs, this, uv_asyncs_index);
+		disposed = true;
 	}
 	void UVAsyncWrapper::InitPtr(xx::MPObject* ptr)
 	{
@@ -685,8 +710,10 @@ namespace xx
 
 	UVClientPeerWrapper::~UVClientPeerWrapper()
 	{
+		if (disposed) return;
 		// 从父容器中移除
 		SYSTEM_LIST_SWAP_REMOVE(creator->clientPeers, this, uv_clientPeers_index);
+		disposed = true;
 	}
 	void UVClientPeerWrapper::InitPtr(xx::MPObject* ptr)
 	{
@@ -707,8 +734,10 @@ namespace xx
 
 	UVServerPeerWrapper::~UVServerPeerWrapper()
 	{
+		if (disposed) return;
 		// 从父容器中移除
 		SYSTEM_LIST_SWAP_REMOVE(creator->serverPeers, this, listener_serverPeers_index);
+		disposed = true;
 	}
 
 	void UVServerPeerWrapper::InitPtr(xx::MPObject* ptr)
