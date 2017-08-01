@@ -519,4 +519,116 @@ namespace xx
 		auto len = sqlite3_column_bytes(stmt, colIdx);
 		return std::make_pair(ptr, len);
 	}
+
+
+
+
+
+
+	/***************************************************************************************/
+
+	// 针对 List<T>, 生成 ( xx, xx, xx )
+	struct SQLiteString : String
+	{
+		SQLiteString() : String() {}
+
+		// 用于插入数字
+		template<typename T>
+		void SQLAppend(T const& v)
+		{
+			static_assert(std::is_arithmetic<T>::value, "");
+			Append(v);
+		}
+
+		// 插入字串
+		void SQLAppend(char const* const& v, uint32_t len = 0)
+		{
+			if (!v)
+			{
+				Append("null");
+				return;
+			}
+			// 转义 '	// todo: 感觉有必要直接找到 sqlite 的转义函数抄一段. 这个先用着
+			if (!len) len = (uint32_t)strlen(v);
+			Reserve(dataLen + len * 2 + 2);
+			buf[dataLen++] = '\'';
+			for (uint32_t i = 0; i < len; ++i)
+			{
+				if (v[i] != '\'')
+				{
+					buf[dataLen++] = v[i];
+				}
+				else
+				{
+					buf[dataLen] = '\'';
+					buf[dataLen + 1] = '\'';
+					dataLen += 2;
+				}
+			}
+			buf[dataLen++] = '\'';
+		}
+
+		// 同上
+		void SQLAppend(String* const& v)
+		{
+			SQLAppend((v ? v->C_str() : nullptr), (v ? v->dataLen : 0));
+		}
+		void SQLAppend(String_v& v)
+		{
+			return SQLAppend(&*v);
+		}
+
+		static constexpr char* const hexStr = "0123456789abcdef";
+		// 插入 BLOB
+		void SQLAppend(BBuffer* const& v)
+		{
+			if (!v)
+			{
+				Append("null");
+				return;
+			}
+			// 将 v 转成 x'11aa22bb....' (  sqlite3.c  71051 行 )
+			auto len = v->dataLen;
+			Reserve(dataLen + len * 2 + 3);
+			this->buf[dataLen] = 'x';
+			this->buf[dataLen + 1] = '\'';
+			this->buf[dataLen + len * 2 + 2] = '\'';
+			dataLen += 2;
+			for (uint32_t i = 0; i < len; i++)
+			{
+				v->buf[dataLen + i * 2 + 0] = hexStr[(uint8_t)buf[i] >> 4];
+				v->buf[dataLen + i * 2 + 1] = hexStr[buf[i] & 0x0F];
+			}
+			dataLen += len * 2 + 1;
+		}
+		void SQLAppend(BBuffer_v& v)
+		{
+			return SQLAppend(&*v);
+		}
+
+
+
+		// List 的重载
+		template<typename T>
+		void SQLAppend(List<T>* const& os)
+		{
+			assert(os && os->dataLen);
+			Append("( ");
+			for (uint32_t i = 0; i < os->dataLen; ++i)
+			{
+				SQLAppend(os->At(i));
+				Append(", ");
+			};
+			dataLen -= 2;
+			Append(" )");
+		}
+
+		template<typename T>
+		void SQLAppend(List_v<T>& os)
+		{
+			return SQLAppend(&*os);
+		}
+	};
+
+	using SQLiteString_v = MemHeaderBox<SQLiteString>;
 }

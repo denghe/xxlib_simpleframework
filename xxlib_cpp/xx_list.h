@@ -257,7 +257,7 @@ namespace xx
 			Emplace(v);
 		}
 
-		// 用参数直接构造一个( 当前不支持直接经由 mempool Create MPObject* ) 不加持
+		// 用参数直接构造一个
 		template<typename...Args>
 		T& Emplace(Args &&... args)
 		{
@@ -268,6 +268,14 @@ namespace xx
 			return p;
 		}
 
+		// 首参传 mempool() 的 Emplace
+		template<typename...Args>
+		T& EmplaceMP(Args &&... args)
+		{
+			return Emplace(mempool(), std::forward<Args>(args)...);
+		}
+
+
 		void InsertAt(uint32_t const& idx, T&& v)
 		{
 			EmplaceAt(idx, (T&&)v);
@@ -277,7 +285,7 @@ namespace xx
 			EmplaceAt(idx, v);
 		}
 
-		// 用参数直接构造一个到指定位置( 当前不支持经由 mempool 创建 MPObject* )
+		// 用参数直接构造一个到指定位置
 		template<typename...Args>
 		T& EmplaceAt(uint32_t idx, Args&&...args)
 		{
@@ -304,6 +312,15 @@ namespace xx
 			new (buf + idx) T(std::forward<Args>(args)...);
 			return buf[idx];
 		}
+
+		// 首参传 mempool() 的 Emplace
+		template<typename...Args>
+		T& EmplaceAtMP(uint32_t idx, Args &&... args)
+		{
+			return EmplaceAt(idx, mempool(), std::forward<Args>(args)...);
+		}
+
+
 		void AddRange(T const* items, uint32_t count)
 		{
 			Reserve(dataLen + count);
@@ -367,6 +384,17 @@ namespace xx
 			}
 		}
 
+
+		template<typename U = T>
+		std::enable_if_t<IsMPObject_v<U>> ReleaseWithItems()
+		{
+			auto& mp = mempool();
+			for (uint32_t i = 0; i < dataLen; ++i)
+			{
+				mp.Release(buf[i]);
+			}
+			mp.Release(this);
+		}
 
 
 

@@ -244,154 +244,11 @@ void Peer::OnReceivePackage(xx::BBuffer& bb)
 
 
 
-
-
-
-
-
-
-
-
-
-
-// todo: 支持传入 SQLite 能用于 bind 的简单数据类型, 以及 List( num ) 主用于 where xx in (.........) 的生成
-// 当遇到 List 时, 生成物将启用拼接模式, 剩下的其他类型参数则依次传给 SetParameters
-// 同时也支持传入 类指针, 暂不支持 List< 类指针 >( 因为这种传值方式主要就是拿来做 insert values (),(),..., 但是直接反复执行一条构造好的 insert 查询应该更快 )
-// 当遇到类指针时, 拼接将展开为 里面的 非只读字段 的个数 问号, 传参时将直接传其子成员
-
-// 也就是说 SQLiteAppend 要根据上面的需求, 做相应的修改, 主要针对 T* , 及 List< 啥啥 >. 啥啥应该是 SQLite 支持的所有数据类型才对
-// ignoreReadOnly 应该是默认启用的. 调用时根本不好传值.
-
-namespace xx
-{
-	// 基础适配模板
-	template<typename T>
-	struct SQLiteAppend
-	{
-		static void Exec(String* ss, T const& in);/*
-		{
-			assert(false);
-		}*/
-	};
-}
-
-namespace xx
-{
-	struct SQLiteString : String
-	{
-		SQLiteString() : String() {}
-
-		// 用于插入数字
-		template<typename T>
-		void SQLAppend(T const& v)
-		{
-			static_assert(std::is_arithmetic<T>::value, "");
-			Append(v);
-		}
-
-		// 插入字串
-		void SQLAppend(char const* const& v, uint32_t len = 0)
-		{
-			if (!v)
-			{
-				Append("null");
-				return;
-			}
-			// 转义 '	// todo: 感觉有必要直接找到 sqlite 的转义函数抄一段. 这个先用着
-			if (!len) len = (uint32_t)strlen(v);
-			Reserve(dataLen + len * 2 + 2);
-			buf[dataLen++] = '\'';
-			for (uint32_t i = 0; i < len; ++i)
-			{
-				if (v[i] != '\'')
-				{
-					buf[dataLen++] = v[i];
-				}
-				else
-				{
-					buf[dataLen] = '\'';
-					buf[dataLen + 1] = '\'';
-					dataLen += 2;
-				}
-			}
-			buf[dataLen++] = '\'';
-		}
-
-		// 同上
-		void SQLAppend(String* const& v)
-		{
-			SQLAppend(v ? v->C_str() : nullptr, v ? v->dataLen : 0);
-		}
-
-		static constexpr char* const hexStr = "0123456789abcdef";
-		// 插入 BLOB
-		void SQLAppend(BBuffer* const& v)
-		{
-			if (!v)
-			{
-				Append("null");
-				return;
-			}
-			// 将 v 转成 x'11aa22bb....' (  sqlite3.c  71051 行 )
-			auto len = v->dataLen;
-			Reserve(dataLen + len * 2 + 3);
-			this->buf[dataLen] = 'x';
-			this->buf[dataLen + 1] = '\'';
-			this->buf[dataLen + len * 2 + 2] = '\'';
-			dataLen += 2;
-			for (uint32_t i = 0; i < len; i++)
-			{
-				v->buf[dataLen + i * 2 + 0] = hexStr[(uint8_t)buf[i] >> 4];
-				v->buf[dataLen + i * 2 + 1] = hexStr[buf[i] & 0x0F];
-			}
-			dataLen += len * 2 + 1;
-		}
-
-		// List 的重载
-		template<typename T>
-		void SQLAppend(List<T>* const& os)
-		{
-			assert(os && os->dataLen);
-			for (int i = 0; i < os->dataLen; ++i)
-			{
-				SQLAppend(os[i]);
-				Append(", ");
-			};
-			dataLen -= 2;
-		}
-
-
-		// 用于插入类
-		template<typename T>
-		void SQLAppend(T* const& v)
-		{
-			assert(v);
-			static_assert(IsMPObject_v<T>, "");
-			SQLiteAppend<T>::Exec(this, *v);
-		}
-	};
-
-	using SQLiteString_v = xx::MemHeaderBox<SQLiteString>;
-}
-
 #include "db\DB_class.h"
-
-namespace xx
-{
-	template<>
-	struct SQLiteAppend<DB::Account const>
-	{
-		static void Exec(String* ss, DB::Account const& in)
-		{
-			ss->Append("(?, ?)");
-		}
-	};
-}
-
 
 namespace DB
 {
-	// 模拟生成的函数长相. 函数执行需要 try
+	// 模拟生成的函数长相
 
 	struct SQLiteFuncs
 	{
@@ -431,21 +288,38 @@ create table [account]
 			hasError = false;
 		}
 
-
 		xx::SQLiteQuery* query_AddAccount = nullptr;
 		void AddAccount(DB::Account const* const& a)
 		{
 			assert(a);
 			hasError = true;
-			s->Clear();
-			s->Append(R"=-=(
+			auto& q = query_CreateAccountTable;
+			if (!q)
+			{
+				q = sqlite->CreateQuery(R"=-=(
 insert into [account] ([username], [password])
-values )=-=");
-			s->SQLAppend(a);
-
-			auto q = sqlite->CreateQuery(s->C_str(), s->dataLen);
+values (?, ?)
+)=-=");
+			}
 			if (!q) return;
 			if (q->SetParameters(a->username, a->password)) return;
+			if (!q->Execute()) return;
+			hasError = false;
+		}
+
+		void AddAccount2(char const* const& username, char const* const& password)
+		{
+			hasError = true;
+			auto& q = query_CreateAccountTable;
+			if (!q)
+			{
+				q = sqlite->CreateQuery(R"=-=(
+insert into [account] ([username], [password])
+values (?, ?)
+)=-=");
+			}
+			if (!q) return;
+			if (q->SetParameters(username, password)) return;
 			if (!q->Execute()) return;
 			hasError = false;
 		}
@@ -468,7 +342,7 @@ select [id], [username], [password]
 			if (q->SetParameters(username)) return rtv;
 			if (!q->Execute([&](xx::SQLiteReader& sr)
 			{
-				rtv = mp.Create<Account>();
+				mp.CreateTo(rtv);
 				rtv->id = sr.ReadInt64(0);
 				mp.CreateTo(rtv->username, sr.ReadString(1));
 				mp.CreateTo(rtv->password, sr.ReadString(2));
@@ -477,6 +351,46 @@ select [id], [username], [password]
 			return rtv;
 		}
 
+		xx::SQLiteQuery* query_GetAccountsByUsernames = nullptr;
+		xx::List<Account*>* GetAccountsByUsernames(xx::List_v<xx::String_v>& usernames)
+		{
+			hasError = true;
+			xx::List<Account*>* rtv = nullptr;
+			auto& q = query_GetAccountsByUsernames;
+			if (q)
+			{
+				q->Release();
+				q = nullptr;
+			}
+			if (!q)
+			{
+				s->Clear();
+				s->Append(R"=-=(
+select [id], [username], [password]
+  from [account]
+ where [username] in )=-=");
+				s->SQLAppend(usernames);
+				q = sqlite->CreateQuery(s->C_str(), s->dataLen);
+			}
+			if (!q) return rtv;
+			mp.CreateTo(rtv);
+			if (!q->Execute([&](xx::SQLiteReader& sr)
+			{
+				auto r = mp.Create<Account>();
+				rtv->Add(r);
+				r->id = sr.ReadInt64(0);
+				if (!sr.IsNull(1)) mp.CreateTo(r->username, sr.ReadString(1));
+				if (!sr.IsNull(2)) mp.CreateTo(r->password, sr.ReadString(2));
+			}))
+			{
+				for (auto& o : *rtv) o->Release();
+				rtv->Release();
+				rtv = nullptr;
+				return rtv;
+			}
+			hasError = false;
+			return rtv;
+		}
 	};
 }
 
@@ -486,9 +400,6 @@ int main()
 	PKG::AllTypesRegister();
 	//xx::MemHeaderBox<Service> s(mp);
 	//s->Run();
-
-
-
 
 
 
@@ -508,15 +419,15 @@ int main()
 		assert(!fs.hasError);
 
 		xx::MemHeaderBox<DB::Account> a(mp);
+		mp.CreateTo(a->username);
+		mp.CreateTo(a->password);
 
 		a->username->Assign("a");
 		a->password->Assign("1");
 		fs.AddAccount(a);
 		assert(!fs.hasError);
 
-		a->username->Assign("b");
-		a->password->Assign("2");
-		fs.AddAccount(a);
+		fs.AddAccount2("b", "2");
 		assert(!fs.hasError);
 	}
 
@@ -527,7 +438,7 @@ int main()
 			mp.Cout("errCode = ", fs.lastErrorCode(), "errMsg = ", fs.lastErrorMessage(), "\n");
 			goto LabEnd;
 		}
-		if (a == nullptr)
+		else if (a == nullptr)
 		{
 			mp.Cout("can't find account a!\n");
 		}
@@ -536,6 +447,17 @@ int main()
 			mp.Cout("found account a! id = ", a->id, " password = ", a->password, "\n");
 			a->Release();
 		}
+	}
+	{
+		xx::List_v<xx::String_v> usernames(mp);
+		usernames->EmplaceMP("a");
+		usernames->EmplaceMP("b");
+		auto as = fs.GetAccountsByUsernames(usernames);
+		for (auto& a : *as)
+		{
+			mp.Cout(a, "\n");
+		}
+		as->ReleaseWithItems();
 	}
 
 LabEnd:

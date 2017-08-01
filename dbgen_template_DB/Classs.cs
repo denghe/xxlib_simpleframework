@@ -7,9 +7,9 @@ class Account
     [Column(true), Desc("自增主键")]
     long id;
 
-    [Column, CreateInstance, Desc("用户名( 唯一索引 )")]
+    [Column, Desc("用户名( 唯一索引 )")]
     string username;
 
-    [Column, CreateInstance, Desc("密码( 无索引 )")]
+    [Column, Desc("密码( 无索引 )")]
     string password;
 }

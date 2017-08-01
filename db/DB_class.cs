@@ -13,10 +13,10 @@ namespace DB
         /// <summary>
         /// 用户名( 唯一索引 )
         /// </summary>
-        public string username = "";
+        public string username;
         /// <summary>
         /// 密码( 无索引 )
         /// </summary>
-        public string password = "";
+        public string password;
     }
 }

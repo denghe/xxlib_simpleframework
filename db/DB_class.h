@@ -24,8 +24,6 @@ namespace DB
     };
 	inline Account::Account()
 	{
-        mempool().CreateTo(username);
-        mempool().CreateTo(password);
 	}
 	inline Account::~Account()
 	{
