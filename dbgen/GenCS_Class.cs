@@ -108,7 +108,14 @@ namespace " + c.Namespace + @"
                 }
                 else if (f._Has<TemplateLibrary.CreateInstance>())
                 {
-                    sb.Append(" = new " + ftn + "();");
+                    if (ft._IsString())
+                    {
+                        sb.Append(" = \"\";");
+                    }
+                    else
+                    {
+                        sb.Append(" = new " + ftn + "();");
+                    }
                 }
                 else
                 {
