@@ -499,7 +499,7 @@ namespace xx
 	{
 		return GetHashCode(in.Ensure());
 	}
-	inline uint32_t GetHashCode(Ptr<String> const &in)
+	inline uint32_t GetHashCode(String_p const &in)
 	{
 		return GetHashCode(*in);
 	}
@@ -526,7 +526,7 @@ namespace xx
 	{
 		return EqualsTo(a.Ensure(), b.Ensure());
 	}
-	inline bool EqualsTo(Ptr<String> const& a, Ptr<String> const& b)
+	inline bool EqualsTo(String_p const& a, String_p const& b)
 	{
 		return EqualsTo(*a, *b);
 	}
