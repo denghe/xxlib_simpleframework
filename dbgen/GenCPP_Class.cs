@@ -12,8 +12,7 @@ public static class GenCPP_Class
         var sb = new StringBuilder();
 
         // usings
-        sb.Append(@"#include <xx_mempool.h>
-#include <xx_bbuffer.h>
+        sb.Append(@"#include <xx_bbuffer.h>
 ");
 
         // template namespace
@@ -118,9 +117,11 @@ namespace " + c.Namespace + @"
             foreach (var f in fs)
             {
                 var ft = f.FieldType;
-                var ftn = ft._GetTypeDecl_Cpp(templateName);
+                var ftn = ft._GetSafeTypeDecl_Cpp(templateName);
                 sb.Append(f._GetDesc_Cpp(8) + @"
         " + (f.IsStatic ? "constexpr " : "") + ftn + " " + f.Name);
+
+                // 当前还无法正确处理 String 数据类型的默认值
 
                 var v = f.GetValue(f.IsStatic ? null : o);
                 var dv = v._GetDefaultValueDecl_Cpp(templateName);
@@ -181,13 +182,13 @@ namespace " + c.Namespace + @"
             foreach (var f in fs)
             {
                 var ft = f.FieldType;
-                var ftn = ft._GetTypeDecl_Cpp(templateName);
+                var ftn = ft._GetSafeTypeDecl_Cpp(templateName);
                 sb.Append(f._GetDesc_Cpp(8) + @"
         " + (f.IsStatic ? "constexpr " : "") + ftn + " " + f.Name);
 
                 var v = f.GetValue(f.IsStatic ? null : o);
                 var dv = v._GetDefaultValueDecl_Cpp(templateName);
-                if (dv != "")
+                if (dv != "" && !ft._IsUserClass() && !ft._IsString())  // 当前还无法正确处理 String 数据类型的默认值
                 {
                     sb.Append(" = " + dv + ";");
                 }
@@ -202,10 +203,15 @@ namespace " + c.Namespace + @"
         typedef " + c.Name + @" ThisType;
         typedef " + btn + @" BaseType;
 	    " + c.Name + @"();
-	    ~" + c.Name + @"();
+		" + c.Name + @"(" + c.Name + @" const&) = delete;
+		" + c.Name + @"& operator=(" + c.Name + @" const&) = delete;
         virtual void ToString(xx::String &str) const override;
         virtual void ToStringCore(xx::String &str) const override;
-    };");   // class }
+    };
+    using " + c.Name + @"_p = xx::Ptr<" + c.Name + @">;
+	using " + c.Name + @"_v = xx::MemHeaderBox<" + c.Name + @">;
+
+");   // class }
 
             // namespace }
             if (c.Namespace != null && ((i < cs.Count - 1 && cs[i + 1].Namespace != c.Namespace) || i == cs.Count - 1))
@@ -237,38 +243,36 @@ namespace " + c.Namespace + @"
 
             sb.Append(@"
 	inline " + c.Name + @"::" + c.Name + @"()");
+            bool dot = false;
             if (c._HasBaseType())
             {
                 sb.Append(@"
-        : " + btn + @"()");
+        " + (dot ? "." : ":") + " " + btn + @"()");
+                dot = true;
             }
-            sb.Append(@"
-	{");
             var fs = c._GetFields();
             foreach (var f in fs)
             {
                 var ft = f.FieldType;
-                if (ft.IsClass && f._Has<TemplateLibrary.CreateInstance>())
+                if (f._Has<TemplateLibrary.CreateInstance>() || ft._IsString())
                 {
-                    sb.Append(@"
-        mempool().CreateTo(" + f.Name + ");");
+                    var v = f.GetValue(f.IsStatic ? null : o);
+                    var dv = v._GetDefaultValueDecl_Cpp(templateName);
+                    if (dv != "nullptr" && ft._IsString())
+                    {
+                        sb.Append(@"
+        " + (dot ? "," : ":") + " " + f.Name + "(mempool(), " + dv + ")");
+                    }
+                    else if(f._Has<TemplateLibrary.CreateInstance>())
+                    {
+                        sb.Append(@"
+        " + (dot ? "," : ":") + " " + f.Name + "(mempool())");
+                    }
+                    dot = true;
                 }
             }
             sb.Append(@"
-	}
-	inline " + c.Name + @"::~" + c.Name + @"()
-	{");
-            fs = c._GetFields();
-            foreach (var f in fs)
-            {
-                var ft = f.FieldType;
-                if (ft.IsClass)
-                {
-                    sb.Append(@"
-        mempool().SafeRelease(" + f.Name + ");");
-                }
-            }
-            sb.Append(@"
+	{
 	}
 
     inline void " + c.Name + @"::ToString(xx::String &str) const
@@ -308,6 +312,27 @@ namespace " + c.Namespace + @"
 
         sb.Append(@"
 }");
+
+
+        // MemmoveSupport 适配
+        sb.Append(@"
+namespace xx
+{");
+        cs = ts._GetClasss();
+        foreach (var c in cs)
+        {
+            var ctn = c._GetTypeDecl_Cpp(templateName);
+            sb.Append(@"
+	template<>
+	struct MemmoveSupport<" + ctn + @">
+	{
+		static const bool value = true;
+    };");
+        }
+        sb.Append(@"
+}
+");
+
 
         // 泛型接口适配
         sb.Append(@"

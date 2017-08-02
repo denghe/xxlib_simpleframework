@@ -556,6 +556,103 @@ public static class GenExtensions
     }
 
 
+
+
+    /// <summary>
+    /// 获取 C++ 的类型声明串
+    /// </summary>
+    public static string _GetSafeTypeDecl_Cpp(this Type t, string templateName)
+    {
+        if (t._IsNullable())
+        {
+            return "std::optional<" + t.GenericTypeArguments[0]._GetSafeTypeDecl_Cpp(templateName) + ">";
+        }
+        if (t.IsArray)                // 当前特指 byte[]
+        {
+            throw new NotSupportedException();
+            //return _GetSafeTypeDecl_Cpp(t.GetElementType(), templateName) + "[]";
+        }
+        else if (t._IsTuple())
+        {
+            string rtv = "std::tuple<";
+            for (int i = 0; i < t.GenericTypeArguments.Length; ++i)
+            {
+                if (i > 0)
+                    rtv += ", ";
+                rtv += _GetSafeTypeDecl_Cpp(t.GenericTypeArguments[i], templateName);
+            }
+            rtv += ">";
+            return rtv;
+        }
+        else if (t.IsEnum) // enum & struct
+        {
+            return templateName + "::" + t.FullName.Replace(".", "::");
+        }
+        else
+        {
+            if (t.Namespace == nameof(TemplateLibrary))
+            {
+                if (t.Name == "List`1")
+                {
+                    return "xx::List_p<" + _GetSafeTypeDecl_Cpp(t.GenericTypeArguments[0], templateName) + ">";
+                }
+                else if (t.Name == "DateTime")
+                {
+                    return "xx::DateTime_p";
+                }
+                else if (t.Name == "BBuffer")
+                {
+                    return "xx::BBuffer_p";
+                }
+            }
+            else if (t.Namespace == nameof(System))
+            {
+                switch (t.Name)
+                {
+                    case "Void":
+                        return "void";
+                    case "Byte":
+                        return "uint8_t";
+                    case "UInt8":
+                        return "uint8_t";
+                    case "UInt16":
+                        return "uint16_t";
+                    case "UInt32":
+                        return "uint32_t";
+                    case "UInt64":
+                        return "uint64_t";
+                    case "SByte":
+                        return "int8_t";
+                    case "Int8":
+                        return "int8_t";
+                    case "Int16":
+                        return "int16_t";
+                    case "Int32":
+                        return "int32_t";
+                    case "Int64":
+                        return "int64_t";
+                    case "Double":
+                        return "double";
+                    case "Float":
+                        return "float";
+                    case "Single":
+                        return "float";
+                    case "Boolean":
+                        return "bool";
+                    case "Bool":
+                        return "bool";
+                    case "String":
+                        return "xx::String_p";
+                }
+            }
+
+            return templateName + "::" + t.FullName.Replace(".", "::") + (t.IsValueType ? "" : "_p");
+            //throw new Exception("unhandled data type");
+        }
+    }
+
+
+
     /// <summary>
     /// 获取枚举对应的数字类型的类型名
     /// </summary>

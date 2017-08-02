@@ -15,139 +15,11 @@ public static class GenCPP_SQLite
         var ts = asm._GetTypes();
 
         // usings
-        sb.Append(@"using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Data.SqlClient;
-using System.Diagnostics;
+        sb.Append(@"#include ""db\" + templateName + @"_class.h""
 ");
 
-        // template namespace
-        sb.Append(@"
-namespace " + templateName + @"
-{
-    public static class MsSqlAppendExt
-    {
-        public static void MsSqlAppend<T>(this StringBuilder sb, T v)
-        {
-            sb.Append(v);
-        }
-
-        public static void MsSqlAppend<T>(this StringBuilder sb, T? o) where T : struct
-        {
-            if (o.HasValue)
-            {
-                sb.MsSqlAppend(o.Value);
-            }
-            else
-            {
-                sb.Append(""null"");
-            }
-        }
-
-        public static void MsSqlAppend(this StringBuilder sb, string v)
-        {
-            sb.Append(""'"" + v.Replace(""'"", ""''"") + ""'"");
-        }
-
-        public static void MsSqlAppend(this StringBuilder sb, DateTime o)
-        {
-            sb.Append(""'"" + o.ToString(""yyyy-MM-dd HH:mm:ss"") + ""'"");
-        }
-
-        public static void MsSqlAppend<T>(this StringBuilder sb, List<T> os) { Debug.Assert(os.Count > 0); for (int i = 0; i < os.Count; ++i) { sb.MsSqlAppend(os[i]); sb.Append("", ""); }; if (os.Count > 0) sb.Length -= 2; }
-        public static void MsSqlAppend(this StringBuilder sb, List<DateTime> os) { Debug.Assert(os.Count > 0); sb.Append(""( ""); for (int i = 0; i < os.Count; ++i) { sb.MsSqlAppend(os[i]); sb.Append("", ""); }; sb.Length -= 2; sb.Append("" )""); }
-        public static void MsSqlAppend(this StringBuilder sb, List<byte> os) { Debug.Assert(os.Count > 0); sb.Append(""( ""); for (int i = 0; i < os.Count; ++i) { sb.Append(os[i]); sb.Append("", ""); }; sb.Length -= 2; sb.Append("" )""); }
-        public static void MsSqlAppend(this StringBuilder sb, List<ushort> os) { Debug.Assert(os.Count > 0); sb.Append(""( ""); for (int i = 0; i < os.Count; ++i) { sb.Append(os[i]); sb.Append("", ""); }; sb.Length -= 2; sb.Append("" )""); }
-        public static void MsSqlAppend(this StringBuilder sb, List<uint> os) { Debug.Assert(os.Count > 0); sb.Append(""( ""); for (int i = 0; i < os.Count; ++i) { sb.Append(os[i]); sb.Append("", ""); }; sb.Length -= 2; sb.Append("" )""); }
-        public static void MsSqlAppend(this StringBuilder sb, List<ulong> os) { Debug.Assert(os.Count > 0); sb.Append(""( ""); for (int i = 0; i < os.Count; ++i) { sb.Append(os[i]); sb.Append("", ""); }; sb.Length -= 2; sb.Append("" )""); }
-        public static void MsSqlAppend(this StringBuilder sb, List<sbyte> os) { Debug.Assert(os.Count > 0); sb.Append(""( ""); for (int i = 0; i < os.Count; ++i) { sb.Append(os[i]); sb.Append("", ""); }; sb.Length -= 2; sb.Append("" )""); }
-        public static void MsSqlAppend(this StringBuilder sb, List<short> os) { Debug.Assert(os.Count > 0); sb.Append(""( ""); for (int i = 0; i < os.Count; ++i) { sb.Append(os[i]); sb.Append("", ""); }; sb.Length -= 2; sb.Append("" )""); }
-        public static void MsSqlAppend(this StringBuilder sb, List<int> os) { Debug.Assert(os.Count > 0); sb.Append(""( ""); for (int i = 0; i < os.Count; ++i) { sb.Append(os[i]); sb.Append("", ""); }; sb.Length -= 2; sb.Append("" )""); }
-        public static void MsSqlAppend(this StringBuilder sb, List<long> os) { Debug.Assert(os.Count > 0); sb.Append(""( ""); for (int i = 0; i < os.Count; ++i) { sb.Append(os[i]); sb.Append("", ""); }; sb.Length -= 2; sb.Append("" )""); }
-        public static void MsSqlAppend(this StringBuilder sb, List<double> os) { Debug.Assert(os.Count > 0); sb.Append(""( ""); for (int i = 0; i < os.Count; ++i) { sb.Append(os[i]); sb.Append("", ""); }; sb.Length -= 2; sb.Append("" )""); }
-        public static void MsSqlAppend(this StringBuilder sb, List<float> os) { Debug.Assert(os.Count > 0); sb.Append(""( ""); for (int i = 0; i < os.Count; ++i) { sb.Append(os[i]); sb.Append("", ""); }; sb.Length -= 2; sb.Append("" )""); }
-        public static void MsSqlAppend(this StringBuilder sb, List<bool> os) { Debug.Assert(os.Count > 0); sb.Append(""( ""); for (int i = 0; i < os.Count; ++i) { sb.Append(os[i]); sb.Append("", ""); }; sb.Length -= 2; sb.Append("" )""); }
-");
-
-        foreach (var e in ts._GetEnums())
-        {
-            var etn = e._GetTypeDecl_Csharp();
-            var eutn = e._GetEnumUnderlyingTypeName_Csharp();
-            sb.Append(@"
-        public static void MsSqlAppend(this StringBuilder sb, List<" + etn + @"> os) { Debug.Assert(os.Count > 0); sb.Append(""( ""); for (int i = 0; i < os.Count; ++i) { sb.Append("", ""); sb.Append((" + eutn + @")os[i]); }; sb.Length -= 2; sb.Append("" )""); }");
-        }
-
-        sb.Append(@"
-
-        // todo: Nullable<Enum>, BBuffer
-");
-
-        foreach (var c in ts._GetClasss())
-        {
-            var ctn = c._GetTypeDecl_Csharp();
-
-            var fs = c._GetFields<Column>();
-
-
-
-            sb.Append(@"
-        public static void MsSqlAppend(this StringBuilder sb, List<" + ctn + @"> os, bool ignoreReadOnly = false) { Debug.Assert(os.Count > 0); for (int i = 0; i < os.Count; ++i) { sb.MsSqlAppend(os[i], ignoreReadOnly); sb.Append("", ""); }; if (os.Count > 0) sb.Length -= 2; }
-        public static void MsSqlAppend(this StringBuilder sb, " + ctn + @" o, bool ignoreReadOnly = false)
-        {
-            sb.Append(""("");");
-
-
-
-            foreach (var m in fs)
-            {
-
-                if (m._IsReadOnly())
-                {
-                    sb.Append(@"
-            if (!ignoreReadOnly)
-            {");
-                }
-
-                var mt = m.FieldType;
-                var mtn = mt._GetTypeDecl_Csharp();
-
-                string fnfix = "", typecnv = "";
-                if (mt.IsEnum)
-                {
-                    typecnv = "(" + mt._GetEnumUnderlyingTypeName_Csharp() + ")";
-                }
-                else if (!mt._IsNumeric())
-                {
-                    fnfix = "MsSql";
-                }
-                sb.Append(@"
-            sb." + fnfix + "Append(" + typecnv + "o." + m.Name + ");");
-
-                sb.Append(@"
-            sb.Append("", "");");
-                if (m._IsReadOnly())
-                {
-                    sb.Append(@"
-            }");
-                }
-            }
-
-
-            sb.Append(@"
-            sb.Length -= 2;
-            sb.Append("")"");
-        }");
-        }
-        sb.Append(@"
-    }
-");
-
-
-        // todo: [MySql]
-
-        // 扫带有 [MsSql] 标志的 interface , 生成相应的函数
-        var ifaces = ts._GetInterfaces<MsSql>();
+        // 扫带有 [SQLite] 标志的 interface , 生成相应的函数
+        var ifaces = ts._GetInterfaces<SQLite>();
         foreach (var iface in ifaces)
         {
             // namespace xxx {
@@ -158,31 +30,21 @@ namespace " + iface.Namespace + @"
 {");
             }
 
-            // class {
-            sb.Append(iface._GetDesc_Csharp(4) + @"
-    public class " + iface.Name + @"
+            // struct {
+            sb.Append(iface._GetDesc_Cpp(4) + @"
+    struct " + iface.Name + @"
     {
-        private SqlConnection conn;
-        private SqlCommand cmd;
-        private StringBuilder sb = new StringBuilder();
-        private List<int> recordsAffecteds = new List<int>();
+		xx::SQLite* sqlite;
+		xx::MemPool& mp;
+		xx::SQLiteString_v s;
+		bool hasError = false;
+		int const& lastErrorCode() { return sqlite->lastErrorCode; }
+		const char* const& lastErrorMessage() { return sqlite->lastErrorMessage; }
 
-        public List<int> RecordsAffecteds
-        {
-            get { return recordsAffecteds; }
-        }
+        //int recordsAffected // todo
 
-        public int RecordsAffected
-        {
-            get { return recordsAffecteds[0]; }
-        }
+		" + iface.Name + @"(xx::SQLite* sqlite) : sqlite(sqlite), mp(sqlite->mempool()), s(mp) {}
 
-        public " + iface.Name + @"(SqlConnection conn)
-        {
-            // conn.Open();
-            this.conn = conn;
-            this.cmd = conn.CreateCommand();
-        }
 ");
 
             // todo: 如果参数都是简单数据类型( 不含 List / Sql拼接段 啥的 ), 生成 SqlCommand + Parameter 复用
@@ -191,16 +53,19 @@ namespace " + iface.Namespace + @"
             var fs = iface._GetMethods();
             foreach (var f in fs)
             {
+                var fn = f.Name;
                 if (!f._Has<Sql>())
-                    throw new Exception("no [Sql] attribute on " + iface.Name + "." + f.Name);
+                    throw new Exception("no [Sql] attribute on " + iface.Name + "." + fn);
 
                 var ps = f.GetParameters();
                 var rt = f.ReturnType;
-                var rtn = rt._GetTypeDecl_Csharp();
+                var rtn = rt._GetSafeTypeDecl_Cpp(templateName);
 
                 sb.Append(@"
-" + f._GetDesc_Csharp(8) + @"
-        " + "public " + rtn + " " + f.Name + @"");
+        xx::SQLiteQuery_p query_" + fn + @";
+
+" + f._GetDesc_Cpp(8) + @"
+        " + rtn + " " + fn);
 
                 if (ps.Length > 0)
                 {
@@ -215,13 +80,14 @@ namespace " + iface.Namespace + @"
                     {
                         sb.Append(",");
                     }
+                    var pt = p.ParameterType;
 
-                    sb.Append(p._GetDesc_Csharp(12) + @"
-            " + p.ParameterType._GetTypeDecl_Csharp() + " " + p.Name);
+                    sb.Append(p._GetDesc_Cpp(12) + @"
+            " + pt._GetSafeTypeDecl_Cpp(templateName) + " const& " + p.Name);
 
                     if (p.HasDefaultValue)
                     {
-                        sb.Append(" = " + p._GetDefaultValueDecl_Csharp());
+                        sb.Append(" = " + p._GetDefaultValueDecl_Cpp(templateName));    // todo: string 支持
                     }
                 }
 
@@ -231,60 +97,124 @@ namespace " + iface.Namespace + @"
         ");
                 }
                 sb.Append(@")
-        {");
+        {
+			hasError = true;
+			auto& q = query_" + fn + @";
+            // recordsAffecteds.Clear();
+");
 
-                if (ps.Length > 0)
+                var sqls = f._GetSql()._SpliteSql();
+
+                // 看看有没有 List
+                bool hasList = false;
+
+                // 合并 sql 成 1 个串 for NewQuery
+                var sqlcombine1 = new StringBuilder();
+                foreach (var o in sqls)
+                {
+                    if (o is string)
+                    {
+                        sqlcombine1.Append(o);
+                    }
+                    else if (ps[(int)o].ParameterType._IsList())
+                    {
+                        hasList = true;
+                    }
+                    else
+                    {
+                        sqlcombine1.Append("?");
+                    }
+                }
+
+                // 将 sqls 中参数是 List 类型的转成 "?" string
+                var sqls2 = sqls.Select((sql) =>
+                {
+                    if (sql is string || ps[(int)sql].ParameterType._IsList()) return sql;
+                    return "?";
+                });
+
+                // 合并连续出现的 string
+                var sqlcombine2 = new StringBuilder();
+                var sqls3 = new System.Collections.Generic.List<object>();
+                foreach (var sql in sqls2)
+                {
+                    if (sql is string)
+                    {
+                        sqlcombine2.Append(sql);
+                    }
+                    else
+                    {
+                        sqlcombine2.Append("?");
+                    }
+                }
+                if (sqlcombine2.Length > 0) sqls3.Add(sqlcombine2.ToString());
+                sqls = sqls3;
+
+
+
+                if (hasList)
                 {
                     sb.Append(@"
-            recordsAffecteds.Clear();
-            sb.Clear();");
-
-                    // 扫描出 f.Sql 的参数部分并与 f.Parameters 相对应
-                    var sqls = f._GetSql()._SpliteSql();
+            s->Clear();");
                     foreach (var o in sqls)
                     {
                         if (o is string)
                         {
                             sb.Append(@"
-            sb.Append(@""" + ((string)o).Replace("\"", "\"\"") + @""");");
+            s->Append(R""=-=(" + o + @")=-="");");
                         }
                         else
                         {
                             var p = ps[(int)o];
                             var pn = p.Name;
                             var pt = p.ParameterType;
-                            if (p._Has<Literal>() || pt._IsNumeric())
-                            {
-                                sb.Append(@"
-            sb.Append(" + pn + @");");
-                            }
-                            else
-                            {
-                                if (pt._IsUserClass() && p._Has<Ignore>())
-                                {
-                                    sb.Append(@"
-            sb.MsSqlAppend(" + pn + @", true);");
-                                }
-                                else
-                                {
-
-                                    sb.Append(@"
-            sb.MsSqlAppend(" + pn + @");");
-                                }
-
-                            }
+                            sb.Append(@"
+            s->SQLAppend(" + pn + @");");
                         }
                     }
-
                     sb.Append(@"
-            cmd.CommandText = sb.ToString();
-");
+            q = sqlite->CreateQuery(s->C_str(), s->dataLen);");
                 }
                 else
                 {
                     sb.Append(@"
-            cmd.CommandText = @""" + f._GetSql().Replace("\"", "\"\"") + @""";");
+			if (!q)
+			{
+				q = sqlite->CreateQuery(R""=-=(" + sqlcombine1 + @")=-="");
+			}");
                 }
+                if (rtn == "void")
+                {
+                    sb.Append(@"
+			if (!q) return;");
+                }
+                else
+                {
+                    sb.Append(@"
+            " + rtn + @" rtv;
+			if (!q) return rtv;
+            rtv.Create(mp);");
+                }
+
+                var ps2 = ps.Where(p => !p.ParameterType._IsList());
+                if (ps2.Count() > 0)
+                {
+                    sb.Append(@"
+            if (q->SetParameters(");
+                    foreach (var p in ps2)
+                    {
+                        sb.Append(p.Name + ", ");
+                    }
+                    sb.Length -= 2;
+                    sb.Append(@")) return;
+");
+                }
+
+
+                // todo
+
+
+
 
                 // 根据函数返回值类型，生成不同的代码段。
 
@@ -311,7 +241,7 @@ namespace " + iface.Namespace + @"
 
                         int ii = jj + 1;
                         rt = rrt.GenericTypeArguments[jj];
-                        rtn = rt._GetTypeDecl_Csharp();
+                        rtn = rt._GetTypeDecl_Cpp(templateName);
                         if (jj > 0)
                         {
                             sb.Append(@"
@@ -323,7 +253,7 @@ namespace " + iface.Namespace + @"
                         if (rt.IsGenericType && rt.Name == "List`1")
                         {
                             var ct = rt.GenericTypeArguments[0];
-                            var ctn = ct._GetTypeDecl_Csharp();
+                            var ctn = ct._GetTypeDecl_Cpp(templateName);
 
                             if (ct.IsValueType)
                             {
@@ -395,7 +325,7 @@ namespace " + iface.Namespace + @"
                                         sb.Append(", ");
                                     }
                                     sb.Append(@"
-                    " + mn + @" = " + (mt._IsSqlNullable() ? ("r.IsDBNull(" + i + ") ? null : (" + mt._GetTypeDecl_Csharp() + ")") : "") + getfn + @"(" + i + @")");
+                    " + mn + @" = " + (mt._IsSqlNullable() ? ("r.IsDBNull(" + i + ") ? null : (" + mt._GetTypeDecl_Cpp(templateName) + ")") : "") + getfn + @"(" + i + @")");
                                 }
                                 sb.Append(@"
                     };
@@ -443,7 +373,7 @@ namespace " + iface.Namespace + @"
                 else if (rt.IsGenericType && rt.Name == "List`1")
                 {
                     var ct = rt.GenericTypeArguments[0];
-                    var ctn = ct._GetTypeDecl_Csharp();
+                    var ctn = ct._GetTypeDecl_Cpp(templateName);
 
                     if (ct.IsValueType)
                     {
@@ -529,7 +459,7 @@ namespace " + iface.Namespace + @"
                                 sb.Append(", ");
                             }
                             sb.Append(@"
-                    " + mn + @" = " + (mt._IsSqlNullable() ? ("r.IsDBNull(" + i + ") ? null : (" + mt._GetTypeDecl_Csharp() + ")") : "") + getfn + @"(" + i + @")");
+                    " + mn + @" = " + (mt._IsSqlNullable() ? ("r.IsDBNull(" + i + ") ? null : (" + mt._GetTypeDecl_Cpp(templateName) + ")") : "") + getfn + @"(" + i + @")");
                         }
                         sb.Append(@"
                 };

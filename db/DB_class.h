@@ -1,5 +1,4 @@
-﻿#include <xx_mempool.h>
-#include <xx_bbuffer.h>
+﻿#include <xx_bbuffer.h>
 
 namespace DB
 {
@@ -11,31 +10,24 @@ namespace DB
         // 自增主键
         int64_t id = 0;
         // 用户名( 唯一索引 )
-        xx::String_p username;						// need change type
+        xx::String_p username;
         // 密码( 无索引 )
         xx::String_p password;
 
         typedef Account ThisType;
         typedef xx::MPObject BaseType;
 	    Account();
-
-		Account(Account&&) = default;				// need gen
-
-	    ~Account();
+		Account(Account const&) = delete;
+		Account& operator=(Account const&) = delete;
         virtual void ToString(xx::String &str) const override;
         virtual void ToStringCore(xx::String &str) const override;
     };
+    using Account_p = xx::Ptr<Account>;
+	using Account_v = xx::MemHeaderBox<Account>;
 
-	using Account_p = xx::Ptr<Account>;				// need gen
-	using Account_v = xx::MemHeaderBox<Account>;	// need gen
 
 	inline Account::Account()
 	{
-	}
-	inline Account::~Account()
-	{
-        //mempool().SafeRelease(username);			// need remove these
-        //mempool().SafeRelease(password);
 	}
 
     inline void Account::ToString(xx::String &str) const
@@ -64,8 +56,12 @@ namespace DB
 namespace xx
 {
 	template<>
-	struct MemmoveSupport<DB::Account_v>			// need gen
+	struct MemmoveSupport<DB::Account*>
 	{
 		static const bool value = true;
-	};
+    };
+}
+
+namespace xx
+{
 }
