@@ -366,7 +366,7 @@ select [id], [username], [password]
 				q = sqlite->CreateQuery(s->C_str(), s->dataLen);
 			}
 			if (!q) return rtv;
-			mp.CreateTo(rtv);
+			rtv.Create(mp);
 			if (!q->Execute([&](xx::SQLiteReader& sr)
 			{
 				auto& r = rtv->EmplaceMP();
@@ -435,10 +435,10 @@ int main()
 		}
 	}
 	{
-		xx::List_p<xx::String_p> usernames(mp);
-		usernames->EmplaceMP("a");
-		usernames->EmplaceMP("b");
-		auto as = fs.GetAccountsByUsernames(usernames);
+		xx::List_p<xx::String_p> ss(mp);
+		ss->EmplaceMP("a");
+		ss->EmplaceMP("b");
+		auto as = fs.GetAccountsByUsernames(ss);
 		for (auto& a : *as)
 		{
 			mp.Cout(a, "\n");
