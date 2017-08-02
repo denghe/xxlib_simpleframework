@@ -198,12 +198,12 @@ namespace xx
 
 		bool Ensure()
 		{
-			return versionNumber != 0 && ptr->ToPointer() != nullptr && ((xx::MPObject*)ptr->ToPointer())->versionNumber() == versionNumber;
+			return !disposed && versionNumber != 0 && ptr->ToPointer() != nullptr && ((xx::MPObject*)ptr->ToPointer())->versionNumber() == versionNumber;
 		}
 
 		void AssertEnsure()
 		{
-			System::Diagnostics::Debug::Assert(versionNumber != 0 && ptr->ToPointer() != nullptr && ((xx::MPObject*)ptr->ToPointer())->versionNumber() == versionNumber);
+			System::Diagnostics::Debug::Assert(!disposed && versionNumber != 0 && ptr->ToPointer() != nullptr && ((xx::MPObject*)ptr->ToPointer())->versionNumber() == versionNumber);
 		}
 
 		!MPtrWrapper()
