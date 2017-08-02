@@ -153,9 +153,10 @@ namespace xx
 	/*************************************************************************/
 
 	using BBQueue_v = MemHeaderBox<BBQueue>;
+	using BBQueue_p = Ptr<BBQueue>;
 
 	template<>
-	struct MemmoveSupport<MemHeaderBox<BBQueue>>
+	struct MemmoveSupport<BBQueue_v>
 	{
 		static const bool value = true;
 	};

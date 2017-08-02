@@ -49,17 +49,17 @@ namespace xx
 		}
 		String& operator=(String const&o) = delete;
 
-		inline void Assign(char const *buf, uint32_t dataLen)
+		inline void Assign(char const * const& buf, uint32_t const& dataLen)
 		{
 			Clear();
 			if(buf && dataLen) AddRange(buf, dataLen);
 		}
-		inline void Assign(char const *buf)
+		inline void Assign(char const * const& buf)
 		{
 			Clear();
 			if(buf) AddRange(buf, (uint32_t)strlen(buf));
 		}
-		inline void Assign(MPObject const* in)
+		inline void Assign(MPObject const* const& in)
 		{
 			Clear();
 			if (in) in->ToString(*this);
@@ -71,6 +71,15 @@ namespace xx
 			memcpy(buf, in.buf, in.dataLen);
 			dataLen = in.dataLen;
 		}
+		inline void Assign(String const* const& in)
+		{
+			Clear();
+			if (!in) return;
+			Reserve(in->dataLen);
+			memcpy(buf, in->buf, in->dataLen);
+			dataLen = in->dataLen;
+		}
+		// todo: more
 
 		template<typename T>
 		void Assign(T const& in)
@@ -80,6 +89,16 @@ namespace xx
 			dataLen += StrWriteTo(buf + dataLen, in);
 			assert(dataLen <= bufLen);
 		}
+
+		// todo: 上面 Assign 中单个参数的实现, 做成 operator=
+		// 先来一发最常见的.
+		String& operator=(char const * const& buf)
+		{
+			Assign(buf);
+			return *this;
+		}
+
+
 		inline virtual void ToString(String& str) const override
 		{
 			auto thisDataLen = dataLen;
@@ -344,6 +363,7 @@ namespace xx
 	/*************************************************************************/
 
 	using String_v = MemHeaderBox<String>;
+	using String_p = Ptr<String>;
 
 	template<>
 	struct MemmoveSupport<String_v>

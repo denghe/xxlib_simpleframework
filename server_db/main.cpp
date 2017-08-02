@@ -247,6 +247,26 @@ void Peer::OnReceivePackage(xx::BBuffer& bb)
 
 
 
+
+struct Foo : xx::MPObject
+{
+	xx::String_p str;
+	Foo() : str(mempool()) {}
+	Foo(Foo&&) = default;
+	Foo(Foo const&) = delete;
+	Foo& operator=(Foo const&) = delete;
+};
+using Foo_p = xx::Ptr<Foo>;
+
+Foo_p GetFoo(xx::MemPool& mp)
+{
+	Foo_p rtv;
+	rtv.Create(mp);
+	return rtv;
+}
+
+
+
 #include "db\DB_class.h"
 
 namespace DB
@@ -407,6 +427,26 @@ int main()
 
 
 	xx::MemPool mp;
+	{
+		auto foo = GetFoo(mp);
+	}
+	{
+		Foo_p foo;
+		foo.Create(mp);
+		*foo->str = "xx";
+		*foo.Create(mp)->str = "xxx";
+		foo = nullptr;
+	}
+
+
+
+
+
+
+
+
+
+
 	xx::SQLite_v sql(mp, "data.db");
 	DB::SQLiteFuncs fs(sql);
 
@@ -435,7 +475,7 @@ int main()
 	}
 
 	{
-		auto a = fs.GetAccountByUsername("a");
+		auto a = fs.GetAccountByUsername("a");	//xx::UPtr<
 		if (fs.hasError)
 		{
 			mp.Cout("errCode = ", fs.lastErrorCode(), "errMsg = ", fs.lastErrorMessage(), "\n");

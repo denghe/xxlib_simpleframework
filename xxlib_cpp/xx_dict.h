@@ -409,9 +409,12 @@ namespace xx
 	template <typename TK, typename TV>
 	using Dict_v = MemHeaderBox<Dict<TK, TV>>;
 
+	template <typename TK, typename TV>
+	using Dict_p = Ptr<Dict<TK, TV>>;
+
 
 	template <typename TK, typename TV>
-	struct MemmoveSupport<MemHeaderBox<Dict<TK, TV>>>
+	struct MemmoveSupport<Dict_v<TK, TV>>
 	{
 		static const bool value = true;
 	};

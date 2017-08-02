@@ -475,7 +475,12 @@ namespace xx
 	/*************************************************************************/
 
 	using BBuffer_v = MemHeaderBox<BBuffer>;
-
+	using BBuffer_p = Ptr<BBuffer>;
+	template<>
+	struct MemmoveSupport<BBuffer_v>
+	{
+		static const bool value = true;
+	};
 
 	/*************************************************************************/
 	// 实现各种序列化接口

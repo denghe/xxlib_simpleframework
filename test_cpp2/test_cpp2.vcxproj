@@ -109,6 +109,7 @@
     <ClInclude Include="..\xxlib_cpp\xx_mempool.h" />
     <ClInclude Include="..\xxlib_cpp\xx_mpobject.h" />
     <ClInclude Include="..\xxlib_cpp\xx_mptr.h" />
+    <ClInclude Include="..\xxlib_cpp\xx_ptr.h" />
     <ClInclude Include="..\xxlib_cpp\xx_queue.h" />
     <ClInclude Include="..\xxlib_cpp\xx_random.h" />
     <ClInclude Include="..\xxlib_cpp\xx_sqlite.h" />

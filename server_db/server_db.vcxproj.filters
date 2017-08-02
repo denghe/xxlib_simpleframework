@@ -81,6 +81,9 @@
     </ClInclude>
     <ClInclude Include="..\db\DB_class.h" />
     <ClInclude Include="..\pkg\PKG_class.h" />
+    <ClInclude Include="..\xxlib_cpp\xx_ptr.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="xxlib">

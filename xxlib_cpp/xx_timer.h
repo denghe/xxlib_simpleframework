@@ -147,4 +147,15 @@ namespace xx
 		this->timerManager->Remove(this);
 	}
 
+	// 标记在容器中可 memmove
+
+
+
+	using TimerManager_v = MemHeaderBox<TimerManager>;
+	using TimerManager_p = Ptr<TimerManager>;
+	template<>
+	struct MemmoveSupport<TimerManager_v>
+	{
+		static const bool value = true;
+	};
 }

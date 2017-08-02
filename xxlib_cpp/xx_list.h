@@ -456,10 +456,13 @@ namespace xx
 	template<typename T, uint32_t reservedHeaderLen = 0>
 	using List_v = MemHeaderBox<List<T, reservedHeaderLen>>;
 
+	template<typename T, uint32_t reservedHeaderLen = 0>
+	using List_p = Ptr<List<T, reservedHeaderLen>>;
+
 	// 标记在容器中可 memmove
 
 	template<typename T, uint32_t reservedHeaderLen>
-	struct MemmoveSupport<MemHeaderBox<List<T, reservedHeaderLen>>>
+	struct MemmoveSupport<List_v<T, reservedHeaderLen>>
 	{
 		static const bool value = true;
 	};

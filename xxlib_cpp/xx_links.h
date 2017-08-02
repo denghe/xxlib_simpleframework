@@ -363,9 +363,11 @@ namespace xx
 
 	template <typename T>
 	using Links_v = MemHeaderBox<Links<T>>;
+	template <typename T>
+	using Links_p = Ptr<Links<T>>;
 
 	template <typename T>
-	struct MemmoveSupport<MemHeaderBox<Links<T>>>
+	struct MemmoveSupport<Links_v<T>>
 	{
 		static const bool value = true;
 	};

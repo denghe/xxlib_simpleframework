@@ -72,6 +72,9 @@
     </ClInclude>
     <ClInclude Include="..\pkg_cpp\PKG_class.h" />
     <ClInclude Include="main.h" />
+    <ClInclude Include="..\xxlib_cpp\xx_ptr.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="xxlib">

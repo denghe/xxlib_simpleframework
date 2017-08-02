@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include "xx_mpobject.h"
+#include "xx_mempool.h"
 #include <limits>
 #include <cmath>	// abs
 #include <cassert>
@@ -10,6 +10,17 @@ namespace xx
 	// 必须传入种子
 	struct Random : MPObject
 	{
+		Random(Random const&) = delete;
+		Random& operator=(Random const&) = delete;
+
+		// 并不清掉 o 的数据
+		Random(Random && o)
+		{
+			inext = o.inext;
+			inextp = o.inextp;
+			memcpy(SeedArray, o.SeedArray, sizeof(SeedArray));
+		}
+
 		//
 		// Private Constants 
 		//
@@ -38,14 +49,19 @@ namespace xx
 		// Constructors
 		//
 
-		explicit Random(int32_t Seed = 0)
+		explicit Random(int32_t seed = 0)
+		{
+			Init(seed);
+		}
+
+		void Init(int32_t seed = 0)
 		{
 			int32_t ii;
 			int32_t mj, mk;
 
 			//Initialize our Seed array.
 			//This algorithm comes from Numerical Recipes in C (2nd Ed.)
-			int32_t subtraction = (Seed == std::numeric_limits<int32_t>::min()) ? std::numeric_limits<int32_t>::max() : std::abs(Seed);
+			int32_t subtraction = (seed == std::numeric_limits<int32_t>::min()) ? std::numeric_limits<int32_t>::max() : std::abs(seed);
 			mj = MSEED - subtraction;
 			SeedArray[55] = mj;
 			mk = 1;
@@ -67,7 +83,6 @@ namespace xx
 			}
 			inext = 0;
 			inextp = 21;
-			//Seed = 1;
 		}
 
 		//
@@ -222,4 +237,10 @@ namespace xx
 	/*************************************************************************/
 
 	using Random_v = MemHeaderBox<Random>;
+	using Random_p = Ptr<Random>;
+
+	struct MemmoveSupport<Random_v>
+	{
+		static const bool value = true;
+	};
 }

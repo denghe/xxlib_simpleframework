@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "xx_mpobject.h"
+#include "xx_ptr.h"
 #include <array>
 #include <string.h>	// for linux memcpy
 
@@ -234,6 +235,12 @@ namespace xx
 			return Create<T>(std::forward<Args>(args)...);
 		}
 
+		template<typename T, typename ...Args>
+		Ptr<T> CreatePtr(Args &&... args)
+		{
+			return Create<T>(std::forward<Args>(args)...);
+		}
+
 		// 适合构造函数中创建成员
 
 		template<typename T, typename ...Args>
@@ -248,7 +255,12 @@ namespace xx
 			outPtr = CreateMPtr<T>(std::forward<Args>(args)...);
 			return outPtr.pointer != nullptr;
 		}
-
+		template<typename T, typename ...Args>
+		bool CreateTo(Ptr<T>& outPtr, Args &&... args)
+		{
+			outPtr = CreatePtr<T>(std::forward<Args>(args)...);
+			return outPtr.pointer != nullptr;
+		}
 
 
 
@@ -322,6 +334,24 @@ namespace xx
 	inline void MPObject::Release() noexcept
 	{
 		mempool().Release(this);
+	}
+
+	template<typename T>
+	template<typename ...Args>
+	Ptr<T>::Ptr(MemPool& mp, Args &&... args)
+	{
+		if (!mp.CreateTo(pointer, std::forward<Args>(args)...)) throw;
+	}
+
+	template<typename T>
+	template<typename ...Args>
+	T* & Ptr<T>::Create(MemPool& mp, Args &&... args)
+	{
+		if (!pointer)
+		{
+			mp.CreateTo(pointer, std::forward<Args>(args)...);
+		}
+		return pointer;
 	}
 }
 

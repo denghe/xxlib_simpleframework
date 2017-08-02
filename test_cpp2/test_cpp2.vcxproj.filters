@@ -79,6 +79,9 @@
     <ClInclude Include="..\sqlite3\sqlite3ext.h">
       <Filter>sqlite3</Filter>
     </ClInclude>
+    <ClInclude Include="..\xxlib_cpp\xx_ptr.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="xxlib">

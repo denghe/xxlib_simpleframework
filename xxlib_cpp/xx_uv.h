@@ -68,6 +68,7 @@ namespace xx
 		Closed
 	};
 
+	// 这个并不直接拿来用
 	struct UVPeer : MPObject										// 一些基础数据结构
 	{
 		UVPeer();
@@ -177,6 +178,7 @@ namespace xx
 		static void TimerCB(uv_timer_t* handle);
 	};
 
+	// 封装的 uv 的异步通知模块
 	struct UVAsync : MPObject
 	{
 		UV* uv;
@@ -193,8 +195,7 @@ namespace xx
 		static void AsyncCB(uv_async_t* handle);
 	};
 
-	using UV_v = MemHeaderBox<UV>;
-
+	// 用来解决 uv_buf_t 跨平台时的成员顺序结构不一致的复制 / 赋值 问题
 	template<>
 	struct BufMaker<uv_buf_t, void>
 	{
@@ -206,6 +207,10 @@ namespace xx
 			return rtv;
 		}
 	};
+
+
+	using UV_v = MemHeaderBox<UV>;
+	using UV_p = Ptr<UV>;
 
 }
 

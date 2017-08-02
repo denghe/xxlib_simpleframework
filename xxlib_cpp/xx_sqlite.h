@@ -174,7 +174,14 @@ namespace xx
 		std::pair<char const*, int> ReadBlob(int colIdx);
 	};
 
+
 	using SQLite_v = MemHeaderBox<SQLite>;
+	using SQLite_p = Ptr<SQLite>;
+
+	struct MemmoveSupport<SQLite_v>
+	{
+		static const bool value = true;
+	};
 
 	/******************************************************************************************************/
 	// impls

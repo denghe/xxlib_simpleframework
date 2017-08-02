@@ -74,7 +74,10 @@ namespace xx
 	using Queue_v = MemHeaderBox<Queue<T>>;
 
 	template<typename T>
-	struct MemmoveSupport<MemHeaderBox<Queue<T>>>
+	using Queue_p = Ptr<Queue<T>>;
+
+	template<typename T>
+	struct MemmoveSupport<Queue_v<T>>
 	{
 		static const bool value = true;
 	};
