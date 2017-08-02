@@ -83,7 +83,6 @@ struct MyUVClientPeer : xx::UVClientPeer
 
 	void OnDisconnect() override
 	{
-		this->xx::UVClientPeer::OnDisconnect();
 		assert(onDisconnect);
 		(*onDisconnect)();
 	}
@@ -232,7 +231,8 @@ namespace xx
 		Disconnected,
 		Connecting,
 		Connected,
-		Disconnecting
+		Disconnecting,
+		Closed
 	};
 
 	public delegate void(Delegate_OnConnect)();

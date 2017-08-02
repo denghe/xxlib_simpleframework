@@ -12,6 +12,7 @@ struct MyConnector : xx::UVClientPeer
 	~MyConnector();
 	virtual void OnReceivePackage(xx::BBuffer & bb) override;
 	virtual void OnConnect() override;
+	virtual void OnDisconnect() override;
 
 	// 将所有收到的数据移进这里来放着以免 AI 来不及处理冲掉
 	xx::Queue_v<xx::MPObject*> recvMsgs;

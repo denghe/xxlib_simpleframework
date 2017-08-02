@@ -210,9 +210,9 @@ namespace xx
 	inline void UVPeer::CloseCB(uv_handle_t* handle)
 	{
 		auto self = container_of(handle, UVPeer, stream);
-		self->state = UVPeerStates::Disconnected;
+		self->state = UVPeerStates::Closed;
 		self->Clear();
-		self->OnDisconnect();	// 这里不再做 self->Release(); 需要自己 Release / Dispose
+		self->OnDisconnect();
 	}
 
 	inline void UVPeer::ReadCB(uv_stream_t* handle, ssize_t nread, const uv_buf_t* buf)
@@ -248,10 +248,6 @@ namespace xx
 		{
 			self->Send();  // 继续发, 直到发光	// todo: 如果返回错误, 存 last error?
 		}
-	}
-
-	inline void UVPeer::OnDisconnect()
-	{
 	}
 
 	inline void UVPeer::OnReceive()
@@ -394,7 +390,7 @@ namespace xx
 
 	inline int UVPeer::Disconnect(bool const& immediately)
 	{
-		if (state == UVPeerStates::Disconnecting || state == UVPeerStates::Disconnected) return -1;
+		if (state == UVPeerStates::Disconnecting || state == UVPeerStates::Disconnected || state == UVPeerStates::Closed) return -1;
 		state = UVPeerStates::Disconnecting;
 
 		// todo: save reason ?
@@ -408,7 +404,7 @@ namespace xx
 			}
 			else
 			{
-				state = UVPeerStates::Disconnected;
+				state = UVPeerStates::Closed;
 				Clear();
 				OnDisconnect();
 			}
@@ -533,13 +529,9 @@ namespace xx
 	inline UVClientPeer::UVClientPeer(UV* uv)
 		: UVPeer()
 	{
-		state = UVPeerStates::Disconnected;
+		state = UVPeerStates::Closed;
 		this->uv = uv;
 		uv_clientPeers_index = uv->clientPeers->dataLen;
-		if (auto rtv = uv_tcp_init(&uv->loop, (uv_tcp_t*)&stream))
-		{
-			throw rtv;
-		}
 		uv->clientPeers->Add(this);
 	}
 
@@ -555,7 +547,11 @@ namespace xx
 
 	inline int UVClientPeer::Connect()
 	{
-		if (state != UVPeerStates::Disconnected) return -1;
+		if (state == UVPeerStates::Closed)
+		{
+			if (auto rtv = uv_tcp_init(&uv->loop, (uv_tcp_t*)&stream)) return rtv;
+		}
+		else if (state != UVPeerStates::Disconnected) return -1;
 		state = UVPeerStates::Connecting;
 		if (auto rtv = uv_tcp_connect(&conn, &stream, (sockaddr*)&tarAddr, ConnectCB))
 		{
@@ -588,11 +584,6 @@ namespace xx
 		}
 	}
 
-	inline void UVClientPeer::OnDisconnect()
-	{
-		auto rtv = uv_tcp_init(&uv->loop, (uv_tcp_t*)&stream);
-		assert(!rtv);
-	}
 
 
 

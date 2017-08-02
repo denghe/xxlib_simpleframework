@@ -20,6 +20,7 @@ struct Peer : xx::UVServerPeer
 
 	Peer(Listener* listener, Service* service);
 	virtual void OnReceivePackage(xx::BBuffer & bb) override;
+	virtual void OnDisconnect() override;
 };
 
 struct Listener : xx::UVListener
@@ -195,6 +196,8 @@ Peer::Peer(Listener* listener, Service* service)
 	, service(service)
 {
 }
+
+void Peer::OnDisconnect() {}
 
 void Peer::OnReceivePackage(xx::BBuffer& bb)
 {

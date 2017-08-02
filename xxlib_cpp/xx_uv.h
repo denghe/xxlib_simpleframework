@@ -64,7 +64,8 @@ namespace xx
 		Disconnected,
 		Connecting,
 		Connected,
-		Disconnecting
+		Disconnecting,
+		Closed
 	};
 
 	struct UVPeer : MPObject										// 一些基础数据结构
@@ -85,7 +86,7 @@ namespace xx
 
 		virtual void OnReceive();									// 默认实现为读取包( 2 byte长度 + 数据 ), 并于凑齐完整包后 call OnReceivePackage
 		virtual void OnReceivePackage(BBuffer& bb) = 0;				// OnReceive 凑齐一个包时将产生该调用
-		virtual void OnDisconnect();								// Client Peer 在这里做 init stream 的事情 以便可以反复使用 client peer
+		virtual void OnDisconnect() = 0;							// 断开事件
 
 		BBuffer* GetSendBB(int const& capacity = 0);				// 获取或创建一个发送用的 BBuffer( 里面可能已经有部分数据 ), 不要自己持有, 填完传给 Send( 不管是否断开 )
 		int Send(BBuffer* const& bb);								// 将数据"移入"待发送队列, 可能立即发送, 立即返回是否成功( 0 表示成功 )( 失败原因可能是待发数据过多 )
@@ -150,7 +151,6 @@ namespace xx
 		int SetAddress(char const* ip, int port);
 		int Connect();
 		virtual void OnConnect() = 0;								// lastStatus 非 0 或 connected 为 false 表示没连上
-		virtual void OnDisconnect() override;						// 这个重写时如果要复用 client peer, 必须调基类的这个函数以 init stream
 
 		// uv's
 		sockaddr_in tarAddr;

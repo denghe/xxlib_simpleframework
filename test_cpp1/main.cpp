@@ -53,6 +53,10 @@ inline void MyConnector::OnConnect()
 		: "state != xx::UVPeerStates::Connected\n"));
 	owner->connecting = false;
 }
+inline void MyConnector::OnDisconnect() 
+{
+	Cout(owner->pkgJoin->username, " MyConnector: OnDisconnect()\n");
+}
 
 
 /*************************************************************************************/
