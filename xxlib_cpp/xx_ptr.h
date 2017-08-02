@@ -75,7 +75,16 @@ namespace xx
 			return *pointer;
 		}
 
-		operator T*()
+		operator bool() const
+		{
+			return pointer != nullptr;
+		}
+
+		operator T const* const& () const
+		{
+			return pointer;
+		}
+		operator T* &()
 		{
 			return pointer;
 		}
@@ -91,9 +100,32 @@ namespace xx
 		//}
 	};
 
+
 	template<typename T>
 	struct MemmoveSupport<Ptr<T>>
 	{
 		static const bool value = true;
 	};
+
+	template<typename T>
+	struct IsPtr
+	{
+		static const bool value = false;
+	};
+
+	template<typename T>
+	struct IsPtr<Ptr<T>>
+	{
+		static const bool value = true;
+	};
+
+	template<typename T>
+	constexpr bool IsPtr_v = IsPtr<T>::value;
+
+
+	template<typename T>
+	Ptr<T> MakePtr(T* p)
+	{
+		return Ptr<T>(p);
+	}
 }

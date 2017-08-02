@@ -11,24 +11,31 @@ namespace DB
         // 自增主键
         int64_t id = 0;
         // 用户名( 唯一索引 )
-        xx::String* username = nullptr;
+        xx::String_p username;						// need change type
         // 密码( 无索引 )
-        xx::String* password = nullptr;
+        xx::String_p password;
 
         typedef Account ThisType;
         typedef xx::MPObject BaseType;
 	    Account();
+
+		Account(Account&&) = default;				// need gen
+
 	    ~Account();
         virtual void ToString(xx::String &str) const override;
         virtual void ToStringCore(xx::String &str) const override;
     };
+
+	using Account_p = xx::Ptr<Account>;				// need gen
+	using Account_v = xx::MemHeaderBox<Account>;	// need gen
+
 	inline Account::Account()
 	{
 	}
 	inline Account::~Account()
 	{
-        mempool().SafeRelease(username);
-        mempool().SafeRelease(password);
+        //mempool().SafeRelease(username);			// need remove these
+        //mempool().SafeRelease(password);
 	}
 
     inline void Account::ToString(xx::String &str) const
@@ -56,4 +63,9 @@ namespace DB
 }
 namespace xx
 {
+	template<>
+	struct MemmoveSupport<DB::Account_v>			// need gen
+	{
+		static const bool value = true;
+	};
 }

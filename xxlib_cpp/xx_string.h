@@ -52,12 +52,12 @@ namespace xx
 		inline void Assign(char const * const& buf, uint32_t const& dataLen)
 		{
 			Clear();
-			if(buf && dataLen) AddRange(buf, dataLen);
+			if (buf && dataLen) AddRange(buf, dataLen);
 		}
 		inline void Assign(char const * const& buf)
 		{
 			Clear();
-			if(buf) AddRange(buf, (uint32_t)strlen(buf));
+			if (buf) AddRange(buf, (uint32_t)strlen(buf));
 		}
 		inline void Assign(MPObject const* const& in)
 		{
@@ -137,12 +137,6 @@ namespace xx
 			if (v) v->ToString(*this);
 			else Append("nil");
 		}
-		template<typename T>
-		void AppendPtr(MPtr<T> const& v)
-		{
-			AppendPtr(v.Ensure());
-		}
-
 
 		template<typename T>
 		void AppendFormatCore(String &s, uint32_t &n, T const &v)
@@ -333,23 +327,50 @@ namespace xx
 	template<>
 	struct StringAppendSwitcher<true>
 	{
+		// T ( mpobject )
 		template<typename T>
-		static void WriteTo(String& str, std::enable_if_t< IsMPObject_v<T>, T> const& v)
+		static void WriteTo(String& str, std::enable_if_t< IsMPObjectStruct_v<T>, T> const& v)
+		{
+			v.ToString(str);
+		}
+
+		// T* ( mpobject )
+		template<typename T>
+		static void WriteTo(String& str, std::enable_if_t< IsMPObjectPointer_v<T>, T> const& v)
 		{
 			str.AppendPtr(v);
 		}
+
+		// Ptr<T>
+		template<typename T>
+		static void WriteTo(String& str, std::enable_if_t< IsPtr_v<T>, T> const& v)
+		{
+			str.AppendPtr(v.pointer);
+		}
+
+		// MPtr<T>
+		template<typename T>
+		static void WriteTo(String& str, std::enable_if_t< IsMPtr_v<T>, T> const& v)
+		{
+			str.AppendPtr(v ? v.pointer : nullptr);
+		}
+
+		// MemHeaderBox<T>
 		template<typename T>
 		static void WriteTo(String& str, std::enable_if_t< IsMemHeaderBox_v<T>, T> const& v)
 		{
-			str.AppendPtr(&*v);
+			v->ToString(str);
 		}
+
+		// not mpobject
 		template<typename T>
-		static void WriteTo(String& str, std::enable_if_t<!(IsMPObject_v<T> || IsMemHeaderBox_v<T>), T> const& v)
+		static void WriteTo(String& str, std::enable_if_t<!IsMPObject_v<T>, T> const& v)
 		{
 			str.Reserve(str.dataLen + StrCalc(v));
 			str.dataLen += StrWriteTo(str.buf + str.dataLen, v);
 			assert(str.dataLen <= str.bufLen);
 		}
+
 		template<typename ...TS>
 		static void Exec(String& str, TS const& ...vs)
 		{
@@ -412,7 +433,7 @@ namespace xx
 		std::cout << s->C_str() << std::flush;
 	}
 
-	
+
 	template<typename T, uint32_t reservedHeaderLen>
 	void List<T, reservedHeaderLen>::ToString(String &str) const
 	{
@@ -433,8 +454,8 @@ namespace xx
 
 		tsFlags() = 0;
 	}
-	
-	
+
+
 	template <typename T>
 	void Links<T>::ToString(String &str) const
 	{
@@ -478,6 +499,15 @@ namespace xx
 	{
 		return GetHashCode(in.Ensure());
 	}
+	inline uint32_t GetHashCode(Ptr<String> const &in)
+	{
+		return GetHashCode(*in);
+	}
+	inline uint32_t GetHashCode(String_v const &in)
+	{
+		return GetHashCode(*in);
+	}
+
 	inline bool EqualsTo(String const& a, String const& b)
 	{
 		return a.Equals(b);
@@ -495,6 +525,14 @@ namespace xx
 	inline bool EqualsTo(MPtr<String> const& a, MPtr<String> const& b)
 	{
 		return EqualsTo(a.Ensure(), b.Ensure());
+	}
+	inline bool EqualsTo(Ptr<String> const& a, Ptr<String> const& b)
+	{
+		return EqualsTo(*a, *b);
+	}
+	inline bool EqualsTo(String_v const& a, String_v const& b)
+	{
+		return EqualsTo(*a, *b);
 	}
 
 }

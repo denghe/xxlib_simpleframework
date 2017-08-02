@@ -2,6 +2,8 @@
 #include <xx_mempool.h>
 #include <sqlite3.h>
 
+// todo: _v _p support
+
 namespace xx
 {
 	struct SQLite;
@@ -148,6 +150,10 @@ namespace xx
 		int SetParameter(int parmIdx, char const* const& buf, size_t const& len, bool makeCopy = false);
 		int SetParameter(int parmIdx, String* const& str, bool makeCopy = false);
 		int SetParameter(int parmIdx, BBuffer* const& buf, bool makeCopy = false);
+		int SetParameter(int parmIdx, String_v const& str, bool makeCopy = false);
+		int SetParameter(int parmIdx, BBuffer_v const& buf, bool makeCopy = false);
+		int SetParameter(int parmIdx, String_p const& str, bool makeCopy = false);
+		int SetParameter(int parmIdx, BBuffer_p const& buf, bool makeCopy = false);
 
 		template<typename ... Parameters>
 		int SetParameters(Parameters const& ... ps);
@@ -175,13 +181,23 @@ namespace xx
 	};
 
 
-	using SQLite_v = MemHeaderBox<SQLite>;
 	using SQLite_p = Ptr<SQLite>;
-
+	using SQLite_v = MemHeaderBox<SQLite>;
+	template<>
 	struct MemmoveSupport<SQLite_v>
 	{
 		static const bool value = true;
 	};
+
+
+	using SQLiteQuery_p = Ptr<SQLiteQuery>;
+	using SQLiteQuery_v = MemHeaderBox<SQLiteQuery>;
+	template<>
+	struct MemmoveSupport<SQLiteQuery_v>
+	{
+		static const bool value = true;
+	};
+
 
 	/******************************************************************************************************/
 	// impls
@@ -409,6 +425,24 @@ namespace xx
 		if (!buf) sqlite3_bind_null(stmt, parmIdx);
 		return sqlite3_bind_blob(stmt, parmIdx, buf->buf, buf->dataLen, makeCopy ? SQLITE_TRANSIENT : SQLITE_STATIC);
 	}
+	inline int SQLiteQuery::SetParameter(int parmIdx, String_v const& str, bool makeCopy)
+	{
+		return sqlite3_bind_text(stmt, parmIdx, (*(String_v*)&str)->C_str(), str->dataLen, makeCopy ? SQLITE_TRANSIENT : SQLITE_STATIC);
+	}
+	inline int SQLiteQuery::SetParameter(int parmIdx, BBuffer_v const& buf, bool makeCopy)
+	{
+		return sqlite3_bind_blob(stmt, parmIdx, buf->buf, buf->dataLen, makeCopy ? SQLITE_TRANSIENT : SQLITE_STATIC);
+	}
+	inline int SQLiteQuery::SetParameter(int parmIdx, String_p const& str, bool makeCopy)
+	{
+		if (!str) sqlite3_bind_null(stmt, parmIdx);
+		return sqlite3_bind_text(stmt, parmIdx, (*(String_v*)&str)->C_str(), str->dataLen, makeCopy ? SQLITE_TRANSIENT : SQLITE_STATIC);
+	}
+	inline int SQLiteQuery::SetParameter(int parmIdx, BBuffer_p const& buf, bool makeCopy)
+	{
+		if (!buf) sqlite3_bind_null(stmt, parmIdx);
+		return sqlite3_bind_blob(stmt, parmIdx, buf->buf, buf->dataLen, makeCopy ? SQLITE_TRANSIENT : SQLITE_STATIC);
+	}
 
 
 	template<typename ... Parameters>
@@ -584,6 +618,10 @@ namespace xx
 		{
 			return SQLAppend(&*v);
 		}
+		void SQLAppend(String_p& v)
+		{
+			return SQLAppend(v.pointer);
+		}
 
 		static constexpr char* const hexStr = "0123456789abcdef";
 		// 插入 BLOB
@@ -612,7 +650,10 @@ namespace xx
 		{
 			return SQLAppend(&*v);
 		}
-
+		void SQLAppend(BBuffer_p& v)
+		{
+			return SQLAppend(v.pointer);
+		}
 
 
 		// List 的重载
@@ -631,11 +672,25 @@ namespace xx
 		}
 
 		template<typename T>
-		void SQLAppend(List_v<T>& os)
+		void SQLAppend(List_v<T> const& os)
 		{
 			return SQLAppend(&*os);
 		}
+
+		template<typename T>
+		void SQLAppend(List_p<T> const& os)
+		{
+			return SQLAppend(os.pointer);
+		}
 	};
 
+
+	using SQLiteString_p = Ptr<SQLiteString>;
 	using SQLiteString_v = MemHeaderBox<SQLiteString>;
+	template<>
+	struct MemmoveSupport<SQLiteString_v>
+	{
+		static const bool value = true;
+	};
+
 }

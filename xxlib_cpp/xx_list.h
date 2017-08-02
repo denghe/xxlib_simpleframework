@@ -385,19 +385,6 @@ namespace xx
 		}
 
 
-		template<typename U = T>
-		std::enable_if_t<IsMPObject_v<U>> ReleaseWithItems()
-		{
-			auto& mp = mempool();
-			for (uint32_t i = 0; i < dataLen; ++i)
-			{
-				mp.Release(buf[i]);
-			}
-			mp.Release(this);
-		}
-
-
-
 		// 只是为了能 for( auto c : 
 		struct Iter
 		{

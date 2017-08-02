@@ -248,24 +248,6 @@ void Peer::OnReceivePackage(xx::BBuffer& bb)
 
 
 
-struct Foo : xx::MPObject
-{
-	xx::String_p str;
-	Foo() : str(mempool()) {}
-	Foo(Foo&&) = default;
-	Foo(Foo const&) = delete;
-	Foo& operator=(Foo const&) = delete;
-};
-using Foo_p = xx::Ptr<Foo>;
-
-Foo_p GetFoo(xx::MemPool& mp)
-{
-	Foo_p rtv;
-	rtv.Create(mp);
-	return rtv;
-}
-
-
 
 #include "db\DB_class.h"
 
@@ -283,14 +265,8 @@ namespace DB
 		const char* const& lastErrorMessage() { return sqlite->lastErrorMessage; }
 
 		SQLiteFuncs(xx::SQLite* sqlite) : sqlite(sqlite), mp(sqlite->mempool()), s(mp) {}
-		~SQLiteFuncs()
-		{
-			if (query_CreateAccountTable) query_CreateAccountTable->Release();
-			if (query_AddAccount) query_AddAccount->Release();
-			if (query_GetAccountByUsername) query_GetAccountByUsername->Release();
-		}
 
-		xx::SQLiteQuery* query_CreateAccountTable = nullptr;
+		xx::SQLiteQuery_p query_CreateAccountTable;
 		void CreateAccountTable()
 		{
 			hasError = true;
@@ -311,12 +287,12 @@ create table [account]
 			hasError = false;
 		}
 
-		xx::SQLiteQuery* query_AddAccount = nullptr;
+		xx::SQLiteQuery_p query_AddAccount;
 		void AddAccount(DB::Account const* const& a)
 		{
 			assert(a);
 			hasError = true;
-			auto& q = query_CreateAccountTable;
+			auto& q = query_AddAccount;
 			if (!q)
 			{
 				q = sqlite->CreateQuery(R"=-=(
@@ -333,7 +309,7 @@ values (?, ?)
 		void AddAccount2(char const* const& username, char const* const& password)
 		{
 			hasError = true;
-			auto& q = query_CreateAccountTable;
+			auto& q = query_AddAccount;
 			if (!q)
 			{
 				q = sqlite->CreateQuery(R"=-=(
@@ -347,11 +323,11 @@ values (?, ?)
 			hasError = false;
 		}
 
-		xx::SQLiteQuery* query_GetAccountByUsername = nullptr;
-		Account* GetAccountByUsername(char const* const& username)
+		xx::SQLiteQuery_p query_GetAccountByUsername;
+		Account_p GetAccountByUsername(char const* const& username)
 		{
 			hasError = true;
-			Account* rtv = nullptr;
+			Account_p rtv;
 			auto& q = query_GetAccountByUsername;
 			if (!q)
 			{
@@ -365,27 +341,21 @@ select [id], [username], [password]
 			if (q->SetParameters(username)) return rtv;
 			if (!q->Execute([&](xx::SQLiteReader& sr)
 			{
-				mp.CreateTo(rtv);
+				rtv.Create(mp);
 				rtv->id = sr.ReadInt64(0);
-				mp.CreateTo(rtv->username, sr.ReadString(1));
-				mp.CreateTo(rtv->password, sr.ReadString(2));
+				rtv->username.Create(mp)->Assign(sr.ReadString(1));	// 如果会创建默认实例
+				rtv->password.Create(mp, sr.ReadString(2));			// 如果不, 值一定是空, 方能确保 Create 执行
 			})) return rtv;
 			hasError = false;
 			return rtv;
 		}
 
-		xx::SQLiteQuery* query_GetAccountsByUsernames = nullptr;
-		xx::List<Account*>* GetAccountsByUsernames(xx::List_v<xx::String_v>& usernames)
+		xx::SQLiteQuery_p query_GetAccountsByUsernames;
+		xx::List_p<Account_p> GetAccountsByUsernames(xx::List_p<xx::String_p> const& usernames)
 		{
 			hasError = true;
-			xx::List<Account*>* rtv = nullptr;
+			xx::List_p<Account_p> rtv;
 			auto& q = query_GetAccountsByUsernames;
-			if (q)
-			{
-				q->Release();
-				q = nullptr;
-			}
-			if (!q)
 			{
 				s->Clear();
 				s->Append(R"=-=(
@@ -399,15 +369,12 @@ select [id], [username], [password]
 			mp.CreateTo(rtv);
 			if (!q->Execute([&](xx::SQLiteReader& sr)
 			{
-				auto r = mp.Create<Account>();
-				rtv->Add(r);
+				auto& r = rtv->EmplaceMP();
 				r->id = sr.ReadInt64(0);
-				if (!sr.IsNull(1)) mp.CreateTo(r->username, sr.ReadString(1));
-				if (!sr.IsNull(2)) mp.CreateTo(r->password, sr.ReadString(2));
+				if (sr.IsNull(1)) r->username = nullptr; else r->username.Create(mp)->Assign(sr.ReadString(1));// 如果会创建默认实例
+				if (sr.IsNull(2)) r->password = nullptr; else r->password.Create(mp, sr.ReadString(2));
 			}))
 			{
-				for (auto& o : *rtv) o->Release();
-				rtv->Release();
 				rtv = nullptr;
 				return rtv;
 			}
@@ -421,31 +388,10 @@ select [id], [username], [password]
 int main()
 {
 	PKG::AllTypesRegister();
+	xx::MemPool mp;
+
 	//xx::MemHeaderBox<Service> s(mp);
 	//s->Run();
-
-
-
-	xx::MemPool mp;
-	{
-		auto foo = GetFoo(mp);
-	}
-	{
-		Foo_p foo;
-		foo.Create(mp);
-		*foo->str = "xx";
-		*foo.Create(mp)->str = "xxx";
-		foo = nullptr;
-	}
-
-
-
-
-
-
-
-
-
 
 	xx::SQLite_v sql(mp, "data.db");
 	DB::SQLiteFuncs fs(sql);
@@ -461,12 +407,10 @@ int main()
 		fs.CreateAccountTable();
 		assert(!fs.hasError);
 
-		xx::MemHeaderBox<DB::Account> a(mp);
-		mp.CreateTo(a->username);
-		mp.CreateTo(a->password);
+		DB::Account_p a(mp);
 
-		a->username->Assign("a");
-		a->password->Assign("1");
+		a->username.Create(mp)->Assign("a");
+		a->password.Create(mp)->Assign("1");
 		fs.AddAccount(a);
 		assert(!fs.hasError);
 
@@ -475,7 +419,7 @@ int main()
 	}
 
 	{
-		auto a = fs.GetAccountByUsername("a");	//xx::UPtr<
+		auto a = fs.GetAccountByUsername("a");
 		if (fs.hasError)
 		{
 			mp.Cout("errCode = ", fs.lastErrorCode(), "errMsg = ", fs.lastErrorMessage(), "\n");
@@ -488,11 +432,10 @@ int main()
 		else
 		{
 			mp.Cout("found account a! id = ", a->id, " password = ", a->password, "\n");
-			a->Release();
 		}
 	}
 	{
-		xx::List_v<xx::String_v> usernames(mp);
+		xx::List_p<xx::String_p> usernames(mp);
 		usernames->EmplaceMP("a");
 		usernames->EmplaceMP("b");
 		auto as = fs.GetAccountsByUsernames(usernames);
@@ -500,10 +443,79 @@ int main()
 		{
 			mp.Cout(a, "\n");
 		}
-		as->ReleaseWithItems();
 	}
 
 LabEnd:
 	std::cin.get();
 	return 0;
 }
+
+
+
+//struct Foo : xx::MPObject
+//{
+//	xx::String_p str;
+//	Foo() : str(mempool()) {}
+//	Foo(Foo&&) = default;
+//	Foo(Foo const&) = delete;
+//	Foo& operator=(Foo const&) = delete;
+//	~Foo()
+//	{
+//	}
+//};
+//using Foo_p = xx::Ptr<Foo>;
+//using Foo_v = xx::MemHeaderBox<Foo>;
+//namespace xx
+//{
+//	template<>
+//	struct MemmoveSupport<Foo_v>
+//	{
+//		static const bool value = true;
+//	};
+//}
+//
+//Foo_p GetFoo(xx::MemPool& mp)
+//{
+//	Foo_p rtv;
+//	rtv.Create(mp);
+//	*rtv->str = "xxx";
+//	return rtv;
+//}
+//
+
+
+
+//{
+//	xx::Dict_v<xx::String_p, xx::String_v> ss(mp);
+//	ss->Add(xx::String_p(mp, "aa"), xx::String_v(mp, "2"));
+//	ss->Add(xx::String_p(mp, "bbb"), xx::String_v(mp, "3"));
+//	xx::String_p k(mp, "cccc");
+//	xx::String_v v(mp, "4");
+//	ss->Add(std::move(k), std::move(v));
+//	k.Create(mp, "bbb");
+//	auto idx = ss->Find(k);
+//	mp.Cout(ss->ValueAt(idx));
+//}
+
+//{
+//	auto foo = GetFoo(mp);
+//}
+//{
+//	Foo_p foo;
+//	foo.Create(mp);
+//	*foo->str = "xx";
+//	*foo.Create(mp)->str = "xxx";
+//	foo = nullptr;
+//}
+
+
+
+//{
+//	xx::List_v<Foo_p> foos(mp);
+//	foos->Add(Foo_p(mp));
+//	foos->Add(Foo_p(mp));
+//}
+
+
+
+

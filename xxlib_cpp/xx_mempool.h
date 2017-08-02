@@ -255,10 +255,11 @@ namespace xx
 			outPtr = CreateMPtr<T>(std::forward<Args>(args)...);
 			return outPtr.pointer != nullptr;
 		}
+
 		template<typename T, typename ...Args>
 		bool CreateTo(Ptr<T>& outPtr, Args &&... args)
 		{
-			outPtr = CreatePtr<T>(std::forward<Args>(args)...);
+			outPtr = Create<T>(std::forward<Args>(args)...);
 			return outPtr.pointer != nullptr;
 		}
 

@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "xx_mptr.h"
+#include "xx_ptr.h"
 
 namespace xx
 {
@@ -93,6 +94,30 @@ namespace xx
 	// type_traits
 	/***********************************************************************************/
 
+	// IsMPObjectPointer
+
+	template<typename T>
+	struct IsMPObjectPointer
+	{
+		static const bool value = !std::is_void<T>::value && std::is_base_of<MPObject, T>::value;
+	};
+	template<typename T>
+	struct IsMPObjectPointer<T*>
+	{
+		static const bool value = !std::is_void<T>::value && std::is_base_of<MPObject, T>::value;
+	};
+	template<typename T>
+	constexpr bool IsMPObjectPointer_v = IsMPObjectPointer<T>::value;
+
+
+	// IsMPObjectStruct_v
+
+	template<typename T>
+	constexpr bool IsMPObjectStruct_v = std::is_base_of<MPObject, T>::value;
+
+
+	// IsMPObject
+
 	template<typename T>
 	struct IsMPObject
 	{
@@ -109,6 +134,16 @@ namespace xx
 		static const bool value = true;
 	};
 	template<typename T>
+	struct IsMPObject<Ptr<T>>
+	{
+		static const bool value = true;
+	};
+	template<typename T>
+	struct IsMPObject<MemHeaderBox<T>>
+	{
+		static const bool value = true;
+	};
+	template<typename T>
 	constexpr bool IsMPObject_v = IsMPObject<T>::value;
 
 
@@ -119,13 +154,13 @@ namespace xx
 		template<class Tuple, size_t N> struct TupleScaner {
 			static constexpr bool Exec()
 			{
-				return (IsMPObject_v< std::tuple_element_t<N - 1, Tuple> > || IsMemHeaderBox_v< std::tuple_element_t<N - 1, Tuple> >) ? true : TupleScaner<Tuple, N - 1>::Exec();
+				return IsMPObject_v< std::tuple_element_t<N - 1, Tuple> > ? true : TupleScaner<Tuple, N - 1>::Exec();
 			}
 		};
 		template<class Tuple> struct TupleScaner<Tuple, 1> {
 			static constexpr bool Exec()
 			{
-				return IsMPObject_v< std::tuple_element_t<0, Tuple> > || IsMemHeaderBox_v< std::tuple_element_t<0, Tuple> >;
+				return IsMPObject_v< std::tuple_element_t<0, Tuple> >;
 			}
 		};
 		static constexpr bool value = TupleScaner<std::tuple<Types...>, sizeof...(Types)>::Exec();

@@ -8,6 +8,7 @@
 
 namespace xx
 {
+
 	/*************************************************************************/
 	// BBufferRWSwitcher( GCC 需要将这样的声明写在类外面 )
 	/*************************************************************************/
@@ -19,17 +20,17 @@ namespace xx
 		static int Read(BBuffer* bb, T& v);
 	};
 
-	// !( MPObject* || MPtr || MemHeaderBox )
+	// 非 MPObject 任何形态
 	template<typename T>
-	struct BBufferRWSwitcher<T, std::enable_if_t< !(std::is_pointer<T>::value && IsMPObject_v<T> || IsMPtr_v<T> || IsMemHeaderBox_v<T>) >>
+	struct BBufferRWSwitcher<T, std::enable_if_t< !IsMPObject_v<T> >>
 	{
 		static void Write(BBuffer* bb, T const& v);
 		static int Read(BBuffer* bb, T& v);
 	};
 
-	// MPObject* || MPtr
+	// MPObject* || MPtr || Ptr ( 能当指针来处理的 )
 	template<typename T>
-	struct BBufferRWSwitcher<T, std::enable_if_t< std::is_pointer<T>::value && IsMPObject_v<T> || IsMPtr<T>::value >>
+	struct BBufferRWSwitcher<T, std::enable_if_t< IsMPObjectPointer_v<T> || IsMPtr<T>::value || IsPtr<T>::value >>
 	{
 		static void Write(BBuffer* bb, T const& v);
 		static int Read(BBuffer* bb, T& v);
@@ -42,6 +43,8 @@ namespace xx
 		static void Write(BBuffer* bb, T const& v);
 		static int Read(BBuffer* bb, T& v);
 	};
+
+	// todo: 这里并未支持 MPObjectStruct 参与序列化, 因为实际上不会那么用
 
 	/*************************************************************************/
 	// BBuffer 本体
@@ -230,7 +233,19 @@ namespace xx
 			v = t;
 			return rtv;
 		}
-
+		template<typename T>
+		void WritePtr(Ptr<T> const& v)
+		{
+			Write(v.pointer);
+		}
+		template<typename T>
+		int ReadPtr(Ptr<T> &v)
+		{
+			T* t;
+			auto rtv = ReadPtr(t);
+			v = t;
+			return rtv;
+		}
 
 
 		template<typename T>
@@ -431,28 +446,28 @@ namespace xx
 	// BBufferRWSwitcher
 	/*************************************************************************/
 
-	// !( MPObject* || MPtr || MemHeaderBox )
+	// 非 MPObject 任何形态
 
 	template<typename T>
-	void BBufferRWSwitcher<T, std::enable_if_t< !(std::is_pointer<T>::value && IsMPObject_v<T> || IsMPtr_v<T> || IsMemHeaderBox_v<T>) >>::Write(BBuffer* bb, T const& v)
+	void BBufferRWSwitcher<T, std::enable_if_t< !IsMPObject_v<T> >>::Write(BBuffer* bb, T const& v)
 	{
 		bb->WritePods(v);
 	}
 	template<typename T>
-	int BBufferRWSwitcher<T, std::enable_if_t< !(std::is_pointer<T>::value && IsMPObject_v<T> || IsMPtr_v<T> || IsMemHeaderBox_v<T>) >>::Read(BBuffer* bb, T& v)
+	int BBufferRWSwitcher<T, std::enable_if_t< !IsMPObject_v<T> >>::Read(BBuffer* bb, T& v)
 	{
 		return bb->ReadPods(v);
 	}
 
-	// MPObject* || MPtr
+	// MPObject* || MPtr || Ptr ( 能当指针来处理的 )
 
 	template<typename T>
-	void BBufferRWSwitcher<T, std::enable_if_t< std::is_pointer<T>::value && IsMPObject_v<T> || IsMPtr<T>::value >>::Write(BBuffer* bb, T const& v)
+	void BBufferRWSwitcher<T, std::enable_if_t< IsMPObjectPointer_v<T> || IsMPtr<T>::value || IsPtr<T>::value >>::Write(BBuffer* bb, T const& v)
 	{
 		bb->WritePtr(v);
 	}
 	template<typename T>
-	int BBufferRWSwitcher<T, std::enable_if_t< std::is_pointer<T>::value && IsMPObject_v<T> || IsMPtr<T>::value >>::Read(BBuffer* bb, T& v)
+	int BBufferRWSwitcher<T, std::enable_if_t< IsMPObjectPointer_v<T> || IsMPtr<T>::value || IsPtr<T>::value >>::Read(BBuffer* bb, T& v)
 	{
 		return bb->ReadPtr(v);
 	}
