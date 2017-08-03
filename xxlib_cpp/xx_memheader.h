@@ -101,11 +101,11 @@ namespace xx
 			return instance;
 		}
 
-		operator T const* const& () const
+		operator T const* () const
 		{
 			return &instance;
 		}
-		operator T* const& ()
+		operator T* ()
 		{
 			return &instance;
 		}
