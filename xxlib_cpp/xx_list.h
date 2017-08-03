@@ -77,12 +77,12 @@ namespace xx
 
 	private:
 		template<typename U = T, typename...Args>
-		void PlacementNew(std::enable_if_t< IsMemHeaderBox_v<U> > *p, Args &&... args)
+		void PlacementNew(std::enable_if_t< IsDock_v<U> > *p, Args &&... args)
 		{
 			new (p) U(mempool(), std::forward<Args>(args)...);
 		}
 		template<typename U = T, typename...Args>
-		void PlacementNew(std::enable_if_t< !IsMemHeaderBox_v<U> > *p, Args &&... args)
+		void PlacementNew(std::enable_if_t< !IsDock_v<U> > *p, Args &&... args)
 		{
 			new (p) U(std::forward<Args>(args)...);
 		}

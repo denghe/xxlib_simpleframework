@@ -113,18 +113,18 @@ namespace xx
 
 
 	template<typename T>
-	struct IsMemHeaderBox
+	struct IsDock
 	{
 		static const bool value = false;
 	};
 
 	template<typename T>
-	struct IsMemHeaderBox<Dock<T>>
+	struct IsDock<Dock<T>>
 	{
 		static const bool value = true;
 	};
 	template<typename T>
-	constexpr bool IsMemHeaderBox_v = IsMemHeaderBox<T>::value;
+	constexpr bool IsDock_v = IsDock<T>::value;
 
 
 	// 标记在容器中可 memmove

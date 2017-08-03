@@ -357,7 +357,7 @@ namespace xx
 
 		// Dock<T>
 		template<typename T>
-		static void WriteTo(String& str, std::enable_if_t< IsMemHeaderBox_v<T>, T> const& v)
+		static void WriteTo(String& str, std::enable_if_t< IsDock_v<T>, T> const& v)
 		{
 			v->ToString(str);
 		}

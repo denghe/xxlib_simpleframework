@@ -38,7 +38,7 @@ namespace xx
 
 	// Dock
 	template<typename T>
-	struct BBufferRWSwitcher<T, std::enable_if_t< IsMemHeaderBox_v<T> >>
+	struct BBufferRWSwitcher<T, std::enable_if_t< IsDock_v<T> >>
 	{
 		static void Write(BBuffer* bb, T const& v);
 		static int Read(BBuffer* bb, T& v);
@@ -475,12 +475,12 @@ namespace xx
 	// Dock
 
 	template<typename T>
-	void BBufferRWSwitcher<T, std::enable_if_t< IsMemHeaderBox_v<T> >>::Write(BBuffer* bb, T const& v)
+	void BBufferRWSwitcher<T, std::enable_if_t< IsDock_v<T> >>::Write(BBuffer* bb, T const& v)
 	{
 		bb->WriteBox(v);
 	}
 	template<typename T>
-	int BBufferRWSwitcher<T, std::enable_if_t< IsMemHeaderBox_v<T> >>::Read(BBuffer* bb, T& v)
+	int BBufferRWSwitcher<T, std::enable_if_t< IsDock_v<T> >>::Read(BBuffer* bb, T& v)
 	{
 		return bb->ReadBox(v);
 	}
