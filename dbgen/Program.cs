@@ -23,6 +23,7 @@ public static class Program
             GenCS_MsSql.Gen(asm, path, tn);
             GenCS_MultiKeyDict.Gen(asm, path, tn);
             GenCPP_Class.Gen(asm, path, tn);
+            GenCPP_SQLite.Gen(asm, path, tn);
         }
     }
 

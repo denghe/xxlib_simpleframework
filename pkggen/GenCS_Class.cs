@@ -109,10 +109,10 @@ namespace " + c.Namespace + @"
                 {
                     sb.Append(" = " + dv + ";");
                 }
-                else if (f._Has<TemplateLibrary.CreateInstance>())
-                {
-                    sb.Append(" = new " + ftn + "();");
-                }
+                //else if (f._Has<TemplateLibrary.CreateInstance>())
+                //{
+                //    sb.Append(" = new " + ftn + "();");
+                //}
                 else
                 {
                     sb.Append(";");

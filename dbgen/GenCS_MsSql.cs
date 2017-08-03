@@ -369,7 +369,7 @@ namespace " + iface.Namespace + @"
                         // 单行 / 单个结果
                         else
                         {
-                            if (rt._IsSqlNullable())
+                            if (rt._IsUserClass())
                             {
                                 var rtfs = rt._GetFields<Column>();
                                 if (rtfs.Count() == 0)
@@ -499,7 +499,7 @@ namespace " + iface.Namespace + @"
                 // 单行 / 单个结果
                 else
                 {
-                    if (rt._IsSqlNullable())
+                    if (rt._IsUserClass())
                     {
                         var rtfs = rt._GetFields<Column>();
                         if (rtfs.Count() == 0)

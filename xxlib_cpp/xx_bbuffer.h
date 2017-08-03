@@ -60,8 +60,17 @@ namespace xx
 
 		BBuffer(BBuffer const&o) = delete;
 		BBuffer& operator=(BBuffer const&o) = delete;
+
 		explicit BBuffer(uint32_t capacity = 0) : BaseType(capacity) {}
+
+		BBuffer(std::pair<char const*, int> const& buff) : BaseType(buff.second)
+		{
+			memcpy(buf, buff.first, buff.second);
+			dataLen = buff.second;
+		}
+		
 		BBuffer(BBuffer* bb) : BaseType(bb) {}
+
 		~BBuffer()
 		{
 			mempool().SafeRelease(ptrStore);

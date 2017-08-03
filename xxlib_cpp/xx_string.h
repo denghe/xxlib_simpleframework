@@ -40,6 +40,11 @@ namespace xx
 			AddRange(s.data(), (uint32_t)s.size());
 		}
 
+		String(std::pair<char const*, int> const& buff) : BaseType(buff.second)
+		{
+			AddRange(buff.first, buff.second);
+		}
+
 		String(BBuffer* bb);
 
 		String(String const&o) = delete;

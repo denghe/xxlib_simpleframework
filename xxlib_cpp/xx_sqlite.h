@@ -172,7 +172,7 @@ namespace xx
 		SQLiteReader(sqlite3_stmt* stmt);
 		SQLiteDataTypes GetColumnDataType(int colIdx);
 		char const* GetColumnName(int colIdx);
-		bool IsNull(int colIdx);
+		bool IsDBNull(int colIdx);
 		int ReadInt32(int colIdx);
 		sqlite_int64 ReadInt64(int colIdx);
 		double ReadDouble(int colIdx);
@@ -470,11 +470,12 @@ namespace xx
 
 	inline bool SQLiteQuery::Execute(ReadFunc && rf)
 	{
+		SQLiteReader dr(stmt);
+
 		int r = sqlite3_step(stmt);
 		if (r == SQLITE_DONE || r == SQLITE_ROW && !rf) goto LabEnd;
 		else if (r != SQLITE_ROW) goto LabErr;
 
-		SQLiteReader dr(stmt);
 		dr.numCols = sqlite3_column_count(stmt);
 		do
 		{
@@ -513,7 +514,7 @@ namespace xx
 		return sqlite3_column_name(stmt, colIdx);
 	}
 
-	inline bool SQLiteReader::IsNull(int colIdx)
+	inline bool SQLiteReader::IsDBNull(int colIdx)
 	{
 		assert(colIdx >= 0 && colIdx < numCols);
 		return GetColumnDataType(colIdx) == SQLiteDataTypes::Null;
@@ -522,25 +523,25 @@ namespace xx
 	inline char const* SQLiteReader::ReadString(int colIdx)
 	{
 		assert(colIdx >= 0 && colIdx < numCols);
-		if (IsNull(colIdx)) return nullptr;
+		if (IsDBNull(colIdx)) return nullptr;
 		return (char const*)sqlite3_column_text(stmt, colIdx);
 	}
 
 	inline int SQLiteReader::ReadInt32(int colIdx)
 	{
-		assert(colIdx >= 0 && colIdx < numCols && !IsNull(colIdx));
+		assert(colIdx >= 0 && colIdx < numCols && !IsDBNull(colIdx));
 		return sqlite3_column_int(stmt, colIdx);
 	}
 
 	inline sqlite_int64 SQLiteReader::ReadInt64(int colIdx)
 	{
-		assert(colIdx >= 0 && colIdx < numCols && !IsNull(colIdx));
+		assert(colIdx >= 0 && colIdx < numCols && !IsDBNull(colIdx));
 		return sqlite3_column_int64(stmt, colIdx);
 	}
 
 	inline double SQLiteReader::ReadDouble(int colIdx)
 	{
-		assert(colIdx >= 0 && colIdx < numCols && !IsNull(colIdx));
+		assert(colIdx >= 0 && colIdx < numCols && !IsDBNull(colIdx));
 		return sqlite3_column_double(stmt, colIdx);
 	}
 

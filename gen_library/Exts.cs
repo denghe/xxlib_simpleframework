@@ -144,15 +144,21 @@ public static class GenExtensions
         return t.Namespace == nameof(System) && t.Name == nameof(String);
     }
 
+    /// <summary>
+    /// 返回 t 是否为 BBuffer
+    /// </summary>
+    public static bool _IsBBuffer(this Type t)
+    {
+        return t.Namespace == nameof(TemplateLibrary) && t.Name == "BBuffer";
+    }
+    
 
     /// <summary>
     /// 返回 t 是否为容器( string, bbuffer, list )
     /// </summary>
     public static bool _IsContainer(this Type t)
     {
-        return t.Namespace == nameof(System) && t.Name == nameof(String)
-            || t._IsList()
-            || t.Namespace == nameof(TemplateLibrary) && t.Name == "BBuffer";
+        return t._IsString() || t._IsList() || t._IsBBuffer();
     }
 
 
@@ -179,6 +185,15 @@ public static class GenExtensions
     }
 
     /// <summary>
+    /// 返回 t 是否为 用户类
+    /// </summary>
+    public static bool _IsSqlNullable(this Type t)
+    {
+        return t.IsValueType && t._IsNullable() || t._IsString() || t._IsBBuffer();
+    }
+    
+
+    /// <summary>
     /// 返回 t 是否为 void
     /// </summary>
     public static bool _IsVoid(this Type t)
@@ -193,15 +208,6 @@ public static class GenExtensions
     {
         return t.Namespace == nameof(TemplateLibrary) && t.Name == "DateTime";
     }
-
-    /// <summary>
-    /// 返回 t 是否为可 null ( sql 范畴 )
-    /// </summary>
-    public static bool _IsSqlNullable(this Type t)
-    {
-        return t.IsClass && !_IsDateTime(t);
-    }
-
 
 
     /// <summary>
@@ -847,7 +853,7 @@ public static class GenExtensions
         {
             return _GetDataReaderFuncName(t.GenericTypeArguments[0]);
         }
-        if(t.Namespace == nameof(TemplateLibrary))
+        if (t.Namespace == nameof(TemplateLibrary))
         {
             switch (t.Name)
             {
@@ -916,6 +922,83 @@ public static class GenExtensions
         else throw new Exception("todo");
     }
 
+    /// <summary>
+    /// 返回类型对应的 SqlDataReader 之数据读取函数名 之 C++ 版
+    /// </summary>
+    public static string _GetDataReaderFuncName_Cpp(this Type t, int colIdx)
+    {
+        if (t._IsNullable())
+        {
+            return _GetDataReaderFuncName_Cpp(t.GenericTypeArguments[0], colIdx);
+        }
+        else if (t.Namespace == nameof(TemplateLibrary))
+        {
+            switch (t.Name)
+            {
+                //case "DateTime":
+                //    return "sr.GetDateTime";
+                case "BBuffer":
+                    return "mp.Create<xx::BBuffer>(sr.ReadBlob(" + colIdx + "))";
+
+                default:
+                    throw new Exception("unhandled data type");
+            }
+        }
+        else if (t.Namespace == nameof(System))
+        {
+            switch (t.Name)
+            {
+                case "Void":
+                    throw new Exception("impossible");
+                case "Byte":
+                    return "(uint8_t)sr.ReadInt32(" + colIdx + ")";
+                case "UInt8":
+                    return "(uint8_t)sr.ReadInt32(" + colIdx + ")";
+                case "UInt16":
+                    return "(uint16_t)sr.ReadInt32(" + colIdx + ")";
+                case "UInt32":
+                    return "(uint32_t)sr.ReadInt32(" + colIdx + ")";
+                case "UInt64":
+                    return "(uint64_t)sr.ReadInt64(" + colIdx + ")";
+                case "SByte":
+                    return "(int8_t)sr.ReadInt32(" + colIdx + ")";
+                case "Int8":
+                    return "(int8_t)sr.ReadInt32(" + colIdx + ")";
+                case "Int16":
+                    return "(int16_t)sr.ReadInt32(" + colIdx + ")";
+                case "Int32":
+                    return "sr.ReadInt32(" + colIdx + ")";
+                case "Int64":
+                    return "sr.ReadInt64(" + colIdx + ")";
+                case "Double":
+                    return "sr.ReadDouble(" + colIdx + ")";
+                case "Float":
+                    return "(float)sr.ReadDouble(" + colIdx + ")";
+                case "Single":
+                    return "(float)sr.ReadDouble(" + colIdx + ")";
+                case "Boolean":
+                    return "sr.ReadInt32(" + colIdx + ") ? true : false";
+                case "Bool":
+                    return "sr.ReadInt32(" + colIdx + ") ? true : false";
+                case "String":
+                    return "mp.Create<xx::String>(sr.ReadString(" + colIdx + "))";
+                //case "DateTime":
+                //    return "sr.GetDateTime";
+
+                default:
+                    throw new Exception("unhandled data type");
+            }
+        }
+        else if (t.IsEnum)
+        {
+            return "(" + t.FullName + ")" + _GetDataReaderFuncName_Cpp(t.GetEnumUnderlyingType(), colIdx);
+        }
+        //else if (t.Namespace == nameof(TemplateLibrary) && t.Name == "BBuffer")
+        //{
+        //    return "sr.GetBBuffer";
+        //}
+        else throw new Exception("todo");
+    }
 
 
 

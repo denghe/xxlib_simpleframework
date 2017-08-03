@@ -133,13 +133,13 @@ namespace TemplateLibrary
     }
 
 
-    /// <summary>
-    /// 针对指针类型成员, 于构造函数中创建默认实例
-    /// </summary>
-    [System.AttributeUsage(System.AttributeTargets.Field)]
-    public class CreateInstance : System.Attribute
-    {
-    }
+    ///// <summary>
+    ///// 针对指针类型成员, 于构造函数中创建默认实例
+    ///// </summary>
+    //[System.AttributeUsage(System.AttributeTargets.Field)]
+    //public class CreateInstance : System.Attribute
+    //{
+    //}
 
 
     /// <summary>

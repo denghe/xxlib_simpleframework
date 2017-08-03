@@ -1,4 +1,6 @@
-﻿#include <xx_bbuffer.h>
+﻿#pragma once
+#include <xx_bbuffer.h>
+#include <optional>
 
 namespace DB
 {

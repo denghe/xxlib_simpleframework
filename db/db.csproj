@@ -54,6 +54,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="DB_class.h" />
+    <Content Include="DB_sqlite.h" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

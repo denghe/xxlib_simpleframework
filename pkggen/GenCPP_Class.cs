@@ -248,15 +248,15 @@ namespace " + c.Namespace + @"
             sb.Append(@"
 	{");
             var fs = c._GetFields();
-            foreach (var f in fs)
-            {
-                var ft = f.FieldType;
-                if (ft.IsClass && f._Has<TemplateLibrary.CreateInstance>())
-                {
-                    sb.Append(@"
-        mempool().CreateTo(" + f.Name + ");");
-                }
-            }
+        //    foreach (var f in fs)
+        //    {
+        //        var ft = f.FieldType;
+        //        if (ft.IsClass && f._Has<TemplateLibrary.CreateInstance>())
+        //        {
+        //            sb.Append(@"
+        //mempool().CreateTo(" + f.Name + ");");
+        //        }
+        //    }
             sb.Append(@"
 	}
 	inline " + c.Name + @"::" + c.Name + @"(xx::BBuffer *bb)");

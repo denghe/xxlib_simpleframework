@@ -106,17 +106,17 @@ namespace " + c.Namespace + @"
                 {
                     sb.Append(" = " + dv + ";");
                 }
-                else if (f._Has<TemplateLibrary.CreateInstance>())
-                {
-                    if (ft._IsString())
-                    {
-                        sb.Append(" = \"\";");
-                    }
-                    else
-                    {
-                        sb.Append(" = new " + ftn + "();");
-                    }
-                }
+                //else if (f._Has<TemplateLibrary.CreateInstance>())
+                //{
+                //    if (ft._IsString())
+                //    {
+                //        sb.Append(" = \"\";");
+                //    }
+                //    else
+                //    {
+                //        sb.Append(" = new " + ftn + "();");
+                //    }
+                //}
                 else
                 {
                     if (!f._Has<TemplateLibrary.Property>()) sb.Append(";");

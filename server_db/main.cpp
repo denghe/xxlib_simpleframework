@@ -4,7 +4,6 @@
 #include <xx_sqlite.h>
 #include <mutex>
 #include <thread>
-#include <optional>
 
 struct Peer;
 struct Service;
@@ -251,138 +250,198 @@ void Peer::OnReceivePackage(xx::BBuffer& bb)
 
 
 #include "db\DB_class.h"
+#include "db\DB_sqlite.h"
 
-namespace DB
-{
-	// 模拟生成的函数长相
-
-	struct SQLiteFuncs
-	{
-		xx::SQLite* sqlite;
-		xx::MemPool& mp;
-		xx::SQLiteString_v s;
-		bool hasError = false;
-		int const& lastErrorCode() { return sqlite->lastErrorCode; }
-		const char* const& lastErrorMessage() { return sqlite->lastErrorMessage; }
-
-		SQLiteFuncs(xx::SQLite* sqlite) : sqlite(sqlite), mp(sqlite->mempool()), s(mp) {}
-
-		xx::SQLiteQuery_p query_CreateAccountTable;
-		void CreateAccountTable()
-		{
-			hasError = true;
-			auto& q = query_CreateAccountTable;
-			if (!q)
-			{
-				q = sqlite->CreateQuery(R"=-=(
-create table [account]
-(
-    [id] integer primary key autoincrement, 
-    [username] text(64) not null unique, 
-    [password] text(64) not null
-)
-)=-=");
-			}
-			if (!q) return;
-			if (!q->Execute()) return;
-			hasError = false;
-		}
-
-		xx::SQLiteQuery_p query_AddAccount;
-		void AddAccount(DB::Account const* const& a)
-		{
-			hasError = true;
-			auto& q = query_AddAccount;
-			if (!q)
-			{
-				q = sqlite->CreateQuery(R"=-=(
-insert into [account] ([username], [password])
-values (?, ?)
-)=-=");
-			}
-			if (!q) return;
-			if (q->SetParameters(a->username, a->password)) return;
-			if (!q->Execute()) return;
-			hasError = false;
-		}
-
-		void AddAccount2(char const* const& username, char const* const& password)
-		{
-			hasError = true;
-			auto& q = query_AddAccount;
-			if (!q)
-			{
-				q = sqlite->CreateQuery(R"=-=(
-insert into [account] ([username], [password])
-values (?, ?)
-)=-=");
-			}
-			if (!q) return;
-			if (q->SetParameters(username, password)) return;
-			if (!q->Execute()) return;
-			hasError = false;
-		}
-
-		xx::SQLiteQuery_p query_GetAccountByUsername;
-		Account_p GetAccountByUsername(char const* const& username)
-		{
-			hasError = true;
-			auto& q = query_GetAccountByUsername;
-			if (!q)
-			{
-				q = sqlite->CreateQuery(R"=-=(
-select [id], [username], [password]
-  from [account]
- where [username] = ?
-)=-=");
-			}
-			Account_p rtv;
-			if (!q) return rtv;
-			if (q->SetParameters(username)) return rtv;
-			if (!q->Execute([&](xx::SQLiteReader& sr)
-			{
-				rtv.Create(mp);
-				rtv->id = sr.ReadInt64(0);
-				rtv->username.Create(mp, sr.ReadString(1));	// 如果不创建默认实例
-				*rtv->password.Create(mp) = sr.ReadString(2);//*rtv->password = sr.ReadString(2); // 如果创建默认实例的 string 可以这样,  也可直接 Assign. BBuffer 同理
-			})) return rtv;
-			hasError = false;
-			return rtv;
-		}
-
-		xx::SQLiteQuery_p query_GetAccountsByUsernames;
-		xx::List_p<Account_p> GetAccountsByUsernames(xx::List_p<xx::String_p> const& usernames)
-		{
-			hasError = true;
-			auto& q = query_GetAccountsByUsernames;
-			{
-				s->Clear();
-				s->Append(R"=-=(
-select [id], [username], [password]
-  from [account]
- where [username] in )=-=");
-				s->SQLAppend(usernames);
-				q = sqlite->CreateQuery(s->C_str(), s->dataLen);
-			}
-			xx::List_p<Account_p> rtv;
-			if (!q) return rtv;
-			rtv.Create(mp);
-			if (!q->Execute([&](xx::SQLiteReader& sr)
-			{
-				auto& r = rtv->EmplaceMP();
-				r->id = sr.ReadInt64(0);
-				if (sr.IsNull(1)) r->username = nullptr; else *r->username.Create(mp) = sr.ReadString(1);	// 如果创建默认实例就要这样设 null, 后面 Create(mp) 不要
-				if (!sr.IsNull(2)) *r->password.Create(mp, sr.ReadString(2));
-			}))
-			{
-				rtv = nullptr;
-				return rtv;
-			}
-			hasError = false;
-			return rtv;
-		}
-	};
-}
+//namespace DB
+//{
+//	// 模拟生成的函数长相
+//
+//	struct SQLiteFuncs
+//	{
+//		xx::SQLite* sqlite;
+//		xx::MemPool& mp;
+//		xx::SQLiteString_v s;
+//		bool hasError = false;
+//		int const& lastErrorCode() { return sqlite->lastErrorCode; }
+//		const char* const& lastErrorMessage() { return sqlite->lastErrorMessage; }
+//
+//		SQLiteFuncs(xx::SQLite* sqlite) : sqlite(sqlite), mp(sqlite->mempool()), s(mp) {}
+//
+//		xx::SQLiteQuery_p query_CreateAccountTable;
+//		void CreateAccountTable()
+//		{
+//			hasError = true;
+//			auto& q = query_CreateAccountTable;
+//			if (!q)
+//			{
+//				q = sqlite->CreateQuery(R"=-=(
+//create table [account]
+//(
+//    [id] integer primary key autoincrement, 
+//    [username] text(64) not null unique, 
+//    [password] text(64) not null
+//)
+//)=-=");
+//			}
+//			if (!q) return;
+//			if (!q->Execute()) return;
+//			hasError = false;
+//		}
+//
+//		xx::SQLiteQuery_p query_AddAccount;
+//		void AddAccount(DB::Account const* const& a)
+//		{
+//			hasError = true;
+//			auto& q = query_AddAccount;
+//			if (!q)
+//			{
+//				q = sqlite->CreateQuery(R"=-=(
+//insert into [account] ([username], [password])
+//values (?, ?)
+//)=-=");
+//			}
+//			if (!q) return;
+//			if (q->SetParameters(a->username, a->password)) return;
+//			if (!q->Execute()) return;
+//			hasError = false;
+//		}
+//
+//		void AddAccount2(char const* const& username, char const* const& password)
+//		{
+//			hasError = true;
+//			auto& q = query_AddAccount;
+//			if (!q)
+//			{
+//				q = sqlite->CreateQuery(R"=-=(
+//insert into [account] ([username], [password])
+//values (?, ?)
+//)=-=");
+//			}
+//			if (!q) return;
+//			if (q->SetParameters(username, password)) return;
+//			if (!q->Execute()) return;
+//			hasError = false;
+//		}
+//
+//		xx::SQLiteQuery_p query_GetAccountByUsername;
+//		Account_p GetAccountByUsername(char const* const& username)
+//		{
+//			hasError = true;
+//			auto& q = query_GetAccountByUsername;
+//			if (!q)
+//			{
+//				q = sqlite->CreateQuery(R"=-=(
+//select [id], [username], [password]
+//  from [account]
+// where [username] = ?
+//)=-=");
+//			}
+//			Account_p rtv;
+//			if (!q) return rtv;
+//			if (q->SetParameters(username)) return rtv;
+//			if (!q->Execute([&](xx::SQLiteReader& sr)
+//			{
+//				rtv.Create(mp);
+//				rtv->id = sr.ReadInt64(0);
+//				rtv->username.Create(mp, sr.ReadString(1));	// 如果不创建默认实例
+//				*rtv->password.Create(mp) = sr.ReadString(2);//*rtv->password = sr.ReadString(2); // 如果创建默认实例的 string 可以这样,  也可直接 Assign. BBuffer 同理
+//			})) return rtv;
+//			hasError = false;
+//			return rtv;
+//		}
+//
+//		xx::SQLiteQuery_p query_GetAccountsByUsernames;
+//		xx::List_p<Account_p> GetAccountsByUsernames(xx::List_p<xx::String_p> const& usernames)
+//		{
+//			hasError = true;
+//			auto& q = query_GetAccountsByUsernames;
+//			{
+//				s->Clear();
+//				s->Append(R"=-=(
+//select [id], [username], [password]
+//  from [account]
+// where [username] in )=-=");
+//				s->SQLAppend(usernames);
+//				q = sqlite->CreateQuery(s->C_str(), s->dataLen);
+//			}
+//			xx::List_p<Account_p> rtv;
+//			if (!q) return rtv;
+//			rtv.Create(mp);
+//			if (!q->Execute([&](xx::SQLiteReader& sr)
+//			{
+//				auto& r = rtv->EmplaceMP();
+//				r->id = sr.ReadInt64(0);
+//				if (sr.IsDBNull(1)) r->username = nullptr; else *r->username.Create(mp) = sr.ReadString(1);	// 如果创建默认实例就要这样设 null, 后面 Create(mp) 不要
+//				if (!sr.IsDBNull(2)) *r->password.Create(mp, sr.ReadString(2));
+//			}))
+//			{
+//				rtv = nullptr;
+//				return rtv;
+//			}
+//			hasError = false;
+//			return rtv;
+//		}
+//
+//		xx::SQLiteQuery_p query_GetAccountIdsByUsernames;
+//		xx::List_p<int64_t> GetAccountIdsByUsernames(xx::List_p<xx::String_p> const& usernames)
+//		{
+//			hasError = true;
+//			auto& q = query_GetAccountIdsByUsernames;
+//			{
+//				s->Clear();
+//				s->Append(R"=-=(
+//select [id]
+//  from [account]
+// where [username] in )=-=");
+//				s->SQLAppend(usernames);
+//				q = sqlite->CreateQuery(s->C_str(), s->dataLen);
+//			}
+//			xx::List_p<int64_t> rtv;
+//			if (!q) return rtv;
+//			rtv.Create(mp);
+//			if (!q->Execute([&](xx::SQLiteReader& sr)
+//			{
+//				rtv->Add(sr.ReadInt64(0));
+//			}))
+//			{
+//				rtv = nullptr;
+//				return rtv;
+//			}
+//			hasError = false;
+//			return rtv;
+//		}
+//
+//		xx::SQLiteQuery_p query_GetAccountIdsByUsernames2;
+//		xx::List_p<std::optional<int64_t>> GetAccountIdsByUsernames2(xx::List_p<xx::String_p> const& usernames)
+//		{
+//			hasError = true;
+//			auto& q = query_GetAccountIdsByUsernames2;
+//			{
+//				s->Clear();
+//				s->Append(R"=-=(
+//select [id]
+//  from [account]
+// where [username] in )=-=");
+//				s->SQLAppend(usernames);
+//				q = sqlite->CreateQuery(s->C_str(), s->dataLen);
+//			}
+//			xx::List_p<std::optional<int64_t>> rtv;
+//			if (!q) return rtv;
+//			rtv.Create(mp);
+//			if (!q->Execute([&](xx::SQLiteReader& sr)
+//			{
+//				if (sr.IsDBNull(0)) rtv->Emplace();
+//				else rtv->Add(sr.ReadInt64(0));
+//			}))
+//			{
+//				rtv = nullptr;
+//				return rtv;
+//			}
+//			hasError = false;
+//			return rtv;
+//		}
+//	};
+//}
 
 int main()
 {
@@ -391,56 +450,56 @@ int main()
 	xx::SQLite_v sql(mp, "data.db");
 	DB::SQLiteFuncs fs(sql);
 
-	auto r = sql->TableExists("account");
-	if (r < 0)
-	{
-		mp.Cout("errCode = ", sql->lastErrorCode, "errMsg = ", sql->lastErrorMessage, "\n");
-		goto LabEnd;
-	}
-	else if (r == 0)
-	{
-		fs.CreateAccountTable();
-		assert(!fs.hasError);
+	//auto r = sql->TableExists("account");
+	//if (r < 0)
+	//{
+	//	mp.Cout("errCode = ", sql->lastErrorCode, "errMsg = ", sql->lastErrorMessage, "\n");
+	//	goto LabEnd;
+	//}
+	//else if (r == 0)
+	//{
+	//	fs.CreateAccountTable();
+	//	assert(!fs.hasError);
 
-		DB::Account_p a(mp);
+	//	DB::Account_p a(mp);
 
-		*a->username.Create(mp) = "a";
-		*a->password.Create(mp) = "1";
-		fs.AddAccount(a);
-		assert(!fs.hasError);
+	//	*a->username.Create(mp) = "a";
+	//	*a->password.Create(mp) = "1";
+	//	fs.AddAccount(a);
+	//	assert(!fs.hasError);
 
-		auto b = std::move(a);
+	//	auto b = std::move(a);
 
-		fs.AddAccount2("b", "2");
-		assert(!fs.hasError);
-	}
+	//	fs.AddAccount2("b", "2");
+	//	assert(!fs.hasError);
+	//}
 
-	{
-		auto a = fs.GetAccountByUsername("a");
-		if (fs.hasError)
-		{
-			mp.Cout("errCode = ", fs.lastErrorCode(), "errMsg = ", fs.lastErrorMessage(), "\n");
-			goto LabEnd;
-		}
-		else if (a == nullptr)
-		{
-			mp.Cout("can't find account a!\n");
-		}
-		else
-		{
-			mp.Cout("found account a! id = ", a->id, " password = ", a->password, "\n");
-		}
-	}
-	{
-		xx::List_p<xx::String_p> ss(mp);
-		ss->EmplaceMP("a");
-		ss->EmplaceMP("b");
-		auto as = fs.GetAccountsByUsernames(ss);
-		for (auto& a : *as)
-		{
-			mp.Cout(a, "\n");
-		}
-	}
+	//{
+	//	auto a = fs.GetAccountByUsername("a");
+	//	if (fs.hasError)
+	//	{
+	//		mp.Cout("errCode = ", fs.lastErrorCode(), "errMsg = ", fs.lastErrorMessage(), "\n");
+	//		goto LabEnd;
+	//	}
+	//	else if (a == nullptr)
+	//	{
+	//		mp.Cout("can't find account a!\n");
+	//	}
+	//	else
+	//	{
+	//		mp.Cout("found account a! id = ", a->id, " password = ", a->password, "\n");
+	//	}
+	//}
+	//{
+	//	xx::List_p<xx::String_p> ss(mp);
+	//	ss->EmplaceMP("a");
+	//	ss->EmplaceMP("b");
+	//	auto as = fs.GetAccountsByUsernames(ss);
+	//	for (auto& a : *as)
+	//	{
+	//		mp.Cout(a, "\n");
+	//	}
+	//}
 
 LabEnd:
 	std::cin.get();

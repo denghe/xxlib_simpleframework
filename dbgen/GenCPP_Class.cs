@@ -12,7 +12,9 @@ public static class GenCPP_Class
         var sb = new StringBuilder();
 
         // usings
-        sb.Append(@"#include <xx_bbuffer.h>
+        sb.Append(@"#pragma once
+#include <xx_bbuffer.h>
+#include <optional>
 ");
 
         // template namespace
@@ -251,26 +253,26 @@ namespace " + c.Namespace + @"
                 dot = true;
             }
             var fs = c._GetFields();
-            foreach (var f in fs)
-            {
-                var ft = f.FieldType;
-                if (f._Has<TemplateLibrary.CreateInstance>() || ft._IsString())
-                {
-                    var v = f.GetValue(f.IsStatic ? null : o);
-                    var dv = v._GetDefaultValueDecl_Cpp(templateName);
-                    if (dv != "nullptr" && ft._IsString())
-                    {
-                        sb.Append(@"
-        " + (dot ? "," : ":") + " " + f.Name + "(mempool(), " + dv + ")");
-                    }
-                    else if (f._Has<TemplateLibrary.CreateInstance>())
-                    {
-                        sb.Append(@"
-        " + (dot ? "," : ":") + " " + f.Name + "(mempool())");
-                    }
-                    dot = true;
-                }
-            }
+        //    foreach (var f in fs)
+        //    {
+        //        var ft = f.FieldType;
+        //        if (f._Has<TemplateLibrary.CreateInstance>() || ft._IsString())
+        //        {
+        //            var v = f.GetValue(f.IsStatic ? null : o);
+        //            var dv = v._GetDefaultValueDecl_Cpp(templateName);
+        //            if (dv != "nullptr" && ft._IsString())
+        //            {
+        //                sb.Append(@"
+        //" + (dot ? "," : ":") + " " + f.Name + "(mempool(), " + dv + ")");
+        //            }
+        //            else if (f._Has<TemplateLibrary.CreateInstance>())
+        //            {
+        //                sb.Append(@"
+        //" + (dot ? "," : ":") + " " + f.Name + "(mempool())");
+        //            }
+        //            dot = true;
+        //        }
+        //    }
             sb.Append(@"
 	{
 	}

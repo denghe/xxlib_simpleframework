@@ -15,7 +15,10 @@ public static class GenCPP_SQLite
         var ts = asm._GetTypes();
 
         // usings
-        sb.Append(@"#include ""db\" + templateName + @"_class.h""
+        sb.Append(@"#pragma once
+#include """ + templateName + @"_class.h""
+namespace DB
+{
 ");
 
         // 扫带有 [SQLite] 标志的 interface , 生成相应的函数
@@ -206,168 +209,16 @@ namespace " + iface.Namespace + @"
                         sb.Append(p.Name + ", ");
                     }
                     sb.Length -= 2;
-                    sb.Append(@")) return;
+                    sb.Append(@")) return" + (rtn == "void" ? "" : " rtv") + @";
 ");
                 }
 
-
-                // todo
-
-
-
-
                 // 根据函数返回值类型，生成不同的代码段。
 
-                // 多结果集
+                // 多结果集 SQLite 不支持
                 if (rt._IsTuple())
                 {
-                    // 为了尽量不改下面的代码, 造个 rt 出来
-                    var rrt = rt;
-                    var rrtn = rtn;
-
-                    sb.Append(@"
-            using (var r = cmd.ExecuteReader())
-            {
-                recordsAffecteds.Add(r.RecordsAffected);");
-
-                    for (int jj = 0; jj < rrt.GenericTypeArguments.Length; ++jj)
-                    {
-
-
-
-
-
-
-
-                        int ii = jj + 1;
-                        rt = rrt.GenericTypeArguments[jj];
-                        rtn = rt._GetTypeDecl_Cpp(templateName);
-                        if (jj > 0)
-                        {
-                            sb.Append(@"
-                r.NextResult();");
-                        }
-                        sb.Append(@"
-                recordsAffecteds.Add(r.RecordsAffected);");
-                        // 单结果集
-                        if (rt.IsGenericType && rt.Name == "List`1")
-                        {
-                            var ct = rt.GenericTypeArguments[0];
-                            var ctn = ct._GetTypeDecl_Cpp(templateName);
-
-                            if (ct.IsValueType)
-                            {
-                                var nullable = (ct.Namespace == "System" && ct.Name == "Nullable`1");
-                                sb.Append(@"
-                var rtv" + ii + @" = new List<" + ctn + @">();
-                while (r.Read())
-                {
-                    rtv" + ii + @".Add(" + (nullable ? ("r.IsDBNull(0) ? null : (" + ctn + ")") : "") + ct._GetDataReaderFuncName() + @"(0));
-                }");
-                            }
-                            else
-                            {
-                                sb.Append(@"
-                var rtv" + ii + @" = new " + rtn + @"();
-                while (r.Read())
-                {
-                    rtv" + ii + @".Add(new " + ctn + @"
-                    {");
-                                var ctfs = ct._GetFields<Column>();
-                                if (ctfs.Count() == 0)
-                                    throw new Exception("the class's fields can't be empty");
-
-                                for (int i = 0; i < ctfs.Count; ++i)
-                                {
-                                    var m = ctfs[i];
-                                    var mn = m.Name;
-
-                                    var getfn = m.FieldType._GetDataReaderFuncName();
-
-                                    if (i > 0)
-                                    {
-                                        sb.Append(",");
-                                    }
-                                    sb.Append(@"
-                        " + mn + @" = " + (ct._IsNullable() ? ("r.IsDBNull(" + i + ") ? null : (" + ctn + ")") : "") + getfn + @"(" + i + @")");
-                                }
-                                sb.Append(@"
-                    });
-                }");
-                            }
-                        }
-                        // 单行 / 单个结果
-                        else
-                        {
-                            if (rt._IsSqlNullable())
-                            {
-                                var rtfs = rt._GetFields<Column>();
-                                if (rtfs.Count() == 0)
-                                    throw new Exception("the class's fields can't be empty");
-
-
-                                sb.Append(@"
-                " + rtn + @" rtv" + ii + @" = null;
-                if (r.Read())
-                {
-                    rtv" + ii + @" = new " + rtn + @"
-                    {");
-                                for (int i = 0; i < rtfs.Count; ++i)
-                                {
-                                    var m = rtfs[i];
-                                    var mt = m.FieldType;
-                                    var mn = m.Name;
-
-                                    var getfn = mt._GetDataReaderFuncName();
-
-                                    if (i > 0)
-                                    {
-                                        sb.Append(", ");
-                                    }
-                                    sb.Append(@"
-                    " + mn + @" = " + (mt._IsSqlNullable() ? ("r.IsDBNull(" + i + ") ? null : (" + mt._GetTypeDecl_Cpp(templateName) + ")") : "") + getfn + @"(" + i + @")");
-                                }
-                                sb.Append(@"
-                    };
-                }");
-                            }
-                            else
-                            {
-                                if (rt._IsVoid())
-                                {
-                                    Debug.Assert(false);
-                                }
-                                else
-                                {
-                                    sb.Append(@"
-                var rtv" + ii + @" = default(" + rtn + @");
-                if (r.Read())
-                {
-                    rtv" + ii + @" = " + (rt._IsSqlNullable() ? ("r.IsDBNull(0) ? null : (" + rtn + ")") : "") + rt._GetDataReaderFuncName() + @"(0);
-                }");
-
-                                }
-                            }
-                        }
-
-
-
-
-
-
-
-
-
-                    }
-                    sb.Append(@"
-                return new " + rrtn + @"(");
-                    for (int jj = 0; jj < rrt.GenericTypeArguments.Length; ++jj)
-                    {
-                        if (jj > 0) sb.Append(", ");
-                        sb.Append("rtv" + (jj + 1));
-                    }
-                    sb.Append(@");
-            }");
+                    throw new NotSupportedException();
                 }
                 // 单结果集
                 else if (rt.IsGenericType && rt.Name == "List`1")
@@ -375,32 +226,13 @@ namespace " + iface.Namespace + @"
                     var ct = rt.GenericTypeArguments[0];
                     var ctn = ct._GetTypeDecl_Cpp(templateName);
 
-                    if (ct.IsValueType)
-                    {
-                        var nullable = (ct.Namespace == "System" && ct.Name == "Nullable`1");
-                        sb.Append(@"
-            var rtv = new List<" + ctn + @">();
-            using (var r = cmd.ExecuteReader())
-            {
-                recordsAffecteds.Add(r.RecordsAffected);
-                while (r.Read())
-                {
-                    rtv.Add(" + (nullable ? ("r.IsDBNull(0) ? null : (" + ctn + ")") : "") + ct._GetDataReaderFuncName() + @"(0));
-                }
-            }
-            return rtv;");
-                    }
-                    else
+                    // 用户类
+                    if (ct._IsUserClass())
                     {
                         sb.Append(@"
-            var rtv = new " + rtn + @"();
-            using (var r = cmd.ExecuteReader())
+			if (!q->Execute([&](xx::SQLiteReader& sr)
             {
-                recordsAffecteds.Add(r.RecordsAffected);
-                while (r.Read())
-                {
-                    rtv.Add(new " + ctn + @"
-                    {");
+				auto& r = rtv->EmplaceMP();");
                         var ctfs = ct._GetFields<Column>();
                         if (ctfs.Count() == 0)
                             throw new Exception("the class's fields can't be empty");
@@ -408,85 +240,78 @@ namespace " + iface.Namespace + @"
                         for (int i = 0; i < ctfs.Count; ++i)
                         {
                             var m = ctfs[i];
+                            var mt = m.FieldType;
                             var mn = m.Name;
+                            var getfn = mt._GetDataReaderFuncName_Cpp(i);
 
-                            var getfn = m.FieldType._GetDataReaderFuncName();
-
-                            if (i > 0)
-                            {
-                                sb.Append(",");
-                            }
                             sb.Append(@"
-                        " + mn + @" = " + (ct._IsNullable() ? ("r.IsDBNull(" + i + ") ? null : (" + ctn + ")") : "") + getfn + @"(" + i + @")");
+                " + (mt._IsSqlNullable() ? "if (!sr.IsDBNull(0)) " : "") + "rtv->" + mn + @" = " + getfn + @";");
                         }
-                        sb.Append(@"
-                    });
-                }
-            }
-            return rtv;");
                     }
+                    // 简单类型
+                    else
+                    {
+                        sb.Append(@"
+            if (!q->Execute([&](xx::SQLiteReader& sr)
+            {
+				" + (ct._IsSqlNullable() ? @"if (sr.IsDBNull(0)) rtv->Emplace();
+                else " : "") + @"rtv.Add(" + ct._GetDataReaderFuncName_Cpp(0) + @");");
+                    }
+                    sb.Append(@"
+            }))
+			{
+				rtv = nullptr;
+				return rtv;
+			}
+			hasError = false;
+			return rtv;");
                 }
                 // 单行 / 单个结果
                 else
                 {
-                    if (rt._IsSqlNullable())
+                    if (rt._IsVoid())
+                    {
+                        // 无返回值
+                        sb.Append(@"
+            if (!q->Execute()) return;");
+                    }
+                    // 用户类
+                    else if (rt._IsUserClass())
                     {
                         var rtfs = rt._GetFields<Column>();
                         if (rtfs.Count() == 0)
                             throw new Exception("the class's fields can't be empty");
 
-
                         sb.Append(@"
-            using (var r = cmd.ExecuteReader())
-            {
-                recordsAffecteds.Add(r.RecordsAffected);
-                if (!r.Read())
-                {
-                    return null;
-                }
-                return new " + rtn + @"
-                {");
+			if (!q->Execute([&](xx::SQLiteReader& sr)
+            {");
                         for (int i = 0; i < rtfs.Count; ++i)
                         {
                             var m = rtfs[i];
                             var mt = m.FieldType;
                             var mn = m.Name;
+                            var getfn = mt._GetDataReaderFuncName_Cpp(i);
 
-                            var getfn = mt._GetDataReaderFuncName();
-
-                            if (i > 0)
-                            {
-                                sb.Append(", ");
-                            }
                             sb.Append(@"
-                    " + mn + @" = " + (mt._IsSqlNullable() ? ("r.IsDBNull(" + i + ") ? null : (" + mt._GetTypeDecl_Cpp(templateName) + ")") : "") + getfn + @"(" + i + @")");
+                " + (mt._IsSqlNullable() ? "if (!sr.IsDBNull(0)) " : "") + "rtv->" + mn + @" = " + getfn + @";");
                         }
                         sb.Append(@"
-                };
-            }");
+            })) return rtv;
+			hasError = false;
+			return rtv;");
                     }
+                    // 简单类型
                     else
                     {
-                        if (rt._IsVoid())
-                        {
-                            // 无返回值
-                            sb.Append(@"
-            recordsAffecteds.Add(cmd.ExecuteNonQuery());");
-                        }
-                        else
-                        {
-                            sb.Append(@"
-            using (var r = cmd.ExecuteReader())
-            {
-                recordsAffecteds.Add(r.RecordsAffected);
-                if (!r.Read())
-                {
-                    return default(" + rtn + @");
-                }
-                return " + (rt._IsSqlNullable() ? ("r.IsDBNull(0) ? null : (" + rtn + ")") : "") + rt._GetDataReaderFuncName() + @"(0);
-            }");
-
-                        }
+                        sb.Append(@"
+            if (!q->Execute([&](xx::SQLiteReader& sr)
+            {");
+                        sb.Append(@"
+                " + (rt._IsSqlNullable() ? "if (!sr.IsDBNull(0)) " : "") + "rtv = " + rt._GetDataReaderFuncName_Cpp(0) + @";");
+                        sb.Append(@"
+            })) return rtv;
+			hasError = false;
+			return rtv;");
                     }
                 }
 
@@ -498,7 +323,7 @@ namespace " + iface.Namespace + @"
 
             // class }
             sb.Append(@"
-    }");
+    };");
 
             // namespace xxx }
             if (iface.Namespace != null)
