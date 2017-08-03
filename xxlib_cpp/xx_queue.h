@@ -71,7 +71,7 @@ namespace xx
 	/*************************************************************************/
 
 	template<typename T>
-	using Queue_v = MemHeaderBox<Queue<T>>;
+	using Queue_v = Dock<Queue<T>>;
 
 	template<typename T>
 	using Queue_p = Ptr<Queue<T>>;

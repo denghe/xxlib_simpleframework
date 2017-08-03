@@ -52,6 +52,16 @@ namespace xx
 		{
 			return Ensure() != nullptr;
 		}
+
+		operator T const* () const
+		{
+			return Ensure();
+		}
+		operator T* ()
+		{
+			return Ensure();
+		}
+
 		// 这样直接用是不安全的
 		T* operator->() const
 		{
@@ -65,6 +75,7 @@ namespace xx
 		{
 			return *(T*)pointer;
 		}
+
 	};
 
 

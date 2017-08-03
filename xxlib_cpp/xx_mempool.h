@@ -200,7 +200,7 @@ namespace xx
 		// 释放由 Create 创建的类
 		inline void Release(MPObject* p) noexcept
 		{
-			if (!p || p->refCount() > 0x7FFFFFFF) return;						// 如果空指针 或是用 MemHeaderBox 包裹则不执行 Release 操作
+			if (!p || p->refCount() > 0x7FFFFFFF) return;						// 如果空指针 或是用 Dock 包裹则不执行 Release 操作
 			assert(p->versionNumber());											// 版本号不应该是 0,
 #ifndef NDEBUG
 			if (enableRefCountAssert)
@@ -346,13 +346,13 @@ namespace xx
 
 	template<typename T>
 	template<typename ...Args>
-	T* & Ptr<T>::Create(MemPool& mp, Args &&... args)
+	Ptr<T>& Ptr<T>::Create(MemPool& mp, Args &&... args)
 	{
 		if (!pointer)
 		{
 			mp.CreateTo(pointer, std::forward<Args>(args)...);
 		}
-		return pointer;
+		return *this;
 	}
 }
 

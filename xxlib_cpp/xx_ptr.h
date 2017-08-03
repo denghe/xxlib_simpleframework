@@ -84,13 +84,13 @@ namespace xx
 		{
 			return pointer;
 		}
-		operator T* &()
+		operator T* const&()
 		{
 			return pointer;
 		}
 
 		template<typename ...Args>
-		T* & Create(MemPool& mp, Args &&... args);
+		Ptr<T>& Create(MemPool& mp, Args &&... args);
 		//{
 		//	if (!pointer)
 		//	{

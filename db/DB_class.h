@@ -23,7 +23,7 @@ namespace DB
         virtual void ToStringCore(xx::String &str) const override;
     };
     using Account_p = xx::Ptr<Account>;
-	using Account_v = xx::MemHeaderBox<Account>;
+	using Account_v = xx::Dock<Account>;
 
 
 	inline Account::Account()
@@ -56,7 +56,7 @@ namespace DB
 namespace xx
 {
 	template<>
-	struct MemmoveSupport<DB::Account*>
+	struct MemmoveSupport<DB::Account_v>
 	{
 		static const bool value = true;
     };

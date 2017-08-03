@@ -441,7 +441,7 @@ namespace xx
 	/*************************************************************************/
 
 	template<typename T, uint32_t reservedHeaderLen = 0>
-	using List_v = MemHeaderBox<List<T, reservedHeaderLen>>;
+	using List_v = Dock<List<T, reservedHeaderLen>>;
 
 	template<typename T, uint32_t reservedHeaderLen = 0>
 	using List_p = Ptr<List<T, reservedHeaderLen>>;

@@ -139,7 +139,7 @@ namespace xx
 		static const bool value = true;
 	};
 	template<typename T>
-	struct IsMPObject<MemHeaderBox<T>>
+	struct IsMPObject<Dock<T>>
 	{
 		static const bool value = true;
 	};

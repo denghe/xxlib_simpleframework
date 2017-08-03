@@ -152,7 +152,7 @@ namespace xx
 	// 值类型使用形态包装
 	/*************************************************************************/
 
-	using BBQueue_v = MemHeaderBox<BBQueue>;
+	using BBQueue_v = Dock<BBQueue>;
 	using BBQueue_p = Ptr<BBQueue>;
 
 	template<>

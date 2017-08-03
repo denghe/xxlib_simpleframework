@@ -209,7 +209,7 @@ namespace " + c.Namespace + @"
         virtual void ToStringCore(xx::String &str) const override;
     };
     using " + c.Name + @"_p = xx::Ptr<" + c.Name + @">;
-	using " + c.Name + @"_v = xx::MemHeaderBox<" + c.Name + @">;
+	using " + c.Name + @"_v = xx::Dock<" + c.Name + @">;
 
 ");   // class }
 
@@ -263,7 +263,7 @@ namespace " + c.Namespace + @"
                         sb.Append(@"
         " + (dot ? "," : ":") + " " + f.Name + "(mempool(), " + dv + ")");
                     }
-                    else if(f._Has<TemplateLibrary.CreateInstance>())
+                    else if (f._Has<TemplateLibrary.CreateInstance>())
                     {
                         sb.Append(@"
         " + (dot ? "," : ":") + " " + f.Name + "(mempool())");
@@ -321,7 +321,7 @@ namespace xx
         cs = ts._GetClasss();
         foreach (var c in cs)
         {
-            var ctn = c._GetTypeDecl_Cpp(templateName);
+            var ctn = c._GetTypeDecl_Cpp(templateName).CutLast() + "_v";
             sb.Append(@"
 	template<>
 	struct MemmoveSupport<" + ctn + @">

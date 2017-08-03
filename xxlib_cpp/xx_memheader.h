@@ -63,21 +63,21 @@ namespace xx
 
 	// 为 MPObject 附加内存头以便提供值类型的物理结构( 这种模式下 mh 除了填充内存池指针以下, 不再填充版本号, 类型等信息 )
 	template<typename T>
-	struct MemHeaderBox
+	struct Dock
 	{
 		MemHeader_MPObject mh;
 		T instance;
 
 		template<typename ...Args>
-		MemHeaderBox(MemPool& mempool, Args&& ... args)
+		Dock(MemPool& mempool, Args&& ... args)
 			: mh(mempool, TypeId_v<T>)
 			, instance(std::forward<Args>(args)...)
 		{
 		}
 
-		MemHeaderBox(MemHeaderBox const&) = delete;
-		MemHeaderBox& operator=(MemHeaderBox const&) = delete;
-		MemHeaderBox(MemHeaderBox&& o)
+		Dock(Dock const&) = delete;
+		Dock& operator=(Dock const&) = delete;
+		Dock(Dock&& o)
 			: mh(std::move(o.mh))
 			, instance(std::move(o.instance))
 		{
@@ -91,6 +91,7 @@ namespace xx
 		{
 			return &instance;
 		}
+
 		T& operator*()
 		{
 			return instance;
@@ -99,7 +100,12 @@ namespace xx
 		{
 			return instance;
 		}
-		operator T*()
+
+		operator T const* const& () const
+		{
+			return &instance;
+		}
+		operator T* const& ()
 		{
 			return &instance;
 		}
@@ -113,7 +119,7 @@ namespace xx
 	};
 
 	template<typename T>
-	struct IsMemHeaderBox<MemHeaderBox<T>>
+	struct IsMemHeaderBox<Dock<T>>
 	{
 		static const bool value = true;
 	};
@@ -124,7 +130,7 @@ namespace xx
 	// 标记在容器中可 memmove
 
 	template<typename T>
-	struct MemmoveSupport<MemHeaderBox<T>>
+	struct MemmoveSupport<Dock<T>>
 	{
 		static const bool value = MemmoveSupport_v<T>;
 	};

@@ -209,7 +209,7 @@ namespace xx
 	};
 
 
-	using UV_v = MemHeaderBox<UV>;
+	using UV_v = Dock<UV>;
 	using UV_p = Ptr<UV>;
 
 }

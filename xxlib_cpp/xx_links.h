@@ -362,7 +362,7 @@ namespace xx
 	/*************************************************************************/
 
 	template <typename T>
-	using Links_v = MemHeaderBox<Links<T>>;
+	using Links_v = Dock<Links<T>>;
 	template <typename T>
 	using Links_p = Ptr<Links<T>>;
 

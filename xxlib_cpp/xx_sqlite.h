@@ -182,7 +182,7 @@ namespace xx
 
 
 	using SQLite_p = Ptr<SQLite>;
-	using SQLite_v = MemHeaderBox<SQLite>;
+	using SQLite_v = Dock<SQLite>;
 	template<>
 	struct MemmoveSupport<SQLite_v>
 	{
@@ -191,7 +191,7 @@ namespace xx
 
 
 	using SQLiteQuery_p = Ptr<SQLiteQuery>;
-	using SQLiteQuery_v = MemHeaderBox<SQLiteQuery>;
+	using SQLiteQuery_v = Dock<SQLiteQuery>;
 	template<>
 	struct MemmoveSupport<SQLiteQuery_v>
 	{
@@ -686,7 +686,7 @@ namespace xx
 
 
 	using SQLiteString_p = Ptr<SQLiteString>;
-	using SQLiteString_v = MemHeaderBox<SQLiteString>;
+	using SQLiteString_v = Dock<SQLiteString>;
 	template<>
 	struct MemmoveSupport<SQLiteString_v>
 	{

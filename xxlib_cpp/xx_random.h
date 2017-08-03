@@ -236,7 +236,7 @@ namespace xx
 	// 实现值类型使用类型声明
 	/*************************************************************************/
 
-	using Random_v = MemHeaderBox<Random>;
+	using Random_v = Dock<Random>;
 	using Random_p = Ptr<Random>;
 
 	struct MemmoveSupport<Random_v>

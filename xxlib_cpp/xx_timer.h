@@ -151,7 +151,7 @@ namespace xx
 
 
 
-	using TimerManager_v = MemHeaderBox<TimerManager>;
+	using TimerManager_v = Dock<TimerManager>;
 	using TimerManager_p = Ptr<TimerManager>;
 	template<>
 	struct MemmoveSupport<TimerManager_v>

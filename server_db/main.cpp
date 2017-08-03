@@ -50,13 +50,14 @@ struct TaskManager : xx::MPObject
 	volatile bool stoped = false;
 	void ThreadProcess();
 };
+using TaskManager_v = xx::Dock<TaskManager>;
 
 struct Service : xx::MPObject
 {
 	xx::UV_v uv;
 	xx::SQLite_v sqldb;
 	Listener* listener = nullptr;
-	xx::MemHeaderBox<TaskManager> tm;
+	TaskManager_v tm;
 
 	Service();
 	int Run();
@@ -388,10 +389,6 @@ int main()
 {
 	PKG::AllTypesRegister();
 	xx::MemPool mp;
-
-	//xx::MemHeaderBox<Service> s(mp);
-	//s->Run();
-
 	xx::SQLite_v sql(mp, "data.db");
 	DB::SQLiteFuncs fs(sql);
 
@@ -451,6 +448,8 @@ LabEnd:
 	return 0;
 }
 
+//xx::Dock<Service> s(mp);
+//s->Run();
 
 
 //struct Foo : xx::MPObject
@@ -465,7 +464,7 @@ LabEnd:
 //	}
 //};
 //using Foo_p = xx::Ptr<Foo>;
-//using Foo_v = xx::MemHeaderBox<Foo>;
+//using Foo_v = xx::Dock<Foo>;
 //namespace xx
 //{
 //	template<>

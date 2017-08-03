@@ -407,7 +407,7 @@ namespace xx
 	/*************************************************************************/
 
 	template <typename TK, typename TV>
-	using Dict_v = MemHeaderBox<Dict<TK, TV>>;
+	using Dict_v = Dock<Dict<TK, TV>>;
 
 	template <typename TK, typename TV>
 	using Dict_p = Ptr<Dict<TK, TV>>;

@@ -355,7 +355,7 @@ namespace xx
 			str.AppendPtr(v ? v.pointer : nullptr);
 		}
 
-		// MemHeaderBox<T>
+		// Dock<T>
 		template<typename T>
 		static void WriteTo(String& str, std::enable_if_t< IsMemHeaderBox_v<T>, T> const& v)
 		{
@@ -383,7 +383,7 @@ namespace xx
 	// 实现值类型使用类型声明
 	/*************************************************************************/
 
-	using String_v = MemHeaderBox<String>;
+	using String_v = Dock<String>;
 	using String_p = Ptr<String>;
 
 	template<>
