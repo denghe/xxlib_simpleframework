@@ -263,7 +263,13 @@ namespace xx
 			return outPtr.pointer != nullptr;
 		}
 
+		// 为创建 String 创造便利
 
+		template<typename ...Args>
+		Ptr<String> Str(Args &&... args)
+		{
+			return Create<String>(std::forward<Args>(args)...);
+		}
 
 
 

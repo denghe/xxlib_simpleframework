@@ -437,7 +437,7 @@ namespace xx
 	inline int SQLiteQuery::SetParameter(int parmIdx, String_p const& str, bool makeCopy)
 	{
 		if (!str) sqlite3_bind_null(stmt, parmIdx);
-		return sqlite3_bind_text(stmt, parmIdx, (*(String_v*)&str)->C_str(), str->dataLen, makeCopy ? SQLITE_TRANSIENT : SQLITE_STATIC);
+		return sqlite3_bind_text(stmt, parmIdx, (*(String_p*)&str)->C_str(), str->dataLen, makeCopy ? SQLITE_TRANSIENT : SQLITE_STATIC);
 	}
 	inline int SQLiteQuery::SetParameter(int parmIdx, BBuffer_p const& buf, bool makeCopy)
 	{

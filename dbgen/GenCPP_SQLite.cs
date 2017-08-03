@@ -17,9 +17,10 @@ public static class GenCPP_SQLite
         // usings
         sb.Append(@"#pragma once
 #include """ + templateName + @"_class.h""
+#include ""xx_sqlite.h""
+
 namespace DB
-{
-");
+{");
 
         // 扫带有 [SQLite] 标志的 interface , 生成相应的函数
         var ifaces = ts._GetInterfaces<SQLite>();
@@ -37,20 +38,17 @@ namespace " + iface.Namespace + @"
             sb.Append(iface._GetDesc_Cpp(4) + @"
     struct " + iface.Name + @"
     {
-		xx::SQLite* sqlite;
+		xx::SQLite& sqlite;
 		xx::MemPool& mp;
 		xx::SQLiteString_v s;
 		bool hasError = false;
-		int const& lastErrorCode() { return sqlite->lastErrorCode; }
-		const char* const& lastErrorMessage() { return sqlite->lastErrorMessage; }
+		int const& lastErrorCode() { return sqlite.lastErrorCode; }
+		const char* const& lastErrorMessage() { return sqlite.lastErrorMessage; }
 
+		" + iface.Name + @"(xx::SQLite& sqlite) : sqlite(sqlite), mp(sqlite.mempool()), s(mp) {}");
         //int recordsAffected // todo
 
-		" + iface.Name + @"(xx::SQLite* sqlite) : sqlite(sqlite), mp(sqlite->mempool()), s(mp) {}
-
-");
-
-            // todo: 如果参数都是简单数据类型( 不含 List / Sql拼接段 啥的 ), 生成 SqlCommand + Parameter 复用
+            // 如果参数都是简单数据类型( 不含 List / Sql拼接段 啥的 ), 生成 SqlCommand + Parameter 复用
 
             // members = default vals;
             var fs = iface._GetMethods();
@@ -65,9 +63,9 @@ namespace " + iface.Namespace + @"
                 var rtn = rt._GetSafeTypeDecl_Cpp(templateName);
 
                 sb.Append(@"
-        xx::SQLiteQuery_p query_" + fn + @";
 
-" + f._GetDesc_Cpp(8) + @"
+
+        xx::SQLiteQuery_p query_" + fn + @";" + f._GetDesc_Cpp(8) + @"
         " + rtn + " " + fn);
 
                 if (ps.Length > 0)
@@ -103,8 +101,8 @@ namespace " + iface.Namespace + @"
         {
 			hasError = true;
 			auto& q = query_" + fn + @";
-            // recordsAffecteds.Clear();
 ");
+            // recordsAffecteds.Clear();
 
                 var sqls = f._GetSql()._SpliteSql();
 
@@ -112,12 +110,12 @@ namespace " + iface.Namespace + @"
                 bool hasList = false;
 
                 // 合并 sql 成 1 个串 for NewQuery
-                var sqlcombine1 = new StringBuilder();
+                var sqlcombine = new StringBuilder();
                 foreach (var o in sqls)
                 {
                     if (o is string)
                     {
-                        sqlcombine1.Append(o);
+                        sqlcombine.Append(o);
                     }
                     else if (ps[(int)o].ParameterType._IsList())
                     {
@@ -125,35 +123,9 @@ namespace " + iface.Namespace + @"
                     }
                     else
                     {
-                        sqlcombine1.Append("?");
+                        sqlcombine.Append("?");
                     }
                 }
-
-                // 将 sqls 中参数是 List 类型的转成 "?" string
-                var sqls2 = sqls.Select((sql) =>
-                {
-                    if (sql is string || ps[(int)sql].ParameterType._IsList()) return sql;
-                    return "?";
-                });
-
-                // 合并连续出现的 string
-                var sqlcombine2 = new StringBuilder();
-                var sqls3 = new System.Collections.Generic.List<object>();
-                foreach (var sql in sqls2)
-                {
-                    if (sql is string)
-                    {
-                        sqlcombine2.Append(sql);
-                    }
-                    else
-                    {
-                        sqlcombine2.Append("?");
-                    }
-                }
-                if (sqlcombine2.Length > 0) sqls3.Add(sqlcombine2.ToString());
-                sqls = sqls3;
-
-
 
                 if (hasList)
                 {
@@ -176,14 +148,14 @@ namespace " + iface.Namespace + @"
                         }
                     }
                     sb.Append(@"
-            q = sqlite->CreateQuery(s->C_str(), s->dataLen);");
+            q = sqlite.CreateQuery(s->C_str(), s->dataLen);");
                 }
                 else
                 {
                     sb.Append(@"
 			if (!q)
 			{
-				q = sqlite->CreateQuery(R""=-=(" + sqlcombine1 + @")=-="");
+				q = sqlite.CreateQuery(R""=-=(" + sqlcombine + @")=-="");
 			}");
                 }
                 if (rtn == "void")
@@ -245,7 +217,7 @@ namespace " + iface.Namespace + @"
                             var getfn = mt._GetDataReaderFuncName_Cpp(i);
 
                             sb.Append(@"
-                " + (mt._IsSqlNullable() ? "if (!sr.IsDBNull(0)) " : "") + "rtv->" + mn + @" = " + getfn + @";");
+                " + (mt._IsSqlNullable() ? "if (!sr.IsDBNull(0)) " : "") + "r->" + mn + @" = " + getfn + @";");
                         }
                     }
                     // 简单类型
@@ -255,7 +227,7 @@ namespace " + iface.Namespace + @"
             if (!q->Execute([&](xx::SQLiteReader& sr)
             {
 				" + (ct._IsSqlNullable() ? @"if (sr.IsDBNull(0)) rtv->Emplace();
-                else " : "") + @"rtv.Add(" + ct._GetDataReaderFuncName_Cpp(0) + @");");
+                else " : "") + @"rtv->Add(" + ct._GetDataReaderFuncName_Cpp(0) + @");");
                     }
                     sb.Append(@"
             }))

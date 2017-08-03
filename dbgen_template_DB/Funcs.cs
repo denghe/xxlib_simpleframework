@@ -17,7 +17,7 @@ create table [account]
     [Desc("数据插入")]
     [Sql(@"
 insert into [account] ([username], [password])
-values (?, ?)
+values ({0}, {1})
 ")]
     void AddAccount(string username, string password);
 
@@ -26,7 +26,31 @@ values (?, ?)
     [Sql(@"
 select [id], [username], [password]
   from [account]
- where [username] = ?")]
+ where [username] = {0}")]
     Account GetAccountByUsername(string username);
+
+
+    [Desc("根据用户名s查找并返回账号s. 未找到将返回 0 长 List")]
+    [Sql(@"
+select [id], [username], [password]
+  from [account]
+ where [username] in {0}")]
+    List<Account> GetAccountsByUsernames(List<string> usernames);
+
+
+    [Desc("根据用户名s查找并返回Ids. 未找到将返回 0 长 List")]
+    [Sql(@"
+select [id]
+  from [account]
+ where [username] in {0}")]
+    List<long> GetAccountIdsByUsernames(List<string> usernames);
+
+
+    [Desc("根据用户名s查找并返回Ids. 未找到将返回 0 长 List")]
+    [Sql(@"
+select [id]
+  from [account]
+ where [username] in {0}")]
+    List<long?> GetAccountIdsByUsernames2(List<string> usernames);
 
 }

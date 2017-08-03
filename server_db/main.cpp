@@ -1,7 +1,7 @@
 #include "xx_uv.h"
 #include "xx_helpers.h"
 #include "pkg\PKG_class.h"
-#include <xx_sqlite.h>
+#include "db\DB_sqlite.h"
 #include <mutex>
 #include <thread>
 
@@ -249,8 +249,139 @@ void Peer::OnReceivePackage(xx::BBuffer& bb)
 
 
 
-#include "db\DB_class.h"
-#include "db\DB_sqlite.h"
+
+int main()
+{
+	PKG::AllTypesRegister();
+	xx::MemPool mp;
+	xx::SQLite_v sql(mp, "data.db");
+	DB::SQLiteFuncs fs(*sql);
+
+	auto r = sql->TableExists("account");
+	if (r < 0)
+	{
+		mp.Cout("errCode = ", sql->lastErrorCode, "errMsg = ", sql->lastErrorMessage, "\n");
+		goto LabEnd;
+	}
+	else if (r == 0)
+	{
+		fs.CreateAccountTable();
+		assert(!fs.hasError);
+
+		auto un = mp.Str("a");
+		auto pw = mp.Str("1");
+		fs.AddAccount(un, pw);
+		assert(!fs.hasError);
+
+		*un = "b";
+		*pw = "2";
+		fs.AddAccount(un, pw);
+		assert(!fs.hasError);
+	}
+
+	{
+		auto a = fs.GetAccountByUsername(mp.Str("a"));
+		if (fs.hasError)
+		{
+			mp.Cout("errCode = ", fs.lastErrorCode(), "errMsg = ", fs.lastErrorMessage(), "\n");
+			goto LabEnd;
+		}
+		else if (!a)
+		{
+			mp.Cout("can't find account a!\n");
+		}
+		else
+		{
+			mp.Cout("found account a! id = ", a->id, " password = ", a->password, "\n");
+		}
+	}
+	{
+		xx::List_p<xx::String_p> ss(mp);
+		ss->EmplaceMP("a");
+		ss->EmplaceMP("b");
+		auto as = fs.GetAccountsByUsernames(ss);
+		for (auto& a : *as)
+		{
+			mp.Cout(a, "\n");
+		}
+	}
+
+LabEnd:
+	std::cin.get();
+	return 0;
+}
+
+//xx::Dock<Service> s(mp);
+//s->Run();
+
+
+//struct Foo : xx::MPObject
+//{
+//	xx::String_p str;
+//	Foo() : str(mempool()) {}
+//	Foo(Foo&&) = default;
+//	Foo(Foo const&) = delete;
+//	Foo& operator=(Foo const&) = delete;
+//	~Foo()
+//	{
+//	}
+//};
+//using Foo_p = xx::Ptr<Foo>;
+//using Foo_v = xx::Dock<Foo>;
+//namespace xx
+//{
+//	template<>
+//	struct MemmoveSupport<Foo_v>
+//	{
+//		static const bool value = true;
+//	};
+//}
+//
+//Foo_p GetFoo(xx::MemPool& mp)
+//{
+//	Foo_p rtv;
+//	rtv.Create(mp);
+//	*rtv->str = "xxx";
+//	return rtv;
+//}
+//
+
+
+
+//{
+//	xx::Dict_v<xx::String_p, xx::String_v> ss(mp);
+//	ss->Add(xx::String_p(mp, "aa"), xx::String_v(mp, "2"));
+//	ss->Add(xx::String_p(mp, "bbb"), xx::String_v(mp, "3"));
+//	xx::String_p k(mp, "cccc");
+//	xx::String_v v(mp, "4");
+//	ss->Add(std::move(k), std::move(v));
+//	k.Create(mp, "bbb");
+//	auto idx = ss->Find(k);
+//	mp.Cout(ss->ValueAt(idx));
+//}
+
+//{
+//	auto foo = GetFoo(mp);
+//}
+//{
+//	Foo_p foo;
+//	foo.Create(mp);
+//	*foo->str = "xx";
+//	*foo.Create(mp)->str = "xxx";
+//	foo = nullptr;
+//}
+
+
+
+//{
+//	xx::List_v<Foo_p> foos(mp);
+//	foos->Add(Foo_p(mp));
+//	foos->Add(Foo_p(mp));
+//}
+
+
+
+
 
 //namespace DB
 //{
@@ -442,138 +573,3 @@ void Peer::OnReceivePackage(xx::BBuffer& bb)
 //		}
 //	};
 //}
-
-int main()
-{
-	PKG::AllTypesRegister();
-	xx::MemPool mp;
-	xx::SQLite_v sql(mp, "data.db");
-	DB::SQLiteFuncs fs(sql);
-
-	//auto r = sql->TableExists("account");
-	//if (r < 0)
-	//{
-	//	mp.Cout("errCode = ", sql->lastErrorCode, "errMsg = ", sql->lastErrorMessage, "\n");
-	//	goto LabEnd;
-	//}
-	//else if (r == 0)
-	//{
-	//	fs.CreateAccountTable();
-	//	assert(!fs.hasError);
-
-	//	DB::Account_p a(mp);
-
-	//	*a->username.Create(mp) = "a";
-	//	*a->password.Create(mp) = "1";
-	//	fs.AddAccount(a);
-	//	assert(!fs.hasError);
-
-	//	auto b = std::move(a);
-
-	//	fs.AddAccount2("b", "2");
-	//	assert(!fs.hasError);
-	//}
-
-	//{
-	//	auto a = fs.GetAccountByUsername("a");
-	//	if (fs.hasError)
-	//	{
-	//		mp.Cout("errCode = ", fs.lastErrorCode(), "errMsg = ", fs.lastErrorMessage(), "\n");
-	//		goto LabEnd;
-	//	}
-	//	else if (a == nullptr)
-	//	{
-	//		mp.Cout("can't find account a!\n");
-	//	}
-	//	else
-	//	{
-	//		mp.Cout("found account a! id = ", a->id, " password = ", a->password, "\n");
-	//	}
-	//}
-	//{
-	//	xx::List_p<xx::String_p> ss(mp);
-	//	ss->EmplaceMP("a");
-	//	ss->EmplaceMP("b");
-	//	auto as = fs.GetAccountsByUsernames(ss);
-	//	for (auto& a : *as)
-	//	{
-	//		mp.Cout(a, "\n");
-	//	}
-	//}
-
-LabEnd:
-	std::cin.get();
-	return 0;
-}
-
-//xx::Dock<Service> s(mp);
-//s->Run();
-
-
-//struct Foo : xx::MPObject
-//{
-//	xx::String_p str;
-//	Foo() : str(mempool()) {}
-//	Foo(Foo&&) = default;
-//	Foo(Foo const&) = delete;
-//	Foo& operator=(Foo const&) = delete;
-//	~Foo()
-//	{
-//	}
-//};
-//using Foo_p = xx::Ptr<Foo>;
-//using Foo_v = xx::Dock<Foo>;
-//namespace xx
-//{
-//	template<>
-//	struct MemmoveSupport<Foo_v>
-//	{
-//		static const bool value = true;
-//	};
-//}
-//
-//Foo_p GetFoo(xx::MemPool& mp)
-//{
-//	Foo_p rtv;
-//	rtv.Create(mp);
-//	*rtv->str = "xxx";
-//	return rtv;
-//}
-//
-
-
-
-//{
-//	xx::Dict_v<xx::String_p, xx::String_v> ss(mp);
-//	ss->Add(xx::String_p(mp, "aa"), xx::String_v(mp, "2"));
-//	ss->Add(xx::String_p(mp, "bbb"), xx::String_v(mp, "3"));
-//	xx::String_p k(mp, "cccc");
-//	xx::String_v v(mp, "4");
-//	ss->Add(std::move(k), std::move(v));
-//	k.Create(mp, "bbb");
-//	auto idx = ss->Find(k);
-//	mp.Cout(ss->ValueAt(idx));
-//}
-
-//{
-//	auto foo = GetFoo(mp);
-//}
-//{
-//	Foo_p foo;
-//	foo.Create(mp);
-//	*foo->str = "xx";
-//	*foo.Create(mp)->str = "xxx";
-//	foo = nullptr;
-//}
-
-
-
-//{
-//	xx::List_v<Foo_p> foos(mp);
-//	foos->Add(Foo_p(mp));
-//	foos->Add(Foo_p(mp));
-//}
-
-
-
-
