@@ -42,8 +42,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DB_class.cs" />
-    <Compile Include="DB_mkdict.cs" />
-    <Compile Include="DB_mssql.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

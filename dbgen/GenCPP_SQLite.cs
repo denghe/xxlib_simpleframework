@@ -205,7 +205,7 @@ namespace " + iface.Namespace + @"
 			if (!q->Execute([&](xx::SQLiteReader& sr)
             {
 				auto& r = rtv->EmplaceMP();");
-                        var ctfs = ct._GetFields<Column>();
+                        var ctfs = ct._GetFields();
                         if (ctfs.Count() == 0)
                             throw new Exception("the class's fields can't be empty");
 
@@ -217,7 +217,7 @@ namespace " + iface.Namespace + @"
                             var getfn = mt._GetDataReaderFuncName_Cpp(i);
 
                             sb.Append(@"
-                " + (mt._IsSqlNullable() ? "if (!sr.IsDBNull(0)) " : "") + "r->" + mn + @" = " + getfn + @";");
+                " + (mt._IsSqlNullable() && !m._Has<NotNull>() ? "if (!sr.IsDBNull(0)) " : "") + "r->" + mn + @" = " + getfn + @";");
                         }
                     }
                     // 简单类型
@@ -250,7 +250,7 @@ namespace " + iface.Namespace + @"
                     // 用户类
                     else if (rt._IsUserClass())
                     {
-                        var rtfs = rt._GetFields<Column>();
+                        var rtfs = rt._GetFields();
                         if (rtfs.Count() == 0)
                             throw new Exception("the class's fields can't be empty");
 
@@ -265,7 +265,7 @@ namespace " + iface.Namespace + @"
                             var getfn = mt._GetDataReaderFuncName_Cpp(i);
 
                             sb.Append(@"
-                " + (mt._IsSqlNullable() ? "if (!sr.IsDBNull(0)) " : "") + "rtv->" + mn + @" = " + getfn + @";");
+                " + (mt._IsSqlNullable() && !m._Has<NotNull>() ? "if (!sr.IsDBNull(0)) " : "") + "rtv->" + mn + @" = " + getfn + @";");
                         }
                         sb.Append(@"
             })) return rtv;

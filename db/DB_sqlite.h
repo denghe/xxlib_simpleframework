@@ -88,8 +88,8 @@ select [id], [username], [password]
 			if (!q->Execute([&](xx::SQLiteReader& sr)
             {
                 rtv->id = sr.ReadInt64(0);
-                if (!sr.IsDBNull(0)) rtv->username = mp.Create<xx::String>(sr.ReadString(1));
-                if (!sr.IsDBNull(0)) rtv->password = mp.Create<xx::String>(sr.ReadString(2));
+                rtv->username = mp.Create<xx::String>(sr.ReadString(1));
+                rtv->password = mp.Create<xx::String>(sr.ReadString(2));
             })) return rtv;
 			hasError = false;
 			return rtv;
@@ -120,8 +120,8 @@ select [id], [username], [password]
             {
 				auto& r = rtv->EmplaceMP();
                 r->id = sr.ReadInt64(0);
-                if (!sr.IsDBNull(0)) r->username = mp.Create<xx::String>(sr.ReadString(1));
-                if (!sr.IsDBNull(0)) r->password = mp.Create<xx::String>(sr.ReadString(2));
+                r->username = mp.Create<xx::String>(sr.ReadString(1));
+                r->password = mp.Create<xx::String>(sr.ReadString(2));
             }))
 			{
 				rtv = nullptr;

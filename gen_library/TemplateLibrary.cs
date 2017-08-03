@@ -254,6 +254,15 @@ namespace TemplateLibrary
     }
 
     /// <summary>
+    /// 标记一个类成员在数据库中不可空( 主要是指 String, BBuffer 这种指针类型 )
+    /// </summary>
+    [System.AttributeUsage(System.AttributeTargets.Field)]
+    public class NotNull : System.Attribute
+    {
+    }
+
+
+    /// <summary>
     /// 标记一个类成员以 "Property" 方式生成( 例如 int xxxx { get; set; }
     /// </summary>
     [System.AttributeUsage(System.AttributeTargets.Field)]

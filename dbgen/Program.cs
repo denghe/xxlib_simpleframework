@@ -2,8 +2,6 @@
 using System.IO;
 using System.Windows.Forms;
 
-// todo: 针对 "受影响行数" 之类的查询执行后附加结果, 考虑存放在 函数接口对应的类中
-
 public static class Program
 {
     public const string templatePrefix = "dbgen_template_";
@@ -20,8 +18,8 @@ public static class Program
             var path = Path.Combine(Application.StartupPath, outputPath);
             var tn = shortfn.Substring(templatePrefix.Length);
             GenCS_Class.Gen(asm, path, tn);
-            GenCS_MsSql.Gen(asm, path, tn);
-            GenCS_MultiKeyDict.Gen(asm, path, tn);
+            //GenCS_MsSql.Gen(asm, path, tn);
+            //GenCS_MultiKeyDict.Gen(asm, path, tn);
             GenCPP_Class.Gen(asm, path, tn);
             GenCPP_SQLite.Gen(asm, path, tn);
         }
