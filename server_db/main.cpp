@@ -384,7 +384,6 @@ select [id], [username], [password]
 	};
 }
 
-
 int main()
 {
 	PKG::AllTypesRegister();

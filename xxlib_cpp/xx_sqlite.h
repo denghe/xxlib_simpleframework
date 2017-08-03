@@ -129,7 +129,7 @@ namespace xx
 		int TableExists(char const* const& tn);
 
 		SQLiteQuery* CreateQuery(char const* const& sql, int const& sqlLen = 0);
-		int Execute(char const* const& sql);
+		int Execute(char const* const& sql, int(*selectRowCB)(void* userData, int numCols, char** colValues, char** colNames) = nullptr, void* const& userData = nullptr);
 	};
 
 	struct SQLiteQuery : MPObject
@@ -167,8 +167,9 @@ namespace xx
 	struct SQLiteReader
 	{
 		sqlite3_stmt* stmt;
+		int numCols = 0;
+
 		SQLiteReader(sqlite3_stmt* stmt);
-		int GetColumnCount();
 		SQLiteDataTypes GetColumnDataType(int colIdx);
 		char const* GetColumnName(int colIdx);
 		bool IsNull(int colIdx);
@@ -320,9 +321,9 @@ namespace xx
 		return mempool().Create<SQLiteQuery>(this, sql, sqlLen ? sqlLen : (int)strlen(sql));
 	}
 
-	inline int SQLite::Execute(char const* const& sql)
+	inline int SQLite::Execute(char const* const& sql, int(*selectRowCB)(void* userData, int numCols, char** colValues, char** colNames), void* const& userData)
 	{
-		return lastErrorCode = sqlite3_exec(dbctx, sql, nullptr, nullptr, (char**)&lastErrorMessage);
+		return lastErrorCode = sqlite3_exec(dbctx, sql, selectRowCB, userData, (char**)&lastErrorMessage);
 	}
 
 
@@ -470,23 +471,24 @@ namespace xx
 	inline bool SQLiteQuery::Execute(ReadFunc && rf)
 	{
 		int r = sqlite3_step(stmt);
-		if (!(r == SQLITE_OK || r == SQLITE_DONE || r == SQLITE_ROW))
+		if (r == SQLITE_DONE || r == SQLITE_ROW && !rf) goto LabEnd;
+		else if (r != SQLITE_ROW) goto LabErr;
+
+		SQLiteReader dr(stmt);
+		dr.numCols = sqlite3_column_count(stmt);
+		do
 		{
-			owner->lastErrorCode = r;
-			owner->lastErrorMessage = sqlite3_errmsg(owner->dbctx);
-			return false;
+			rf(dr);
+			r = sqlite3_step(stmt);
 		}
-		if (rf)
-		{
-			SQLiteReader dr(stmt);
-			while (r == SQLITE_ROW)
-			{
-				rf(dr);
-				r = sqlite3_step(stmt);
-			}
-		}
+		while (r == SQLITE_ROW);
+		assert(r == SQLITE_DONE);
+
+	LabEnd:
 		r = sqlite3_reset(stmt);
-		if (r == SQLITE_OK || r == SQLITE_DONE) return true;
+		if (r == SQLITE_OK) return true;
+
+	LabErr:
 		owner->lastErrorCode = r;
 		owner->lastErrorMessage = sqlite3_errmsg(owner->dbctx);
 		return false;
@@ -499,51 +501,46 @@ namespace xx
 
 	inline SQLiteReader::SQLiteReader(sqlite3_stmt* stmt) : stmt(stmt) {}
 
-	inline int SQLiteReader::GetColumnCount()
-	{
-		return sqlite3_column_count(stmt);
-	}
-
 	inline SQLiteDataTypes SQLiteReader::GetColumnDataType(int colIdx)
 	{
-		assert(colIdx >= 0 && colIdx < GetColumnCount());
+		assert(colIdx >= 0 && colIdx < numCols);
 		return (SQLiteDataTypes)sqlite3_column_type(stmt, colIdx);
 	}
 
 	inline char const* SQLiteReader::GetColumnName(int colIdx)
 	{
-		assert(colIdx >= 0 && colIdx < GetColumnCount());
+		assert(colIdx >= 0 && colIdx < numCols);
 		return sqlite3_column_name(stmt, colIdx);
 	}
 
 	inline bool SQLiteReader::IsNull(int colIdx)
 	{
-		assert(colIdx >= 0 && colIdx < GetColumnCount());
+		assert(colIdx >= 0 && colIdx < numCols);
 		return GetColumnDataType(colIdx) == SQLiteDataTypes::Null;
 	}
 
 	inline char const* SQLiteReader::ReadString(int colIdx)
 	{
-		assert(colIdx >= 0 && colIdx < GetColumnCount());
+		assert(colIdx >= 0 && colIdx < numCols);
 		if (IsNull(colIdx)) return nullptr;
 		return (char const*)sqlite3_column_text(stmt, colIdx);
 	}
 
 	inline int SQLiteReader::ReadInt32(int colIdx)
 	{
-		assert(colIdx >= 0 && colIdx < GetColumnCount() && !IsNull(colIdx));
+		assert(colIdx >= 0 && colIdx < numCols && !IsNull(colIdx));
 		return sqlite3_column_int(stmt, colIdx);
 	}
 
 	inline sqlite_int64 SQLiteReader::ReadInt64(int colIdx)
 	{
-		assert(colIdx >= 0 && colIdx < GetColumnCount() && !IsNull(colIdx));
+		assert(colIdx >= 0 && colIdx < numCols && !IsNull(colIdx));
 		return sqlite3_column_int64(stmt, colIdx);
 	}
 
 	inline double SQLiteReader::ReadDouble(int colIdx)
 	{
-		assert(colIdx >= 0 && colIdx < GetColumnCount() && !IsNull(colIdx));
+		assert(colIdx >= 0 && colIdx < numCols && !IsNull(colIdx));
 		return sqlite3_column_double(stmt, colIdx);
 	}
 
