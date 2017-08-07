@@ -1,8 +1,9 @@
 ﻿#pragma warning disable 0169, 0414
 using TemplateLibrary;
 
+
 [SQLite]
-partial interface SQLiteFuncs
+partial interface SQLiteInitFuncs
 {
     [Desc("建 account 表")]
     [Sql(@"
@@ -12,8 +13,13 @@ create table [account]
     [username] text(64) not null unique, 
     [password] text(64) not null
 )")]
-    void CreateAccountTable();
+    void CreateTable_Account();
+}
 
+
+[SQLite]
+partial interface SQLiteFuncs
+{
     [Desc("数据插入")]
     [Sql(@"
 insert into [account] ([username], [password])

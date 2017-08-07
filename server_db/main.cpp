@@ -265,7 +265,8 @@ int main()
 	}
 	else if (r == 0)
 	{
-		fs.CreateAccountTable();
+		DB::SQLiteInitFuncs initfs(*sql);
+		initfs.CreateTable_Account();
 		assert(!fs.hasError);
 
 		auto un = mp.Str("a");
@@ -399,7 +400,7 @@ LabEnd:
 //		SQLiteFuncs(xx::SQLite* sqlite) : sqlite(sqlite), mp(sqlite->mempool()), s(mp) {}
 //
 //		xx::SQLiteQuery_p query_CreateAccountTable;
-//		void CreateAccountTable()
+//		void CreateTable_Account()
 //		{
 //			hasError = true;
 //			auto& q = query_CreateAccountTable;

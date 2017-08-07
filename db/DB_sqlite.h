@@ -4,7 +4,7 @@
 
 namespace DB
 {
-    struct SQLiteFuncs
+    struct SQLiteInitFuncs
     {
 		xx::SQLite& sqlite;
 		xx::MemPool& mp;
@@ -13,15 +13,15 @@ namespace DB
 		int const& lastErrorCode() { return sqlite.lastErrorCode; }
 		const char* const& lastErrorMessage() { return sqlite.lastErrorMessage; }
 
-		SQLiteFuncs(xx::SQLite& sqlite) : sqlite(sqlite), mp(sqlite.mempool()), s(mp) {}
+		SQLiteInitFuncs(xx::SQLite& sqlite) : sqlite(sqlite), mp(sqlite.mempool()), s(mp) {}
 
 
-        xx::SQLiteQuery_p query_CreateAccountTable;
+        xx::SQLiteQuery_p query_CreateTable_Account;
         // 建 account 表
-        void CreateAccountTable()
+        void CreateTable_Account()
         {
 			hasError = true;
-			auto& q = query_CreateAccountTable;
+			auto& q = query_CreateTable_Account;
 
 			if (!q)
 			{
@@ -36,6 +36,17 @@ create table [account]
 			if (!q) return;
             if (!q->Execute()) return;
         }
+    };
+    struct SQLiteFuncs
+    {
+		xx::SQLite& sqlite;
+		xx::MemPool& mp;
+		xx::SQLiteString_v s;
+		bool hasError = false;
+		int const& lastErrorCode() { return sqlite.lastErrorCode; }
+		const char* const& lastErrorMessage() { return sqlite.lastErrorMessage; }
+
+		SQLiteFuncs(xx::SQLite& sqlite) : sqlite(sqlite), mp(sqlite.mempool()), s(mp) {}
 
 
         xx::SQLiteQuery_p query_AddAccount;
