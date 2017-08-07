@@ -19,6 +19,8 @@ namespace xx
 
     public class UnityClientPeer : IDisposable
     {
+        readonly object syncer = new object();
+        bool disposed = false;
         NetStates state = NetStates.Disconnected;
         Socket sock = null;
         IPAddress ipAddress;
@@ -85,11 +87,14 @@ namespace xx
                 {
                     // 收数据, 追加到接收容器
                     var recvLen = sock.Receive(bbReceive.buf, bbReceive.dataLen, bbReceive.buf.Length - bbReceive.dataLen, SocketFlags.None);
-                    if (recvLen == 0) continue;
+                    if (recvLen == 0)
+                    {
+                        throw new SocketException(10054);
+                    };
                     bbReceive.dataLen += recvLen;
                     bbReceive.offset = 0;
 
-                LabBegin:
+                    LabBegin:
 
                     // 如果包头没收齐, 将剩余数据移到最前面跳出
                     if (bbReceive.dataLen < bbReceive.offset + 2)
@@ -215,29 +220,39 @@ namespace xx
         public void Disconnect(bool immediately = true)
         {
             state = NetStates.Disconnecting;
-            lock (this)
+            lock (this.syncer)
             {
                 if (sock != null)
                 {
-                    sock.Close();
+                    try
+                    {
+                        sock.Close();
+                    }
+                    catch (Exception) { }
                     sock = null;
                 }
             }
             state = NetStates.Disconnected;
         }
 
+        /// <summary>
+        /// 实现接口
+        /// </summary>
         public void Dispose()
         {
+            if (disposed) return;
             state = NetStates.Disconnecting;
-            if (this.sock != null)
+            if (sock != null)
             {
-                if (sock.Connected)
+                try
                 {
                     sock.Close();
                 }
-                this.sock = null;
+                catch (Exception) { }
+                sock = null;
             }
             state = NetStates.Disconnected;
+            disposed = true;
         }
     }
 
