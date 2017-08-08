@@ -533,10 +533,9 @@ namespace xx
             bb.Reserve(bb.dataLen + vsDataLen * 3);
             var bbBuf = bb.buf;
             var vsBuf = vs.buf;
-            var bbDataLen = bb.dataLen;
             for (int i = 0; i < vsDataLen; i++)
             {
-                BBuffer.Bit7Write(bbBuf, ref bbDataLen, (ushort)(object)vsBuf[i]);
+                BBuffer.Bit7Write(bbBuf, ref bb.dataLen, (ushort)(object)vsBuf[i]);
             }
         }
         public override void FromBBuffer(BBuffer bb, List<T> vs)
@@ -566,10 +565,9 @@ namespace xx
             bb.Reserve(bb.dataLen + vsDataLen * 3);
             var bbBuf = bb.buf;
             var vsBuf = vs.buf;
-            var bbDataLen = bb.dataLen;
             for (int i = 0; i < vsDataLen; i++)
             {
-                BBuffer.Bit7Write(bbBuf, ref bbDataLen, BBuffer.ZigZagEncode((short)(object)vsBuf[i]));
+                BBuffer.Bit7Write(bbBuf, ref bb.dataLen, BBuffer.ZigZagEncode((short)(object)vsBuf[i]));
             }
         }
         public override void FromBBuffer(BBuffer bb, List<T> vs)
@@ -599,10 +597,9 @@ namespace xx
             bb.Reserve(bb.dataLen + vsDataLen * 5);
             var bbBuf = bb.buf;
             var vsBuf = vs.buf;
-            var bbDataLen = bb.dataLen;
             for (int i = 0; i < vsDataLen; i++)
             {
-                BBuffer.Bit7Write(bbBuf, ref bbDataLen, (uint)(object)vsBuf[i]);
+                BBuffer.Bit7Write(bbBuf, ref bb.dataLen, (uint)(object)vsBuf[i]);
             }
         }
         public override void FromBBuffer(BBuffer bb, List<T> vs)
@@ -632,10 +629,9 @@ namespace xx
             bb.Reserve(bb.dataLen + vsDataLen * 5);
             var bbBuf = bb.buf;
             var vsBuf = vs.buf;
-            var bbDataLen = bb.dataLen;
             for (int i = 0; i < vsDataLen; i++)
             {
-                BBuffer.Bit7Write(bbBuf, ref bbDataLen, BBuffer.ZigZagEncode((int)(object)vs[i]));
+                BBuffer.Bit7Write(bbBuf, ref bb.dataLen, BBuffer.ZigZagEncode((int)(object)vs[i]));
             }
         }
         public override void FromBBuffer(BBuffer bb, List<T> vs)
@@ -665,10 +661,9 @@ namespace xx
             bb.Reserve(bb.dataLen + vsDataLen * 9);
             var bbBuf = bb.buf;
             var vsBuf = vs.buf;
-            var bbDataLen = bb.dataLen;
             for (int i = 0; i < vsDataLen; i++)
             {
-                BBuffer.Bit7Write(bbBuf, ref bbDataLen, (ulong)(object)vsBuf[i]);
+                BBuffer.Bit7Write(bbBuf, ref bb.dataLen, (ulong)(object)vsBuf[i]);
             }
         }
         public override void FromBBuffer(BBuffer bb, List<T> vs)
@@ -698,10 +693,9 @@ namespace xx
             bb.Reserve(bb.dataLen + vsDataLen * 9);
             var bbBuf = bb.buf;
             var vsBuf = vs.buf;
-            var bbDataLen = bb.dataLen;
             for (int i = 0; i < vsDataLen; i++)
             {
-                BBuffer.Bit7Write(bbBuf, ref bbDataLen, BBuffer.ZigZagEncode((long)(object)vsBuf[i]));
+                BBuffer.Bit7Write(bbBuf, ref bb.dataLen, BBuffer.ZigZagEncode((long)(object)vsBuf[i]));
             }
         }
         public override void FromBBuffer(BBuffer bb, List<T> vs)
@@ -926,10 +920,9 @@ namespace xx
             bb.Reserve(bb.dataLen + vsDataLen * 3);
             var bbBuf = bb.buf;
             var vsBuf = vs.buf;
-            var bbDataLen = bb.dataLen;
             for (int i = 0; i < vsDataLen; i++)
             {
-                BBuffer.Bit7Write(bbBuf, ref bbDataLen, BBuffer.ZigZagEncode(vsBuf[i]));
+                BBuffer.Bit7Write(bbBuf, ref bb.dataLen, BBuffer.ZigZagEncode(vsBuf[i]));
             }
         }
         public override void FromBBuffer(BBuffer bb, List<short> vs)
@@ -959,10 +952,9 @@ namespace xx
             bb.Reserve(bb.dataLen + vsDataLen * 3);
             var bbBuf = bb.buf;
             var vsBuf = vs.buf;
-            var bbDataLen = bb.dataLen;
             for (int i = 0; i < vsDataLen; i++)
             {
-                BBuffer.Bit7Write(bbBuf, ref bbDataLen, vsBuf[i]);
+                BBuffer.Bit7Write(bbBuf, ref bb.dataLen, vsBuf[i]);
             }
         }
         public override void FromBBuffer(BBuffer bb, List<ushort> vs)
@@ -992,10 +984,9 @@ namespace xx
             bb.Reserve(bb.dataLen + vsDataLen * 5);
             var bbBuf = bb.buf;
             var vsBuf = vs.buf;
-            var bbDataLen = bb.dataLen;
             for (int i = 0; i < vsDataLen; i++)
             {
-                BBuffer.Bit7Write(bbBuf, ref bbDataLen, BBuffer.ZigZagEncode(vsBuf[i]));
+                BBuffer.Bit7Write(bbBuf, ref bb.dataLen, BBuffer.ZigZagEncode(vsBuf[i]));
             }
         }
         public override void FromBBuffer(BBuffer bb, List<int> vs)
@@ -1025,10 +1016,9 @@ namespace xx
             bb.Reserve(bb.dataLen + vsDataLen * 5);
             var bbBuf = bb.buf;
             var vsBuf = vs.buf;
-            var bbDataLen = bb.dataLen;
             for (int i = 0; i < vsDataLen; i++)
             {
-                BBuffer.Bit7Write(bbBuf, ref bbDataLen, vsBuf[i]);
+                BBuffer.Bit7Write(bbBuf, ref bb.dataLen, vsBuf[i]);
             }
         }
         public override void FromBBuffer(BBuffer bb, List<uint> vs)
@@ -1058,10 +1048,9 @@ namespace xx
             bb.Reserve(bb.dataLen + vsDataLen * 9);
             var bbBuf = bb.buf;
             var vsBuf = vs.buf;
-            var bbDataLen = bb.dataLen;
             for (int i = 0; i < vsDataLen; i++)
             {
-                BBuffer.Bit7Write(bbBuf, ref bbDataLen, BBuffer.ZigZagEncode(vsBuf[i]));
+                BBuffer.Bit7Write(bbBuf, ref bb.dataLen, BBuffer.ZigZagEncode(vsBuf[i]));
             }
         }
         public override void FromBBuffer(BBuffer bb, List<long> vs)
@@ -1091,10 +1080,9 @@ namespace xx
             bb.Reserve(bb.dataLen + vsDataLen * 9);
             var bbBuf = bb.buf;
             var vsBuf = vs.buf;
-            var bbDataLen = bb.dataLen;
             for (int i = 0; i < vsDataLen; i++)
             {
-                BBuffer.Bit7Write(bbBuf, ref bbDataLen, vsBuf[i]);
+                BBuffer.Bit7Write(bbBuf, ref bb.dataLen, vsBuf[i]);
             }
         }
         public override void FromBBuffer(BBuffer bb, List<ulong> vs)

@@ -321,23 +321,19 @@ template<typename T> struct HasTypedef_##typedefName<T, typename xx::Typedef_Voi
 	/* XX_LIST_SWAP_REMOVE
 	/***********************************************************************************/
 
-	// 交换删除 list 中的某元素
-
-#define XX_LIST_SWAP_REMOVE( listPtr, tarPtr, indexName )		\
-do																\
-{																\
-	auto& buf = listPtr->buf;									\
-	auto& dataLen = listPtr->dataLen;							\
-	--dataLen;													\
-	if (dataLen == tarPtr->indexName) break;					\
-	else														\
-	{															\
-		buf[tarPtr->indexName] = buf[dataLen];					\
-		buf[dataLen]->indexName = tarPtr->indexName;			\
-	}															\
-}																\
-while(false)
-
+	// 交换删除 list 中的某元素( for T* or Ptr<T>, 避免在移出 list 时再次析构 )
+#define XX_LIST_SWAP_REMOVE( listPtr, tarPtr, indexName )			\
+do																	\
+{																	\
+	auto count_1 = listPtr->dataLen - 1;							\
+	auto& buf = listPtr->buf;										\
+	if (count_1 != tarPtr->indexName)								\
+	{																\
+		buf[count_1]->indexName = tarPtr->indexName;				\
+		((void**)buf)[tarPtr->indexName] = ((void**)buf)[count_1];	\
+	}																\
+	--listPtr->dataLen;												\
+} while (false)
 
 
 

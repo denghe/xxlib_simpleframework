@@ -73,7 +73,7 @@ public class Peer : xx.UVServerPeerWrapperEx
                         new Task(() =>
                         {
                             string err = "no mssql";  // null
-                            DB.Account acc = null;
+                            DB.Game.Account acc = null;
                             //Console.WriteLine("handler: begin exec SQL: Account_GetByUsername");
                             //try
                             //{
@@ -102,10 +102,10 @@ public class Peer : xx.UVServerPeerWrapperEx
                                 switch (o.username)
                                 {
                                     case "a":
-                                        acc = new DB.Account { id = 1, password = "a" };
+                                        acc = new DB.Game.Account { id = 1, password = "a" };
                                         break;
                                     case "b":
-                                        acc = new DB.Account { id = 2, password = "b" };
+                                        acc = new DB.Game.Account { id = 2, password = "b" };
                                         break;
                                 }
                             }

@@ -40,12 +40,16 @@ namespace " + iface.Namespace + @"
     {
 		xx::SQLite& sqlite;
 		xx::MemPool& mp;
+		bool& hasError;
 		xx::SQLiteString_v s;
-		bool hasError = false;
-		int const& lastErrorCode() { return sqlite.lastErrorCode; }
-		const char* const& lastErrorMessage() { return sqlite.lastErrorMessage; }
 
-		" + iface.Name + @"(xx::SQLite& sqlite) : sqlite(sqlite), mp(sqlite.mempool()), s(mp) {}");
+		" + iface.Name + @"(xx::SQLite& sqlite)
+            : sqlite(sqlite)
+            , mp(sqlite.mempool())
+            , hasError(sqlite.hasError)
+            , s(mp)
+        {
+        }");
         //int recordsAffected // todo
 
             // 如果参数都是简单数据类型( 不含 List / Sql拼接段 啥的 ), 生成 SqlCommand + Parameter 复用
@@ -161,13 +165,13 @@ namespace " + iface.Namespace + @"
                 if (rtn == "void")
                 {
                     sb.Append(@"
-			if (!q) return;");
+			if (hasError) return;");
                 }
                 else
                 {
                     sb.Append(@"
             " + rtn + @" rtv;
-			if (!q) return rtv;
+			if (hasError) return rtv;
             rtv.Create(mp);");
                 }
 
@@ -175,14 +179,14 @@ namespace " + iface.Namespace + @"
                 if (ps2.Count() > 0)
                 {
                     sb.Append(@"
-            if (q->SetParameters(");
+            q->SetParameters(");
                     foreach (var p in ps2)
                     {
                         sb.Append(p.Name + ", ");
                     }
                     sb.Length -= 2;
-                    sb.Append(@")) return" + (rtn == "void" ? "" : " rtv") + @";
-");
+                    sb.Append(@");
+            if (hasError) return" + (rtn == "void" ? "" : " rtv") + @";");
                 }
 
                 // 根据函数返回值类型，生成不同的代码段。
@@ -202,7 +206,7 @@ namespace " + iface.Namespace + @"
                     if (ct._IsUserClass())
                     {
                         sb.Append(@"
-			if (!q->Execute([&](xx::SQLiteReader& sr)
+			q->Execute([&](xx::SQLiteReader& sr)
             {
 				auto& r = rtv->EmplaceMP();");
                         var ctfs = ct._GetFields();
@@ -224,18 +228,14 @@ namespace " + iface.Namespace + @"
                     else
                     {
                         sb.Append(@"
-            if (!q->Execute([&](xx::SQLiteReader& sr)
+            q->Execute([&](xx::SQLiteReader& sr)
             {
 				" + (ct._IsSqlNullable() ? @"if (sr.IsDBNull(0)) rtv->Emplace();
                 else " : "") + @"rtv->Add(" + ct._GetDataReaderFuncName_Cpp(0) + @");");
                     }
                     sb.Append(@"
-            }))
-			{
-				rtv = nullptr;
-				return rtv;
-			}
-			hasError = false;
+            });
+            if (hasError) rtv = nullptr;
 			return rtv;");
                 }
                 // 单行 / 单个结果
@@ -245,7 +245,7 @@ namespace " + iface.Namespace + @"
                     {
                         // 无返回值
                         sb.Append(@"
-            if (!q->Execute()) return;");
+            q->Execute();");
                     }
                     // 用户类
                     else if (rt._IsUserClass())
@@ -255,7 +255,7 @@ namespace " + iface.Namespace + @"
                             throw new Exception("the class's fields can't be empty");
 
                         sb.Append(@"
-			if (!q->Execute([&](xx::SQLiteReader& sr)
+			q->Execute([&](xx::SQLiteReader& sr)
             {");
                         for (int i = 0; i < rtfs.Count; ++i)
                         {
@@ -268,22 +268,20 @@ namespace " + iface.Namespace + @"
                 " + (mt._IsSqlNullable() && !m._Has<NotNull>() ? "if (!sr.IsDBNull(0)) " : "") + "rtv->" + mn + @" = " + getfn + @";");
                         }
                         sb.Append(@"
-            })) return rtv;
-			hasError = false;
-			return rtv;");
+            });
+            return rtv;");
                     }
                     // 简单类型
                     else
                     {
                         sb.Append(@"
-            if (!q->Execute([&](xx::SQLiteReader& sr)
+            q->Execute([&](xx::SQLiteReader& sr)
             {");
                         sb.Append(@"
                 " + (rt._IsSqlNullable() ? "if (!sr.IsDBNull(0)) " : "") + "rtv = " + rt._GetDataReaderFuncName_Cpp(0) + @";");
                         sb.Append(@"
-            })) return rtv;
-			hasError = false;
-			return rtv;");
+            });
+            return rtv;");
                     }
                 }
 

@@ -41,8 +41,13 @@ namespace xx
 		{
 			o.pointer = nullptr;
 		}
-
 		Ptr(Ptr const&) = delete;
+
+		Ptr& operator=(Ptr&& o)
+		{
+			std::swap(pointer, o.pointer);
+			return *this;
+		}
 		Ptr& operator=(Ptr const&) = delete;
 
 		Ptr& operator=(T* const& o)

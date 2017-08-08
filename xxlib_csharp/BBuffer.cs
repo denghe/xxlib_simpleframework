@@ -451,23 +451,24 @@ namespace xx
 
         public void Write<T>(T v) where T : IBBuffer
         {
-            if (v == null) Write((ushort)0);
+            if (v == null)
+            {
+                Write((ushort)0);
+            }
             else
             {
                 System.Diagnostics.Debug.Assert(v.GetPackageId() != ushort.MaxValue);
                 Write(v.GetPackageId());
                 if (ptrStore != null)
                 {
-                    var rtv = ptrStore.Add(v, (uint)(dataLen - offsetRoot));       // 试将 v 和 相对offset 放入字典, 得到下标和是否成功
+                    var rtv = ptrStore.Add(v, (uint)(dataLen - offsetRoot));        // 试将 v 和 相对offset 放入字典, 得到下标和是否成功
                     Write(ptrStore.ValueAt(rtv.index));                             // 取 offset ( 不管是否成功 )
-                    if (rtv.success) v.ToBBuffer(this);                         // 如果首次出现就序列化类本体
+                    if (!rtv.success) return;                                       // 如果首次出现就序列化类本体
                 }
-                else
-                {
-                    v.ToBBuffer(this);
-                }
+                v.ToBBuffer(this);
             }
         }
+
         public void Read<T>(ref T v) where T : IBBuffer
         {
             var typeId = (ushort)0;

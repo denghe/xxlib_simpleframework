@@ -255,57 +255,78 @@ int main()
 	PKG::AllTypesRegister();
 	xx::MemPool mp;
 	xx::SQLite_v sql(mp, "data.db");
-	DB::SQLiteFuncs fs(*sql);
+	DB::SQLiteInitFuncs initfs(*sql);
+	DB::SQLiteGameFuncs fs(*sql);
 
-	auto r = sql->TableExists("account");
-	if (r < 0)
-	{
-		mp.Cout("errCode = ", sql->lastErrorCode, "errMsg = ", sql->lastErrorMessage, "\n");
-		goto LabEnd;
-	}
-	else if (r == 0)
-	{
-		DB::SQLiteInitFuncs initfs(*sql);
-		initfs.CreateTable_Account();
-		assert(!fs.hasError);
+	bool b = sql->TableExists("game_account");
+	assert(!sql->hasError);
+	if (!b) initfs.CreateTable_game_account();
+	assert(!sql->hasError);
 
-		auto un = mp.Str("a");
-		auto pw = mp.Str("1");
-		fs.AddAccount(un, pw);
-		assert(!fs.hasError);
+	b = sql->TableExists("manage_account");
+	assert(!sql->hasError);
+	if (!b) initfs.CreateTable_manage_account();
+	assert(!sql->hasError);
 
-		*un = "b";
-		*pw = "2";
-		fs.AddAccount(un, pw);
-		assert(!fs.hasError);
-	}
+	b = sql->TableExists("manage_permission");
+	assert(!sql->hasError);
+	if (!b) initfs.CreateTable_manage_permission();
+	assert(!sql->hasError);
 
-	{
-		auto a = fs.GetAccountByUsername(mp.Str("a"));
-		if (fs.hasError)
-		{
-			mp.Cout("errCode = ", fs.lastErrorCode(), "errMsg = ", fs.lastErrorMessage(), "\n");
-			goto LabEnd;
-		}
-		else if (!a)
-		{
-			mp.Cout("can't find account a!\n");
-		}
-		else
-		{
-			mp.Cout("found account a! id = ", a->id, " password = ", a->password, "\n");
-		}
-	}
-	{
-		xx::List_p<xx::String_p> ss(mp);
-		ss->EmplaceMP("a");
-		ss->EmplaceMP("b");
-		auto as = fs.GetAccountsByUsernames(ss);
-		for (auto& a : *as)
-		{
-			mp.Cout(a, "\n");
-		}
-	}
+	b = sql->TableExists("manage_role");
+	assert(!sql->hasError);
+	if (!b) initfs.CreateTable_manage_role();
+	assert(!sql->hasError);
+
+	b = sql->TableExists("manage_bind_role_permission");
+	assert(!sql->hasError);
+	if (!b) initfs.CreateTable_manage_bind_role_permission();
+	assert(!sql->hasError);
+
+	b = sql->TableExists("manage_bind_account_role");
+	assert(!sql->hasError);
+	if (!b) initfs.CreateTable_manage_bind_account_role();
+	assert(!sql->hasError);
+
+
+	// todo: fill data
+
+	//auto un = mp.Str("a");
+	//auto pw = mp.Str("1");
+	//fs.AddAccount(un, pw);
+	//assert(!fs.hasError);
+
+	//*un = "b";
+	//*pw = "2";
+	//fs.AddAccount(un, pw);
+	//assert(!fs.hasError);
+
+//{
+//	auto a = fs.GetAccountByUsername(mp.Str("a"));
+//	if (fs.hasError)
+//	{
+//		mp.Cout("errCode = ", fs.lastErrorCode(), "errMsg = ", fs.lastErrorMessage(), "\n");
+//		goto LabEnd;
+//	}
+//	else if (!a)
+//	{
+//		mp.Cout("can't find account a!\n");
+//	}
+//	else
+//	{
+//		mp.Cout("found account a! id = ", a->id, " password = ", a->password, "\n");
+//	}
+//}
+//{
+//	xx::List_p<xx::String_p> ss(mp);
+//	ss->EmplaceMP("a");
+//	ss->EmplaceMP("b");
+//	auto as = fs.GetAccountsByUsernames(ss);
+//	for (auto& a : *as)
+//	{
+//		mp.Cout(a, "\n");
+//	}
+//}
 
 LabEnd:
 	std::cin.get();
