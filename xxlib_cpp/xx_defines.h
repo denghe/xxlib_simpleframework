@@ -459,10 +459,14 @@ do																	\
 	struct TypeId
 	{
 		static const uint16_t value = 0;
+		constexpr static const char* const& name = "";
 	};
 
 	template<typename T>
 	constexpr uint16_t TypeId_v = TypeId<T>::value;
+
+	template<typename T>
+	constexpr const char* const& TypeId_n = TypeId<T>::name;
 
 	typedef uint16_t TypeIdValueType;
 

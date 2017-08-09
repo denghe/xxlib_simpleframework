@@ -8,13 +8,11 @@ namespace DB
     {
 		xx::SQLite& sqlite;
 		xx::MemPool& mp;
-		bool& hasError;
 		xx::SQLiteString_v s;
 
 		SQLiteInitFuncs(xx::SQLite& sqlite)
             : sqlite(sqlite)
             , mp(sqlite.mempool())
-            , hasError(sqlite.hasError)
             , s(mp)
         {
         }
@@ -24,7 +22,6 @@ namespace DB
         // 建一系列表
         void CreateTable_game_account()
         {
-			hasError = true;
 			auto& q = query_CreateTable_game_account;
 
 			if (!q)
@@ -37,7 +34,6 @@ CREATE TABLE [game_account](
 );
 )=-=");
 			}
-			if (hasError) return;
             q->Execute();
         }
 
@@ -46,7 +42,6 @@ CREATE TABLE [game_account](
         // 建一系列表
         void CreateTable_manage_account()
         {
-			hasError = true;
 			auto& q = query_CreateTable_manage_account;
 
 			if (!q)
@@ -59,7 +54,6 @@ CREATE TABLE [manage_account](
 );
 )=-=");
 			}
-			if (hasError) return;
             q->Execute();
         }
 
@@ -68,7 +62,6 @@ CREATE TABLE [manage_account](
         // 建一系列表
         void CreateTable_manage_permission()
         {
-			hasError = true;
 			auto& q = query_CreateTable_manage_permission;
 
 			if (!q)
@@ -82,7 +75,6 @@ CREATE TABLE [manage_permission](
 );
 )=-=");
 			}
-			if (hasError) return;
             q->Execute();
         }
 
@@ -91,7 +83,6 @@ CREATE TABLE [manage_permission](
         // 建一系列表
         void CreateTable_manage_role()
         {
-			hasError = true;
 			auto& q = query_CreateTable_manage_role;
 
 			if (!q)
@@ -104,7 +95,6 @@ CREATE TABLE [manage_role](
 );
 )=-=");
 			}
-			if (hasError) return;
             q->Execute();
         }
 
@@ -113,7 +103,6 @@ CREATE TABLE [manage_role](
         // 建一系列表
         void CreateTable_manage_bind_role_permission()
         {
-			hasError = true;
 			auto& q = query_CreateTable_manage_bind_role_permission;
 
 			if (!q)
@@ -126,7 +115,6 @@ CREATE TABLE [manage_bind_role_permission](
 );
 )=-=");
 			}
-			if (hasError) return;
             q->Execute();
         }
 
@@ -135,7 +123,6 @@ CREATE TABLE [manage_bind_role_permission](
         // 建一系列表
         void CreateTable_manage_bind_account_role()
         {
-			hasError = true;
 			auto& q = query_CreateTable_manage_bind_account_role;
 
 			if (!q)
@@ -148,7 +135,6 @@ CREATE TABLE [manage_bind_account_role](
 );
 )=-=");
 			}
-			if (hasError) return;
             q->Execute();
         }
     };
@@ -156,15 +142,58 @@ CREATE TABLE [manage_bind_account_role](
     {
 		xx::SQLite& sqlite;
 		xx::MemPool& mp;
-		bool& hasError;
 		xx::SQLiteString_v s;
 
 		SQLiteGameFuncs(xx::SQLite& sqlite)
             : sqlite(sqlite)
             , mp(sqlite.mempool())
-            , hasError(sqlite.hasError)
             , s(mp)
         {
+        }
+
+
+        xx::SQLiteQuery_p query_GetAll_GameAccount;
+        xx::List_p<DB::Game::Account_p> GetAll_GameAccount()
+        {
+			auto& q = query_GetAll_GameAccount;
+
+			if (!q)
+			{
+				q = sqlite.CreateQuery(R"=-=(
+    select [id], [username], [password]
+      from [game_account])=-=");
+			}
+            xx::List_p<DB::Game::Account_p> rtv;
+            rtv.Create(mp);
+			q->Execute([&](xx::SQLiteReader& sr)
+            {
+				auto& r = rtv->EmplaceMP();
+                r->id = sr.ReadInt64(0);
+                r->username = mp.Create<xx::String>(sr.ReadString(1));
+                r->password = mp.Create<xx::String>(sr.ReadString(2));
+            });
+			return rtv;
+        }
+
+
+        xx::SQLiteQuery_p query_AddAccount;
+        void AddAccount
+        (
+            xx::String_p const& username,
+            xx::String_p const& password
+        )
+        {
+			auto& q = query_AddAccount;
+
+			if (!q)
+			{
+				q = sqlite.CreateQuery(R"=-=(
+    insert into [game_account] ([username], [password])
+    values (?, ?)
+    )=-=");
+			}
+            q->SetParameters(username, password);
+            q->Execute();
         }
     };
 }

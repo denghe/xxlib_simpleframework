@@ -126,13 +126,11 @@ namespace xx
 		xx::List_v<SQLiteQuery_p> queries;
 		xx::String_v sqlBuilder;
 
-		// 用于检测刚执行的语句是否成功
-		bool hasError = false;
 		int lastErrorCode = 0;
 		const char* lastErrorMessage = nullptr;
 
 		// 为设置错误提供便利
-		void SetError(int const& errCode, char const* const& errMsg = nullptr);
+		void ThrowError(int const& errCode, char const* const& errMsg = nullptr);
 
 		SQLiteQuery_p query_BeginTransaction = nullptr;
 		SQLiteQuery_p query_Commit = nullptr;
@@ -140,11 +138,10 @@ namespace xx
 		SQLiteQuery_p query_EndTransaction = nullptr;
 		SQLiteQuery_p query_TableExists = nullptr;
 		SQLiteQuery_p query_GetTableCount = nullptr;
-		SQLiteQuery_p query_ResetAutoInc = nullptr;
 
 		SQLite(char const* const& fn, bool readOnly = false);
 
-		// 下列函数均靠 hasError 检测是否执行出错
+		// 下列函数均靠 try 检测是否执行出错
 
 		// 根据 SQL 语句, 创建一个查询对象( 有错误发生将返回空 )
 		SQLiteQuery_p CreateQuery(char const* const& sql, int const& sqlLen = 0);
@@ -180,7 +177,7 @@ namespace xx
 		bool TableExists(char const* const& tn);	// SELECT count(*) FROM sqlite_master WHERE type = 'table' AND name = ?
 
 		// 会清空表数据, 并且重置自增计数. 如果存在约束, 有可能清空失败.
-		void ResetAutoInc(char const* const& tn);		// DELETE FROM ?; DELETE FROM sqlite_sequence WHERE name = ?;
+		void TruncateTable(char const* const& tn);	// DELETE FROM ?; DELETE FROM sqlite_sequence WHERE name = ?;
 
 		// 直接执行一个 SQL 语句( 相当于 create query + execute + destroy 全套 )
 		void Execute(char const* const& sql, int(*selectRowCB)(void* userData, int numCols, char** colValues, char** colNames) = nullptr, void* const& userData = nullptr);
@@ -191,7 +188,6 @@ namespace xx
 	struct SQLiteQuery : MPObject
 	{
 		SQLite& owner;
-		bool& hasError;
 
 		uint32_t owner_queries_index = -1;
 		sqlite3_stmt* stmt = nullptr;
@@ -201,7 +197,7 @@ namespace xx
 		SQLiteQuery(SQLite& owner, char const* const& sql, int const& sqlLen);
 		~SQLiteQuery();
 
-		// 下面这些函数都是靠 hasError 来报错
+		// 下面这些函数都是靠 try 来检测错误
 
 		void SetParameter(int parmIdx, int const& v);
 		void SetParameter(int parmIdx, sqlite_int64 const& v);
@@ -281,63 +277,47 @@ namespace xx
 	{
 	}
 
-	void SQLite::SetError(int const& errCode, char const* const& errMsg)
+	void SQLite::ThrowError(int const& errCode, char const* const& errMsg)
 	{
 		lastErrorCode = errCode;
 		lastErrorMessage = errMsg ? errMsg : sqlite3_errmsg(dbctx);
-		hasError = true;
+		throw errCode;
 	}
 
 	inline SQLiteQuery_p SQLite::CreateQuery(char const* const& sql, int const& sqlLen)
 	{
-		hasError = false;
-		return mempool().Create<SQLiteQuery>(*this, sql, sqlLen ? sqlLen : (int)strlen(sql));
+		auto r = mempool().Create<SQLiteQuery>(*this, sql, sqlLen ? sqlLen : (int)strlen(sql));
+		if (!r) throw lastErrorCode;
+		return r;
 	}
 
 	inline void SQLite::SetPragma(SQLiteSynchronousTypes st)
 	{
-		hasError = false;
-		if ((int)st < 0 || (int)st >(int)SQLiteSynchronousTypes::MAX)
-		{
-			SetError(-1, "bad SQLiteSynchronousTypes");
-			return;
-		}
+		if ((int)st < 0 || (int)st >(int)SQLiteSynchronousTypes::MAX) ThrowError(-1, "bad SQLiteSynchronousTypes");
 		sqlBuilder->Clear();
 		sqlBuilder->Append("PRAGMA synchronous = ", SQLiteSynchronousTypes_ss[(int)st]);
 		Execute(sqlBuilder->C_str());
 	}
+
 	inline void SQLite::SetPragma(SQLiteJournalModes jm)
 	{
-		hasError = false;
-		if ((int)jm < 0 || (int)jm >(int)SQLiteJournalModes::MAX)
-		{
-			SetError(-1, "bad SQLiteJournalModes");
-			return;
-		}
+		if ((int)jm < 0 || (int)jm >(int)SQLiteJournalModes::MAX) ThrowError(-1, "bad SQLiteJournalModes");
 		sqlBuilder->Clear();
 		sqlBuilder->Append("PRAGMA journal_mode = ", SQLiteJournalModes_ss[(int)jm]);
 		Execute(sqlBuilder->C_str());
 	}
+
 	inline void SQLite::SetPragma(SQLiteTempStoreTypes tst)
 	{
-		hasError = false;
-		if ((int)tst < 0 || (int)tst >(int)SQLiteTempStoreTypes::MAX)
-		{
-			SetError(-1, "bad SQLiteTempStoreTypes");
-			return;
-		}
+		if ((int)tst < 0 || (int)tst >(int)SQLiteTempStoreTypes::MAX) ThrowError(-1, "bad SQLiteTempStoreTypes");
 		sqlBuilder->Clear();
 		sqlBuilder->Append("PRAGMA temp_store = ", SQLiteTempStoreTypes_ss[(int)tst]);
 		Execute(sqlBuilder->C_str());
 	}
+
 	inline void SQLite::SetPragma(SQLiteLockingModes lm)
 	{
-		hasError = false;
-		if ((int)lm < 0 || (int)lm >(int)SQLiteLockingModes::MAX)
-		{
-			SetError(-1, "bad SQLiteLockingModes");
-			return;
-		}
+		if ((int)lm < 0 || (int)lm >(int)SQLiteLockingModes::MAX) ThrowError(-1, "bad SQLiteLockingModes");
 		sqlBuilder->Clear();
 		sqlBuilder->Append("PRAGMA locking_mode = ", SQLiteLockingModes_ss[(int)lm]);
 		Execute(sqlBuilder->C_str());
@@ -353,23 +333,16 @@ namespace xx
 	void SQLite::SetPragmasCore(Parameter const& p, Parameters const& ... ps)
 	{
 		SetPragma(p);
-		if (hasError) return;
 		SetPragmasCore(ps...);
 	}
 	inline void SQLite::SetPragmasCore() {}
 
 	inline void SQLite::SetPragma(int cacheSize)
 	{
-		hasError = false;
-		if (cacheSize < 1)
-		{
-			SetError(-1, "bad cacheSize( default is 2000 )");
-			return;
-		}
+		if (cacheSize < 1) ThrowError(-1, "bad cacheSize( default is 2000 )");
 		sqlBuilder->Clear();
 		sqlBuilder->Append("PRAGMA default_cache_size = ", cacheSize);
 		Execute(sqlBuilder->C_str());
-		if (hasError) return;
 
 		sqlBuilder->Clear();
 		sqlBuilder->Append("PRAGMA cache_size = ", cacheSize);
@@ -380,87 +353,68 @@ namespace xx
 	inline void SQLite::Execute(char const* const& sql, int(*selectRowCB)(void* userData, int numCols, char** colValues, char** colNames), void* const& userData)
 	{
 		lastErrorCode = sqlite3_exec(dbctx, sql, selectRowCB, userData, (char**)&lastErrorMessage);
-		hasError = lastErrorCode == SQLITE_OK;
+		if (lastErrorCode != SQLITE_OK) throw lastErrorCode;
 	}
 
 
 	inline void SQLite::BeginTransaction()
 	{
-		hasError = false;
 		auto& q = query_BeginTransaction;
 		if (!q) q = CreateQuery("BEGIN TRANSACTION");
-		if (hasError) return;
 		q->Execute();
 	}
 
 	inline void SQLite::Commit()
 	{
-		hasError = false;
 		auto& q = query_Commit;
 		if (!q) q = CreateQuery("COMMIT TRANSACTION");
-		if (hasError) return;
 		q->Execute();
 	}
 
 	inline void SQLite::Rollback()
 	{
-		hasError = false;
 		auto& q = query_Rollback;
 		if (!q) q = CreateQuery("ROLLBACK TRANSACTION");
-		if (hasError) return;
 		q->Execute();
 	}
 
 	inline void SQLite::EndTransaction()
 	{
-		hasError = false;
 		auto& q = query_EndTransaction;
 		if (!q) q = CreateQuery("END TRANSACTION");
-		if (hasError) return;
 		q->Execute();
 	}
 
 	inline bool SQLite::TableExists(char const* const& tn)
 	{
-		hasError = false;
 		auto& q = query_TableExists;
 		if (!q) q = CreateQuery("SELECT count(*) FROM sqlite_master WHERE type = 'table' AND name = ?");
-		if (hasError) return false;
 		q->SetParameters(tn);
-		if (hasError) return false;
 		bool exists;
 		q->Execute([&](SQLiteReader& dr)
 		{
 			exists = dr.ReadInt32(0) > 0;
 		});
-		if (hasError) return false;
 		return exists ? 1 : 0;
 	}
 
 	inline int SQLite::GetTableCount()
 	{
-		hasError = false;
 		auto& q = query_GetTableCount;
 		if (!q) q = CreateQuery("SELECT count(*) FROM sqlite_master WHERE type = 'table'");
-		if (hasError) return 0;
 		int count = 0;
 		q->Execute([&](SQLiteReader& dr)
 		{
 			count = dr.ReadInt32(0);
 		});
-		if (hasError) return 0;
 		return count;
 	}
 
-	inline void SQLite::ResetAutoInc(char const* const& tn)
+	inline void SQLite::TruncateTable(char const* const& tn)
 	{
-		hasError = false;
-		auto& q = query_ResetAutoInc;
-		if (!q) q = CreateQuery("DELETE FROM sqlite_sequence WHERE name = ?;");
-		if (hasError) return;
-		q->SetParameters(tn, tn);
-		if (hasError) return;
-		q->Execute();
+		sqlBuilder->Clear();
+		sqlBuilder->Append("BEGIN; DELETE FROM [", tn, "]; DELETE FROM [sqlite_sequence] WHERE [name] = '", tn, "'; COMMIT;");
+		Execute(sqlBuilder->C_str());
 	}
 
 
@@ -471,15 +425,9 @@ namespace xx
 
 	inline SQLiteQuery::SQLiteQuery(SQLite& owner, char const* const& sql, int const& sqlLen)
 		: owner(owner)
-		, hasError(owner.hasError)
 	{
-		hasError = false;
 		auto r = sqlite3_prepare_v2(owner.dbctx, sql, sqlLen, &stmt, nullptr);
-		if (r != SQLITE_OK)
-		{
-			owner.SetError(r);
-			throw r;
-		}
+		if (r != SQLITE_OK) owner.ThrowError(r);
 
 		auto s = sql;	// 已知问题: s + 1 会导致第 1 个字符检测不到. 但 sql 中第 1 个字符不可能是 ?
 		while (s = strchr(s + 1, '?')) ++numParams;	// numParams = std::count(sql, sql + sqlLen, '?');
@@ -496,121 +444,87 @@ namespace xx
 
 	inline void SQLiteQuery::SetParameter(int parmIdx, int const& v)
 	{
-		hasError = false;
 		auto r = sqlite3_bind_int(stmt, parmIdx, v);
-		if (r != SQLITE_OK) owner.SetError(r);
+		if (r != SQLITE_OK) owner.ThrowError(r);
 	}
 
 	inline void SQLiteQuery::SetParameter(int parmIdx, sqlite_int64 const& v)
 	{
-		hasError = false;
 		auto r = sqlite3_bind_int64(stmt, parmIdx, v);
-		if (r != SQLITE_OK) owner.SetError(r);
+		if (r != SQLITE_OK) owner.ThrowError(r);
 	}
 
 	inline void SQLiteQuery::SetParameter(int parmIdx, double const& v)
 	{
-		hasError = false;
 		auto r = sqlite3_bind_double(stmt, parmIdx, v);
-		if (r != SQLITE_OK) owner.SetError(r);
+		if (r != SQLITE_OK) owner.ThrowError(r);
 	}
 
 	inline void SQLiteQuery::SetParameter(int parmIdx, char const* const& str, int strLen, bool makeCopy)
 	{
-		hasError = false;
 		int r = SQLITE_OK;
 		if (!str) r = sqlite3_bind_null(stmt, parmIdx);
-		if (r != SQLITE_OK)
-		{
-			owner.SetError(r);
-			return;
-		}
+		if (r != SQLITE_OK) owner.ThrowError(r);
 		r = sqlite3_bind_text(stmt, parmIdx, str, strLen ? strLen : (int)strlen(str), makeCopy ? SQLITE_TRANSIENT : SQLITE_STATIC);
-		if (r != SQLITE_OK) owner.SetError(r);
+		if (r != SQLITE_OK) owner.ThrowError(r);
 	}
 
 	inline void SQLiteQuery::SetParameter(int parmIdx, char const* const& buf, size_t const& len, bool makeCopy)
 	{
-		hasError = false;
 		int r = SQLITE_OK;
 		if (!buf) r = sqlite3_bind_null(stmt, parmIdx);
-		if (r != SQLITE_OK)
-		{
-			owner.SetError(r);
-			return;
-		}
+		if (r != SQLITE_OK) owner.ThrowError(r);
 		r = sqlite3_bind_blob(stmt, parmIdx, buf, (int)len, makeCopy ? SQLITE_TRANSIENT : SQLITE_STATIC);
-		if (r != SQLITE_OK) owner.SetError(r);
+		if (r != SQLITE_OK) owner.ThrowError(r);
 	}
 
 	inline void SQLiteQuery::SetParameter(int parmIdx, String* const& str, bool makeCopy)
 	{
-		hasError = false;
 		int r = SQLITE_OK;
 		if (!str) r = sqlite3_bind_null(stmt, parmIdx);
-		if (r != SQLITE_OK)
-		{
-			owner.SetError(r);
-			return;
-		}
+		if (r != SQLITE_OK) owner.ThrowError(r);
 		r = sqlite3_bind_text(stmt, parmIdx, str->C_str(), str->dataLen, makeCopy ? SQLITE_TRANSIENT : SQLITE_STATIC);
-		if (r != SQLITE_OK) owner.SetError(r);
+		if (r != SQLITE_OK) owner.ThrowError(r);
 	}
 
 	inline void SQLiteQuery::SetParameter(int parmIdx, BBuffer* const& buf, bool makeCopy)
 	{
-		hasError = false;
 		int r = SQLITE_OK;
 		if (!buf) r = sqlite3_bind_null(stmt, parmIdx);
-		if (r != SQLITE_OK)
-		{
-			owner.SetError(r);
-			return;
-		}
+		if (r != SQLITE_OK) owner.ThrowError(r);
 		r = sqlite3_bind_blob(stmt, parmIdx, buf->buf, buf->dataLen, makeCopy ? SQLITE_TRANSIENT : SQLITE_STATIC);
-		if (r != SQLITE_OK) owner.SetError(r);
+		if (r != SQLITE_OK) owner.ThrowError(r);
 
 	}
 
 	inline void SQLiteQuery::SetParameter(int parmIdx, String_v const& str, bool makeCopy)
 	{
-		hasError = false;
 		auto r = sqlite3_bind_text(stmt, parmIdx, (*(String_v*)&str)->C_str(), str->dataLen, makeCopy ? SQLITE_TRANSIENT : SQLITE_STATIC);
-		if (r != SQLITE_OK) owner.SetError(r);
+		if (r != SQLITE_OK) owner.ThrowError(r);
 	}
 
 	inline void SQLiteQuery::SetParameter(int parmIdx, BBuffer_v const& buf, bool makeCopy)
 	{
 		auto r = sqlite3_bind_blob(stmt, parmIdx, buf->buf, buf->dataLen, makeCopy ? SQLITE_TRANSIENT : SQLITE_STATIC);
-		if (r != SQLITE_OK) owner.SetError(r);
+		if (r != SQLITE_OK) owner.ThrowError(r);
 	}
 
 	inline void SQLiteQuery::SetParameter(int parmIdx, String_p const& str, bool makeCopy)
 	{
-		hasError = false;
 		int r = SQLITE_OK;
 		if (!str) r = sqlite3_bind_null(stmt, parmIdx);
-		if (r != SQLITE_OK)
-		{
-			owner.SetError(r);
-			return;
-		}
+		if (r != SQLITE_OK) owner.ThrowError(r);
 		r = sqlite3_bind_text(stmt, parmIdx, (*(String_p*)&str)->C_str(), str->dataLen, makeCopy ? SQLITE_TRANSIENT : SQLITE_STATIC);
-		if (r != SQLITE_OK) owner.SetError(r);
+		if (r != SQLITE_OK) owner.ThrowError(r);
 	}
 
 	inline void SQLiteQuery::SetParameter(int parmIdx, BBuffer_p const& buf, bool makeCopy)
 	{
-		hasError = false;
 		int r = SQLITE_OK;
 		if (!buf) r = sqlite3_bind_null(stmt, parmIdx);
-		if (r != SQLITE_OK)
-		{
-			owner.SetError(r);
-			return;
-		}
+		if (r != SQLITE_OK) owner.ThrowError(r);
 		r = sqlite3_bind_blob(stmt, parmIdx, buf->buf, buf->dataLen, makeCopy ? SQLITE_TRANSIENT : SQLITE_STATIC);
-		if (r != SQLITE_OK) owner.SetError(r);
+		if (r != SQLITE_OK) owner.ThrowError(r);
 	}
 
 
@@ -625,7 +539,6 @@ namespace xx
 	void SQLiteQuery::SetParametersCore(int& parmIdx, Parameter const& p, Parameters const& ... ps)
 	{
 		SetParameter(parmIdx, p);
-		if (hasError) return;
 		SetParametersCore(++parmIdx, ps...);
 	}
 
@@ -633,7 +546,6 @@ namespace xx
 
 	inline void SQLiteQuery::Execute(ReadFunc && rf)
 	{
-		hasError = false;
 		SQLiteReader dr(stmt);
 
 		int r = sqlite3_step(stmt);
@@ -653,7 +565,7 @@ namespace xx
 		if (r == SQLITE_OK) return;
 
 	LabErr:
-		owner.SetError(r);
+		owner.ThrowError(r);
 	}
 
 
@@ -708,6 +620,7 @@ namespace xx
 
 	inline std::pair<char const*, int> SQLiteReader::ReadText(int colIdx)
 	{
+		assert(colIdx >= 0 && colIdx < numCols);
 		auto ptr = (char const*)sqlite3_column_text(stmt, colIdx);
 		auto len = sqlite3_column_bytes(stmt, colIdx);
 		return std::make_pair(ptr, len);
@@ -715,6 +628,7 @@ namespace xx
 
 	inline std::pair<char const*, int> SQLiteReader::ReadBlob(int colIdx)
 	{
+		assert(colIdx >= 0 && colIdx < numCols);
 		auto ptr = (char const*)sqlite3_column_blob(stmt, colIdx);
 		auto len = sqlite3_column_bytes(stmt, colIdx);
 		return std::make_pair(ptr, len);

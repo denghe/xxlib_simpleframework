@@ -242,51 +242,39 @@ void Peer::OnReceivePackage(xx::BBuffer& bb)
 
 
 
-
-
-
-
-
-
-
-
 int main()
 {
 	PKG::AllTypesRegister();
 	xx::MemPool mp;
 	xx::SQLite_v sql(mp, "data.db");
-	DB::SQLiteInitFuncs initfs(*sql);
-	DB::SQLiteGameFuncs fs(*sql);
+	DB::SQLiteInitFuncs fs1(*sql);
+	DB::SQLiteGameFuncs fs2(*sql);
 
-	bool b = sql->TableExists("game_account");
-	assert(!sql->hasError);
-	if (!b) initfs.CreateTable_game_account();
-	assert(!sql->hasError);
+	try
+	{
+		if (!sql->TableExists("game_account")) fs1.CreateTable_game_account();
+		if (!sql->TableExists("manage_account")) fs1.CreateTable_manage_account();
+		if (!sql->TableExists("manage_permission")) fs1.CreateTable_manage_permission();
+		if (!sql->TableExists("manage_role")) fs1.CreateTable_manage_role();
+		if (!sql->TableExists("manage_bind_role_permission")) fs1.CreateTable_manage_bind_role_permission();
+		if (!sql->TableExists("manage_bind_account_role")) fs1.CreateTable_manage_bind_account_role();
 
-	b = sql->TableExists("manage_account");
-	assert(!sql->hasError);
-	if (!b) initfs.CreateTable_manage_account();
-	assert(!sql->hasError);
+		sql->TruncateTable("game_account");
+		fs2.AddAccount(mp.Str("a"), mp.Str("a"));
+		fs2.AddAccount(mp.Str("b"), mp.Str("b"));
+		auto rows = fs2.GetAll_GameAccount();
+		for (auto& row : *rows)
+		{
+			mp.Cout(row);
+		}
+	}
+	catch (int errCode)
+	{
+		mp.Cout("errCode = ", errCode, ", lastErrorMessage = ", sql->lastErrorMessage, "\n");
+	}
 
-	b = sql->TableExists("manage_permission");
-	assert(!sql->hasError);
-	if (!b) initfs.CreateTable_manage_permission();
-	assert(!sql->hasError);
 
-	b = sql->TableExists("manage_role");
-	assert(!sql->hasError);
-	if (!b) initfs.CreateTable_manage_role();
-	assert(!sql->hasError);
-
-	b = sql->TableExists("manage_bind_role_permission");
-	assert(!sql->hasError);
-	if (!b) initfs.CreateTable_manage_bind_role_permission();
-	assert(!sql->hasError);
-
-	b = sql->TableExists("manage_bind_account_role");
-	assert(!sql->hasError);
-	if (!b) initfs.CreateTable_manage_bind_account_role();
-	assert(!sql->hasError);
+	//sql->Execute("insert into game_account");
 
 
 	// todo: fill data

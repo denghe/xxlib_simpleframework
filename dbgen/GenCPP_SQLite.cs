@@ -40,13 +40,11 @@ namespace " + iface.Namespace + @"
     {
 		xx::SQLite& sqlite;
 		xx::MemPool& mp;
-		bool& hasError;
 		xx::SQLiteString_v s;
 
 		" + iface.Name + @"(xx::SQLite& sqlite)
             : sqlite(sqlite)
             , mp(sqlite.mempool())
-            , hasError(sqlite.hasError)
             , s(mp)
         {
         }");
@@ -103,7 +101,6 @@ namespace " + iface.Namespace + @"
                 }
                 sb.Append(@")
         {
-			hasError = true;
 			auto& q = query_" + fn + @";
 ");
             // recordsAffecteds.Clear();
@@ -164,14 +161,11 @@ namespace " + iface.Namespace + @"
                 }
                 if (rtn == "void")
                 {
-                    sb.Append(@"
-			if (hasError) return;");
                 }
                 else
                 {
                     sb.Append(@"
             " + rtn + @" rtv;
-			if (hasError) return rtv;
             rtv.Create(mp);");
                 }
 
@@ -185,8 +179,7 @@ namespace " + iface.Namespace + @"
                         sb.Append(p.Name + ", ");
                     }
                     sb.Length -= 2;
-                    sb.Append(@");
-            if (hasError) return" + (rtn == "void" ? "" : " rtv") + @";");
+                    sb.Append(@");");
                 }
 
                 // 根据函数返回值类型，生成不同的代码段。
@@ -235,7 +228,6 @@ namespace " + iface.Namespace + @"
                     }
                     sb.Append(@"
             });
-            if (hasError) rtv = nullptr;
 			return rtv;");
                 }
                 // 单行 / 单个结果
