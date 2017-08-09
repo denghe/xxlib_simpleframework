@@ -123,14 +123,18 @@ namespace xx
 
 	struct SQLite : SQLiteBase
 	{
-		xx::List_v<SQLiteQuery_p> queries;
+		// 临时拿来拼 sql 串
 		xx::String_v sqlBuilder;
 
+		// 保存最后一次的错误信息
 		int lastErrorCode = 0;
 		const char* lastErrorMessage = nullptr;
 
 		// 为设置错误提供便利
 		void ThrowError(int const& errCode, char const* const& errMsg = nullptr);
+
+		// 获取受影响行数
+		int GetAffectedRows();
 
 		SQLiteQuery_p query_BeginTransaction = nullptr;
 		SQLiteQuery_p query_Commit = nullptr;
@@ -188,10 +192,7 @@ namespace xx
 	struct SQLiteQuery : MPObject
 	{
 		SQLite& owner;
-
-		uint32_t owner_queries_index = -1;
 		sqlite3_stmt* stmt = nullptr;
-		int numParams = 0;
 		typedef std::function<void(SQLiteReader& sr)> ReadFunc;
 
 		SQLiteQuery(SQLite& owner, char const* const& sql, int const& sqlLen);
@@ -272,16 +273,20 @@ namespace xx
 
 	inline SQLite::SQLite(char const* const& fn, bool readOnly)
 		: SQLiteBase(fn, readOnly)
-		, queries(mempool())
 		, sqlBuilder(mempool())
 	{
 	}
 
-	void SQLite::ThrowError(int const& errCode, char const* const& errMsg)
+	inline void SQLite::ThrowError(int const& errCode, char const* const& errMsg)
 	{
 		lastErrorCode = errCode;
 		lastErrorMessage = errMsg ? errMsg : sqlite3_errmsg(dbctx);
 		throw errCode;
+	}
+
+	inline int SQLite::GetAffectedRows()
+	{
+		return sqlite3_changes(dbctx);
 	}
 
 	inline SQLiteQuery_p SQLite::CreateQuery(char const* const& sql, int const& sqlLen)
@@ -428,18 +433,11 @@ namespace xx
 	{
 		auto r = sqlite3_prepare_v2(owner.dbctx, sql, sqlLen, &stmt, nullptr);
 		if (r != SQLITE_OK) owner.ThrowError(r);
-
-		auto s = sql;	// 已知问题: s + 1 会导致第 1 个字符检测不到. 但 sql 中第 1 个字符不可能是 ?
-		while (s = strchr(s + 1, '?')) ++numParams;	// numParams = std::count(sql, sql + sqlLen, '?');
-
-		owner_queries_index = owner.queries->dataLen;
-		owner.queries->Add(this);
 	}
 
 	inline SQLiteQuery::~SQLiteQuery()
 	{
 		sqlite3_finalize(stmt);
-		XX_LIST_SWAP_REMOVE(owner.queries, this, owner_queries_index);
 	}
 
 	inline void SQLiteQuery::SetParameter(int parmIdx, int const& v)
@@ -565,7 +563,10 @@ namespace xx
 		if (r == SQLITE_OK) return;
 
 	LabErr:
-		owner.ThrowError(r);
+		auto ec = r;
+		auto em = sqlite3_errmsg(owner.dbctx);
+		sqlite3_reset(stmt);
+		owner.ThrowError(ec, em);
 	}
 
 

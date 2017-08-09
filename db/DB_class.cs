@@ -21,6 +21,74 @@ namespace Manage
         /// </summary>
         public string password;
     }
+    /// <summary>
+    /// 对应 manage_role 身份表
+    /// </summary>
+    public partial class Role
+    {
+        /// <summary>
+        /// 主键
+        /// </summary>
+        public int id;
+        /// <summary>
+        /// 身份名
+        /// </summary>
+        public string name;
+        /// <summary>
+        /// 备注
+        /// </summary>
+        public string desc;
+    }
+    /// <summary>
+    /// 对应 manage_permission 权限表
+    /// </summary>
+    public partial class Permission
+    {
+        /// <summary>
+        /// 主键
+        /// </summary>
+        public int id;
+        /// <summary>
+        /// 分组依据( 仅用于显示 )
+        /// </summary>
+        public string group;
+        /// <summary>
+        /// 权限名
+        /// </summary>
+        public string name;
+        /// <summary>
+        /// 备注
+        /// </summary>
+        public string desc;
+    }
+    /// <summary>
+    /// 对应 manage_bind_account_role 管理人员 & 身份 绑定表
+    /// </summary>
+    public partial class BindAccountRole
+    {
+        /// <summary>
+        /// 管理人员主键
+        /// </summary>
+        public int account_id;
+        /// <summary>
+        /// 身份主键
+        /// </summary>
+        public int role_id;
+    }
+    /// <summary>
+    /// 对应 manage_bind_role_permission 身份 & 权限 绑定表
+    /// </summary>
+    public partial class BindRolePermission
+    {
+        /// <summary>
+        /// 身份主键
+        /// </summary>
+        public int role_id;
+        /// <summary>
+        /// 权限主键
+        /// </summary>
+        public int permission_id;
+    }
 }
 namespace Game
 {

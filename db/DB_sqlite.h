@@ -4,6 +4,7 @@
 
 namespace DB
 {
+    // 表创建相关
     struct SQLiteInitFuncs
     {
 		xx::SQLite& sqlite;
@@ -19,7 +20,6 @@ namespace DB
 
 
         xx::SQLiteQuery_p query_CreateTable_game_account;
-        // 建一系列表
         void CreateTable_game_account()
         {
 			auto& q = query_CreateTable_game_account;
@@ -31,15 +31,13 @@ CREATE TABLE [game_account](
     [id] INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE, 
     [username] TEXT(50) NOT NULL UNIQUE, 
     [password] TEXT(50) NOT NULL
-);
-)=-=");
+);)=-=");
 			}
             q->Execute();
         }
 
 
         xx::SQLiteQuery_p query_CreateTable_manage_account;
-        // 建一系列表
         void CreateTable_manage_account()
         {
 			auto& q = query_CreateTable_manage_account;
@@ -51,15 +49,13 @@ CREATE TABLE [manage_account](
     [id] INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE, 
     [username] TEXT(50) NOT NULL UNIQUE, 
     [password] TEXT(50) NOT NULL
-);
-)=-=");
+);)=-=");
 			}
             q->Execute();
         }
 
 
         xx::SQLiteQuery_p query_CreateTable_manage_permission;
-        // 建一系列表
         void CreateTable_manage_permission()
         {
 			auto& q = query_CreateTable_manage_permission;
@@ -70,17 +66,15 @@ CREATE TABLE [manage_account](
 CREATE TABLE [manage_permission](
     [id] INTEGER PRIMARY KEY NOT NULL UNIQUE, 
     [name] TEXT(50) NOT NULL UNIQUE, 
-    [desc] TEXT(250) NOT NULL,
-    [group] TEXT(50) NOT NULL 
-);
-)=-=");
+    [group] TEXT(50) NOT NULL,
+    [desc] TEXT(250) NOT NULL
+);)=-=");
 			}
             q->Execute();
         }
 
 
         xx::SQLiteQuery_p query_CreateTable_manage_role;
-        // 建一系列表
         void CreateTable_manage_role()
         {
 			auto& q = query_CreateTable_manage_role;
@@ -92,15 +86,13 @@ CREATE TABLE [manage_role](
     [id] INTEGER PRIMARY KEY NOT NULL UNIQUE, 
     [name] TEXT(50) NOT NULL UNIQUE, 
     [desc] TEXT(250) NOT NULL
-);
-)=-=");
+);)=-=");
 			}
             q->Execute();
         }
 
 
         xx::SQLiteQuery_p query_CreateTable_manage_bind_role_permission;
-        // 建一系列表
         void CreateTable_manage_bind_role_permission()
         {
 			auto& q = query_CreateTable_manage_bind_role_permission;
@@ -112,15 +104,13 @@ CREATE TABLE [manage_bind_role_permission](
     [role_id] INTEGER NOT NULL REFERENCES manage_role([id]), 
     [permission_id] INTEGER NOT NULL REFERENCES manage_permission([id]), 
     PRIMARY KEY([role_id], [permission_id])
-);
-)=-=");
+);)=-=");
 			}
             q->Execute();
         }
 
 
         xx::SQLiteQuery_p query_CreateTable_manage_bind_account_role;
-        // 建一系列表
         void CreateTable_manage_bind_account_role()
         {
 			auto& q = query_CreateTable_manage_bind_account_role;
@@ -132,19 +122,19 @@ CREATE TABLE [manage_bind_account_role](
     [account_id] INTEGER NOT NULL REFERENCES manage_account([id]), 
     [role_id] INTEGER NOT NULL REFERENCES manage_role([id]), 
     PRIMARY KEY([account_id], [role_id])
-);
-)=-=");
+);)=-=");
 			}
             q->Execute();
         }
     };
-    struct SQLiteGameFuncs
+    // 玩家登录相关
+    struct SQLiteLoginFuncs
     {
 		xx::SQLite& sqlite;
 		xx::MemPool& mp;
 		xx::SQLiteString_v s;
 
-		SQLiteGameFuncs(xx::SQLite& sqlite)
+		SQLiteLoginFuncs(xx::SQLite& sqlite)
             : sqlite(sqlite)
             , mp(sqlite.mempool())
             , s(mp)
@@ -152,18 +142,308 @@ CREATE TABLE [manage_bind_account_role](
         }
 
 
-        xx::SQLiteQuery_p query_GetAll_GameAccount;
-        xx::List_p<DB::Game::Account_p> GetAll_GameAccount()
+        xx::SQLiteQuery_p query_GetAccountByUsername;
+        // 根据用户名查找并返回账号. 未找到将返回 null
+        DB::Game::Account_p GetAccountByUsername
+        (
+            xx::String_p const& username
+        )
         {
-			auto& q = query_GetAll_GameAccount;
+			auto& q = query_GetAccountByUsername;
 
 			if (!q)
 			{
 				q = sqlite.CreateQuery(R"=-=(
     select [id], [username], [password]
-      from [game_account])=-=");
+      from [game_account]
+     where [username] = ?)=-=");
 			}
-            xx::List_p<DB::Game::Account_p> rtv;
+            DB::Game::Account_p rtv;
+            rtv.Create(mp);
+            q->SetParameters(username);
+			q->Execute([&](xx::SQLiteReader& sr)
+            {
+                rtv->id = sr.ReadInt64(0);
+                rtv->username = mp.Create<xx::String>(sr.ReadString(1));
+                rtv->password = mp.Create<xx::String>(sr.ReadString(2));
+            });
+            return rtv;
+        }
+    };
+    // 管理后台相关
+    struct SQLiteManageFuncs
+    {
+		xx::SQLite& sqlite;
+		xx::MemPool& mp;
+		xx::SQLiteString_v s;
+
+		SQLiteManageFuncs(xx::SQLite& sqlite)
+            : sqlite(sqlite)
+            , mp(sqlite.mempool())
+            , s(mp)
+        {
+        }
+
+
+        xx::SQLiteQuery_p query_InsertAccount;
+        // 插入一条 账号. 可能因为 username 已存在而失败
+        void InsertAccount
+        (
+            xx::String_p const& username,
+            xx::String_p const& password
+        )
+        {
+			auto& q = query_InsertAccount;
+
+			if (!q)
+			{
+				q = sqlite.CreateQuery(R"=-=(insert into [manage_account] ([username], [password]) values (?, ?))=-=");
+			}
+            q->SetParameters(username, password);
+            q->Execute();
+        }
+
+
+        xx::SQLiteQuery_p query_InsertPermission;
+        // 插入一条 权限. 可能因为 name 已存在而失败
+        void InsertPermission
+        (
+            xx::String_p const& name,
+            xx::String_p const& group,
+            xx::String_p const& desc
+        )
+        {
+			auto& q = query_InsertPermission;
+
+			if (!q)
+			{
+				q = sqlite.CreateQuery(R"=-=(insert into [manage_permission] ([name], [group], [desc]) values (?, ?, ?))=-=");
+			}
+            q->SetParameters(name, group, desc);
+            q->Execute();
+        }
+
+
+        xx::SQLiteQuery_p query_InsertRole;
+        // 插入一条 身份. 可能因为 id 已存在, name 已存在而失败
+        void InsertRole
+        (
+            int64_t const& id,
+            xx::String_p const& name,
+            xx::String_p const& desc
+        )
+        {
+			auto& q = query_InsertRole;
+
+			if (!q)
+			{
+				q = sqlite.CreateQuery(R"=-=(insert into [manage_role] ([id], [name], [desc]) values (?, ?, ?))=-=");
+			}
+            q->SetParameters(id, name, desc);
+            q->Execute();
+        }
+
+
+        xx::SQLiteQuery_p query_InsertBindAccountRole;
+        // 插入一条 账号.身份 绑定
+        void InsertBindAccountRole
+        (
+            int64_t const& accountId,
+            int64_t const& roleId
+        )
+        {
+			auto& q = query_InsertBindAccountRole;
+
+			if (!q)
+			{
+				q = sqlite.CreateQuery(R"=-=(insert into [manage_bind_account_role] ([account_id], [role_id]) values (?, ?))=-=");
+			}
+            q->SetParameters(accountId, roleId);
+            q->Execute();
+        }
+
+
+        xx::SQLiteQuery_p query_InsertBindRolePermission;
+        // 插入一条 身份.权限 绑定
+        void InsertBindRolePermission
+        (
+            int64_t const& roleId,
+            int64_t const& permissionId
+        )
+        {
+			auto& q = query_InsertBindRolePermission;
+
+			if (!q)
+			{
+				q = sqlite.CreateQuery(R"=-=(insert into [manage_bind_role_permission] ([role_id], [permission_id]) values (?, ?))=-=");
+			}
+            q->SetParameters(roleId, permissionId);
+            q->Execute();
+        }
+
+
+        xx::SQLiteQuery_p query_UpdateAccount_ChangePassword;
+        // 改密码. 可能因 找不到 id 而失败
+        void UpdateAccount_ChangePassword
+        (
+            int64_t const& id,
+            xx::String_p const& newPassword
+        )
+        {
+			auto& q = query_UpdateAccount_ChangePassword;
+
+			if (!q)
+			{
+				q = sqlite.CreateQuery(R"=-=(update [manage_account] set [password] = ? where [id] = ?)=-=");
+			}
+            q->SetParameters(newPassword, id);
+            q->Execute();
+        }
+
+
+        xx::SQLiteQuery_p query_UpdateAccount_ChangeUsername;
+        // 改用户名. 可能因 找不到 id 或 新 username 已存在而失败
+        void UpdateAccount_ChangeUsername
+        (
+            int64_t const& id,
+            xx::String_p const& newUsername
+        )
+        {
+			auto& q = query_UpdateAccount_ChangeUsername;
+
+			if (!q)
+			{
+				q = sqlite.CreateQuery(R"=-=(update [manage_account] set [username] = ? where [id] = ?)=-=");
+			}
+            q->SetParameters(newUsername, id);
+            q->Execute();
+        }
+
+
+        xx::SQLiteQuery_p query_UpdateRole;
+        // 更新 身份 数据. 可能因 找不到 id 或 新 name 已存在而失败
+        void UpdateRole
+        (
+            int64_t const& id,
+            xx::String_p const& newName,
+            xx::String_p const& newDesc
+        )
+        {
+			auto& q = query_UpdateRole;
+
+			if (!q)
+			{
+				q = sqlite.CreateQuery(R"=-=(update [manage_role] set [name] = ?, [desc] = ? where [id] = ?)=-=");
+			}
+            q->SetParameters(newName, newDesc, id);
+            q->Execute();
+        }
+
+
+        xx::SQLiteQuery_p query_UpdatePermission;
+        // 更新 权限 数据. 可能因 找不到 id 或 新 name 已存在而失败
+        void UpdatePermission
+        (
+            int64_t const& id,
+            xx::String_p const& newGroup,
+            xx::String_p const& newName,
+            xx::String_p const& newDesc
+        )
+        {
+			auto& q = query_UpdatePermission;
+
+			if (!q)
+			{
+				q = sqlite.CreateQuery(R"=-=(update [manage_permission] set [group] = ?, [name] = ?, [desc] = ? where [id] = ?)=-=");
+			}
+            q->SetParameters(newGroup, newName, newDesc, id);
+            q->Execute();
+        }
+
+
+        xx::SQLiteQuery_p query_DeleteBindAccountRoleByAccountId;
+        // 删掉账号相关 身份 绑定数据
+        void DeleteBindAccountRoleByAccountId
+        (
+            int64_t const& id
+        )
+        {
+			auto& q = query_DeleteBindAccountRoleByAccountId;
+
+			if (!q)
+			{
+				q = sqlite.CreateQuery(R"=-=(delete from [manage_bind_account_role] where [account_id] = ?)=-=");
+			}
+            q->SetParameters(id);
+            q->Execute();
+        }
+
+
+        xx::SQLiteQuery_p query_DeleteAccount;
+        // 根据主键删一条 账号. 需要先删相关绑定, 否则可能失败. 也有可能 id 找不到而没删到数据. 要用 GetAffectedRows 的值来判断
+        void DeleteAccount
+        (
+            int64_t const& id
+        )
+        {
+			auto& q = query_DeleteAccount;
+
+			if (!q)
+			{
+				q = sqlite.CreateQuery(R"=-=(delete from [manage_account] where [id] = ?)=-=");
+			}
+            q->SetParameters(id);
+            q->Execute();
+        }
+
+
+        xx::SQLiteQuery_p query_DeletePermission;
+        // 根据主键删一条 权限. 需要先删掉相关绑定, 否则可能失败
+        void DeletePermission
+        (
+            int64_t const& id
+        )
+        {
+			auto& q = query_DeletePermission;
+
+			if (!q)
+			{
+				q = sqlite.CreateQuery(R"=-=(delete from [manage_permission] where [id] = ?)=-=");
+			}
+            q->SetParameters(id);
+            q->Execute();
+        }
+
+
+        xx::SQLiteQuery_p query_DeleteRole;
+        // 根据主键删一条 角色. 需要先删掉相关绑定, 否则可能失败
+        void DeleteRole
+        (
+            int64_t const& id
+        )
+        {
+			auto& q = query_DeleteRole;
+
+			if (!q)
+			{
+				q = sqlite.CreateQuery(R"=-=(delete from [manage_role] where [id] = ?)=-=");
+			}
+            q->SetParameters(id);
+            q->Execute();
+        }
+
+
+        xx::SQLiteQuery_p query_SelectAccounts;
+        // 获取账号表所有数据
+        xx::List_p<DB::Manage::Account_p> SelectAccounts()
+        {
+			auto& q = query_SelectAccounts;
+
+			if (!q)
+			{
+				q = sqlite.CreateQuery(R"=-=(select [id], [username], [password] from [manage_account])=-=");
+			}
+            xx::List_p<DB::Manage::Account_p> rtv;
             rtv.Create(mp);
 			q->Execute([&](xx::SQLiteReader& sr)
             {
@@ -176,24 +456,176 @@ CREATE TABLE [manage_bind_account_role](
         }
 
 
-        xx::SQLiteQuery_p query_AddAccount;
-        void AddAccount
+        xx::SQLiteQuery_p query_SelectRoles;
+        // 读所有 身份 数据
+        xx::List_p<DB::Manage::Role_p> SelectRoles()
+        {
+			auto& q = query_SelectRoles;
+
+			if (!q)
+			{
+				q = sqlite.CreateQuery(R"=-=(select [id], [name], [desc] from [manage_role])=-=");
+			}
+            xx::List_p<DB::Manage::Role_p> rtv;
+            rtv.Create(mp);
+			q->Execute([&](xx::SQLiteReader& sr)
+            {
+				auto& r = rtv->EmplaceMP();
+                r->id = sr.ReadInt32(0);
+                if (!sr.IsDBNull(0)) r->name = mp.Create<xx::String>(sr.ReadString(1));
+                if (!sr.IsDBNull(0)) r->desc = mp.Create<xx::String>(sr.ReadString(2));
+            });
+			return rtv;
+        }
+
+
+        xx::SQLiteQuery_p query_SelectPermissions;
+        // 读所有权限数据
+        xx::List_p<DB::Manage::Permission_p> SelectPermissions()
+        {
+			auto& q = query_SelectPermissions;
+
+			if (!q)
+			{
+				q = sqlite.CreateQuery(R"=-=(select [id], [group], [name], [desc] from [manage_permission])=-=");
+			}
+            xx::List_p<DB::Manage::Permission_p> rtv;
+            rtv.Create(mp);
+			q->Execute([&](xx::SQLiteReader& sr)
+            {
+				auto& r = rtv->EmplaceMP();
+                r->id = sr.ReadInt32(0);
+                if (!sr.IsDBNull(0)) r->group = mp.Create<xx::String>(sr.ReadString(1));
+                if (!sr.IsDBNull(0)) r->name = mp.Create<xx::String>(sr.ReadString(2));
+                if (!sr.IsDBNull(0)) r->desc = mp.Create<xx::String>(sr.ReadString(3));
+            });
+			return rtv;
+        }
+
+
+        xx::SQLiteQuery_p query_SelectBindRolePermissions;
+        // 读所有 身份 数据
+        xx::List_p<DB::Manage::BindRolePermission_p> SelectBindRolePermissions()
+        {
+			auto& q = query_SelectBindRolePermissions;
+
+			if (!q)
+			{
+				q = sqlite.CreateQuery(R"=-=(select [role_id], [permission_id] from [manage_bind_role_permission])=-=");
+			}
+            xx::List_p<DB::Manage::BindRolePermission_p> rtv;
+            rtv.Create(mp);
+			q->Execute([&](xx::SQLiteReader& sr)
+            {
+				auto& r = rtv->EmplaceMP();
+                r->role_id = sr.ReadInt32(0);
+                r->permission_id = sr.ReadInt32(1);
+            });
+			return rtv;
+        }
+
+
+        xx::SQLiteQuery_p query_SelectBindAccountRoles;
+        // 读所有权限数据
+        xx::List_p<DB::Manage::BindAccountRole_p> SelectBindAccountRoles()
+        {
+			auto& q = query_SelectBindAccountRoles;
+
+			if (!q)
+			{
+				q = sqlite.CreateQuery(R"=-=(select [account_id], [role_id] from [manage_bind_account_role])=-=");
+			}
+            xx::List_p<DB::Manage::BindAccountRole_p> rtv;
+            rtv.Create(mp);
+			q->Execute([&](xx::SQLiteReader& sr)
+            {
+				auto& r = rtv->EmplaceMP();
+                r->account_id = sr.ReadInt32(0);
+                r->role_id = sr.ReadInt32(1);
+            });
+			return rtv;
+        }
+
+
+        xx::SQLiteQuery_p query_SelectAccountByUsername;
+        // 根据用户名查找并返回一条账号记录. 未找到将返回 null
+        DB::Manage::Account_p SelectAccountByUsername
         (
-            xx::String_p const& username,
-            xx::String_p const& password
+            xx::String_p const& username
         )
         {
-			auto& q = query_AddAccount;
+			auto& q = query_SelectAccountByUsername;
+
+			if (!q)
+			{
+				q = sqlite.CreateQuery(R"=-=(select [id], [username], [password] from [manage_account] where [username] = ?)=-=");
+			}
+            DB::Manage::Account_p rtv;
+            rtv.Create(mp);
+            q->SetParameters(username);
+			q->Execute([&](xx::SQLiteReader& sr)
+            {
+                rtv->id = sr.ReadInt64(0);
+                rtv->username = mp.Create<xx::String>(sr.ReadString(1));
+                rtv->password = mp.Create<xx::String>(sr.ReadString(2));
+            });
+            return rtv;
+        }
+
+
+        xx::SQLiteQuery_p query_SelectPermissionIdsByAccountId;
+        // 根据 accountId 获取 身份id列表 以及 去重后的 权限id列表
+        xx::List_p<int64_t> SelectPermissionIdsByAccountId
+        (
+            int64_t const& accountId
+        )
+        {
+			auto& q = query_SelectPermissionIdsByAccountId;
 
 			if (!q)
 			{
 				q = sqlite.CreateQuery(R"=-=(
-    insert into [game_account] ([username], [password])
-    values (?, ?)
-    )=-=");
+select distinct b.[permission_id]
+  from [manage_bind_account_role] a
+  join [bind_role_permission] b
+    on a.[role_id] = b.[role_id]
+ where a.[account_id] = ?;)=-=");
 			}
-            q->SetParameters(username, password);
-            q->Execute();
+            xx::List_p<int64_t> rtv;
+            rtv.Create(mp);
+            q->SetParameters(accountId);
+            q->Execute([&](xx::SQLiteReader& sr)
+            {
+				rtv->Add(sr.ReadInt64(0));
+            });
+			return rtv;
+        }
+
+
+        xx::SQLiteQuery_p query_SelectRoleIdsByAccountId;
+        // 根据 accountId 获取 身份id列表
+        xx::List_p<int64_t> SelectRoleIdsByAccountId
+        (
+            int64_t const& accountId
+        )
+        {
+			auto& q = query_SelectRoleIdsByAccountId;
+
+			if (!q)
+			{
+				q = sqlite.CreateQuery(R"=-=(
+select [role_id]
+  from [manage_bind_account_role]
+ where [account_id] = ?;)=-=");
+			}
+            xx::List_p<int64_t> rtv;
+            rtv.Create(mp);
+            q->SetParameters(accountId);
+            q->Execute([&](xx::SQLiteReader& sr)
+            {
+				rtv->Add(sr.ReadInt64(0));
+            });
+			return rtv;
         }
     };
 }

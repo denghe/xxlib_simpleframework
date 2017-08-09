@@ -48,7 +48,7 @@ namespace " + iface.Namespace + @"
             , s(mp)
         {
         }");
-        //int recordsAffected // todo
+            //int recordsAffected // todo
 
             // 如果参数都是简单数据类型( 不含 List / Sql拼接段 啥的 ), 生成 SqlCommand + Parameter 复用
 
@@ -103,7 +103,7 @@ namespace " + iface.Namespace + @"
         {
 			auto& q = query_" + fn + @";
 ");
-            // recordsAffecteds.Clear();
+                // recordsAffecteds.Clear();
 
                 var sqls = f._GetSql()._SpliteSql();
 
@@ -169,13 +169,15 @@ namespace " + iface.Namespace + @"
             rtv.Create(mp);");
                 }
 
-                var ps2 = ps.Where(p => !p.ParameterType._IsList());
-                if (ps2.Count() > 0)
+                if (ps.Where(p => !p.ParameterType._IsList()).Count() > 0)
                 {
                     sb.Append(@"
             q->SetParameters(");
-                    foreach (var p in ps2)
+                    foreach (var o in sqls)
                     {
+                        if (o is string) continue;
+                        var p = ps[(int)o];
+                        if (p.ParameterType._IsList()) continue;
                         sb.Append(p.Name + ", ");
                     }
                     sb.Length -= 2;

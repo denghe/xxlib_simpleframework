@@ -245,34 +245,95 @@ void Peer::OnReceivePackage(xx::BBuffer& bb)
 int main()
 {
 	PKG::AllTypesRegister();
-	xx::MemPool mp;
-	xx::SQLite_v sql(mp, "data.db");
-	DB::SQLiteInitFuncs fs1(*sql);
-	DB::SQLiteGameFuncs fs2(*sql);
 
-	try
 	{
-		if (!sql->TableExists("game_account")) fs1.CreateTable_game_account();
-		if (!sql->TableExists("manage_account")) fs1.CreateTable_manage_account();
-		if (!sql->TableExists("manage_permission")) fs1.CreateTable_manage_permission();
-		if (!sql->TableExists("manage_role")) fs1.CreateTable_manage_role();
-		if (!sql->TableExists("manage_bind_role_permission")) fs1.CreateTable_manage_bind_role_permission();
-		if (!sql->TableExists("manage_bind_account_role")) fs1.CreateTable_manage_bind_account_role();
 
-		sql->TruncateTable("game_account");
-		fs2.AddAccount(mp.Str("a"), mp.Str("a"));
-		fs2.AddAccount(mp.Str("b"), mp.Str("b"));
-		auto rows = fs2.GetAll_GameAccount();
-		for (auto& row : *rows)
+		xx::MemPool mp;
+		xx::SQLite_v sql(mp, "data.db");
+		DB::SQLiteInitFuncs ifs(*sql);
+		//DB::SQLiteLoginFuncs lfs(*sql);
+		DB::SQLiteManageFuncs mfs(*sql);
+
+		try
 		{
-			mp.Cout(row);
-		}
-	}
-	catch (int errCode)
-	{
-		mp.Cout("errCode = ", errCode, ", lastErrorMessage = ", sql->lastErrorMessage, "\n");
-	}
+			// 建表
+			if (!sql->TableExists("game_account")) ifs.CreateTable_game_account();
+			if (!sql->TableExists("manage_account")) ifs.CreateTable_manage_account();
+			if (!sql->TableExists("manage_permission")) ifs.CreateTable_manage_permission();
+			if (!sql->TableExists("manage_role")) ifs.CreateTable_manage_role();
+			if (!sql->TableExists("manage_bind_role_permission")) ifs.CreateTable_manage_bind_role_permission();
+			if (!sql->TableExists("manage_bind_account_role")) ifs.CreateTable_manage_bind_account_role();
 
+			// 清表数据
+			sql->TruncateTable("manage_bind_account_role");
+			sql->TruncateTable("manage_bind_role_permission");
+			sql->TruncateTable("manage_role");
+			sql->TruncateTable("manage_permission");
+			sql->TruncateTable("manage_account");
+			sql->TruncateTable("game_account");
+
+			// 准备点原始素材
+			auto u1 = mp.Str("a");
+			auto u2 = mp.Str("bb");
+			auto u3 = mp.Str("ccc");
+			auto p1 = mp.Str("1");
+			auto p2 = mp.Str("22");
+			auto p3 = mp.Str("333");
+
+			// 插入测试数据
+			mfs.InsertAccount(u1, p1);
+			mfs.InsertAccount(u2, p2);
+			mfs.InsertAccount(u3, p3);
+
+			// 测试查询
+			{
+				auto rtv = mfs.SelectAccountByUsername(u2);
+				mp.Cout("SelectAccountByUsername's rtv = ", rtv, '\n');
+			}
+
+			// 测试改密码
+			{
+				mfs.UpdateAccount_ChangePassword(1, p2);
+				mp.Cout("affected rows = ", sql->GetAffectedRows(), '\n');
+				mfs.UpdateAccount_ChangePassword(2, p3);
+				mp.Cout("affected rows = ", sql->GetAffectedRows(), '\n');
+				mfs.UpdateAccount_ChangePassword(3, p1);
+				mp.Cout("affected rows = ", sql->GetAffectedRows(), '\n');
+			}
+
+			// 测试改用户名
+			{
+				try
+				{
+					// 这句应该会提示用户名重复
+					mfs.UpdateAccount_ChangeUsername(1, u2);
+				}
+				catch (int e)
+				{
+					mp.Cout("e = ", e, ", msg = ", sql->lastErrorMessage, "\n");
+				}
+				mfs.UpdateAccount_ChangeUsername(1, mp.Str("ererere"));
+				mp.Cout("affected rows = ", sql->GetAffectedRows(), '\n');
+			}
+
+			// 测试删账号
+			{
+				mfs.DeleteAccount(2);
+				mp.Cout("affected rows = ", sql->GetAffectedRows(), '\n');
+			}
+
+			// 显示表的数据
+			{
+				auto rows = mfs.SelectAccounts();
+				mp.Cout("SelectAccounts's rtv = ", rows);
+			}
+		}
+		catch (int errCode)
+		{
+			mp.Cout("errCode = ", errCode, ", lastErrorMessage = ", sql->lastErrorMessage, "\n");
+		}
+
+	}
 
 	//sql->Execute("insert into game_account");
 
