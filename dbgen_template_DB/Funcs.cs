@@ -24,9 +24,10 @@ CREATE TABLE [manage_account](
     [Sql(@"
 CREATE TABLE [manage_permission](
     [id] INTEGER PRIMARY KEY NOT NULL UNIQUE, 
-    [name] TEXT(50) NOT NULL UNIQUE, 
-    [group] TEXT(50) NOT NULL,
-    [desc] TEXT(250) NOT NULL
+    [name] TEXT(50) NOT NULL, 
+    [desc] TEXT(250) NOT NULL, 
+    [group] TEXT(50) NOT NULL, 
+    UNIQUE([name], [group])
 );")]
     void CreateTable_manage_permission();
 
@@ -82,8 +83,8 @@ partial interface SQLiteManageFuncs
 
 
     [Desc("插入一条 权限. 可能因为 name 已存在而失败")]
-    [Sql("insert into [manage_permission] ([name], [group], [desc]) values ({0}, {1}, {2})")]
-    void InsertPermission(string name, string group, string desc);
+    [Sql("insert into [manage_permission] ([id], [name], [group], [desc]) values ({0}, {1}, {2}, {3})")]
+    void InsertPermission(long id, string name, string group, string desc);
 
 
     [Desc("插入一条 身份. 可能因为 id 已存在, name 已存在而失败")]

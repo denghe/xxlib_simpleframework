@@ -281,9 +281,50 @@ int main()
 			auto p3 = mp.Str("333");
 
 			// 插入测试数据
+			// acc
 			mfs.InsertAccount(u1, p1);
 			mfs.InsertAccount(u2, p2);
 			mfs.InsertAccount(u3, p3);
+
+			// role
+			mfs.InsertRole(1, mp.Str("admin"), mp.Str("admin's desc"));
+			mfs.InsertRole(2, mp.Str("user"), mp.Str("user's desc"));
+			mfs.InsertRole(3, mp.Str("guest"), mp.Str("guest's desc"));
+
+			// perm
+			mfs.InsertPermission(1, mp.Str("xxx1"), mp.Str("g1"), mp.Str("xxx1's desc"));
+			mfs.InsertPermission(2, mp.Str("xxx2"), mp.Str("g1"), mp.Str("xxx2's desc"));
+			mfs.InsertPermission(3, mp.Str("xxx3"), mp.Str("g1"), mp.Str("xxx3's desc"));
+			mfs.InsertPermission(4, mp.Str("xxx1"), mp.Str("g2"), mp.Str("xxx1's desc"));
+			mfs.InsertPermission(5, mp.Str("xxx2"), mp.Str("g2"), mp.Str("xxx2's desc"));
+			mfs.InsertPermission(6, mp.Str("xxx3"), mp.Str("g2"), mp.Str("xxx3's desc"));
+
+			// 测试绑身份
+			mfs.InsertBindAccountRole(1, 1);
+			mfs.InsertBindAccountRole(1, 2);
+			mfs.InsertBindAccountRole(1, 3);
+
+			mfs.InsertBindAccountRole(2, 2);
+			mfs.InsertBindAccountRole(2, 3);
+
+			mfs.InsertBindAccountRole(3, 3);
+
+			// 测试绑身份的权限
+			mfs.InsertBindRolePermission(1, 1);
+			mfs.InsertBindRolePermission(1, 2);
+			mfs.InsertBindRolePermission(1, 3);
+			mfs.InsertBindRolePermission(1, 4);
+			mfs.InsertBindRolePermission(1, 5);
+			mfs.InsertBindRolePermission(1, 6);
+
+			mfs.InsertBindRolePermission(2, 1);
+			mfs.InsertBindRolePermission(2, 2);
+			mfs.InsertBindRolePermission(2, 3);
+
+			mfs.InsertBindRolePermission(3, 4);
+			mfs.InsertBindRolePermission(3, 5);
+			mfs.InsertBindRolePermission(3, 6);
+
 
 			// 测试查询
 			{
@@ -318,6 +359,9 @@ int main()
 
 			// 测试删账号
 			{
+				// todo: 先删依赖数据
+				// todo: 下面这个删除似乎可以运行, 这就表明有问题. 需要进一步研究表的创建声明语句, 看看问题在哪
+
 				mfs.DeleteAccount(2);
 				mp.Cout("affected rows = ", sql->GetAffectedRows(), '\n');
 			}
@@ -325,7 +369,11 @@ int main()
 			// 显示表的数据
 			{
 				auto rows = mfs.SelectAccounts();
-				mp.Cout("SelectAccounts's rtv = ", rows);
+				mp.Cout("SelectAccounts's rtv = ", rows, '\n');
+			}
+			{
+				auto rows = mfs.SelectBindAccountRoles();
+				mp.Cout("SelectBindAccountRoles's rtv = ", rows, '\n');
 			}
 		}
 		catch (int errCode)

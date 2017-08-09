@@ -65,9 +65,10 @@ CREATE TABLE [manage_account](
 				q = sqlite.CreateQuery(R"=-=(
 CREATE TABLE [manage_permission](
     [id] INTEGER PRIMARY KEY NOT NULL UNIQUE, 
-    [name] TEXT(50) NOT NULL UNIQUE, 
-    [group] TEXT(50) NOT NULL,
-    [desc] TEXT(250) NOT NULL
+    [name] TEXT(50) NOT NULL, 
+    [desc] TEXT(250) NOT NULL, 
+    [group] TEXT(50) NOT NULL, 
+    UNIQUE([name], [group])
 );)=-=");
 			}
             q->Execute();
@@ -208,6 +209,7 @@ CREATE TABLE [manage_bind_account_role](
         // 插入一条 权限. 可能因为 name 已存在而失败
         void InsertPermission
         (
+            int64_t const& id,
             xx::String_p const& name,
             xx::String_p const& group,
             xx::String_p const& desc
@@ -217,9 +219,9 @@ CREATE TABLE [manage_bind_account_role](
 
 			if (!q)
 			{
-				q = sqlite.CreateQuery(R"=-=(insert into [manage_permission] ([name], [group], [desc]) values (?, ?, ?))=-=");
+				q = sqlite.CreateQuery(R"=-=(insert into [manage_permission] ([id], [name], [group], [desc]) values (?, ?, ?, ?))=-=");
 			}
-            q->SetParameters(name, group, desc);
+            q->SetParameters(id, name, group, desc);
             q->Execute();
         }
 
