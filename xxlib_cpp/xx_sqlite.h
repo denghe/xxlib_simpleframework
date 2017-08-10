@@ -97,7 +97,7 @@ namespace xx
 	};
 
 	// 由慢及快
-	// 释放排它锁，仅当关闭数据库连接，或者将锁模式改回为NORMAL时，再次访问数据库文件（读或写）才会放掉
+	// 排它锁持有方式，仅当关闭数据库连接，或者将锁模式改回为NORMAL时，再次访问数据库文件（读或写）才会放掉
 	enum class SQLiteLockingModes : uint8_t
 	{
 		// 数据库连接在每一个读或写事务终点的时候放掉文件锁
@@ -116,6 +116,7 @@ namespace xx
 	// 搞出个基类只是为了控制对象回收的顺序
 	struct SQLiteBase : MPObject
 	{
+	protected:
 		SQLiteBase(char const* const& fn, bool readOnly);
 		~SQLiteBase();
 		sqlite3* dbctx = nullptr;
@@ -130,11 +131,11 @@ namespace xx
 		int lastErrorCode = 0;
 		const char* lastErrorMessage = nullptr;
 
-		// 为设置错误提供便利
-		void ThrowError(int const& errCode, char const* const& errMsg = nullptr);
+	private:
+		friend SQLiteQuery;
 
-		// 获取受影响行数
-		int GetAffectedRows();
+		// 为throw错误提供便利
+		void ThrowError(int const& errCode, char const* const& errMsg = nullptr);
 
 		SQLiteQuery_p query_BeginTransaction = nullptr;
 		SQLiteQuery_p query_Commit = nullptr;
@@ -142,46 +143,69 @@ namespace xx
 		SQLiteQuery_p query_EndTransaction = nullptr;
 		SQLiteQuery_p query_TableExists = nullptr;
 		SQLiteQuery_p query_GetTableCount = nullptr;
+		SQLiteQuery_p query_Attach = nullptr;
+		SQLiteQuery_p query_Detach = nullptr;
+	public:
 
+		// fn 可以是 :memory: 以创建内存数据库
 		SQLite(char const* const& fn, bool readOnly = false);
+
+		// 获取受影响行数
+		int GetAffectedRows();
 
 		// 下列函数均靠 try 检测是否执行出错
 
 		// 根据 SQL 语句, 创建一个查询对象( 有错误发生将返回空 )
 		SQLiteQuery_p CreateQuery(char const* const& sql, int const& sqlLen = 0);
 
-		// 各种 set pragma
-		void SetPragma(SQLiteSynchronousTypes st);
-		void SetPragma(SQLiteJournalModes jm);
-		void SetPragma(SQLiteTempStoreTypes tst);
-		void SetPragma(SQLiteLockingModes lm);
-		void SetPragma(int cacheSize);
+		// 各种 set pragma( 通常推荐设置 SQLiteJournalModes::WAL 似乎能提升一些 insert 的性能 )
 
-		template<typename ... Parameters>
-		void SetPragmas(Parameters const& ... ps);
-		template<typename Parameter, typename ... Parameters>
-		void SetPragmasCore(Parameter const& p, Parameters const& ... ps);
-		void SetPragmasCore();
+		// 事务数据记录模式( 设成 WAL 能提升一些性能 )
+		void SetPragmaJournalMode(SQLiteJournalModes jm);
+
+		// 启用外键约束( 默认为未启用 )
+		void SetPragmaForeignKeys(bool enable);
+
+		// 数据写盘模式
+		void SetPragmaSynchronousType(SQLiteSynchronousTypes st);
+
+		// 临时表处理模式
+		void SetPragmaTempStoreType(SQLiteTempStoreTypes tst);
+
+		// 排它锁持有方式
+		void SetPragmaLockingMode(SQLiteLockingModes lm);
+
+		// 内存数据库页数
+		void SetPragmaCacheSize(int cacheSize);
+
+
+		// 附加另外一个库
+		void Attach(char const* const& alias, char const* const& fn);	// ATTACH DATABASE 'fn' AS 'alias'
+
+		// 反附加另外一个库
+		void Detach(char const* const& alias);							// DETACH DATABASE 'alias'
 
 		// 启动事务
-		void BeginTransaction();					// BEGIN TRANSACTION
+		void BeginTransaction();										// BEGIN TRANSACTION
 
 		// 提交事务
-		void Commit();								// COMMIT TRANSACTION
+		void Commit();													// COMMIT TRANSACTION
 
 		// 回滚
-		void Rollback();							// ROLLBACK TRANSACTION
+		void Rollback();												// ROLLBACK TRANSACTION
 
 		// 结束事务( 同 Commit )
-		void EndTransaction();						// END TRANSACTION
+		void EndTransaction();											// END TRANSACTION
 
-		// 返回 1 表示只包含 'sqlite_sequence' 这样一个预创建表. android 下也有可能返回 2, 有张 android 字样的预创建表存在
-		int GetTableCount();						// SELECT count(*) FROM sqlite_master
+		// 返回 1 表示只包含 'sqlite_sequence' 这样一个预创建表. 
+		// android 下也有可能返回 2, 有张 android 字样的预创建表存在
+		int GetTableCount();											// SELECT count(*) FROM sqlite_master
 
-		bool TableExists(char const* const& tn);	// SELECT count(*) FROM sqlite_master WHERE type = 'table' AND name = ?
+		// 判断表是否存在
+		bool TableExists(char const* const& tn);						// SELECT count(*) FROM sqlite_master WHERE type = 'table' AND name = ?
 
 		// 会清空表数据, 并且重置自增计数. 如果存在约束, 有可能清空失败.
-		void TruncateTable(char const* const& tn);	// DELETE FROM ?; DELETE FROM sqlite_sequence WHERE name = ?;
+		void TruncateTable(char const* const& tn);						// DELETE FROM ?; DELETE FROM sqlite_sequence WHERE name = ?;
 
 		// 直接执行一个 SQL 语句( 相当于 create query + execute + destroy 全套 )
 		void Execute(char const* const& sql, int(*selectRowCB)(void* userData, int numCols, char** colValues, char** colNames) = nullptr, void* const& userData = nullptr);
@@ -191,8 +215,10 @@ namespace xx
 
 	struct SQLiteQuery : MPObject
 	{
+	protected:
 		SQLite& owner;
 		sqlite3_stmt* stmt = nullptr;
+	public:
 		typedef std::function<void(SQLiteReader& sr)> ReadFunc;
 
 		SQLiteQuery(SQLite& owner, char const* const& sql, int const& sqlLen);
@@ -225,7 +251,9 @@ namespace xx
 
 	struct SQLiteReader
 	{
+	protected:
 		sqlite3_stmt* stmt;
+	public:
 		int numCols = 0;
 
 		SQLiteReader(sqlite3_stmt* stmt);
@@ -296,7 +324,7 @@ namespace xx
 		return r;
 	}
 
-	inline void SQLite::SetPragma(SQLiteSynchronousTypes st)
+	inline void SQLite::SetPragmaSynchronousType(SQLiteSynchronousTypes st)
 	{
 		if ((int)st < 0 || (int)st >(int)SQLiteSynchronousTypes::MAX) ThrowError(-1, "bad SQLiteSynchronousTypes");
 		sqlBuilder->Clear();
@@ -304,7 +332,7 @@ namespace xx
 		Execute(sqlBuilder->C_str());
 	}
 
-	inline void SQLite::SetPragma(SQLiteJournalModes jm)
+	inline void SQLite::SetPragmaJournalMode(SQLiteJournalModes jm)
 	{
 		if ((int)jm < 0 || (int)jm >(int)SQLiteJournalModes::MAX) ThrowError(-1, "bad SQLiteJournalModes");
 		sqlBuilder->Clear();
@@ -312,7 +340,7 @@ namespace xx
 		Execute(sqlBuilder->C_str());
 	}
 
-	inline void SQLite::SetPragma(SQLiteTempStoreTypes tst)
+	inline void SQLite::SetPragmaTempStoreType(SQLiteTempStoreTypes tst)
 	{
 		if ((int)tst < 0 || (int)tst >(int)SQLiteTempStoreTypes::MAX) ThrowError(-1, "bad SQLiteTempStoreTypes");
 		sqlBuilder->Clear();
@@ -320,7 +348,7 @@ namespace xx
 		Execute(sqlBuilder->C_str());
 	}
 
-	inline void SQLite::SetPragma(SQLiteLockingModes lm)
+	inline void SQLite::SetPragmaLockingMode(SQLiteLockingModes lm)
 	{
 		if ((int)lm < 0 || (int)lm >(int)SQLiteLockingModes::MAX) ThrowError(-1, "bad SQLiteLockingModes");
 		sqlBuilder->Clear();
@@ -328,32 +356,20 @@ namespace xx
 		Execute(sqlBuilder->C_str());
 	}
 
-	template<typename ... Parameters>
-	void SQLite::SetPragmas(Parameters const& ... ps)
-	{
-		SetPragmasCore(ps...);
-	}
-
-	template<typename Parameter, typename ... Parameters>
-	void SQLite::SetPragmasCore(Parameter const& p, Parameters const& ... ps)
-	{
-		SetPragma(p);
-		SetPragmasCore(ps...);
-	}
-	inline void SQLite::SetPragmasCore() {}
-
-	inline void SQLite::SetPragma(int cacheSize)
+	inline void SQLite::SetPragmaCacheSize(int cacheSize)
 	{
 		if (cacheSize < 1) ThrowError(-1, "bad cacheSize( default is 2000 )");
-		sqlBuilder->Clear();
-		sqlBuilder->Append("PRAGMA default_cache_size = ", cacheSize);
-		Execute(sqlBuilder->C_str());
-
 		sqlBuilder->Clear();
 		sqlBuilder->Append("PRAGMA cache_size = ", cacheSize);
 		Execute(sqlBuilder->C_str());
 	}
 
+	inline void SQLite::SetPragmaForeignKeys(bool enable)
+	{
+		sqlBuilder->Clear();
+		sqlBuilder->Append("PRAGMA foreign_keys = ", (enable ? "true" : "false"));
+		Execute(sqlBuilder->C_str());
+	}
 
 	inline void SQLite::Execute(char const* const& sql, int(*selectRowCB)(void* userData, int numCols, char** colValues, char** colNames), void* const& userData)
 	{
@@ -361,6 +377,22 @@ namespace xx
 		if (lastErrorCode != SQLITE_OK) throw lastErrorCode;
 	}
 
+
+	inline void SQLite::Attach(char const* const& alias, char const* const& fn)
+	{
+		auto& q = query_Attach;
+		if (!q) q = CreateQuery("ATTACH DATABASE ? AS ?");
+		q->SetParameters(fn, alias);
+		q->Execute();
+	}
+
+	inline void SQLite::Detach(char const* const& alias)
+	{
+		auto& q = query_Detach;
+		if (!q) q = CreateQuery("DETACH DATABASE ?");
+		q->SetParameters(alias);
+		q->Execute();
+	}
 
 	inline void SQLite::BeginTransaction()
 	{
@@ -417,6 +449,7 @@ namespace xx
 
 	inline void SQLite::TruncateTable(char const* const& tn)
 	{
+		// todo: 对 tn 转义
 		sqlBuilder->Clear();
 		sqlBuilder->Append("BEGIN; DELETE FROM [", tn, "]; DELETE FROM [sqlite_sequence] WHERE [name] = '", tn, "'; COMMIT;");
 		Execute(sqlBuilder->C_str());

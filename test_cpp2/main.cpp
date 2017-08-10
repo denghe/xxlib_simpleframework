@@ -60,7 +60,8 @@ int main()
 	//	xx::SQLiteTempStoreTypes::Memory/*, xx::SQLiteLockingModes::Exclusive*/);
 
 	// 折中的方案, 随机 insert 一万多次一秒, 死系统小概率坏数据
-	lite->SetPragmas(xx::SQLiteSynchronousTypes::Normal, xx::SQLiteJournalModes::WAL);
+	lite->SetPragmaSynchronousType(xx::SQLiteSynchronousTypes::Normal);
+	lite->SetPragmaJournalMode(xx::SQLiteJournalModes::WAL);
 
 	// 默认配置, insert 百把次一秒, 通常不会坏数据.
 	//lite->SetPragmas(xx::SQLiteSynchronousTypes::Full, xx::SQLiteJournalModes::Delete);

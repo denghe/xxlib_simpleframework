@@ -175,7 +175,7 @@ Service::Service()
 	, sqldb(mempool(), "data.db")
 	, tm(mempool(), this)
 {
-	sqldb->SetPragmas(xx::SQLiteJournalModes::WAL);
+	sqldb->SetPragmaJournalMode(xx::SQLiteJournalModes::WAL);
 }
 
 int Service::Run()
@@ -250,6 +250,9 @@ int main()
 
 		xx::MemPool mp;
 		xx::SQLite_v sql(mp, "data.db");
+		sql->SetPragmaForeignKeys(true);
+		sql->Attach("log", "log.db");
+
 		DB::SQLiteInitFuncs ifs(*sql);
 		//DB::SQLiteLoginFuncs lfs(*sql);
 		DB::SQLiteManageFuncs mfs(*sql);
