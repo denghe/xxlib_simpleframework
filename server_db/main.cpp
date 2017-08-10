@@ -30,7 +30,7 @@ struct Listener : xx::UVListener
 	virtual xx::UVServerPeer * OnCreatePeer() override;
 };
 
-struct TaskManager : xx::MPObject
+struct TaskManager : xx::Object
 {
 	Service* service;
 	Dispacher* dispacher = nullptr;
@@ -51,7 +51,7 @@ struct TaskManager : xx::MPObject
 };
 using TaskManager_v = xx::Dock<TaskManager>;
 
-struct Service : xx::MPObject
+struct Service : xx::Object
 {
 	xx::UV_v uv;
 	xx::SQLite_v sqldb;
@@ -175,7 +175,9 @@ Service::Service()
 	, sqldb(mempool(), "data.db")
 	, tm(mempool(), this)
 {
+	sqldb->Attach("log", "log.db");
 	sqldb->SetPragmaJournalMode(xx::SQLiteJournalModes::WAL);
+	sqldb->SetPragmaForeignKeys(true);
 }
 
 int Service::Run()
@@ -220,7 +222,7 @@ void Peer::OnReceivePackage(xx::BBuffer& bb)
 
 
 
-	service->tm->AddTask([service = this->service, peer = xx::MPtr<Peer>(this)/*, args*/]	// 转到 SQL 线程
+	service->tm->AddTask([service = this->service, peer = xx::Ref<Peer>(this)/*, args*/]	// 转到 SQL 线程
 	{
 		// 执行 SQL 语句, 得到结果
 		// auto rtv = sqlfs.execxxxxx( args... )
@@ -251,7 +253,6 @@ int main()
 		xx::MemPool mp;
 		xx::SQLite_v sql(mp, "data.db");
 		sql->SetPragmaForeignKeys(true);
-		sql->Attach("log", "log.db");
 
 		DB::SQLiteInitFuncs ifs(*sql);
 		//DB::SQLiteLoginFuncs lfs(*sql);
@@ -267,13 +268,15 @@ int main()
 			if (!sql->TableExists("manage_bind_role_permission")) ifs.CreateTable_manage_bind_role_permission();
 			if (!sql->TableExists("manage_bind_account_role")) ifs.CreateTable_manage_bind_account_role();
 
-			// 清表数据
+			// 清表数据( 关和开启外键约束这样就能更随意高速的批量删数据 )
+			sql->SetPragmaForeignKeys(false);
 			sql->TruncateTable("manage_bind_account_role");
 			sql->TruncateTable("manage_bind_role_permission");
 			sql->TruncateTable("manage_role");
 			sql->TruncateTable("manage_permission");
 			sql->TruncateTable("manage_account");
 			sql->TruncateTable("game_account");
+			sql->SetPragmaForeignKeys(true);
 
 			// 准备点原始素材
 			auto u1 = mp.Str("a");
@@ -329,7 +332,25 @@ int main()
 			mfs.InsertBindRolePermission(3, 6);
 
 
-			// 测试查询
+			// 测试读取用户权限列表
+			{
+				mp.Cout("SelectPermissionIdsByAccountId(1)'s rtv = ", mfs.SelectPermissionIdsByAccountId(1), '\n');
+				mp.Cout("SelectPermissionIdsByAccountId(2)'s rtv = ", mfs.SelectPermissionIdsByAccountId(2), '\n');
+				mp.Cout("SelectPermissionIdsByAccountId(3)'s rtv = ", mfs.SelectPermissionIdsByAccountId(3), '\n');
+			}
+
+			// 测试删角色
+			{
+				// 先删依赖和引用
+				mfs.DeleteBindRolePermissionByRoleId(1);
+				mp.Cout("DeleteBindRolePermissionByRoleId affected rows = ", sql->GetAffectedRows(), '\n');
+				mfs.DeleteBindAccountRoleByRoleId(1);
+				mp.Cout("DeleteBindAccountRoleByRoleId affected rows = ", sql->GetAffectedRows(), '\n');
+				mfs.DeleteRole(1);
+				mp.Cout("DeleteRole affected rows = ", sql->GetAffectedRows(), '\n');
+			}
+
+			// 测试按用户名查询账号
 			{
 				auto rtv = mfs.SelectAccountByUsername(u2);
 				mp.Cout("SelectAccountByUsername's rtv = ", rtv, '\n');
@@ -338,11 +359,11 @@ int main()
 			// 测试改密码
 			{
 				mfs.UpdateAccount_ChangePassword(1, p2);
-				mp.Cout("affected rows = ", sql->GetAffectedRows(), '\n');
+				mp.Cout("UpdateAccount_ChangePassword affected rows = ", sql->GetAffectedRows(), '\n');
 				mfs.UpdateAccount_ChangePassword(2, p3);
-				mp.Cout("affected rows = ", sql->GetAffectedRows(), '\n');
+				mp.Cout("UpdateAccount_ChangePassword affected rows = ", sql->GetAffectedRows(), '\n');
 				mfs.UpdateAccount_ChangePassword(3, p1);
-				mp.Cout("affected rows = ", sql->GetAffectedRows(), '\n');
+				mp.Cout("UpdateAccount_ChangePassword affected rows = ", sql->GetAffectedRows(), '\n');
 			}
 
 			// 测试改用户名
@@ -357,26 +378,28 @@ int main()
 					mp.Cout("e = ", e, ", msg = ", sql->lastErrorMessage, "\n");
 				}
 				mfs.UpdateAccount_ChangeUsername(1, mp.Str("ererere"));
-				mp.Cout("affected rows = ", sql->GetAffectedRows(), '\n');
+				mp.Cout("UpdateAccount_ChangeUsername affected rows = ", sql->GetAffectedRows(), '\n');
 			}
 
 			// 测试删账号
 			{
-				// todo: 先删依赖数据
-				// todo: 下面这个删除似乎可以运行, 这就表明有问题. 需要进一步研究表的创建声明语句, 看看问题在哪
+				// 先删依赖数据
+
+				mfs.DeleteBindAccountRoleByAccountId(2);
+				mp.Cout("DeleteBindAccountRoleByAccountId affected rows = ", sql->GetAffectedRows(), '\n');
 
 				mfs.DeleteAccount(2);
-				mp.Cout("affected rows = ", sql->GetAffectedRows(), '\n');
+				mp.Cout("DeleteAccount affected rows = ", sql->GetAffectedRows(), '\n');
 			}
 
-			// 显示表的数据
+
+			// 显示各表的数据
 			{
-				auto rows = mfs.SelectAccounts();
-				mp.Cout("SelectAccounts's rtv = ", rows, '\n');
-			}
-			{
-				auto rows = mfs.SelectBindAccountRoles();
-				mp.Cout("SelectBindAccountRoles's rtv = ", rows, '\n');
+				mp.Cout("SelectAccounts's rtv = ", mfs.SelectAccounts(), '\n');
+				mp.Cout("SelectRoles's rtv = ", mfs.SelectRoles(), '\n');
+				mp.Cout("SelectPermissions's rtv = ", mfs.SelectPermissions(), '\n');
+				mp.Cout("SelectBindRolePermissions's rtv = ", mfs.SelectBindRolePermissions(), '\n');
+				mp.Cout("SelectBindAccountRoles's rtv = ", mfs.SelectBindAccountRoles(), '\n');
 			}
 		}
 		catch (int errCode)
@@ -437,7 +460,7 @@ LabEnd:
 //s->Run();
 
 
-//struct Foo : xx::MPObject
+//struct Foo : xx::Object
 //{
 //	xx::String_p str;
 //	Foo() : str(mempool()) {}

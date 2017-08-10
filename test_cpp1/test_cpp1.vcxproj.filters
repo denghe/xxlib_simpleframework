@@ -46,9 +46,6 @@
     <ClInclude Include="..\xxlib_cpp\xx_mpobject.h">
       <Filter>xxlib</Filter>
     </ClInclude>
-    <ClInclude Include="..\xxlib_cpp\xx_mptr.h">
-      <Filter>xxlib</Filter>
-    </ClInclude>
     <ClInclude Include="..\xxlib_cpp\xx_queue.h">
       <Filter>xxlib</Filter>
     </ClInclude>
@@ -73,6 +70,9 @@
     <ClInclude Include="..\pkg_cpp\PKG_class.h" />
     <ClInclude Include="main.h" />
     <ClInclude Include="..\xxlib_cpp\xx_ptr.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\xxlib_cpp\xx_ref.h">
       <Filter>xxlib</Filter>
     </ClInclude>
   </ItemGroup>

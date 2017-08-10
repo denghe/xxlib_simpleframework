@@ -16,7 +16,7 @@ namespace xx
 	struct UVTimer;
 	struct UVAsync;
 
-	struct UV : MPObject											// 该类可能只能创建 1 份实例
+	struct UV : Object											// 该类可能只能创建 1 份实例
 	{
 		List_v<UVListener*> listeners;
 		List_v<UVClientPeer*> clientPeers;
@@ -45,7 +45,7 @@ namespace xx
 		static void IdleCB(uv_idle_t* handle);
 	};
 
-	struct UVListener : MPObject									// 当前为 ipv4, ip 为 0.0.0.0
+	struct UVListener : Object									// 当前为 ipv4, ip 为 0.0.0.0
 	{
 		UV* uv;
 		uint32_t uv_listeners_index;
@@ -69,7 +69,7 @@ namespace xx
 	};
 
 	// 这个并不直接拿来用
-	struct UVPeer : MPObject										// 一些基础数据结构
+	struct UVPeer : Object										// 一些基础数据结构
 	{
 		UVPeer();
 		~UVPeer();
@@ -103,7 +103,7 @@ namespace xx
 		void Clear();												// 内部函数, 于断开之后清理收发相关缓存
 
 		// 方便使用的一些扩展( 当前并不直接映射到 C# )
-		List_v<MPObject*> recvPkgs;									// 可于 OnReceivePackage 时用 bb.ReadPackages(*recvPkgs) 来填充它. 须用 bb.ReleasePackages 释放.
+		List_v<Object*> recvPkgs;									// 可于 OnReceivePackage 时用 bb.ReadPackages(*recvPkgs) 来填充它. 须用 bb.ReleasePackages 释放.
 		void ReleaseRecvPkgs();										// 主动回收 recvPkgs 的数据
 	protected:
 		template<typename T>
@@ -159,7 +159,7 @@ namespace xx
 		static void ConnectCB(uv_connect_t* conn, int status);
 	};
 
-	struct UVTimer : MPObject
+	struct UVTimer : Object
 	{
 		UV* uv;
 		uint32_t uv_timers_index;
@@ -179,7 +179,7 @@ namespace xx
 	};
 
 	// 封装的 uv 的异步通知模块
-	struct UVAsync : MPObject
+	struct UVAsync : Object
 	{
 		UV* uv;
 		uint32_t uv_asyncs_index;

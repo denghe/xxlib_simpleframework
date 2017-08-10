@@ -32,7 +32,7 @@ namespace xx
 
 	// 整套库的核心内存分配组件. 按 2^N 尺寸划分内存分配行为, 将 free 的指针放入 stack 缓存复用
 	// 对于分配出来的内存, 自增 版本号 将填充在 指针 -8 区( Alloc ). 用于判断指针是否已失效
-	// MPObject 对象使用 Create / Release 来创建和析构
+	// Object 对象使用 Create / Release 来创建和析构
 	struct MemPool
 	{
 		// 单链表. 指向下一指针的内存区域避开版本号区域不写
@@ -138,17 +138,17 @@ namespace xx
 		}
 
 		/***********************************************************************************/
-		// 内存分配( Create / Release 系列 ). 仅针对派生自 MPObject 的对象
+		// 内存分配( Create / Release 系列 ). 仅针对派生自 Object 的对象
 		/***********************************************************************************/
 
-		// 该操作将会在头部填充 MemHeader_MPObject
+		// 该操作将会在头部填充 MemHeader_Object
 		template<typename T, typename ...Args>
 		T* Create(Args &&... args) noexcept
 		{
-			static_assert(std::is_base_of<MPObject, T>::value, "the T must be inerit of MPObject.");
+			static_assert(std::is_base_of<Object, T>::value, "the T must be inerit of Object.");
 
 			// 下列代码 复制自 Alloc 函数小改
-			auto siz = sizeof(T) + sizeof(MemHeader_MPObject);
+			auto siz = sizeof(T) + sizeof(MemHeader_Object);
 			auto idx = Calc2n(siz);
 			if (siz > (size_t(1) << idx)) siz = size_t(1) << ++idx;
 
@@ -156,7 +156,7 @@ namespace xx
 			if (!ptrstacks[idx].TryPop(rtv)) rtv = malloc(siz);
 			if (!rtv) return nullptr;
 
-			auto p = (MemHeader_MPObject*)rtv;
+			auto p = (MemHeader_Object*)rtv;
 			p->versionNumber = (++versionNumber) | ((uint64_t)idx << 56);
 			p->mempool = this;
 			p->refCount = 1;
@@ -198,7 +198,7 @@ namespace xx
 
 
 		// 释放由 Create 创建的类
-		inline void Release(MPObject* p) noexcept
+		inline void Release(Object* p) noexcept
 		{
 			if (!p || p->refCount() > 0x7FFFFFFF) return;						// 如果空指针 或是用 Dock 包裹则不执行 Release 操作
 			assert(p->versionNumber());											// 版本号不应该是 0,
@@ -211,8 +211,8 @@ namespace xx
 			if (--p->refCount()) return;
 			auto stackIdx = p->memHeader().ptrStackIndex();						// 提前清空版本号以提供析构过程中针对当前对象的 Ensure() 返回空
 			p->memHeader().versionNumber = 0;
-			p->~MPObject();
-			ptrstacks[stackIdx].Push((MemHeader_MPObject*)p - 1);				// 入池
+			p->~Object();
+			ptrstacks[stackIdx].Push((MemHeader_Object*)p - 1);				// 入池
 		}
 
 
@@ -230,7 +230,7 @@ namespace xx
 		/***********************************************************************************/
 
 		template<typename T, typename ...Args>
-		MPtr<T> CreateMPtr(Args &&... args)
+		Ref<T> CreateRef(Args &&... args)
 		{
 			return Create<T>(std::forward<Args>(args)...);
 		}
@@ -250,9 +250,9 @@ namespace xx
 			return outPtr != nullptr;
 		}
 		template<typename T, typename ...Args>
-		bool CreateTo(MPtr<T>& outPtr, Args &&... args)
+		bool CreateTo(Ref<T>& outPtr, Args &&... args)
 		{
-			outPtr = CreateMPtr<T>(std::forward<Args>(args)...);
+			outPtr = CreateRef<T>(std::forward<Args>(args)...);
 			return outPtr.pointer != nullptr;
 		}
 
@@ -277,7 +277,7 @@ namespace xx
 		// 类型处理相关
 		/***********************************************************************************/
 
-		// 放置 type 对应的 parent 的 type id. 1 : MPObject
+		// 放置 type 对应的 parent 的 type id. 1 : Object
 		inline static std::array<uint16_t, std::numeric_limits<uint16_t>::max()>& pids()
 		{
 			static std::array<uint16_t, std::numeric_limits<uint16_t>::max()> _pids;
@@ -291,7 +291,7 @@ namespace xx
 			return _creators;
 		}
 
-		// 注册类型的父子关系. 顺便生成创建函数. MPObject 不需要注册. T 需要提供相应构造函数 for 反序列化
+		// 注册类型的父子关系. 顺便生成创建函数. Object 不需要注册. T 需要提供相应构造函数 for 反序列化
 		template<typename T, typename PT>
 		static void Register();							// 实现在 xx_buffer.h 尾部
 
@@ -322,7 +322,7 @@ namespace xx
 
 		// 试将指针 p 转成 T* 类型. 取代 dynamic_cast
 		template<typename T>
-		static T* TryCast(MPObject* p)
+		static T* TryCast(Object* p)
 		{
 			return IsBaseOf(TypeId<T>::value, p->typeId()) ? (T*)p : nullptr;
 		}
@@ -338,7 +338,7 @@ namespace xx
 	// 一些函数要用到 MemPool 的功能故实现写在这里
 	/***********************************************************************************/
 
-	inline void MPObject::Release() noexcept
+	inline void Object::Release() noexcept
 	{
 		mempool().Release(this);
 	}

@@ -46,9 +46,6 @@
     <ClInclude Include="..\xxlib_cpp\xx_mpobject.h">
       <Filter>xxlib</Filter>
     </ClInclude>
-    <ClInclude Include="..\xxlib_cpp\xx_mptr.h">
-      <Filter>xxlib</Filter>
-    </ClInclude>
     <ClInclude Include="..\xxlib_cpp\xx_queue.h">
       <Filter>xxlib</Filter>
     </ClInclude>
@@ -85,6 +82,9 @@
       <Filter>xxlib</Filter>
     </ClInclude>
     <ClInclude Include="..\db\DB_sqlite.h" />
+    <ClInclude Include="..\xxlib_cpp\xx_ref.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="xxlib">

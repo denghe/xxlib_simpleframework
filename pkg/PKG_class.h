@@ -35,12 +35,12 @@ namespace Client_Server
     // 主动退出
     struct Logout;
 }
-    struct Property : xx::MPObject
+    struct Property : xx::Object
     {
         xx::String* name = nullptr;
 
         typedef Property ThisType;
-        typedef xx::MPObject BaseType;
+        typedef xx::Object BaseType;
 	    Property();
 	    Property(xx::BBuffer *bb);
 	    ~Property();
@@ -50,12 +50,12 @@ namespace Client_Server
         virtual int FromBBuffer(xx::BBuffer &bb) override;
     };
     // 一个回应( 当前限定为 service 与 db 间 ), 通常携带一个请求发过来的流水号. 这是基类
-    struct Response : xx::MPObject
+    struct Response : xx::Object
     {
         int32_t requestSerial = 0;
 
         typedef Response ThisType;
-        typedef xx::MPObject BaseType;
+        typedef xx::Object BaseType;
 	    Response();
 	    Response(xx::BBuffer *bb);
 	    ~Response();
@@ -65,12 +65,12 @@ namespace Client_Server
         virtual int FromBBuffer(xx::BBuffer &bb) override;
     };
     // 一个请求( 当前限定为 service 与 db 间 ), 通常携带一个流水号. 这是基类
-    struct Request : xx::MPObject
+    struct Request : xx::Object
     {
         int32_t serial = 0;
 
         typedef Request ThisType;
-        typedef xx::MPObject BaseType;
+        typedef xx::Object BaseType;
 	    Request();
 	    Request(xx::BBuffer *bb);
 	    ~Request();
@@ -135,13 +135,13 @@ namespace Client_Server
         virtual void ToBBuffer(xx::BBuffer &bb) const override;
         virtual int FromBBuffer(xx::BBuffer &bb) override;
     };
-    struct UserInfo : xx::MPObject
+    struct UserInfo : xx::Object
     {
         int64_t id = 0;
         xx::List<PKG::Property*>* props = nullptr;
 
         typedef UserInfo ThisType;
-        typedef xx::MPObject BaseType;
+        typedef xx::Object BaseType;
 	    UserInfo();
 	    UserInfo(xx::BBuffer *bb);
 	    ~UserInfo();
@@ -184,12 +184,12 @@ namespace Server_Client
         virtual int FromBBuffer(xx::BBuffer &bb) override;
     };
     // 推送文字消息
-    struct PushJoin : xx::MPObject
+    struct PushJoin : xx::Object
     {
         int64_t id = 0;
 
         typedef PushJoin ThisType;
-        typedef xx::MPObject BaseType;
+        typedef xx::Object BaseType;
 	    PushJoin();
 	    PushJoin(xx::BBuffer *bb);
 	    ~PushJoin();
@@ -199,13 +199,13 @@ namespace Server_Client
         virtual int FromBBuffer(xx::BBuffer &bb) override;
     };
     // 推送文字消息
-    struct PushMessage : xx::MPObject
+    struct PushMessage : xx::Object
     {
         int64_t id = 0;
         xx::String* text = nullptr;
 
         typedef PushMessage ThisType;
-        typedef xx::MPObject BaseType;
+        typedef xx::Object BaseType;
 	    PushMessage();
 	    PushMessage(xx::BBuffer *bb);
 	    ~PushMessage();
@@ -215,14 +215,14 @@ namespace Server_Client
         virtual int FromBBuffer(xx::BBuffer &bb) override;
     };
     // 推送退出消息
-    struct PushLogout : xx::MPObject
+    struct PushLogout : xx::Object
     {
         int64_t id = 0;
         // 退出原因( 主动? 掉线?
         xx::String* reason = nullptr;
 
         typedef PushLogout ThisType;
-        typedef xx::MPObject BaseType;
+        typedef xx::Object BaseType;
 	    PushLogout();
 	    PushLogout(xx::BBuffer *bb);
 	    ~PushLogout();
@@ -251,12 +251,12 @@ namespace Client_Server
         virtual int FromBBuffer(xx::BBuffer &bb) override;
     };
     // 发消息
-    struct Message : xx::MPObject
+    struct Message : xx::Object
     {
         xx::String* text = nullptr;
 
         typedef Message ThisType;
-        typedef xx::MPObject BaseType;
+        typedef xx::Object BaseType;
 	    Message();
 	    Message(xx::BBuffer *bb);
 	    ~Message();
@@ -266,11 +266,11 @@ namespace Client_Server
         virtual int FromBBuffer(xx::BBuffer &bb) override;
     };
     // 主动退出
-    struct Logout : xx::MPObject
+    struct Logout : xx::Object
     {
 
         typedef Logout ThisType;
-        typedef xx::MPObject BaseType;
+        typedef xx::Object BaseType;
 	    Logout();
 	    Logout(xx::BBuffer *bb);
 	    ~Logout();
@@ -1127,25 +1127,25 @@ namespace PKG
 {
 	inline void AllTypesRegister()
 	{
-	    xx::MemPool::Register<xx::String, xx::MPObject>();
-	    xx::MemPool::Register<xx::BBuffer, xx::MPObject>();
-	    xx::MemPool::Register<PKG::Request, xx::MPObject>();
-	    xx::MemPool::Register<PKG::Response, xx::MPObject>();
-	    xx::MemPool::Register<PKG::Property, xx::MPObject>();
+	    xx::MemPool::Register<xx::String, xx::Object>();
+	    xx::MemPool::Register<xx::BBuffer, xx::Object>();
+	    xx::MemPool::Register<PKG::Request, xx::Object>();
+	    xx::MemPool::Register<PKG::Response, xx::Object>();
+	    xx::MemPool::Register<PKG::Property, xx::Object>();
 	    xx::MemPool::Register<PKG::Property_long, PKG::Property>();
 	    xx::MemPool::Register<PKG::Property_double, PKG::Property>();
 	    xx::MemPool::Register<PKG::Property_string, PKG::Property>();
 	    xx::MemPool::Register<PKG::Properties, PKG::Property>();
-	    xx::MemPool::Register<xx::List<PKG::Property*>, xx::MPObject>();
-	    xx::MemPool::Register<PKG::UserInfo, xx::MPObject>();
+	    xx::MemPool::Register<xx::List<PKG::Property*>, xx::Object>();
+	    xx::MemPool::Register<PKG::UserInfo, xx::Object>();
 	    xx::MemPool::Register<PKG::Server_Client::JoinSuccess, PKG::Response>();
-	    xx::MemPool::Register<xx::List<PKG::UserInfo*>, xx::MPObject>();
+	    xx::MemPool::Register<xx::List<PKG::UserInfo*>, xx::Object>();
 	    xx::MemPool::Register<PKG::Server_Client::JoinFail, PKG::Response>();
-	    xx::MemPool::Register<PKG::Server_Client::PushJoin, xx::MPObject>();
-	    xx::MemPool::Register<PKG::Server_Client::PushMessage, xx::MPObject>();
-	    xx::MemPool::Register<PKG::Server_Client::PushLogout, xx::MPObject>();
+	    xx::MemPool::Register<PKG::Server_Client::PushJoin, xx::Object>();
+	    xx::MemPool::Register<PKG::Server_Client::PushMessage, xx::Object>();
+	    xx::MemPool::Register<PKG::Server_Client::PushLogout, xx::Object>();
 	    xx::MemPool::Register<PKG::Client_Server::Join, PKG::Request>();
-	    xx::MemPool::Register<PKG::Client_Server::Message, xx::MPObject>();
-	    xx::MemPool::Register<PKG::Client_Server::Logout, xx::MPObject>();
+	    xx::MemPool::Register<PKG::Client_Server::Message, xx::Object>();
+	    xx::MemPool::Register<PKG::Client_Server::Logout, xx::Object>();
 	}
 }

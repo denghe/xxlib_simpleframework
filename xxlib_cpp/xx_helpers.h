@@ -12,7 +12,7 @@ namespace xx
 	};
 
 	template<typename T>
-	struct DumpCore<T, std::enable_if_t<(std::is_pointer<T>::value && IsMPObject_v<T>) || IsMPtr_v<T>>>
+	struct DumpCore<T, std::enable_if_t<(std::is_pointer<T>::value && IsObject_v<T>) || IsRef_v<T>>>
 	{
 		inline static void Dump(T const& o)
 		{
@@ -23,7 +23,7 @@ namespace xx
 		}
 	};
 	template<typename T>
-	struct DumpCore<T, std::enable_if_t<!std::is_pointer<T>::value && IsMPObject_v<T>>>
+	struct DumpCore<T, std::enable_if_t<!std::is_pointer<T>::value && IsObject_v<T>>>
 	{
 		inline static void Dump(T const& o)
 		{

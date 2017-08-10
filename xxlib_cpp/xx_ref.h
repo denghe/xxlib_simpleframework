@@ -4,48 +4,48 @@
 
 namespace xx
 {
-	struct MPObject;
+	struct Object;
 
 	// 与 MemPool 的版本号相配合的智能指针之模板派生类
 	template<typename T>
-	struct MPtr
+	struct Ref
 	{
 		typedef T ChildType;
 		T* pointer = nullptr;
 		uint64_t versionNumber = 0;
 
-		MPtr() {}
-		MPtr(MPtr const &o) = default;
-		MPtr& operator=(MPtr const& o) = default;
-		MPtr(T* p)
+		Ref() {}
+		Ref(Ref const &o) = default;
+		Ref& operator=(Ref const& o) = default;
+		Ref(T* p)
 			: pointer(p)
-			, versionNumber(p ? ((MemHeader_MPObject*)p - 1)->versionNumber : 0)
+			, versionNumber(p ? ((MemHeader_Object*)p - 1)->versionNumber : 0)
 		{}
-		MPtr& operator=(T* p)
+		Ref& operator=(T* p)
 		{
 			pointer = p;
-			versionNumber = p ? ((MemHeader_MPObject*)p - 1)->versionNumber : 0;
+			versionNumber = p ? ((MemHeader_Object*)p - 1)->versionNumber : 0;
 			return *this;
 		}
 
 		template<typename IT>
-		MPtr(MPtr<IT> const &p)
+		Ref(Ref<IT> const &p)
 		{
 			operator=(static_cast<T*>(p.Ensure()));
 		}
 		template<typename IT>
-		MPtr& operator=(MPtr<IT> const& p)
+		Ref& operator=(Ref<IT> const& p)
 		{
 			operator=(static_cast<T*>(p.Ensure()));
 		}
 
-		bool operator==(MPtr const &o) const
+		bool operator==(Ref const &o) const
 		{
 			return Ensure() == o.Ensure();
 		}
 		T* Ensure() const
 		{
-			if (pointer && ((MemHeader_MPObject*)pointer - 1)->versionNumber == versionNumber) return pointer;
+			if (pointer && ((MemHeader_Object*)pointer - 1)->versionNumber == versionNumber) return pointer;
 			return nullptr;
 		}
 		operator bool() const
@@ -84,30 +84,30 @@ namespace xx
 	/***********************************************************************************/
 
 	template<typename T>
-	struct IsMPtr
+	struct IsRef
 	{
 		static const bool value = false;
 	};
 
 	template<typename T>
-	struct IsMPtr<MPtr<T>>
+	struct IsRef<Ref<T>>
 	{
 		static const bool value = true;
 	};
 	template<typename T>
-	constexpr bool IsMPtr_v = IsMPtr<T>::value;
+	constexpr bool IsRef_v = IsRef<T>::value;
 
 
 	template<typename T>
-	struct MemmoveSupport<MPtr<T>>
+	struct MemmoveSupport<Ref<T>>
 	{
 		static const bool value = true;
 	};
 
 	template<typename T>
-	MPtr<T> MakeMPtr(T* p)
+	Ref<T> MakeRef(T* p)
 	{
-		return MPtr<T>(p);
+		return Ref<T>(p);
 	}
 
 }

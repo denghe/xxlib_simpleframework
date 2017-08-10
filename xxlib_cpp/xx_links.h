@@ -6,7 +6,7 @@ namespace xx
 {
 	// 经由 Dict 简化而来的双向链表
 	template <typename T>
-	struct Links : public MPObject
+	struct Links : public Object
 	{
 		typedef T ValueType;
 		struct Node

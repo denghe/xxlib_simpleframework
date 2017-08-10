@@ -178,10 +178,10 @@ namespace xx
 {
 
 	/********************************************************************************************************************/
-	// MPtrWrapper
+	// RefWrapper
 	/********************************************************************************************************************/
 
-	public ref class MPtrWrapper abstract
+	public ref class RefWrapper abstract
 	{
 	protected:
 		System::IntPtr^ ptr = nullptr;
@@ -189,7 +189,7 @@ namespace xx
 		bool disposed = false;
 	public:
 
-		virtual void InitPtr(xx::MPObject* ptr)
+		virtual void InitPtr(xx::Object* ptr)
 		{
 			this->ptr = gcnew System::IntPtr(ptr);
 			versionNumber = ptr->versionNumber();
@@ -197,26 +197,26 @@ namespace xx
 
 		bool Ensure()
 		{
-			return !disposed && versionNumber != 0 && ptr->ToPointer() != nullptr && ((xx::MPObject*)ptr->ToPointer())->versionNumber() == versionNumber;
+			return !disposed && versionNumber != 0 && ptr->ToPointer() != nullptr && ((xx::Object*)ptr->ToPointer())->versionNumber() == versionNumber;
 		}
 
 		void AssertEnsure()
 		{
-			System::Diagnostics::Debug::Assert(!disposed && versionNumber != 0 && ptr->ToPointer() != nullptr && ((xx::MPObject*)ptr->ToPointer())->versionNumber() == versionNumber);
+			System::Diagnostics::Debug::Assert(!disposed && versionNumber != 0 && ptr->ToPointer() != nullptr && ((xx::Object*)ptr->ToPointer())->versionNumber() == versionNumber);
 		}
 
-		!MPtrWrapper()
+		!RefWrapper()
 		{
 			AssertEnsure();
-			((xx::MPObject*)ptr->ToPointer())->Release();
+			((xx::Object*)ptr->ToPointer())->Release();
 			this->ptr = nullptr;
 			versionNumber = 0;
 		}
 
-		~MPtrWrapper()
+		~RefWrapper()
 		{
 			if (disposed) return;
-			this->!MPtrWrapper();
+			this->!RefWrapper();
 			disposed = true;
 		}
 	};
@@ -239,7 +239,7 @@ namespace xx
 	public delegate void(Delegate_OnDisconnect)();
 	public delegate void(Delegate_OnReceivePackage)(char* buf, int dataLen);
 
-	public ref class UVPeerWrapper abstract : MPtrWrapper
+	public ref class UVPeerWrapper abstract : RefWrapper
 	{
 	protected:
 		Delegate_OnConnect^ onConnect;
@@ -265,7 +265,7 @@ namespace xx
 		}
 		//~UVPeerWrapper();
 
-		virtual void InitPtr(xx::MPObject* ptr) override = 0;
+		virtual void InitPtr(xx::Object* ptr) override = 0;
 
 		int Disconnect(bool immediately)
 		{
@@ -333,7 +333,7 @@ namespace xx
 
 		~UVClientPeerWrapper();
 
-		virtual void InitPtr(xx::MPObject* ptr) override;
+		virtual void InitPtr(xx::Object* ptr) override;
 
 		int SetAddress(System::String^ ip, int port)
 		{
@@ -369,7 +369,7 @@ namespace xx
 
 		~UVServerPeerWrapper();
 
-		virtual void InitPtr(xx::MPObject* ptr) override;
+		virtual void InitPtr(xx::Object* ptr) override;
 	};
 
 	/********************************************************************************************************************/
@@ -377,7 +377,7 @@ namespace xx
 	/********************************************************************************************************************/
 
 	public delegate xx::UVServerPeer*(Delegate_OnCreatePeer)();
-	public ref class UVListenerWrapper abstract : MPtrWrapper
+	public ref class UVListenerWrapper abstract : RefWrapper
 	{
 		bool disposed = false;
 	public:
@@ -405,7 +405,7 @@ namespace xx
 			serverPeers = gcnew System::Collections::Generic::List<UVServerPeerWrapper^>();
 		}
 		~UVListenerWrapper();
-		virtual void InitPtr(xx::MPObject* ptr) override;
+		virtual void InitPtr(xx::Object* ptr) override;
 
 		// 仅用作 OnCreatePeer 内部创建 server peer 返回
 		generic<typename T> where T : UVServerPeerWrapper
@@ -413,7 +413,7 @@ namespace xx
 		{
 			System::Diagnostics::Debug::Assert(wrapper->creator == nullptr);
 			wrapper->creator = this;
-			auto t = ((xx::MPObject*)ptr->ToPointer())->mempool().Create<MyUVServerPeer>((MyUVListener*)ptr->ToPointer());
+			auto t = ((xx::Object*)ptr->ToPointer())->mempool().Create<MyUVServerPeer>((MyUVListener*)ptr->ToPointer());
 			if (t == nullptr) return T();
 
 			wrapper->InitPtr(t);
@@ -433,7 +433,7 @@ namespace xx
 	/********************************************************************************************************************/
 
 	public delegate void(Delegate_OnTicks)();
-	public ref class UVTimerWrapper abstract : MPtrWrapper
+	public ref class UVTimerWrapper abstract : RefWrapper
 	{
 		bool disposed = false;
 	public:
@@ -452,7 +452,7 @@ namespace xx
 			onTicks = gcnew Delegate_OnTicks(this, &UVTimerWrapper::OnTicks);
 		}
 		~UVTimerWrapper();
-		virtual void InitPtr(xx::MPObject* ptr) override;
+		virtual void InitPtr(xx::Object* ptr) override;
 		int Start(System::UInt64 timeoutMS, UInt64 repeatIntervalMS)
 		{
 			AssertEnsure();
@@ -467,7 +467,7 @@ namespace xx
 	/********************************************************************************************************************/
 
 	public delegate void(Delegate_OnFire)();
-	public ref class UVAsyncWrapper abstract : MPtrWrapper
+	public ref class UVAsyncWrapper abstract : RefWrapper
 	{
 		bool disposed = false;
 	public:
@@ -485,7 +485,7 @@ namespace xx
 			onFire = gcnew Delegate_OnFire(this, &UVAsyncWrapper::OnFire);
 		}
 		~UVAsyncWrapper();
-		virtual void InitPtr(xx::MPObject* ptr) override;
+		virtual void InitPtr(xx::Object* ptr) override;
 
 		void Fire();
 	};
@@ -644,10 +644,10 @@ namespace xx
 		SYSTEM_LIST_SWAP_REMOVE(creator->listeners, this, uv_listeners_index);
 		disposed = true;
 	}
-	void UVListenerWrapper::InitPtr(xx::MPObject* ptr)
+	void UVListenerWrapper::InitPtr(xx::Object* ptr)
 	{
 		System::Diagnostics::Debug::Assert(this->ptr == nullptr);
-		this->MPtrWrapper::InitPtr(ptr);
+		this->RefWrapper::InitPtr(ptr);
 		auto p = (MyUVListener*)ptr;
 		p->onCreatePeer = Func_OnCreatePeer(Marshal::GetFunctionPointerForDelegate(onCreatePeer).ToPointer());
 
@@ -665,10 +665,10 @@ namespace xx
 		SYSTEM_LIST_SWAP_REMOVE(creator->timers, this, uv_timers_index);
 		disposed = true;
 	}
-	void UVTimerWrapper::InitPtr(xx::MPObject* ptr)
+	void UVTimerWrapper::InitPtr(xx::Object* ptr)
 	{
 		System::Diagnostics::Debug::Assert(this->ptr == nullptr);
-		this->MPtrWrapper::InitPtr(ptr);
+		this->RefWrapper::InitPtr(ptr);
 		auto p = (MyUVTimer*)ptr;
 		p->onTicks = Func_OnTicks(Marshal::GetFunctionPointerForDelegate(onTicks).ToPointer());
 
@@ -686,10 +686,10 @@ namespace xx
 		SYSTEM_LIST_SWAP_REMOVE(creator->asyncs, this, uv_asyncs_index);
 		disposed = true;
 	}
-	void UVAsyncWrapper::InitPtr(xx::MPObject* ptr)
+	void UVAsyncWrapper::InitPtr(xx::Object* ptr)
 	{
 		System::Diagnostics::Debug::Assert(this->ptr == nullptr);
-		this->MPtrWrapper::InitPtr(ptr);
+		this->RefWrapper::InitPtr(ptr);
 		auto p = (MyUVAsync*)ptr;
 		p->onFire = Func_OnFire(Marshal::GetFunctionPointerForDelegate(onFire).ToPointer());
 
@@ -715,10 +715,10 @@ namespace xx
 		SYSTEM_LIST_SWAP_REMOVE(creator->clientPeers, this, uv_clientPeers_index);
 		disposed = true;
 	}
-	void UVClientPeerWrapper::InitPtr(xx::MPObject* ptr)
+	void UVClientPeerWrapper::InitPtr(xx::Object* ptr)
 	{
 		System::Diagnostics::Debug::Assert(this->ptr == nullptr);
-		this->MPtrWrapper::InitPtr(ptr);
+		this->RefWrapper::InitPtr(ptr);
 		auto p = (MyUVClientPeer*)ptr;
 		p->onReceivePackage = Func_OnReceivePackage(Marshal::GetFunctionPointerForDelegate(onReceivePackage).ToPointer());
 		p->onConnect = Func_OnConnect(Marshal::GetFunctionPointerForDelegate(onConnect).ToPointer());
@@ -740,10 +740,10 @@ namespace xx
 		disposed = true;
 	}
 
-	void UVServerPeerWrapper::InitPtr(xx::MPObject* ptr)
+	void UVServerPeerWrapper::InitPtr(xx::Object* ptr)
 	{
 		System::Diagnostics::Debug::Assert(this->ptr == nullptr);
-		this->MPtrWrapper::InitPtr(ptr);
+		this->RefWrapper::InitPtr(ptr);
 		auto p = (MyUVServerPeer*)ptr;
 		p->onReceivePackage = Func_OnReceivePackage(Marshal::GetFunctionPointerForDelegate(onReceivePackage).ToPointer());
 		p->onDisconnect = Func_OnDisconnect(Marshal::GetFunctionPointerForDelegate(onDisconnect).ToPointer());

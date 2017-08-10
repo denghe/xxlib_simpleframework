@@ -169,7 +169,7 @@ namespace " + c.Namespace + @"
 
             // 定位到基类
             var bt = c.BaseType;
-            var btn = c._HasBaseType() ? bt._GetTypeDecl_Cpp(templateName).CutLast() : "xx::MPObject";
+            var btn = c._HasBaseType() ? bt._GetTypeDecl_Cpp(templateName).CutLast() : "xx::Object";
 
             // desc
             // T xxxxxxxxx = defaultValue
@@ -241,7 +241,7 @@ namespace " + c.Namespace + @"
 
             // 定位到基类
             var bt = c.BaseType;
-            var btn = c._HasBaseType() ? bt._GetTypeDecl_Cpp(templateName).CutLast() : "xx::MPObject";
+            var btn = c._HasBaseType() ? bt._GetTypeDecl_Cpp(templateName).CutLast() : "xx::Object";
 
             sb.Append(@"
 	inline " + c.Name + @"::" + c.Name + @"()");

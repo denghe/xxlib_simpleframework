@@ -10,8 +10,8 @@ int main()
 
 	xx::MemPool mp;
 	xx::UV_v uv(mp);
-	auto c1 = mp.CreateMPtr<MyClient>(uv, "a", "a");	// 自持有, 自杀
-	auto c2 = mp.CreateMPtr<MyClient>(uv, "b", "b");	// 自持有, 自杀
+	auto c1 = mp.CreateRef<MyClient>(&*uv, "a", "a");	// 自持有, 自杀
+	auto c2 = mp.CreateRef<MyClient>(&*uv, "b", "b");	// 自持有, 自杀
 	uv->Run();
 	std::cout << "main: press any key to continue ..." << std::endl;
 	std::cin.get();
@@ -200,7 +200,7 @@ inline int MyClient::Update()
 			auto o = (PKG::Server_Client::JoinSuccess*)o_;
 
 			// 转移包成员继续用
-			self = o->self;			// 转为 MPtr
+			self = o->self;			// 转为 Ref
 			users = o->users;		// 作为持有容器, 所有包引用计数都为1, 刚好
 			o->self = nullptr;		// 避免析构到移走的数据
 			o->users = nullptr;		// 避免析构到移走的数据
@@ -235,7 +235,7 @@ inline int MyClient::Update()
 		}
 
 		// 继续处理后续收到的包
-		xx::MPObject* o_;
+		xx::Object* o_;
 		if (conn->recvMsgs->TryPop(o_))
 		{
 			xx::ScopeGuard sg_o_killer([&] { o_->Release(); });		// 跳出这层大扩号就删

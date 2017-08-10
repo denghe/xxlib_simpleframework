@@ -8,7 +8,7 @@ namespace xx
 {
 	// 从 .NET System.Random 翻写, 理论上讲相同种子能输出相同结果. 支持序列化.
 	// 必须传入种子
-	struct Random : MPObject
+	struct Random : Object
 	{
 		Random(Random const&) = delete;
 		Random& operator=(Random const&) = delete;

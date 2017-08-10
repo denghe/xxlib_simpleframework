@@ -1,21 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?> 
 <AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
 
-  <Type Name="xx::MPtr&lt;*&gt;">
-    <DisplayString Condition="pointer == 0 || versionNumber != (*((MemHeader_MPObject*)pointer - 1)).versionNumber">MPtr(nullptr)</DisplayString>
-    <DisplayString Condition="pointer != 0 &amp;&amp; versionNumber == (*((MemHeader_MPObject*)pointer - 1)).versionNumber">MPtr({*pointer})</DisplayString>
+  <Type Name="xx::Ref&lt;*&gt;">
+    <DisplayString Condition="pointer == 0 || versionNumber != (*((MemHeader_Object*)pointer - 1)).versionNumber">Ref(nullptr)</DisplayString>
+    <DisplayString Condition="pointer != 0 &amp;&amp; versionNumber == (*((MemHeader_Object*)pointer - 1)).versionNumber">Ref({*pointer})</DisplayString>
     <!--<Expand>
       <Item Name="versionNumber">versionNumber &amp; 0x00FFFFFFFFFFFFFFu</Item>
     </Expand>-->
   </Type>
 
-  <Type Name="xx::MPObject" Inheritable="false">
+  <Type Name="xx::Object" Inheritable="false">
     <Expand>
-      <Item Name="MemHeader_MPObject">*((MemHeader_MPObject*)this - 1)</Item>
+      <Item Name="MemHeader_Object">*((MemHeader_Object*)this - 1)</Item>
     </Expand>
   </Type>
   
-  <Type Name="xx::MemHeader_MPObject" Inheritable="false">
+  <Type Name="xx::MemHeader_Object" Inheritable="false">
     <Expand>
       <Item Name="typeId">typeId</Item>
       <Item Name="versionNumber">versionNumber &amp; 0x00FFFFFFFFFFFFFFu</Item>

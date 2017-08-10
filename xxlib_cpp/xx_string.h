@@ -64,7 +64,7 @@ namespace xx
 			Clear();
 			if (buf) AddRange(buf, (uint32_t)strlen(buf));
 		}
-		inline void Assign(MPObject const* const& in)
+		inline void Assign(Object const* const& in)
 		{
 			Clear();
 			if (in) in->ToString(*this);
@@ -129,7 +129,7 @@ namespace xx
 		template<typename ...TS>
 		void Append(TS const & ...vs)
 		{
-			StringAppendSwitcher<ExistsMPObject<TS...>::value>::Exec(*this, vs...);
+			StringAppendSwitcher<ExistsObject<TS...>::value>::Exec(*this, vs...);
 		}
 
 	protected:
@@ -137,7 +137,7 @@ namespace xx
 		friend StringAppendSwitcher<true>;
 		friend StringAppendSwitcher<false>;
 
-		void AppendPtr(MPObject const* const& v)
+		void AppendPtr(Object const* const& v)
 		{
 			if (v) v->ToString(*this);
 			else Append("nil");
@@ -334,14 +334,14 @@ namespace xx
 	{
 		// T ( mpobject )
 		template<typename T>
-		static void WriteTo(String& str, std::enable_if_t< IsMPObjectStruct_v<T>, T> const& v)
+		static void WriteTo(String& str, std::enable_if_t< IsObjectStruct_v<T>, T> const& v)
 		{
 			v.ToString(str);
 		}
 
 		// T* ( mpobject )
 		template<typename T>
-		static void WriteTo(String& str, std::enable_if_t< IsMPObjectPointer_v<T>, T> const& v)
+		static void WriteTo(String& str, std::enable_if_t< IsObjectPointer_v<T>, T> const& v)
 		{
 			str.AppendPtr(v);
 		}
@@ -353,9 +353,9 @@ namespace xx
 			str.AppendPtr(v.pointer);
 		}
 
-		// MPtr<T>
+		// Ref<T>
 		template<typename T>
-		static void WriteTo(String& str, std::enable_if_t< IsMPtr_v<T>, T> const& v)
+		static void WriteTo(String& str, std::enable_if_t< IsRef_v<T>, T> const& v)
 		{
 			str.AppendPtr(v ? v.pointer : nullptr);
 		}
@@ -369,7 +369,7 @@ namespace xx
 
 		// not mpobject
 		template<typename T>
-		static void WriteTo(String& str, std::enable_if_t<!IsMPObject_v<T>, T> const& v)
+		static void WriteTo(String& str, std::enable_if_t<!IsObject_v<T>, T> const& v)
 		{
 			str.Reserve(str.dataLen + StrCalc(v));
 			str.dataLen += StrWriteTo(str.buf + str.dataLen, v);
@@ -401,9 +401,9 @@ namespace xx
 
 
 
-	// MPObject 默认的 ToString 的实现代码
+	// Object 默认的 ToString 的实现代码
 
-	inline void MPObject::ToString(String &str) const
+	inline void Object::ToString(String &str) const
 	{
 		if (tsFlags())
 		{
@@ -412,20 +412,20 @@ namespace xx
 		}
 		else tsFlags() = 1;
 
-		str.Append("{ \"type\" : \"MPObject\"");
+		str.Append("{ \"type\" : \"Object\"");
 		ToStringCore(str);
 		str.Append(" }");
 
 		tsFlags() = 0;
 	}
 
-	inline void MPObject::ToStringCore(String &str) const
+	inline void Object::ToStringCore(String &str) const
 	{
 	}
 
 
 	template<typename ...Args>
-	void MPObject::Cout(Args const& ... args)
+	void Object::Cout(Args const& ... args)
 	{
 		mempool().Cout(args...);
 	}
@@ -500,7 +500,7 @@ namespace xx
 		if (!in) return 0;
 		return in->dataLen == 0 ? 0 : GetHashCode((uint8_t*)in->buf, in->dataLen);
 	}
-	inline uint32_t GetHashCode(MPtr<String> const &in)
+	inline uint32_t GetHashCode(Ref<String> const &in)
 	{
 		return GetHashCode(in.Ensure());
 	}
@@ -527,7 +527,7 @@ namespace xx
 		if (a == b) return true;
 		return a->Equals(*b);
 	}
-	inline bool EqualsTo(MPtr<String> const& a, MPtr<String> const& b)
+	inline bool EqualsTo(Ref<String> const& a, Ref<String> const& b)
 	{
 		return EqualsTo(a.Ensure(), b.Ensure());
 	}

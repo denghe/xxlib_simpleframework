@@ -15,7 +15,7 @@ namespace xx
 	// 翻抄自 .net 的 Dictionary 的代码
 	// 内存优化原则: 内存集中以 亲和 cpu cache( hashCode, next 与 key value prev 分离 )
 	template <typename TK, typename TV>
-	struct Dict : public MPObject
+	struct Dict : public Object
 	{
 		typedef TK KeyType;
 		typedef TV ValueType;

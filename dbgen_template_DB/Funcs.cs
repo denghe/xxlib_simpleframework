@@ -128,9 +128,19 @@ partial interface SQLiteManageFuncs
 
     // 各种 Delete
 
-    [Desc("删掉账号相关 身份 绑定数据")]
+    [Desc("根据 accountId 删掉 账号.身份 绑定数据")]
     [Sql(@"delete from [manage_bind_account_role] where [account_id] = {0}")]
-    void DeleteBindAccountRoleByAccountId(long id);
+    void DeleteBindAccountRoleByAccountId(long accountId);
+
+
+    [Desc("根据 roleId 删掉 账号.身份 绑定数据")]
+    [Sql(@"delete from [manage_bind_account_role] where [role_id] = {0}")]
+    void DeleteBindAccountRoleByRoleId(long roleId);
+
+
+    [Desc("根据 roleId 删掉 身份.权限 绑定数据")]
+    [Sql(@"delete from [manage_bind_role_permission] where [role_id] = {0}")]
+    void DeleteBindRolePermissionByRoleId(long roleId);
 
 
     [Desc("根据主键删一条 账号. 需要先删相关绑定, 否则可能失败. 也有可能 id 找不到而没删到数据. 要用 GetAffectedRows 的值来判断")]
@@ -187,7 +197,7 @@ partial interface SQLiteManageFuncs
     [Sql(@"
 select distinct b.[permission_id]
   from [manage_bind_account_role] a
-  join [bind_role_permission] b
+  join [manage_bind_role_permission] b
     on a.[role_id] = b.[role_id]
  where a.[account_id] = {0};")]
     List<long> SelectPermissionIdsByAccountId(long accountId);

@@ -15,7 +15,7 @@ struct MyConnector : xx::UVClientPeer
 	virtual void OnDisconnect() override;
 
 	// 将所有收到的数据移进这里来放着以免 AI 来不及处理冲掉
-	xx::Queue_v<xx::MPObject*> recvMsgs;
+	xx::Queue_v<xx::Object*> recvMsgs;
 };
 
 
@@ -27,7 +27,7 @@ struct MyTimer : xx::UVTimer
 };
 
 
-struct MyClient : xx::MPObject
+struct MyClient : xx::Object
 {
 	xx::UV* uv;
 	MyConnector* conn;
@@ -40,7 +40,7 @@ struct MyClient : xx::MPObject
 	PKG::Client_Server::Message* pkgMessage;
 
 	// 运行时上下文
-	xx::MPtr<PKG::UserInfo> self;
+	xx::Ref<PKG::UserInfo> self;
 	xx::List<PKG::UserInfo*>* users = nullptr;
 
 	int lineNumber = 0;					    // stackless 协程行号

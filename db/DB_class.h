@@ -25,7 +25,7 @@ namespace Game
 namespace Manage
 {
     // 对应 manage_account 账号表
-    struct Account : xx::MPObject
+    struct Account : xx::Object
     {
         // 自增主键
         int64_t id = 0;
@@ -35,7 +35,7 @@ namespace Manage
         xx::String_p password;
 
         typedef Account ThisType;
-        typedef xx::MPObject BaseType;
+        typedef xx::Object BaseType;
 	    Account();
 		Account(Account const&) = delete;
 		Account& operator=(Account const&) = delete;
@@ -47,7 +47,7 @@ namespace Manage
 
 
     // 对应 manage_role 身份表
-    struct Role : xx::MPObject
+    struct Role : xx::Object
     {
         // 主键
         int32_t id = 0;
@@ -57,7 +57,7 @@ namespace Manage
         xx::String_p desc;
 
         typedef Role ThisType;
-        typedef xx::MPObject BaseType;
+        typedef xx::Object BaseType;
 	    Role();
 		Role(Role const&) = delete;
 		Role& operator=(Role const&) = delete;
@@ -69,7 +69,7 @@ namespace Manage
 
 
     // 对应 manage_permission 权限表
-    struct Permission : xx::MPObject
+    struct Permission : xx::Object
     {
         // 主键
         int32_t id = 0;
@@ -81,7 +81,7 @@ namespace Manage
         xx::String_p desc;
 
         typedef Permission ThisType;
-        typedef xx::MPObject BaseType;
+        typedef xx::Object BaseType;
 	    Permission();
 		Permission(Permission const&) = delete;
 		Permission& operator=(Permission const&) = delete;
@@ -93,7 +93,7 @@ namespace Manage
 
 
     // 对应 manage_bind_account_role 管理人员 & 身份 绑定表
-    struct BindAccountRole : xx::MPObject
+    struct BindAccountRole : xx::Object
     {
         // 管理人员主键
         int32_t account_id = 0;
@@ -101,7 +101,7 @@ namespace Manage
         int32_t role_id = 0;
 
         typedef BindAccountRole ThisType;
-        typedef xx::MPObject BaseType;
+        typedef xx::Object BaseType;
 	    BindAccountRole();
 		BindAccountRole(BindAccountRole const&) = delete;
 		BindAccountRole& operator=(BindAccountRole const&) = delete;
@@ -113,7 +113,7 @@ namespace Manage
 
 
     // 对应 manage_bind_role_permission 身份 & 权限 绑定表
-    struct BindRolePermission : xx::MPObject
+    struct BindRolePermission : xx::Object
     {
         // 身份主键
         int32_t role_id = 0;
@@ -121,7 +121,7 @@ namespace Manage
         int32_t permission_id = 0;
 
         typedef BindRolePermission ThisType;
-        typedef xx::MPObject BaseType;
+        typedef xx::Object BaseType;
 	    BindRolePermission();
 		BindRolePermission(BindRolePermission const&) = delete;
 		BindRolePermission& operator=(BindRolePermission const&) = delete;
@@ -136,7 +136,7 @@ namespace Manage
 namespace Game
 {
     // 对应 game_account 账号表
-    struct Account : xx::MPObject
+    struct Account : xx::Object
     {
         // 自增主键
         int64_t id = 0;
@@ -146,7 +146,7 @@ namespace Game
         xx::String_p password;
 
         typedef Account ThisType;
-        typedef xx::MPObject BaseType;
+        typedef xx::Object BaseType;
 	    Account();
 		Account(Account const&) = delete;
 		Account& operator=(Account const&) = delete;

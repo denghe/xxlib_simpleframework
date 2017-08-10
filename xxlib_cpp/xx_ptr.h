@@ -21,6 +21,15 @@ namespace xx
 		{
 		}
 
+		template<typename O>
+		Ptr(Ptr<O>&& o)
+			: pointer(o.pointer)
+		{
+			static_assert(std::is_base_of<T, O>::value, "");
+			o.pointer = nullptr;
+		}
+
+
 		template<typename ...Args>
 		Ptr(MemPool& mp, Args &&... args);
 		//{
@@ -43,11 +52,22 @@ namespace xx
 		}
 		Ptr(Ptr const&) = delete;
 
-		Ptr& operator=(Ptr&& o)
+		//Ptr& operator=(Ptr&& o)
+		//{
+		//	std::swap(pointer, o.pointer);
+		//	return *this;
+		//}
+
+		template<typename O>
+		Ptr& operator=(Ptr<O>&& o)
 		{
-			std::swap(pointer, o.pointer);
+			static_assert(std::is_base_of<T, O>::value, "");
+			if (pointer) pointer->Release();
+			pointer = o.pointer;
+			o.pointer = nullptr;
 			return *this;
 		}
+
 		Ptr& operator=(Ptr const&) = delete;
 
 		Ptr& operator=(T* const& o)
@@ -85,14 +105,14 @@ namespace xx
 			return pointer != nullptr;
 		}
 
-		operator T const* const& () const
-		{
-			return pointer;
-		}
-		operator T* const&()
-		{
-			return pointer;
-		}
+		//operator T const* const& () const
+		//{
+		//	return pointer;
+		//}
+		//operator T* const&()
+		//{
+		//	return pointer;
+		//}
 
 		template<typename ...Args>
 		Ptr<T>& Create(MemPool& mp, Args &&... args);
@@ -133,4 +153,6 @@ namespace xx
 	{
 		return Ptr<T>(p);
 	}
+
+	using Object_p = Ptr<Object>;
 }

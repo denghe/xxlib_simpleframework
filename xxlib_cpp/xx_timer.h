@@ -6,7 +6,7 @@ namespace xx
 	// todo: ToString support ?
 
 	struct TimerManager;
-	struct TimerBase : MPObject
+	struct TimerBase : Object
 	{
 		// TimerManager 于 Register 时填充下列成员
 		TimerManager* timerManager = nullptr;	// 指向管理器
@@ -19,7 +19,7 @@ namespace xx
 	};
 
 	// 基于内存池的 timer 管理器, 只支持传入继承至 TimerBase 的仿函数类
-	struct TimerManager : MPObject
+	struct TimerManager : Object
 	{
 		TimerBase**				timerss;		// timer 链表数组
 		int						timerssLen;		// timer 链表数组 长度

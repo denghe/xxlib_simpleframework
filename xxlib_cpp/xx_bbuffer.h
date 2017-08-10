@@ -20,17 +20,17 @@ namespace xx
 		static int Read(BBuffer* bb, T& v);
 	};
 
-	// 非 MPObject 任何形态
+	// 非 Object 任何形态
 	template<typename T>
-	struct BBufferRWSwitcher<T, std::enable_if_t< !IsMPObject_v<T> >>
+	struct BBufferRWSwitcher<T, std::enable_if_t< !IsObject_v<T> >>
 	{
 		static void Write(BBuffer* bb, T const& v);
 		static int Read(BBuffer* bb, T& v);
 	};
 
-	// MPObject* || MPtr || Ptr ( 能当指针来处理的 )
+	// Object* || Ref || Ptr ( 能当指针来处理的 )
 	template<typename T>
-	struct BBufferRWSwitcher<T, std::enable_if_t< IsMPObjectPointer_v<T> || IsMPtr<T>::value || IsPtr<T>::value >>
+	struct BBufferRWSwitcher<T, std::enable_if_t< IsObjectPointer_v<T> || IsRef<T>::value || IsPtr<T>::value >>
 	{
 		static void Write(BBuffer* bb, T const& v);
 		static int Read(BBuffer* bb, T& v);
@@ -44,7 +44,7 @@ namespace xx
 		static int Read(BBuffer* bb, T& v);
 	};
 
-	// todo: 这里并未支持 MPObjectStruct 参与序列化, 因为实际上不会那么用
+	// todo: 这里并未支持 ObjectStruct 参与序列化, 因为实际上不会那么用
 
 	/*************************************************************************/
 	// BBuffer 本体
@@ -115,7 +115,7 @@ namespace xx
 
 
 		/*************************************************************************/
-		//  MPObject 对象读写系列
+		//  Object 对象读写系列
 		/*************************************************************************/
 
 		Dict<void*, uint32_t>*						ptrStore = nullptr;		// 临时记录 key: 指针, value: offset
@@ -230,12 +230,12 @@ namespace xx
 		}
 
 		template<typename T>
-		void WritePtr(MPtr<T> const& v)
+		void WritePtr(Ref<T> const& v)
 		{
 			Write(v.Ensure());
 		}
 		template<typename T>
-		int ReadPtr(MPtr<T> &v)
+		int ReadPtr(Ref<T> &v)
 		{
 			T* t;
 			auto rtv = ReadPtr(t);
@@ -401,12 +401,12 @@ namespace xx
 		// 尝试一次性反序列化一到多个包, 将结果填充到 outPkgs, 返回包个数 或 错误码
 		// 注意: 注意其元素的 引用计数, 通通为 1( 即便是递归互引 )
 		// 注意: 即便返回错误码, outPkgs 中也可能存在残留数据
-		int ReadPackages(List<MPObject*>& outPkgs)
+		int ReadPackages(List<Object*>& outPkgs)
 		{
 			if (outPkgs.dataLen) ReleasePackages(outPkgs);
 			while (offset < dataLen)
 			{
-				MPObject* ibb = nullptr;
+				Object* ibb = nullptr;
 				if (auto rtv = ReadRoot(ibb)) return rtv;
 				if (ibb == nullptr) return -2;
 				outPkgs.Add(ibb);
@@ -415,7 +415,7 @@ namespace xx
 		}
 
 		// 释放经由 ReadPackages 填充的 packages 的内存
-		void ReleasePackages(List<MPObject*>& recvPkgs)
+		void ReleasePackages(List<Object*>& recvPkgs)
 		{
 			mempool().DisableRefCountAssert();
 			for (auto& o : recvPkgs)
@@ -455,28 +455,28 @@ namespace xx
 	// BBufferRWSwitcher
 	/*************************************************************************/
 
-	// 非 MPObject 任何形态
+	// 非 Object 任何形态
 
 	template<typename T>
-	void BBufferRWSwitcher<T, std::enable_if_t< !IsMPObject_v<T> >>::Write(BBuffer* bb, T const& v)
+	void BBufferRWSwitcher<T, std::enable_if_t< !IsObject_v<T> >>::Write(BBuffer* bb, T const& v)
 	{
 		bb->WritePods(v);
 	}
 	template<typename T>
-	int BBufferRWSwitcher<T, std::enable_if_t< !IsMPObject_v<T> >>::Read(BBuffer* bb, T& v)
+	int BBufferRWSwitcher<T, std::enable_if_t< !IsObject_v<T> >>::Read(BBuffer* bb, T& v)
 	{
 		return bb->ReadPods(v);
 	}
 
-	// MPObject* || MPtr || Ptr ( 能当指针来处理的 )
+	// Object* || Ref || Ptr ( 能当指针来处理的 )
 
 	template<typename T>
-	void BBufferRWSwitcher<T, std::enable_if_t< IsMPObjectPointer_v<T> || IsMPtr<T>::value || IsPtr<T>::value >>::Write(BBuffer* bb, T const& v)
+	void BBufferRWSwitcher<T, std::enable_if_t< IsObjectPointer_v<T> || IsRef<T>::value || IsPtr<T>::value >>::Write(BBuffer* bb, T const& v)
 	{
 		bb->WritePtr(v);
 	}
 	template<typename T>
-	int BBufferRWSwitcher<T, std::enable_if_t< IsMPObjectPointer_v<T> || IsMPtr<T>::value || IsPtr<T>::value >>::Read(BBuffer* bb, T& v)
+	int BBufferRWSwitcher<T, std::enable_if_t< IsObjectPointer_v<T> || IsRef<T>::value || IsPtr<T>::value >>::Read(BBuffer* bb, T& v)
 	{
 		return bb->ReadPtr(v);
 	}
@@ -524,7 +524,7 @@ namespace xx
 			auto addResult = bb->idxStore->Add(ptrOffset, std::make_pair(nullptr, TypeId<T>::value));
 
 			// 下列代码 复制自 Create 函数小改
-			auto siz = sizeof(T) + sizeof(MemHeader_MPObject);
+			auto siz = sizeof(T) + sizeof(MemHeader_Object);
 			auto idx = Calc2n(siz);
 			if (siz > (size_t(1) << idx)) siz = size_t(1) << ++idx;
 
@@ -532,7 +532,7 @@ namespace xx
 			if (!mp->ptrstacks[idx].TryPop(rtv)) rtv = malloc(siz);
 			if (!rtv) return nullptr;
 
-			auto p = (MemHeader_MPObject*)rtv;
+			auto p = (MemHeader_Object*)rtv;
 			p->versionNumber = (++mp->versionNumber) | ((uint64_t)idx << 56);
 			p->mempool = mp;
 			p->refCount = 1;
@@ -627,9 +627,9 @@ namespace xx
 		}
 	};
 
-	// 适配非 MPObject* / MPtr ( 只能 foreach 一个个搞, 含 Dock )
+	// 适配非 Object* / Ref ( 只能 foreach 一个个搞, 含 Dock )
 	template<typename T, uint32_t reservedHeaderLen>
-	struct ListBBSwitcher<T, reservedHeaderLen, std::enable_if_t< !(sizeof(T) == 1 || std::is_same<float, typename std::decay<T>::type>::value) && !(IsMPtr_v<T> || (std::is_pointer<T>::value && IsMPObject_v<T>)) >>
+	struct ListBBSwitcher<T, reservedHeaderLen, std::enable_if_t< !(sizeof(T) == 1 || std::is_same<float, typename std::decay<T>::type>::value) && !(IsRef_v<T> || (std::is_pointer<T>::value && IsObject_v<T>)) >>
 	{
 		static void ToBBuffer(List<T, reservedHeaderLen> const* list, BBuffer &bb)
 		{
@@ -675,9 +675,9 @@ namespace xx
 		}
 	};
 
-	// 适配 MPObject* / MPtr, 反序列化失败后会逐个 Release 已成功创建的 items
+	// 适配 Object* / Ref, 反序列化失败后会逐个 Release 已成功创建的 items
 	template<typename T, uint32_t reservedHeaderLen>
-	struct ListBBSwitcher<T, reservedHeaderLen, std::enable_if_t< IsMPtr_v<T> || (std::is_pointer<T>::value && IsMPObject_v<T>) >>
+	struct ListBBSwitcher<T, reservedHeaderLen, std::enable_if_t< IsRef_v<T> || (std::is_pointer<T>::value && IsObject_v<T>) >>
 	{
 		static void ToBBuffer(List<T, reservedHeaderLen> const* list, BBuffer &bb)
 		{

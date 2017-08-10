@@ -1,4 +1,4 @@
-﻿#pragma once
+﻿ #pragma once
 #include "DB_class.h"
 #include "xx_sqlite.h"
 
@@ -364,10 +364,10 @@ CREATE TABLE [manage_bind_account_role](
 
 
         xx::SQLiteQuery_p query_DeleteBindAccountRoleByAccountId;
-        // 删掉账号相关 身份 绑定数据
+        // 根据 accountId 删掉 账号.身份 绑定数据
         void DeleteBindAccountRoleByAccountId
         (
-            int64_t const& id
+            int64_t const& accountId
         )
         {
 			auto& q = query_DeleteBindAccountRoleByAccountId;
@@ -376,7 +376,43 @@ CREATE TABLE [manage_bind_account_role](
 			{
 				q = sqlite.CreateQuery(R"=-=(delete from [manage_bind_account_role] where [account_id] = ?)=-=");
 			}
-            q->SetParameters(id);
+            q->SetParameters(accountId);
+            q->Execute();
+        }
+
+
+        xx::SQLiteQuery_p query_DeleteBindAccountRoleByRoleId;
+        // 根据 roleId 删掉 账号.身份 绑定数据
+        void DeleteBindAccountRoleByRoleId
+        (
+            int64_t const& roleId
+        )
+        {
+			auto& q = query_DeleteBindAccountRoleByRoleId;
+
+			if (!q)
+			{
+				q = sqlite.CreateQuery(R"=-=(delete from [manage_bind_account_role] where [role_id] = ?)=-=");
+			}
+            q->SetParameters(roleId);
+            q->Execute();
+        }
+
+
+        xx::SQLiteQuery_p query_DeleteBindRolePermissionByRoleId;
+        // 根据 roleId 删掉 身份.权限 绑定数据
+        void DeleteBindRolePermissionByRoleId
+        (
+            int64_t const& roleId
+        )
+        {
+			auto& q = query_DeleteBindRolePermissionByRoleId;
+
+			if (!q)
+			{
+				q = sqlite.CreateQuery(R"=-=(delete from [manage_bind_role_permission] where [role_id] = ?)=-=");
+			}
+            q->SetParameters(roleId);
             q->Execute();
         }
 
@@ -589,7 +625,7 @@ CREATE TABLE [manage_bind_account_role](
 				q = sqlite.CreateQuery(R"=-=(
 select distinct b.[permission_id]
   from [manage_bind_account_role] a
-  join [bind_role_permission] b
+  join [manage_bind_role_permission] b
     on a.[role_id] = b.[role_id]
  where a.[account_id] = ?;)=-=");
 			}

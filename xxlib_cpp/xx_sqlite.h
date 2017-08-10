@@ -114,7 +114,7 @@ namespace xx
 
 
 	// 搞出个基类只是为了控制对象回收的顺序
-	struct SQLiteBase : MPObject
+	struct SQLiteBase : Object
 	{
 	protected:
 		SQLiteBase(char const* const& fn, bool readOnly);
@@ -213,7 +213,7 @@ namespace xx
 	};
 
 
-	struct SQLiteQuery : MPObject
+	struct SQLiteQuery : Object
 	{
 	protected:
 		SQLite& owner;

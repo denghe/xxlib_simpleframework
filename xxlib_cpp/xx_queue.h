@@ -14,7 +14,7 @@ namespace xx
 	//......Head+++++++++++Tail.......					// DataLen = Tail - Head
 	//++++++Tail...........Head+++++++					// DataLen = BufLen - Head + Tail
 	template <class T>
-	struct Queue : public MPObject
+	struct Queue : public Object
 	{
 		typedef T ChildType;
 		static const bool memmoveAble = std::is_pod<T>::value || IsDock_v<T>;

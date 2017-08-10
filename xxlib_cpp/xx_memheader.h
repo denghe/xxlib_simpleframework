@@ -17,18 +17,18 @@ namespace xx
 
 	struct MemPool;
 
-	// 经由 MemPool 分配的 针对 MPObject 派生类的内存都带有这样一个头部
-	struct MemHeader_MPObject : public MemHeader_VersionNumber
+	// 经由 MemPool 分配的 针对 Object 派生类的内存都带有这样一个头部
+	struct MemHeader_Object : public MemHeader_VersionNumber
 	{
-		// 这个用于希望将 MPObject 对象以非指针方式使用时, 放在变量前面以提供内存头空间时使用( 实现在 xx_mempoolbase.h 属 )
-		MemHeader_MPObject(MemPool& mempool, uint16_t const& typeId)
+		// 这个用于希望将 Object 对象以非指针方式使用时, 放在变量前面以提供内存头空间时使用( 实现在 xx_mempoolbase.h 属 )
+		MemHeader_Object(MemPool& mempool, uint16_t const& typeId)
 			: mempool(&mempool)
 			, typeId(typeId)
 		{
 			this->versionNumber = 0;
 			this->refCount = (uint32_t)-1;											// 防 Release
 		}
-		MemHeader_MPObject(MemHeader_MPObject&& o)
+		MemHeader_Object(MemHeader_Object&& o)
 			: mempool(o.mempool)
 			, refCount(o.refCount)
 			, typeId(o.typeId)
@@ -61,11 +61,11 @@ namespace xx
 	// 值类型使用相关
 	/************************************************************************************/
 
-	// 为 MPObject 附加内存头以便提供值类型的物理结构( 这种模式下 mh 除了填充内存池指针以下, 不再填充版本号, 类型等信息 )
+	// 为 Object 附加内存头以便提供值类型的物理结构( 这种模式下 mh 除了填充内存池指针以下, 不再填充版本号, 类型等信息 )
 	template<typename T>
 	struct Dock
 	{
-		MemHeader_MPObject mh;
+		MemHeader_Object mh;
 		T instance;
 
 		template<typename ...Args>
@@ -101,14 +101,14 @@ namespace xx
 			return instance;
 		}
 
-		operator T const* () const
-		{
-			return &instance;
-		}
-		operator T* ()
-		{
-			return &instance;
-		}
+		//operator T const* () const
+		//{
+		//	return &instance;
+		//}
+		//operator T* ()
+		//{
+		//	return &instance;
+		//}
 	};
 
 

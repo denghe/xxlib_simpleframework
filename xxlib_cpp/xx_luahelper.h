@@ -25,8 +25,8 @@ namespace xx
 
 
 	// 可放入 LUA 的数据类型有: float, double, int64, 各式 string, 以及 T, T*
-	// 其中 T 又分为 一般结构体 以及 MPtr<T> ( T 为 MPObject 派生类 )
-	// T* 分为一般指针 或 MPObject* 派生类指针
+	// 其中 T 又分为 一般结构体 以及 Ref<T> ( T 为 Object 派生类 )
+	// T* 分为一般指针 或 Object* 派生类指针
 	// String* 空指针于 lua 中当前用 nil 来表达
 	// 不支持复杂结构体创建为 ud( 可以有构造函数但不要有析构函数. 最好就是个 pod )
 	// 只支持单继承
@@ -354,7 +354,7 @@ namespace xx
 	// Lua_RegisterCoroutine
 	/************************************************************************************/
 
-	// 为状态机( 基类是 MPObject )建协程放至 LUA_REGISTRYINDEX 并返回指针
+	// 为状态机( 基类是 Object )建协程放至 LUA_REGISTRYINDEX 并返回指针
 	// 主要供状态机构造函数处调用. o 传入 this
 	inline lua_State* Lua_RegisterCoroutine(lua_State* L, void* key)
 	{
@@ -439,9 +439,9 @@ namespace xx
 	// 压入 lua 的 userdata 的数据形态
 	enum class Lua_UDTypes : uint8_t
 	{
-		Pointer,					// 指针( 可能是 MPObject 派生 )
-		MPtr,						// MPtr<T>( 必然是 MPObject 派生 )
-		Struct						// 结构体( 一定不是 MPObject 派生 )
+		Pointer,					// 指针( 可能是 Object 派生 )
+		Ref,						// Ref<T>( 必然是 Object 派生 )
+		Struct						// 结构体( 一定不是 Object 派生 )
 	};
 
 	// 压入 lua 的 userdata 的数据头. 应该是占 8 字节. 后面紧跟数据区
@@ -450,7 +450,7 @@ namespace xx
 	{
 		int typeIndex;				// MP 中的类型索引( 主用于判断继承关系, 做 dynamic_cast )
 		Lua_UDTypes udType;			// 数据形态
-		bool isMPObject;			// 是否从 MPObject 派生( 作为指针数据形态的一个补充说明 )
+		bool isObject;			// 是否从 Object 派生( 作为指针数据形态的一个补充说明 )
 		T data;
 	};
 
@@ -596,16 +596,16 @@ namespace xx
 		static inline void Push(lua_State* L, T const& v)
 		{
 			auto ud = (Lua_UD<T>*)lua_newuserdata(L, sizeof(Lua_UD<T>));	// ud
-			if (std::is_base_of<MPObject, TT>::value && v)
+			if (std::is_base_of<Object, TT>::value && v)
 			{
-				ud->typeIndex = (decltype(ud->typeIndex))((MPObject*)v)->typeId();
+				ud->typeIndex = (decltype(ud->typeIndex))((Object*)v)->typeId();
 			}
 			else
 			{
 				ud->typeIndex = TupleIndexOf_v<TT, typename MP::Tuple>;
 			}
 			ud->udType = Lua_UDTypes::Pointer;
-			ud->isMPObject = IsMPObject<TT>::value;
+			ud->isObject = IsObject<TT>::value;
 			new (&ud->data) T(v);
 			Lua_PushMetatable<MP, TT>(L);									// ud, mt
 			lua_setmetatable(L, -2);										// ud
@@ -631,8 +631,8 @@ namespace xx
 			case Lua_UDTypes::Pointer:
 				v = ud->data;
 				return true;
-			case Lua_UDTypes::MPtr:
-				v = ((MPtr<TT>*)&ud->data)->Ensure();
+			case Lua_UDTypes::Ref:
+				v = ((Ref<TT>*)&ud->data)->Ensure();
 				return true;
 			case Lua_UDTypes::Struct:
 				v = (TT*)&ud->data;			// 理论上讲这个值是危险的. 如果被 lua 回收就没了. 需要立即使用
@@ -644,7 +644,7 @@ namespace xx
 
 	// T
 	template<typename MP, typename T>
-	struct LuaFunc<MP, T, std::enable_if_t<std::is_class<T>::value && !IsMPtr<T>::value>>
+	struct LuaFunc<MP, T, std::enable_if_t<std::is_class<T>::value && !IsRef<T>::value>>
 	{
 		// todo: 右值版, 结构体析构函数
 		static inline void Push(lua_State* L, T const& v)
@@ -652,7 +652,7 @@ namespace xx
 			auto ud = (Lua_UD<T>*)lua_newuserdata(L, sizeof(Lua_UD<T>));	// ud
 			ud->typeIndex = TypeId<T>::value;
 			ud->udType = Lua_UDTypes::Struct;
-			ud->isMPObject = false;
+			ud->isObject = false;
 			new (&ud->data) T(v);
 			Lua_PushMetatable<MP, T>(L);									// ud, mt
 			lua_setmetatable(L, -2);										// ud
@@ -669,14 +669,14 @@ namespace xx
 			switch (ud->udType)
 			{
 			case Lua_UDTypes::Pointer:
-				if (ud->isMPObject) return false;
+				if (ud->isObject) return false;
 				else
 				{
 					v = **(T**)&ud->data;
 					return true;
 				}
-			case Lua_UDTypes::MPtr:
-				return false;				// MPObject 不支持以值方式使用
+			case Lua_UDTypes::Ref:
+				return false;				// Object 不支持以值方式使用
 			case Lua_UDTypes::Struct:
 				v = ud->data;
 				return true;
@@ -685,25 +685,25 @@ namespace xx
 		}
 	};
 
-	// MPtr<T>
+	// Ref<T>
 	template<typename MP, typename T>
-	struct LuaFunc<MP, T, std::enable_if_t<IsMPtr<T>::value>>
+	struct LuaFunc<MP, T, std::enable_if_t<IsRef<T>::value>>
 	{
 		typedef typename T::ChildType TT;
 
 		static inline void Push(lua_State* L, T const& v)
 		{
 			auto ud = (Lua_UD<T>*)lua_newuserdata(L, sizeof(Lua_UD<T>));	// ud
-			if (std::is_base_of<MPObject, TT>::value && v)
+			if (std::is_base_of<Object, TT>::value && v)
 			{
-				ud->typeIndex = (decltype(ud->typeIndex))((MPObject*)v.pointer)->typeId();
+				ud->typeIndex = (decltype(ud->typeIndex))((Object*)v.pointer)->typeId();
 			}
 			else
 			{
 				ud->typeIndex = TupleIndexOf_v<TT, typename MP::Tuple>;
 			}
-			ud->udType = Lua_UDTypes::MPtr;
-			ud->isMPObject = true;
+			ud->udType = Lua_UDTypes::Ref;
+			ud->isObject = true;
 			new (&ud->data) T(v);
 			Lua_PushMetatable<MP, TT>(L);									// ud, mt
 			lua_setmetatable(L, -2);										// ud
@@ -728,7 +728,7 @@ namespace xx
 			case Lua_UDTypes::Pointer:
 				v = *(TT**)&ud->data;
 				return true;
-			case Lua_UDTypes::MPtr:
+			case Lua_UDTypes::Ref:
 				v = ud->data;
 				return true;
 			case Lua_UDTypes::Struct:
@@ -917,7 +917,7 @@ namespace xx
 			{
 				return Lua_Error(L, "error!!! func args num wrong.");
 			}
-			MPObject* self = nullptr;
+			Object* self = nullptr;
 			auto b = xx::Lua_TryTo<MP>(L, self, 1) && self;
 			lua_pushboolean(L, b);
 			return 1;
@@ -941,7 +941,7 @@ namespace xx
 			{
 				return Lua_Error(L, "error!!! func args num wrong.");
 			}
-			MPObject* self = nullptr;
+			Object* self = nullptr;
 			auto b = xx::Lua_TryTo<MP>(L, self, 1) && self;
 			if (b) self->Release();
 			return 0;
@@ -965,7 +965,7 @@ namespace xx
 			{
 				return Lua_Error(L, "error!!! func args num wrong.");
 			}
-			MPObject* self = nullptr;
+			Object* self = nullptr;
 			auto b = xx::Lua_TryTo<MP>(L, self, 1) && self;
 			if (b)
 			{
@@ -1008,7 +1008,7 @@ namespace xx
 				lua_pushstring(L, "__index");						// _G, mt, __index
 				lua_pushvalue(L, -2);								// _G, mt, __index, mt
 				lua_rawset(L, -3);									// _G, mt
-				if (mp.template IsBaseOf<MPObject>(i))
+				if (mp.template IsBaseOf<Object>(i))
 				{
 					Lua_BindFunc_ToString<MP>(L, "__tostring");
 				}
@@ -1027,10 +1027,10 @@ namespace xx
 			}
 			assert(lua_gettop(L) == 1);
 
-			lua_rawgeti(L, -1, 0);									// _G, MPObject's mt
-			Lua_BindFunc_Ensure<MP>(L);								// _G, MPObject's mt
-			Lua_BindFunc_Release<MP>(L);							// _G, MPObject's mt
-			Lua_BindFunc_ToString<MP>(L);							// _G, MPObject's mt
+			lua_rawgeti(L, -1, 0);									// _G, Object's mt
+			Lua_BindFunc_Ensure<MP>(L);								// _G, Object's mt
+			Lua_BindFunc_Release<MP>(L);							// _G, Object's mt
+			Lua_BindFunc_ToString<MP>(L);							// _G, Object's mt
 
 			lua_pop(L, 2);											//
 			assert(lua_gettop(L) == 0);

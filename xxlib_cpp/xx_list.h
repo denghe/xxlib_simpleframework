@@ -9,7 +9,7 @@ namespace xx
 	// 类似 std vector / .net List 的简化容器
 	// reservedHeaderLen 为分配 buf 内存后在前面空出一段内存不用, 也不初始化, 扩容不复制( 为附加头部数据创造便利 )
 	template<typename T, uint32_t reservedHeaderLen = 0>
-	struct List : public MPObject
+	struct List : public Object
 	{
 		typedef T ChildType;
 		T*			buf;

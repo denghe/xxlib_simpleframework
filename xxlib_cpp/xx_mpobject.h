@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include "xx_mptr.h"
+#include "xx_ref.h"
 #include "xx_ptr.h"
 
 namespace xx
@@ -8,9 +8,9 @@ namespace xx
 	struct BBuffer;
 
 	// 支持 MemPool 的类都应该从该基类派生
-	struct MPObject
+	struct Object
 	{
-		virtual ~MPObject() {}
+		virtual ~Object() {}
 
 		// 加持
 		inline void AddRef()
@@ -71,8 +71,8 @@ namespace xx
 		// 下面是访问头部数据的各种 helpers
 		/***********************************************************************************/
 
-		inline MemHeader_MPObject& memHeader() { return *((MemHeader_MPObject*)this - 1); }
-		inline MemHeader_MPObject& memHeader() const { return *((MemHeader_MPObject*)this - 1); }
+		inline MemHeader_Object& memHeader() { return *((MemHeader_Object*)this - 1); }
+		inline MemHeader_Object& memHeader() const { return *((MemHeader_Object*)this - 1); }
 
 		inline uint64_t const& versionNumber() const { return memHeader().versionNumber; }
 		inline uint64_t pureVersionNumber() const { return versionNumber() & 0x00FFFFFFFFFFFFFFu; }
@@ -89,83 +89,82 @@ namespace xx
 		inline MemPool& mempool() { return *(memHeader().mempool); }
 	};
 
-
 	/***********************************************************************************/
 	// type_traits
 	/***********************************************************************************/
 
-	// IsMPObjectPointer
+	// IsObjectPointer
 
 	template<typename T>
-	struct IsMPObjectPointer
+	struct IsObjectPointer
 	{
 		static const bool value = false;
 	};
 	template<typename T>
-	struct IsMPObjectPointer<T*>
+	struct IsObjectPointer<T*>
 	{
-		static const bool value = !std::is_void<T>::value && std::is_base_of<MPObject, T>::value;
+		static const bool value = !std::is_void<T>::value && std::is_base_of<Object, T>::value;
 	};
 	template<typename T>
-	constexpr bool IsMPObjectPointer_v = IsMPObjectPointer<T>::value;
+	constexpr bool IsObjectPointer_v = IsObjectPointer<T>::value;
 
 
-	// IsMPObjectStruct_v
-
-	template<typename T>
-	constexpr bool IsMPObjectStruct_v = std::is_base_of<MPObject, T>::value;
-
-
-	// IsMPObject
+	// IsObjectStruct_v
 
 	template<typename T>
-	struct IsMPObject
+	constexpr bool IsObjectStruct_v = std::is_base_of<Object, T>::value;
+
+
+	// IsObject
+
+	template<typename T>
+	struct IsObject
 	{
-		static const bool value = !std::is_void<T>::value && std::is_base_of<MPObject, T>::value;
+		static const bool value = !std::is_void<T>::value && std::is_base_of<Object, T>::value;
 	};
 	template<typename T>
-	struct IsMPObject<T*>
+	struct IsObject<T*>
 	{
-		static const bool value = !std::is_void<T>::value && std::is_base_of<MPObject, T>::value;
+		static const bool value = !std::is_void<T>::value && std::is_base_of<Object, T>::value;
 	};
 	template<typename T>
-	struct IsMPObject<MPtr<T>>
-	{
-		static const bool value = true;
-	};
-	template<typename T>
-	struct IsMPObject<Ptr<T>>
+	struct IsObject<Ref<T>>
 	{
 		static const bool value = true;
 	};
 	template<typename T>
-	struct IsMPObject<Dock<T>>
+	struct IsObject<Ptr<T>>
 	{
 		static const bool value = true;
 	};
 	template<typename T>
-	constexpr bool IsMPObject_v = IsMPObject<T>::value;
+	struct IsObject<Dock<T>>
+	{
+		static const bool value = true;
+	};
+	template<typename T>
+	constexpr bool IsObject_v = IsObject<T>::value;
 
 
-	// 扫类型列表中是否含有 MPObject* 或 MPtr<MPObject> 类型
+	// 扫类型列表中是否含有 Object* 或 Ref<Object> 类型
 	template<typename ...Types>
-	struct ExistsMPObject
+	struct ExistsObject
 	{
 		template<class Tuple, size_t N> struct TupleScaner {
 			static constexpr bool Exec()
 			{
-				return IsMPObject_v< std::tuple_element_t<N - 1, Tuple> > ? true : TupleScaner<Tuple, N - 1>::Exec();
+				return IsObject_v< std::tuple_element_t<N - 1, Tuple> > ? true : TupleScaner<Tuple, N - 1>::Exec();
 			}
 		};
 		template<class Tuple> struct TupleScaner<Tuple, 1> {
 			static constexpr bool Exec()
 			{
-				return IsMPObject_v< std::tuple_element_t<0, Tuple> >;
+				return IsObject_v< std::tuple_element_t<0, Tuple> >;
 			}
 		};
 		static constexpr bool value = TupleScaner<std::tuple<Types...>, sizeof...(Types)>::Exec();
 	};
 
-	// 生成 MPObject 的原始 typeId 映射
-	template<> struct TypeId<MPObject> { static const uint16_t value = 1; };
+	// 生成 Object 的原始 typeId 映射
+	template<> struct TypeId<Object> { static const uint16_t value = 1; };
 }
