@@ -82,6 +82,8 @@
     <ClInclude Include="..\xxlib_cpp\xx_ref.h">
       <Filter>xxlib</Filter>
     </ClInclude>
+    <ClInclude Include="..\db\DB_class.h" />
+    <ClInclude Include="..\db\DB_sqlite.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="xxlib">
