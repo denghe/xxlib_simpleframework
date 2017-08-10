@@ -459,7 +459,7 @@ do																	\
 	struct TypeId
 	{
 		static const uint16_t value = 0;
-		constexpr static const char* const& name = "";
+		//constexpr static const char* const& name = "";		// 会导致 vs2017 release 模式下编译崩溃( 含 libuv 的项目 )
 	};
 
 	template<typename T>
