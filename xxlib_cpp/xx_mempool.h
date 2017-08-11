@@ -229,6 +229,12 @@ namespace xx
 		// helpers
 		/***********************************************************************************/
 
+		template<typename T>
+		T* Alloc()
+		{
+			return (T*)Alloc(sizeof(T));
+		}
+
 		template<typename T, typename ...Args>
 		Ref<T> CreateRef(Args &&... args)
 		{
