@@ -236,11 +236,10 @@ void Peer::OnReceivePackage(xx::BBuffer& bb)
 
 
 
-#include <atomic>
-
+// 测试结果, UV_THREADPOOL_SIZE=1 的情况下, 每秒能执行 100 万次
 struct Worker
 {
-	std::atomic<int> i1 = 0, i2 = 0;
+	int i1 = 0, i2 = 0;
 	uv_loop_t* loop;
 	uv_work_t req;
 	Worker(uv_loop_t* loop) : loop(loop) {}
@@ -257,7 +256,7 @@ struct Worker
 	{
 		auto self = container_of(w, Worker, req);
 		++self->i2;
-		if (self->i2 < 1000000)		self->Exec();			// 测试结果, 每秒能执行 40 万次, 不压入 work 时不吃 cpu
+		if (self->i2 < 10000000)		self->Exec();			
 	}
 };
 
@@ -277,7 +276,6 @@ int main()
 		std::cout << "i1 = " << worker.i1 << ", i2 = " << worker.i2 << std::endl;
 	}, 0, 1000);
 	uv_run(loop, UV_RUN_DEFAULT);
-	//uv_os_setenv("UV_RUN_DEFAULT", "1");
 	return 0;
 }
 

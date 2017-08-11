@@ -1,20 +1,17 @@
 ﻿using System.Diagnostics;
-using System.Threading;
 using System.Threading.Tasks;
 
 public class Worker
 {
-    public volatile int i1, i2;
+    public int i1, i2;
 
     void WorkCB()
     {
-        System.Threading.Interlocked.Increment(ref i1);
-        //Thread.Sleep(1000);
-        //System.Console.WriteLine("sleep");
+        ++i1;
     }
     void AfterWorkCB()
     {
-        System.Threading.Interlocked.Increment(ref i2);
+        ++i2;
     }
     public void Execute()
     {
