@@ -74,7 +74,6 @@ namespace 麻将
         // len:1, count:2/3 代表拿掉 对子/刻子.   len:3, count:1 代表拿掉顺子
         public static void 拿掉牌(xx.List<牌张> 牌张s, xx.List<牌张> ps, int idx, int len, int count)
         {
-            //var ps = new xx.List<牌张>();
             ps.Clear();
             var buf = 牌张s.buf;
             for (int i = 0; i < idx; ++i)
@@ -94,7 +93,6 @@ namespace 麻将
             {
                 ps.Add(buf[i]);
             }
-            //return ps;
         }
 
         public bool 简单判断是否能胡()

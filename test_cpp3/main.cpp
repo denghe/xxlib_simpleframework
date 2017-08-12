@@ -107,33 +107,33 @@ namespace 麻将
 				if (牌张s->At(i).张 >= 2)
 				{
 					拿掉牌(*牌张s, *ps, i, 1, 2);
-					if (简单判断是否能胡(ps)) return true;
+					if (简单判断是否能胡(*ps)) return true;
 				}
 			}
 			return false;
 		}
 
-		bool 简单判断是否能胡(xx::List_v<牌张> const& 牌张s)
+		bool 简单判断是否能胡(xx::List<牌张> const& 牌张s)
 		{
-			if (牌张s->dataLen == 0) return true;
+			if (牌张s.dataLen == 0) return true;
 			xx::List_v<牌张> ps(mempool());
 			// 拿掉刻
-			for (int i = 0; i < 牌张s->dataLen; ++i)
+			for (int i = 0; i < 牌张s.dataLen; ++i)
 			{
-				if (牌张s->At(i).张 >= 3)
+				if (牌张s.At(i).张 >= 3)
 				{
-					拿掉牌(*牌张s, *ps, i, 1, 3);
-					if (简单判断是否能胡(ps)) return true;
+					拿掉牌(牌张s, *ps, i, 1, 3);
+					if (简单判断是否能胡(*ps)) return true;
 				}
 			}
 			// 拿掉顺
-			for (int i = 0; i < 牌张s->dataLen - 2; ++i)
+			for (int i = 0; i < 牌张s.dataLen - 2; ++i)
 			{
-				if ((int)牌张s->At(i).牌 + 1 == (int)牌张s->At(i + 1).牌
-					&& (int)牌张s->At(i).牌 + 2 == (int)牌张s->At(i + 2).牌)
+				if ((int)牌张s.At(i).牌 + 1 == (int)牌张s.At(i + 1).牌
+					&& (int)牌张s.At(i).牌 + 2 == (int)牌张s.At(i + 2).牌)
 				{
-					拿掉牌(*牌张s, *ps, i, 3, 1);
-					if (简单判断是否能胡(ps)) return true;
+					拿掉牌(牌张s, *ps, i, 3, 1);
+					if (简单判断是否能胡(*ps)) return true;
 				}
 			}
 			return false;
