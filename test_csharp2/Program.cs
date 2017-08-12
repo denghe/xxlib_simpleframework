@@ -147,12 +147,12 @@ public static class Program
         };
         sp.填充牌张s();
         var sw = Stopwatch.StartNew();
-        int count = 0;
-        for (int i = 0; i < 10000000; i++)
+        //int count = 0;
+        for (int i = 0; i < 1000000; i++)
         {
-            if (sp.简单判断是否能胡()) ++count;
+            /*if (*/sp.简单判断是否能胡()/*) ++count*/;
         }
-        System.Console.WriteLine("count = " + count + ", sw = " + sw.ElapsedMilliseconds);
+        System.Console.WriteLine("sw = " + sw.ElapsedMilliseconds);
     }
 }
 
