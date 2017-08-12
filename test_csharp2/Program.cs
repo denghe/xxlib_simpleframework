@@ -72,9 +72,10 @@ namespace 麻将
         }
 
         // len:1, count:2/3 代表拿掉 对子/刻子.   len:3, count:1 代表拿掉顺子
-        public static xx.List<牌张> 拿掉牌(xx.List<牌张> 牌张s, int idx, int len, int count)
+        public static void 拿掉牌(xx.List<牌张> 牌张s, xx.List<牌张> ps, int idx, int len, int count)
         {
-            var ps = new xx.List<牌张>();
+            //var ps = new xx.List<牌张>();
+            ps.Clear();
             var buf = 牌张s.buf;
             for (int i = 0; i < idx; ++i)
             {
@@ -93,31 +94,45 @@ namespace 麻将
             {
                 ps.Add(buf[i]);
             }
-            return ps;
+            //return ps;
         }
 
         public bool 简单判断是否能胡()
         {
+            var ps = new xx.List<牌张>();
             for (int i = 0; i < 牌张s.dataLen; ++i)
             {
-                if (牌张s[i].张 >= 2 && 简单判断是否能胡(拿掉牌(牌张s, i, 1, 2))) return true;
+                if (牌张s[i].张 >= 2)
+                {
+                    拿掉牌(牌张s, ps, i, 1, 2);
+                    if (简单判断是否能胡(ps)) return true;
+                }
             }
             return false;
         }
         public static bool 简单判断是否能胡(xx.List<牌张> 牌张s)
         {
             if (牌张s.dataLen == 0) return true;
+            var ps = new xx.List<牌张>();
             // 拿掉刻
             for (int i = 0; i < 牌张s.dataLen; ++i)
             {
-                if (牌张s[i].张 >= 3 && 简单判断是否能胡(拿掉牌(牌张s, i, 1, 3))) return true;
+
+                if (牌张s[i].张 >= 3)
+                {
+                    拿掉牌(牌张s, ps, i, 1, 3);
+                    if (简单判断是否能胡(ps)) return true;
+                }
             }
             // 拿掉顺
             for (int i = 0; i < 牌张s.dataLen - 2; ++i)
             {
                 if ((int)牌张s[i].牌 + 1 == (int)牌张s[i + 1].牌
-                    && (int)牌张s[i].牌 + 2 == (int)牌张s[i + 2].牌
-                    && 简单判断是否能胡(拿掉牌(牌张s, i, 3, 1))) return true;
+                    && (int)牌张s[i].牌 + 2 == (int)牌张s[i + 2].牌)
+                {
+                    拿掉牌(牌张s, ps, i, 3, 1);
+                    if (简单判断是否能胡(ps)) return true;
+                }
             }
             return false;
         }
@@ -150,7 +165,8 @@ public static class Program
         //int count = 0;
         for (int i = 0; i < 1000000; i++)
         {
-            /*if (*/sp.简单判断是否能胡()/*) ++count*/;
+            /*if (*/
+            sp.简单判断是否能胡()/*) ++count*/;
         }
         System.Console.WriteLine("sw = " + sw.ElapsedMilliseconds);
     }

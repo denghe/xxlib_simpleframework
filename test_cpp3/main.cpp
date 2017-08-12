@@ -76,13 +76,13 @@ namespace 麻将
 		}
 
 		// len:1, count:2/3 代表拿掉 对子/刻子.   len:3, count:1 代表拿掉顺子
-		xx::List_p<牌张> 拿掉牌(xx::List_p<牌张> const& 牌张s, int idx, int len, int count)
+		void 拿掉牌(xx::List<牌张> const& 牌张s, xx::List<牌张>& ps, int idx, int len, int count)
 		{
-			auto ps = mempool().CreatePtr<xx::List<牌张>>(14);
-			auto& buf = 牌张s->buf;
+			ps.Clear();
+			auto& buf = 牌张s.buf;
 			for (int i = 0; i < idx; ++i)
 			{
-				ps->Add(buf[i]);
+				ps.Add(buf[i]);
 			}
 			for (int i = idx; i < idx + len; ++i)
 			{
@@ -90,39 +90,51 @@ namespace 麻将
 				assert(p.张 >= count);
 				if (p.张 > count)
 				{
-					ps->Add(牌张{ p.牌, (uint8_t)(p.张 - count) });
+					ps.Add(牌张{ p.牌, (uint8_t)(p.张 - count) });
 				}
 			}
-			for (int i = idx + len; i < 牌张s->dataLen; ++i)
+			for (int i = idx + len; i < 牌张s.dataLen; ++i)
 			{
-				ps->Add(buf[i]);
+				ps.Add(buf[i]);
 			}
-			return ps;
 		}
 
 		bool 简单判断是否能胡()
 		{
+			xx::List_v<牌张> ps(mempool());
 			for (int i = 0; i < 牌张s->dataLen; ++i)
 			{
-				if (牌张s->At(i).张 >= 2 && 简单判断是否能胡(拿掉牌(牌张s, i, 1, 2))) return true;
+				if (牌张s->At(i).张 >= 2)
+				{
+					拿掉牌(*牌张s, *ps, i, 1, 2);
+					if (简单判断是否能胡(ps)) return true;
+				}
 			}
 			return false;
 		}
 
-		bool 简单判断是否能胡(xx::List_p<牌张> const& 牌张s)
+		bool 简单判断是否能胡(xx::List_v<牌张> const& 牌张s)
 		{
 			if (牌张s->dataLen == 0) return true;
+			xx::List_v<牌张> ps(mempool());
 			// 拿掉刻
 			for (int i = 0; i < 牌张s->dataLen; ++i)
 			{
-				if (牌张s->At(i).张 >= 3 && 简单判断是否能胡(拿掉牌(牌张s, i, 1, 3))) return true;
+				if (牌张s->At(i).张 >= 3)
+				{
+					拿掉牌(*牌张s, *ps, i, 1, 3);
+					if (简单判断是否能胡(ps)) return true;
+				}
 			}
 			// 拿掉顺
 			for (int i = 0; i < 牌张s->dataLen - 2; ++i)
 			{
 				if ((int)牌张s->At(i).牌 + 1 == (int)牌张s->At(i + 1).牌
-					&& (int)牌张s->At(i).牌 + 2 == (int)牌张s->At(i + 2).牌
-					&& 简单判断是否能胡(拿掉牌(牌张s, i, 3, 1))) return true;
+					&& (int)牌张s->At(i).牌 + 2 == (int)牌张s->At(i + 2).牌)
+				{
+					拿掉牌(*牌张s, *ps, i, 3, 1);
+					if (简单判断是否能胡(ps)) return true;
+				}
 			}
 			return false;
 		}
