@@ -12,9 +12,9 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
-    <ProjectGuid>{948020E2-764E-462B-A8A8-2C48422570A2}</ProjectGuid>
+    <ProjectGuid>{9947D8D7-2CAB-4637-8F4B-5E2E3DCB7FAB}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>test_cpp2</RootNamespace>
+    <RootNamespace>test_cpp3</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -88,41 +88,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <Natvis Include="..\xxlib_cpp\xx.natvis" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\db\DB_class.h" />
-    <ClInclude Include="..\db\DB_sqlite.h" />
-    <ClInclude Include="..\sqlite3\sqlite3.h" />
-    <ClInclude Include="..\sqlite3\sqlite3ext.h" />
-    <ClInclude Include="..\xxlib_cpp\xx_bbqueue.h" />
-    <ClInclude Include="..\xxlib_cpp\xx_bbuffer.h" />
-    <ClInclude Include="..\xxlib_cpp\xx_bytesutils.h" />
-    <ClInclude Include="..\xxlib_cpp\xx_charsutils.h" />
-    <ClInclude Include="..\xxlib_cpp\xx_cursorpool.h" />
-    <ClInclude Include="..\xxlib_cpp\xx_defines.h" />
-    <ClInclude Include="..\xxlib_cpp\xx_dict.h" />
-    <ClInclude Include="..\xxlib_cpp\xx_hashutils.h" />
-    <ClInclude Include="..\xxlib_cpp\xx_helpers.h" />
-    <ClInclude Include="..\xxlib_cpp\xx_links.h" />
-    <ClInclude Include="..\xxlib_cpp\xx_list.h" />
-    <ClInclude Include="..\xxlib_cpp\xx_luahelper.h" />
-    <ClInclude Include="..\xxlib_cpp\xx_memheader.h" />
-    <ClInclude Include="..\xxlib_cpp\xx_mempool.h" />
-    <ClInclude Include="..\xxlib_cpp\xx_mpobject.h" />
-    <ClInclude Include="..\xxlib_cpp\xx_ptr.h" />
-    <ClInclude Include="..\xxlib_cpp\xx_queue.h" />
-    <ClInclude Include="..\xxlib_cpp\xx_random.h" />
-    <ClInclude Include="..\xxlib_cpp\xx_ref.h" />
-    <ClInclude Include="..\xxlib_cpp\xx_sqlite.h" />
-    <ClInclude Include="..\xxlib_cpp\xx_string.h" />
-    <ClInclude Include="..\xxlib_cpp\xx_structs.h" />
-    <ClInclude Include="..\xxlib_cpp\xx_timer.h" />
-    <ClInclude Include="..\xxlib_cpp\xx_uv.h" />
-    <ClInclude Include="..\xxlib_cpp\xx_uv.hpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="..\sqlite3\sqlite3.c" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
