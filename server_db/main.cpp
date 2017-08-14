@@ -171,11 +171,13 @@ inline void Service::AddTask(xx::Func<void()>&& fn)
 
 inline void Service::SetResult(xx::Func<void()>&& fn)
 {
+	assert(!worker->result);
 	worker->result = std::move(fn);
 }
 
 inline void Service::SetResultKiller(xx::Func<void()>&& fn)
 {
+	assert(!worker->resultKiller);
 	worker->resultKiller = std::move(fn);
 }
 
@@ -214,21 +216,19 @@ inline void Peer::OnReceivePackage(xx::BBuffer& bb)
 	// 填充 args .........
 	// ...
 
-
 	// 向 SQL 线程压入函数( service 是指针, 直接复制. peer 捕获安全引用类型, 传递到 result 函数中使用. args 捕获右值移动 )
-	service->AddTask([service = this->service, peer = xx::Ref<Peer>(this), args = xx::Move(args)]()
+	service->AddTask([service = this->service, peer = xx::Ref<Peer>(this), args = std::move(args)]()
 	{
-		std::cout << "SQL, thread id = " << std::this_thread::get_id() << std::endl;
-
+		std::cout << "Task, thread id = " << std::this_thread::get_id() << std::endl;
 
 		// 执行 SQL 语句, 得到结果
 		// 期间只能从 service->sqlmp 分配内存. rtv 创建为类似 Args 的集合类似乎更佳
 		auto rtv = service->fs.SelectAccountByUsername(args->un);
 
-
-		// 到主线程去处理结果, 释放 args ( service, peer 直接复制, rtv 移动, args 移到主线程去析构 )
+		// 到主线程去处理结果, 设置结果函数( service, peer 直接复制, rtv 移动, 顺便将 args 移进去以便回收 )
 		service->SetResult([service, peer, rtv = std::move(rtv), args = xx::Move(args)]
 		{
+			std::cout << "Result, thread id = " << std::this_thread::get_id() << std::endl;
 
 			// handle( rtv )
 			if (peer && peer->state == xx::UVPeerStates::Connected)			// 如果 peer 还活着, 回发
@@ -236,8 +236,11 @@ inline void Peer::OnReceivePackage(xx::BBuffer& bb)
 				//peer->SendPackages
 			}
 
-
-			service->SetResultKiller([rtv = xx::Move(rtv)] {});  			// 将 rtv 再次传到 SQL 线程回收
+			// 到工作线程去回收结果, 设置结果回收函数( 将 rtv 移进去即可 )
+			service->SetResultKiller([rtv = xx::Move(rtv)]
+			{
+				std::cout << "ResultKiller, thread id = " << std::this_thread::get_id() << std::endl;
+			});  			
 		});
 	});
 }
