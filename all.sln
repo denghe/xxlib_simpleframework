@@ -43,6 +43,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "test_csharp2", "test_csharp
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test_cpp3", "test_cpp3\test_cpp3.vcxproj", "{9947D8D7-2CAB-4637-8F4B-5E2E3DCB7FAB}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test_cpp4", "test_cpp4\test_cpp4.vcxproj", "{52940E70-11D7-44E8-8A3F-C91AA603A902}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -113,6 +115,10 @@ Global
 		{9947D8D7-2CAB-4637-8F4B-5E2E3DCB7FAB}.Debug|x64.Build.0 = Debug|x64
 		{9947D8D7-2CAB-4637-8F4B-5E2E3DCB7FAB}.Release|x64.ActiveCfg = Release|x64
 		{9947D8D7-2CAB-4637-8F4B-5E2E3DCB7FAB}.Release|x64.Build.0 = Release|x64
+		{52940E70-11D7-44E8-8A3F-C91AA603A902}.Debug|x64.ActiveCfg = Debug|x64
+		{52940E70-11D7-44E8-8A3F-C91AA603A902}.Debug|x64.Build.0 = Debug|x64
+		{52940E70-11D7-44E8-8A3F-C91AA603A902}.Release|x64.ActiveCfg = Release|x64
+		{52940E70-11D7-44E8-8A3F-C91AA603A902}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

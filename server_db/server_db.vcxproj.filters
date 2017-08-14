@@ -76,14 +76,20 @@
     <ClInclude Include="..\sqlite3\sqlite3ext.h">
       <Filter>sqlite3</Filter>
     </ClInclude>
-    <ClInclude Include="..\db\DB_class.h" />
-    <ClInclude Include="..\pkg\PKG_class.h" />
     <ClInclude Include="..\xxlib_cpp\xx_ptr.h">
       <Filter>xxlib</Filter>
     </ClInclude>
-    <ClInclude Include="..\db\DB_sqlite.h" />
     <ClInclude Include="..\xxlib_cpp\xx_ref.h">
       <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\db\DB_class.h">
+      <Filter>gens</Filter>
+    </ClInclude>
+    <ClInclude Include="..\db\DB_sqlite.h">
+      <Filter>gens</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pkg\PKG_class.h">
+      <Filter>gens</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -92,6 +98,9 @@
     </Filter>
     <Filter Include="sqlite3">
       <UniqueIdentifier>{11450ed2-9ea9-484f-8f66-9002557fd924}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="gens">
+      <UniqueIdentifier>{ade74c02-6fcd-4d5f-83a7-a75e7c630423}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

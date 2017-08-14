@@ -7,6 +7,7 @@ namespace xx
 		, clientPeers(mempool())
 		, timers(mempool())
 		, asyncs(mempool())
+		, workers(mempool())
 	{
 		//loop = uv_default_loop();
 		if (auto r = uv_loop_init(&loop)) throw r;
@@ -15,6 +16,12 @@ namespace xx
 
 	inline UV::~UV()
 	{
+		for (int i = (int)workers->dataLen - 1; i >= 0; --i)
+		{
+			workers->At(i)->Release();
+		}
+		workers->Clear();
+
 		for (int i = (int)asyncs->dataLen - 1; i >= 0; --i)
 		{
 			asyncs->At(i)->Release();
@@ -38,7 +45,6 @@ namespace xx
 			clientPeers->At(i)->Release();	// todo: 传递 release 原因?
 		}
 		clientPeers->Clear();
-
 		uv_loop_close(&loop);
 	}
 
@@ -92,6 +98,13 @@ namespace xx
 	{
 		static_assert(std::is_base_of<UVAsync, AsyncType>::value, "the AsyncType must inherit of UVAsync.");
 		return mempool().Create<AsyncType>(this, std::forward<Args>(args)...);
+	}
+
+	template<typename WorkerType, typename ...Args>
+	WorkerType* UV::CreateWorker(Args &&... args)
+	{
+		static_assert(std::is_base_of<UVWorker, WorkerType>::value, "the WorkerType must inherit of UVWorker.");
+		return mempool().Create<WorkerType>(this, std::forward<Args>(args)...);
 	}
 
 	inline void UV::IdleCB(uv_idle_t* handle)
@@ -667,5 +680,42 @@ namespace xx
 	{
 		auto self = container_of(handle, UVAsync, async_req);
 		self->OnFire();
+	}
+
+
+
+
+
+
+
+
+	inline UVWorker::UVWorker(UV* uv)
+		: uv(uv)
+	{
+		uv_workers_index = uv->workers->dataLen;
+		uv->workers->Add(this);
+	}
+
+	inline UVWorker::~UVWorker()
+	{
+		uv_cancel((uv_req_t*)&work_req);
+		XX_LIST_SWAP_REMOVE(uv->workers, this, uv_workers_index);
+	}
+
+	inline int UVWorker::Start()
+	{
+		return uv_queue_work(&uv->loop, &work_req, WorkCB, AfterWorkCB);
+	}
+
+	inline void UVWorker::WorkCB(uv_work_t* handle)
+	{
+		auto self = container_of(handle, UVWorker, work_req);
+		self->OnWork();
+	}
+
+	inline void UVWorker::AfterWorkCB(uv_work_t* handle, int status)
+	{
+		auto self = container_of(handle, UVWorker, work_req);
+		self->OnAfterWork(status);
 	}
 }

@@ -237,45 +237,72 @@ void Peer::OnReceivePackage(xx::BBuffer& bb)
 
 
 // 测试结果, UV_THREADPOOL_SIZE=1 的情况下, 每秒能执行 100 万次
-struct Worker
+
+struct MyUV : xx::UV
+{
+	MyUV() : UV() 
+	{
+		Cout("MyUV()\n");
+	}
+	~MyUV()
+	{
+		Cout("~MyUV()\n");
+	}
+};
+
+struct Worker : xx::UVWorker
 {
 	int i1 = 0, i2 = 0;
-	uv_loop_t* loop;
-	uv_work_t req;
-	Worker(uv_loop_t* loop) : loop(loop) {}
-	void Exec()
+	Worker(xx::UV* uv) : UVWorker(uv)
 	{
-		uv_queue_work(loop, &req, Worker::WorkCB, Worker::AfterWorkCB);
+		Cout("Worker()\n");
 	}
-	static void WorkCB(uv_work_t* w)
+	~Worker() 
 	{
-		auto self = container_of(w, Worker, req);
-		++self->i1;
+		Cout("~Worker()\n");
 	}
-	static void AfterWorkCB(uv_work_t* w, int status)
+	virtual void OnWork() override
 	{
-		auto self = container_of(w, Worker, req);
-		++self->i2;
-		if (self->i2 < 10000000)		self->Exec();			
+		Cout("OnWork before sleep\n");
+		++i1;
+		Sleep(2000000);
+		Cout("OnWork sleeped\n");
+	}
+	virtual void OnAfterWork(int status) override
+	{
+		Cout("OnAfterWork\n");
+		++i2;
+		if (i2 < 10000000) Start();
+	}
+};
+
+struct Timer : xx::UVTimer
+{
+	Worker& w;
+	Timer(xx::UV* uv, Worker& w) : UVTimer(uv), w(w)
+	{
+		Start(1000, 1000);
+	}
+	virtual void OnFire() override
+	{
+		Cout("i1 = ", w.i1, ", i2 = ", w.i2, "\n");
+		uv->Stop();
 	}
 };
 
 int main()
 {
-	// todo: 测试 uv_work
+	// todo: 用 Worker 改造上面的代码
 	xx::MemPool mp;
-	auto loop = uv_default_loop();
-	Worker w(loop);
-	w.Exec();
-	uv_timer_t t;
-	t.data = &w;
-	uv_timer_init(loop, &t);
-	uv_timer_start(&t, [](auto tp)
 	{
-		auto& worker = *((Worker*)tp->data);
-		std::cout << "i1 = " << worker.i1 << ", i2 = " << worker.i2 << std::endl;
-	}, 0, 1000);
-	uv_run(loop, UV_RUN_DEFAULT);
+		xx::Dock<MyUV> uv(mp);
+		auto w = uv->CreateWorker<Worker>();
+		w->Start();
+		auto t = uv->CreateTimer<Timer>(*w);
+		uv->Run();
+		mp.Cout("uv stoped.\n");
+	}
+	std::cin.get();
 	return 0;
 }
 

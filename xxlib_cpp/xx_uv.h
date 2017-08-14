@@ -15,6 +15,7 @@ namespace xx
 	struct UVClientPeer;
 	struct UVTimer;
 	struct UVAsync;
+	struct UVWorker;
 
 	struct UV : Object											// 该类可能只能创建 1 份实例
 	{
@@ -22,22 +23,33 @@ namespace xx
 		List_v<UVClientPeer*> clientPeers;
 		List_v<UVTimer*> timers;
 		List_v<UVAsync*> asyncs;
+		List_v<UVWorker*> workers;
 
 		UV();
 		~UV();
-		int EnableIdle();
-		void DisableIdle();
-		void Run();
-		void Stop();
-		virtual void OnIdle();
+
+		void Run();												// 开始运行
+		void Stop();											// 中途可以用这个函数停止 uv loop
+
+		int EnableIdle();										// 启用 cpu 闲置期回调( 每秒可能发生上百万次, 自己在里面 sleep 则有可能影响 uv 对网络包的收发响应 )
+		void DisableIdle();										// 停用
+		virtual void OnIdle();									// 闲置期回调
+
+		// 各种方便使用的创建函数. 创建成功将返回非空指针( 引用性质 )
 		template<typename ListenerType, typename ...Args>
 		ListenerType* CreateListener(int port, int backlog, Args &&... args);
+
 		template<typename ClientPeerType, typename ...Args>
 		ClientPeerType* CreateClientPeer(Args &&... args);
+
 		template<typename TimerType, typename ...Args>
 		TimerType* CreateTimer(Args &&... args);
+
 		template<typename AsyncType, typename ...Args>
 		AsyncType* CreateAsync(Args &&... args);
+
+		template<typename WorkerType, typename ...Args>
+		WorkerType* CreateWorker(Args &&... args);
 
 		// uv's
 		uv_loop_t loop;
@@ -45,7 +57,7 @@ namespace xx
 		static void IdleCB(uv_idle_t* handle);
 	};
 
-	struct UVListener : Object									// 当前为 ipv4, ip 为 0.0.0.0
+	struct UVListener : Object										// 当前为 ipv4, ip 为 0.0.0.0
 	{
 		UV* uv;
 		uint32_t uv_listeners_index;
@@ -69,7 +81,7 @@ namespace xx
 	};
 
 	// 这个并不直接拿来用
-	struct UVPeer : Object										// 一些基础数据结构
+	struct UVPeer : Object											// 一些基础数据结构
 	{
 		UVPeer();
 		~UVPeer();
@@ -194,6 +206,28 @@ namespace xx
 		uv_async_t async_req;
 		static void AsyncCB(uv_async_t* handle);
 	};
+
+	// 封装的 uv 的线程池工作模块( 可用环境变量 UV_THREADPOOL_SIZE 来影响线程池数量. windows 下改了需要重启系统生效. )
+	// 感觉不科学, 无法针对具体某个应用来改, 未来考虑改 uv 源代码直读静态变量. 
+	struct UVWorker : Object
+	{
+		UV* uv;
+		uint32_t uv_workers_index;
+
+		UVWorker(UV* uv);
+		~UVWorker();
+
+		int Start();
+		virtual void OnWork() = 0;
+		virtual void OnAfterWork(int status) = 0;
+
+		// uv's
+		uv_work_t work_req;
+		static void WorkCB(uv_work_t* handle);
+		static void AfterWorkCB(uv_work_t* handle, int status);
+	};
+
+
 
 	// 用来解决 uv_buf_t 跨平台时的成员顺序结构不一致的复制 / 赋值 问题
 	template<>
