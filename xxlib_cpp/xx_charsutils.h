@@ -7,7 +7,6 @@
 #include <cmath>
 #include <cstdlib>
 #include <type_traits>
-#include <vector>
 #include <array>
 
 namespace xx
@@ -580,16 +579,13 @@ namespace xx
 	// Utf8 转为 char16_t* 的类
 	/**************************************************************************************************/
 
+	template<size_t bufCount>
 	struct Utf8Converter
 	{
-		std::vector<std::u16string> bufs;
+		std::array<std::u16string, bufCount> bufs;	// 如果被用于多参数环境时避免重复使用到一个 buf
 		uint32_t idx = 0;
-		Utf8Converter(uint32_t bufCount = 16)			// 如果被用于多参数环境时避免重复使用到一个 buf
-		{
-			assert(bufCount);
-			bufs.resize(bufCount);
-		}
-		inline char16_t const* Convert(char const * utf8Str)
+
+		char16_t const* Convert(char const * utf8Str)
 		{
 			assert(utf8Str);
 			auto& buf = bufs[idx++];

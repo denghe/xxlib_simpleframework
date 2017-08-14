@@ -55,6 +55,7 @@ GetFuncArgsCount
 FuncTupleCaller
 TupleIndexOf
 BufMaker
+Move
 */
 
 
@@ -600,5 +601,17 @@ do																	\
 	{
 		static T Make(char* buf, uint32_t len);
 	};
+
+
+
+	/************************************************************************************/
+	// Move
+	/************************************************************************************/
+
+	template<typename T>
+	T&& Move(T const& o)
+	{
+		return (T&&)o;
+	}
 
 }

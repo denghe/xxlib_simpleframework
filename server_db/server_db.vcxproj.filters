@@ -91,6 +91,9 @@
     <ClInclude Include="..\pkg\PKG_class.h">
       <Filter>gens</Filter>
     </ClInclude>
+    <ClInclude Include="..\xxlib_cpp\xx_func.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="xxlib">

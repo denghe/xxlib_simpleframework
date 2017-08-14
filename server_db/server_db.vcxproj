@@ -103,6 +103,7 @@
     <ClInclude Include="..\xxlib_cpp\xx_cursorpool.h" />
     <ClInclude Include="..\xxlib_cpp\xx_defines.h" />
     <ClInclude Include="..\xxlib_cpp\xx_dict.h" />
+    <ClInclude Include="..\xxlib_cpp\xx_func.h" />
     <ClInclude Include="..\xxlib_cpp\xx_hashutils.h" />
     <ClInclude Include="..\xxlib_cpp\xx_helpers.h" />
     <ClInclude Include="..\xxlib_cpp\xx_links.h" />

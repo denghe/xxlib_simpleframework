@@ -213,6 +213,7 @@ namespace xx
 	{
 		UV* uv;
 		uint32_t uv_workers_index;
+		bool working = false;
 
 		UVWorker(UV* uv);
 		~UVWorker();

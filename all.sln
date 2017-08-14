@@ -29,6 +29,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "xxuvlibex_csharp", "xxuvlib
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{03B66A93-339F-4940-B72F-B7D58B2FC3E5}"
 	ProjectSection(SolutionItems) = preProject
+		docs\fixed_function.hpp = docs\fixed_function.hpp
 		docs\lua_mempool.h = docs\lua_mempool.h
 		README.md = README.md
 		docs\test1.db = docs\test1.db

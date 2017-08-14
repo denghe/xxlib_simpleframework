@@ -704,18 +704,23 @@ namespace xx
 
 	inline int UVWorker::Start()
 	{
-		return uv_queue_work(&uv->loop, &work_req, WorkCB, AfterWorkCB);
+		if (working) return -1;
+		auto r = uv_queue_work(&uv->loop, &work_req, WorkCB, AfterWorkCB);
+		if (!r) working = true;
+		return r;
 	}
 
 	inline void UVWorker::WorkCB(uv_work_t* handle)
 	{
 		auto self = container_of(handle, UVWorker, work_req);
+		assert(self->working);
 		self->OnWork();
 	}
 
 	inline void UVWorker::AfterWorkCB(uv_work_t* handle, int status)
 	{
 		auto self = container_of(handle, UVWorker, work_req);
+		self->working = false;
 		self->OnAfterWork(status);
 	}
 }
