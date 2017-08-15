@@ -14,6 +14,8 @@ namespace xx
 			db->SetPragmaLockingMode(xx::SQLiteLockingModes::Exclusive);
 			if (!db->TableExists("log")) funcs.CreateTable_log();
 		}
+
+		// todo: 缓存 机器名, 服务名, 实例id
 	};
 }
 
