@@ -237,6 +237,8 @@ namespace xx
 		void SetParameter(int parmIdx, BBuffer_v const& buf, bool makeCopy = false);
 		void SetParameter(int parmIdx, String_p const& str, bool makeCopy = false);
 		void SetParameter(int parmIdx, BBuffer_p const& buf, bool makeCopy = false);
+		template<typename EnumType>
+		void SetParameter(int parmIdx, EnumType const& v);
 
 		template<typename ... Parameters>
 		void SetParameters(Parameters const& ... ps);
@@ -558,6 +560,13 @@ namespace xx
 		if (r != SQLITE_OK) owner.ThrowError(r);
 	}
 
+	template<typename EnumType>
+	void SQLiteQuery::SetParameter(int parmIdx, EnumType const& v)
+	{
+		static_assert(std::is_enum<EnumType>::value, "parameter only support sqlite base types and enum types.");
+		if (sizeof(EnumType) <= 4) SetParameter(parmIdx, (int)(typename std::underlying_type<EnumType>::type)v);
+		else SetParameter(parmIdx, (sqlite_int64)(typename std::underlying_type<EnumType>::type)v);
+	}
 
 	template<typename ... Parameters>
 	void SQLiteQuery::SetParameters(Parameters const& ... ps)

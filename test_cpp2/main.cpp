@@ -159,7 +159,6 @@ int main()
 		mp.Cout("errCode = ", errCode, ", lastErrorMessage = ", sql->lastErrorMessage, "\n");
 	}
 
-LabEnd:
 	std::cin.get();
 	return 0;
 }

@@ -19,7 +19,7 @@ public static class GenCPP_SQLite
 #include """ + templateName + @"_class.h""
 #include ""xx_sqlite.h""
 
-namespace DB
+namespace " + templateName + @"
 {");
 
         // 扫带有 [SQLite] 标志的 interface , 生成相应的函数
@@ -64,7 +64,8 @@ namespace " + iface.Namespace + @"
                 var rt = f.ReturnType;
                 var rtn = rt._GetSafeTypeDecl_Cpp(templateName);
 
-                sb.Append(@"
+                var sb2 = new StringBuilder();
+                sb2.Append(@"
 
 
         xx::SQLiteQuery_p query_" + fn + @";" + f._GetDesc_Cpp(8) + @"
@@ -72,34 +73,34 @@ namespace " + iface.Namespace + @"
 
                 if (ps.Length > 0)
                 {
-                    sb.Append(@"
+                    sb2.Append(@"
         ");
                 }
 
-                sb.Append(@"(");
+                sb2.Append(@"(");
                 foreach (var p in ps)
                 {
                     if (p != ps[0])
                     {
-                        sb.Append(",");
+                        sb2.Append(",");
                     }
                     var pt = p.ParameterType;
 
-                    sb.Append(p._GetDesc_Cpp(12) + @"
+                    sb2.Append(p._GetDesc_Cpp(12) + @"
             " + pt._GetSafeTypeDecl_Cpp(templateName) + " const& " + p.Name);
 
                     if (p.HasDefaultValue)
                     {
-                        sb.Append(" = " + p._GetDefaultValueDecl_Cpp(templateName));    // todo: string 支持
+                        sb2.Append(" = " + p._GetDefaultValueDecl_Cpp(templateName));    // todo: string 支持
                     }
                 }
 
                 if (ps.Length > 0)
                 {
-                    sb.Append(@"
+                    sb2.Append(@"
         ");
                 }
-                sb.Append(@")
+                sb2.Append(@")
         {
 			auto& q = query_" + fn + @";
 ");
@@ -130,13 +131,13 @@ namespace " + iface.Namespace + @"
 
                 if (hasList)
                 {
-                    sb.Append(@"
+                    sb2.Append(@"
             s->Clear();");
                     foreach (var o in sqls)
                     {
                         if (o is string)
                         {
-                            sb.Append(@"
+                            sb2.Append(@"
             s->Append(R""=-=(" + o + @")=-="");");
                         }
                         else
@@ -144,16 +145,16 @@ namespace " + iface.Namespace + @"
                             var p = ps[(int)o];
                             var pn = p.Name;
                             var pt = p.ParameterType;
-                            sb.Append(@"
+                            sb2.Append(@"
             s->SQLAppend(" + pn + @");");
                         }
                     }
-                    sb.Append(@"
+                    sb2.Append(@"
             q = sqlite.CreateQuery(s->C_str(), s->dataLen);");
                 }
                 else
                 {
-                    sb.Append(@"
+                    sb2.Append(@"
 			if (!q)
 			{
 				q = sqlite.CreateQuery(R""=-=(" + sqlcombine + @")=-="");
@@ -164,24 +165,24 @@ namespace " + iface.Namespace + @"
                 }
                 else
                 {
-                    sb.Append(@"
+                    sb2.Append(@"
             " + rtn + @" rtv;
             rtv.Create(mp);");
                 }
 
                 if (ps.Where(p => !p.ParameterType._IsList()).Count() > 0)
                 {
-                    sb.Append(@"
+                    sb2.Append(@"
             q->SetParameters(");
                     foreach (var o in sqls)
                     {
                         if (o is string) continue;
                         var p = ps[(int)o];
                         if (p.ParameterType._IsList()) continue;
-                        sb.Append(p.Name + ", ");
+                        sb2.Append(p.Name + ", ");
                     }
-                    sb.Length -= 2;
-                    sb.Append(@");");
+                    sb2.Length -= 2;
+                    sb2.Append(@");");
                 }
 
                 // 根据函数返回值类型，生成不同的代码段。
@@ -200,7 +201,7 @@ namespace " + iface.Namespace + @"
                     // 用户类
                     if (ct._IsUserClass())
                     {
-                        sb.Append(@"
+                        sb2.Append(@"
 			q->Execute([&](xx::SQLiteReader& sr)
             {
 				auto& r = rtv->EmplaceMP();");
@@ -215,20 +216,20 @@ namespace " + iface.Namespace + @"
                             var mn = m.Name;
                             var getfn = mt._GetDataReaderFuncName_Cpp(i);
 
-                            sb.Append(@"
+                            sb2.Append(@"
                 " + (mt._IsSqlNullable() && !m._Has<NotNull>() ? "if (!sr.IsDBNull(0)) " : "") + "r->" + mn + @" = " + getfn + @";");
                         }
                     }
                     // 简单类型
                     else
                     {
-                        sb.Append(@"
+                        sb2.Append(@"
             q->Execute([&](xx::SQLiteReader& sr)
             {
 				" + (ct._IsSqlNullable() ? @"if (sr.IsDBNull(0)) rtv->Emplace();
                 else " : "") + @"rtv->Add(" + ct._GetDataReaderFuncName_Cpp(0) + @");");
                     }
-                    sb.Append(@"
+                    sb2.Append(@"
             });
 			return rtv;");
                 }
@@ -238,7 +239,7 @@ namespace " + iface.Namespace + @"
                     if (rt._IsVoid())
                     {
                         // 无返回值
-                        sb.Append(@"
+                        sb2.Append(@"
             q->Execute();");
                     }
                     // 用户类
@@ -248,7 +249,7 @@ namespace " + iface.Namespace + @"
                         if (rtfs.Count() == 0)
                             throw new Exception("the class's fields can't be empty");
 
-                        sb.Append(@"
+                        sb2.Append(@"
 			q->Execute([&](xx::SQLiteReader& sr)
             {");
                         for (int i = 0; i < rtfs.Count; ++i)
@@ -258,30 +259,39 @@ namespace " + iface.Namespace + @"
                             var mn = m.Name;
                             var getfn = mt._GetDataReaderFuncName_Cpp(i);
 
-                            sb.Append(@"
+                            sb2.Append(@"
                 " + (mt._IsSqlNullable() && !m._Has<NotNull>() ? "if (!sr.IsDBNull(0)) " : "") + "rtv->" + mn + @" = " + getfn + @";");
                         }
-                        sb.Append(@"
+                        sb2.Append(@"
             });
             return rtv;");
                     }
                     // 简单类型
                     else
                     {
-                        sb.Append(@"
+                        sb2.Append(@"
             q->Execute([&](xx::SQLiteReader& sr)
             {");
-                        sb.Append(@"
+                        sb2.Append(@"
                 " + (rt._IsSqlNullable() ? "if (!sr.IsDBNull(0)) " : "") + "rtv = " + rt._GetDataReaderFuncName_Cpp(0) + @";");
-                        sb.Append(@"
+                        sb2.Append(@"
             });
             return rtv;");
                     }
                 }
 
                 // func }
-                sb.Append(@"
+                sb2.Append(@"
         }");
+
+                sb.Append(sb2);
+
+                // if 有 string 参数, 再生成一份 char const* 版
+                if(ps.Any(p=>p.ParameterType._IsString()))
+                {
+                    sb.Append(sb2.Replace("query_", "query__").Replace("xx::String_p", "char const*"));
+                }
+
             }
 
 

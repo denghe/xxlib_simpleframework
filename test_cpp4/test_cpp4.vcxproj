@@ -88,7 +88,44 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\sqlite3\sqlite3.c" />
     <ClCompile Include="main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\db\LOGDB_class.h" />
+    <ClInclude Include="..\db\LOGDB_sqlite.h" />
+    <ClInclude Include="..\sqlite3\sqlite3.h" />
+    <ClInclude Include="..\sqlite3\sqlite3ext.h" />
+    <ClInclude Include="..\xxlib_cpp\ajson.hpp" />
+    <ClInclude Include="..\xxlib_cpp\xx_bbqueue.h" />
+    <ClInclude Include="..\xxlib_cpp\xx_bbuffer.h" />
+    <ClInclude Include="..\xxlib_cpp\xx_bytesutils.h" />
+    <ClInclude Include="..\xxlib_cpp\xx_charsutils.h" />
+    <ClInclude Include="..\xxlib_cpp\xx_cursorpool.h" />
+    <ClInclude Include="..\xxlib_cpp\xx_defines.h" />
+    <ClInclude Include="..\xxlib_cpp\xx_dict.h" />
+    <ClInclude Include="..\xxlib_cpp\xx_func.h" />
+    <ClInclude Include="..\xxlib_cpp\xx_hashutils.h" />
+    <ClInclude Include="..\xxlib_cpp\xx_helpers.h" />
+    <ClInclude Include="..\xxlib_cpp\xx_links.h" />
+    <ClInclude Include="..\xxlib_cpp\xx_list.h" />
+    <ClInclude Include="..\xxlib_cpp\xx_luahelper.h" />
+    <ClInclude Include="..\xxlib_cpp\xx_memheader.h" />
+    <ClInclude Include="..\xxlib_cpp\xx_mempool.h" />
+    <ClInclude Include="..\xxlib_cpp\xx_mpobject.h" />
+    <ClInclude Include="..\xxlib_cpp\xx_ptr.h" />
+    <ClInclude Include="..\xxlib_cpp\xx_queue.h" />
+    <ClInclude Include="..\xxlib_cpp\xx_random.h" />
+    <ClInclude Include="..\xxlib_cpp\xx_ref.h" />
+    <ClInclude Include="..\xxlib_cpp\xx_sqlite.h" />
+    <ClInclude Include="..\xxlib_cpp\xx_string.h" />
+    <ClInclude Include="..\xxlib_cpp\xx_structs.h" />
+    <ClInclude Include="..\xxlib_cpp\xx_timer.h" />
+    <ClInclude Include="..\xxlib_cpp\xx_uv.h" />
+    <ClInclude Include="..\xxlib_cpp\xx_uv.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="..\xxlib_cpp\xx.natvis" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

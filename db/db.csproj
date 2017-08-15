@@ -42,6 +42,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DB_class.cs" />
+    <Compile Include="LOGDB_class.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -53,6 +54,8 @@
   <ItemGroup>
     <Content Include="DB_class.h" />
     <Content Include="DB_sqlite.h" />
+    <Content Include="LOGDB_class.h" />
+    <Content Include="LOGDB_sqlite.h" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

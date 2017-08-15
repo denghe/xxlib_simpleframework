@@ -1,0 +1,120 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="..\sqlite3\sqlite3.c">
+      <Filter>sqlite3</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="sqlite3">
+      <UniqueIdentifier>{d0d8ec5f-a624-442b-b916-b8c181ab253a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="xxlib">
+      <UniqueIdentifier>{bffbaff4-44b7-437a-bdbf-7de0a74d1c29}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="gens">
+      <UniqueIdentifier>{9c5dc8c6-eabc-4695-bda3-2886cecf0b17}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\sqlite3\sqlite3.h">
+      <Filter>sqlite3</Filter>
+    </ClInclude>
+    <ClInclude Include="..\sqlite3\sqlite3ext.h">
+      <Filter>sqlite3</Filter>
+    </ClInclude>
+    <ClInclude Include="..\xxlib_cpp\ajson.hpp">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\xxlib_cpp\xx_bbqueue.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\xxlib_cpp\xx_bbuffer.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\xxlib_cpp\xx_bytesutils.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\xxlib_cpp\xx_charsutils.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\xxlib_cpp\xx_cursorpool.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\xxlib_cpp\xx_defines.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\xxlib_cpp\xx_dict.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\xxlib_cpp\xx_func.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\xxlib_cpp\xx_hashutils.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\xxlib_cpp\xx_helpers.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\xxlib_cpp\xx_links.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\xxlib_cpp\xx_list.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\xxlib_cpp\xx_luahelper.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\xxlib_cpp\xx_memheader.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\xxlib_cpp\xx_mempool.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\xxlib_cpp\xx_mpobject.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\xxlib_cpp\xx_ptr.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\xxlib_cpp\xx_queue.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\xxlib_cpp\xx_random.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\xxlib_cpp\xx_ref.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\xxlib_cpp\xx_sqlite.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\xxlib_cpp\xx_string.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\xxlib_cpp\xx_structs.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\xxlib_cpp\xx_timer.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\xxlib_cpp\xx_uv.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\xxlib_cpp\xx_uv.hpp">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\db\LOGDB_class.h">
+      <Filter>gens</Filter>
+    </ClInclude>
+    <ClInclude Include="..\db\LOGDB_sqlite.h">
+      <Filter>gens</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="..\xxlib_cpp\xx.natvis">
+      <Filter>xxlib</Filter>
+    </Natvis>
+  </ItemGroup>
+</Project>

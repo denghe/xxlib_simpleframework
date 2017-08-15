@@ -57,6 +57,10 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\dbgen_template_LOGDB\dbgen_template_LOGDB.csproj">
+      <Project>{4a51e5a3-6a23-46e3-acd8-691ca3c5e9e2}</Project>
+      <Name>dbgen_template_LOGDB</Name>
+    </ProjectReference>
     <ProjectReference Include="..\gen_library\gen_library.csproj">
       <Project>{7f62e40f-e079-46d2-85e9-661fce50168c}</Project>
       <Name>gen_library</Name>

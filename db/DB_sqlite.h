@@ -1,4 +1,4 @@
-﻿ #pragma once
+﻿#pragma once
 #include "DB_class.h"
 #include "xx_sqlite.h"
 
@@ -170,6 +170,35 @@ CREATE TABLE [manage_bind_account_role](
             });
             return rtv;
         }
+
+
+        xx::SQLiteQuery_p query__GetAccountByUsername;
+        // 根据用户名查找并返回账号. 未找到将返回 null
+        DB::Game::Account_p GetAccountByUsername
+        (
+            char const* const& username
+        )
+        {
+			auto& q = query__GetAccountByUsername;
+
+			if (!q)
+			{
+				q = sqlite.CreateQuery(R"=-=(
+    select [id], [username], [password]
+      from [game_account]
+     where [username] = ?)=-=");
+			}
+            DB::Game::Account_p rtv;
+            rtv.Create(mp);
+            q->SetParameters(username);
+			q->Execute([&](xx::SQLiteReader& sr)
+            {
+                rtv->id = sr.ReadInt64(0);
+                rtv->username = mp.Create<xx::String>(sr.ReadString(1));
+                rtv->password = mp.Create<xx::String>(sr.ReadString(2));
+            });
+            return rtv;
+        }
     };
     // 管理后台相关
     struct SQLiteManageFuncs
@@ -205,6 +234,25 @@ CREATE TABLE [manage_bind_account_role](
         }
 
 
+        xx::SQLiteQuery_p query__InsertAccount;
+        // 插入一条 账号. 可能因为 username 已存在而失败
+        void InsertAccount
+        (
+            char const* const& username,
+            char const* const& password
+        )
+        {
+			auto& q = query__InsertAccount;
+
+			if (!q)
+			{
+				q = sqlite.CreateQuery(R"=-=(insert into [manage_account] ([username], [password]) values (?, ?))=-=");
+			}
+            q->SetParameters(username, password);
+            q->Execute();
+        }
+
+
         xx::SQLiteQuery_p query_InsertPermission;
         // 插入一条 权限. 可能因为 name 已存在而失败
         void InsertPermission
@@ -226,6 +274,27 @@ CREATE TABLE [manage_bind_account_role](
         }
 
 
+        xx::SQLiteQuery_p query__InsertPermission;
+        // 插入一条 权限. 可能因为 name 已存在而失败
+        void InsertPermission
+        (
+            int64_t const& id,
+            char const* const& name,
+            char const* const& group,
+            char const* const& desc
+        )
+        {
+			auto& q = query__InsertPermission;
+
+			if (!q)
+			{
+				q = sqlite.CreateQuery(R"=-=(insert into [manage_permission] ([id], [name], [group], [desc]) values (?, ?, ?, ?))=-=");
+			}
+            q->SetParameters(id, name, group, desc);
+            q->Execute();
+        }
+
+
         xx::SQLiteQuery_p query_InsertRole;
         // 插入一条 身份. 可能因为 id 已存在, name 已存在而失败
         void InsertRole
@@ -236,6 +305,26 @@ CREATE TABLE [manage_bind_account_role](
         )
         {
 			auto& q = query_InsertRole;
+
+			if (!q)
+			{
+				q = sqlite.CreateQuery(R"=-=(insert into [manage_role] ([id], [name], [desc]) values (?, ?, ?))=-=");
+			}
+            q->SetParameters(id, name, desc);
+            q->Execute();
+        }
+
+
+        xx::SQLiteQuery_p query__InsertRole;
+        // 插入一条 身份. 可能因为 id 已存在, name 已存在而失败
+        void InsertRole
+        (
+            int64_t const& id,
+            char const* const& name,
+            char const* const& desc
+        )
+        {
+			auto& q = query__InsertRole;
 
 			if (!q)
 			{
@@ -303,6 +392,25 @@ CREATE TABLE [manage_bind_account_role](
         }
 
 
+        xx::SQLiteQuery_p query__UpdateAccount_ChangePassword;
+        // 改密码. 可能因 找不到 id 而失败
+        void UpdateAccount_ChangePassword
+        (
+            int64_t const& id,
+            char const* const& newPassword
+        )
+        {
+			auto& q = query__UpdateAccount_ChangePassword;
+
+			if (!q)
+			{
+				q = sqlite.CreateQuery(R"=-=(update [manage_account] set [password] = ? where [id] = ?)=-=");
+			}
+            q->SetParameters(newPassword, id);
+            q->Execute();
+        }
+
+
         xx::SQLiteQuery_p query_UpdateAccount_ChangeUsername;
         // 改用户名. 可能因 找不到 id 或 新 username 已存在而失败
         void UpdateAccount_ChangeUsername
@@ -312,6 +420,25 @@ CREATE TABLE [manage_bind_account_role](
         )
         {
 			auto& q = query_UpdateAccount_ChangeUsername;
+
+			if (!q)
+			{
+				q = sqlite.CreateQuery(R"=-=(update [manage_account] set [username] = ? where [id] = ?)=-=");
+			}
+            q->SetParameters(newUsername, id);
+            q->Execute();
+        }
+
+
+        xx::SQLiteQuery_p query__UpdateAccount_ChangeUsername;
+        // 改用户名. 可能因 找不到 id 或 新 username 已存在而失败
+        void UpdateAccount_ChangeUsername
+        (
+            int64_t const& id,
+            char const* const& newUsername
+        )
+        {
+			auto& q = query__UpdateAccount_ChangeUsername;
 
 			if (!q)
 			{
@@ -342,6 +469,26 @@ CREATE TABLE [manage_bind_account_role](
         }
 
 
+        xx::SQLiteQuery_p query__UpdateRole;
+        // 更新 身份 数据. 可能因 找不到 id 或 新 name 已存在而失败
+        void UpdateRole
+        (
+            int64_t const& id,
+            char const* const& newName,
+            char const* const& newDesc
+        )
+        {
+			auto& q = query__UpdateRole;
+
+			if (!q)
+			{
+				q = sqlite.CreateQuery(R"=-=(update [manage_role] set [name] = ?, [desc] = ? where [id] = ?)=-=");
+			}
+            q->SetParameters(newName, newDesc, id);
+            q->Execute();
+        }
+
+
         xx::SQLiteQuery_p query_UpdatePermission;
         // 更新 权限 数据. 可能因 找不到 id 或 新 name 已存在而失败
         void UpdatePermission
@@ -353,6 +500,27 @@ CREATE TABLE [manage_bind_account_role](
         )
         {
 			auto& q = query_UpdatePermission;
+
+			if (!q)
+			{
+				q = sqlite.CreateQuery(R"=-=(update [manage_permission] set [group] = ?, [name] = ?, [desc] = ? where [id] = ?)=-=");
+			}
+            q->SetParameters(newGroup, newName, newDesc, id);
+            q->Execute();
+        }
+
+
+        xx::SQLiteQuery_p query__UpdatePermission;
+        // 更新 权限 数据. 可能因 找不到 id 或 新 name 已存在而失败
+        void UpdatePermission
+        (
+            int64_t const& id,
+            char const* const& newGroup,
+            char const* const& newName,
+            char const* const& newDesc
+        )
+        {
+			auto& q = query__UpdatePermission;
 
 			if (!q)
 			{
@@ -593,6 +761,32 @@ CREATE TABLE [manage_bind_account_role](
         )
         {
 			auto& q = query_SelectAccountByUsername;
+
+			if (!q)
+			{
+				q = sqlite.CreateQuery(R"=-=(select [id], [username], [password] from [manage_account] where [username] = ?)=-=");
+			}
+            DB::Manage::Account_p rtv;
+            rtv.Create(mp);
+            q->SetParameters(username);
+			q->Execute([&](xx::SQLiteReader& sr)
+            {
+                rtv->id = sr.ReadInt64(0);
+                rtv->username = mp.Create<xx::String>(sr.ReadString(1));
+                rtv->password = mp.Create<xx::String>(sr.ReadString(2));
+            });
+            return rtv;
+        }
+
+
+        xx::SQLiteQuery_p query__SelectAccountByUsername;
+        // 根据用户名查找并返回一条账号记录. 未找到将返回 null
+        DB::Manage::Account_p SelectAccountByUsername
+        (
+            char const* const& username
+        )
+        {
+			auto& q = query__SelectAccountByUsername;
 
 			if (!q)
 			{
