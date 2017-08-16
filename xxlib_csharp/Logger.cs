@@ -132,7 +132,7 @@ namespace xx
         /// </summary>
         public string WriteAll(LogLevel level, long time, string machine, string service, string instanceId, string title, long opcode, string desc)
         {
-            Debug.Assert(disposed);
+            Debug.Assert(!disposed);
 
             var hMachine = GCHandle.Alloc(Encoding.UTF8.GetBytes(machine), GCHandleType.Pinned);
             var hService = GCHandle.Alloc(Encoding.UTF8.GetBytes(service), GCHandleType.Pinned);
@@ -159,7 +159,7 @@ namespace xx
         /// </summary>
         public string Write(LogLevel level, string title, long opcode, string desc)
         {
-            Debug.Assert(disposed);
+            Debug.Assert(!disposed);
 
             var hMachine = GCHandle.Alloc(Encoding.UTF8.GetBytes(title), GCHandleType.Pinned);
             var hService = GCHandle.Alloc(Encoding.UTF8.GetBytes(desc), GCHandleType.Pinned);
@@ -180,7 +180,7 @@ namespace xx
         /// </summary>
         public void SetDefaultValue(string machine, string service, string instanceId)
         {
-            Debug.Assert(disposed);
+            Debug.Assert(!disposed);
 
             var hMachine = GCHandle.Alloc(Encoding.UTF8.GetBytes(machine), GCHandleType.Pinned);
             var hService = GCHandle.Alloc(Encoding.UTF8.GetBytes(service), GCHandleType.Pinned);
@@ -203,7 +203,7 @@ namespace xx
         /// </summary>
         public void BeginTrans()
         {
-            Debug.Assert(disposed);
+            Debug.Assert(!disposed);
             LogInterop.xxlogBeginTrans(ctx);
         }
 
@@ -212,7 +212,7 @@ namespace xx
         /// </summary>
         public void EndTrans()
         {
-            Debug.Assert(disposed);
+            Debug.Assert(!disposed);
             LogInterop.xxlogEndTrans(ctx);
         }
 
@@ -322,6 +322,7 @@ namespace xx
 
         public void WriteAll(LogLevel level, long time, string machine, string service, string instanceId, string title, long opcode, string desc)
         {
+            Debug.Assert(!disposed);
             logMsgs.Enqueue(new Log
             {
                 id = 1,             // 用来标记是通过 WaitAll 写入的
@@ -338,6 +339,7 @@ namespace xx
 
         public void Write(LogLevel level, string title, long opcode, string desc)
         {
+            Debug.Assert(!disposed);
             logMsgs.Enqueue(new Log
             {
                 id = 0,             // 用来标记是通过 Write 写入的
@@ -351,6 +353,7 @@ namespace xx
 
         public void SetDefaultValue(string machine, string service, string instanceId)
         {
+            Debug.Assert(!disposed);
             logMsgs.Enqueue(new Log
             {
                 id = 2,             // 用来标记是通过 SetDefaultValue 写入的
