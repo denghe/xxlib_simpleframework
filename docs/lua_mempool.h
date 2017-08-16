@@ -38,7 +38,7 @@ struct Lua_MemPool
 			while (header)
 			{
 				auto next = *(void**)header;
-				std::free(header);
+				free(header);
 				header = next;
 			}
 		}
@@ -53,7 +53,7 @@ struct Lua_MemPool
 
 		auto p = headers[idx];
 		if (p) headers[idx] = *(void**)p;
-		else p = std::malloc(siz);
+		else p = malloc(siz);
 
 		*(size_t*)p = idx;
 		return (void**)p + 1;

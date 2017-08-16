@@ -230,17 +230,17 @@ inline void Peer::OnReceivePackage(xx::BBuffer& bb)
 		{
 			std::cout << "Result, thread id = " << std::this_thread::get_id() << std::endl;
 
-			// handle( rtv )
-			if (peer && peer->state == xx::UVPeerStates::Connected)			// 如果 peer 还活着, 回发
-			{
-				//peer->SendPackages
-			}
+		// handle( rtv )
+		if (peer && peer->state == xx::UVPeerStates::Connected)			// 如果 peer 还活着, 回发
+		{
+			//peer->SendPackages
+		}
 
-			// 到工作线程去回收结果, 设置结果回收函数( 将 rtv 移进去即可 )
-			service->SetResultKiller([rtv = xx::Move(rtv)]
-			{
-				std::cout << "ResultKiller, thread id = " << std::this_thread::get_id() << std::endl;
-			});  			
+		// 到工作线程去回收结果, 设置结果回收函数( 将 rtv 移进去即可 )
+		service->SetResultKiller([rtv = xx::Move(rtv)]
+		{
+			std::cout << "ResultKiller, thread id = " << std::this_thread::get_id() << std::endl;
+		});
 		});
 	});
 }
@@ -249,68 +249,109 @@ inline void Peer::OnReceivePackage(xx::BBuffer& bb)
 
 /******************************************************************************/
 
-struct Ctx
-{
-	xx::Func<void()> f1;
-	xx::Func<void()> f2;
-	xx::Func<void()> f3;
-};
-struct Foo
-{
-	bool val;
-	Foo(bool val = false) : val(val)
-	{
-		std::cout << "Foo() val = " << (val ? "true" : "false") << std::endl;
-	}
-	Foo(Foo const& o) = delete;
-	Foo(Foo && o)
-		: val(false)
-	{
-		std::swap(val, o.val);
-		std::cout << "Foo(Foo && o)" << std::endl;
-	}
-	~Foo()
-	{
-		std::cout << "~Foo() val = " << (val ? "true" : "false") << std::endl;
-	}
-};
+#include "xx_logger.h"
 
-int main()
+std::unique_ptr<xx::Logger> logger;
+
+int main(int argc, char** argv)
 {
+	int64_t count = 1000000;
+	std::cout << "start." << std::endl;
+	logger.reset(new xx::Logger((std::string(argv[0]) + ".log.db").c_str()));
+	std::cout << "new Logger." << std::endl;
+	xx::Stopwatch sw;
+
+	std::thread t([&]
 	{
-		Ctx ctx;
+		std::cout << "begin fill." << std::endl;
+		for (int64_t i = 0; i < count/1000; ++i)
 		{
-			Foo foo(true);
-			ctx.f1 = [&ctx, foo = xx::Move(foo)]()mutable
+			for (int64_t j = 0; j < 1000; ++j)
 			{
-				std::cout << "f1()" << std::endl;
-				ctx.f2 = [&ctx, foo = xx::Move(foo)]()mutable
-				{
-					std::cout << "f2()" << std::endl;
-					ctx.f3 = [&ctx, foo = xx::Move(foo)]()mutable
-					{
-						std::cout << "f3()" << std::endl;
-					};
-					std::cout << "~f2()" << std::endl;
-				};
-				std::cout << "~f1()" << std::endl;
-			};
-			std::cout << "1111111111" << std::endl;
-			ctx.f1();
-			ctx.f1 = nullptr;
-			std::cout << "2222222222" << std::endl;
-			ctx.f2();
-			ctx.f2 = nullptr;
-			std::cout << "3333333333" << std::endl;
-			ctx.f3();
-			ctx.f3 = nullptr;
-			std::cout << "4444444444" << std::endl;
+				logger->WriteAll(xx::LogLevel::Info, xx::GetNowDateTimeTicks(), "pc1", "server_db", "1", "title", i, "aksdjflaksdjflkasjdflkjasdfasdf");
+			}
+			Sleep(1);
 		}
-		std::cout << "5555555555" << std::endl;
-	}
+		std::cout << "filled." << std::endl;
+	});
+	t.detach();
 
+	std::cout << "while counter." << std::endl;
+	while (logger->counter < count) Sleep(1);
+
+	std::cout << "press any quit. sw = " << sw() << std::endl;
 	return 0;
 }
+
+
+
+
+
+//
+//struct Ctx
+//{
+//	xx::Func<void()> f1;
+//	xx::Func<void()> f2;
+//	xx::Func<void()> f3;
+//};
+//struct Foo
+//{
+//	bool val;
+//	Foo(bool val = false) : val(val)
+//	{
+//		std::cout << "Foo() val = " << (val ? "true" : "false") << std::endl;
+//	}
+//	Foo(Foo const& o) = delete;
+//	Foo(Foo && o)
+//		: val(false)
+//	{
+//		std::swap(val, o.val);
+//		std::cout << "Foo(Foo && o)" << std::endl;
+//	}
+//	~Foo()
+//	{
+//		std::cout << "~Foo() val = " << (val ? "true" : "false") << std::endl;
+//	}
+//};
+//
+//int main()
+//{
+//	{
+//		Ctx ctx;
+//		{
+//			Foo foo(true);
+//			ctx.f1 = [&ctx, foo = xx::Move(foo)]
+//			{
+//				std::cout << "f1()" << std::endl;
+//			ctx.f2 = [&ctx, foo = xx::Move(foo)]
+//			{
+//				std::cout << "f2()" << std::endl;
+//			ctx.f3 = [&ctx, foo = xx::Move(foo)]
+//			{
+//				std::cout << "f3()" << std::endl;
+//			};
+//			std::cout << "~f2()" << std::endl;
+//			};
+//			std::cout << "~f1()" << std::endl;
+//			};
+//			std::cout << "1111111111" << std::endl;
+//			ctx.f1();
+//			ctx.f1 = nullptr;
+//			std::cout << "2222222222" << std::endl;
+//			ctx.f2();
+//			ctx.f2 = nullptr;
+//			std::cout << "3333333333" << std::endl;
+//			ctx.f3();
+//			ctx.f3 = nullptr;
+//			std::cout << "4444444444" << std::endl;
+//		}
+//		std::cout << "5555555555" << std::endl;
+//	}
+//
+//	return 0;
+//}
+
+
 
 
 

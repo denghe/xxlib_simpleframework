@@ -93,6 +93,8 @@
   <ItemGroup>
     <ClInclude Include="..\db\DB_class.h" />
     <ClInclude Include="..\db\DB_sqlite.h" />
+    <ClInclude Include="..\db\LOGDB_class.h" />
+    <ClInclude Include="..\db\LOGDB_sqlite.h" />
     <ClInclude Include="..\pkg\PKG_class.h" />
     <ClInclude Include="..\sqlite3\sqlite3.h" />
     <ClInclude Include="..\sqlite3\sqlite3ext.h" />
@@ -108,6 +110,7 @@
     <ClInclude Include="..\xxlib_cpp\xx_helpers.h" />
     <ClInclude Include="..\xxlib_cpp\xx_links.h" />
     <ClInclude Include="..\xxlib_cpp\xx_list.h" />
+    <ClInclude Include="..\xxlib_cpp\xx_logger.h" />
     <ClInclude Include="..\xxlib_cpp\xx_luahelper.h" />
     <ClInclude Include="..\xxlib_cpp\xx_memheader.h" />
     <ClInclude Include="..\xxlib_cpp\xx_mempool.h" />

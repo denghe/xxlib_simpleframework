@@ -9,12 +9,13 @@ public static class Program
         var sw = Stopwatch.StartNew();
 
         var log = new xx.ConcurrentLogger();
+        log.batchSize = 10000;
 
         for (int j = 0; j < 1000000; j++)
         {
             log.WriteAll(xx.LogLevel.Info, DateTime.Now.Ticks,
                 "pc1", "test_csharp3", Guid.NewGuid().ToString(),
-                "asdfjlaskdjf", 22, "hi 中文hello中文hello !"
+                "asdfjlaskdjf", 22, @"hi 中文hello中文hello !"
             );
         }
 

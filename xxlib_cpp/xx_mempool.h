@@ -80,7 +80,7 @@ namespace xx
 			void* p;
 			for (auto& stack : ptrstacks)
 			{
-				while (stack.TryPop(p)) std::free(p);
+				while (stack.TryPop(p)) free(p);
 			}
 		}
 
@@ -99,7 +99,7 @@ namespace xx
 			if (siz > (size_t(1) << idx)) siz = size_t(1) << ++idx;
 
 			void* p;
-			if (!ptrstacks[idx].TryPop(p)) p = std::malloc(siz);
+			if (!ptrstacks[idx].TryPop(p)) p = malloc(siz);
 
 			auto h = (MemHeader_VersionNumber*)p;								// 指到内存头
 			h->versionNumber = ++versionNumber;

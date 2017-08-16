@@ -1,5 +1,5 @@
 #include "xxloglib.h"
-#include "db/LOGDB_sqlite.h"
+#include "xx_logger.h"
 
 BOOL APIENTRY DllMain(HMODULE hModule,
 	DWORD  ul_reason_for_call,
@@ -17,11 +17,12 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 	return TRUE;
 }
 
+// 专门写一份供 C# 用, C# 自己管理线程和内存队列
 struct Logger
 {
 	xx::MemPool mp;
 	xx::SQLite_v db;
-	LOGDB::SQLiteFuncs funcs;
+	xx::LogFuncs funcs;
 	xx::String_v machine;
 	xx::String_v service;
 	xx::String_v instanceId;
@@ -33,9 +34,6 @@ struct Logger
 		, service(mp)
 		, instanceId(mp)
 	{
-		db->SetPragmaSynchronousType(xx::SQLiteSynchronousTypes::Off);
-		db->SetPragmaJournalMode(xx::SQLiteJournalModes::Off);
-		db->SetPragmaLockingMode(xx::SQLiteLockingModes::Exclusive);
 		if (!db->TableExists("log")) funcs.CreateTable_log();
 	}
 };
@@ -60,7 +58,7 @@ XXLOGLIB_API char const* xxlogWriteAll(void* ctx, int level, long long time, cha
 	auto str = "";
 	try
 	{
-		self.funcs.InsertLog((LOGDB::Level const&)level, time, (machine ? machine : str), (service ? service : str), (instanceId ? instanceId : str), (title ? title : str), opcode, (desc ? desc : str));
+		self.funcs.InsertLog((xx::LogLevel const&)level, time, (machine ? machine : str), (service ? service : str), (instanceId ? instanceId : str), (title ? title : str), opcode, (desc ? desc : str));
 	}
 	catch (...)
 	{

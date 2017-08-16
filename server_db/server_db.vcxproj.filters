@@ -94,6 +94,15 @@
     <ClInclude Include="..\xxlib_cpp\xx_func.h">
       <Filter>xxlib</Filter>
     </ClInclude>
+    <ClInclude Include="..\db\LOGDB_class.h">
+      <Filter>gens</Filter>
+    </ClInclude>
+    <ClInclude Include="..\db\LOGDB_sqlite.h">
+      <Filter>gens</Filter>
+    </ClInclude>
+    <ClInclude Include="..\xxlib_cpp\xx_logger.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="xxlib">
