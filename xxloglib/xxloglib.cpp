@@ -41,7 +41,7 @@ struct Logger
 };
 
 // 根据文件名 创建日志 db 文件. 成功返回 Logger 的指针 ctx. 失败返回 空
-XXLOGLIB_API void* XxLogNew(char const* fn)
+XXLOGLIB_API void* xxlogNew(char const* fn)
 {
 	try
 	{
@@ -54,7 +54,7 @@ XXLOGLIB_API void* XxLogNew(char const* fn)
 }
 
 // 直接传所有日志参数, 记录日志. 返回 nullptr 表示成功( 失败返回错误信息 )
-XXLOGLIB_API char const* XxLogWriteAll(void* ctx, int level, long long time, char const* machine, char const* service, char const* instanceId, char const* title, long long opcode, char const* desc)
+XXLOGLIB_API char const* xxlogWriteAll(void* ctx, int level, long long time, char const* machine, char const* service, char const* instanceId, char const* title, long long opcode, char const* desc)
 {
 	auto& self = *(Logger*)ctx;
 	auto str = "";
@@ -69,25 +69,54 @@ XXLOGLIB_API char const* XxLogWriteAll(void* ctx, int level, long long time, cha
 	return nullptr;
 }
 
+// 记录日志( 相比 WriteAll 缺失的参数 会去读默认值 ). 返回 nullptr 表示成功( 失败返回错误信息 )
+XXLOGLIB_API char const* xxlogWrite(void* ctx, int level, char const* title, long long opcode, char const* desc)
+{
+	auto& self = *(Logger*)ctx;
+	return xxlogWriteAll(ctx, level, xx::GetNowDateTimeTicks(), self.machine->buf, self.service->buf, self.instanceId->buf, title, opcode, desc);
+}
+
 // 设置一些不容易变化的项目的默认值, 以便使用 Write 时能反复写入这些数据 而不需要再传
-XXLOGLIB_API void XxLogSetDefaultValue(void* ctx, char const* machine, char const* service, char const* instanceId)
+XXLOGLIB_API void xxlogSetDefaultValue(void* ctx, char const* machine, char const* service, char const* instanceId)
 {
 	auto& self = *(Logger*)ctx;
 	self.machine->Assign(machine); self.machine->C_str();
 	self.service->Assign(service); self.service->C_str();
 	self.instanceId->Assign(instanceId); self.instanceId->C_str();
-
 }
 
-// 记录日志( 相比 WriteAll 缺失的参数 会去读默认值 ). 返回 nullptr 表示成功( 失败返回错误信息 )
-XXLOGLIB_API char const* XxLogWrite(void* ctx, int level, char const* title, long long opcode, char const* desc)
+// 开始批写( 启动事务, 合并写入批次, 能提升性能, 但增加了数据损坏的可能性 ). 返回 nullptr 表示成功( 失败返回错误信息 )
+XXLOGLIB_API char const* xxlogBeginTrans(void* ctx)
 {
 	auto& self = *(Logger*)ctx;
-	return XxLogWriteAll(ctx, level, xx::GetNowDateTimeTicks(), self.machine->buf, self.service->buf, self.instanceId->buf, title, opcode, desc);
+	try
+	{
+		self.db->BeginTransaction();
+	}
+	catch (...)
+	{
+		return self.db->lastErrorMessage;
+	}
+	return nullptr;
+}
+
+// 结束批写( 提交事务 ). 返回 nullptr 表示成功( 失败返回错误信息 )
+XXLOGLIB_API char const* xxlogEndTrans(void* ctx)
+{
+	auto& self = *(Logger*)ctx;
+	try
+	{
+		self.db->EndTransaction();
+	}
+	catch (...)
+	{
+		return self.db->lastErrorMessage;
+	}
+	return nullptr;
 }
 
 // 析构 Logger
-XXLOGLIB_API void XxLogDelete(void* ctx)
+XXLOGLIB_API void xxlogDelete(void* ctx)
 {
 	delete (Logger*)ctx;
 }
