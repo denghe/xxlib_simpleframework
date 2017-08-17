@@ -202,12 +202,12 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
 		MemPool mp2;
 		Queue_v<Log_p> logMsgs2;		// 切换使用
 
-		Queue<Log_p>* logMsgs;		// 指向当前正在使用的 logMsgs
+		Queue<Log_p>* logMsgs;			// 指向当前正在使用的 logMsgs
 		std::mutex mtx;
 
-
-		int64_t counter = 0;
-		bool disposing = false;
+		int64_t writeLimit = 1000000;	// 当前队列写入深度如果超过这个值就不再写入
+		int64_t counter = 0;			// 总写入量的统计值
+		bool disposing = false;			// 通知后台线程退出的标志位
 
 		Logger(char const* const& fn)
 			: db(mp, fn)
@@ -290,11 +290,13 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
 		}
 
 		template<typename MachineType, typename ServiceType, typename InstanceIdType, typename TitleType, typename DescType>
-		void WriteAll(LogLevel const& level, int64_t const& time
+		bool WriteAll(LogLevel const& level, int64_t const& time
 			, MachineType const& machine, ServiceType const& service, InstanceIdType const& instanceId
 			, TitleType const& title, int64_t const& opcode, DescType const& desc)
 		{
 			std::lock_guard<std::mutex> lg(mtx);
+			if (logMsgs->Count() > writeLimit) return false;
+
 			auto& mp = logMsgs->mempool();
 			auto o = mp.CreatePtr<Log>();
 
@@ -309,12 +311,15 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
 			o->desc.Create(mp, desc);
 
 			logMsgs->Emplace(std::move(o));
+			return true;
 		}
 
 		template<typename TitleType, typename DescType>
-		void Write(LogLevel level, TitleType const& title, int64_t const& opcode, DescType const& desc)
+		bool Write(LogLevel level, TitleType const& title, int64_t const& opcode, DescType const& desc)
 		{
 			std::lock_guard<std::mutex> lg(mtx);
+			if (logMsgs->Count() > writeLimit) return false;
+
 			auto& mp = logMsgs->mempool();
 			auto o = mp.CreatePtr<Log>();
 
@@ -331,12 +336,15 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
 			o->desc.Create(mp, desc);
 
 			logMsgs->Emplace(std::move(o));
+			return true;
 		}
 
 		template<typename MachineType, typename ServiceType, typename InstanceIdType>
-		void SetDefaultValue(MachineType const& machine, ServiceType const& service, InstanceIdType const& instanceId)
+		bool SetDefaultValue(MachineType const& machine, ServiceType const& service, InstanceIdType const& instanceId)
 		{
 			std::lock_guard<std::mutex> lg(mtx);
+			if (logMsgs->Count() > writeLimit) return false;
+
 			auto& mp = logMsgs->mempool();
 			auto o = mp.CreatePtr<Log>();
 
@@ -346,6 +354,7 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
 			o->instanceId.Create(mp, instanceId);
 
 			logMsgs->Emplace(std::move(o));
+			return true;
 		}
 	};
 }

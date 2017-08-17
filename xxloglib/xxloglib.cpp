@@ -17,6 +17,63 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 	return TRUE;
 }
 
+
+
+
+// 根据文件名 创建日志 db 文件. 成功返回 Logger 的指针 ctx. 失败返回 空
+XXLOGLIB_API void* xxlog2New(char const* fn)
+{
+	try
+	{
+		return new xx::Logger(fn);
+	}
+	catch (...)
+	{
+		return nullptr;
+	}
+}
+
+// todo: 尝试 char* 转为 uint16_t* 再转为 utf8, 不用再在 C# 那边做, C# 那边直接 string
+
+// 直接传所有日志参数, 记录日志. 返回 nullptr 表示成功( 失败返回错误信息 )
+XXLOGLIB_API void xxlog2WriteAll(void* ctx, int level, long long time, char const* machine, char const* service, char const* instanceId, char const* title, long long opcode, char const* desc)
+{
+	((xx::Logger*)ctx)->WriteAll((xx::LogLevel)level, time, machine, service, instanceId, title, opcode, desc);
+}
+
+// 记录日志( 相比 WriteAll 缺失的参数 会去读默认值 ). 返回 nullptr 表示成功( 失败返回错误信息 )
+XXLOGLIB_API void xxlog2Write(void* ctx, int level, char const* title, long long opcode, char const* desc)
+{
+	((xx::Logger*)ctx)->Write((xx::LogLevel)level, title, opcode, desc);
+}
+
+// 设置一些不容易变化的项目的默认值, 以便使用 Write 时能反复写入这些数据 而不需要再传
+XXLOGLIB_API void xxlog2SetDefaultValue(void* ctx, char const* machine, char const* service, char const* instanceId)
+{
+	((xx::Logger*)ctx)->SetDefaultValue(machine, service, instanceId);
+}
+
+// 析构 Logger
+XXLOGLIB_API long long xxlog2GetCounter(void* ctx)
+{
+	return ((xx::Logger*)ctx)->counter;
+}
+
+
+// 析构 Logger
+XXLOGLIB_API void xxlog2Delete(void* ctx)
+{
+	delete (xx::Logger*)ctx;
+}
+
+
+
+
+
+
+
+
+
 // 专门写一份供 C# 用, C# 自己管理线程和内存队列
 struct Logger
 {
@@ -58,7 +115,7 @@ XXLOGLIB_API char const* xxlogWriteAll(void* ctx, int level, long long time, cha
 	auto str = "";
 	try
 	{
-		self.funcs.InsertLog((xx::LogLevel const&)level, time, (machine ? machine : str), (service ? service : str), (instanceId ? instanceId : str), (title ? title : str), opcode, (desc ? desc : str));
+		self.funcs.InsertLog((xx::LogLevel)level, time, (machine ? machine : str), (service ? service : str), (instanceId ? instanceId : str), (title ? title : str), opcode, (desc ? desc : str));
 	}
 	catch (...)
 	{
