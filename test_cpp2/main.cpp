@@ -86,6 +86,10 @@ int main()
 			mp.Cout(ids, '\n');
 			auto rows = mfs.SelectAccountsByIds(ids);
 			mp.Cout(rows, '\n');
+			ids = mfs.SelectAccountIdsBySortLimit("[username] desc", 3);
+			mp.Cout(ids, '\n');
+			rows = mfs.SelectAccountsByIds(ids);
+			mp.Cout(rows, '\n');
 		}
 
 
