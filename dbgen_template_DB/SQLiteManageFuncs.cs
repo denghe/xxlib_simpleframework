@@ -170,7 +170,7 @@ CREATE TABLE [manage_bind_account_role](
 
 
     [Desc("根据用户 ids 查找并返回一批账号记录.")]
-    [Sql(@"select [id], [username] from [manage_account] where [id] in {0}")]
+    [Sql(@"select [id], [username], '' from [manage_account] where [id] in {0}")]
     List<Manage.Account> SelectAccountsByIds(List<long> ids);
 
 

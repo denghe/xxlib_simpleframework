@@ -80,6 +80,16 @@ int main()
 		mfs.InsertBindRolePermission(3, 6);
 
 
+		// 测试查询账号表
+		{
+			auto ids = mfs.SelectAccountIdsBySortLimit("[id] asc", 2);
+			mp.Cout(ids, '\n');
+			auto rows = mfs.SelectAccountsByIds(ids);
+			mp.Cout(rows, '\n');
+		}
+
+
+
 		// 测试读取用户权限列表
 		{
 			mp.Cout("SelectPermissionIdsByAccountId(1)'s rtv = ", mfs.SelectPermissionIdsByAccountId(1), '\n');

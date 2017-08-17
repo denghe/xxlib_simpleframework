@@ -801,7 +801,7 @@ CREATE TABLE [manage_bind_account_role](
 			auto& q = query_SelectAccountsByIds;
 
             s->Clear();
-            s->Append(R"=-=(select [id], [username] from [manage_account] where [id] in )=-=");
+            s->Append(R"=-=(select [id], [username], '' from [manage_account] where [id] in )=-=");
             s->SQLAppend(ids);
             q = sqlite.CreateQuery(s->C_str(), s->dataLen);
             xx::List_p<DB::Manage::Account_p> rtv;
