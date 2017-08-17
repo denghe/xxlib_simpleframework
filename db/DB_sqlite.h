@@ -4,14 +4,14 @@
 
 namespace DB
 {
-    // 表创建相关
-    struct SQLiteInitFuncs
+    // 游戏相关
+    struct SQLiteGameFuncs
     {
 		xx::SQLite& sqlite;
 		xx::MemPool& mp;
 		xx::SQLiteString_v s;
 
-		SQLiteInitFuncs(xx::SQLite& sqlite)
+		SQLiteGameFuncs(xx::SQLite& sqlite)
             : sqlite(sqlite)
             , mp(sqlite.mempool())
             , s(mp)
@@ -34,6 +34,78 @@ CREATE TABLE [game_account](
 );)=-=");
 			}
             q->Execute();
+        }
+
+
+        xx::SQLiteQuery_p query_SelectAccountByUsername;
+        // 根据用户名查找并返回账号. 未找到将返回 null
+        DB::Game::Account_p SelectAccountByUsername
+        (
+            xx::String_p const& username
+        )
+        {
+			auto& q = query_SelectAccountByUsername;
+
+			if (!q)
+			{
+				q = sqlite.CreateQuery(R"=-=(
+    select [id], [username], [password]
+      from [game_account]
+     where [username] = ?)=-=");
+			}
+            DB::Game::Account_p rtv;
+            rtv.Create(mp);
+            q->SetParameters(username);
+			q->Execute([&](xx::SQLiteReader& sr)
+            {
+                rtv->id = sr.ReadInt64(0);
+                rtv->username = mp.Create<xx::String>(sr.ReadString(1));
+                rtv->password = mp.Create<xx::String>(sr.ReadString(2));
+            });
+            return rtv;
+        }
+
+
+        xx::SQLiteQuery_p query__SelectAccountByUsername;
+        // 根据用户名查找并返回账号. 未找到将返回 null
+        DB::Game::Account_p SelectAccountByUsername
+        (
+            char const* const& username
+        )
+        {
+			auto& q = query__SelectAccountByUsername;
+
+			if (!q)
+			{
+				q = sqlite.CreateQuery(R"=-=(
+    select [id], [username], [password]
+      from [game_account]
+     where [username] = ?)=-=");
+			}
+            DB::Game::Account_p rtv;
+            rtv.Create(mp);
+            q->SetParameters(username);
+			q->Execute([&](xx::SQLiteReader& sr)
+            {
+                rtv->id = sr.ReadInt64(0);
+                rtv->username = mp.Create<xx::String>(sr.ReadString(1));
+                rtv->password = mp.Create<xx::String>(sr.ReadString(2));
+            });
+            return rtv;
+        }
+    };
+    // 管理后台相关
+    struct SQLiteManageFuncs
+    {
+		xx::SQLite& sqlite;
+		xx::MemPool& mp;
+		xx::SQLiteString_v s;
+
+		SQLiteManageFuncs(xx::SQLite& sqlite)
+            : sqlite(sqlite)
+            , mp(sqlite.mempool())
+            , s(mp)
+        {
         }
 
 
@@ -126,92 +198,6 @@ CREATE TABLE [manage_bind_account_role](
 );)=-=");
 			}
             q->Execute();
-        }
-    };
-    // 玩家登录相关
-    struct SQLiteLoginFuncs
-    {
-		xx::SQLite& sqlite;
-		xx::MemPool& mp;
-		xx::SQLiteString_v s;
-
-		SQLiteLoginFuncs(xx::SQLite& sqlite)
-            : sqlite(sqlite)
-            , mp(sqlite.mempool())
-            , s(mp)
-        {
-        }
-
-
-        xx::SQLiteQuery_p query_GetAccountByUsername;
-        // 根据用户名查找并返回账号. 未找到将返回 null
-        DB::Game::Account_p GetAccountByUsername
-        (
-            xx::String_p const& username
-        )
-        {
-			auto& q = query_GetAccountByUsername;
-
-			if (!q)
-			{
-				q = sqlite.CreateQuery(R"=-=(
-    select [id], [username], [password]
-      from [game_account]
-     where [username] = ?)=-=");
-			}
-            DB::Game::Account_p rtv;
-            rtv.Create(mp);
-            q->SetParameters(username);
-			q->Execute([&](xx::SQLiteReader& sr)
-            {
-                rtv->id = sr.ReadInt64(0);
-                rtv->username = mp.Create<xx::String>(sr.ReadString(1));
-                rtv->password = mp.Create<xx::String>(sr.ReadString(2));
-            });
-            return rtv;
-        }
-
-
-        xx::SQLiteQuery_p query__GetAccountByUsername;
-        // 根据用户名查找并返回账号. 未找到将返回 null
-        DB::Game::Account_p GetAccountByUsername
-        (
-            char const* const& username
-        )
-        {
-			auto& q = query__GetAccountByUsername;
-
-			if (!q)
-			{
-				q = sqlite.CreateQuery(R"=-=(
-    select [id], [username], [password]
-      from [game_account]
-     where [username] = ?)=-=");
-			}
-            DB::Game::Account_p rtv;
-            rtv.Create(mp);
-            q->SetParameters(username);
-			q->Execute([&](xx::SQLiteReader& sr)
-            {
-                rtv->id = sr.ReadInt64(0);
-                rtv->username = mp.Create<xx::String>(sr.ReadString(1));
-                rtv->password = mp.Create<xx::String>(sr.ReadString(2));
-            });
-            return rtv;
-        }
-    };
-    // 管理后台相关
-    struct SQLiteManageFuncs
-    {
-		xx::SQLite& sqlite;
-		xx::MemPool& mp;
-		xx::SQLiteString_v s;
-
-		SQLiteManageFuncs(xx::SQLite& sqlite)
-            : sqlite(sqlite)
-            , mp(sqlite.mempool())
-            , s(mp)
-        {
         }
 
 

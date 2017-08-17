@@ -62,9 +62,9 @@ namespace xx
 	{
 	}
 
-	inline void UV::Run()
+	inline int UV::Run()
 	{
-		uv_run(&loop, UV_RUN_DEFAULT);
+		return uv_run(&loop, UV_RUN_DEFAULT);
 	}
 
 	inline void UV::Stop()

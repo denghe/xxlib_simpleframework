@@ -1,6 +1,7 @@
 #include "xx_func.h"
 #include "xx_uv.h"
 #include "xx_helpers.h"
+#include "xx_logger.h"
 #include "pkg\PKG_class.h"
 #include "db\DB_sqlite.h"
 
@@ -56,20 +57,22 @@ struct Worker : xx::UVWorker
 
 struct Service : xx::Object
 {
-	xx::MemPool sqlmp;			// 给 SQLite 及其工作线程使用的 mp
-	xx::SQLite_v sqldb;			// SQLite 走独立的内存池, 和主线程的分离
-	DB::SQLiteManageFuncs fs;	// SQL 语句集
+	xx::MemPool sqlmp;											// 给 SQLite 及其工作线程使用的 mp
+	xx::SQLite_v sqldb;											// SQLite 走独立的内存池, 和主线程的分离
+	DB::SQLiteManageFuncs sqlmfs;								// SQL 语句集( 针对管理套表 )
 
-	xx::UV_v uv;
-	Listener* listener = nullptr;
+	xx::Logger logger;											// 日志记录器
 
-	xx::Dock<Worker> worker;
-	xx::Queue_v<xx::Func<void()>> tasks;
-	void AddTask(xx::Func<void()>&& fn);
-	void SetResult(xx::Func<void()>&& fn);
-	void SetResultKiller(xx::Func<void()>&& fn);
+	xx::UV_v uv;												// uv 上下文
+	Listener* listener = nullptr;								// 监听器
 
-	Service();
+	xx::Dock<Worker> worker;									// 后台工作请求
+	xx::Queue_v<xx::Func<void()>> tasks;						// 即将压到后台去执行的函数集
+	void AddTask(xx::Func<void()>&& fn);						// 用于向 tasks 压入函数, 之后通过 worker 转到后台线程执行
+	void SetResult(xx::Func<void()>&& fn);						// 工作结果处理函数设置
+	void SetResultKiller(xx::Func<void()>&& fn);				// 设置结果清理函数( 将于后台线程执行 )
+
+	Service(char const* dbFileName, char const* logFileName);	// 传入 服务的数据文件名, 日志文件名
 	int Run();
 };
 
@@ -133,26 +136,24 @@ inline void Worker::OnAfterWork(int status)
 
 /******************************************************************************/
 
-inline Service::Service()
-	: sqldb(sqlmp, "data.db")
-	, fs(*sqldb)
+inline Service::Service(char const* dbFileName, char const* logFileName)
+	: sqldb(sqlmp, dbFileName)
+	, sqlmfs(*sqldb)
+	, logger(logFileName)
 	, uv(mempool())
 	, tasks(mempool())
 	, worker(mempool(), this)
 {
-	//sqldb->Attach("log", "log.db");
 	sqldb->SetPragmaJournalMode(xx::SQLiteJournalModes::WAL);
 	sqldb->SetPragmaForeignKeys(true);
+	// todo: 检查 db 看是不是新建的, 是就执行建表脚本
 }
 
 inline int Service::Run()
 {
-	// todo: 检查 db 看是不是新建的, 是就执行建表脚本
-
 	listener = uv->CreateListener<Listener>(12345, 128, this);
 	if (!listener) return -1;
-	uv->Run();
-	return 0;
+	return uv->Run();
 }
 
 inline void Service::AddTask(xx::Func<void()>&& fn)
@@ -223,7 +224,7 @@ inline void Peer::OnReceivePackage(xx::BBuffer& bb)
 
 		// 执行 SQL 语句, 得到结果
 		// 期间只能从 service->sqlmp 分配内存. rtv 创建为类似 Args 的集合类似乎更佳
-		auto rtv = service->fs.SelectAccountByUsername(args->un);
+		auto rtv = service->sqlmfs.SelectAccountByUsername(args->un);
 
 		// 到主线程去处理结果, 设置结果函数( service, peer 直接复制, rtv 移动, 顺便将 args 移进去以便回收 )
 		service->SetResult([service, peer, rtv = std::move(rtv), args = xx::Move(args)]
@@ -249,39 +250,62 @@ inline void Peer::OnReceivePackage(xx::BBuffer& bb)
 
 /******************************************************************************/
 
-#include "xx_logger.h"
-
-std::unique_ptr<xx::Logger> logger;
 
 int main(int argc, char** argv)
 {
-	int64_t count = 1000000;
-	std::cout << "start." << std::endl;
-	logger.reset(new xx::Logger((std::string(argv[0]) + ".log.db").c_str()));
-	std::cout << "new Logger." << std::endl;
-	xx::Stopwatch sw;
-
-	std::thread t([&]
-	{
-		std::cout << "begin fill." << std::endl;
-		for (int64_t i = 0; i < count/1000; ++i)
-		{
-			for (int64_t j = 0; j < 1000; ++j)
-			{
-				logger->WriteAll(xx::LogLevel::Info, xx::GetNowDateTimeTicks(), "pc1", "server_db", "1", "title", i, "aksdjflaksdjflkasjdflkjasdfasdf");
-			}
-			Sleep(1);
-		}
-		std::cout << "filled." << std::endl;
-	});
-	t.detach();
-
-	std::cout << "while counter." << std::endl;
-	while (logger->counter < count) Sleep(1);
-
-	std::cout << "press any quit. sw = " << sw() << std::endl;
-	return 0;
+	xx::MemPool mp;
+	auto service = mp.CreatePtr<Service>((std::string(argv[0])+".db").c_str(), (std::string(argv[0]) + ".log.db").c_str());
+	return !service ? -1 : service->Run();
 }
+
+
+
+
+
+
+
+
+
+
+
+
+//
+//
+//#include "xx_logger.h"
+//
+//std::unique_ptr<xx::Logger> logger;
+//
+//int main(int argc, char** argv)
+//{
+//	int64_t count = 1000000;
+//	std::cout << "start." << std::endl;
+//	logger.reset(new xx::Logger((std::string(argv[0]) + ".log.db").c_str()));
+//	std::cout << "new Logger." << std::endl;
+//	xx::Stopwatch sw;
+//
+//	std::thread t([&]
+//	{
+//		std::cout << "begin fill." << std::endl;
+//		for (int64_t i = 0; i < count / 1000; ++i)
+//		{
+//			for (int64_t j = 0; j < 1000; ++j)
+//			{
+//				logger->WriteAll(xx::LogLevel::Info, xx::GetNowDateTimeTicks(), "pc1", "server_db", "1", "title", i, "aksdjflaksdjflkasjdflkjasdfasdf");
+//			}
+//			Sleep(1);
+//		}
+//		std::cout << "filled." << std::endl;
+//	});
+//	t.detach();
+//
+//	std::cout << "while counter." << std::endl;
+//	while (logger->counter < count) Sleep(1);
+//
+//	std::cout << "press any quit. sw = " << sw() << std::endl;
+//	return 0;
+//}
+
+
 
 
 

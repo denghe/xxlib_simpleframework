@@ -1,17 +1,10 @@
 ﻿#pragma warning disable 0169, 0414
 using TemplateLibrary;
 
-
-[SQLite, Desc("表创建相关")]
-partial interface SQLiteInitFuncs
+[SQLite, Desc("管理后台相关")]
+partial interface SQLiteManageFuncs
 {
-    [Sql(@"
-CREATE TABLE [game_account](
-    [id] INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE, 
-    [username] TEXT(50) NOT NULL UNIQUE, 
-    [password] TEXT(50) NOT NULL
-);")]
-    void CreateTable_game_account();
+    #region 各种 Create
 
     [Sql(@"
 CREATE TABLE [manage_account](
@@ -55,27 +48,9 @@ CREATE TABLE [manage_bind_account_role](
 );")]
     void CreateTable_manage_bind_account_role();
 
-}
+    #endregion
 
-
-
-[SQLite, Desc("玩家登录相关")]
-partial interface SQLiteLoginFuncs
-{
-    [Desc("根据用户名查找并返回账号. 未找到将返回 null")]
-    [Sql(@"
-    select [id], [username], [password]
-      from [game_account]
-     where [username] = {0}")]
-    Game.Account GetAccountByUsername(string username);
-}
-
-
-[SQLite, Desc("管理后台相关")]
-partial interface SQLiteManageFuncs
-{
-
-    // 各种 Insert
+    #region 各种 Insert
 
     [Desc("插入一条 账号. 可能因为 username 已存在而失败")]
     [Sql("insert into [manage_account] ([username], [password]) values ({0}, {1})")]
@@ -101,9 +76,9 @@ partial interface SQLiteManageFuncs
     [Sql(@"insert into [manage_bind_role_permission] ([role_id], [permission_id]) values ({0}, {1})")]
     void InsertBindRolePermission(long roleId, long permissionId);
 
+    #endregion
 
-
-    // 各种 Update
+    #region 各种 Update
 
     [Desc("改密码. 可能因 找不到 id 而失败")]
     [Sql("update [manage_account] set [password] = {1} where [id] = {0}")]
@@ -124,9 +99,9 @@ partial interface SQLiteManageFuncs
     [Sql("update [manage_permission] set [group] = {1}, [name] = {2}, [desc] = {3} where [id] = {0}")]
     void UpdatePermission(long id, string newGroup, string newName, string newDesc);
 
+    #endregion
 
-
-    // 各种 Delete
+    #region 各种 Delete
 
     [Desc("根据 accountId 删掉 账号.身份 绑定数据")]
     [Sql(@"delete from [manage_bind_account_role] where [account_id] = {0}")]
@@ -157,8 +132,10 @@ partial interface SQLiteManageFuncs
     [Sql("delete from [manage_role] where [id] = {0}")]
     void DeleteRole(long id);
 
+    #endregion
 
-    // 各种 Select all
+
+    #region 各种 Select all
 
     [Desc("获取账号表所有数据")]
     [Sql(@"select [id], [username], [password] from [manage_account]")]
@@ -184,9 +161,9 @@ partial interface SQLiteManageFuncs
     [Sql("select [account_id], [role_id] from [manage_bind_account_role]")]
     List<Manage.BindAccountRole> SelectBindAccountRoles();
 
+    #endregion
 
-
-    // 各种 Select
+    #region 各种 Select
 
     [Desc("根据用户名查找并返回一条账号记录. 未找到将返回 null")]
     [Sql(@"select [id], [username], [password] from [manage_account] where [username] = {0}")]
@@ -209,5 +186,7 @@ select [role_id]
   from [manage_bind_account_role]
  where [account_id] = {0};")]
     List<long> SelectRoleIdsByAccountId(long accountId);
+
+    #endregion
 
 }

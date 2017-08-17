@@ -6,19 +6,16 @@ int main()
 	xx::SQLite_v sql(mp, "data.db");
 	sql->SetPragmaForeignKeys(true);
 
-	DB::SQLiteInitFuncs ifs(*sql);
-	//DB::SQLiteLoginFuncs lfs(*sql);
 	DB::SQLiteManageFuncs mfs(*sql);
 
 	try
 	{
 		// 建表
-		if (!sql->TableExists("game_account")) ifs.CreateTable_game_account();
-		if (!sql->TableExists("manage_account")) ifs.CreateTable_manage_account();
-		if (!sql->TableExists("manage_permission")) ifs.CreateTable_manage_permission();
-		if (!sql->TableExists("manage_role")) ifs.CreateTable_manage_role();
-		if (!sql->TableExists("manage_bind_role_permission")) ifs.CreateTable_manage_bind_role_permission();
-		if (!sql->TableExists("manage_bind_account_role")) ifs.CreateTable_manage_bind_account_role();
+		if (!sql->TableExists("manage_account")) mfs.CreateTable_manage_account();
+		if (!sql->TableExists("manage_permission")) mfs.CreateTable_manage_permission();
+		if (!sql->TableExists("manage_role")) mfs.CreateTable_manage_role();
+		if (!sql->TableExists("manage_bind_role_permission")) mfs.CreateTable_manage_bind_role_permission();
+		if (!sql->TableExists("manage_bind_account_role")) mfs.CreateTable_manage_bind_account_role();
 
 		// 清表数据( 关和开启外键约束这样就能更随意高速的批量删数据 )
 		sql->SetPragmaForeignKeys(false);
@@ -27,7 +24,6 @@ int main()
 		sql->TruncateTable("manage_role");
 		sql->TruncateTable("manage_permission");
 		sql->TruncateTable("manage_account");
-		sql->TruncateTable("game_account");
 		sql->SetPragmaForeignKeys(true);
 
 		// 准备点原始素材

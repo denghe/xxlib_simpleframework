@@ -42,9 +42,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Funcs.cs" />
+    <Compile Include="ManageClasss.cs" />
+    <Compile Include="SQLiteGameFuncs.cs" />
+    <Compile Include="SQLiteManageFuncs.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Classs.cs" />
+    <Compile Include="GameClasss.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\gen_library\gen_library.csproj">

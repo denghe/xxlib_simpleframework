@@ -28,7 +28,7 @@ namespace xx
 		UV();
 		~UV();
 
-		void Run();												// 开始运行
+		int Run();												// 开始运行
 		void Stop();											// 中途可以用这个函数停止 uv loop
 
 		int EnableIdle();										// 启用 cpu 闲置期回调( 每秒可能发生上百万次, 自己在里面 sleep 则有可能影响 uv 对网络包的收发响应 )
