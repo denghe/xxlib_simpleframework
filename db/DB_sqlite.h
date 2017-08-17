@@ -757,7 +757,6 @@ CREATE TABLE [manage_bind_account_role](
             q = sqlite.CreateQuery(s->C_str(), s->dataLen);
             xx::List_p<int64_t> rtv;
             rtv.Create(mp);
-            q->SetParameters(sort, limit);
             q->Execute([&](xx::SQLiteReader& sr)
             {
 				rtv->Add(sr.ReadInt64(0));
@@ -784,7 +783,6 @@ CREATE TABLE [manage_bind_account_role](
             q = sqlite.CreateQuery(s->C_str(), s->dataLen);
             xx::List_p<int64_t> rtv;
             rtv.Create(mp);
-            q->SetParameters(sort, limit);
             q->Execute([&](xx::SQLiteReader& sr)
             {
 				rtv->Add(sr.ReadInt64(0));

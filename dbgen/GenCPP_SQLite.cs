@@ -171,7 +171,7 @@ namespace " + iface.Namespace + @"
             rtv.Create(mp);");
                 }
 
-                if (ps.Where(p => !p.ParameterType._IsList()).Count() > 0)
+                if (ps.Where(p => !p.ParameterType._IsList() && !p._Has<Literal>()).Count() > 0)
                 {
                     sb2.Append(@"
             q->SetParameters(");
