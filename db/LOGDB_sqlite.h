@@ -71,7 +71,7 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
         }
 
 
-        xx::SQLiteQuery_p query__InsertLog;
+        // xx::SQLiteQuery_p query_InsertLog;
         // 插入一条 log. time 传入 DateTime.Now.Ticks
         void InsertLog
         (
@@ -85,7 +85,7 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
             char const* const& desc
         )
         {
-			auto& q = query__InsertLog;
+			auto& q = query_InsertLog;
 
 			if (!q)
 			{

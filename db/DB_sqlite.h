@@ -66,14 +66,14 @@ CREATE TABLE [game_account](
         }
 
 
-        xx::SQLiteQuery_p query__SelectAccountByUsername;
+        // xx::SQLiteQuery_p query_SelectAccountByUsername;
         // 根据用户名查找并返回账号. 未找到将返回 null
         DB::Game::Account_p SelectAccountByUsername
         (
             char const* const& username
         )
         {
-			auto& q = query__SelectAccountByUsername;
+			auto& q = query_SelectAccountByUsername;
 
 			if (!q)
 			{
@@ -220,7 +220,7 @@ CREATE TABLE [manage_bind_account_role](
         }
 
 
-        xx::SQLiteQuery_p query__InsertAccount;
+        // xx::SQLiteQuery_p query_InsertAccount;
         // 插入一条 账号. 可能因为 username 已存在而失败
         void InsertAccount
         (
@@ -228,7 +228,7 @@ CREATE TABLE [manage_bind_account_role](
             char const* const& password
         )
         {
-			auto& q = query__InsertAccount;
+			auto& q = query_InsertAccount;
 
 			if (!q)
 			{
@@ -260,7 +260,7 @@ CREATE TABLE [manage_bind_account_role](
         }
 
 
-        xx::SQLiteQuery_p query__InsertPermission;
+        // xx::SQLiteQuery_p query_InsertPermission;
         // 插入一条 权限. 可能因为 name 已存在而失败
         void InsertPermission
         (
@@ -270,7 +270,7 @@ CREATE TABLE [manage_bind_account_role](
             char const* const& desc
         )
         {
-			auto& q = query__InsertPermission;
+			auto& q = query_InsertPermission;
 
 			if (!q)
 			{
@@ -301,7 +301,7 @@ CREATE TABLE [manage_bind_account_role](
         }
 
 
-        xx::SQLiteQuery_p query__InsertRole;
+        // xx::SQLiteQuery_p query_InsertRole;
         // 插入一条 身份. 可能因为 id 已存在, name 已存在而失败
         void InsertRole
         (
@@ -310,7 +310,7 @@ CREATE TABLE [manage_bind_account_role](
             char const* const& desc
         )
         {
-			auto& q = query__InsertRole;
+			auto& q = query_InsertRole;
 
 			if (!q)
 			{
@@ -378,7 +378,7 @@ CREATE TABLE [manage_bind_account_role](
         }
 
 
-        xx::SQLiteQuery_p query__UpdateAccount_ChangePassword;
+        // xx::SQLiteQuery_p query_UpdateAccount_ChangePassword;
         // 改密码. 可能因 找不到 id 而失败
         void UpdateAccount_ChangePassword
         (
@@ -386,7 +386,7 @@ CREATE TABLE [manage_bind_account_role](
             char const* const& newPassword
         )
         {
-			auto& q = query__UpdateAccount_ChangePassword;
+			auto& q = query_UpdateAccount_ChangePassword;
 
 			if (!q)
 			{
@@ -416,7 +416,7 @@ CREATE TABLE [manage_bind_account_role](
         }
 
 
-        xx::SQLiteQuery_p query__UpdateAccount_ChangeUsername;
+        // xx::SQLiteQuery_p query_UpdateAccount_ChangeUsername;
         // 改用户名. 可能因 找不到 id 或 新 username 已存在而失败
         void UpdateAccount_ChangeUsername
         (
@@ -424,7 +424,7 @@ CREATE TABLE [manage_bind_account_role](
             char const* const& newUsername
         )
         {
-			auto& q = query__UpdateAccount_ChangeUsername;
+			auto& q = query_UpdateAccount_ChangeUsername;
 
 			if (!q)
 			{
@@ -455,7 +455,7 @@ CREATE TABLE [manage_bind_account_role](
         }
 
 
-        xx::SQLiteQuery_p query__UpdateRole;
+        // xx::SQLiteQuery_p query_UpdateRole;
         // 更新 身份 数据. 可能因 找不到 id 或 新 name 已存在而失败
         void UpdateRole
         (
@@ -464,7 +464,7 @@ CREATE TABLE [manage_bind_account_role](
             char const* const& newDesc
         )
         {
-			auto& q = query__UpdateRole;
+			auto& q = query_UpdateRole;
 
 			if (!q)
 			{
@@ -496,7 +496,7 @@ CREATE TABLE [manage_bind_account_role](
         }
 
 
-        xx::SQLiteQuery_p query__UpdatePermission;
+        // xx::SQLiteQuery_p query_UpdatePermission;
         // 更新 权限 数据. 可能因 找不到 id 或 新 name 已存在而失败
         void UpdatePermission
         (
@@ -506,7 +506,7 @@ CREATE TABLE [manage_bind_account_role](
             char const* const& newDesc
         )
         {
-			auto& q = query__UpdatePermission;
+			auto& q = query_UpdatePermission;
 
 			if (!q)
 			{
@@ -739,6 +739,86 @@ CREATE TABLE [manage_bind_account_role](
         }
 
 
+        xx::SQLiteQuery_p query_SelectAccountIdsBySortLimit;
+        // 根据排序规则返回 limit 行账号记录.
+        xx::List_p<int64_t> SelectAccountIdsBySortLimit
+        (
+            xx::String_p const& sort,
+            int64_t const& limit
+        )
+        {
+			auto& q = query_SelectAccountIdsBySortLimit;
+
+            s->Clear();
+            s->Append(R"=-=(select [id] from [manage_account] order by )=-=");
+            s->Append(sort);
+            s->Append(R"=-=( limit 0, )=-=");
+            s->Append(limit);
+            q = sqlite.CreateQuery(s->C_str(), s->dataLen);
+            xx::List_p<int64_t> rtv;
+            rtv.Create(mp);
+            q->SetParameters(sort, limit);
+            q->Execute([&](xx::SQLiteReader& sr)
+            {
+				rtv->Add(sr.ReadInt64(0));
+            });
+			return rtv;
+        }
+
+
+        // xx::SQLiteQuery_p query_SelectAccountIdsBySortLimit;
+        // 根据排序规则返回 limit 行账号记录.
+        xx::List_p<int64_t> SelectAccountIdsBySortLimit
+        (
+            char const* const& sort,
+            int64_t const& limit
+        )
+        {
+			auto& q = query_SelectAccountIdsBySortLimit;
+
+            s->Clear();
+            s->Append(R"=-=(select [id] from [manage_account] order by )=-=");
+            s->Append(sort);
+            s->Append(R"=-=( limit 0, )=-=");
+            s->Append(limit);
+            q = sqlite.CreateQuery(s->C_str(), s->dataLen);
+            xx::List_p<int64_t> rtv;
+            rtv.Create(mp);
+            q->SetParameters(sort, limit);
+            q->Execute([&](xx::SQLiteReader& sr)
+            {
+				rtv->Add(sr.ReadInt64(0));
+            });
+			return rtv;
+        }
+
+
+        xx::SQLiteQuery_p query_SelectAccountsByIds;
+        // 根据用户 ids 查找并返回一批账号记录.
+        xx::List_p<DB::Manage::Account_p> SelectAccountsByIds
+        (
+            xx::List_p<int64_t> const& ids
+        )
+        {
+			auto& q = query_SelectAccountsByIds;
+
+            s->Clear();
+            s->Append(R"=-=(select [id], [username] from [manage_account] where [id] in )=-=");
+            s->SQLAppend(ids);
+            q = sqlite.CreateQuery(s->C_str(), s->dataLen);
+            xx::List_p<DB::Manage::Account_p> rtv;
+            rtv.Create(mp);
+			q->Execute([&](xx::SQLiteReader& sr)
+            {
+				auto& r = rtv->EmplaceMP();
+                r->id = sr.ReadInt64(0);
+                r->username = mp.Create<xx::String>(sr.ReadString(1));
+                r->password = mp.Create<xx::String>(sr.ReadString(2));
+            });
+			return rtv;
+        }
+
+
         xx::SQLiteQuery_p query_SelectAccountByUsername;
         // 根据用户名查找并返回一条账号记录. 未找到将返回 null
         DB::Manage::Account_p SelectAccountByUsername
@@ -765,14 +845,14 @@ CREATE TABLE [manage_bind_account_role](
         }
 
 
-        xx::SQLiteQuery_p query__SelectAccountByUsername;
+        // xx::SQLiteQuery_p query_SelectAccountByUsername;
         // 根据用户名查找并返回一条账号记录. 未找到将返回 null
         DB::Manage::Account_p SelectAccountByUsername
         (
             char const* const& username
         )
         {
-			auto& q = query__SelectAccountByUsername;
+			auto& q = query_SelectAccountByUsername;
 
 			if (!q)
 			{

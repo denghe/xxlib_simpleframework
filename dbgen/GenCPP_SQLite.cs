@@ -108,8 +108,8 @@ namespace " + iface.Namespace + @"
 
                 var sqls = f._GetSql()._SpliteSql();
 
-                // 看看有没有 List
-                bool hasList = false;
+                // 看看是否要生成拼字串的代码
+                bool needSqlAppend = false;
 
                 // 合并 sql 成 1 个串 for NewQuery
                 var sqlcombine = new StringBuilder();
@@ -119,9 +119,10 @@ namespace " + iface.Namespace + @"
                     {
                         sqlcombine.Append(o);
                     }
-                    else if (ps[(int)o].ParameterType._IsList())
+                    else if (ps[(int)o].ParameterType._IsList()
+                        || ps[(int)o]._Has<Literal>())
                     {
-                        hasList = true;
+                        needSqlAppend = true;
                     }
                     else
                     {
@@ -129,7 +130,7 @@ namespace " + iface.Namespace + @"
                     }
                 }
 
-                if (hasList)
+                if (needSqlAppend)
                 {
                     sb2.Append(@"
             s->Clear();");
@@ -146,7 +147,7 @@ namespace " + iface.Namespace + @"
                             var pn = p.Name;
                             var pt = p.ParameterType;
                             sb2.Append(@"
-            s->SQLAppend(" + pn + @");");
+            s->" + (p._Has<Literal>() ? "" : "SQL") + "Append(" + pn + @");");
                         }
                     }
                     sb2.Append(@"
@@ -287,9 +288,9 @@ namespace " + iface.Namespace + @"
                 sb.Append(sb2);
 
                 // if 有 string 参数, 再生成一份 char const* 版
-                if(ps.Any(p=>p.ParameterType._IsString()))
+                if (ps.Any(p => p.ParameterType._IsString()))
                 {
-                    sb.Append(sb2.Replace("query_", "query__").Replace("xx::String_p", "char const*"));
+                    sb.Append(sb2.Replace("xx::SQLiteQuery_p", "// xx::SQLiteQuery_p").Replace("xx::String_p", "char const*"));
                 }
 
             }

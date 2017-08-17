@@ -41,7 +41,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="All.cs" />
+    <Compile Include="Classs.cs" />
+    <Compile Include="DB_Server.cs" />
+    <Compile Include="DB_Manage.cs" />
+    <Compile Include="Manage.cs" />
+    <Compile Include="Server_DB.cs" />
+    <Compile Include="Manage_DB.cs" />
+    <Compile Include="Server_Client.cs" />
+    <Compile Include="Client_Server.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

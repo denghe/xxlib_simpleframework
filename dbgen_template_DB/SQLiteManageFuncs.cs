@@ -134,7 +134,6 @@ CREATE TABLE [manage_bind_account_role](
 
     #endregion
 
-
     #region 各种 Select all
 
     [Desc("获取账号表所有数据")]
@@ -165,6 +164,16 @@ CREATE TABLE [manage_bind_account_role](
 
     #region 各种 Select
 
+    [Desc("根据排序规则返回 limit 行账号记录.")]
+    [Sql(@"select [id] from [manage_account] order by {0} limit 0, {1}")]
+    List<long> SelectAccountIdsBySortLimit([Literal]string sort, [Literal]long limit);
+
+
+    [Desc("根据用户 ids 查找并返回一批账号记录.")]
+    [Sql(@"select [id], [username] from [manage_account] where [id] in {0}")]
+    List<Manage.Account> SelectAccountsByIds(List<long> ids);
+
+
     [Desc("根据用户名查找并返回一条账号记录. 未找到将返回 null")]
     [Sql(@"select [id], [username], [password] from [manage_account] where [username] = {0}")]
     Manage.Account SelectAccountByUsername(string username);
@@ -188,5 +197,4 @@ select [role_id]
     List<long> SelectRoleIdsByAccountId(long accountId);
 
     #endregion
-
 }

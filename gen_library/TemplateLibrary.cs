@@ -313,7 +313,7 @@ namespace TemplateLibrary
     }
 
     /// <summary>
-    /// 标记函数参数为不转义的字符串
+    /// 标记函数参数为不转义的字符串, 或是不纳入"传参" 的部分
     /// </summary>
     [System.AttributeUsage(System.AttributeTargets.Parameter)]
     public class Literal : System.Attribute

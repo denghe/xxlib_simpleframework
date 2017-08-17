@@ -146,7 +146,16 @@ inline Service::Service(char const* dbFileName, char const* logFileName)
 {
 	sqldb->SetPragmaJournalMode(xx::SQLiteJournalModes::WAL);
 	sqldb->SetPragmaForeignKeys(true);
-	// todo: 检查 db 看是不是新建的, 是就执行建表脚本
+
+	// 检查 db 看是不是新建的, 是就执行建表脚本
+	if (sqldb->GetTableCount() < 5)
+	{
+		sqlmfs.CreateTable_manage_account();
+		sqlmfs.CreateTable_manage_permission();
+		sqlmfs.CreateTable_manage_role();
+		sqlmfs.CreateTable_manage_bind_role_permission();
+		sqlmfs.CreateTable_manage_bind_account_role();
+	}
 }
 
 inline int Service::Run()
@@ -254,7 +263,7 @@ inline void Peer::OnReceivePackage(xx::BBuffer& bb)
 int main(int argc, char** argv)
 {
 	xx::MemPool mp;
-	auto service = mp.CreatePtr<Service>((std::string(argv[0])+".db").c_str(), (std::string(argv[0]) + ".log.db").c_str());
+	auto service = mp.CreatePtr<Service>((std::string(argv[0]) + ".db").c_str(), (std::string(argv[0]) + ".log.db").c_str());
 	return !service ? -1 : service->Run();
 }
 
