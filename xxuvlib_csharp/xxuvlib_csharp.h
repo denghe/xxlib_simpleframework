@@ -632,6 +632,11 @@ namespace xx
 		{
 			uv->Stop();
 		}
+
+		void RunOnce()
+		{
+			uv->RunOnce();
+		}
 	};
 
 

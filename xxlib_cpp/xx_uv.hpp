@@ -67,6 +67,11 @@ namespace xx
 		return uv_run(&loop, UV_RUN_DEFAULT);
 	}
 
+	inline int UV::RunOnce()
+	{
+		return uv_run(&loop, UV_RUN_ONCE);
+	}
+
 	inline void UV::Stop()
 	{
 		uv_stop(&loop);
