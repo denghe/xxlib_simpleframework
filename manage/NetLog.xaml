@@ -1,11 +1,12 @@
-﻿<Window x:Class="manage.MainWindow"
+﻿<Window x:Class="manage.NetLog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:manage"
         mc:Ignorable="d"
-        SizeToContent="WidthAndHeight"
-        WindowStartupLocation="CenterScreen"
-        Title="MainWindow">
+        Title="NetLog" Height="600" Width="300">
+    <Grid>
+        <TextBox x:Name="tb_log" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Visible" IsReadOnly="True" HorizontalAlignment="Stretch" TextWrapping="Wrap" AcceptsReturn="True" Text="" VerticalAlignment="Stretch" />
+    </Grid>
 </Window>

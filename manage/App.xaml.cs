@@ -15,18 +15,5 @@ namespace manage
     /// </summary>
     public partial class App : Application
     {
-        UVLooper looper = new UVLooper();
-        DispatcherTimer dt = new DispatcherTimer(DispatcherPriority.SystemIdle);
-        public App()
-        {
-            dt.Interval = new TimeSpan(0,0,0,0,1);
-            dt.Tick += Dt_Tick;
-            dt.Start();
-        }
-
-        private void Dt_Tick(object sender, EventArgs e)
-        {
-            looper.uv.RunOnce();
-        }
     }
 }

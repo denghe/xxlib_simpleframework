@@ -1,4 +1,5 @@
-﻿using System;
+﻿#pragma warning disable CS0164
+using System;
 using System.Collections;
 using System.Diagnostics;
 
@@ -7,22 +8,9 @@ namespace manage
     public class ClientPeer : xx.UVClientPeerWrapperEx
     {
         NetLooper looper;
-        public xx.Queue<xx.IBBuffer> recvMsgs = new xx.Queue<xx.IBBuffer>();
-
-        public ClientPeer(NetLooper looper)
-        {
-            this.looper = looper;
-        }
-
-        public override void OnConnect()
-        {
-        }
-
-        public override void OnDisconnect()
-        {
-            recvMsgs.Clear();
-        }
-
+        public ClientPeer(NetLooper looper) { this.looper = looper; }
+        public override void OnConnect() { }
+        public override void OnDisconnect() { }
         public override void OnReceivePackage(byte[] data)
         {
             // 反序列化一到多个包出来
@@ -35,10 +23,18 @@ namespace manage
                 return;
             }
 
-            // 将包移到接收队列
+            // 调用注册的包处理函数
             for (int i = 0; i < recvPkgs.dataLen; ++i)
             {
-                recvMsgs.Push(recvPkgs[i]);
+                var o = recvPkgs[i];
+                if (!(o is PKG.Response)) throw new Exception();
+
+                var idx = looper.serialHandlers.Find(((PKG.Response)o).requestSerial);
+                if (idx != -1)
+                {
+                    looper.serialHandlers.ValueAt(idx)?.Invoke(o);
+                    looper.serialHandlers.RemoveAt(idx);
+                }
             }
         }
     }
@@ -46,6 +42,7 @@ namespace manage
     public class NetLooper : xx.UVTimerWrapper
     {
         xx.UVWrapper uv;
+        MainWindow mw;
         ClientPeer peer;
         IEnumerator iter;
 
@@ -60,18 +57,14 @@ namespace manage
         public xx.Queue<object> cmds = new xx.Queue<object>();
 
         /// <summary>
-        /// 发送队列
-        /// </summary>
-        public xx.Queue<xx.IBBuffer> sendMsgs = new xx.Queue<xx.IBBuffer>();
-
-        /// <summary>
         /// 状态变化相关日志( 主用于显示 )
         /// </summary>
         public xx.Queue<string> stateLogs = new xx.Queue<string>();
 
-        public NetLooper(xx.UVWrapper uv)
+        public NetLooper(xx.UVWrapper uv, MainWindow mw)
         {
             this.uv = uv;
+            this.mw = mw;
             peer = uv.CreateClientPeer(new ClientPeer(this));
             iter = Update().GetEnumerator();
         }
@@ -81,18 +74,14 @@ namespace manage
         }
         public override void OnTicks()
         {
-            if (peer.Alive)
-            {
-                while (sendMsgs.TryDequeue(out var o))
-                {
-                    peer.SendPackages(o);
-                }
-            }
-
             if (!iter.MoveNext())
             {
                 Dispose();
                 uv.Stop();
+            }
+            else
+            {
+
             }
         }
         protected override void Dispose(bool A_0)
@@ -119,20 +108,23 @@ namespace manage
             cmds.Enqueue("Disconnect");
         }
 
-        public int serial = 0;
-        void Send(PKG.Request msg, Action<xx.IBBuffer> handler = null)
+        public byte serial = 0;
+        int Send(PKG.Request msg, Action<xx.IBBuffer> handler)
         {
-            msg.serial = ++serial;
-            sendMsgs.Enqueue(msg);
+            if (!peer.Alive) throw new Exception();
+            msg.serial = unchecked(++serial);
+            peer.SendPackages(msg);
             if (handler != null)
             {
                 serialHandlers[msg.serial] = handler;
             }
+            else
+            {
+                serialHandlers.Remove(msg.serial);
+            }
+            return msg.serial;
         }
-        void Send(xx.IBBuffer msg)
-        {
-            sendMsgs.Enqueue(msg);
-        }
+
         protected void StateLog(string log)
         {
             log = "\n" + DateTime.Now.ToLongTimeString() + ": " + log;
@@ -142,14 +134,23 @@ namespace manage
 
         public IEnumerable Update()
         {
-            // 等指令
-            LabWaitCommand:
+            LabInit:
+            StateLog("init");
             // 清各种队列
             serialHandlers.Clear();
             cmds.Clear();
-            sendMsgs.Clear();
 
-            StateLog("inited. wait Connect cmd");
+            LabGotoServerIP:
+            StateLog("GotoServerIP");
+            // 显示服务器 IP 地址填写窗口
+            mw.GotoServerIP((ip, port) =>
+            {
+                Connect(ip, port);
+            });
+
+            // 等 ServerIP 操作结果
+            LabWaitServerIPSubmit:
+            StateLog("wait ServerIP submit");
             while (true)
             {
                 yield return null;
@@ -179,51 +180,50 @@ namespace manage
             if (peer.State == xx.NetStates.Disconnecting || peer.State == xx.NetStates.Disconnected)
             {
                 StateLog("connect failed.");
-                goto LabWaitCommand;
+                goto LabInit;
             }
+            StateLog("connected.");
 
-            StateLog("connected. wait Send msgs, Disconnect cmds, recv Response pkgs");
-            while (peer.State == xx.NetStates.Connected)
+            LabGotoLogin:
+            // 显示登录窗口
+            xx.IBBuffer loginResult = null;
+            mw.GotoLogin((u, p) =>
+            {
+                var pkg = new PKG.Manage_DB.Login { username = u, password = p };
+                Send(pkg, o =>
+                {
+                    loginResult = o;
+                });
+            });
+
+            LabWaitLoginSubmit:
+            while(true)
             {
                 yield return null;
+                StateLog("connected. wait Send msgs, Disconnect cmds, recv Response pkgs");
+                if (peer.State != xx.NetStates.Connected) goto LabDisconnectedByServer;
 
-                // 指令处理
-                if (cmds.TryDequeue(out var o_))
+                // 如果有收到登录返回结果
+                if (loginResult != null)
                 {
-                    switch (o_)
+                    switch(loginResult)
                     {
-                        case string o when (o == "Disconnect"):
-                            peer.Disconnect(true);
-                            StateLog("disconnected by client.");
-                            goto LabWaitCommand;
-
+                        case PKG.DB_Manage.LoginSuccess o:
+                            //mw.GotoMain(/**/);
+                            break;
+                        case PKG.DB_Manage.LoginFail o:
+                            ((UCLogin)mw.Content).Tips = o.reason;
+                            loginResult = null;
+                            break;
                         default:
-                            throw new NotImplementedException();
+                            throw new Exception();
                     }
-                }
-
-                // 数据接收处理
-                while (peer.recvMsgs.TryDequeue(out var o))
-                {
-                    if (!(o is PKG.Response)) throw new Exception();
-
-                    var idx = serialHandlers.Find(((PKG.Response)o).requestSerial);
-                    if (idx != -1)
-                    {
-                        serialHandlers.ValueAt(idx)?.Invoke(o);
-                        serialHandlers.RemoveAt(idx);
-                    }
-                }
-
-                // 数据发送处理
-                while (sendMsgs.TryDequeue(out var o))
-                {
-                    peer.SendPackages(o);
                 }
             }
 
+            LabDisconnectedByServer:
             StateLog("disconnected by server.");
-            goto LabWaitCommand;
+            goto LabInit;
 
             //yield break;
         }
@@ -234,10 +234,10 @@ namespace manage
         public xx.UVWrapper uv = new xx.UVWrapper();
         public NetLooper looper;
 
-        public UVLooper()
+        public UVLooper(MainWindow mw)
         {
             PKG.AllTypes.Register();
-            looper = uv.CreateTimer(new NetLooper(uv));
+            looper = uv.CreateTimer(new NetLooper(uv, mw));
             instance = this;
         }
 

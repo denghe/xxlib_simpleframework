@@ -16,36 +16,35 @@ using System.Windows.Shapes;
 namespace manage
 {
     /// <summary>
-    /// Interaction logic for UCLogin.xaml
+    /// Interaction logic for UCServerIP.xaml
     /// </summary>
-    public partial class UCLogin : UserControl
+    public partial class UCServerIP : UserControl
     {
-
-        public UCLogin()
+        public UCServerIP()
         {
             InitializeComponent();
-            Username = "";
-            Password = "";
+            IP = "127.0.0.1";
+            Port = "12345";
             Tips = "";
         }
 
 
         public void InitFocus()
         {
-            tb_username.Focus();
+            tb_ip.Focus();
         }
 
 
-        public string Username
+        public string IP
         {
-            get { return tb_username.Text.Trim(); }
-            set { tb_username.Text = value; }
+            get { return tb_ip.Text.Trim(); }
+            set { tb_ip.Text = value; }
         }
 
-        public string Password
+        public string Port
         {
-            get { return tb_password.Text; }
-            set { tb_password.Text = value; }
+            get { return tb_port.Text; }
+            set { tb_port.Text = value; }
         }
 
 
@@ -66,10 +65,10 @@ namespace manage
         }
 
 
-        public event Action<string, string> Submit;
+        public event Action<string, int> Submit;
         private void b_submit_Click(object sender, RoutedEventArgs e)
         {
-            Submit(Username, Password);
+            Submit(IP, int.Parse(Port));
         }
 
     }

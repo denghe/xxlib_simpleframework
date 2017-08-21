@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="manage.UCLogin"
+﻿<UserControl x:Class="manage.UCServerIP"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
@@ -18,11 +18,11 @@
             <RowDefinition Height="12*"/>
             <RowDefinition Height="5"/>
         </Grid.RowDefinitions>
-        <Label Content="登录" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Column="0" Grid.ColumnSpan="2" FontSize="16" />
-        <Label Content="用户名:" HorizontalAlignment="Right" VerticalAlignment="Center" Grid.Column="0" Grid.Row="1" Margin="0,5" />
-        <TextBox x:Name="tb_username" Grid.Column="1"  Padding="3" Grid.Row="1" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Center" VerticalContentAlignment="Center" />
-        <Label Content="密码:" HorizontalAlignment="Right" VerticalAlignment="Center" Grid.Column="0" Grid.Row="2" Margin="0,5" />
-        <TextBox x:Name="tb_password" Grid.Column="1"  Padding="3" Grid.Row="2" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Center" VerticalContentAlignment="Center" />
+        <Label Content="设置基本连接参数" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Column="0" Grid.ColumnSpan="2" FontSize="16" />
+        <Label Content="IP:" HorizontalAlignment="Right" VerticalAlignment="Center" Grid.Column="0" Grid.Row="1" Margin="0,5" />
+        <TextBox x:Name="tb_ip" Grid.Column="1"  Padding="3" Grid.Row="1" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Center" VerticalContentAlignment="Center" />
+        <Label Content="PORT:" HorizontalAlignment="Right" VerticalAlignment="Center" Grid.Column="0" Grid.Row="2" Margin="0,5" />
+        <TextBox x:Name="tb_port" Grid.Column="1"  Padding="3" Grid.Row="2" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Center" VerticalContentAlignment="Center" />
         <Label Content="提示:" HorizontalAlignment="Right" VerticalAlignment="Center" Grid.Column="0" Grid.Row="3" Margin="0,5" />
         <TextBlock x:Name="t_tips" Grid.Column="1" HorizontalAlignment="Left" Margin="5,0,0,0" Grid.Row="3" Text="TextBlock" VerticalAlignment="Center" Foreground="Red"/>
         <Button x:Name="b_submit" Content="提交" FontSize="16" Padding="15,3,15,3"  Grid.Column="1" HorizontalAlignment="Right" Grid.Row="3" VerticalAlignment="Center" Click="b_submit_Click" />
