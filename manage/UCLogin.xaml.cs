@@ -44,8 +44,8 @@ namespace manage
 
         public string Password
         {
-            get { return tb_password.Text; }
-            set { tb_password.Text = value; }
+            get { return pb_password.Password; }
+            set { pb_password.Password = value; }
         }
 
 

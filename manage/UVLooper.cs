@@ -49,7 +49,12 @@ namespace manage
         /// <summary>
         /// 流水号 -- 处理函数映射
         /// </summary>
-        public xx.Dict<long, Action<xx.IBBuffer>> serialHandlers = new xx.Dict<long, Action<xx.IBBuffer>>();
+        public xx.Dict<int, Action<xx.IBBuffer>> serialHandlers = new xx.Dict<int, Action<xx.IBBuffer>>();
+
+        /// <summary>
+        /// 流水号循环生成变量
+        /// </summary>
+        public byte serial = 0;
 
         /// <summary>
         /// 指令队列
@@ -108,7 +113,6 @@ namespace manage
             cmds.Enqueue("Disconnect");
         }
 
-        public byte serial = 0;
         int Send(PKG.Request msg, Action<xx.IBBuffer> handler)
         {
             if (!peer.Alive) throw new Exception();
@@ -132,6 +136,7 @@ namespace manage
             stateLogs.Enqueue(log);
         }
 
+        // 主控核心代码
         public IEnumerable Update()
         {
             LabInit:
@@ -142,13 +147,13 @@ namespace manage
 
             LabGotoServerIP:
             StateLog("GotoServerIP");
-            // 显示服务器 IP 地址填写窗口
+            // 切到 "服务器 IP 地址填写窗口"
             mw.GotoServerIP((ip, port) =>
             {
                 Connect(ip, port);
             });
 
-            // 等 ServerIP 操作结果
+            // 等待 "服务器 IP 地址填写窗口" 提交操作
             LabWaitServerIPSubmit:
             StateLog("wait ServerIP submit");
             while (true)
