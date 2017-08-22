@@ -9,8 +9,10 @@
 struct Peer;
 struct Service;
 struct Listener;
-struct TaskManager;
-struct Dispacher;
+struct Worker;
+
+using Listener_p = xx::Ptr<Listener>;
+using Worker_v = xx::Dock<Worker>;
 
 /******************************************************************************/
 
@@ -20,12 +22,12 @@ struct Peer : xx::UVServerPeer
 	Service* service;
 
 	Peer(Listener* listener);
-	virtual void OnReceivePackage(xx::BBuffer & bb) override;
+	virtual void OnReceivePackage(xx::BBuffer& bb) override;
 	virtual void OnDisconnect() override;
 
 	// pkg handlers
-	void OnRecv(PKG::Manage_DB::Login& o);
-	void OnRecv(PKG::Manage_DB::Logout& o);
+	void OnRecv(PKG::Manage_DB::Login_p& o);
+	void OnRecv(PKG::Manage_DB::Logout_p& o);
 	// ...
 };
 
@@ -35,7 +37,7 @@ struct Listener : xx::UVListener
 	Service* service;
 
 	Listener(xx::UV* uv, int port, int backlog, Service* service);
-	virtual xx::UVServerPeer * OnCreatePeer() override;
+	virtual xx::UVServerPeer* OnCreatePeer() override;
 };
 
 struct Worker : xx::UVWorker
@@ -69,9 +71,9 @@ struct Service : xx::Object
 	xx::Logger logger;											// 日志记录器
 
 	xx::UV_v uv;												// uv 上下文
-	Listener* listener = nullptr;								// 监听器
+	Listener_p listener;										// 监听器
 
-	xx::Dock<Worker> worker;									// 后台工作请求
+	Worker_v worker;											// 后台工作请求
 	xx::Queue_v<xx::Func<void()>> tasks;						// 即将压到后台去执行的函数集
 	void AddTask(xx::Func<void()>&& fn);						// 用于向 tasks 压入函数, 之后通过 worker 转到后台线程执行
 	void SetResult(xx::Func<void()>&& fn);						// 工作结果处理函数设置
@@ -79,6 +81,10 @@ struct Service : xx::Object
 
 	Service(char const* dbFileName, char const* logFileName);	// 传入 服务的数据文件名, 日志文件名
 	int Run();
+
+	// 一系列预创建的包用于小改发送
+	PKG::DB_Manage::LoginSuccess_v pkgLoginSuccess;
+	PKG::DB_Manage::LoginFail_v pkgLoginFail;
 };
 
 
@@ -148,6 +154,9 @@ inline Service::Service(char const* dbFileName, char const* logFileName)
 	, uv(mempool())
 	, tasks(mempool())
 	, worker(mempool(), this)
+
+	, pkgLoginSuccess(mempool())
+	, pkgLoginFail(mempool())
 {
 	sqldb->SetPragmaJournalMode(xx::SQLiteJournalModes::WAL);
 	sqldb->SetPragmaForeignKeys(true);
@@ -161,6 +170,10 @@ inline Service::Service(char const* dbFileName, char const* logFileName)
 		sqlmfs.CreateTable_manage_bind_role_permission();
 		sqlmfs.CreateTable_manage_bind_account_role();
 	}
+
+	// 包预创建之 fields 预创建
+	pkgLoginSuccess->token.Create(mempool());
+	pkgLoginFail->reason.Create(mempool());
 }
 
 inline int Service::Run()
@@ -212,57 +225,70 @@ inline void Peer::OnDisconnect()
 
 inline void Peer::OnReceivePackage(xx::BBuffer& bb)
 {
-	Cout("recv data = ", bb, "\n");
-	
+	if (bb.ReadPackages(*recvPkgs) <= 0)
+	{
+		Disconnect(true);
+		return;
+	}
+	for (auto& pkg : *recvPkgs)
+	{
+		switch (pkg->typeId())
+		{
+		case xx::TypeId_v<PKG::Manage_DB::Login>:
+			OnRecv(*(PKG::Manage_DB::Login_p*)&pkg);
+			break;
+
+			// more case here ...
+
+		default:
+			Disconnect(true);	// todo: log
+		}
+	}
 }
 
-void Peer::OnRecv(PKG::Manage_DB::Login& o)
+inline void Peer::OnRecv(PKG::Manage_DB::Login_p& arg)
 {
-	
-
-	// 模拟传一批参数
-	struct Args : xx::Object
+	service->AddTask([service = this->service, peer = xx::Ref<Peer>(this), arg = std::move(arg)]()
 	{
-		Args()
-		{
-			std::cout << "Args(), thread id = " << std::this_thread::get_id() << std::endl;
-		}
-		Args(Args&&) = default;
-		xx::String_p un;
-		~Args()
-		{
-			std::cout << "~Args(), thread id = " << std::this_thread::get_id() << std::endl;
-		}
-	};
-	auto args = mempool().CreatePtr<Args>();
-	// 填充 args .........
-	// ...
+		auto res = service->sqlmfs.SelectAccountByUsername(arg->username);
 
-	// 向 SQL 线程压入函数( service 是指针, 直接复制. peer 捕获安全引用类型, 传递到 result 函数中使用. args 捕获右值移动 )
-	service->AddTask([service = this->service, peer = xx::Ref<Peer>(this), args = std::move(args)]()
-	{
-		std::cout << "Task, thread id = " << std::this_thread::get_id() << std::endl;
-
-		// 执行 SQL 语句, 得到结果
-		// 期间只能从 service->sqlmp 分配内存. rtv 创建为类似 Args 的集合类似乎更佳
-		auto rtv = service->sqlmfs.SelectAccountByUsername(args->un);
-
-		// 到主线程去处理结果, 设置结果函数( service, peer 直接复制, rtv 移动, 顺便将 args 移进去以便回收 )
-		service->SetResult([service, peer, rtv = std::move(rtv), args = xx::Move(args)]
+		service->SetResult([service, peer, res = std::move(res), arg = xx::Move(arg)]
 		{
-			std::cout << "Result, thread id = " << std::this_thread::get_id() << std::endl;
+			if (peer && peer->state == xx::UVPeerStates::Connected)
+			{
+				auto& mp = service->mempool();
+				if (res)
+				{
+					if ((!res->password && !arg->password) || res->password->Equals(arg->password))
+					{
+						auto& pkg = service->pkgLoginSuccess;
+						pkg->requestSerial = arg->serial;
+						pkg->id = res->id;
+						pkg->token->Assign("12345abcde");	// todo: GUID gen
 
-		// handle( rtv )
-		if (peer && peer->state == xx::UVPeerStates::Connected)			// 如果 peer 还活着, 回发
-		{
-			//peer->SendPackages
-		}
+						peer->SendPackages(pkg);
+					}
+					else
+					{
+						auto& pkg = service->pkgLoginFail;
+						pkg->requestSerial = arg->serial;
+						pkg->reason->Assign("bad password");
 
-		// 到工作线程去回收结果, 设置结果回收函数( 将 rtv 移进去即可 )
-		service->SetResultKiller([rtv = xx::Move(rtv)]
-		{
-			std::cout << "ResultKiller, thread id = " << std::this_thread::get_id() << std::endl;
-		});
+						peer->SendPackages(pkg);
+						peer->Disconnect(false);
+					}
+				}
+				else
+				{
+					auto& pkg = service->pkgLoginFail;
+					pkg->requestSerial = arg->serial;
+					pkg->reason->Assign("username is not found");
+
+					peer->SendPackages(pkg);
+					peer->Disconnect(false);
+				}
+			}
+			service->SetResultKiller([res = xx::Move(res)]{});
 		});
 	});
 }

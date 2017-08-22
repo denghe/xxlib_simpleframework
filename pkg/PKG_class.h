@@ -5,186 +5,186 @@ namespace PKG
 {
     // 一个请求( 当前限定为 service 与 db 间 ), 通常携带一个流水号. 这是基类
     struct Request;
-    using Request_p = xx::Ptr < Request >;
-    using Request_v = xx::Dock < Request >;
+    using Request_p = xx::Ptr<Request>;
+    using Request_v = xx::Dock<Request>;
 
     // 一个回应( 当前限定为 service 与 db 间 ), 通常携带一个请求发过来的流水号. 这是基类
     struct Response;
-    using Response_p = xx::Ptr < Response >;
-    using Response_v = xx::Dock < Response >;
+    using Response_p = xx::Ptr<Response>;
+    using Response_v = xx::Dock<Response>;
 
     // 成功
     struct Success;
-    using Success_p = xx::Ptr < Success >;
-    using Success_v = xx::Dock < Success >;
+    using Success_p = xx::Ptr<Success>;
+    using Success_v = xx::Dock<Success>;
 
     // 失败
     struct Fail;
-    using Fail_p = xx::Ptr < Fail >;
-    using Fail_v = xx::Dock < Fail >;
+    using Fail_p = xx::Ptr<Fail>;
+    using Fail_v = xx::Dock<Fail>;
 
     struct Property;
-    using Property_p = xx::Ptr < Property >;
-    using Property_v = xx::Dock < Property >;
+    using Property_p = xx::Ptr<Property>;
+    using Property_v = xx::Dock<Property>;
 
     struct Property_long;
-    using Property_long_p = xx::Ptr < Property_long >;
-    using Property_long_v = xx::Dock < Property_long >;
+    using Property_long_p = xx::Ptr<Property_long>;
+    using Property_long_v = xx::Dock<Property_long>;
 
     struct Property_double;
-    using Property_double_p = xx::Ptr < Property_double >;
-    using Property_double_v = xx::Dock < Property_double >;
+    using Property_double_p = xx::Ptr<Property_double>;
+    using Property_double_v = xx::Dock<Property_double>;
 
     struct Property_string;
-    using Property_string_p = xx::Ptr < Property_string >;
-    using Property_string_v = xx::Dock < Property_string >;
+    using Property_string_p = xx::Ptr<Property_string>;
+    using Property_string_v = xx::Dock<Property_string>;
 
     struct Properties;
-    using Properties_p = xx::Ptr < Properties >;
-    using Properties_v = xx::Dock < Properties >;
+    using Properties_p = xx::Ptr<Properties>;
+    using Properties_v = xx::Dock<Properties>;
 
     struct UserInfo;
-    using UserInfo_p = xx::Ptr < UserInfo >;
-    using UserInfo_v = xx::Dock < UserInfo >;
+    using UserInfo_p = xx::Ptr<UserInfo>;
+    using UserInfo_v = xx::Dock<UserInfo>;
 
 namespace Client_Server
 {
     // 请求进入服务器
     struct Join;
-    using Join_p = xx::Ptr < Join >;
-    using Join_v = xx::Dock < Join >;
+    using Join_p = xx::Ptr<Join>;
+    using Join_v = xx::Dock<Join>;
 
     // 发消息
     struct Message;
-    using Message_p = xx::Ptr < Message >;
-    using Message_v = xx::Dock < Message >;
+    using Message_p = xx::Ptr<Message>;
+    using Message_v = xx::Dock<Message>;
 
     // 主动退出
     struct Logout;
-    using Logout_p = xx::Ptr < Logout >;
-    using Logout_v = xx::Dock < Logout >;
+    using Logout_p = xx::Ptr<Logout>;
+    using Logout_v = xx::Dock<Logout>;
 
 }
 namespace Server_Client
 {
     // 进入成功, 返回用户信息
     struct JoinSuccess;
-    using JoinSuccess_p = xx::Ptr < JoinSuccess >;
-    using JoinSuccess_v = xx::Dock < JoinSuccess >;
+    using JoinSuccess_p = xx::Ptr<JoinSuccess>;
+    using JoinSuccess_v = xx::Dock<JoinSuccess>;
 
     // 进入失败, 返回错误信息
     struct JoinFail;
-    using JoinFail_p = xx::Ptr < JoinFail >;
-    using JoinFail_v = xx::Dock < JoinFail >;
+    using JoinFail_p = xx::Ptr<JoinFail>;
+    using JoinFail_v = xx::Dock<JoinFail>;
 
     // 推送文字消息
     struct PushJoin;
-    using PushJoin_p = xx::Ptr < PushJoin >;
-    using PushJoin_v = xx::Dock < PushJoin >;
+    using PushJoin_p = xx::Ptr<PushJoin>;
+    using PushJoin_v = xx::Dock<PushJoin>;
 
     // 推送文字消息
     struct PushMessage;
-    using PushMessage_p = xx::Ptr < PushMessage >;
-    using PushMessage_v = xx::Dock < PushMessage >;
+    using PushMessage_p = xx::Ptr<PushMessage>;
+    using PushMessage_v = xx::Dock<PushMessage>;
 
     // 推送退出消息
     struct PushLogout;
-    using PushLogout_p = xx::Ptr < PushLogout >;
-    using PushLogout_v = xx::Dock < PushLogout >;
+    using PushLogout_p = xx::Ptr<PushLogout>;
+    using PushLogout_v = xx::Dock<PushLogout>;
 
 }
 namespace Manage_DB
 {
     // 请求进入服务器
     struct Login;
-    using Login_p = xx::Ptr < Login >;
-    using Login_v = xx::Dock < Login >;
+    using Login_p = xx::Ptr<Login>;
+    using Login_v = xx::Dock<Login>;
 
     // 注销式退出
     struct Logout;
-    using Logout_p = xx::Ptr < Logout >;
-    using Logout_v = xx::Dock < Logout >;
+    using Logout_p = xx::Ptr<Logout>;
+    using Logout_v = xx::Dock<Logout>;
 
     // 拉管理员账号列表的 id 列表( 需要相关权限 )
     struct SelectManageAccountIds;
-    using SelectManageAccountIds_p = xx::Ptr < SelectManageAccountIds >;
-    using SelectManageAccountIds_v = xx::Dock < SelectManageAccountIds >;
+    using SelectManageAccountIds_p = xx::Ptr<SelectManageAccountIds>;
+    using SelectManageAccountIds_v = xx::Dock<SelectManageAccountIds>;
 
     // 拉管理员账号列表( 需要相关权限 )
     struct SelectManageAccounts;
-    using SelectManageAccounts_p = xx::Ptr < SelectManageAccounts >;
-    using SelectManageAccounts_v = xx::Dock < SelectManageAccounts >;
+    using SelectManageAccounts_p = xx::Ptr<SelectManageAccounts>;
+    using SelectManageAccounts_v = xx::Dock<SelectManageAccounts>;
 
 }
 namespace Manage
 {
     // 账号
     struct Account;
-    using Account_p = xx::Ptr < Account >;
-    using Account_v = xx::Dock < Account >;
+    using Account_p = xx::Ptr<Account>;
+    using Account_v = xx::Dock<Account>;
 
     // 身份
     struct Role;
-    using Role_p = xx::Ptr < Role >;
-    using Role_v = xx::Dock < Role >;
+    using Role_p = xx::Ptr<Role>;
+    using Role_v = xx::Dock<Role>;
 
     // 权限
     struct Permission;
-    using Permission_p = xx::Ptr < Permission >;
-    using Permission_v = xx::Dock < Permission >;
+    using Permission_p = xx::Ptr<Permission>;
+    using Permission_v = xx::Dock<Permission>;
 
     // 管理人员 & 身份 绑定
     struct BindAccountRole;
-    using BindAccountRole_p = xx::Ptr < BindAccountRole >;
-    using BindAccountRole_v = xx::Dock < BindAccountRole >;
+    using BindAccountRole_p = xx::Ptr<BindAccountRole>;
+    using BindAccountRole_v = xx::Dock<BindAccountRole>;
 
     // 身份 & 权限 绑定
     struct BindRolePermission;
-    using BindRolePermission_p = xx::Ptr < BindRolePermission >;
-    using BindRolePermission_v = xx::Dock < BindRolePermission >;
+    using BindRolePermission_p = xx::Ptr<BindRolePermission>;
+    using BindRolePermission_v = xx::Dock<BindRolePermission>;
 
 }
 namespace DB_Manage
 {
     // 登录成功
     struct LoginSuccess;
-    using LoginSuccess_p = xx::Ptr < LoginSuccess >;
-    using LoginSuccess_v = xx::Dock < LoginSuccess >;
+    using LoginSuccess_p = xx::Ptr<LoginSuccess>;
+    using LoginSuccess_v = xx::Dock<LoginSuccess>;
 
     // 登录失败
     struct LoginFail;
-    using LoginFail_p = xx::Ptr < LoginFail >;
-    using LoginFail_v = xx::Dock < LoginFail >;
+    using LoginFail_p = xx::Ptr<LoginFail>;
+    using LoginFail_v = xx::Dock<LoginFail>;
 
     // 注销成功
     struct LogoutSuccess;
-    using LogoutSuccess_p = xx::Ptr < LogoutSuccess >;
-    using LogoutSuccess_v = xx::Dock < LogoutSuccess >;
+    using LogoutSuccess_p = xx::Ptr<LogoutSuccess>;
+    using LogoutSuccess_v = xx::Dock<LogoutSuccess>;
 
     // 注销失败
     struct LogoutFail;
-    using LogoutFail_p = xx::Ptr < LogoutFail >;
-    using LogoutFail_v = xx::Dock < LogoutFail >;
+    using LogoutFail_p = xx::Ptr<LogoutFail>;
+    using LogoutFail_v = xx::Dock<LogoutFail>;
 
     // 拉管理员账号列表的 id 列表 成功
     struct SelectManageAccountIdsSuccess;
-    using SelectManageAccountIdsSuccess_p = xx::Ptr < SelectManageAccountIdsSuccess >;
-    using SelectManageAccountIdsSuccess_v = xx::Dock < SelectManageAccountIdsSuccess >;
+    using SelectManageAccountIdsSuccess_p = xx::Ptr<SelectManageAccountIdsSuccess>;
+    using SelectManageAccountIdsSuccess_v = xx::Dock<SelectManageAccountIdsSuccess>;
 
     // 拉管理员账号列表的 id 列表 失败
     struct SelectManageAccountIdsFail;
-    using SelectManageAccountIdsFail_p = xx::Ptr < SelectManageAccountIdsFail >;
-    using SelectManageAccountIdsFail_v = xx::Dock < SelectManageAccountIdsFail >;
+    using SelectManageAccountIdsFail_p = xx::Ptr<SelectManageAccountIdsFail>;
+    using SelectManageAccountIdsFail_v = xx::Dock<SelectManageAccountIdsFail>;
 
     // 拉管理员账号列表 成功
     struct SelectManageAccountsSuccess;
-    using SelectManageAccountsSuccess_p = xx::Ptr < SelectManageAccountsSuccess >;
-    using SelectManageAccountsSuccess_v = xx::Dock < SelectManageAccountsSuccess >;
+    using SelectManageAccountsSuccess_p = xx::Ptr<SelectManageAccountsSuccess>;
+    using SelectManageAccountsSuccess_v = xx::Dock<SelectManageAccountsSuccess>;
 
     // 拉管理员账号列表 失败
     struct SelectManageAccountsFail;
-    using SelectManageAccountsFail_p = xx::Ptr < SelectManageAccountsFail >;
-    using SelectManageAccountsFail_v = xx::Dock < SelectManageAccountsFail >;
+    using SelectManageAccountsFail_p = xx::Ptr<SelectManageAccountsFail>;
+    using SelectManageAccountsFail_v = xx::Dock<SelectManageAccountsFail>;
 
 }
 namespace Manage

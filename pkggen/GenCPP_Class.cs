@@ -42,8 +42,8 @@ namespace " + c.Namespace + @"
             // enum class xxxxxxxxx : underlyingType
             sb.Append(c._GetDesc_Cpp(4) + @"
     struct " + c.Name + @";
-    using " + c.Name + @"_p = xx::Ptr < " + c.Name + @" >;
-    using " + c.Name + @"_v = xx::Dock < " + c.Name + @" >;
+    using " + c.Name + @"_p = xx::Ptr<" + c.Name + @">;
+    using " + c.Name + @"_v = xx::Dock<" + c.Name + @">;
 ");
 
             // namespace }

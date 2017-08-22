@@ -5,6 +5,7 @@
 #include "xx_string.h"
 #include "xx_list.h"
 #include "xx_dict.h"
+#include "xx_queue.h"
 
 namespace xx
 {
@@ -412,6 +413,19 @@ namespace xx
 				outPkgs.Add(std::move(ibb));
 			}
 			return outPkgs.dataLen;
+		}
+
+		// 队列版并不清除原有数据, 乃是追加. 如果出错, 也不会回滚.
+		int ReadPackages(Queue<Object_p>& outPkgs)
+		{
+			while (offset < dataLen)
+			{
+				Object_p ibb;
+				if (auto rtv = ReadRoot(ibb)) return rtv;
+				if (!ibb) return -2;
+				outPkgs.Emplace(std::move(ibb));
+			}
+			return outPkgs.Count();
 		}
 
 		/*************************************************************************/

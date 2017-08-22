@@ -32,19 +32,12 @@ inline MyConnector::~MyConnector()
 }
 inline void MyConnector::OnReceivePackage(xx::BBuffer & bb)
 {
-	// 试将收到的包解出来
-	if (bb.ReadPackages(*recvPkgs) != 1)
+	// 试将收到的包解出来并往 recvMsgs 追加. 如果出错则直接断开
+	if (bb.ReadPackages(*recvMsgs) <= 0)
 	{
 		Disconnect(true);
 		return;
 	}
-
-	// 将数据转移并追加到持续收到的数据队列中
-	for (uint32_t i = 0; i < recvPkgs->dataLen; ++i)
-	{
-		recvMsgs->Push(std::move(recvPkgs->At(i)));
-	}
-	recvPkgs->Clear();
 }
 inline void MyConnector::OnConnect()
 {
@@ -226,7 +219,6 @@ inline int MyClient::Update()
 		xx::Object_p o_;
 		if (conn->recvMsgs->TryPop(o_))
 		{
-			xx::ScopeGuard sg_o_killer([&] { o_->Release(); });		// 跳出这层大扩号就删
 			auto& typeId = o_->typeId();
 			switch (typeId)
 			{

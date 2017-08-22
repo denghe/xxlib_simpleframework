@@ -311,6 +311,20 @@ namespace xx
 			if (dataLen != o.dataLen) return false;
 			return memcmp(buf, o.buf, dataLen) == 0;
 		}
+		inline bool Equals(String const* const& o) const
+		{
+			if (!o) return false;
+			return Equals(*o);
+		}
+		inline bool Equals(Ptr<String> const& o) const
+		{
+			if (!o) return false;
+			return Equals(*o);
+		}
+		inline bool Equals(Dock<String> const& o) const
+		{
+			return Equals(*o);
+		}
 	};
 
 
