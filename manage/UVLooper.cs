@@ -84,10 +84,6 @@ namespace manage
                 Dispose();
                 uv.Stop();
             }
-            else
-            {
-
-            }
         }
         protected override void Dispose(bool A_0)
         {
@@ -228,6 +224,12 @@ namespace manage
 
             LabDisconnectedByServer:
             StateLog("disconnected by server.");
+
+            
+            var lastMS = currMS;
+            while (currMS - lastMS < 2000) yield return null;       // 停 2 秒再跳, 让用户看清提示
+
+
             goto LabInit;
 
             //yield break;
@@ -253,7 +255,7 @@ namespace manage
     {
         public static long MS(this DateTime dt)
         {
-            return dt.Ticks / 1000000;
+            return dt.Ticks / 10000;
         }
     }
 }

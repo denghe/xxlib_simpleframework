@@ -238,7 +238,7 @@ namespace xx
 		template<typename T>
 		int ReadPtr(Ref<T> &v)
 		{
-			T* t;
+			T* t = nullptr;
 			auto rtv = ReadPtr(t);
 			v = t;
 			return rtv;
@@ -251,7 +251,7 @@ namespace xx
 		template<typename T>
 		int ReadPtr(Ptr<T> &v)
 		{
-			T* t;
+			T* t = nullptr;
 			auto rtv = ReadPtr(t);
 			v = t;
 			return rtv;
@@ -259,12 +259,12 @@ namespace xx
 
 
 		template<typename T>
-		void WriteBox(Dock<T> const& v)
+		void WriteDock(Dock<T> const& v)
 		{
 			v->ToBBuffer(*this);
 		}
 		template<typename T>
-		int ReadBox(Dock<T> &v)
+		int ReadDock(Dock<T> &v)
 		{
 			return v->FromBBuffer(*this);
 		}
@@ -488,12 +488,12 @@ namespace xx
 	template<typename T>
 	void BBufferRWSwitcher<T, std::enable_if_t< IsDock_v<T> >>::Write(BBuffer* bb, T const& v)
 	{
-		bb->WriteBox(v);
+		bb->WriteDock(v);
 	}
 	template<typename T>
 	int BBufferRWSwitcher<T, std::enable_if_t< IsDock_v<T> >>::Read(BBuffer* bb, T& v)
 	{
-		return bb->ReadBox(v);
+		return bb->ReadDock(v);
 	}
 
 	/*************************************************************************/

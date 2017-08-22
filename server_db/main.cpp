@@ -83,8 +83,8 @@ struct Service : xx::Object
 	int Run();
 
 	// 一系列预创建的包用于小改发送
-	PKG::DB_Manage::LoginSuccess_v pkgLoginSuccess;
-	PKG::DB_Manage::LoginFail_v pkgLoginFail;
+	PKG::DB_Manage::LoginSuccess_p pkgLoginSuccess;
+	PKG::DB_Manage::LoginFail_p pkgLoginFail;
 };
 
 
@@ -154,9 +154,6 @@ inline Service::Service(char const* dbFileName, char const* logFileName)
 	, uv(mempool())
 	, tasks(mempool())
 	, worker(mempool(), this)
-
-	, pkgLoginSuccess(mempool())
-	, pkgLoginFail(mempool())
 {
 	sqldb->SetPragmaJournalMode(xx::SQLiteJournalModes::WAL);
 	sqldb->SetPragmaForeignKeys(true);
@@ -172,7 +169,9 @@ inline Service::Service(char const* dbFileName, char const* logFileName)
 	}
 
 	// 包预创建之 fields 预创建
+	pkgLoginSuccess.Create(mempool());
 	pkgLoginSuccess->token.Create(mempool());
+	pkgLoginFail.Create(mempool());
 	pkgLoginFail->reason.Create(mempool());
 }
 
@@ -259,7 +258,7 @@ inline void Peer::OnRecv(PKG::Manage_DB::Login_p& arg)
 				auto& mp = service->mempool();
 				if (res)
 				{
-					if ((!res->password && !arg->password) || res->password->Equals(arg->password))
+					if (xx::String::Equals(res->password ,arg->password))
 					{
 						auto& pkg = service->pkgLoginSuccess;
 						pkg->requestSerial = arg->serial;
@@ -299,6 +298,7 @@ inline void Peer::OnRecv(PKG::Manage_DB::Login_p& arg)
 
 int main(int argc, char** argv)
 {
+	PKG::AllTypesRegister();
 	xx::MemPool mp;
 	auto service = mp.CreatePtr<Service>((std::string(argv[0]) + ".db").c_str(), (std::string(argv[0]) + ".log.db").c_str());
 	return !service ? -1 : service->Run();

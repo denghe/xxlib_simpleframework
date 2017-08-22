@@ -178,41 +178,17 @@ namespace xx
 		}
 
 
-		// 下面这组设计中为 package debug 状态 释放所设计, 可临时关闭 assert, 
-		// 以便于 package 类包的释放特性: 不会在释放时创建新对象, 可能递归 / 互引用但引用计数为 1
-#ifndef NDEBUG
-		bool enableRefCountAssert = true;
-#endif
-		inline void EnableRefCountAssert()
-		{
-#ifndef NDEBUG
-			enableRefCountAssert = true;
-#endif
-		}
-		inline void DisableRefCountAssert()
-		{
-#ifndef NDEBUG
-			enableRefCountAssert = false;
-#endif
-		}
-
-
 		// 释放由 Create 创建的类
 		inline void Release(Object* p) noexcept
 		{
-			if (!p || p->refCount() > 0x7FFFFFFF) return;						// 如果空指针 或是用 Dock 包裹则不执行 Release 操作
-			assert(p->versionNumber());											// 版本号不应该是 0,
-#ifndef NDEBUG
-			if (enableRefCountAssert)
-			{
-				assert(p->refCount());											// 引用计数不该是 0. 否则就是 Release 次数过多
-			}
-#endif
+			// 宽松的判断策略
+			if (!p || !p->refCount() || p->refCount() > 0x7FFFFFFF || !p->versionNumber()) return;		// 0x7FFFFFFF 为 Dock 包裹
+
 			if (--p->refCount()) return;
 			auto stackIdx = p->memHeader().ptrStackIndex();						// 提前清空版本号以提供析构过程中针对当前对象的 Ensure() 返回空
 			p->memHeader().versionNumber = 0;
 			p->~Object();
-			ptrstacks[stackIdx].Push((MemHeader_Object*)p - 1);				// 入池
+			ptrstacks[stackIdx].Push((MemHeader_Object*)p - 1);					// 入池
 		}
 
 

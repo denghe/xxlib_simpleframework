@@ -325,6 +325,14 @@ namespace xx
 		{
 			return Equals(*o);
 		}
+
+		static bool Equals(Ptr<String> const& a, Ptr<String> const& b)
+		{
+			if (!a && !b) return true;
+			if (a && b) return a->Equals(b);
+			return false;
+		}
+		// todo: more
 	};
 
 
