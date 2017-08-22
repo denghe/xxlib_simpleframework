@@ -42,7 +42,10 @@ namespace " + c.Namespace + @"
             // desc
             // enum class xxxxxxxxx : underlyingType
             sb.Append(c._GetDesc_Cpp(4) + @"
-    struct " + c.Name + @";");
+    struct " + c.Name + @";
+    using " + c.Name + @"_p = xx::Ptr<" + c.Name + @">;
+	using " + c.Name + @"_v = xx::Dock<" + c.Name + @">;
+");
 
             // namespace }
             if (c.Namespace != null && ((i < cs.Count - 1 && cs[i + 1].Namespace != c.Namespace) || i == cs.Count - 1))
@@ -127,7 +130,7 @@ namespace " + c.Namespace + @"
 
                 var v = f.GetValue(f.IsStatic ? null : o);
                 var dv = v._GetDefaultValueDecl_Cpp(templateName);
-                if (dv != "")
+                if (dv != "" && !ft._IsUserClass() && !ft._IsString())  // 当前还无法正确处理 String 数据类型的默认值
                 {
                     sb.Append(" = " + dv + ";");
                 }
@@ -210,8 +213,6 @@ namespace " + c.Namespace + @"
         virtual void ToString(xx::String &str) const override;
         virtual void ToStringCore(xx::String &str) const override;
     };
-    using " + c.Name + @"_p = xx::Ptr<" + c.Name + @">;
-	using " + c.Name + @"_v = xx::Dock<" + c.Name + @">;
 
 ");   // class }
 
@@ -253,26 +254,26 @@ namespace " + c.Namespace + @"
                 dot = true;
             }
             var fs = c._GetFields();
-        //    foreach (var f in fs)
-        //    {
-        //        var ft = f.FieldType;
-        //        if (f._Has<TemplateLibrary.CreateInstance>() || ft._IsString())
-        //        {
-        //            var v = f.GetValue(f.IsStatic ? null : o);
-        //            var dv = v._GetDefaultValueDecl_Cpp(templateName);
-        //            if (dv != "nullptr" && ft._IsString())
-        //            {
-        //                sb.Append(@"
-        //" + (dot ? "," : ":") + " " + f.Name + "(mempool(), " + dv + ")");
-        //            }
-        //            else if (f._Has<TemplateLibrary.CreateInstance>())
-        //            {
-        //                sb.Append(@"
-        //" + (dot ? "," : ":") + " " + f.Name + "(mempool())");
-        //            }
-        //            dot = true;
-        //        }
-        //    }
+            //    foreach (var f in fs)
+            //    {
+            //        var ft = f.FieldType;
+            //        if (f._Has<TemplateLibrary.CreateInstance>() || ft._IsString())
+            //        {
+            //            var v = f.GetValue(f.IsStatic ? null : o);
+            //            var dv = v._GetDefaultValueDecl_Cpp(templateName);
+            //            if (dv != "nullptr" && ft._IsString())
+            //            {
+            //                sb.Append(@"
+            //" + (dot ? "," : ":") + " " + f.Name + "(mempool(), " + dv + ")");
+            //            }
+            //            else if (f._Has<TemplateLibrary.CreateInstance>())
+            //            {
+            //                sb.Append(@"
+            //" + (dot ? "," : ":") + " " + f.Name + "(mempool())");
+            //            }
+            //            dot = true;
+            //        }
+            //    }
             sb.Append(@"
 	{
 	}

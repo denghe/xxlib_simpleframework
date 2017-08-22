@@ -22,6 +22,11 @@ struct Peer : xx::UVServerPeer
 	Peer(Listener* listener);
 	virtual void OnReceivePackage(xx::BBuffer & bb) override;
 	virtual void OnDisconnect() override;
+
+	// pkg handlers
+	void OnRecv(PKG::Manage_DB::Login& o);
+	void OnRecv(PKG::Manage_DB::Logout& o);
+	// ...
 };
 
 struct Listener : xx::UVListener
@@ -197,16 +202,23 @@ inline Peer::Peer(Listener* listener)
 	: xx::UVServerPeer(listener)
 	, service(listener->service)
 {
+	Cout(GetPeerName(), " connected!\n");
 }
 
-inline void Peer::OnDisconnect() {}
-
-#include <thread>
+inline void Peer::OnDisconnect()
+{
+	Cout(tmpStr, " disconnected!\n");
+}
 
 inline void Peer::OnReceivePackage(xx::BBuffer& bb)
 {
-	// todo: 收到包, 解析, 向任务容器压函数, 转到后台线程执行
+	Cout("recv data = ", bb, "\n");
+	
+}
 
+void Peer::OnRecv(PKG::Manage_DB::Login& o)
+{
+	
 
 	// 模拟传一批参数
 	struct Args : xx::Object
@@ -256,7 +268,6 @@ inline void Peer::OnReceivePackage(xx::BBuffer& bb)
 }
 
 
-
 /******************************************************************************/
 
 
@@ -274,6 +285,56 @@ int main(int argc, char** argv)
 
 
 
+
+/*
+// todo: 收到包, 解析, 向任务容器压函数, 转到后台线程执行
+
+// 模拟传一批参数
+struct Args : xx::Object
+{
+	Args()
+	{
+		std::cout << "Args(), thread id = " << std::this_thread::get_id() << std::endl;
+	}
+	Args(Args&&) = default;
+	xx::String_p un;
+	~Args()
+	{
+		std::cout << "~Args(), thread id = " << std::this_thread::get_id() << std::endl;
+	}
+};
+auto args = mempool().CreatePtr<Args>();
+// 填充 args .........
+// ...
+
+// 向 SQL 线程压入函数( service 是指针, 直接复制. peer 捕获安全引用类型, 传递到 result 函数中使用. args 捕获右值移动 )
+service->AddTask([service = this->service, peer = xx::Ref<Peer>(this), args = std::move(args)]()
+{
+	std::cout << "Task, thread id = " << std::this_thread::get_id() << std::endl;
+
+	// 执行 SQL 语句, 得到结果
+	// 期间只能从 service->sqlmp 分配内存. rtv 创建为类似 Args 的集合类似乎更佳
+	auto rtv = service->sqlmfs.SelectAccountByUsername(args->un);
+
+	// 到主线程去处理结果, 设置结果函数( service, peer 直接复制, rtv 移动, 顺便将 args 移进去以便回收 )
+	service->SetResult([service, peer, rtv = std::move(rtv), args = xx::Move(args)]
+	{
+		std::cout << "Result, thread id = " << std::this_thread::get_id() << std::endl;
+
+	// handle( rtv )
+	if (peer && peer->state == xx::UVPeerStates::Connected)			// 如果 peer 还活着, 回发
+	{
+		//peer->SendPackages
+	}
+
+	// 到工作线程去回收结果, 设置结果回收函数( 将 rtv 移进去即可 )
+	service->SetResultKiller([rtv = xx::Move(rtv)]
+	{
+		std::cout << "ResultKiller, thread id = " << std::this_thread::get_id() << std::endl;
+	});
+	});
+});
+*/
 
 
 

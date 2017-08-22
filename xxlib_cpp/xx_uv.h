@@ -116,8 +116,7 @@ namespace xx
 		void Clear();												// 内部函数, 于断开之后清理收发相关缓存
 
 		// 方便使用的一些扩展( 当前并不直接映射到 C# )
-		List_v<Object*> recvPkgs;									// 可于 OnReceivePackage 时用 bb.ReadPackages(*recvPkgs) 来填充它. 须用 bb.ReleasePackages 释放.
-		void ReleaseRecvPkgs();										// 主动回收 recvPkgs 的数据
+		List_v<Object_p> recvPkgs;									// 可于 OnReceivePackage 时用 bb.ReadPackages(*recvPkgs) 来填充它
 	protected:
 		template<typename T>
 		int SendCore(T const& pkg);

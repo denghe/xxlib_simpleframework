@@ -5,82 +5,187 @@ namespace PKG
 {
     // 一个请求( 当前限定为 service 与 db 间 ), 通常携带一个流水号. 这是基类
     struct Request;
+    using Request_p = xx::Ptr < Request >;
+    using Request_v = xx::Dock < Request >;
+
     // 一个回应( 当前限定为 service 与 db 间 ), 通常携带一个请求发过来的流水号. 这是基类
     struct Response;
+    using Response_p = xx::Ptr < Response >;
+    using Response_v = xx::Dock < Response >;
+
     // 成功
     struct Success;
+    using Success_p = xx::Ptr < Success >;
+    using Success_v = xx::Dock < Success >;
+
     // 失败
     struct Fail;
+    using Fail_p = xx::Ptr < Fail >;
+    using Fail_v = xx::Dock < Fail >;
+
     struct Property;
+    using Property_p = xx::Ptr < Property >;
+    using Property_v = xx::Dock < Property >;
+
     struct Property_long;
+    using Property_long_p = xx::Ptr < Property_long >;
+    using Property_long_v = xx::Dock < Property_long >;
+
     struct Property_double;
+    using Property_double_p = xx::Ptr < Property_double >;
+    using Property_double_v = xx::Dock < Property_double >;
+
     struct Property_string;
+    using Property_string_p = xx::Ptr < Property_string >;
+    using Property_string_v = xx::Dock < Property_string >;
+
     struct Properties;
+    using Properties_p = xx::Ptr < Properties >;
+    using Properties_v = xx::Dock < Properties >;
+
     struct UserInfo;
+    using UserInfo_p = xx::Ptr < UserInfo >;
+    using UserInfo_v = xx::Dock < UserInfo >;
+
 namespace Client_Server
 {
     // 请求进入服务器
     struct Join;
+    using Join_p = xx::Ptr < Join >;
+    using Join_v = xx::Dock < Join >;
+
     // 发消息
     struct Message;
+    using Message_p = xx::Ptr < Message >;
+    using Message_v = xx::Dock < Message >;
+
     // 主动退出
     struct Logout;
+    using Logout_p = xx::Ptr < Logout >;
+    using Logout_v = xx::Dock < Logout >;
+
 }
 namespace Server_Client
 {
     // 进入成功, 返回用户信息
     struct JoinSuccess;
+    using JoinSuccess_p = xx::Ptr < JoinSuccess >;
+    using JoinSuccess_v = xx::Dock < JoinSuccess >;
+
     // 进入失败, 返回错误信息
     struct JoinFail;
+    using JoinFail_p = xx::Ptr < JoinFail >;
+    using JoinFail_v = xx::Dock < JoinFail >;
+
     // 推送文字消息
     struct PushJoin;
+    using PushJoin_p = xx::Ptr < PushJoin >;
+    using PushJoin_v = xx::Dock < PushJoin >;
+
     // 推送文字消息
     struct PushMessage;
+    using PushMessage_p = xx::Ptr < PushMessage >;
+    using PushMessage_v = xx::Dock < PushMessage >;
+
     // 推送退出消息
     struct PushLogout;
+    using PushLogout_p = xx::Ptr < PushLogout >;
+    using PushLogout_v = xx::Dock < PushLogout >;
+
 }
 namespace Manage_DB
 {
     // 请求进入服务器
     struct Login;
+    using Login_p = xx::Ptr < Login >;
+    using Login_v = xx::Dock < Login >;
+
     // 注销式退出
     struct Logout;
+    using Logout_p = xx::Ptr < Logout >;
+    using Logout_v = xx::Dock < Logout >;
+
     // 拉管理员账号列表的 id 列表( 需要相关权限 )
     struct SelectManageAccountIds;
+    using SelectManageAccountIds_p = xx::Ptr < SelectManageAccountIds >;
+    using SelectManageAccountIds_v = xx::Dock < SelectManageAccountIds >;
+
     // 拉管理员账号列表( 需要相关权限 )
     struct SelectManageAccounts;
+    using SelectManageAccounts_p = xx::Ptr < SelectManageAccounts >;
+    using SelectManageAccounts_v = xx::Dock < SelectManageAccounts >;
+
 }
 namespace Manage
 {
     // 账号
     struct Account;
+    using Account_p = xx::Ptr < Account >;
+    using Account_v = xx::Dock < Account >;
+
     // 身份
     struct Role;
+    using Role_p = xx::Ptr < Role >;
+    using Role_v = xx::Dock < Role >;
+
     // 权限
     struct Permission;
+    using Permission_p = xx::Ptr < Permission >;
+    using Permission_v = xx::Dock < Permission >;
+
     // 管理人员 & 身份 绑定
     struct BindAccountRole;
+    using BindAccountRole_p = xx::Ptr < BindAccountRole >;
+    using BindAccountRole_v = xx::Dock < BindAccountRole >;
+
     // 身份 & 权限 绑定
     struct BindRolePermission;
+    using BindRolePermission_p = xx::Ptr < BindRolePermission >;
+    using BindRolePermission_v = xx::Dock < BindRolePermission >;
+
 }
 namespace DB_Manage
 {
     // 登录成功
     struct LoginSuccess;
+    using LoginSuccess_p = xx::Ptr < LoginSuccess >;
+    using LoginSuccess_v = xx::Dock < LoginSuccess >;
+
     // 登录失败
     struct LoginFail;
+    using LoginFail_p = xx::Ptr < LoginFail >;
+    using LoginFail_v = xx::Dock < LoginFail >;
+
     // 注销成功
     struct LogoutSuccess;
+    using LogoutSuccess_p = xx::Ptr < LogoutSuccess >;
+    using LogoutSuccess_v = xx::Dock < LogoutSuccess >;
+
     // 注销失败
     struct LogoutFail;
+    using LogoutFail_p = xx::Ptr < LogoutFail >;
+    using LogoutFail_v = xx::Dock < LogoutFail >;
+
     // 拉管理员账号列表的 id 列表 成功
     struct SelectManageAccountIdsSuccess;
+    using SelectManageAccountIdsSuccess_p = xx::Ptr < SelectManageAccountIdsSuccess >;
+    using SelectManageAccountIdsSuccess_v = xx::Dock < SelectManageAccountIdsSuccess >;
+
     // 拉管理员账号列表的 id 列表 失败
     struct SelectManageAccountIdsFail;
+    using SelectManageAccountIdsFail_p = xx::Ptr < SelectManageAccountIdsFail >;
+    using SelectManageAccountIdsFail_v = xx::Dock < SelectManageAccountIdsFail >;
+
     // 拉管理员账号列表 成功
     struct SelectManageAccountsSuccess;
+    using SelectManageAccountsSuccess_p = xx::Ptr < SelectManageAccountsSuccess >;
+    using SelectManageAccountsSuccess_v = xx::Dock < SelectManageAccountsSuccess >;
+
     // 拉管理员账号列表 失败
     struct SelectManageAccountsFail;
+    using SelectManageAccountsFail_p = xx::Ptr < SelectManageAccountsFail >;
+    using SelectManageAccountsFail_v = xx::Dock < SelectManageAccountsFail >;
+
 }
 namespace Manage
 {
@@ -102,7 +207,8 @@ namespace Manage
         typedef xx::Object BaseType;
 	    Response();
 	    Response(xx::BBuffer *bb);
-	    ~Response();
+		Response(Response const&) = delete;
+		Response& operator=(Response const&) = delete;
         virtual void ToString(xx::String &str) const override;
         virtual void ToStringCore(xx::String &str) const override;
         virtual void ToBBuffer(xx::BBuffer &bb) const override;
@@ -117,7 +223,8 @@ namespace Manage
         typedef xx::Object BaseType;
 	    Request();
 	    Request(xx::BBuffer *bb);
-	    ~Request();
+		Request(Request const&) = delete;
+		Request& operator=(Request const&) = delete;
         virtual void ToString(xx::String &str) const override;
         virtual void ToStringCore(xx::String &str) const override;
         virtual void ToBBuffer(xx::BBuffer &bb) const override;
@@ -131,7 +238,8 @@ namespace Manage
         typedef PKG::Response BaseType;
 	    Success();
 	    Success(xx::BBuffer *bb);
-	    ~Success();
+		Success(Success const&) = delete;
+		Success& operator=(Success const&) = delete;
         virtual void ToString(xx::String &str) const override;
         virtual void ToStringCore(xx::String &str) const override;
         virtual void ToBBuffer(xx::BBuffer &bb) const override;
@@ -140,13 +248,14 @@ namespace Manage
     // 失败
     struct Fail : PKG::Response
     {
-        xx::String* reason = nullptr;
+        xx::String_p reason;
 
         typedef Fail ThisType;
         typedef PKG::Response BaseType;
 	    Fail();
 	    Fail(xx::BBuffer *bb);
-	    ~Fail();
+		Fail(Fail const&) = delete;
+		Fail& operator=(Fail const&) = delete;
         virtual void ToString(xx::String &str) const override;
         virtual void ToStringCore(xx::String &str) const override;
         virtual void ToBBuffer(xx::BBuffer &bb) const override;
@@ -154,13 +263,14 @@ namespace Manage
     };
     struct Property : xx::Object
     {
-        xx::String* name = nullptr;
+        xx::String_p name;
 
         typedef Property ThisType;
         typedef xx::Object BaseType;
 	    Property();
 	    Property(xx::BBuffer *bb);
-	    ~Property();
+		Property(Property const&) = delete;
+		Property& operator=(Property const&) = delete;
         virtual void ToString(xx::String &str) const override;
         virtual void ToStringCore(xx::String &str) const override;
         virtual void ToBBuffer(xx::BBuffer &bb) const override;
@@ -172,13 +282,14 @@ namespace Manage_DB
     struct SelectManageAccounts : PKG::Request
     {
         // 要拉的 id 列表
-        xx::List<int64_t>* ids = nullptr;
+        xx::List_p<int64_t> ids;
 
         typedef SelectManageAccounts ThisType;
         typedef PKG::Request BaseType;
 	    SelectManageAccounts();
 	    SelectManageAccounts(xx::BBuffer *bb);
-	    ~SelectManageAccounts();
+		SelectManageAccounts(SelectManageAccounts const&) = delete;
+		SelectManageAccounts& operator=(SelectManageAccounts const&) = delete;
         virtual void ToString(xx::String &str) const override;
         virtual void ToStringCore(xx::String &str) const override;
         virtual void ToBBuffer(xx::BBuffer &bb) const override;
@@ -191,13 +302,14 @@ namespace Manage
     struct Account : xx::Object
     {
         int64_t id = 0;
-        xx::String* username = nullptr;
+        xx::String_p username;
 
         typedef Account ThisType;
         typedef xx::Object BaseType;
 	    Account();
 	    Account(xx::BBuffer *bb);
-	    ~Account();
+		Account(Account const&) = delete;
+		Account& operator=(Account const&) = delete;
         virtual void ToString(xx::String &str) const override;
         virtual void ToStringCore(xx::String &str) const override;
         virtual void ToBBuffer(xx::BBuffer &bb) const override;
@@ -207,14 +319,15 @@ namespace Manage
     struct Role : xx::Object
     {
         int32_t id = 0;
-        xx::String* name = nullptr;
-        xx::String* desc = nullptr;
+        xx::String_p name;
+        xx::String_p desc;
 
         typedef Role ThisType;
         typedef xx::Object BaseType;
 	    Role();
 	    Role(xx::BBuffer *bb);
-	    ~Role();
+		Role(Role const&) = delete;
+		Role& operator=(Role const&) = delete;
         virtual void ToString(xx::String &str) const override;
         virtual void ToStringCore(xx::String &str) const override;
         virtual void ToBBuffer(xx::BBuffer &bb) const override;
@@ -224,15 +337,16 @@ namespace Manage
     struct Permission : xx::Object
     {
         int32_t id = 0;
-        xx::String* group = nullptr;
-        xx::String* name = nullptr;
-        xx::String* desc = nullptr;
+        xx::String_p group;
+        xx::String_p name;
+        xx::String_p desc;
 
         typedef Permission ThisType;
         typedef xx::Object BaseType;
 	    Permission();
 	    Permission(xx::BBuffer *bb);
-	    ~Permission();
+		Permission(Permission const&) = delete;
+		Permission& operator=(Permission const&) = delete;
         virtual void ToString(xx::String &str) const override;
         virtual void ToStringCore(xx::String &str) const override;
         virtual void ToBBuffer(xx::BBuffer &bb) const override;
@@ -248,7 +362,8 @@ namespace Manage
         typedef xx::Object BaseType;
 	    BindAccountRole();
 	    BindAccountRole(xx::BBuffer *bb);
-	    ~BindAccountRole();
+		BindAccountRole(BindAccountRole const&) = delete;
+		BindAccountRole& operator=(BindAccountRole const&) = delete;
         virtual void ToString(xx::String &str) const override;
         virtual void ToStringCore(xx::String &str) const override;
         virtual void ToBBuffer(xx::BBuffer &bb) const override;
@@ -264,7 +379,8 @@ namespace Manage
         typedef xx::Object BaseType;
 	    BindRolePermission();
 	    BindRolePermission(xx::BBuffer *bb);
-	    ~BindRolePermission();
+		BindRolePermission(BindRolePermission const&) = delete;
+		BindRolePermission& operator=(BindRolePermission const&) = delete;
         virtual void ToString(xx::String &str) const override;
         virtual void ToStringCore(xx::String &str) const override;
         virtual void ToBBuffer(xx::BBuffer &bb) const override;
@@ -281,7 +397,8 @@ namespace DB_Manage
         typedef PKG::Fail BaseType;
 	    LoginFail();
 	    LoginFail(xx::BBuffer *bb);
-	    ~LoginFail();
+		LoginFail(LoginFail const&) = delete;
+		LoginFail& operator=(LoginFail const&) = delete;
         virtual void ToString(xx::String &str) const override;
         virtual void ToStringCore(xx::String &str) const override;
         virtual void ToBBuffer(xx::BBuffer &bb) const override;
@@ -302,7 +419,8 @@ namespace Manage_DB
         typedef PKG::Request BaseType;
 	    SelectManageAccountIds();
 	    SelectManageAccountIds(xx::BBuffer *bb);
-	    ~SelectManageAccountIds();
+		SelectManageAccountIds(SelectManageAccountIds const&) = delete;
+		SelectManageAccountIds& operator=(SelectManageAccountIds const&) = delete;
         virtual void ToString(xx::String &str) const override;
         virtual void ToStringCore(xx::String &str) const override;
         virtual void ToBBuffer(xx::BBuffer &bb) const override;
@@ -319,7 +437,8 @@ namespace DB_Manage
         typedef PKG::Success BaseType;
 	    LogoutSuccess();
 	    LogoutSuccess(xx::BBuffer *bb);
-	    ~LogoutSuccess();
+		LogoutSuccess(LogoutSuccess const&) = delete;
+		LogoutSuccess& operator=(LogoutSuccess const&) = delete;
         virtual void ToString(xx::String &str) const override;
         virtual void ToStringCore(xx::String &str) const override;
         virtual void ToBBuffer(xx::BBuffer &bb) const override;
@@ -333,7 +452,8 @@ namespace DB_Manage
         typedef PKG::Fail BaseType;
 	    LogoutFail();
 	    LogoutFail(xx::BBuffer *bb);
-	    ~LogoutFail();
+		LogoutFail(LogoutFail const&) = delete;
+		LogoutFail& operator=(LogoutFail const&) = delete;
         virtual void ToString(xx::String &str) const override;
         virtual void ToStringCore(xx::String &str) const override;
         virtual void ToBBuffer(xx::BBuffer &bb) const override;
@@ -342,13 +462,14 @@ namespace DB_Manage
     // 拉管理员账号列表的 id 列表 成功
     struct SelectManageAccountIdsSuccess : PKG::Success
     {
-        xx::List<int64_t>* ids = nullptr;
+        xx::List_p<int64_t> ids;
 
         typedef SelectManageAccountIdsSuccess ThisType;
         typedef PKG::Success BaseType;
 	    SelectManageAccountIdsSuccess();
 	    SelectManageAccountIdsSuccess(xx::BBuffer *bb);
-	    ~SelectManageAccountIdsSuccess();
+		SelectManageAccountIdsSuccess(SelectManageAccountIdsSuccess const&) = delete;
+		SelectManageAccountIdsSuccess& operator=(SelectManageAccountIdsSuccess const&) = delete;
         virtual void ToString(xx::String &str) const override;
         virtual void ToStringCore(xx::String &str) const override;
         virtual void ToBBuffer(xx::BBuffer &bb) const override;
@@ -362,7 +483,8 @@ namespace DB_Manage
         typedef PKG::Fail BaseType;
 	    SelectManageAccountIdsFail();
 	    SelectManageAccountIdsFail(xx::BBuffer *bb);
-	    ~SelectManageAccountIdsFail();
+		SelectManageAccountIdsFail(SelectManageAccountIdsFail const&) = delete;
+		SelectManageAccountIdsFail& operator=(SelectManageAccountIdsFail const&) = delete;
         virtual void ToString(xx::String &str) const override;
         virtual void ToStringCore(xx::String &str) const override;
         virtual void ToBBuffer(xx::BBuffer &bb) const override;
@@ -372,13 +494,14 @@ namespace DB_Manage
     struct LoginSuccess : PKG::Success
     {
         int64_t id = 0;
-        xx::String* token = nullptr;
+        xx::String_p token;
 
         typedef LoginSuccess ThisType;
         typedef PKG::Success BaseType;
 	    LoginSuccess();
 	    LoginSuccess(xx::BBuffer *bb);
-	    ~LoginSuccess();
+		LoginSuccess(LoginSuccess const&) = delete;
+		LoginSuccess& operator=(LoginSuccess const&) = delete;
         virtual void ToString(xx::String &str) const override;
         virtual void ToStringCore(xx::String &str) const override;
         virtual void ToBBuffer(xx::BBuffer &bb) const override;
@@ -395,7 +518,8 @@ namespace Manage_DB
         typedef PKG::Request BaseType;
 	    Logout();
 	    Logout(xx::BBuffer *bb);
-	    ~Logout();
+		Logout(Logout const&) = delete;
+		Logout& operator=(Logout const&) = delete;
         virtual void ToString(xx::String &str) const override;
         virtual void ToStringCore(xx::String &str) const override;
         virtual void ToBBuffer(xx::BBuffer &bb) const override;
@@ -409,13 +533,14 @@ namespace Server_Client
     {
         int64_t id = 0;
         // 退出原因( 主动? 掉线?
-        xx::String* reason = nullptr;
+        xx::String_p reason;
 
         typedef PushLogout ThisType;
         typedef xx::Object BaseType;
 	    PushLogout();
 	    PushLogout(xx::BBuffer *bb);
-	    ~PushLogout();
+		PushLogout(PushLogout const&) = delete;
+		PushLogout& operator=(PushLogout const&) = delete;
         virtual void ToString(xx::String &str) const override;
         virtual void ToStringCore(xx::String &str) const override;
         virtual void ToBBuffer(xx::BBuffer &bb) const override;
@@ -427,13 +552,14 @@ namespace DB_Manage
     // 拉管理员账号列表 成功
     struct SelectManageAccountsSuccess : PKG::Success
     {
-        xx::List<PKG::Manage::Account*>* rows = nullptr;
+        xx::List_p<PKG::Manage::Account_p> rows;
 
         typedef SelectManageAccountsSuccess ThisType;
         typedef PKG::Success BaseType;
 	    SelectManageAccountsSuccess();
 	    SelectManageAccountsSuccess(xx::BBuffer *bb);
-	    ~SelectManageAccountsSuccess();
+		SelectManageAccountsSuccess(SelectManageAccountsSuccess const&) = delete;
+		SelectManageAccountsSuccess& operator=(SelectManageAccountsSuccess const&) = delete;
         virtual void ToString(xx::String &str) const override;
         virtual void ToStringCore(xx::String &str) const override;
         virtual void ToBBuffer(xx::BBuffer &bb) const override;
@@ -446,13 +572,14 @@ namespace Server_Client
     struct PushMessage : xx::Object
     {
         int64_t id = 0;
-        xx::String* text = nullptr;
+        xx::String_p text;
 
         typedef PushMessage ThisType;
         typedef xx::Object BaseType;
 	    PushMessage();
 	    PushMessage(xx::BBuffer *bb);
-	    ~PushMessage();
+		PushMessage(PushMessage const&) = delete;
+		PushMessage& operator=(PushMessage const&) = delete;
         virtual void ToString(xx::String &str) const override;
         virtual void ToStringCore(xx::String &str) const override;
         virtual void ToBBuffer(xx::BBuffer &bb) const override;
@@ -467,7 +594,8 @@ namespace Server_Client
         typedef xx::Object BaseType;
 	    PushJoin();
 	    PushJoin(xx::BBuffer *bb);
-	    ~PushJoin();
+		PushJoin(PushJoin const&) = delete;
+		PushJoin& operator=(PushJoin const&) = delete;
         virtual void ToString(xx::String &str) const override;
         virtual void ToStringCore(xx::String &str) const override;
         virtual void ToBBuffer(xx::BBuffer &bb) const override;
@@ -476,13 +604,14 @@ namespace Server_Client
     // 进入失败, 返回错误信息
     struct JoinFail : PKG::Response
     {
-        xx::String* reason = nullptr;
+        xx::String_p reason;
 
         typedef JoinFail ThisType;
         typedef PKG::Response BaseType;
 	    JoinFail();
 	    JoinFail(xx::BBuffer *bb);
-	    ~JoinFail();
+		JoinFail(JoinFail const&) = delete;
+		JoinFail& operator=(JoinFail const&) = delete;
         virtual void ToString(xx::String &str) const override;
         virtual void ToStringCore(xx::String &str) const override;
         virtual void ToBBuffer(xx::BBuffer &bb) const override;
@@ -491,14 +620,15 @@ namespace Server_Client
     // 进入成功, 返回用户信息
     struct JoinSuccess : PKG::Response
     {
-        PKG::UserInfo* self = nullptr;
-        xx::List<PKG::UserInfo*>* users = nullptr;
+        PKG::UserInfo_p self;
+        xx::List_p<PKG::UserInfo_p> users;
 
         typedef JoinSuccess ThisType;
         typedef PKG::Response BaseType;
 	    JoinSuccess();
 	    JoinSuccess(xx::BBuffer *bb);
-	    ~JoinSuccess();
+		JoinSuccess(JoinSuccess const&) = delete;
+		JoinSuccess& operator=(JoinSuccess const&) = delete;
         virtual void ToString(xx::String &str) const override;
         virtual void ToStringCore(xx::String &str) const override;
         virtual void ToBBuffer(xx::BBuffer &bb) const override;
@@ -515,7 +645,8 @@ namespace Client_Server
         typedef xx::Object BaseType;
 	    Logout();
 	    Logout(xx::BBuffer *bb);
-	    ~Logout();
+		Logout(Logout const&) = delete;
+		Logout& operator=(Logout const&) = delete;
         virtual void ToString(xx::String &str) const override;
         virtual void ToStringCore(xx::String &str) const override;
         virtual void ToBBuffer(xx::BBuffer &bb) const override;
@@ -524,13 +655,14 @@ namespace Client_Server
     // 发消息
     struct Message : xx::Object
     {
-        xx::String* text = nullptr;
+        xx::String_p text;
 
         typedef Message ThisType;
         typedef xx::Object BaseType;
 	    Message();
 	    Message(xx::BBuffer *bb);
-	    ~Message();
+		Message(Message const&) = delete;
+		Message& operator=(Message const&) = delete;
         virtual void ToString(xx::String &str) const override;
         virtual void ToStringCore(xx::String &str) const override;
         virtual void ToBBuffer(xx::BBuffer &bb) const override;
@@ -539,14 +671,15 @@ namespace Client_Server
     // 请求进入服务器
     struct Join : PKG::Request
     {
-        xx::String* username = nullptr;
-        xx::String* password = nullptr;
+        xx::String_p username;
+        xx::String_p password;
 
         typedef Join ThisType;
         typedef PKG::Request BaseType;
 	    Join();
 	    Join(xx::BBuffer *bb);
-	    ~Join();
+		Join(Join const&) = delete;
+		Join& operator=(Join const&) = delete;
         virtual void ToString(xx::String &str) const override;
         virtual void ToStringCore(xx::String &str) const override;
         virtual void ToBBuffer(xx::BBuffer &bb) const override;
@@ -556,13 +689,14 @@ namespace Client_Server
     struct UserInfo : xx::Object
     {
         int64_t id = 0;
-        xx::List<PKG::Property*>* props = nullptr;
+        xx::List_p<PKG::Property_p> props;
 
         typedef UserInfo ThisType;
         typedef xx::Object BaseType;
 	    UserInfo();
 	    UserInfo(xx::BBuffer *bb);
-	    ~UserInfo();
+		UserInfo(UserInfo const&) = delete;
+		UserInfo& operator=(UserInfo const&) = delete;
         virtual void ToString(xx::String &str) const override;
         virtual void ToStringCore(xx::String &str) const override;
         virtual void ToBBuffer(xx::BBuffer &bb) const override;
@@ -570,13 +704,14 @@ namespace Client_Server
     };
     struct Properties : PKG::Property
     {
-        xx::List<PKG::Property*>* value = nullptr;
+        xx::List_p<PKG::Property_p> value;
 
         typedef Properties ThisType;
         typedef PKG::Property BaseType;
 	    Properties();
 	    Properties(xx::BBuffer *bb);
-	    ~Properties();
+		Properties(Properties const&) = delete;
+		Properties& operator=(Properties const&) = delete;
         virtual void ToString(xx::String &str) const override;
         virtual void ToStringCore(xx::String &str) const override;
         virtual void ToBBuffer(xx::BBuffer &bb) const override;
@@ -584,13 +719,14 @@ namespace Client_Server
     };
     struct Property_string : PKG::Property
     {
-        xx::String* value = nullptr;
+        xx::String_p value;
 
         typedef Property_string ThisType;
         typedef PKG::Property BaseType;
 	    Property_string();
 	    Property_string(xx::BBuffer *bb);
-	    ~Property_string();
+		Property_string(Property_string const&) = delete;
+		Property_string& operator=(Property_string const&) = delete;
         virtual void ToString(xx::String &str) const override;
         virtual void ToStringCore(xx::String &str) const override;
         virtual void ToBBuffer(xx::BBuffer &bb) const override;
@@ -604,7 +740,8 @@ namespace Client_Server
         typedef PKG::Property BaseType;
 	    Property_double();
 	    Property_double(xx::BBuffer *bb);
-	    ~Property_double();
+		Property_double(Property_double const&) = delete;
+		Property_double& operator=(Property_double const&) = delete;
         virtual void ToString(xx::String &str) const override;
         virtual void ToStringCore(xx::String &str) const override;
         virtual void ToBBuffer(xx::BBuffer &bb) const override;
@@ -618,7 +755,8 @@ namespace Client_Server
         typedef PKG::Property BaseType;
 	    Property_long();
 	    Property_long(xx::BBuffer *bb);
-	    ~Property_long();
+		Property_long(Property_long const&) = delete;
+		Property_long& operator=(Property_long const&) = delete;
         virtual void ToString(xx::String &str) const override;
         virtual void ToStringCore(xx::String &str) const override;
         virtual void ToBBuffer(xx::BBuffer &bb) const override;
@@ -629,14 +767,15 @@ namespace Manage_DB
     // 请求进入服务器
     struct Login : PKG::Request
     {
-        xx::String* username = nullptr;
-        xx::String* password = nullptr;
+        xx::String_p username;
+        xx::String_p password;
 
         typedef Login ThisType;
         typedef PKG::Request BaseType;
 	    Login();
 	    Login(xx::BBuffer *bb);
-	    ~Login();
+		Login(Login const&) = delete;
+		Login& operator=(Login const&) = delete;
         virtual void ToString(xx::String &str) const override;
         virtual void ToStringCore(xx::String &str) const override;
         virtual void ToBBuffer(xx::BBuffer &bb) const override;
@@ -653,7 +792,8 @@ namespace DB_Manage
         typedef PKG::Fail BaseType;
 	    SelectManageAccountsFail();
 	    SelectManageAccountsFail(xx::BBuffer *bb);
-	    ~SelectManageAccountsFail();
+		SelectManageAccountsFail(SelectManageAccountsFail const&) = delete;
+		SelectManageAccountsFail& operator=(SelectManageAccountsFail const&) = delete;
         virtual void ToString(xx::String &str) const override;
         virtual void ToStringCore(xx::String &str) const override;
         virtual void ToBBuffer(xx::BBuffer &bb) const override;
@@ -668,9 +808,16 @@ namespace DB_Manage
 	    int rtv = 0;
         if (rtv = bb->Read(serial)) throw rtv;
 	}
-	inline Request::~Request()
-	{
-	}
+    inline void Request::ToBBuffer(xx::BBuffer &bb) const
+    {
+        bb.Write(this->serial);
+    }
+    inline int Request::FromBBuffer(xx::BBuffer &bb)
+    {
+        int rtv = 0;
+        if (rtv = bb.Read(this->serial)) return rtv;
+        return rtv;
+    }
 
     inline void Request::ToString(xx::String &str) const
     {
@@ -694,18 +841,6 @@ namespace DB_Manage
     }
 
 
-    inline void Request::ToBBuffer(xx::BBuffer &bb) const
-    {
-        bb.Write(this->serial);
-    }
-
-    inline int Request::FromBBuffer(xx::BBuffer &bb)
-    {
-        int rtv = 0;
-        if (rtv = bb.Read(this->serial)) return rtv;
-        return rtv;
-    }
-
 	inline Response::Response()
 	{
 	}
@@ -714,9 +849,16 @@ namespace DB_Manage
 	    int rtv = 0;
         if (rtv = bb->Read(requestSerial)) throw rtv;
 	}
-	inline Response::~Response()
-	{
-	}
+    inline void Response::ToBBuffer(xx::BBuffer &bb) const
+    {
+        bb.Write(this->requestSerial);
+    }
+    inline int Response::FromBBuffer(xx::BBuffer &bb)
+    {
+        int rtv = 0;
+        if (rtv = bb.Read(this->requestSerial)) return rtv;
+        return rtv;
+    }
 
     inline void Response::ToString(xx::String &str) const
     {
@@ -740,18 +882,6 @@ namespace DB_Manage
     }
 
 
-    inline void Response::ToBBuffer(xx::BBuffer &bb) const
-    {
-        bb.Write(this->requestSerial);
-    }
-
-    inline int Response::FromBBuffer(xx::BBuffer &bb)
-    {
-        int rtv = 0;
-        if (rtv = bb.Read(this->requestSerial)) return rtv;
-        return rtv;
-    }
-
 	inline Success::Success()
         : PKG::Response()
 	{
@@ -760,9 +890,16 @@ namespace DB_Manage
         : PKG::Response(bb)
 	{
 	}
-	inline Success::~Success()
-	{
-	}
+    inline void Success::ToBBuffer(xx::BBuffer &bb) const
+    {
+        this->BaseType::ToBBuffer(bb);
+    }
+    inline int Success::FromBBuffer(xx::BBuffer &bb)
+    {
+        int rtv = 0;
+        if (rtv = this->BaseType::FromBBuffer(bb)) return rtv;
+        return rtv;
+    }
 
     inline void Success::ToString(xx::String &str) const
     {
@@ -785,18 +922,6 @@ namespace DB_Manage
     }
 
 
-    inline void Success::ToBBuffer(xx::BBuffer &bb) const
-    {
-        this->BaseType::ToBBuffer(bb);
-    }
-
-    inline int Success::FromBBuffer(xx::BBuffer &bb)
-    {
-        int rtv = 0;
-        if (rtv = this->BaseType::FromBBuffer(bb)) return rtv;
-        return rtv;
-    }
-
 	inline Fail::Fail()
         : PKG::Response()
 	{
@@ -808,10 +933,19 @@ namespace DB_Manage
         bb->readLengthLimit = 0;
         if (rtv = bb->Read(reason)) throw rtv;
 	}
-	inline Fail::~Fail()
-	{
-        mempool().SafeRelease(reason);
-	}
+    inline void Fail::ToBBuffer(xx::BBuffer &bb) const
+    {
+        this->BaseType::ToBBuffer(bb);
+        bb.Write(this->reason);
+    }
+    inline int Fail::FromBBuffer(xx::BBuffer &bb)
+    {
+        int rtv = 0;
+        if (rtv = this->BaseType::FromBBuffer(bb)) return rtv;
+        bb.readLengthLimit = 0;
+        if (rtv = bb.Read(this->reason)) return rtv;
+        return rtv;
+    }
 
     inline void Fail::ToString(xx::String &str) const
     {
@@ -835,21 +969,6 @@ namespace DB_Manage
     }
 
 
-    inline void Fail::ToBBuffer(xx::BBuffer &bb) const
-    {
-        this->BaseType::ToBBuffer(bb);
-        bb.Write(this->reason);
-    }
-
-    inline int Fail::FromBBuffer(xx::BBuffer &bb)
-    {
-        int rtv = 0;
-        if (rtv = this->BaseType::FromBBuffer(bb)) return rtv;
-        bb.readLengthLimit = 0;
-        if (rtv = bb.Read(this->reason)) return rtv;
-        return rtv;
-    }
-
 	inline Property::Property()
 	{
 	}
@@ -859,10 +978,17 @@ namespace DB_Manage
         bb->readLengthLimit = 0;
         if (rtv = bb->Read(name)) throw rtv;
 	}
-	inline Property::~Property()
-	{
-        mempool().SafeRelease(name);
-	}
+    inline void Property::ToBBuffer(xx::BBuffer &bb) const
+    {
+        bb.Write(this->name);
+    }
+    inline int Property::FromBBuffer(xx::BBuffer &bb)
+    {
+        int rtv = 0;
+        bb.readLengthLimit = 0;
+        if (rtv = bb.Read(this->name)) return rtv;
+        return rtv;
+    }
 
     inline void Property::ToString(xx::String &str) const
     {
@@ -886,19 +1012,6 @@ namespace DB_Manage
     }
 
 
-    inline void Property::ToBBuffer(xx::BBuffer &bb) const
-    {
-        bb.Write(this->name);
-    }
-
-    inline int Property::FromBBuffer(xx::BBuffer &bb)
-    {
-        int rtv = 0;
-        bb.readLengthLimit = 0;
-        if (rtv = bb.Read(this->name)) return rtv;
-        return rtv;
-    }
-
 	inline Property_long::Property_long()
         : PKG::Property()
 	{
@@ -909,9 +1022,18 @@ namespace DB_Manage
 	    int rtv = 0;
         if (rtv = bb->Read(value)) throw rtv;
 	}
-	inline Property_long::~Property_long()
-	{
-	}
+    inline void Property_long::ToBBuffer(xx::BBuffer &bb) const
+    {
+        this->BaseType::ToBBuffer(bb);
+        bb.Write(this->value);
+    }
+    inline int Property_long::FromBBuffer(xx::BBuffer &bb)
+    {
+        int rtv = 0;
+        if (rtv = this->BaseType::FromBBuffer(bb)) return rtv;
+        if (rtv = bb.Read(this->value)) return rtv;
+        return rtv;
+    }
 
     inline void Property_long::ToString(xx::String &str) const
     {
@@ -935,20 +1057,6 @@ namespace DB_Manage
     }
 
 
-    inline void Property_long::ToBBuffer(xx::BBuffer &bb) const
-    {
-        this->BaseType::ToBBuffer(bb);
-        bb.Write(this->value);
-    }
-
-    inline int Property_long::FromBBuffer(xx::BBuffer &bb)
-    {
-        int rtv = 0;
-        if (rtv = this->BaseType::FromBBuffer(bb)) return rtv;
-        if (rtv = bb.Read(this->value)) return rtv;
-        return rtv;
-    }
-
 	inline Property_double::Property_double()
         : PKG::Property()
 	{
@@ -959,9 +1067,18 @@ namespace DB_Manage
 	    int rtv = 0;
         if (rtv = bb->Read(value)) throw rtv;
 	}
-	inline Property_double::~Property_double()
-	{
-	}
+    inline void Property_double::ToBBuffer(xx::BBuffer &bb) const
+    {
+        this->BaseType::ToBBuffer(bb);
+        bb.Write(this->value);
+    }
+    inline int Property_double::FromBBuffer(xx::BBuffer &bb)
+    {
+        int rtv = 0;
+        if (rtv = this->BaseType::FromBBuffer(bb)) return rtv;
+        if (rtv = bb.Read(this->value)) return rtv;
+        return rtv;
+    }
 
     inline void Property_double::ToString(xx::String &str) const
     {
@@ -985,20 +1102,6 @@ namespace DB_Manage
     }
 
 
-    inline void Property_double::ToBBuffer(xx::BBuffer &bb) const
-    {
-        this->BaseType::ToBBuffer(bb);
-        bb.Write(this->value);
-    }
-
-    inline int Property_double::FromBBuffer(xx::BBuffer &bb)
-    {
-        int rtv = 0;
-        if (rtv = this->BaseType::FromBBuffer(bb)) return rtv;
-        if (rtv = bb.Read(this->value)) return rtv;
-        return rtv;
-    }
-
 	inline Property_string::Property_string()
         : PKG::Property()
 	{
@@ -1010,10 +1113,19 @@ namespace DB_Manage
         bb->readLengthLimit = 0;
         if (rtv = bb->Read(value)) throw rtv;
 	}
-	inline Property_string::~Property_string()
-	{
-        mempool().SafeRelease(value);
-	}
+    inline void Property_string::ToBBuffer(xx::BBuffer &bb) const
+    {
+        this->BaseType::ToBBuffer(bb);
+        bb.Write(this->value);
+    }
+    inline int Property_string::FromBBuffer(xx::BBuffer &bb)
+    {
+        int rtv = 0;
+        if (rtv = this->BaseType::FromBBuffer(bb)) return rtv;
+        bb.readLengthLimit = 0;
+        if (rtv = bb.Read(this->value)) return rtv;
+        return rtv;
+    }
 
     inline void Property_string::ToString(xx::String &str) const
     {
@@ -1037,21 +1149,6 @@ namespace DB_Manage
     }
 
 
-    inline void Property_string::ToBBuffer(xx::BBuffer &bb) const
-    {
-        this->BaseType::ToBBuffer(bb);
-        bb.Write(this->value);
-    }
-
-    inline int Property_string::FromBBuffer(xx::BBuffer &bb)
-    {
-        int rtv = 0;
-        if (rtv = this->BaseType::FromBBuffer(bb)) return rtv;
-        bb.readLengthLimit = 0;
-        if (rtv = bb.Read(this->value)) return rtv;
-        return rtv;
-    }
-
 	inline Properties::Properties()
         : PKG::Property()
 	{
@@ -1063,10 +1160,19 @@ namespace DB_Manage
         bb->readLengthLimit = 0;
         if (rtv = bb->Read(value)) throw rtv;
 	}
-	inline Properties::~Properties()
-	{
-        mempool().SafeRelease(value);
-	}
+    inline void Properties::ToBBuffer(xx::BBuffer &bb) const
+    {
+        this->BaseType::ToBBuffer(bb);
+        bb.Write(this->value);
+    }
+    inline int Properties::FromBBuffer(xx::BBuffer &bb)
+    {
+        int rtv = 0;
+        if (rtv = this->BaseType::FromBBuffer(bb)) return rtv;
+        bb.readLengthLimit = 0;
+        if (rtv = bb.Read(this->value)) return rtv;
+        return rtv;
+    }
 
     inline void Properties::ToString(xx::String &str) const
     {
@@ -1090,21 +1196,6 @@ namespace DB_Manage
     }
 
 
-    inline void Properties::ToBBuffer(xx::BBuffer &bb) const
-    {
-        this->BaseType::ToBBuffer(bb);
-        bb.Write(this->value);
-    }
-
-    inline int Properties::FromBBuffer(xx::BBuffer &bb)
-    {
-        int rtv = 0;
-        if (rtv = this->BaseType::FromBBuffer(bb)) return rtv;
-        bb.readLengthLimit = 0;
-        if (rtv = bb.Read(this->value)) return rtv;
-        return rtv;
-    }
-
 	inline UserInfo::UserInfo()
 	{
 	}
@@ -1115,10 +1206,19 @@ namespace DB_Manage
         bb->readLengthLimit = 0;
         if (rtv = bb->Read(props)) throw rtv;
 	}
-	inline UserInfo::~UserInfo()
-	{
-        mempool().SafeRelease(props);
-	}
+    inline void UserInfo::ToBBuffer(xx::BBuffer &bb) const
+    {
+        bb.Write(this->id);
+        bb.Write(this->props);
+    }
+    inline int UserInfo::FromBBuffer(xx::BBuffer &bb)
+    {
+        int rtv = 0;
+        if (rtv = bb.Read(this->id)) return rtv;
+        bb.readLengthLimit = 0;
+        if (rtv = bb.Read(this->props)) return rtv;
+        return rtv;
+    }
 
     inline void UserInfo::ToString(xx::String &str) const
     {
@@ -1143,21 +1243,6 @@ namespace DB_Manage
     }
 
 
-    inline void UserInfo::ToBBuffer(xx::BBuffer &bb) const
-    {
-        bb.Write(this->id);
-        bb.Write(this->props);
-    }
-
-    inline int UserInfo::FromBBuffer(xx::BBuffer &bb)
-    {
-        int rtv = 0;
-        if (rtv = bb.Read(this->id)) return rtv;
-        bb.readLengthLimit = 0;
-        if (rtv = bb.Read(this->props)) return rtv;
-        return rtv;
-    }
-
 namespace Client_Server
 {
 	inline Join::Join()
@@ -1173,11 +1258,22 @@ namespace Client_Server
         bb->readLengthLimit = 16;
         if (rtv = bb->Read(password)) throw rtv;
 	}
-	inline Join::~Join()
-	{
-        mempool().SafeRelease(username);
-        mempool().SafeRelease(password);
-	}
+    inline void Join::ToBBuffer(xx::BBuffer &bb) const
+    {
+        this->BaseType::ToBBuffer(bb);
+        bb.Write(this->username);
+        bb.Write(this->password);
+    }
+    inline int Join::FromBBuffer(xx::BBuffer &bb)
+    {
+        int rtv = 0;
+        if (rtv = this->BaseType::FromBBuffer(bb)) return rtv;
+        bb.readLengthLimit = 16;
+        if (rtv = bb.Read(this->username)) return rtv;
+        bb.readLengthLimit = 16;
+        if (rtv = bb.Read(this->password)) return rtv;
+        return rtv;
+    }
 
     inline void Join::ToString(xx::String &str) const
     {
@@ -1202,24 +1298,6 @@ namespace Client_Server
     }
 
 
-    inline void Join::ToBBuffer(xx::BBuffer &bb) const
-    {
-        this->BaseType::ToBBuffer(bb);
-        bb.Write(this->username);
-        bb.Write(this->password);
-    }
-
-    inline int Join::FromBBuffer(xx::BBuffer &bb)
-    {
-        int rtv = 0;
-        if (rtv = this->BaseType::FromBBuffer(bb)) return rtv;
-        bb.readLengthLimit = 16;
-        if (rtv = bb.Read(this->username)) return rtv;
-        bb.readLengthLimit = 16;
-        if (rtv = bb.Read(this->password)) return rtv;
-        return rtv;
-    }
-
 	inline Message::Message()
 	{
 	}
@@ -1229,10 +1307,17 @@ namespace Client_Server
         bb->readLengthLimit = 256;
         if (rtv = bb->Read(text)) throw rtv;
 	}
-	inline Message::~Message()
-	{
-        mempool().SafeRelease(text);
-	}
+    inline void Message::ToBBuffer(xx::BBuffer &bb) const
+    {
+        bb.Write(this->text);
+    }
+    inline int Message::FromBBuffer(xx::BBuffer &bb)
+    {
+        int rtv = 0;
+        bb.readLengthLimit = 256;
+        if (rtv = bb.Read(this->text)) return rtv;
+        return rtv;
+    }
 
     inline void Message::ToString(xx::String &str) const
     {
@@ -1256,28 +1341,20 @@ namespace Client_Server
     }
 
 
-    inline void Message::ToBBuffer(xx::BBuffer &bb) const
-    {
-        bb.Write(this->text);
-    }
-
-    inline int Message::FromBBuffer(xx::BBuffer &bb)
-    {
-        int rtv = 0;
-        bb.readLengthLimit = 256;
-        if (rtv = bb.Read(this->text)) return rtv;
-        return rtv;
-    }
-
 	inline Logout::Logout()
 	{
 	}
 	inline Logout::Logout(xx::BBuffer *bb)
 	{
 	}
-	inline Logout::~Logout()
-	{
-	}
+    inline void Logout::ToBBuffer(xx::BBuffer &bb) const
+    {
+    }
+    inline int Logout::FromBBuffer(xx::BBuffer &bb)
+    {
+        int rtv = 0;
+        return rtv;
+    }
 
     inline void Logout::ToString(xx::String &str) const
     {
@@ -1300,16 +1377,6 @@ namespace Client_Server
     }
 
 
-    inline void Logout::ToBBuffer(xx::BBuffer &bb) const
-    {
-    }
-
-    inline int Logout::FromBBuffer(xx::BBuffer &bb)
-    {
-        int rtv = 0;
-        return rtv;
-    }
-
 }
 namespace Server_Client
 {
@@ -1325,11 +1392,21 @@ namespace Server_Client
         bb->readLengthLimit = 0;
         if (rtv = bb->Read(users)) throw rtv;
 	}
-	inline JoinSuccess::~JoinSuccess()
-	{
-        mempool().SafeRelease(self);
-        mempool().SafeRelease(users);
-	}
+    inline void JoinSuccess::ToBBuffer(xx::BBuffer &bb) const
+    {
+        this->BaseType::ToBBuffer(bb);
+        bb.Write(this->self);
+        bb.Write(this->users);
+    }
+    inline int JoinSuccess::FromBBuffer(xx::BBuffer &bb)
+    {
+        int rtv = 0;
+        if (rtv = this->BaseType::FromBBuffer(bb)) return rtv;
+        if (rtv = bb.Read(this->self)) return rtv;
+        bb.readLengthLimit = 0;
+        if (rtv = bb.Read(this->users)) return rtv;
+        return rtv;
+    }
 
     inline void JoinSuccess::ToString(xx::String &str) const
     {
@@ -1354,23 +1431,6 @@ namespace Server_Client
     }
 
 
-    inline void JoinSuccess::ToBBuffer(xx::BBuffer &bb) const
-    {
-        this->BaseType::ToBBuffer(bb);
-        bb.Write(this->self);
-        bb.Write(this->users);
-    }
-
-    inline int JoinSuccess::FromBBuffer(xx::BBuffer &bb)
-    {
-        int rtv = 0;
-        if (rtv = this->BaseType::FromBBuffer(bb)) return rtv;
-        if (rtv = bb.Read(this->self)) return rtv;
-        bb.readLengthLimit = 0;
-        if (rtv = bb.Read(this->users)) return rtv;
-        return rtv;
-    }
-
 	inline JoinFail::JoinFail()
         : PKG::Response()
 	{
@@ -1382,10 +1442,19 @@ namespace Server_Client
         bb->readLengthLimit = 0;
         if (rtv = bb->Read(reason)) throw rtv;
 	}
-	inline JoinFail::~JoinFail()
-	{
-        mempool().SafeRelease(reason);
-	}
+    inline void JoinFail::ToBBuffer(xx::BBuffer &bb) const
+    {
+        this->BaseType::ToBBuffer(bb);
+        bb.Write(this->reason);
+    }
+    inline int JoinFail::FromBBuffer(xx::BBuffer &bb)
+    {
+        int rtv = 0;
+        if (rtv = this->BaseType::FromBBuffer(bb)) return rtv;
+        bb.readLengthLimit = 0;
+        if (rtv = bb.Read(this->reason)) return rtv;
+        return rtv;
+    }
 
     inline void JoinFail::ToString(xx::String &str) const
     {
@@ -1409,21 +1478,6 @@ namespace Server_Client
     }
 
 
-    inline void JoinFail::ToBBuffer(xx::BBuffer &bb) const
-    {
-        this->BaseType::ToBBuffer(bb);
-        bb.Write(this->reason);
-    }
-
-    inline int JoinFail::FromBBuffer(xx::BBuffer &bb)
-    {
-        int rtv = 0;
-        if (rtv = this->BaseType::FromBBuffer(bb)) return rtv;
-        bb.readLengthLimit = 0;
-        if (rtv = bb.Read(this->reason)) return rtv;
-        return rtv;
-    }
-
 	inline PushJoin::PushJoin()
 	{
 	}
@@ -1432,9 +1486,16 @@ namespace Server_Client
 	    int rtv = 0;
         if (rtv = bb->Read(id)) throw rtv;
 	}
-	inline PushJoin::~PushJoin()
-	{
-	}
+    inline void PushJoin::ToBBuffer(xx::BBuffer &bb) const
+    {
+        bb.Write(this->id);
+    }
+    inline int PushJoin::FromBBuffer(xx::BBuffer &bb)
+    {
+        int rtv = 0;
+        if (rtv = bb.Read(this->id)) return rtv;
+        return rtv;
+    }
 
     inline void PushJoin::ToString(xx::String &str) const
     {
@@ -1458,18 +1519,6 @@ namespace Server_Client
     }
 
 
-    inline void PushJoin::ToBBuffer(xx::BBuffer &bb) const
-    {
-        bb.Write(this->id);
-    }
-
-    inline int PushJoin::FromBBuffer(xx::BBuffer &bb)
-    {
-        int rtv = 0;
-        if (rtv = bb.Read(this->id)) return rtv;
-        return rtv;
-    }
-
 	inline PushMessage::PushMessage()
 	{
 	}
@@ -1480,10 +1529,19 @@ namespace Server_Client
         bb->readLengthLimit = 0;
         if (rtv = bb->Read(text)) throw rtv;
 	}
-	inline PushMessage::~PushMessage()
-	{
-        mempool().SafeRelease(text);
-	}
+    inline void PushMessage::ToBBuffer(xx::BBuffer &bb) const
+    {
+        bb.Write(this->id);
+        bb.Write(this->text);
+    }
+    inline int PushMessage::FromBBuffer(xx::BBuffer &bb)
+    {
+        int rtv = 0;
+        if (rtv = bb.Read(this->id)) return rtv;
+        bb.readLengthLimit = 0;
+        if (rtv = bb.Read(this->text)) return rtv;
+        return rtv;
+    }
 
     inline void PushMessage::ToString(xx::String &str) const
     {
@@ -1508,21 +1566,6 @@ namespace Server_Client
     }
 
 
-    inline void PushMessage::ToBBuffer(xx::BBuffer &bb) const
-    {
-        bb.Write(this->id);
-        bb.Write(this->text);
-    }
-
-    inline int PushMessage::FromBBuffer(xx::BBuffer &bb)
-    {
-        int rtv = 0;
-        if (rtv = bb.Read(this->id)) return rtv;
-        bb.readLengthLimit = 0;
-        if (rtv = bb.Read(this->text)) return rtv;
-        return rtv;
-    }
-
 	inline PushLogout::PushLogout()
 	{
 	}
@@ -1533,10 +1576,19 @@ namespace Server_Client
         bb->readLengthLimit = 0;
         if (rtv = bb->Read(reason)) throw rtv;
 	}
-	inline PushLogout::~PushLogout()
-	{
-        mempool().SafeRelease(reason);
-	}
+    inline void PushLogout::ToBBuffer(xx::BBuffer &bb) const
+    {
+        bb.Write(this->id);
+        bb.Write(this->reason);
+    }
+    inline int PushLogout::FromBBuffer(xx::BBuffer &bb)
+    {
+        int rtv = 0;
+        if (rtv = bb.Read(this->id)) return rtv;
+        bb.readLengthLimit = 0;
+        if (rtv = bb.Read(this->reason)) return rtv;
+        return rtv;
+    }
 
     inline void PushLogout::ToString(xx::String &str) const
     {
@@ -1561,21 +1613,6 @@ namespace Server_Client
     }
 
 
-    inline void PushLogout::ToBBuffer(xx::BBuffer &bb) const
-    {
-        bb.Write(this->id);
-        bb.Write(this->reason);
-    }
-
-    inline int PushLogout::FromBBuffer(xx::BBuffer &bb)
-    {
-        int rtv = 0;
-        if (rtv = bb.Read(this->id)) return rtv;
-        bb.readLengthLimit = 0;
-        if (rtv = bb.Read(this->reason)) return rtv;
-        return rtv;
-    }
-
 }
 namespace Manage_DB
 {
@@ -1592,11 +1629,22 @@ namespace Manage_DB
         bb->readLengthLimit = 50;
         if (rtv = bb->Read(password)) throw rtv;
 	}
-	inline Login::~Login()
-	{
-        mempool().SafeRelease(username);
-        mempool().SafeRelease(password);
-	}
+    inline void Login::ToBBuffer(xx::BBuffer &bb) const
+    {
+        this->BaseType::ToBBuffer(bb);
+        bb.Write(this->username);
+        bb.Write(this->password);
+    }
+    inline int Login::FromBBuffer(xx::BBuffer &bb)
+    {
+        int rtv = 0;
+        if (rtv = this->BaseType::FromBBuffer(bb)) return rtv;
+        bb.readLengthLimit = 50;
+        if (rtv = bb.Read(this->username)) return rtv;
+        bb.readLengthLimit = 50;
+        if (rtv = bb.Read(this->password)) return rtv;
+        return rtv;
+    }
 
     inline void Login::ToString(xx::String &str) const
     {
@@ -1621,24 +1669,6 @@ namespace Manage_DB
     }
 
 
-    inline void Login::ToBBuffer(xx::BBuffer &bb) const
-    {
-        this->BaseType::ToBBuffer(bb);
-        bb.Write(this->username);
-        bb.Write(this->password);
-    }
-
-    inline int Login::FromBBuffer(xx::BBuffer &bb)
-    {
-        int rtv = 0;
-        if (rtv = this->BaseType::FromBBuffer(bb)) return rtv;
-        bb.readLengthLimit = 50;
-        if (rtv = bb.Read(this->username)) return rtv;
-        bb.readLengthLimit = 50;
-        if (rtv = bb.Read(this->password)) return rtv;
-        return rtv;
-    }
-
 	inline Logout::Logout()
         : PKG::Request()
 	{
@@ -1647,9 +1677,16 @@ namespace Manage_DB
         : PKG::Request(bb)
 	{
 	}
-	inline Logout::~Logout()
-	{
-	}
+    inline void Logout::ToBBuffer(xx::BBuffer &bb) const
+    {
+        this->BaseType::ToBBuffer(bb);
+    }
+    inline int Logout::FromBBuffer(xx::BBuffer &bb)
+    {
+        int rtv = 0;
+        if (rtv = this->BaseType::FromBBuffer(bb)) return rtv;
+        return rtv;
+    }
 
     inline void Logout::ToString(xx::String &str) const
     {
@@ -1672,18 +1709,6 @@ namespace Manage_DB
     }
 
 
-    inline void Logout::ToBBuffer(xx::BBuffer &bb) const
-    {
-        this->BaseType::ToBBuffer(bb);
-    }
-
-    inline int Logout::FromBBuffer(xx::BBuffer &bb)
-    {
-        int rtv = 0;
-        if (rtv = this->BaseType::FromBBuffer(bb)) return rtv;
-        return rtv;
-    }
-
 	inline SelectManageAccountIds::SelectManageAccountIds()
         : PKG::Request()
 	{
@@ -1695,9 +1720,20 @@ namespace Manage_DB
         if (rtv = bb->Read(limit)) throw rtv;
         if (rtv = bb->Read(sort)) throw rtv;
 	}
-	inline SelectManageAccountIds::~SelectManageAccountIds()
-	{
-	}
+    inline void SelectManageAccountIds::ToBBuffer(xx::BBuffer &bb) const
+    {
+        this->BaseType::ToBBuffer(bb);
+        bb.Write(this->limit);
+        bb.Write(this->sort);
+    }
+    inline int SelectManageAccountIds::FromBBuffer(xx::BBuffer &bb)
+    {
+        int rtv = 0;
+        if (rtv = this->BaseType::FromBBuffer(bb)) return rtv;
+        if (rtv = bb.Read(this->limit)) return rtv;
+        if (rtv = bb.Read(this->sort)) return rtv;
+        return rtv;
+    }
 
     inline void SelectManageAccountIds::ToString(xx::String &str) const
     {
@@ -1722,22 +1758,6 @@ namespace Manage_DB
     }
 
 
-    inline void SelectManageAccountIds::ToBBuffer(xx::BBuffer &bb) const
-    {
-        this->BaseType::ToBBuffer(bb);
-        bb.Write(this->limit);
-        bb.Write(this->sort);
-    }
-
-    inline int SelectManageAccountIds::FromBBuffer(xx::BBuffer &bb)
-    {
-        int rtv = 0;
-        if (rtv = this->BaseType::FromBBuffer(bb)) return rtv;
-        if (rtv = bb.Read(this->limit)) return rtv;
-        if (rtv = bb.Read(this->sort)) return rtv;
-        return rtv;
-    }
-
 	inline SelectManageAccounts::SelectManageAccounts()
         : PKG::Request()
 	{
@@ -1749,10 +1769,19 @@ namespace Manage_DB
         bb->readLengthLimit = 50;
         if (rtv = bb->Read(ids)) throw rtv;
 	}
-	inline SelectManageAccounts::~SelectManageAccounts()
-	{
-        mempool().SafeRelease(ids);
-	}
+    inline void SelectManageAccounts::ToBBuffer(xx::BBuffer &bb) const
+    {
+        this->BaseType::ToBBuffer(bb);
+        bb.Write(this->ids);
+    }
+    inline int SelectManageAccounts::FromBBuffer(xx::BBuffer &bb)
+    {
+        int rtv = 0;
+        if (rtv = this->BaseType::FromBBuffer(bb)) return rtv;
+        bb.readLengthLimit = 50;
+        if (rtv = bb.Read(this->ids)) return rtv;
+        return rtv;
+    }
 
     inline void SelectManageAccounts::ToString(xx::String &str) const
     {
@@ -1776,21 +1805,6 @@ namespace Manage_DB
     }
 
 
-    inline void SelectManageAccounts::ToBBuffer(xx::BBuffer &bb) const
-    {
-        this->BaseType::ToBBuffer(bb);
-        bb.Write(this->ids);
-    }
-
-    inline int SelectManageAccounts::FromBBuffer(xx::BBuffer &bb)
-    {
-        int rtv = 0;
-        if (rtv = this->BaseType::FromBBuffer(bb)) return rtv;
-        bb.readLengthLimit = 50;
-        if (rtv = bb.Read(this->ids)) return rtv;
-        return rtv;
-    }
-
 }
 namespace Manage
 {
@@ -1804,10 +1818,19 @@ namespace Manage
         bb->readLengthLimit = 0;
         if (rtv = bb->Read(username)) throw rtv;
 	}
-	inline Account::~Account()
-	{
-        mempool().SafeRelease(username);
-	}
+    inline void Account::ToBBuffer(xx::BBuffer &bb) const
+    {
+        bb.Write(this->id);
+        bb.Write(this->username);
+    }
+    inline int Account::FromBBuffer(xx::BBuffer &bb)
+    {
+        int rtv = 0;
+        if (rtv = bb.Read(this->id)) return rtv;
+        bb.readLengthLimit = 0;
+        if (rtv = bb.Read(this->username)) return rtv;
+        return rtv;
+    }
 
     inline void Account::ToString(xx::String &str) const
     {
@@ -1832,21 +1855,6 @@ namespace Manage
     }
 
 
-    inline void Account::ToBBuffer(xx::BBuffer &bb) const
-    {
-        bb.Write(this->id);
-        bb.Write(this->username);
-    }
-
-    inline int Account::FromBBuffer(xx::BBuffer &bb)
-    {
-        int rtv = 0;
-        if (rtv = bb.Read(this->id)) return rtv;
-        bb.readLengthLimit = 0;
-        if (rtv = bb.Read(this->username)) return rtv;
-        return rtv;
-    }
-
 	inline Role::Role()
 	{
 	}
@@ -1859,11 +1867,22 @@ namespace Manage
         bb->readLengthLimit = 0;
         if (rtv = bb->Read(desc)) throw rtv;
 	}
-	inline Role::~Role()
-	{
-        mempool().SafeRelease(name);
-        mempool().SafeRelease(desc);
-	}
+    inline void Role::ToBBuffer(xx::BBuffer &bb) const
+    {
+        bb.Write(this->id);
+        bb.Write(this->name);
+        bb.Write(this->desc);
+    }
+    inline int Role::FromBBuffer(xx::BBuffer &bb)
+    {
+        int rtv = 0;
+        if (rtv = bb.Read(this->id)) return rtv;
+        bb.readLengthLimit = 0;
+        if (rtv = bb.Read(this->name)) return rtv;
+        bb.readLengthLimit = 0;
+        if (rtv = bb.Read(this->desc)) return rtv;
+        return rtv;
+    }
 
     inline void Role::ToString(xx::String &str) const
     {
@@ -1889,24 +1908,6 @@ namespace Manage
     }
 
 
-    inline void Role::ToBBuffer(xx::BBuffer &bb) const
-    {
-        bb.Write(this->id);
-        bb.Write(this->name);
-        bb.Write(this->desc);
-    }
-
-    inline int Role::FromBBuffer(xx::BBuffer &bb)
-    {
-        int rtv = 0;
-        if (rtv = bb.Read(this->id)) return rtv;
-        bb.readLengthLimit = 0;
-        if (rtv = bb.Read(this->name)) return rtv;
-        bb.readLengthLimit = 0;
-        if (rtv = bb.Read(this->desc)) return rtv;
-        return rtv;
-    }
-
 	inline Permission::Permission()
 	{
 	}
@@ -1921,12 +1922,25 @@ namespace Manage
         bb->readLengthLimit = 0;
         if (rtv = bb->Read(desc)) throw rtv;
 	}
-	inline Permission::~Permission()
-	{
-        mempool().SafeRelease(group);
-        mempool().SafeRelease(name);
-        mempool().SafeRelease(desc);
-	}
+    inline void Permission::ToBBuffer(xx::BBuffer &bb) const
+    {
+        bb.Write(this->id);
+        bb.Write(this->group);
+        bb.Write(this->name);
+        bb.Write(this->desc);
+    }
+    inline int Permission::FromBBuffer(xx::BBuffer &bb)
+    {
+        int rtv = 0;
+        if (rtv = bb.Read(this->id)) return rtv;
+        bb.readLengthLimit = 0;
+        if (rtv = bb.Read(this->group)) return rtv;
+        bb.readLengthLimit = 0;
+        if (rtv = bb.Read(this->name)) return rtv;
+        bb.readLengthLimit = 0;
+        if (rtv = bb.Read(this->desc)) return rtv;
+        return rtv;
+    }
 
     inline void Permission::ToString(xx::String &str) const
     {
@@ -1953,27 +1967,6 @@ namespace Manage
     }
 
 
-    inline void Permission::ToBBuffer(xx::BBuffer &bb) const
-    {
-        bb.Write(this->id);
-        bb.Write(this->group);
-        bb.Write(this->name);
-        bb.Write(this->desc);
-    }
-
-    inline int Permission::FromBBuffer(xx::BBuffer &bb)
-    {
-        int rtv = 0;
-        if (rtv = bb.Read(this->id)) return rtv;
-        bb.readLengthLimit = 0;
-        if (rtv = bb.Read(this->group)) return rtv;
-        bb.readLengthLimit = 0;
-        if (rtv = bb.Read(this->name)) return rtv;
-        bb.readLengthLimit = 0;
-        if (rtv = bb.Read(this->desc)) return rtv;
-        return rtv;
-    }
-
 	inline BindAccountRole::BindAccountRole()
 	{
 	}
@@ -1983,9 +1976,18 @@ namespace Manage
         if (rtv = bb->Read(account_id)) throw rtv;
         if (rtv = bb->Read(role_id)) throw rtv;
 	}
-	inline BindAccountRole::~BindAccountRole()
-	{
-	}
+    inline void BindAccountRole::ToBBuffer(xx::BBuffer &bb) const
+    {
+        bb.Write(this->account_id);
+        bb.Write(this->role_id);
+    }
+    inline int BindAccountRole::FromBBuffer(xx::BBuffer &bb)
+    {
+        int rtv = 0;
+        if (rtv = bb.Read(this->account_id)) return rtv;
+        if (rtv = bb.Read(this->role_id)) return rtv;
+        return rtv;
+    }
 
     inline void BindAccountRole::ToString(xx::String &str) const
     {
@@ -2010,20 +2012,6 @@ namespace Manage
     }
 
 
-    inline void BindAccountRole::ToBBuffer(xx::BBuffer &bb) const
-    {
-        bb.Write(this->account_id);
-        bb.Write(this->role_id);
-    }
-
-    inline int BindAccountRole::FromBBuffer(xx::BBuffer &bb)
-    {
-        int rtv = 0;
-        if (rtv = bb.Read(this->account_id)) return rtv;
-        if (rtv = bb.Read(this->role_id)) return rtv;
-        return rtv;
-    }
-
 	inline BindRolePermission::BindRolePermission()
 	{
 	}
@@ -2033,9 +2021,18 @@ namespace Manage
         if (rtv = bb->Read(role_id)) throw rtv;
         if (rtv = bb->Read(permission_id)) throw rtv;
 	}
-	inline BindRolePermission::~BindRolePermission()
-	{
-	}
+    inline void BindRolePermission::ToBBuffer(xx::BBuffer &bb) const
+    {
+        bb.Write(this->role_id);
+        bb.Write(this->permission_id);
+    }
+    inline int BindRolePermission::FromBBuffer(xx::BBuffer &bb)
+    {
+        int rtv = 0;
+        if (rtv = bb.Read(this->role_id)) return rtv;
+        if (rtv = bb.Read(this->permission_id)) return rtv;
+        return rtv;
+    }
 
     inline void BindRolePermission::ToString(xx::String &str) const
     {
@@ -2060,20 +2057,6 @@ namespace Manage
     }
 
 
-    inline void BindRolePermission::ToBBuffer(xx::BBuffer &bb) const
-    {
-        bb.Write(this->role_id);
-        bb.Write(this->permission_id);
-    }
-
-    inline int BindRolePermission::FromBBuffer(xx::BBuffer &bb)
-    {
-        int rtv = 0;
-        if (rtv = bb.Read(this->role_id)) return rtv;
-        if (rtv = bb.Read(this->permission_id)) return rtv;
-        return rtv;
-    }
-
 }
 namespace DB_Manage
 {
@@ -2089,10 +2072,21 @@ namespace DB_Manage
         bb->readLengthLimit = 0;
         if (rtv = bb->Read(token)) throw rtv;
 	}
-	inline LoginSuccess::~LoginSuccess()
-	{
-        mempool().SafeRelease(token);
-	}
+    inline void LoginSuccess::ToBBuffer(xx::BBuffer &bb) const
+    {
+        this->BaseType::ToBBuffer(bb);
+        bb.Write(this->id);
+        bb.Write(this->token);
+    }
+    inline int LoginSuccess::FromBBuffer(xx::BBuffer &bb)
+    {
+        int rtv = 0;
+        if (rtv = this->BaseType::FromBBuffer(bb)) return rtv;
+        if (rtv = bb.Read(this->id)) return rtv;
+        bb.readLengthLimit = 0;
+        if (rtv = bb.Read(this->token)) return rtv;
+        return rtv;
+    }
 
     inline void LoginSuccess::ToString(xx::String &str) const
     {
@@ -2117,23 +2111,6 @@ namespace DB_Manage
     }
 
 
-    inline void LoginSuccess::ToBBuffer(xx::BBuffer &bb) const
-    {
-        this->BaseType::ToBBuffer(bb);
-        bb.Write(this->id);
-        bb.Write(this->token);
-    }
-
-    inline int LoginSuccess::FromBBuffer(xx::BBuffer &bb)
-    {
-        int rtv = 0;
-        if (rtv = this->BaseType::FromBBuffer(bb)) return rtv;
-        if (rtv = bb.Read(this->id)) return rtv;
-        bb.readLengthLimit = 0;
-        if (rtv = bb.Read(this->token)) return rtv;
-        return rtv;
-    }
-
 	inline LoginFail::LoginFail()
         : PKG::Fail()
 	{
@@ -2142,9 +2119,16 @@ namespace DB_Manage
         : PKG::Fail(bb)
 	{
 	}
-	inline LoginFail::~LoginFail()
-	{
-	}
+    inline void LoginFail::ToBBuffer(xx::BBuffer &bb) const
+    {
+        this->BaseType::ToBBuffer(bb);
+    }
+    inline int LoginFail::FromBBuffer(xx::BBuffer &bb)
+    {
+        int rtv = 0;
+        if (rtv = this->BaseType::FromBBuffer(bb)) return rtv;
+        return rtv;
+    }
 
     inline void LoginFail::ToString(xx::String &str) const
     {
@@ -2167,18 +2151,6 @@ namespace DB_Manage
     }
 
 
-    inline void LoginFail::ToBBuffer(xx::BBuffer &bb) const
-    {
-        this->BaseType::ToBBuffer(bb);
-    }
-
-    inline int LoginFail::FromBBuffer(xx::BBuffer &bb)
-    {
-        int rtv = 0;
-        if (rtv = this->BaseType::FromBBuffer(bb)) return rtv;
-        return rtv;
-    }
-
 	inline LogoutSuccess::LogoutSuccess()
         : PKG::Success()
 	{
@@ -2187,9 +2159,16 @@ namespace DB_Manage
         : PKG::Success(bb)
 	{
 	}
-	inline LogoutSuccess::~LogoutSuccess()
-	{
-	}
+    inline void LogoutSuccess::ToBBuffer(xx::BBuffer &bb) const
+    {
+        this->BaseType::ToBBuffer(bb);
+    }
+    inline int LogoutSuccess::FromBBuffer(xx::BBuffer &bb)
+    {
+        int rtv = 0;
+        if (rtv = this->BaseType::FromBBuffer(bb)) return rtv;
+        return rtv;
+    }
 
     inline void LogoutSuccess::ToString(xx::String &str) const
     {
@@ -2212,18 +2191,6 @@ namespace DB_Manage
     }
 
 
-    inline void LogoutSuccess::ToBBuffer(xx::BBuffer &bb) const
-    {
-        this->BaseType::ToBBuffer(bb);
-    }
-
-    inline int LogoutSuccess::FromBBuffer(xx::BBuffer &bb)
-    {
-        int rtv = 0;
-        if (rtv = this->BaseType::FromBBuffer(bb)) return rtv;
-        return rtv;
-    }
-
 	inline LogoutFail::LogoutFail()
         : PKG::Fail()
 	{
@@ -2232,9 +2199,16 @@ namespace DB_Manage
         : PKG::Fail(bb)
 	{
 	}
-	inline LogoutFail::~LogoutFail()
-	{
-	}
+    inline void LogoutFail::ToBBuffer(xx::BBuffer &bb) const
+    {
+        this->BaseType::ToBBuffer(bb);
+    }
+    inline int LogoutFail::FromBBuffer(xx::BBuffer &bb)
+    {
+        int rtv = 0;
+        if (rtv = this->BaseType::FromBBuffer(bb)) return rtv;
+        return rtv;
+    }
 
     inline void LogoutFail::ToString(xx::String &str) const
     {
@@ -2257,18 +2231,6 @@ namespace DB_Manage
     }
 
 
-    inline void LogoutFail::ToBBuffer(xx::BBuffer &bb) const
-    {
-        this->BaseType::ToBBuffer(bb);
-    }
-
-    inline int LogoutFail::FromBBuffer(xx::BBuffer &bb)
-    {
-        int rtv = 0;
-        if (rtv = this->BaseType::FromBBuffer(bb)) return rtv;
-        return rtv;
-    }
-
 	inline SelectManageAccountIdsSuccess::SelectManageAccountIdsSuccess()
         : PKG::Success()
 	{
@@ -2280,10 +2242,19 @@ namespace DB_Manage
         bb->readLengthLimit = 0;
         if (rtv = bb->Read(ids)) throw rtv;
 	}
-	inline SelectManageAccountIdsSuccess::~SelectManageAccountIdsSuccess()
-	{
-        mempool().SafeRelease(ids);
-	}
+    inline void SelectManageAccountIdsSuccess::ToBBuffer(xx::BBuffer &bb) const
+    {
+        this->BaseType::ToBBuffer(bb);
+        bb.Write(this->ids);
+    }
+    inline int SelectManageAccountIdsSuccess::FromBBuffer(xx::BBuffer &bb)
+    {
+        int rtv = 0;
+        if (rtv = this->BaseType::FromBBuffer(bb)) return rtv;
+        bb.readLengthLimit = 0;
+        if (rtv = bb.Read(this->ids)) return rtv;
+        return rtv;
+    }
 
     inline void SelectManageAccountIdsSuccess::ToString(xx::String &str) const
     {
@@ -2307,21 +2278,6 @@ namespace DB_Manage
     }
 
 
-    inline void SelectManageAccountIdsSuccess::ToBBuffer(xx::BBuffer &bb) const
-    {
-        this->BaseType::ToBBuffer(bb);
-        bb.Write(this->ids);
-    }
-
-    inline int SelectManageAccountIdsSuccess::FromBBuffer(xx::BBuffer &bb)
-    {
-        int rtv = 0;
-        if (rtv = this->BaseType::FromBBuffer(bb)) return rtv;
-        bb.readLengthLimit = 0;
-        if (rtv = bb.Read(this->ids)) return rtv;
-        return rtv;
-    }
-
 	inline SelectManageAccountIdsFail::SelectManageAccountIdsFail()
         : PKG::Fail()
 	{
@@ -2330,9 +2286,16 @@ namespace DB_Manage
         : PKG::Fail(bb)
 	{
 	}
-	inline SelectManageAccountIdsFail::~SelectManageAccountIdsFail()
-	{
-	}
+    inline void SelectManageAccountIdsFail::ToBBuffer(xx::BBuffer &bb) const
+    {
+        this->BaseType::ToBBuffer(bb);
+    }
+    inline int SelectManageAccountIdsFail::FromBBuffer(xx::BBuffer &bb)
+    {
+        int rtv = 0;
+        if (rtv = this->BaseType::FromBBuffer(bb)) return rtv;
+        return rtv;
+    }
 
     inline void SelectManageAccountIdsFail::ToString(xx::String &str) const
     {
@@ -2355,18 +2318,6 @@ namespace DB_Manage
     }
 
 
-    inline void SelectManageAccountIdsFail::ToBBuffer(xx::BBuffer &bb) const
-    {
-        this->BaseType::ToBBuffer(bb);
-    }
-
-    inline int SelectManageAccountIdsFail::FromBBuffer(xx::BBuffer &bb)
-    {
-        int rtv = 0;
-        if (rtv = this->BaseType::FromBBuffer(bb)) return rtv;
-        return rtv;
-    }
-
 	inline SelectManageAccountsSuccess::SelectManageAccountsSuccess()
         : PKG::Success()
 	{
@@ -2378,10 +2329,19 @@ namespace DB_Manage
         bb->readLengthLimit = 0;
         if (rtv = bb->Read(rows)) throw rtv;
 	}
-	inline SelectManageAccountsSuccess::~SelectManageAccountsSuccess()
-	{
-        mempool().SafeRelease(rows);
-	}
+    inline void SelectManageAccountsSuccess::ToBBuffer(xx::BBuffer &bb) const
+    {
+        this->BaseType::ToBBuffer(bb);
+        bb.Write(this->rows);
+    }
+    inline int SelectManageAccountsSuccess::FromBBuffer(xx::BBuffer &bb)
+    {
+        int rtv = 0;
+        if (rtv = this->BaseType::FromBBuffer(bb)) return rtv;
+        bb.readLengthLimit = 0;
+        if (rtv = bb.Read(this->rows)) return rtv;
+        return rtv;
+    }
 
     inline void SelectManageAccountsSuccess::ToString(xx::String &str) const
     {
@@ -2405,21 +2365,6 @@ namespace DB_Manage
     }
 
 
-    inline void SelectManageAccountsSuccess::ToBBuffer(xx::BBuffer &bb) const
-    {
-        this->BaseType::ToBBuffer(bb);
-        bb.Write(this->rows);
-    }
-
-    inline int SelectManageAccountsSuccess::FromBBuffer(xx::BBuffer &bb)
-    {
-        int rtv = 0;
-        if (rtv = this->BaseType::FromBBuffer(bb)) return rtv;
-        bb.readLengthLimit = 0;
-        if (rtv = bb.Read(this->rows)) return rtv;
-        return rtv;
-    }
-
 	inline SelectManageAccountsFail::SelectManageAccountsFail()
         : PKG::Fail()
 	{
@@ -2428,9 +2373,16 @@ namespace DB_Manage
         : PKG::Fail(bb)
 	{
 	}
-	inline SelectManageAccountsFail::~SelectManageAccountsFail()
-	{
-	}
+    inline void SelectManageAccountsFail::ToBBuffer(xx::BBuffer &bb) const
+    {
+        this->BaseType::ToBBuffer(bb);
+    }
+    inline int SelectManageAccountsFail::FromBBuffer(xx::BBuffer &bb)
+    {
+        int rtv = 0;
+        if (rtv = this->BaseType::FromBBuffer(bb)) return rtv;
+        return rtv;
+    }
 
     inline void SelectManageAccountsFail::ToString(xx::String &str) const
     {
@@ -2453,18 +2405,6 @@ namespace DB_Manage
     }
 
 
-    inline void SelectManageAccountsFail::ToBBuffer(xx::BBuffer &bb) const
-    {
-        this->BaseType::ToBBuffer(bb);
-    }
-
-    inline int SelectManageAccountsFail::FromBBuffer(xx::BBuffer &bb)
-    {
-        int rtv = 0;
-        if (rtv = this->BaseType::FromBBuffer(bb)) return rtv;
-        return rtv;
-    }
-
 }
 }
 namespace xx
@@ -2480,13 +2420,13 @@ namespace xx
 	template<> struct TypeId<PKG::Property_double> { static const uint16_t value = 9; };
 	template<> struct TypeId<PKG::Property_string> { static const uint16_t value = 10; };
 	template<> struct TypeId<PKG::Properties> { static const uint16_t value = 11; };
-	template<> struct TypeId<xx::List<PKG::Property*>> { static const uint16_t value = 12; };
+	template<> struct TypeId<xx::List<PKG::Property_p>> { static const uint16_t value = 12; };
 	template<> struct TypeId<PKG::UserInfo> { static const uint16_t value = 13; };
 	template<> struct TypeId<PKG::Client_Server::Join> { static const uint16_t value = 14; };
 	template<> struct TypeId<PKG::Client_Server::Message> { static const uint16_t value = 15; };
 	template<> struct TypeId<PKG::Client_Server::Logout> { static const uint16_t value = 16; };
 	template<> struct TypeId<PKG::Server_Client::JoinSuccess> { static const uint16_t value = 17; };
-	template<> struct TypeId<xx::List<PKG::UserInfo*>> { static const uint16_t value = 18; };
+	template<> struct TypeId<xx::List<PKG::UserInfo_p>> { static const uint16_t value = 18; };
 	template<> struct TypeId<PKG::Server_Client::JoinFail> { static const uint16_t value = 19; };
 	template<> struct TypeId<PKG::Server_Client::PushJoin> { static const uint16_t value = 20; };
 	template<> struct TypeId<PKG::Server_Client::PushMessage> { static const uint16_t value = 21; };
@@ -2508,7 +2448,7 @@ namespace xx
 	template<> struct TypeId<PKG::DB_Manage::SelectManageAccountIdsSuccess> { static const uint16_t value = 37; };
 	template<> struct TypeId<PKG::DB_Manage::SelectManageAccountIdsFail> { static const uint16_t value = 38; };
 	template<> struct TypeId<PKG::DB_Manage::SelectManageAccountsSuccess> { static const uint16_t value = 39; };
-	template<> struct TypeId<xx::List<PKG::Manage::Account*>> { static const uint16_t value = 40; };
+	template<> struct TypeId<xx::List<PKG::Manage::Account_p>> { static const uint16_t value = 40; };
 	template<> struct TypeId<PKG::DB_Manage::SelectManageAccountsFail> { static const uint16_t value = 41; };
 }
 namespace PKG
@@ -2526,13 +2466,13 @@ namespace PKG
 	    xx::MemPool::Register<PKG::Property_double, PKG::Property>();
 	    xx::MemPool::Register<PKG::Property_string, PKG::Property>();
 	    xx::MemPool::Register<PKG::Properties, PKG::Property>();
-	    xx::MemPool::Register<xx::List<PKG::Property*>, xx::Object>();
+	    xx::MemPool::Register<xx::List<PKG::Property_p>, xx::Object>();
 	    xx::MemPool::Register<PKG::UserInfo, xx::Object>();
 	    xx::MemPool::Register<PKG::Client_Server::Join, PKG::Request>();
 	    xx::MemPool::Register<PKG::Client_Server::Message, xx::Object>();
 	    xx::MemPool::Register<PKG::Client_Server::Logout, xx::Object>();
 	    xx::MemPool::Register<PKG::Server_Client::JoinSuccess, PKG::Response>();
-	    xx::MemPool::Register<xx::List<PKG::UserInfo*>, xx::Object>();
+	    xx::MemPool::Register<xx::List<PKG::UserInfo_p>, xx::Object>();
 	    xx::MemPool::Register<PKG::Server_Client::JoinFail, PKG::Response>();
 	    xx::MemPool::Register<PKG::Server_Client::PushJoin, xx::Object>();
 	    xx::MemPool::Register<PKG::Server_Client::PushMessage, xx::Object>();
@@ -2554,7 +2494,7 @@ namespace PKG
 	    xx::MemPool::Register<PKG::DB_Manage::SelectManageAccountIdsSuccess, PKG::Success>();
 	    xx::MemPool::Register<PKG::DB_Manage::SelectManageAccountIdsFail, PKG::Fail>();
 	    xx::MemPool::Register<PKG::DB_Manage::SelectManageAccountsSuccess, PKG::Success>();
-	    xx::MemPool::Register<xx::List<PKG::Manage::Account*>, xx::Object>();
+	    xx::MemPool::Register<xx::List<PKG::Manage::Account_p>, xx::Object>();
 	    xx::MemPool::Register<PKG::DB_Manage::SelectManageAccountsFail, PKG::Fail>();
 	}
 }

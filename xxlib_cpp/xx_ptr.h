@@ -114,6 +114,11 @@ namespace xx
 		//	return pointer;
 		//}
 
+		operator Ref<T> const&()
+		{
+			return pointer;
+		}
+
 		template<typename ...Args>
 		Ptr<T>& Create(MemPool& mp, Args &&... args);
 		//{

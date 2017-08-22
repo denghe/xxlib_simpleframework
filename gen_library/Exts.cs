@@ -151,7 +151,7 @@ public static class GenExtensions
     {
         return t.Namespace == nameof(TemplateLibrary) && t.Name == "BBuffer";
     }
-    
+
 
     /// <summary>
     /// 返回 t 是否为容器( string, bbuffer, list )
@@ -191,7 +191,7 @@ public static class GenExtensions
     {
         return t.IsValueType && t._IsNullable() || t._IsString() || t._IsBBuffer();
     }
-    
+
 
     /// <summary>
     /// 返回 t 是否为 void
@@ -567,7 +567,7 @@ public static class GenExtensions
     /// <summary>
     /// 获取 C++ 的类型声明串
     /// </summary>
-    public static string _GetSafeTypeDecl_Cpp(this Type t, string templateName)
+    public static string _GetSafeTypeDecl_Cpp(this Type t, string templateName, bool cutOutside_p = false)
     {
         if (t._IsNullable())
         {
@@ -600,7 +600,7 @@ public static class GenExtensions
             {
                 if (t.Name == "List`1")
                 {
-                    return "xx::List_p<" + _GetSafeTypeDecl_Cpp(t.GenericTypeArguments[0], templateName) + ">";
+                    return "xx::List" + (cutOutside_p ? "" : "_p") + @"<" + _GetSafeTypeDecl_Cpp(t.GenericTypeArguments[0], templateName) + ">";
                 }
                 else if (t.Name == "DateTime")
                 {

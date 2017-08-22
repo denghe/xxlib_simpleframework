@@ -54,6 +54,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "xxloglib", "xxloglib\xxlogl
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "manage", "manage\manage.csproj", "{2A4C90EB-E2BB-4D95-834C-CF5E4DDF901A}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test_cpp5", "test_cpp5\test_cpp5.vcxproj", "{9947D8D7-2CAB-4637-8F4B-4E2E3DCB7FAB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -144,6 +146,10 @@ Global
 		{2A4C90EB-E2BB-4D95-834C-CF5E4DDF901A}.Debug|x64.Build.0 = Debug|x64
 		{2A4C90EB-E2BB-4D95-834C-CF5E4DDF901A}.Release|x64.ActiveCfg = Release|x64
 		{2A4C90EB-E2BB-4D95-834C-CF5E4DDF901A}.Release|x64.Build.0 = Release|x64
+		{9947D8D7-2CAB-4637-8F4B-4E2E3DCB7FAB}.Debug|x64.ActiveCfg = Debug|x64
+		{9947D8D7-2CAB-4637-8F4B-4E2E3DCB7FAB}.Debug|x64.Build.0 = Debug|x64
+		{9947D8D7-2CAB-4637-8F4B-4E2E3DCB7FAB}.Release|x64.ActiveCfg = Release|x64
+		{9947D8D7-2CAB-4637-8F4B-4E2E3DCB7FAB}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

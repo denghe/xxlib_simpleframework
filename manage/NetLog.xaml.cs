@@ -37,6 +37,7 @@ namespace manage
             while (nl.stateLogs.TryDequeue(out var s))
             {
                 tb_log.AppendText(s);
+                tb_log.ScrollToEnd();
             }
         }
 

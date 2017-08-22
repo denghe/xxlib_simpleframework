@@ -202,16 +202,16 @@ namespace manage
             });
 
             LabWaitLoginSubmit:
-            while(true)
+            StateLog("connected. wait Send msgs, Disconnect cmds, recv Response pkgs");
+            while (true)
             {
                 yield return null;
-                StateLog("connected. wait Send msgs, Disconnect cmds, recv Response pkgs");
                 if (peer.State != xx.NetStates.Connected) goto LabDisconnectedByServer;
 
                 // 如果有收到登录返回结果
                 if (loginResult != null)
                 {
-                    switch(loginResult)
+                    switch (loginResult)
                     {
                         case PKG.DB_Manage.LoginSuccess o:
                             //mw.GotoMain(/**/);

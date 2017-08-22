@@ -198,8 +198,6 @@ namespace xx
 		bbReceivePackage->bufLen = 0;
 		bbReceivePackage->dataLen = 0;
 		bbReceivePackage->offset = 0;
-
-		if (recvPkgs->dataLen) bbReceivePackage->ReleasePackages(*recvPkgs);
 	}
 
 	inline void UVPeer::AllocCB(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf)
@@ -456,11 +454,6 @@ namespace xx
 			tmpStr->Append(':', ntohs(saddr.sin_port));
 		}
 		return *tmpStr;
-	}
-
-	inline void UVPeer::ReleaseRecvPkgs()
-	{
-		bbReceivePackage->ReleasePackages(*recvPkgs);
 	}
 
 	template<typename T>

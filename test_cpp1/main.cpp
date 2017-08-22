@@ -42,7 +42,7 @@ inline void MyConnector::OnReceivePackage(xx::BBuffer & bb)
 	// 将数据转移并追加到持续收到的数据队列中
 	for (uint32_t i = 0; i < recvPkgs->dataLen; ++i)
 	{
-		recvMsgs->Push(recvPkgs->At(i));
+		recvMsgs->Push(std::move(recvPkgs->At(i)));
 	}
 	recvPkgs->Clear();
 }
@@ -53,7 +53,7 @@ inline void MyConnector::OnConnect()
 		: "state != xx::UVPeerStates::Connected\n"));
 	owner->connecting = false;
 }
-inline void MyConnector::OnDisconnect() 
+inline void MyConnector::OnDisconnect()
 {
 	Cout(owner->pkgJoin->username, " MyConnector: OnDisconnect()\n");
 }
@@ -82,14 +82,13 @@ inline MyClient::MyClient(xx::UV* uv, char const* un, char const* pw)
 	timer = uv->CreateTimer<MyTimer>(this);
 
 	// 预构造待发数据包
-	mempool().CreateTo(pkgJoin);
-	mempool().CreateTo(pkgJoin->username);
-	mempool().CreateTo(pkgJoin->password);
-	pkgJoin->username->Assign(un);
-	pkgJoin->password->Assign(pw);
+	auto& mp = mempool();
+	pkgJoin.Create(mp);
+	pkgJoin->username.Create(mp)->Assign(un);
+	pkgJoin->password.Create(mp)->Assign(pw);
 
-	mempool().CreateTo(pkgMessage);
-	mempool().CreateTo(pkgMessage->text);
+	pkgMessage.Create(mp);
+	pkgMessage->text.Create(mp);
 
 	Cout("MyClient::MyClient(uv, ", un, ", ", pw, ")\n");
 }
@@ -97,16 +96,9 @@ inline MyClient::MyClient(xx::UV* uv, char const* un, char const* pw)
 inline MyClient::~MyClient()
 {
 	Cout(pkgJoin->username, " MyClient:~MyClient()\n");
-	auto& mp = mempool();
-	mp.SafeRelease(timer);
-	mp.SafeRelease(conn);
-
-	mp.SafeRelease(users);
-
-	mp.SafeRelease(pkgJoin);
-	mp.SafeRelease(pkgMessage);
 }
 
+#pragma warning(disable: 4102)					// 禁未引用到的 Label 检测
 inline int MyClient::Update()
 {
 	auto currMS = xx::GetCurrentMS();
@@ -188,8 +180,7 @@ inline int MyClient::Update()
 		assert(!conn->recvMsgs->Empty());
 
 		// 取出第 1 个包处理. 必然是 JoinSuccess 或 JoinFail
-		auto o_ = conn->recvMsgs->Top();
-		xx::ScopeGuard sg_o_killer([&] { o_->Release(); });		// 跳出这层大扩号就删
+		auto o_ = std::move(conn->recvMsgs->Top());
 		conn->recvMsgs->Pop();
 
 		auto& typeId = o_->typeId();
@@ -197,13 +188,10 @@ inline int MyClient::Update()
 		{
 		case xx::TypeId_v<PKG::Server_Client::JoinSuccess>:
 		{
-			auto o = (PKG::Server_Client::JoinSuccess*)o_;
+			auto& o = *(PKG::Server_Client::JoinSuccess_p*)&o_;
 
-			// 转移包成员继续用
-			self = o->self;			// 转为 Ref
-			users = o->users;		// 作为持有容器, 所有包引用计数都为1, 刚好
-			o->self = nullptr;		// 避免析构到移走的数据
-			o->users = nullptr;		// 避免析构到移走的数据
+			self = o->self;						// 转为 Ref 对象
+			users = std::move(o->users);		// 转移并继续用
 
 			// 显示点收到的内容
 			Cout(pkgJoin->username, " MyClient: recv msg == PKG::Server_Client::JoinSuccess!\n"
@@ -215,7 +203,7 @@ inline int MyClient::Update()
 		}
 		case xx::TypeId_v<PKG::Server_Client::JoinFail>:
 		{
-			auto o = (PKG::Server_Client::JoinFail*)o_;
+			auto& o = *(PKG::Server_Client::JoinFail_p*)&o_;
 			Cout(pkgJoin->username, " MyClient: recv msg == PKG::Server_Client::JoinFail!\n    reason = ", o->reason, '\n');
 			return -1;
 		}
@@ -235,7 +223,7 @@ inline int MyClient::Update()
 		}
 
 		// 继续处理后续收到的包
-		xx::Object* o_;
+		xx::Object_p o_;
 		if (conn->recvMsgs->TryPop(o_))
 		{
 			xx::ScopeGuard sg_o_killer([&] { o_->Release(); });		// 跳出这层大扩号就删
@@ -244,19 +232,19 @@ inline int MyClient::Update()
 			{
 			case xx::TypeId_v<PKG::Server_Client::PushJoin>:
 			{
-				auto o = (PKG::Server_Client::PushJoin*)o_;
+				auto& o = *(PKG::Server_Client::PushJoin_p*)&o_;
 				Cout(pkgJoin->username, " MyClient: recv msg == PKG::Server_Client::PushJoin! id = ", o->id, '\n');
 				break;
 			}
 			case xx::TypeId_v<PKG::Server_Client::PushLogout>:
 			{
-				auto o = (PKG::Server_Client::PushLogout*)o_;
+				auto& o = *(PKG::Server_Client::PushLogout_p*)&o_;
 				Cout(pkgJoin->username, " MyClient: recv msg == PKG::Server_Client::PushLogout! id & reason = ", o->id, ' ', o->reason, '\n');
 				break;
 			}
 			case xx::TypeId_v<PKG::Server_Client::PushMessage>:
 			{
-				auto o = (PKG::Server_Client::PushMessage*)o_;
+				auto& o = *(PKG::Server_Client::PushMessage_p*)&o_;
 				Cout(pkgJoin->username, " MyClient: recv msg == PKG::Server_Client::PushMessage! id & text = ", o->id, ' ', o->text, '\n');
 				break;
 			}

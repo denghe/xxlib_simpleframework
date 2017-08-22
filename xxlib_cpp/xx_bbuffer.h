@@ -401,29 +401,17 @@ namespace xx
 		// 尝试一次性反序列化一到多个包, 将结果填充到 outPkgs, 返回包个数 或 错误码
 		// 注意: 注意其元素的 引用计数, 通通为 1( 即便是递归互引 )
 		// 注意: 即便返回错误码, outPkgs 中也可能存在残留数据
-		int ReadPackages(List<Object*>& outPkgs)
+		int ReadPackages(List<Object_p>& outPkgs)
 		{
-			if (outPkgs.dataLen) ReleasePackages(outPkgs);
+			outPkgs.Clear();
 			while (offset < dataLen)
 			{
-				Object* ibb = nullptr;
+				Object_p ibb;
 				if (auto rtv = ReadRoot(ibb)) return rtv;
-				if (ibb == nullptr) return -2;
-				outPkgs.Add(ibb);
+				if (!ibb) return -2;
+				outPkgs.Add(std::move(ibb));
 			}
 			return outPkgs.dataLen;
-		}
-
-		// 释放经由 ReadPackages 填充的 packages 的内存
-		void ReleasePackages(List<Object*>& recvPkgs)
-		{
-			mempool().DisableRefCountAssert();
-			for (auto& o : recvPkgs)
-			{
-				o->Release();
-			}
-			mempool().EnableRefCountAssert();
-			recvPkgs.Clear();
 		}
 
 		/*************************************************************************/

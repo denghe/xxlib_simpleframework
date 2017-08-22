@@ -41,7 +41,10 @@ namespace " + c.Namespace + @"
             // desc
             // enum class xxxxxxxxx : underlyingType
             sb.Append(c._GetDesc_Cpp(4) + @"
-    struct " + c.Name + @";");
+    struct " + c.Name + @";
+    using " + c.Name + @"_p = xx::Ptr < " + c.Name + @" >;
+    using " + c.Name + @"_v = xx::Dock < " + c.Name + @" >;
+");
 
             // namespace }
             if (c.Namespace != null && ((i < cs.Count - 1 && cs[i + 1].Namespace != c.Namespace) || i == cs.Count - 1))
@@ -50,6 +53,8 @@ namespace " + c.Namespace + @"
 }");
             }
         }
+
+
 
         var es = ts._GetEnums();
         for (int i = 0; i < es.Count; ++i)
@@ -118,13 +123,13 @@ namespace " + c.Namespace + @"
             foreach (var f in fs)
             {
                 var ft = f.FieldType;
-                var ftn = ft._GetTypeDecl_Cpp(templateName);
+                var ftn = ft._GetSafeTypeDecl_Cpp(templateName);
                 sb.Append(f._GetDesc_Cpp(8) + @"
         " + (f.IsStatic ? "constexpr " : "") + ftn + " " + f.Name);
 
                 var v = f.GetValue(f.IsStatic ? null : o);
                 var dv = v._GetDefaultValueDecl_Cpp(templateName);
-                if (dv != "")
+                if (dv != "" && !ft._IsList() && !ft._IsUserClass() && !ft._IsString())  // 当前还无法正确处理 String 数据类型的默认值
                 {
                     sb.Append(" = " + dv + ";");
                 }
@@ -181,13 +186,13 @@ namespace " + c.Namespace + @"
             foreach (var f in fs)
             {
                 var ft = f.FieldType;
-                var ftn = ft._GetTypeDecl_Cpp(templateName);
+                var ftn = ft._GetSafeTypeDecl_Cpp(templateName);
                 sb.Append(f._GetDesc_Cpp(8) + @"
         " + (f.IsStatic ? "constexpr " : "") + ftn + " " + f.Name);
 
                 var v = f.GetValue(f.IsStatic ? null : o);
                 var dv = v._GetDefaultValueDecl_Cpp(templateName);
-                if (dv != "")
+                if (dv != "" && !ft._IsList() && !ft._IsUserClass() && !ft._IsString())  // 当前还无法正确处理 String 数据类型的默认值
                 {
                     sb.Append(" = " + dv + ";");
                 }
@@ -203,7 +208,8 @@ namespace " + c.Namespace + @"
         typedef " + btn + @" BaseType;
 	    " + c.Name + @"();
 	    " + c.Name + @"(xx::BBuffer *bb);
-	    ~" + c.Name + @"();
+		" + c.Name + @"(" + c.Name + @" const&) = delete;
+		" + c.Name + @"& operator=(" + c.Name + @" const&) = delete;
         virtual void ToString(xx::String &str) const override;
         virtual void ToStringCore(xx::String &str) const override;
         virtual void ToBBuffer(xx::BBuffer &bb) const override;
@@ -248,15 +254,15 @@ namespace " + c.Namespace + @"
             sb.Append(@"
 	{");
             var fs = c._GetFields();
-        //    foreach (var f in fs)
-        //    {
-        //        var ft = f.FieldType;
-        //        if (ft.IsClass && f._Has<TemplateLibrary.CreateInstance>())
-        //        {
-        //            sb.Append(@"
-        //mempool().CreateTo(" + f.Name + ");");
-        //        }
-        //    }
+            //    foreach (var f in fs)
+            //    {
+            //        var ft = f.FieldType;
+            //        if (ft.IsClass && f._Has<TemplateLibrary.CreateInstance>())
+            //        {
+            //            sb.Append(@"
+            //mempool().CreateTo(" + f.Name + ");");
+            //        }
+            //    }
             sb.Append(@"
 	}
 	inline " + c.Name + @"::" + c.Name + @"(xx::BBuffer *bb)");
@@ -298,20 +304,59 @@ namespace " + c.Namespace + @"
             }
             sb.Append(@"
 	}
-	inline " + c.Name + @"::~" + c.Name + @"()
-	{");
+    inline void " + c.Name + @"::ToBBuffer(xx::BBuffer &bb) const
+    {");
+
+            if (c._HasBaseType())
+            {
+                sb.Append(@"
+        this->BaseType::ToBBuffer(bb);");
+            }
             fs = c._GetFields();
             foreach (var f in fs)
             {
-                var ft = f.FieldType;
-                if (ft.IsClass)
+                if (f._Has<TemplateLibrary.NotSerialize>())
                 {
                     sb.Append(@"
-        mempool().SafeRelease(" + f.Name + ");");
+        bb.WriteDefaultValue<" + f.FieldType._GetSafeTypeDecl_Cpp(templateName) + ">();");
+                }
+                else if (f._Has<TemplateLibrary.CustomSerialize>())
+                {
+                    sb.Append(@"
+        bb.CustomWrite(bb, (void*)this, _offsetof(ThisType, " + f.Name + "));");
+                }
+                else
+                {
+                    sb.Append(@"
+        bb.Write(this->" + f.Name + ");");
                 }
             }
+
             sb.Append(@"
-	}
+    }
+    inline int " + c.Name + @"::FromBBuffer(xx::BBuffer &bb)
+    {
+        int rtv = 0;");
+            if (c._HasBaseType())
+            {
+                sb.Append(@"
+        if (rtv = this->BaseType::FromBBuffer(bb)) return rtv;");
+            }
+            fs = c._GetFields();
+            foreach (var f in fs)
+            {
+                if (f.FieldType._IsContainer())
+                {
+                    sb.Append(@"
+        bb.readLengthLimit = " + f._GetLimit() + ";");
+                }
+
+                sb.Append(@"
+        if (rtv = bb.Read(this->" + f.Name + @")) return rtv;");
+            }
+            sb.Append(@"
+        return rtv;
+    }
 
     inline void " + c.Name + @"::ToString(xx::String &str) const
     {
@@ -339,61 +384,6 @@ namespace " + c.Namespace + @"
             sb.Append(@"
     }
 
-
-    inline void " + c.Name + @"::ToBBuffer(xx::BBuffer &bb) const
-    {");
-
-            if (c._HasBaseType())
-            {
-                sb.Append(@"
-        this->BaseType::ToBBuffer(bb);");
-            }
-            fs = c._GetFields();
-            foreach (var f in fs)
-            {
-                if (f._Has<TemplateLibrary.NotSerialize>())
-                {
-                    sb.Append(@"
-        bb.WriteDefaultValue<" + f.FieldType._GetTypeDecl_Cpp(templateName) + ">();");
-                }
-                else if (f._Has<TemplateLibrary.CustomSerialize>())
-                {
-                    sb.Append(@"
-        bb.CustomWrite(bb, (void*)this, _offsetof(ThisType, " + f.Name + "));");
-                }
-                else
-                {
-                    sb.Append(@"
-        bb.Write(this->" + f.Name + ");");
-                }
-            }
-
-            sb.Append(@"
-    }
-
-    inline int " + c.Name + @"::FromBBuffer(xx::BBuffer &bb)
-    {
-        int rtv = 0;");
-            if (c._HasBaseType())
-            {
-                sb.Append(@"
-        if (rtv = this->BaseType::FromBBuffer(bb)) return rtv;");
-            }
-            fs = c._GetFields();
-            foreach (var f in fs)
-            {
-                if (f.FieldType._IsContainer())
-                {
-                    sb.Append(@"
-        bb.readLengthLimit = " + f._GetLimit() + ";");
-                }
-
-                sb.Append(@"
-        if (rtv = bb.Read(this->" + f.Name + @")) return rtv;");
-            }
-            sb.Append(@"
-        return rtv;
-    }
 ");
 
             // namespace }
@@ -516,7 +506,9 @@ namespace xx
         foreach (var kv in types)
         {
             var ct = kv.Key;
-            var ctn = ct._GetTypeDecl_Cpp(templateName).CutLast();
+            string ctn;
+            if (ct._IsList()) ctn = ct._GetSafeTypeDecl_Cpp(templateName, true);
+            else ctn = ct._GetTypeDecl_Cpp(templateName).CutLast();
             typeId = kv.Value;
 
             sb.Append(@"
@@ -533,7 +525,9 @@ namespace " + templateName + @"
         foreach (var kv in types)
         {
             var ct = kv.Key;
-            var ctn = ct._GetTypeDecl_Cpp(templateName).CutLast();
+            string ctn;
+            if (ct._IsList()) ctn = ct._GetSafeTypeDecl_Cpp(templateName, true);
+            else ctn = ct._GetTypeDecl_Cpp(templateName).CutLast();
             var bt = ct.BaseType;
             var btn = ct._HasBaseType() ? bt._GetTypeDecl_Cpp(templateName).CutLast() : "xx::Object";
 
