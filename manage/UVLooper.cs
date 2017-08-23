@@ -210,27 +210,29 @@ namespace manage
                     switch (loginResult)
                     {
                         case PKG.DB_Manage.LoginSuccess o:
-                            //mw.GotoMain(/**/);
-                            break;
+                            goto LabMain;
+
                         case PKG.DB_Manage.LoginFail o:
                             ((UCLogin)mw.Content).Tips = o.reason;
                             loginResult = null;
-                            break;
+                            goto LabDisconnectedByServer;
+
                         default:
                             throw new Exception();
                     }
                 }
             }
 
+            LabMain:;
+            //mw.GotoMain(/**/);
+
+
             LabDisconnectedByServer:
             StateLog("disconnected by server.");
-
-            
             var lastMS = currMS;
             while (currMS - lastMS < 2000) yield return null;       // 停 2 秒再跳, 让用户看清提示
-
-
             goto LabInit;
+
 
             //yield break;
         }

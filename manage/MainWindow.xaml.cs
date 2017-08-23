@@ -59,6 +59,13 @@ namespace manage
             uc.Submit += submitHandler;
             uc.InitFocus();
         }
-        
+
+        public void GotoMain()
+        {
+            //var uc = new UCLogin();
+            //this.Content = uc;
+            //uc.Submit += submitHandler;
+            //uc.InitFocus();
+        }
     }
 }
