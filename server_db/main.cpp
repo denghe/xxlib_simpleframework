@@ -158,14 +158,20 @@ inline Service::Service(char const* dbFileName, char const* logFileName)
 	sqldb->SetPragmaJournalMode(xx::SQLiteJournalModes::WAL);
 	sqldb->SetPragmaForeignKeys(true);
 
-	// 检查 db 看是不是新建的, 是就执行建表脚本
+	// 检查 db 看是不是新建的, 是就执行建表和数据预填充脚本
 	if (sqldb->GetTableCount() < 5)
 	{
-		sqlmfs.CreateTable_manage_account();
-		sqlmfs.CreateTable_manage_permission();
-		sqlmfs.CreateTable_manage_role();
-		sqlmfs.CreateTable_manage_bind_role_permission();
-		sqlmfs.CreateTable_manage_bind_account_role();
+		auto& mp = sqlmp;
+		auto& fs = sqlmfs;
+
+		fs.CreateTable_manage_account();
+		fs.CreateTable_manage_permission();
+		fs.CreateTable_manage_role();
+		fs.CreateTable_manage_bind_role_permission();
+		fs.CreateTable_manage_bind_account_role();
+
+		// 创建特殊用户. 无身份绑定, 只能进系统初始化模块, 含用户权限啥的.
+		fs.InsertAccount("1", "1");	// 
 	}
 
 	// 包预创建之 fields 预创建

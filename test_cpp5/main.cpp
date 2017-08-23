@@ -1,9 +1,115 @@
-﻿#include "xx_mempool.h"
-#include "..\pkg\PKG_class.h"
+﻿#include <vector>
+#include <string>
+#include <array>
+#include <bitset>
+#include <iostream>
+#include "xx_defines.h"
 
 int main()
 {
-	xx::MemPool mp;
+	static_assert(sizeof(wchar_t) == 2);
+	std::vector<std::wstring> words = { L"我日", L"日你", L"我日你妈", L"日你妈", L"操", L"fuck" };
+	for (int i = 0; i < 9999999; ++i) words.push_back(std::to_wstring(i));
+	size_t len = 0, minLen = -1;
+	for (auto& word : words)
+	{
+		if (len < word.size()) len = word.size();
+		if (minLen > word.size()) minLen = word.size();
+	}
+	std::vector<std::bitset<65536>> masks;
+	std::vector<std::bitset<65536>> ends;
+	masks.resize(len + 1);
+	ends.resize(len + 1);
+	for (int i = 0; i < len; ++i)
+	{
+		for (auto& word : words)
+		{
+			if (i >= word.size()) continue;
+			if (ends[i][(size_t)word[i]]) continue;
+			if (i + 1 <= word.size()) masks[i][(size_t)word[i]] = true;
+			if (i + 1 == word.size()) ends[i][(size_t)word[i]] = true;
+		}
+	}
 
+	xx::Stopwatch sw;
+	std::wstring test;
+	for (int n = 0; n < 10000000; ++n)
+	{
+		test = L"我日你妈B 123   操你妈!!  321  fucker  1234567 干!!";
+		size_t i = 0, offset = 0;
+		do
+		{
+			len = 0, offset = 0;
+			while (masks[offset][(size_t)test[i + offset]])
+			{
+				if (ends[offset][(size_t)test[i + offset]]) len = offset + 1;
+				++offset;
+				if (offset == masks.size() || i + offset >= test.size()) break;
+			};
+			if (len)
+			{
+				for (size_t j = 0; j < len; ++j)
+				{
+					test[i + j] = L'*';
+				}
+				i += len;
+			}
+		} while (++i < test.size() - minLen);
+	}
+	std::cout << "elapsed ms = " << sw() << std::endl;
+	std::wcout.imbue(std::locale("chs"));
+	std::wcout << test << std::endl;
+	return 0;
 }
 
+
+/*
+#include <vector>
+#include <string>
+#include <array>
+#include <iostream>
+int main()
+{
+	std::vector<std::string> words = { "suck", "sucks", "sucker", "fuck", "fucker" };
+	size_t len = 0, minLen = -1;
+	for (auto& word : words)
+	{
+		if (len < word.size()) len = word.size();
+		if (minLen > word.size()) minLen = word.size();
+	}
+	std::vector<std::array<char, 256>> masks;
+	masks.resize(len + 1);
+	for (int i = 0; i < len; ++i)
+	{
+		for (auto& word : words)
+		{
+			if (i >= word.size()) continue;
+			auto& m = masks[i][(size_t)word[i]];
+			if (m == 2) continue;
+			if (i + 1 < word.size()) m = 1;
+			else if (i + 1 == word.size()) m = 2;
+		}
+	}
+	std::string test = "mother fucker uncle sucker fuck thefuckereer !!";
+
+	size_t i = 0, offset = 0;
+	do
+	{
+		len = 0, offset = 0;
+		while (auto n = masks[offset][(size_t)test[i + offset]])
+		{
+			++offset;
+			if (n == 2) len = offset;
+			if (offset == masks.size() || i + offset >= test.size()) break;
+		};
+		if (len)
+		{
+			memset(test.data() + i, '*', len);
+			i += len;
+		}
+	} while (++i < test.size() - minLen);
+
+	std::cout << test << std::endl;
+	return 0;
+}
+*/
