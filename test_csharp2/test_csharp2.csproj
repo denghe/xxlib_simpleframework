@@ -46,6 +46,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="CreateMaJiangHuPaiType.cs" />
+    <None Include="Program - Copy.bak" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
