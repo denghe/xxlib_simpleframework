@@ -162,7 +162,7 @@ namespace " + iface.Namespace + @"
             sb.Append(iface._GetDesc_Csharp(4) + @"
     public class " + iface.Name + @"
     {
-        private SqlConnection conn;
+        public SqlConnection conn;
         private SqlCommand cmd;
         private StringBuilder sb = new StringBuilder();
         private List<int> recordsAffecteds = new List<int>();
