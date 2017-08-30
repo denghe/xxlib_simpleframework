@@ -255,14 +255,31 @@ inline void Peer::OnRecv(PKG::Manage_DB::Login_p& arg)
 {
 	service->AddTask([service = this->service, peer = xx::Ref<Peer>(this), arg = std::move(arg)]()
 	{
-		auto res = service->sqlmfs.SelectAccountByUsername(arg->username);
+		int errNo = 0;
+		DB::Manage::Account_p res;
+		try
+		{
+			res = service->sqlmfs.SelectAccountByUsername(arg->username);
+		}
+		catch (int en) 
+		{
+			errNo = en;
+		}
 
-		service->SetResult([service, peer, res = std::move(res), arg = xx::Move(arg)]
+		service->SetResult([service, peer, errNo, res = std::move(res), arg = xx::Move(arg)]
 		{
 			if (peer && peer->state == xx::UVPeerStates::Connected)
 			{
-				auto& mp = service->mempool();
-				if (res)
+				if (errNo || !res)
+				{
+					auto& pkg = service->pkgLoginFail;
+					pkg->requestSerial = arg->serial;
+					pkg->reason->Assign("sql execute error.");
+
+					peer->SendPackages(pkg);
+					peer->Disconnect(false);
+				}
+				else if (res->username)
 				{
 					if (xx::String::Equals(res->password ,arg->password))
 					{

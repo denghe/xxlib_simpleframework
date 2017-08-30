@@ -91,7 +91,7 @@
     <Natvis Include="..\xxlib_cpp\xx.natvis" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\pkg_cpp\PKG_class.h" />
+    <ClInclude Include="..\pkg\PKG_class.h" />
     <ClInclude Include="..\xxlib_cpp\xx_bbqueue.h" />
     <ClInclude Include="..\xxlib_cpp\xx_bbuffer.h" />
     <ClInclude Include="..\xxlib_cpp\xx_bytesutils.h" />

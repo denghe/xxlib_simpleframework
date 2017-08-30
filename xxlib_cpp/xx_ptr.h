@@ -114,7 +114,7 @@ namespace xx
 		//	return pointer;
 		//}
 
-		operator Ref<T> const&()
+		operator Ref<T> ()
 		{
 			return pointer;
 		}

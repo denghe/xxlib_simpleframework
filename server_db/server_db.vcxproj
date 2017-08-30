@@ -93,8 +93,6 @@
   <ItemGroup>
     <ClInclude Include="..\db\DB_class.h" />
     <ClInclude Include="..\db\DB_sqlite.h" />
-    <ClInclude Include="..\db\LOGDB_class.h" />
-    <ClInclude Include="..\db\LOGDB_sqlite.h" />
     <ClInclude Include="..\pkg\PKG_class.h" />
     <ClInclude Include="..\sqlite3\sqlite3.h" />
     <ClInclude Include="..\sqlite3\sqlite3ext.h" />
