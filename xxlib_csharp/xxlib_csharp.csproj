@@ -43,7 +43,6 @@
   <ItemGroup>
     <Compile Include="BBuffer.cs" />
     <Compile Include="Dict.cs" />
-    <Compile Include="Logger2.cs" />
     <Compile Include="Logger.cs" />
     <Compile Include="Queue.cs" />
     <Compile Include="List.cs" />

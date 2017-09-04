@@ -8,7 +8,7 @@ public static class Program
     {
         var sw = Stopwatch.StartNew();
 
-        var log = new xx.Logger2();
+        var log = new xx.Logger();
         //log.batchSize = 10000;
 
         for (int j = 0; j < 1000000; j++)
