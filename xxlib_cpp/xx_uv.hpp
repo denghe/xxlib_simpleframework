@@ -286,7 +286,7 @@ namespace xx
 			}
 
 			// 读出头
-			dataLen = bbReceive->buf[bbReceive->offset] + (bbReceive->buf[bbReceive->offset + 1] << 8);
+			dataLen = ((uint8_t*)bbReceive->buf)[bbReceive->offset] + (((uint8_t*)bbReceive->buf)[bbReceive->offset + 1] << 8);
 			bbReceive->offset += 2;
 
 			// 如果数据区长度足够, 来一发 OnReceivePackage 并重复解析头 + 数据的过程
@@ -335,7 +335,7 @@ namespace xx
 			}
 
 			// 读包头, 得到长度
-			dataLen = bbReceiveLeft->buf[bbReceiveLeft->offset] + (bbReceiveLeft->buf[bbReceiveLeft->offset + 1] << 8);
+			dataLen = ((uint8_t*)bbReceiveLeft->buf)[bbReceiveLeft->offset] + (((uint8_t*)bbReceiveLeft->buf)[bbReceiveLeft->offset + 1] << 8);
 			bbReceiveLeft->offset += 2;
 
 			// 判断数据区长度. 如果不够长, 看看能不能补足

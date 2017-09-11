@@ -6,6 +6,9 @@ namespace LOGDB
 {
     // 对应 log 日志表
     struct Log;
+    using Log_p = xx::Ptr<Log>;
+	using Log_v = xx::Dock<Log>;
+
     // 日志级别
     enum class Level : int32_t
     {
@@ -47,8 +50,6 @@ namespace LOGDB
         virtual void ToString(xx::String &str) const override;
         virtual void ToStringCore(xx::String &str) const override;
     };
-    using Log_p = xx::Ptr<Log>;
-	using Log_v = xx::Dock<Log>;
 
 
 	inline Log::Log()

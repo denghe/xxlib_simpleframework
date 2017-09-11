@@ -54,10 +54,11 @@ CREATE TABLE [game_account](
      where [username] = ?)=-=");
 			}
             DB::Game::Account_p rtv;
-            rtv.Create(mp);
             q->SetParameters(username);
 			q->Execute([&](xx::SQLiteReader& sr)
             {
+                assert(!rtv);
+                rtv.Create(mp);
                 rtv->id = sr.ReadInt64(0);
                 rtv->username = mp.Create<xx::String>(sr.ReadString(1));
                 rtv->password = mp.Create<xx::String>(sr.ReadString(2));
@@ -83,10 +84,11 @@ CREATE TABLE [game_account](
      where [username] = ?)=-=");
 			}
             DB::Game::Account_p rtv;
-            rtv.Create(mp);
             q->SetParameters(username);
 			q->Execute([&](xx::SQLiteReader& sr)
             {
+                assert(!rtv);
+                rtv.Create(mp);
                 rtv->id = sr.ReadInt64(0);
                 rtv->username = mp.Create<xx::String>(sr.ReadString(1));
                 rtv->password = mp.Create<xx::String>(sr.ReadString(2));
@@ -831,10 +833,11 @@ CREATE TABLE [manage_bind_account_role](
 				q = sqlite.CreateQuery(R"=-=(select [id], [username], [password] from [manage_account] where [username] = ?)=-=");
 			}
             DB::Manage::Account_p rtv;
-            rtv.Create(mp);
             q->SetParameters(username);
 			q->Execute([&](xx::SQLiteReader& sr)
             {
+                assert(!rtv);
+                rtv.Create(mp);
                 rtv->id = sr.ReadInt64(0);
                 rtv->username = mp.Create<xx::String>(sr.ReadString(1));
                 rtv->password = mp.Create<xx::String>(sr.ReadString(2));
@@ -857,10 +860,11 @@ CREATE TABLE [manage_bind_account_role](
 				q = sqlite.CreateQuery(R"=-=(select [id], [username], [password] from [manage_account] where [username] = ?)=-=");
 			}
             DB::Manage::Account_p rtv;
-            rtv.Create(mp);
             q->SetParameters(username);
 			q->Execute([&](xx::SQLiteReader& sr)
             {
+                assert(!rtv);
+                rtv.Create(mp);
                 rtv->id = sr.ReadInt64(0);
                 rtv->username = mp.Create<xx::String>(sr.ReadString(1));
                 rtv->password = mp.Create<xx::String>(sr.ReadString(2));

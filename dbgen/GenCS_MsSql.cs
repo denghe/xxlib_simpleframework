@@ -163,8 +163,8 @@ namespace " + iface.Namespace + @"
     public class " + iface.Name + @"
     {
         public SqlConnection conn;
-        private SqlCommand cmd;
-        private StringBuilder sb = new StringBuilder();
+        public SqlCommand cmd;
+        public StringBuilder sb = new StringBuilder();
         private List<int> recordsAffecteds = new List<int>();
 
         public List<int> RecordsAffecteds
@@ -228,10 +228,11 @@ namespace " + iface.Namespace + @"
                 if (ps.Length > 0)
                 {
                     sb.Append(@"
-        ");
+            , ");
                 }
-                sb.Append(@")
-        {");
+                sb.Append(@"SqlTransaction tran_ = null)
+        {
+            cmd.Transaction = tran_;");
 
                 if (ps.Length > 0)
                 {

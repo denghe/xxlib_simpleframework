@@ -167,7 +167,8 @@ namespace " + iface.Namespace + @"
                 else
                 {
                     sb2.Append(@"
-            " + rtn + @" rtv;
+            " + rtn + @" rtv;");
+                    if (rt._IsList()) sb2.Append(@"
             rtv.Create(mp);");
                 }
 
@@ -252,7 +253,9 @@ namespace " + iface.Namespace + @"
 
                         sb2.Append(@"
 			q->Execute([&](xx::SQLiteReader& sr)
-            {");
+            {
+                assert(!rtv);
+                rtv.Create(mp);");
                         for (int i = 0; i < rtfs.Count; ++i)
                         {
                             var m = rtfs[i];

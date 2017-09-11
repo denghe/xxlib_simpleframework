@@ -8,19 +8,37 @@ namespace Game
 {
     // 对应 game_account 账号表
     struct Account;
+    using Account_p = xx::Ptr<Account>;
+	using Account_v = xx::Dock<Account>;
+
 }
 namespace Manage
 {
     // 对应 manage_account 账号表
     struct Account;
+    using Account_p = xx::Ptr<Account>;
+	using Account_v = xx::Dock<Account>;
+
     // 对应 manage_role 身份表
     struct Role;
+    using Role_p = xx::Ptr<Role>;
+	using Role_v = xx::Dock<Role>;
+
     // 对应 manage_permission 权限表
     struct Permission;
+    using Permission_p = xx::Ptr<Permission>;
+	using Permission_v = xx::Dock<Permission>;
+
     // 对应 manage_bind_account_role 管理人员 & 身份 绑定表
     struct BindAccountRole;
+    using BindAccountRole_p = xx::Ptr<BindAccountRole>;
+	using BindAccountRole_v = xx::Dock<BindAccountRole>;
+
     // 对应 manage_bind_role_permission 身份 & 权限 绑定表
     struct BindRolePermission;
+    using BindRolePermission_p = xx::Ptr<BindRolePermission>;
+	using BindRolePermission_v = xx::Dock<BindRolePermission>;
+
 }
 namespace Game
 {
@@ -42,8 +60,6 @@ namespace Game
         virtual void ToString(xx::String &str) const override;
         virtual void ToStringCore(xx::String &str) const override;
     };
-    using Account_p = xx::Ptr<Account>;
-	using Account_v = xx::Dock<Account>;
 
 
 }
@@ -67,8 +83,6 @@ namespace Manage
         virtual void ToString(xx::String &str) const override;
         virtual void ToStringCore(xx::String &str) const override;
     };
-    using Account_p = xx::Ptr<Account>;
-	using Account_v = xx::Dock<Account>;
 
 
     // 对应 manage_role 身份表
@@ -89,8 +103,6 @@ namespace Manage
         virtual void ToString(xx::String &str) const override;
         virtual void ToStringCore(xx::String &str) const override;
     };
-    using Role_p = xx::Ptr<Role>;
-	using Role_v = xx::Dock<Role>;
 
 
     // 对应 manage_permission 权限表
@@ -113,8 +125,6 @@ namespace Manage
         virtual void ToString(xx::String &str) const override;
         virtual void ToStringCore(xx::String &str) const override;
     };
-    using Permission_p = xx::Ptr<Permission>;
-	using Permission_v = xx::Dock<Permission>;
 
 
     // 对应 manage_bind_account_role 管理人员 & 身份 绑定表
@@ -133,8 +143,6 @@ namespace Manage
         virtual void ToString(xx::String &str) const override;
         virtual void ToStringCore(xx::String &str) const override;
     };
-    using BindAccountRole_p = xx::Ptr<BindAccountRole>;
-	using BindAccountRole_v = xx::Dock<BindAccountRole>;
 
 
     // 对应 manage_bind_role_permission 身份 & 权限 绑定表
@@ -153,8 +161,6 @@ namespace Manage
         virtual void ToString(xx::String &str) const override;
         virtual void ToStringCore(xx::String &str) const override;
     };
-    using BindRolePermission_p = xx::Ptr<BindRolePermission>;
-	using BindRolePermission_v = xx::Dock<BindRolePermission>;
 
 
 }
