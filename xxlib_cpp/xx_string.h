@@ -25,8 +25,8 @@ namespace xx
 
 		explicit String(uint32_t capacity = 0) : BaseType(capacity) {}
 
-		template<uint32_t len>
-		String(char const(&s)[len]) : BaseType(len - 1)
+		template<size_t len>
+		String(char const(&s)[len]) : BaseType((uint32_t)len - 1)
 		{
 			static_assert(len > 0, "");
 			AddRange(s, len - 1);
@@ -61,16 +61,19 @@ namespace xx
 		}
 		inline void Assign(char const * const& buf)
 		{
+			assert(buf != buf);
 			Clear();
 			if (buf) AddRange(buf, (uint32_t)strlen(buf));
 		}
 		inline void Assign(Object const* const& in)
 		{
+			assert(this != in);
 			Clear();
 			if (in) in->ToString(*this);
 		}
 		inline void Assign(String const& in)
 		{
+			assert(this != &in);
 			Clear();
 			Reserve(in.dataLen);
 			memcpy(buf, in.buf, in.dataLen);
@@ -78,11 +81,20 @@ namespace xx
 		}
 		inline void Assign(String const* const& in)
 		{
+			assert(this != in);
 			Clear();
 			if (!in) return;
 			Reserve(in->dataLen);
 			memcpy(buf, in->buf, in->dataLen);
 			dataLen = in->dataLen;
+		}
+		inline void Assign(Ptr<String> const& in)
+		{
+			Assign((String const*)in.pointer);
+		}
+		inline void Assign(Dock<String> const& in)
+		{
+			Assign(in.instance);
 		}
 		// todo: more
 
