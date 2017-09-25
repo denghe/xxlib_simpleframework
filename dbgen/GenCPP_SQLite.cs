@@ -42,7 +42,7 @@ namespace " + iface.Namespace + @"
 		xx::MemPool& mp;
 		xx::SQLiteString_v s;
 
-		" + iface.Name + @"(xx::SQLite& sqlite)
+		inline " + iface.Name + @"(xx::SQLite& sqlite)
             : sqlite(sqlite)
             , mp(sqlite.mempool())
             , s(mp)
@@ -69,7 +69,7 @@ namespace " + iface.Namespace + @"
 
 
         xx::SQLiteQuery_p query_" + fn + @";" + f._GetDesc_Cpp(8) + @"
-        " + rtn + " " + fn);
+        inline " + rtn + " " + fn);
 
                 if (ps.Length > 0)
                 {
