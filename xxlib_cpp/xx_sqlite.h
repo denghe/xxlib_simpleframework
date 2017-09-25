@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include <xx_mempool.h>
+#include "xx_mempool.h"
 #include <sqlite3.h>
 
 // todo: _v _p support
@@ -589,7 +589,7 @@ namespace xx
 		SQLiteReader dr(stmt);
 
 		int r = sqlite3_step(stmt);
-		if (r == SQLITE_DONE || r == SQLITE_ROW && !rf) goto LabEnd;
+		if (r == SQLITE_DONE || (r == SQLITE_ROW && !rf)) goto LabEnd;
 		else if (r != SQLITE_ROW) goto LabErr;
 
 		dr.numCols = sqlite3_column_count(stmt);
@@ -739,7 +739,7 @@ namespace xx
 			return SQLAppend(v.pointer);
 		}
 
-		static constexpr char* const hexStr = "0123456789abcdef";
+		static constexpr char const* const hexStr = "0123456789abcdef";
 		// 插入 BLOB
 		inline void SQLAppend(BBuffer* const& v)
 		{

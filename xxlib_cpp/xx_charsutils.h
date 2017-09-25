@@ -575,45 +575,45 @@ namespace xx
 
 
 
-	/**************************************************************************************************/
-	// Utf8 转为 char16_t* 的类
-	/**************************************************************************************************/
-
-	template<size_t bufCount>
-	struct Utf8Converter
-	{
-		std::array<std::u16string, bufCount> bufs;	// 如果被用于多参数环境时避免重复使用到一个 buf
-		uint32_t idx = 0;
-
-		char16_t const* Convert(char const * utf8Str)
-		{
-			assert(utf8Str);
-			auto& buf = bufs[idx++];
-			if (idx == bufs.size()) idx = 0;
-
-			auto len = strlen(utf8Str);
-			buf.resize(strlen(utf8Str));
-
-			uint32_t i = 0, j = 0;
-			while (uint8_t c = utf8Str[i++])
-			{
-				if (c < 0x80u)
-				{
-					buf[j++] = c;
-				}
-				else if ((c & 0xC0u) == 0xC0u)
-				{
-					buf[j++] = ((c & 0x1F) << 6) | (utf8Str[i++] & 0x3F);
-				}
-				else if ((c & 0xE0) == 0xE0)
-				{
-					buf[j++] = ((c & 0x0F) << 12) | (((utf8Str[i]) & 0x3F) << 6) | ((utf8Str[i + 1]) & 0x3F);
-					i += 2;
-				}
-			};
-			buf.resize(j);
-			return buf.c_str();
-		}
-	};
+//    /**************************************************************************************************/
+//    // Utf8 转为 char16_t* 的类
+//    /**************************************************************************************************/
+//
+//    template<size_t bufCount>
+//    struct Utf8Converter
+//    {
+//        std::array<std::u16string, bufCount> bufs;    // 如果被用于多参数环境时避免重复使用到一个 buf
+//        uint32_t idx = 0;
+//
+//        char16_t const* Convert(char const * utf8Str)
+//        {
+//            assert(utf8Str);
+//            auto& buf = bufs[idx++];
+//            if (idx == bufs.size()) idx = 0;
+//
+//            auto len = strlen(utf8Str);
+//            buf.resize(strlen(utf8Str));
+//
+//            uint32_t i = 0, j = 0;
+//            while (uint8_t c = utf8Str[i++])
+//            {
+//                if (c < 0x80u)
+//                {
+//                    buf[j++] = c;
+//                }
+//                else if ((c & 0xC0u) == 0xC0u)
+//                {
+//                    buf[j++] = ((c & 0x1F) << 6) | (utf8Str[i++] & 0x3F);
+//                }
+//                else if ((c & 0xE0) == 0xE0)
+//                {
+//                    buf[j++] = ((c & 0x0F) << 12) | (((utf8Str[i]) & 0x3F) << 6) | ((utf8Str[i + 1]) & 0x3F);
+//                    i += 2;
+//                }
+//            };
+//            buf.resize(j);
+//            return buf.c_str();
+//        }
+//    };
 
 }

@@ -102,7 +102,7 @@ namespace xx
 
 		SQLiteQuery_p query_CreateTable_log;
 		// 建 log 表
-		void CreateTable_log()
+		inline void CreateTable_log()
 		{
 			auto& q = query_CreateTable_log;
 
@@ -127,7 +127,7 @@ CREATE TABLE [log](
 
 		SQLiteQuery_p query_InsertLog;
 		// 插入一条 log. time 传入 DateTime.Now.Ticks
-		void InsertLog
+		inline void InsertLog
 		(
 			LogLevel const& level,
 			int64_t const& time,
@@ -155,7 +155,7 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
 
 		//xx::SQLiteQuery_p query_InsertLog;
 		// 插入一条 log. time 传入 DateTime.Now.Ticks
-		void InsertLog
+		inline void InsertLog
 		(
 			LogLevel const& level,
 			int64_t const& time,
@@ -190,7 +190,7 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
 		SQLite_v db;
 		LogFuncs funcs;
 
-		static const int nameLenLimit = 200;
+		static constexpr int nameLenLimit = 200;
 		String_v machine;
 		String_v service;
 		String_v instanceId;
@@ -203,6 +203,7 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
 		Queue_v<Log_p> logMsgs2;		// 切换使用
 
 		Queue<Log_p>* logMsgs;			// 指向当前正在使用的 logMsgs
+        Queue<Log_p>* bakMsgs;          // 指向后台 logMsgs
 		std::mutex mtx;
 
 		int64_t writeLimit = 1000000;	// 当前队列写入深度如果超过这个值就不再写入
@@ -218,39 +219,27 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
 			, logMsgs1(mp1)
 			, logMsgs2(mp2)
 			, logMsgs(&*logMsgs1)
+            , bakMsgs(&*logMsgs2)
 		{
 			if (!db->TableExists("log")) funcs.CreateTable_log();
 			std::thread t([this]
 			{
-				Queue<Log_p>* backMsgs;
-
-				while (!disposing)
+				while (true)
 				{
 					// 切换前后台队列( 如果有数据. 没有就 sleep 一下继续扫 )
 					{
 						std::lock_guard<std::mutex> lg(mtx);
-
 						if (!logMsgs->Count()) goto LabEnd;
-
-						if (logMsgs == &*logMsgs1)
-						{
-							backMsgs = &*logMsgs1;
-							logMsgs = &*logMsgs2;
-						}
-						else
-						{
-							backMsgs = &*logMsgs2;
-							logMsgs = &*logMsgs1;
-						}
+                        std::swap(logMsgs, bakMsgs);
 					}
 
 					// 开始批量插入( 这期间前台可以继续操作 )
 					try
 					{
 						db->BeginTransaction();
-						while (!backMsgs->Empty())
+						while (!bakMsgs->Empty())
 						{
-							auto& o = *backMsgs->Top();
+							auto& o = *bakMsgs->Top();
 							if (o.id)
 							{
 								funcs.InsertLog(o.level, o.time, o.machine, o.service, o.instanceId, o.title, o.opcode, o.desc);
@@ -261,7 +250,7 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
 								service->Assign(o.service);
 								instanceId->Assign(o.instanceId);
 							}
-							backMsgs->Pop();
+							bakMsgs->Pop();
 							++counter;
 						}
 						db->EndTransaction();
@@ -272,6 +261,7 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
 						std::cout << "logdb insert error! errNO = " << db->lastErrorCode << " errMsg = " << db->lastErrorMessage << std::endl;
 					}
 				LabEnd:
+                    if (disposing) break;
 					Sleep(50);
 				}
 				disposing = false;

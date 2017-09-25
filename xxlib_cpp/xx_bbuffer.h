@@ -559,7 +559,7 @@ namespace xx
 	};
 
 
-	void BBuffer::ToBBuffer(BBuffer &bb) const
+	inline void BBuffer::ToBBuffer(BBuffer &bb) const
 	{
 		bb.Reserve(bb.dataLen + 5 + this->dataLen);
 		bb.Write(this->dataLen);
@@ -568,7 +568,7 @@ namespace xx
 		bb.dataLen += this->dataLen;
 	}
 
-	int BBuffer::FromBBuffer(BBuffer &bb)
+	inline int BBuffer::FromBBuffer(BBuffer &bb)
 	{
 		uint32_t len = 0;
 		if (auto rtv = bb.Read(len)) return rtv;

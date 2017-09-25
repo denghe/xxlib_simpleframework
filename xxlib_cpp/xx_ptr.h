@@ -80,7 +80,7 @@ namespace xx
 			return *this;
 		}
 
-		T const* const& operator->() const
+		T const* operator->() const
 		{
 			return pointer;
 		}

@@ -2,7 +2,7 @@
 #pragma execution_character_set("utf-8")
 #pragma warning(disable:4819)
 
-#include <cstdint>
+#include <stdint.h>
 #include <chrono>
 #ifdef _WIN32
 #include <intrin.h>     // _BitScanReverse  64
@@ -303,7 +303,7 @@ namespace xx
 	//}
 
 	/***********************************************************************************/
-	/* XX_HAS_TYPEDEF
+	// XX_HAS_TYPEDEF
 	/***********************************************************************************/
 
 	template<typename T>
@@ -320,7 +320,7 @@ template<typename T> struct HasTypedef_##typedefName<T, typename xx::Typedef_Voi
 
 
 	/***********************************************************************************/
-	/* XX_LIST_SWAP_REMOVE
+	// XX_LIST_SWAP_REMOVE
 	/***********************************************************************************/
 
 	// 交换删除 list 中的某元素( for T* or Ptr<T>, 避免在移出 list 时再次析构 )
@@ -620,42 +620,42 @@ do																	\
 	// time_point <--> DateTime.Ticks converts
 	/************************************************************************************/
 
-	int64_t TimeSinceEpochToDateTimeTicks(int64_t const& val)
+	inline int64_t TimeSinceEpochToDateTimeTicks(int64_t const& val)
 	{
 		return val + 621356256000000000LL;
 	}
 
-	int64_t TimePointToDateTimeTicks(std::chrono::system_clock::time_point const& val)
+	inline int64_t TimePointToDateTimeTicks(std::chrono::system_clock::time_point const& val)
 	{
 		return val.time_since_epoch().count() + 621356256000000000LL;
 	}
 
-	int64_t DateTimeTicksToTimeSinceEpoch(int64_t const& val)
+	inline int64_t DateTimeTicksToTimeSinceEpoch(int64_t const& val)
 	{
 		return val - 621356256000000000LL;
 	}
 
-	std::chrono::system_clock::time_point TimeSinceEpochToTimePoint(int64_t const& val)
+	inline std::chrono::system_clock::time_point TimeSinceEpochToTimePoint(int64_t const& val)
 	{
 		return std::chrono::system_clock::time_point::time_point(std::chrono::system_clock::time_point::duration(val));
 	}
 
-	std::chrono::system_clock::time_point DateTimeTicksToTimePoint(int64_t const& val)
+	inline std::chrono::system_clock::time_point DateTimeTicksToTimePoint(int64_t const& val)
 	{
 		return TimeSinceEpochToTimePoint(val - 621356256000000000LL);
 	}
 
-	std::chrono::system_clock::time_point GetNowTimePoint()
+	inline std::chrono::system_clock::time_point GetNowTimePoint()
 	{
 		return std::chrono::system_clock::now();
 	}
 
-	int64_t GetNowTimeSinceEpoch()
+	inline int64_t GetNowTimeSinceEpoch()
 	{
 		return GetNowTimePoint().time_since_epoch().count();
 	}
 
-	int64_t GetNowDateTimeTicks()
+	inline int64_t GetNowDateTimeTicks()
 	{
 		return GetNowTimeSinceEpoch() + 621356256000000000LL;
 	}

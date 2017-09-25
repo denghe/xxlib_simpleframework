@@ -401,7 +401,7 @@ namespace xx
 		template<typename ...TS>
 		static void Exec(String& str, TS const& ...vs)
 		{
-			std::initializer_list<int>{ (WriteTo<TS>(str, vs), 0)... };
+			(void)std::initializer_list<int>{ (WriteTo<TS>(str, vs), 0)... };
 		}
 	};
 
