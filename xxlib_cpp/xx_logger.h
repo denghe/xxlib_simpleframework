@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include "xx_sqlite.h"
 #include "xx_queue.h"
 #include <mutex>
@@ -6,9 +6,9 @@
 
 namespace xx
 {
-	// ¶ÔÓ¦ log ÈÕÖ¾±í
+	// å¯¹åº” log æ—¥å¿—è¡¨
 	struct Log;
-	// ÈÕÖ¾¼¶±ğ
+	// æ—¥å¿—çº§åˆ«
 	enum class LogLevel : int32_t
 	{
 		Off = 0,
@@ -20,26 +20,26 @@ namespace xx
 		All = 6,
 	};
 
-	// ¶ÔÓ¦ log ÈÕÖ¾±í
+	// å¯¹åº” log æ—¥å¿—è¡¨
 	struct Log : Object
 	{
-		// ×ÔÔöÖ÷¼ü
+		// è‡ªå¢ä¸»é”®
 		int64_t id = 0;
-		// ÈÕÖ¾¼¶±ğ
+		// æ—¥å¿—çº§åˆ«
 		LogLevel level = (LogLevel)0;
-		// ·¢ÉúÊ±¼ä
+		// å‘ç”Ÿæ—¶é—´
 		int64_t time = 0;
-		// »úÆ÷Ãû
+		// æœºå™¨å
 		String_p machine;
-		// ½ø³Ì/·şÎñÃû
+		// è¿›ç¨‹/æœåŠ¡å
 		String_p service;
-		// ½ø³Ì/ÊµÀıid
+		// è¿›ç¨‹/å®ä¾‹id
 		String_p instanceId;
-		// ±êÌâ
+		// æ ‡é¢˜
 		String_p title;
-		// ²Ù×÷´úÂë
+		// æ“ä½œä»£ç 
 		int64_t opcode = 0;
-		// ÈÕÖ¾Ã÷Ï¸
+		// æ—¥å¿—æ˜ç»†
 		String_p desc;
 
 		typedef Log ThisType;
@@ -101,7 +101,7 @@ namespace xx
 		LogFuncs(SQLite& db) : db(db) {}
 
 		SQLiteQuery_p query_CreateTable_log;
-		// ½¨ log ±í
+		// å»º log è¡¨
 		void CreateTable_log()
 		{
 			auto& q = query_CreateTable_log;
@@ -126,7 +126,7 @@ CREATE TABLE [log](
 
 
 		SQLiteQuery_p query_InsertLog;
-		// ²åÈëÒ»Ìõ log. time ´«Èë DateTime.Now.Ticks
+		// æ’å…¥ä¸€æ¡ log. time ä¼ å…¥ DateTime.Now.Ticks
 		void InsertLog
 		(
 			LogLevel const& level,
@@ -154,7 +154,7 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
 
 
 		//xx::SQLiteQuery_p query_InsertLog;
-		// ²åÈëÒ»Ìõ log. time ´«Èë DateTime.Now.Ticks
+		// æ’å…¥ä¸€æ¡ log. time ä¼ å…¥ DateTime.Now.Ticks
 		void InsertLog
 		(
 			LogLevel const& level,
@@ -195,19 +195,19 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
 		String_v service;
 		String_v instanceId;
 
-		// ÎªÃ¿¸ö queue ´´½¨Ò»¸ö mp¡¡×¨ÓÃ£®ÕâÑùÖ»ĞèÒªÔÚÇĞ»»Ê± lock
+		// ä¸ºæ¯ä¸ª queue åˆ›å»ºä¸€ä¸ª mpã€€ä¸“ç”¨ï¼è¿™æ ·åªéœ€è¦åœ¨åˆ‡æ¢æ—¶ lock
 		MemPool mp1;
-		Queue_v<Log_p> logMsgs1;		// ÇĞ»»Ê¹ÓÃ
+		Queue_v<Log_p> logMsgs1;		// åˆ‡æ¢ä½¿ç”¨
 
 		MemPool mp2;
-		Queue_v<Log_p> logMsgs2;		// ÇĞ»»Ê¹ÓÃ
+		Queue_v<Log_p> logMsgs2;		// åˆ‡æ¢ä½¿ç”¨
 
-		Queue<Log_p>* logMsgs;			// Ö¸Ïòµ±Ç°ÕıÔÚÊ¹ÓÃµÄ logMsgs
+		Queue<Log_p>* logMsgs;			// æŒ‡å‘å½“å‰æ­£åœ¨ä½¿ç”¨çš„ logMsgs
 		std::mutex mtx;
 
-		int64_t writeLimit = 1000000;	// µ±Ç°¶ÓÁĞĞ´ÈëÉî¶ÈÈç¹û³¬¹ıÕâ¸öÖµ¾Í²»ÔÙĞ´Èë
-		int64_t counter = 0;			// ×ÜĞ´ÈëÁ¿µÄÍ³¼ÆÖµ
-		bool disposing = false;			// Í¨ÖªºóÌ¨Ïß³ÌÍË³öµÄ±êÖ¾Î»
+		int64_t writeLimit = 1000000;	// å½“å‰é˜Ÿåˆ—å†™å…¥æ·±åº¦å¦‚æœè¶…è¿‡è¿™ä¸ªå€¼å°±ä¸å†å†™å…¥
+		int64_t counter = 0;			// æ€»å†™å…¥é‡çš„ç»Ÿè®¡å€¼
+		bool disposing = false;			// é€šçŸ¥åå°çº¿ç¨‹é€€å‡ºçš„æ ‡å¿—ä½
 
 		Logger(char const* const& fn)
 			: db(mp, fn)
@@ -226,7 +226,7 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
 
 				while (!disposing)
 				{
-					// ÇĞ»»Ç°ºóÌ¨¶ÓÁĞ( Èç¹ûÓĞÊı¾İ. Ã»ÓĞ¾Í sleep Ò»ÏÂ¼ÌĞøÉ¨ )
+					// åˆ‡æ¢å‰åå°é˜Ÿåˆ—( å¦‚æœæœ‰æ•°æ®. æ²¡æœ‰å°± sleep ä¸€ä¸‹ç»§ç»­æ‰« )
 					{
 						std::lock_guard<std::mutex> lg(mtx);
 
@@ -244,7 +244,7 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
 						}
 					}
 
-					// ¿ªÊ¼ÅúÁ¿²åÈë( ÕâÆÚ¼äÇ°Ì¨¿ÉÒÔ¼ÌĞø²Ù×÷ )
+					// å¼€å§‹æ‰¹é‡æ’å…¥( è¿™æœŸé—´å‰å°å¯ä»¥ç»§ç»­æ“ä½œ )
 					try
 					{
 						db->BeginTransaction();
@@ -268,7 +268,7 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
 					}
 					catch (...)
 					{
-						// ËÆºõÖ»ÄÜºöÂÔ´íÎó
+						// ä¼¼ä¹åªèƒ½å¿½ç•¥é”™è¯¯
 						std::cout << "logdb insert error! errNO = " << db->lastErrorCode << " errMsg = " << db->lastErrorMessage << std::endl;
 					}
 				LabEnd:
@@ -300,7 +300,7 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
 			auto& mp = logMsgs->mempool();
 			auto o = mp.CreatePtr<Log>();
 
-			o->id = 2;             // ÓÃÀ´±ê¼ÇÊÇÍ¨¹ı WaitAll Ğ´ÈëµÄ
+			o->id = 2;             // ç”¨æ¥æ ‡è®°æ˜¯é€šè¿‡ WaitAll å†™å…¥çš„
 			o->level = level;
 			o->time = time;
 			o->machine.Create(mp, machine);
@@ -323,7 +323,7 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
 			auto& mp = logMsgs->mempool();
 			auto o = mp.CreatePtr<Log>();
 
-			o->id = 1;             // ÓÃÀ´±ê¼ÇÊÇÍ¨¹ı Write Ğ´ÈëµÄ
+			o->id = 1;             // ç”¨æ¥æ ‡è®°æ˜¯é€šè¿‡ Write å†™å…¥çš„
 			o->level = level;
 
 			o->time = GetNowDateTimeTicks();
@@ -348,7 +348,7 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
 			auto& mp = logMsgs->mempool();
 			auto o = mp.CreatePtr<Log>();
 
-			o->id = 0;				// ÓÃÀ´±ê¼ÇÊÇÍ¨¹ı SetDefaultValue Ğ´ÈëµÄ
+			o->id = 0;				// ç”¨æ¥æ ‡è®°æ˜¯é€šè¿‡ SetDefaultValue å†™å…¥çš„
 			o->machine.Create(mp, machine);
 			o->service.Create(mp, service);
 			o->instanceId.Create(mp, instanceId);

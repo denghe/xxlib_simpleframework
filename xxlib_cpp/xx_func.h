@@ -1,9 +1,9 @@
-#pragma once
+ï»¿#pragma once
 #include <type_traits>
 
 namespace xx
 {
-	// ³­×Ô zeno µÄ´úÂë ÖØ¹¹³É×Ô¼ºµÄ·ç¸ñ
+	// æŠ„è‡ª zeno çš„ä»£ç  é‡æ„æˆè‡ªå·±çš„é£æ ¼
 
 	template <typename Signature, size_t StorageSize = 64>
 	struct Func;
