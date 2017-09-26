@@ -637,7 +637,7 @@ do																	\
 
 	inline std::chrono::system_clock::time_point TimeSinceEpochToTimePoint(int64_t const& val)
 	{
-		return std::chrono::system_clock::time_point::time_point(std::chrono::system_clock::time_point::duration(val));
+		return std::chrono::system_clock::time_point(std::chrono::system_clock::time_point::duration(val));
 	}
 
 	inline std::chrono::system_clock::time_point DateTimeTicksToTimePoint(int64_t const& val)

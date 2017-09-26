@@ -2,7 +2,7 @@
 #include "xx_mpobject.h"
 #include "xx_ptr.h"
 #include <array>
-#include <string.h>	// for linux memcpy
+#include <stdlib.h>	// for linux memcpy
 
 namespace xx
 {
