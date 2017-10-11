@@ -10,29 +10,29 @@ namespace xx
     public static class LogInterop
     {
         [DllImport("xxloglib", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr xxlog2New(IntPtr fn);
+        internal static extern IntPtr xxlogNew(IntPtr fn);
 
 
         [DllImport("xxloglib", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void xxlog2WriteAll(IntPtr ctx, int level, long time
+        internal static extern void xxlogWriteAll(IntPtr ctx, int level, long time
             , IntPtr machine, IntPtr service, IntPtr instanceId
             , IntPtr title, long opcode, IntPtr desc);
 
 
         [DllImport("xxloglib", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void xxlog2Write(IntPtr ctx, int level, IntPtr title, long opcode, IntPtr desc);
+        internal static extern void xxlogWrite(IntPtr ctx, int level, IntPtr title, long opcode, IntPtr desc);
 
 
         [DllImport("xxloglib", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void xxlog2SetDefaultValue(IntPtr ctx, IntPtr machine, IntPtr service, IntPtr instanceId);
+        internal static extern void xxlogSetDefaultValue(IntPtr ctx, IntPtr machine, IntPtr service, IntPtr instanceId);
 
 
         [DllImport("xxloglib", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern long xxlog2GetCounter(IntPtr ctx);
+        internal static extern long xxlogGetCounter(IntPtr ctx);
 
 
         [DllImport("xxloglib", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void xxlog2Delete(IntPtr ctx);
+        internal static extern void xxlogDelete(IntPtr ctx);
     }
 
     /// <summary>
@@ -56,7 +56,7 @@ namespace xx
         /// <summary>
         /// 取已写入数据条数
         /// </summary>
-        public long counter { get { return LogInterop.xxlog2GetCounter(ctx); } }
+        public long counter { get { return LogInterop.xxlogGetCounter(ctx); } }
 
         /// <summary>
         /// 根据文件名 创建日志 db 文件. 成功返回 Logger 的指针 ctx. 失败返回 空
@@ -69,7 +69,7 @@ namespace xx
             }
 
             var h = GCHandle.Alloc(Encoding.UTF8.GetBytes(fn), GCHandleType.Pinned);
-            ctx = LogInterop.xxlog2New(h.AddrOfPinnedObject());
+            ctx = LogInterop.xxlogNew(h.AddrOfPinnedObject());
             h.Free();
 
             if (ctx == IntPtr.Zero)
@@ -92,7 +92,7 @@ namespace xx
             var hDesc = GCHandle.Alloc(Encoding.UTF8.GetBytes(desc), GCHandleType.Pinned);
             try
             {
-                LogInterop.xxlog2WriteAll(ctx, (int)level, time, hMachine.AddrOfPinnedObject(), hService.AddrOfPinnedObject()
+                LogInterop.xxlogWriteAll(ctx, (int)level, time, hMachine.AddrOfPinnedObject(), hService.AddrOfPinnedObject()
                     , hInstanceId.AddrOfPinnedObject(), hTitle.AddrOfPinnedObject(), opcode, hDesc.AddrOfPinnedObject());
             }
             finally
@@ -116,7 +116,7 @@ namespace xx
             var hService = GCHandle.Alloc(Encoding.UTF8.GetBytes(desc), GCHandleType.Pinned);
             try
             {
-                LogInterop.xxlog2Write(ctx, (int)level, hMachine.AddrOfPinnedObject()
+                LogInterop.xxlogWrite(ctx, (int)level, hMachine.AddrOfPinnedObject()
                     , opcode, hService.AddrOfPinnedObject());
             }
             finally
@@ -138,7 +138,7 @@ namespace xx
             var hInstanceId = GCHandle.Alloc(Encoding.UTF8.GetBytes(instanceId), GCHandleType.Pinned);
             try
             {
-                LogInterop.xxlog2SetDefaultValue(ctx, hMachine.AddrOfPinnedObject()
+                LogInterop.xxlogSetDefaultValue(ctx, hMachine.AddrOfPinnedObject()
                     , hService.AddrOfPinnedObject(), hInstanceId.AddrOfPinnedObject());
             }
             finally
@@ -170,7 +170,7 @@ namespace xx
                 }
                 // Free your own state (unmanaged objects).
                 // Set large fields to null.
-                LogInterop.xxlog2Delete(ctx);
+                LogInterop.xxlogDelete(ctx);
                 disposed = true;
             }
             // Call Dispose in the base class.
