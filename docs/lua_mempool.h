@@ -51,8 +51,8 @@ struct Lua_MemPool
 		auto idx = Calc2n(siz);
 		if (siz > (size_t(1) << idx)) siz = size_t(1) << ++idx;
 
-		auto& p = headers[idx];
-		if (p) p = *(void**)p;
+		auto p = headers[idx];
+		if (p) headers[idx] = *(void**)p;
 		else p = malloc(siz);
 
 		*(size_t*)p = idx;
@@ -62,10 +62,10 @@ struct Lua_MemPool
 	inline void Free(void* p)
 	{
 		if (!p) return;
-		p = *((void**)p - 1);
-		auto& h = headers[*(size_t*)p];
-		*(void**)p = h;
-		h = p;
+		p = (void**)p - 1;
+		auto idx = *(size_t*)p;
+		*(void**)p = headers[idx];
+		headers[idx] = p;
 	}
 
 	inline void* Realloc(void *p, size_t newSize, size_t dataLen = -1)
