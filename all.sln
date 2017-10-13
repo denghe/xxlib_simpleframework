@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26730.8
+VisualStudioVersion = 15.0.27004.2002
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "test_csharp1", "test_csharp1\test_csharp1.csproj", "{40783734-2418-451C-8B7E-472A33C6D91B}"
 EndProject
@@ -30,7 +30,6 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{03B66A93-339F-4940-B72F-B7D58B2FC3E5}"
 	ProjectSection(SolutionItems) = preProject
 		docs\fixed_function.hpp = docs\fixed_function.hpp
-		docs\lua_mempool.h = docs\lua_mempool.h
 		README.md = README.md
 		docs\test1.db = docs\test1.db
 		docs\UnityClientPeer.cs = docs\UnityClientPeer.cs
@@ -55,6 +54,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "manage", "manage\manage.csproj", "{2A4C90EB-E2BB-4D95-834C-CF5E4DDF901A}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test_cpp5", "test_cpp5\test_cpp5.vcxproj", "{9947D8D7-2CAB-4637-8F4B-4E2E3DCB7FAB}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test_cpp6_lua", "test_cpp6_lua\test_cpp6_lua.vcxproj", "{6ED55611-B66E-4B3E-B03A-DEC9AF0177A2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -150,6 +151,10 @@ Global
 		{9947D8D7-2CAB-4637-8F4B-4E2E3DCB7FAB}.Debug|x64.Build.0 = Debug|x64
 		{9947D8D7-2CAB-4637-8F4B-4E2E3DCB7FAB}.Release|x64.ActiveCfg = Release|x64
 		{9947D8D7-2CAB-4637-8F4B-4E2E3DCB7FAB}.Release|x64.Build.0 = Release|x64
+		{6ED55611-B66E-4B3E-B03A-DEC9AF0177A2}.Debug|x64.ActiveCfg = Debug|x64
+		{6ED55611-B66E-4B3E-B03A-DEC9AF0177A2}.Debug|x64.Build.0 = Debug|x64
+		{6ED55611-B66E-4B3E-B03A-DEC9AF0177A2}.Release|x64.ActiveCfg = Release|x64
+		{6ED55611-B66E-4B3E-B03A-DEC9AF0177A2}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
