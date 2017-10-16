@@ -7,7 +7,13 @@
 #include "xx_mempool.h"
 #include "xx_dict.h"
 #include "xx_bbuffer.h"
-#include "lua.hpp"
+extern "C"
+{
+#include "../lua/lua.h"
+#include "../lua/lauxlib.h"
+#include "../lua/lualib.h"
+}
+
 
 #include <iostream>
 

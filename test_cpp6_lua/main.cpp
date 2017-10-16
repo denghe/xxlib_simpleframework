@@ -1,6 +1,7 @@
 ﻿#pragma execution_character_set("utf-8")	// 为方便测试, 不加 L的"字串" 中文内容直接就是 utf8 编码
 
 #include "luaex.h"
+#include "lua_xx_bbuffer.h"
 #include "std_cout_helper.h"
 
 static int test中文变量(lua_State *L)

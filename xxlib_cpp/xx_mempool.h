@@ -100,6 +100,7 @@ namespace xx
 
 			void* p;
 			if (!ptrstacks[idx].TryPop(p)) p = malloc(siz);
+			if (!p) return nullptr;
 
 			auto h = (MemHeader_VersionNumber*)p;								// 指到内存头
 			h->versionNumber = ++versionNumber;
