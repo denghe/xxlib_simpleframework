@@ -1,58 +1,35 @@
-﻿#pragma execution_character_set("utf-8")	// 为方便测试, 不加 L的"字串" 中文内容直接就是 utf8 编码
+﻿#pragma execution_character_set("utf-8")
 
 #include "luaex.h"
 #include "lua_xx_bbuffer.h"
 #include "std_cout_helper.h"
 
-static int test中文变量(lua_State *L)
+static int InitLua(lua_State *L)
 {
 	luaL_openlibs(L);
-
-	auto rtv = luaL_loadstring(L, R"-==-(
-local 测试一下中文变量 = 123
-print( 测试一下中文变量 )
-	)-==-");
-
-	if (rtv != LUA_OK) return lua_error(L);
-
-	lua_call(L, 0, 0);
+	xx::Lua_BBuffer::Init(L);
 	return 0;
 }
 
-struct Foo
+static int TestBBuffer(lua_State *L)
 {
-	Foo()
-	{
-		CoutLine("Foo();");
-	}
-	~Foo()
-	{
-		CoutLine("~Foo();");
-	}
-};
-
-static int test异常RAII(lua_State *L)
-{
-	Foo foo;					// 测试是否会被析构
-	CoutLine("begin test");
-	for (int i = 0; i < 5; ++i)
-	{
-		CoutLine("i = ", i, " begin");
-		lua_newuserdata(L, 0x0FFFFFFF);	// 32bit 下执行只分配得到 2 次, 第 3 次将会内存不足
-		CoutLine("i = ", i, " end");
-	}
-	CoutLine("end test");
+	auto rtv = luaL_loadstring(L, R"-==-(
+local bb = BBuffer.Create()
+--bb:WriteUInt8( 123 )
+--bb:WriteUInt16( 1234 )
+	)-==-");
+	if (rtv != LUA_OK) return lua_error(L);
+	lua_call(L, 0, 0);
 	return 0;
 }
 
 int main()
 {
-	Lua_MemPool lmp;
+	xx::MemPool mp;
 	auto L = lua_newstate([](void *ud, void *ptr, size_t osize, size_t nsize)
 	{
-		return ((Lua_MemPool*)ud)->Realloc(ptr, nsize, osize);
-	}, &lmp);
-
+		return ((xx::MemPool*)ud)->Realloc(ptr, nsize, osize);
+	}, &mp);
 	if (!L)
 	{
 		CoutLine("create lua state failed. not enough memory");
@@ -61,25 +38,55 @@ int main()
 
 	//CoutLine("top = ", lua_gettop(L));
 	int rtv = 0;
-
-	lua_pushcfunction(L, &test异常RAII);
-	rtv = lua_pcall(L, 0, 0, 0);
-	CoutLine("pcall rtv = ", rtv);
-	if (rtv != LUA_OK)
+	auto exec = [&](auto&& fn)
 	{
-		CoutLine("errmsg = ", lua_tostring(L, -1));
-		lua_pop(L, 1);
-	}
+		lua_pushcfunction(L, fn);
+		rtv = lua_pcall(L, 0, 0, 0);
+		if (rtv != LUA_OK)
+		{
+			CoutLine("pcall rtv = ", rtv, " errmsg = ", lua_tostring(L, -1));
+			lua_pop(L, 1);
+		}
+	};
 
-	lua_pushcfunction(L, &test中文变量);
-	rtv = lua_pcall(L, 0, 0, 0);
-	CoutLine("pcall rtv = ", rtv);
-	if (rtv != LUA_OK)
+	exec(InitLua);
+	xx::Stopwatch sw;
+	for (int i = 0; i < 999999; ++i)
 	{
-		CoutLine("errmsg = ", lua_tostring(L, -1));
-		lua_pop(L, 1);
+		exec(TestBBuffer);
 	}
+	CoutLine(sw());
+	sw.Reset();
+	uint64_t xx = 0;		// 防优化
+	for (int i = 0; i < 999999; ++i)
+	{
+		auto bb = mp.CreatePtr<xx::BBuffer>();
+		bb->Write((uint8_t)123);
+		bb->Write((uint16_t)1234);
+		xx += bb->dataLen;
+	}
+	CoutLine(sw(), "        ", xx);
 
 	lua_close(L);
 	return 0;
 }
+
+
+//
+//auto rtv = luaL_loadstring(L, R"-==-(
+//
+//--print( "lua exec..." )
+//
+//local bb = BBuffer.Create()
+//--print( bb:GetDataLen() )
+//
+//--bb:WriteUInt8( 123 )
+//--print( bb:GetDataLen() )
+//
+//--bb:WriteUInt16( 1234 )
+//--print( bb:GetDataLen() )
+//
+//-- read_xx
+//-- .... length, offset
+//
+//	)-==-");
