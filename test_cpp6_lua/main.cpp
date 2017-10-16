@@ -13,13 +13,23 @@ static int InitLua(lua_State *L)
 
 static int TestBBuffer(lua_State *L)
 {
+	xx::Stopwatch sw;
 	auto rtv = luaL_loadstring(L, R"-==-(
+
 local bb = BBuffer.Create()
---bb:WriteUInt8( 123 )
---bb:WriteUInt16( 1234 )
+--bb:WriteString( "asdf" )
+bb:WriteUInt8( 0 )
+bb:WriteUInt8( 12 )
+print( bb:Dump() )
+print( bb:ReadString() )
+--print( bb:ReadString() )
+print( bb:ReadUInt8() )
+
 	)-==-");
 	if (rtv != LUA_OK) return lua_error(L);
-	lua_call(L, 0, 0);
+	{
+		lua_call(L, 0, 0);
+	}
 	return 0;
 }
 
@@ -50,22 +60,7 @@ int main()
 	};
 
 	exec(InitLua);
-	xx::Stopwatch sw;
-	for (int i = 0; i < 999999; ++i)
-	{
-		exec(TestBBuffer);
-	}
-	CoutLine(sw());
-	sw.Reset();
-	uint64_t xx = 0;		// 防优化
-	for (int i = 0; i < 999999; ++i)
-	{
-		auto bb = mp.CreatePtr<xx::BBuffer>();
-		bb->Write((uint8_t)123);
-		bb->Write((uint16_t)1234);
-		xx += bb->dataLen;
-	}
-	CoutLine(sw(), "        ", xx);
+	exec(TestBBuffer);
 
 	lua_close(L);
 	return 0;
@@ -90,3 +85,23 @@ int main()
 //-- .... length, offset
 //
 //	)-==-");
+
+/*
+
+auto rtv = luaL_loadstring(L, R"-==-(
+local xx = 0
+for i = 0, 100000, 1 do
+	local bb = BBuffer.Create()
+	local w32 = bb.WriteUInt32
+	local w16 = bb.WriteUInt16
+	for j = 0, 1000, 1 do
+		w32( bb, i )
+		w16( bb, j )
+	end
+	xx = xx + bb:GetDataLen()
+end
+print ( "xx = " .. xx )
+	)-==-");
+
+
+*/

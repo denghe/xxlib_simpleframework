@@ -29,8 +29,25 @@ namespace xx
 				{ "WriteDouble", WriteDouble },
 				{ "WriteString", WriteString },
 
+				// todo: bool
+
+				{ "ReadInt8", ReadInt8 },
+				{ "ReadInt16", ReadInt16 },
+				{ "ReadInt32", ReadInt32 },
+				{ "ReadInt64", ReadInt64 },
+				{ "ReadUInt8", ReadUInt8 },
+				{ "ReadUInt16", ReadUInt16 },
+				{ "ReadUInt32", ReadUInt32 },
+				{ "ReadUInt64", ReadUInt64 },
+				{ "ReadFloat", ReadFloat },
+				{ "ReadDouble", ReadDouble },
+				{ "ReadString", ReadString },
+
+				// todo: bool
+
 				{ "GetDataLen", GetDataLen },
 				{ "GetOffset", GetOffset },
+				{ "Dump", Dump },
 
 				// todo: more
 
@@ -105,48 +122,16 @@ namespace xx
 			return 0;
 		}
 
-		inline static int WriteInt8(lua_State* L)
-		{
-			return WriteNum<int8_t>(L);
-		}
-		inline static int WriteInt16(lua_State* L)
-		{
-			return WriteNum<int16_t>(L);
-		}
-		inline static int WriteInt32(lua_State* L)
-		{
-			return WriteNum<int32_t>(L);
-		}
-		inline static int WriteInt64(lua_State* L)
-		{
-			return WriteNum<int64_t>(L);
-		}
-
-		inline static int WriteUInt8(lua_State* L)
-		{
-			return WriteNum<uint8_t>(L);
-		}
-		inline static int WriteUInt16(lua_State* L)
-		{
-			return WriteNum<uint16_t>(L);
-		}
-		inline static int WriteUInt32(lua_State* L)
-		{
-			return WriteNum<uint32_t>(L);
-		}
-		inline static int WriteUInt64(lua_State* L)
-		{
-			return WriteNum<uint64_t>(L);
-		}
-
-		inline static int WriteFloat(lua_State* L)
-		{
-			return WriteNum<float>(L);
-		}
-		inline static int WriteDouble(lua_State* L)
-		{
-			return WriteNum<double>(L);
-		}
+		inline static int WriteInt8(lua_State* L) { return WriteNum<int8_t>(L); }
+		inline static int WriteInt16(lua_State* L) { return WriteNum<int16_t>(L); }
+		inline static int WriteInt32(lua_State* L) { return WriteNum<int32_t>(L); }
+		inline static int WriteInt64(lua_State* L) { return WriteNum<int64_t>(L); }
+		inline static int WriteUInt8(lua_State* L) { return WriteNum<uint8_t>(L); }
+		inline static int WriteUInt16(lua_State* L) { return WriteNum<uint16_t>(L); }
+		inline static int WriteUInt32(lua_State* L) { return WriteNum<uint32_t>(L); }
+		inline static int WriteUInt64(lua_State* L) { return WriteNum<uint64_t>(L); }
+		inline static int WriteFloat(lua_State* L) { return WriteNum<float>(L); }
+		inline static int WriteDouble(lua_State* L) { return WriteNum<double>(L); }
 
 		inline static int GetDataLen(lua_State* L)
 		{
@@ -185,6 +170,72 @@ namespace xx
 				self->dataLen += (uint32_t)dataLen;
 			}
 			return 0;
+		}
+
+		inline static int Dump(lua_State* L)
+		{
+			auto& self = GetSelf(L, 1);
+			xx::String_v s(self->mempool());
+			self->ToString(s.instance);
+			lua_pushlstring(L, s->C_str(), s->dataLen);
+			return 1;
+		}
+
+
+		template<typename T>
+		inline static int ReadNum(lua_State* L)
+		{
+			static_assert(std::is_arithmetic_v<T>);
+			auto& self = GetSelf(L, 1);
+			T v;
+			if (self->Read(v))
+			{
+				luaL_error(L, "read num error!");
+			}
+			if constexpr(std::is_integral_v<T>)
+			{
+				lua_pushinteger(L, (lua_Integer)v);
+			}
+			else
+			{
+				lua_pushnumber(L, (lua_Number)v);
+			}
+			return 1;
+		}
+
+		inline static int ReadInt8(lua_State* L) { return ReadNum<int8_t>(L); }
+		inline static int ReadInt16(lua_State* L) { return  ReadNum<int16_t>(L); }
+		inline static int ReadInt32(lua_State* L) { return  ReadNum<int32_t>(L); }
+		inline static int ReadInt64(lua_State* L) { return  ReadNum<int64_t>(L); }
+		inline static int ReadUInt8(lua_State* L) { return  ReadNum<uint8_t>(L); }
+		inline static int ReadUInt16(lua_State* L) { return ReadNum<uint16_t>(L); }
+		inline static int ReadUInt32(lua_State* L) { return ReadNum<uint32_t>(L); }
+		inline static int ReadUInt64(lua_State* L) { return ReadNum<uint64_t>(L); }
+		inline static int ReadFloat(lua_State* L) { return  ReadNum<float>(L); }
+		inline static int ReadDouble(lua_State* L) { return ReadNum<double>(L); }
+
+		inline static int ReadString(lua_State* L)
+		{
+			auto& self = GetSelf(L, 1);
+			uint8_t typeId;
+			if (self->Read(typeId))
+			{
+				luaL_error(L, "read string typeId error!");
+			}
+			if (typeId)
+			{
+				xx::String_v s(self->mempool());
+				if (self->Read(s))
+				{
+					luaL_error(L, "read string content error!");
+				}
+				lua_pushlstring(L, s->C_str(), s->dataLen);
+			}
+			else
+			{
+				lua_pushnil(L);
+			}
+			return 1;
 		}
 	};
 };
