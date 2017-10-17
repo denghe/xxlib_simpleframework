@@ -435,7 +435,7 @@ namespace xx
 		// 先简单来点
 		virtual void ToString(String &str) const override
 		{
-			str.Append("{ \"len\" : ", dataLen, ", \"data\" : [ ");
+			str.Append("{ \"len\" : ", dataLen, ", \"offset\" : ", offset, ", \"data\" : [ ");
 			for (size_t i = 0; i < dataLen; i++)
 			{
 				str.Append((int)(uint8_t)buf[i], ", ");

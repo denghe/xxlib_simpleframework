@@ -14,22 +14,22 @@ static int InitLua(lua_State *L)
 static int TestBBuffer(lua_State *L)
 {
 	xx::Stopwatch sw;
-	auto rtv = luaL_loadstring(L, R"-==-(
 
-local bb = BBuffer.Create()
---bb:WriteString( "asdf" )
-bb:WriteUInt8( 0 )
-bb:WriteUInt8( 12 )
-print( bb:Dump() )
-print( bb:ReadString() )
---print( bb:ReadString() )
-print( bb:ReadUInt8() )
-
-	)-==-");
-	if (rtv != LUA_OK) return lua_error(L);
-	{
-		lua_call(L, 0, 0);
-	}
+	if (luaL_loadfile(L, "test.lua")) return lua_error(L);
+//	auto rtv = luaL_loadstring(L, R"-==-(
+//
+//local bb = BBuffer.Create()
+//local bb2 = BBuffer.Create()
+//bb2:WriteUInt8( 255 )
+//bb:WriteBBuffer( bb2 )
+//print( bb:Dump() )
+//local bb3 = bb:ReadBBuffer()
+//print( bb:Dump() )
+//print( bb3:Dump() )
+//
+//	)-==-");
+//	if (rtv != LUA_OK) return lua_error(L);
+	lua_call(L, 0, 0);
 	return 0;
 }
 

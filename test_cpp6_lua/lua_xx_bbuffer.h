@@ -17,6 +17,7 @@ namespace xx
 			{
 				{ "__gc", __gc },
 				{ "Create", Create },
+				{ "WriteBool", WriteBool },
 				{ "WriteInt8", WriteInt8 },
 				{ "WriteInt16", WriteInt16 },
 				{ "WriteInt32", WriteInt32 },
@@ -28,9 +29,12 @@ namespace xx
 				{ "WriteFloat", WriteFloat },
 				{ "WriteDouble", WriteDouble },
 				{ "WriteString", WriteString },
+				{ "WriteBBuffer", WriteBBuffer },
 
-				// todo: bool
+				// todo: class/struct
+				// todo: write package ?
 
+				{ "ReadBool", ReadBool },
 				{ "ReadInt8", ReadInt8 },
 				{ "ReadInt16", ReadInt16 },
 				{ "ReadInt32", ReadInt32 },
@@ -42,14 +46,19 @@ namespace xx
 				{ "ReadFloat", ReadFloat },
 				{ "ReadDouble", ReadDouble },
 				{ "ReadString", ReadString },
+				{ "ReadBBuffer", ReadBBuffer },
 
-				// todo: bool
+				// todo: class/struct
 
 				{ "GetDataLen", GetDataLen },
 				{ "GetOffset", GetOffset },
 				{ "Dump", Dump },
 
 				// todo: more
+				{ "WriteUInt8Zero", WriteUInt8Zero },
+				{ "WriteTypeId", WriteTypeId },
+				{ "ReadTypeId", ReadTypeId },
+
 
 				{ nullptr, nullptr }
 			};
@@ -99,6 +108,17 @@ namespace xx
 			return *selfptr;
 		}
 
+		inline static int WriteBool(lua_State* L)
+		{
+			auto& self = GetSelf(L, 2);
+			if (!lua_isboolean(L, 2))
+			{
+				luaL_error(L, "the arg's type must be a bool");
+			}
+			self->Write(lua_toboolean(L, 2) != 0);
+			return 0;
+		}
+
 		template<typename T>
 		inline static int WriteNum(lua_State* L)
 		{
@@ -146,7 +166,7 @@ namespace xx
 			return 1;
 		}
 
-		// 这里按写入 xx::String* 的编码规则来写. nil 写入 0, 非 nil 写入 typeId(1) + 长度 + 内容
+		// nil 写入 0, 非 nil 写入 typeId(1) + 长度 + 内容
 		inline static int WriteString(lua_State* L)
 		{
 			auto& self = GetSelf(L, 2);
@@ -172,6 +192,26 @@ namespace xx
 			return 0;
 		}
 
+		// nil 写入 0, 非 nil 写入 typeId(2) + 长度 + 内容
+		inline static int WriteBBuffer(lua_State* L)
+		{
+			auto& self = GetSelf(L, 2);
+			if (lua_isnil(L, 2))
+			{
+				self->Write((uint8_t)0);
+				return 0;
+			}
+			if (!lua_isuserdata(L, 2))	// 这里先这样简单检查. 暂不检查其是否具备特定元表
+			{
+				luaL_error(L, "the arg's type must be a BBuffer / nil");
+			}
+
+			auto& bb = *(Lua_BBuffer_v*)lua_touserdata(L, 2);
+			self->Write((uint8_t)2);
+			bb->ToBBuffer(*self);
+			return 0;
+		}
+
 		inline static int Dump(lua_State* L)
 		{
 			auto& self = GetSelf(L, 1);
@@ -181,6 +221,18 @@ namespace xx
 			return 1;
 		}
 
+
+		inline static int ReadBool(lua_State* L)
+		{
+			auto& self = GetSelf(L, 1);
+			bool v;
+			if (self->Read(v))
+			{
+				luaL_error(L, "read bool error!");
+			}
+			lua_pushboolean(L, v);
+			return 1;
+		}
 
 		template<typename T>
 		inline static int ReadNum(lua_State* L)
@@ -220,14 +272,18 @@ namespace xx
 			uint8_t typeId;
 			if (self->Read(typeId))
 			{
-				luaL_error(L, "read string typeId error!");
+				luaL_error(L, "read string typeId error");
 			}
 			if (typeId)
 			{
+				if (typeId != 1)
+				{
+					luaL_error(L, "read string typeId error: typeId != 1");
+				}
 				xx::String_v s(self->mempool());
 				if (self->Read(s))
 				{
-					luaL_error(L, "read string content error!");
+					luaL_error(L, "read string content error");
 				}
 				lua_pushlstring(L, s->C_str(), s->dataLen);
 			}
@@ -236,6 +292,52 @@ namespace xx
 				lua_pushnil(L);
 			}
 			return 1;
+		}
+
+		inline static int ReadBBuffer(lua_State* L)
+		{
+			auto& self = GetSelf(L, 1);
+			uint8_t typeId;
+			if (self->Read(typeId))
+			{
+				luaL_error(L, "read BBuffer typeId error");
+			}
+			if (typeId)
+			{
+				if (typeId != 2)
+				{
+					luaL_error(L, "read BBuffer typeId error: typeId != 2");
+				}
+				Create(L);											// self, bb
+				auto& bb = *(Lua_BBuffer_v*)lua_touserdata(L, 2);
+				if (bb->FromBBuffer(*self))
+				{
+					lua_pop(L, 1);									// self
+					luaL_error(L, "read string content error");
+				}
+			}
+			else
+			{
+				lua_pushnil(L);
+			}
+			return 1;
+		}
+
+
+		inline static int WriteUInt8Zero(lua_State* L)
+		{
+			auto& self = GetSelf(L, 2);
+			self->Write((uint8_t)0);
+			return 0;
+		}
+
+		inline static int WriteTypeId(lua_State* L)
+		{
+			return WriteUInt16(L);
+		}
+		inline static int ReadTypeId(lua_State* L)
+		{
+			return ReadUInt16(L);
 		}
 	};
 };

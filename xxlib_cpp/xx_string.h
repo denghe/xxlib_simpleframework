@@ -177,19 +177,11 @@ namespace xx
 		template<typename...TS>
 		void AppendFormat(char const* format, TS const&...vs)
 		{
-			struct flag
+			struct StringView				// 用来存放已经序列化过的参数位于输出 buf 中的下标及长度
 			{
-				uint32_t idx, len;
+				uint32_t idx = 0, len = 0;
 			};
-			flag flags[sizeof...(vs)];
-			memset(flags, 0, sizeof(flag) * sizeof...(vs));
-
-#ifdef _MSC_VER
-			__declspec(align(8)) char numBuf[32];
-#else
-			char numBuf[32] __attribute__((aligned(8)));
-#endif
-			uint32_t numBuf_dataLen = 0;
+			std::array<StringView, sizeof...(vs)> cache;	// 缓存已经序列化过的参数的序列化结果
 
 			uint32_t offset = 0, i = 0, n = 0;
 			while (auto c = format[offset])
@@ -203,40 +195,38 @@ namespace xx
 					}
 					else
 					{
+						i = 0;
 						while ((c = format[offset]))
 						{
 							if (c == '}')
 							{
-								numBuf[numBuf_dataLen] = '\0';				// for terminate that FromString is need it
-								FromString(i, numBuf);
-								numBuf_dataLen = 0;
-								if (i < 0 || i >= sizeof...(vs))
+								if (i >= sizeof...(vs))
 								{
 									assert(false);	//throw std::invalid_argument("argument out of range.");
 									break;
 								}
-								if (flags[i].len)
+								if (cache[i].len)		// 如果已经在 cache 中, memcpy 到当前位置
 								{
-									if (dataLen + flags[i].len > bufLen)
+									if (dataLen + cache[i].len > bufLen)
 									{
-										Reserve(dataLen + flags[i].len);
+										Reserve(dataLen + cache[i].len);
 									}
-									memcpy(buf + dataLen, buf + flags[i].idx, flags[i].len);
-									dataLen += flags[i].len;
+									memcpy(buf + dataLen, buf + cache[i].idx, cache[i].len);
+									dataLen += cache[i].len;
 								}
-								else
+								else					// 不在 cache 中, 没有输出过, 则输出
 								{
-									flags[i].idx = dataLen;
+									cache[i].idx = dataLen;
 									n = i;
 									AppendFormatCore(*this, n, vs...);
-									flags[i].len = dataLen - flags[i].idx;
+									cache[i].len = dataLen - cache[i].idx;
 								}
 
 								break;
 							}
 							else
 							{
-								numBuf[numBuf_dataLen++] = c;
+								i = i * 10 + (c - '0');
 							}
 							++offset;
 						}
