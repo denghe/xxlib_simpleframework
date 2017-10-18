@@ -33,10 +33,10 @@
     <DisplayString Condition="sizeof(size_t)==4">{(char*)this + 20}"</DisplayString>
   </Type>
   <Type Name="Udata">
-    <DisplayString>metatable: {*metatable}</DisplayString>
-  </Type>
-  <Type Name="Udata">
-    <DisplayString>userdata</DisplayString>
+    <DisplayString>{(void*)next}</DisplayString>
+    <Expand>
+      <Item Name="metatable" Condition="metatable!=0">*metatable</Item>
+    </Expand>
   </Type>
   <Type Name="CClosure">
     <DisplayString>{f}</DisplayString>
@@ -51,7 +51,7 @@
     <DisplayString>[{sizearray}]</DisplayString>
     <Expand>
       <Item Name="[array size]">sizearray</Item>
-      <Item Name="metatable" Condition="metatable!=0">metatable</Item>
+      <Item Name="metatable" Condition="metatable!=0">*metatable</Item>
       <IndexListItems>
         <Size>sizearray</Size>
         <ValueNode>array[$i]</ValueNode>
@@ -66,7 +66,7 @@
   <Type Name="Node">
     <DisplayString>{u} : {i_val}</DisplayString>
   </Type>
-  
+
   <Type Name="Node::NodeKey">
     <DisplayString Condition="(key_tt&amp;0xf)==0">nil</DisplayString>
     <DisplayString Condition="(key_tt&amp;0xf)==1">boolean</DisplayString>
@@ -80,5 +80,5 @@
     <DisplayString Condition="(key_tt&amp;0xf)==8">thread</DisplayString>
     <DisplayString>unknown</DisplayString>
   </Type>
-  
+
 </AutoVisualizer>

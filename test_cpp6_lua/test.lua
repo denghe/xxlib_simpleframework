@@ -185,5 +185,16 @@ print( rawget( eee, "msg" ), eee.msg )
 ]]
 
 local bb = BBuffer.Create()
-bb:SetOffsetRoot( nil, 123, 1.23, "asdf", { a=1, b=2, c=3 } )
 
+local bb2 = BBuffer.Create()
+bb2:WriteUInt8(1)
+bb2:WriteUInt8(2)
+bb2:WriteUInt8(3)
+
+bb:BeginWrite()
+bb:WriteOffsetObject( bb2 )
+bb:WriteOffsetObject( bb2 )
+bb:WriteOffsetObject( bb2 )
+bb:EndWrite()
+
+print( bb:Dump() )

@@ -59,8 +59,11 @@ namespace xx
 				{ "WriteTypeId", WriteTypeId },
 				{ "ReadTypeId", ReadTypeId },
 
-				{ "GetOffsetRoot", GetOffsetRoot },
-				{ "InitOffsetRoot", InitOffsetRoot },
+				{ "BeginWrite", BeginWrite },
+				{ "EndWrite", EndWrite },
+				{ "WriteOffsetObject", WriteOffsetObject },
+				
+
 				// todo: 字典操作函数
 
 				{ nullptr, nullptr }
@@ -80,42 +83,23 @@ namespace xx
 			return mp;
 		}
 
+
 		inline static int __gc(lua_State* L)
 		{
-			auto& bb = *(Lua_BBuffer_v*)lua_touserdata(L, -1);
-			bb.~Lua_BBuffer_v();
-
-			// clear table for ptrStore
-			lua_pushlightuserdata(L, &bb);				// &ud
-			lua_pushnil(L);								// &ud, nil
-			lua_rawset(L, LUA_REGISTRYINDEX);			//
-
-			// clear table for idxStore
-			lua_pushlightuserdata(L, (char*)&bb + 1);	// &ud
-			lua_pushnil(L);								// &ud, nil
-			lua_rawset(L, LUA_REGISTRYINDEX);			//
-
+			auto& self = *(Lua_BBuffer_v*)lua_touserdata(L, -1);
+			self->ReleasePtrDict(L);
+			self->ReleaseIdxDict(L);
+			self.~Lua_BBuffer_v();
 			return 0;
 		}
 
 		inline static int Create(lua_State* L)
 		{
-			auto& bb = *(Lua_BBuffer_v*)lua_newuserdata(L, sizeof(Lua_BBuffer_v));
+			auto& self = *(Lua_BBuffer_v*)lua_newuserdata(L, sizeof(Lua_BBuffer_v));
 			auto mp = GetMP(L);							// ud
-			new (&bb) Lua_BBuffer_v(*mp);
+			new (&self) Lua_BBuffer_v(*mp);
 			lua_getglobal(L, name);						// ud, mt
 			lua_setmetatable(L, -2);					// ud
-
-			// table for ptrStore
-			lua_pushlightuserdata(L, &bb);				// ud, &ud
-			lua_createtable(L, 0, 64);					// ud, &ud, t
-			lua_rawset(L, LUA_REGISTRYINDEX);			// ud
-
-			// table for idxStore
-			lua_pushlightuserdata(L, (char*)&bb + 1);	// ud, &ud
-			lua_createtable(L, 0, 64);					// ud, &ud, t
-			lua_rawset(L, LUA_REGISTRYINDEX);			// ud
-
 			return 1;
 		}
 
@@ -370,23 +354,65 @@ namespace xx
 
 
 
-
-		inline static int GetOffsetRoot(lua_State* L)
+		inline void CreatePtrDict(lua_State* L)
 		{
-			auto& self = GetSelf(L, 1);
-			lua_pushinteger(L, self->offsetRoot);
-			return 1;
+			lua_pushlightuserdata(L, this);				// ud, &ud
+			lua_createtable(L, 0, 64);					// ud, &ud, t
+			lua_rawset(L, LUA_REGISTRYINDEX);			// ud
+		}
+		inline void CreateIdxDict(lua_State* L)
+		{
+			lua_pushlightuserdata(L, (char*)this + 1);	// ud, &ud
+			lua_createtable(L, 0, 64);					// ud, &ud, t
+			lua_rawset(L, LUA_REGISTRYINDEX);			// ud
+		}
+		inline void ReleasePtrDict(lua_State* L)
+		{
+			lua_pushlightuserdata(L, this);				// &ud
+			lua_pushnil(L);								// &ud, nil
+			lua_rawset(L, LUA_REGISTRYINDEX);			//
+		}
+		inline void ReleaseIdxDict(lua_State* L)
+		{
+			lua_pushlightuserdata(L, (char*)this + 1);	// &ud
+			lua_pushnil(L);								// &ud, nil
+			lua_rawset(L, LUA_REGISTRYINDEX);			//
+		}
+		inline void PushPtrDict(lua_State* L)
+		{
+			lua_pushlightuserdata(L, this);				// ... key
+			lua_rawget(L, LUA_REGISTRYINDEX);			// ... table
+		}
+		inline void PushIdxDict(lua_State* L)
+		{
+			lua_pushlightuserdata(L, (char*)this + 1);	// ... key
+			lua_rawget(L, LUA_REGISTRYINDEX);			// ... table
 		}
 
-		inline static int InitOffsetRoot(lua_State* L)
+		//inline static int GetOffsetRoot(lua_State* L)
+		//{
+		//	auto& self = GetSelf(L, 1);
+		//	lua_pushinteger(L, self->offsetRoot);
+		//	return 1;
+		//}
+
+		inline static int BeginWrite(lua_State* L)
 		{
 			auto& self = GetSelf(L, 1); 
 			self->offsetRoot = self->offset;
+			self->CreatePtrDict(L);
+			return 0;
+		}
+
+		inline static int EndWrite(lua_State* L)
+		{
+			auto& self = GetSelf(L, 1);
+			self->ReleasePtrDict(L);
 			return 0;
 		}
 
 		// 只需要传 key( string, bbuffer, table ). value 由 dataLen - offsetRoot 算出来
-		inline static int WriteOffset(lua_State* L)
+		inline static int WriteOffsetObject(lua_State* L)
 		{
 			auto& self = GetSelf(L, 2);
 			switch (lua_type(L, 2))
@@ -394,11 +420,10 @@ namespace xx
 			case LUA_TSTRING:
 			case LUA_TTABLE:
 			case LUA_TUSERDATA:
-				lua_pushlightuserdata(L, &self);						// bb, v, k
-				lua_rawget(L, LUA_REGISTRYINDEX);						// bb, v, t
-				lua_pushvalue(L, 2);									// bb, v, t, v
-				lua_pushinteger(L, self->dataLen - self->offsetRoot);	// bb, v, t, v, offset
-				lua_rawset(L, 3);										// bb, v, t
+				self->PushPtrDict(L);									// bb, v, dict
+				lua_pushvalue(L, 2);									// bb, v, dict, v
+				lua_pushinteger(L, self->dataLen - self->offsetRoot);	// bb, v, dict, v, offset
+				lua_rawset(L, 3);										// bb, v, dict
 				lua_pop(L, 1);											// bb, v
 				break;
 			default:
