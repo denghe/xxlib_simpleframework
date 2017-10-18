@@ -60,7 +60,7 @@ namespace xx
 				{ "ReadTypeId", ReadTypeId },
 
 				{ "GetOffsetRoot", GetOffsetRoot },
-				{ "SetOffsetRoot", SetOffsetRoot },
+				{ "InitOffsetRoot", InitOffsetRoot },
 				// todo: 字典操作函数
 
 				{ nullptr, nullptr }
@@ -378,15 +378,10 @@ namespace xx
 			return 1;
 		}
 
-		inline static int SetOffsetRoot(lua_State* L)
+		inline static int InitOffsetRoot(lua_State* L)
 		{
-			auto& self = GetSelf(L, 2); 
-			int isnum;
-			self->offsetRoot = (uint32_t)lua_tointegerx(L, 2, &isnum);
-			if (!isnum)
-			{
-				luaL_error(L, "the arg's type must be a integer / number");
-			}
+			auto& self = GetSelf(L, 1); 
+			self->offsetRoot = self->offset;
 			return 0;
 		}
 
