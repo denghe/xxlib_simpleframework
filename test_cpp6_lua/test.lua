@@ -10,16 +10,7 @@ print( bb:Dump() )
 print( bb3:Dump() )
 ]]
 
--- todo: 还原过程中的引用赋值, 将 cpp 代码的 offset 字典代码在 lua 中重写? 考虑使用全局字典. 在 End 的时候将其清空
-
-ParentTypeIds = {}
-ParentTypeIds[ 1 ] = 0			-- String : Object
-ParentTypeIds[ 2 ] = 0			-- BBuffer : Object
-ParentTypeIds[ 3 ] = 0			-- PKG.Request : Object
-ParentTypeIds[ 4 ] = 3			-- PKG.Ping : PKG.Request
--- more
-
-
+--[[
 -- 传入父子 id 号, 检测其关系是否成立( 不判断 nil )
 function IsBaseOf( p, t )
 	::begin::
@@ -40,6 +31,17 @@ function TypeIdBaseOfCheck( pt, typeId )
 		return TypeIdProtos[ typeId ]
 	end
 end
+]]
+
+
+-- todo: 还原过程中的引用赋值, 将 cpp 代码的 offset 字典代码在 lua 中重写? 考虑使用全局字典. 在 End 的时候将其清空
+
+ParentTypeIds = {}
+ParentTypeIds[ 1 ] = 0			-- String : Object
+ParentTypeIds[ 2 ] = 0			-- BBuffer : Object
+ParentTypeIds[ 3 ] = 0			-- PKG.Request : Object
+ParentTypeIds[ 4 ] = 3			-- PKG.Ping : PKG.Request
+-- more
 
 -- 校验 typeId 是否合法
 function TypeIdValidate( typeId )
@@ -47,7 +49,6 @@ function TypeIdValidate( typeId )
 		error( "invalid typeId: " .. typeId )
 	end
 end
-
 
 TypeIdProtos = {}
 -- TypeIdProtos[ Xxxxxx.typeId ] = Xxxxxx
@@ -71,10 +72,27 @@ BBuffer.WriteObject = function( bb, o )
 	else
 		local pt = o.__prototype
 		bb:WriteTypeId( pt.typeId )
-		pt.ToBBuffer( bb, o )
+
+		local offset = BBuffer.ptrStore[ o ]
+		if BBuffer.ptrStore[ o ] == nil then
+			offset = bb:GetDataLen() - BBuffer.offsetRoot
+			BBuffer.ptrStore[ o ] = offset
+			bb:WriteUInt32( offset )
+			pt.ToBBuffer( bb, o )
+		else
+			bb:WriteUInt32( offset )
+		end
 	end
 end
 
+BBuffer.ptrStore = {}
+BBuffer.offsetRoot = 0
+BBuffer.WriteRoot = function( bb, o )
+	BBuffer.ptrStore = {}
+	BBuffer.offsetRoot = bb:GetDataLen()
+	BBuffer.WriteObject( bb, o )
+	BBuffer.ptrStore = {}
+end
 
 
 
@@ -141,6 +159,10 @@ TypeIdProtos[ PKG.Xxx.typeId ] = PKG.Xxx
 
 
 
+
+-- 测试
+
+--[[
 local bb = BBuffer.Create()
 local xxx = PKG.Xxx.Create()
 xxx.serial = 1
@@ -160,3 +182,8 @@ local eee = bb:ReadObject()
 print( rawget( eee, "serial" ), eee.serial )
 print( rawget( eee, "ticks" ), eee.ticks )
 print( rawget( eee, "msg" ), eee.msg )
+]]
+
+local bb = BBuffer.Create()
+bb:SetOffsetRoot( nil, 123, 1.23, "asdf", { a=1, b=2, c=3 } )
+

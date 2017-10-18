@@ -59,6 +59,9 @@ namespace xx
 				{ "WriteTypeId", WriteTypeId },
 				{ "ReadTypeId", ReadTypeId },
 
+				{ "GetOffsetRoot", GetOffsetRoot },
+				{ "SetOffsetRoot", SetOffsetRoot },
+				// todo: 字典操作函数
 
 				{ nullptr, nullptr }
 			};
@@ -81,6 +84,17 @@ namespace xx
 		{
 			auto& bb = *(Lua_BBuffer_v*)lua_touserdata(L, -1);
 			bb.~Lua_BBuffer_v();
+
+			// clear table for ptrStore
+			lua_pushlightuserdata(L, &bb);				// &ud
+			lua_pushnil(L);								// &ud, nil
+			lua_rawset(L, LUA_REGISTRYINDEX);			//
+
+			// clear table for idxStore
+			lua_pushlightuserdata(L, (char*)&bb + 1);	// &ud
+			lua_pushnil(L);								// &ud, nil
+			lua_rawset(L, LUA_REGISTRYINDEX);			//
+
 			return 0;
 		}
 
@@ -91,6 +105,17 @@ namespace xx
 			new (&bb) Lua_BBuffer_v(*mp);
 			lua_getglobal(L, name);						// ud, mt
 			lua_setmetatable(L, -2);					// ud
+
+			// table for ptrStore
+			lua_pushlightuserdata(L, &bb);				// ud, &ud
+			lua_createtable(L, 0, 64);					// ud, &ud, t
+			lua_rawset(L, LUA_REGISTRYINDEX);			// ud
+
+			// table for idxStore
+			lua_pushlightuserdata(L, (char*)&bb + 1);	// ud, &ud
+			lua_createtable(L, 0, 64);					// ud, &ud, t
+			lua_rawset(L, LUA_REGISTRYINDEX);			// ud
+
 			return 1;
 		}
 
@@ -159,12 +184,14 @@ namespace xx
 			lua_pushinteger(L, self->dataLen);
 			return 1;
 		}
+
 		inline static int GetOffset(lua_State* L)
 		{
 			auto& self = GetSelf(L, 1);
 			lua_pushinteger(L, self->offset);
 			return 1;
 		}
+
 
 		// nil 写入 0, 非 nil 写入 typeId(1) + 长度 + 内容
 		inline static int WriteString(lua_State* L)
@@ -339,5 +366,52 @@ namespace xx
 		{
 			return ReadUInt16(L);
 		}
+
+
+
+
+
+		inline static int GetOffsetRoot(lua_State* L)
+		{
+			auto& self = GetSelf(L, 1);
+			lua_pushinteger(L, self->offsetRoot);
+			return 1;
+		}
+
+		inline static int SetOffsetRoot(lua_State* L)
+		{
+			auto& self = GetSelf(L, 2); 
+			int isnum;
+			self->offsetRoot = (uint32_t)lua_tointegerx(L, 2, &isnum);
+			if (!isnum)
+			{
+				luaL_error(L, "the arg's type must be a integer / number");
+			}
+			return 0;
+		}
+
+		// 只需要传 key( string, bbuffer, table ). value 由 dataLen - offsetRoot 算出来
+		inline static int WriteOffset(lua_State* L)
+		{
+			auto& self = GetSelf(L, 2);
+			switch (lua_type(L, 2))
+			{
+			case LUA_TSTRING:
+			case LUA_TTABLE:
+			case LUA_TUSERDATA:
+				lua_pushlightuserdata(L, &self);						// bb, v, k
+				lua_rawget(L, LUA_REGISTRYINDEX);						// bb, v, t
+				lua_pushvalue(L, 2);									// bb, v, t, v
+				lua_pushinteger(L, self->dataLen - self->offsetRoot);	// bb, v, t, v, offset
+				lua_rawset(L, 3);										// bb, v, t
+				lua_pop(L, 1);											// bb, v
+				break;
+			default:
+				luaL_error(L, "the arg's type must be a string / table / BBuffer");
+			}
+			return 0;
+		}
+
+		// todo: readOffset
 	};
 };
