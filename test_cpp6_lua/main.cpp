@@ -16,19 +16,19 @@ static int TestBBuffer(lua_State *L)
 	xx::Stopwatch sw;
 
 	if (luaL_loadfile(L, "test.lua")) return lua_error(L);
-//	auto rtv = luaL_loadstring(L, R"-==-(
-//
-//local bb = BBuffer.Create()
-//local bb2 = BBuffer.Create()
-//bb2:WriteUInt8( 255 )
-//bb:WriteBBuffer( bb2 )
-//print( bb:Dump() )
-//local bb3 = bb:ReadBBuffer()
-//print( bb:Dump() )
-//print( bb3:Dump() )
-//
-//	)-==-");
-//	if (rtv != LUA_OK) return lua_error(L);
+	//	auto rtv = luaL_loadstring(L, R"-==-(
+	//
+	//local bb = BBuffer.Create()
+	//local bb2 = BBuffer.Create()
+	//bb2:WriteUInt8( 255 )
+	//bb:WriteBBuffer( bb2 )
+	//print( bb:Dump() )
+	//local bb3 = bb:ReadBBuffer()
+	//print( bb:Dump() )
+	//print( bb3:Dump() )
+	//
+	//	)-==-");
+	//	if (rtv != LUA_OK) return lua_error(L);
 	lua_call(L, 0, 0);
 	return 0;
 }
@@ -48,7 +48,7 @@ int main()
 
 	//CoutLine("top = ", lua_gettop(L));
 	int rtv = 0;
-	auto exec = [&](auto&& fn)
+	auto exec = [&](auto&& fn)->int
 	{
 		lua_pushcfunction(L, fn);
 		rtv = lua_pcall(L, 0, 0, 0);
@@ -57,10 +57,10 @@ int main()
 			CoutLine("pcall rtv = ", rtv, " errmsg = ", lua_tostring(L, -1));
 			lua_pop(L, 1);
 		}
+		return rtv;
 	};
 
-	exec(InitLua);
-	exec(TestBBuffer);
+	!exec(InitLua) && !exec(TestBBuffer);
 
 	lua_close(L);
 	return 0;

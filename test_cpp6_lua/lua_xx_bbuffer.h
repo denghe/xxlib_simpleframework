@@ -1,6 +1,9 @@
 ﻿#pragma execution_character_set("utf-8")
 #pragma once
 
+// todo: 各种 check stack 补足
+// todo: 有空直接将序列化的代码整合过来, 该类不再继承, 配合 lua_mempool 做独立版
+
 #include "xx_bbuffer.h"
 namespace xx
 {
@@ -17,7 +20,7 @@ namespace xx
 			{
 				{ "__gc", __gc },
 				{ "Create", Create },
-				{ "WriteBool", WriteBool },
+				{ "WriteBoolean", WriteBoolean },
 				{ "WriteInt8", WriteInt8 },
 				{ "WriteInt16", WriteInt16 },
 				{ "WriteInt32", WriteInt32 },
@@ -30,8 +33,11 @@ namespace xx
 				{ "WriteDouble", WriteDouble },
 				{ "WriteString", WriteString },
 				{ "WriteBBuffer", WriteBBuffer },
+				{ "WriteRoot", WriteRoot },
+				{ "WriteObject", WriteObject },
+				//{ "WriteList", WriteList },
 
-				{ "ReadBool", ReadBool },
+				{ "ReadBoolean", ReadBoolean },
 				{ "ReadInt8", ReadInt8 },
 				{ "ReadInt16", ReadInt16 },
 				{ "ReadInt32", ReadInt32 },
@@ -44,18 +50,21 @@ namespace xx
 				{ "ReadDouble", ReadDouble },
 				{ "ReadString", ReadString },
 				{ "ReadBBuffer", ReadBBuffer },
+				{ "ReadRoot", ReadRoot },
+				//{ "ReadObject", ReadObject },
+				//{ "ReadList", ReadList },
 
-				{ "WriteUInt8Zero", WriteUInt8Zero },
-				{ "WriteTypeId", WriteTypeId },
-				{ "ReadTypeId", ReadTypeId },
+				//{ "WriteUInt8Zero", WriteUInt8Zero },
+				//{ "WriteTypeId", WriteTypeId },
+				//{ "ReadTypeId", ReadTypeId },
 
-				{ "BeginWrite", BeginWrite },
-				{ "EndWrite", EndWrite },
-				{ "WriteOffset", WriteOffset },
+				//{ "BeginWrite", BeginWrite },
+				//{ "EndWrite", EndWrite },
+				//{ "WriteOffset", WriteOffset },
 
-				{ "BeginRead", BeginRead },
-				{ "EndRead", EndRead },
-				{ "ReadOffset", ReadOffset },
+				//{ "BeginRead", BeginRead },
+				//{ "EndRead", EndRead },
+				//{ "ReadOffset", ReadOffset },
 
 				{ "GetDataLen", GetDataLen },
 				{ "GetOffset", GetOffset },
@@ -66,10 +75,10 @@ namespace xx
 			};
 			lua_createtable(L, 0, _countof(funcs));		// mt
 			luaL_setfuncs(L, funcs, 0);					// mt
-			lua_pushvalue(L, 1);					    // mt, mt
-			lua_setfield(L, 1, "__index");				// mt
-			lua_pushlightuserdata(L, (void*)name);		// mt, lud
-			lua_setfield(L, 1, "null");					// mt			用来代表空值占位符的元素
+			lua_pushvalue(L, -1);					    // mt, mt
+			lua_setfield(L, -2, "__index");				// mt
+			lua_pushlightuserdata(L, 0);				// mt, lud
+			lua_setfield(L, -2, "null");				// mt			用 lud: 0 来代表空值占位符的元素
 			lua_setglobal(L, name);						// 
 			return 0;
 		}
@@ -85,18 +94,18 @@ namespace xx
 		inline static int __gc(lua_State* L)
 		{
 			auto& self = *(Lua_BBuffer_v*)lua_touserdata(L, -1);
-			self->ReleasePtrDict(L);
-			self->ReleaseIdxDict(L);
 			self.~Lua_BBuffer_v();
+			self->ReleasePtrDict(L);					// 异常: 因为是移除, 应该不会抛
+			self->ReleaseIdxDict(L);
 			return 0;
 		}
 
 		inline static int Create(lua_State* L)
 		{
-			auto& self = *(Lua_BBuffer_v*)lua_newuserdata(L, sizeof(Lua_BBuffer_v));
+			auto& self = *(Lua_BBuffer_v*)lua_newuserdata(L, sizeof(Lua_BBuffer_v));	//	异常: 无副作用
 			auto mp = GetMP(L);							// ud
-			new (&self) Lua_BBuffer_v(*mp);
-			lua_getglobal(L, name);						// ud, mt
+			lua_getglobal(L, name);						// ud, mt							异常: 未执行构造函数, 不需要析构
+			new (&self) Lua_BBuffer_v(*mp);				//									异常: 因为未 bind 元表, 不会执行到析构
 			lua_setmetatable(L, -2);					// ud
 			return 1;
 		}
@@ -115,7 +124,7 @@ namespace xx
 			return *selfptr;
 		}
 
-		inline static int WriteBool(lua_State* L)
+		inline static int WriteBoolean(lua_State* L)
 		{
 			auto& self = GetSelf(L, 2);
 			if (!lua_isboolean(L, 2))
@@ -231,7 +240,7 @@ namespace xx
 		}
 
 
-		inline static int ReadBool(lua_State* L)
+		inline static int ReadBoolean(lua_State* L)
 		{
 			auto& self = GetSelf(L, 1);
 			bool v;
@@ -333,21 +342,49 @@ namespace xx
 		}
 
 
-		inline static int WriteUInt8Zero(lua_State* L)
-		{
-			auto& self = GetSelf(L, 2);
-			self->Write((uint8_t)0);
-			return 0;
-		}
+		//inline static int BeginRead(lua_State* L)
+		//{
+		//	auto& self = GetSelf(L, 1);
+		//	self->offsetRoot = self->offset;
+		//	self->CreateIdxDict(L);
+		//	return 0;
+		//}
 
-		inline static int WriteTypeId(lua_State* L)
-		{
-			return WriteUInt16(L);
-		}
-		inline static int ReadTypeId(lua_State* L)
-		{
-			return ReadUInt16(L);
-		}
+		//inline static int EndRead(lua_State* L)
+		//{
+		//	auto& self = GetSelf(L, 1);
+		//	self->ReleaseIdxDict(L);
+		//	return 0;
+		//}
+
+
+		//// 针对 string, bbuffer, table, 根据当前 offset - offsetRoot 的值, 判断是否已经读入过, 返回先前 或 新建的对象. 
+		//// 需要传入对象的创建函数, 第二参数非 nil 表示该对象为新建, 需要填充
+		//inline static int ReadOffset(lua_State* L)
+		//{
+		//	auto& self = GetSelf(L, 2);
+		//	uint32_t ptr_offset = 0, bb_offset_bak = self->offset - self->offsetRoot;
+		//	if (self->Read(ptr_offset)) return luaL_error(L, "read offset error.");
+		//	if (ptr_offset == bb_offset_bak)
+		//	{
+		//		// 这里先不做严格检查了. 如果需要做, 则此处需要将 lua 的检查函数注册到 bb 才行
+		//		lua_pushvalue(L, 2);								// bb, f, f
+		//		lua_call(L, 0, 1);									// bb, f, rtv
+		//		self->PushIdxDict(L);								// bb, f, rtv, dict
+		//		lua_pushinteger(L, ptr_offset);						// bb, f, rtv, dict, offset
+		//		lua_pushvalue(L, 3);								// bb, f, rtv, dict, offset, rtv
+		//		lua_rawset(L, -3);									// bb, f, rtv, dict
+		//		return 2;											// 第二个参数非 nil
+		//	}
+		//	else
+		//	{
+		//		self->PushIdxDict(L);								// bb, f, dict
+		//		lua_pushinteger(L, ptr_offset);						// bb, f, dict, offset
+		//		lua_rawget(L, -2);									// bb, f, dict, rtv
+		//		lua_remove(L, 3);									// bb, f, rtv
+		//		return 1;											// 第二个参数为 nil
+		//	}
+		//}
 
 
 
@@ -364,6 +401,7 @@ namespace xx
 			lua_createtable(L, 0, 64);					// ud, &ud, t
 			lua_rawset(L, LUA_REGISTRYINDEX);			// ud
 		}
+
 		inline void ReleasePtrDict(lua_State* L)
 		{
 			lua_pushlightuserdata(L, this);				// &ud
@@ -376,6 +414,7 @@ namespace xx
 			lua_pushnil(L);								// &ud, nil
 			lua_rawset(L, LUA_REGISTRYINDEX);			//
 		}
+
 		inline void PushPtrDict(lua_State* L)
 		{
 			lua_pushlightuserdata(L, this);				// ... key
@@ -387,107 +426,103 @@ namespace xx
 			lua_rawget(L, LUA_REGISTRYINDEX);			// ... table
 		}
 
-		//inline static int GetOffsetRoot(lua_State* L)
-		//{
-		//	auto& self = GetSelf(L, 1);
-		//	lua_pushinteger(L, self->offsetRoot);
-		//	return 1;
-		//}
 
-		inline static int BeginWrite(lua_State* L)
+		// 针对 string, bbuffer, table, 写 dataLen - offsetRoot 到 buf, 返回是否第一次写入
+		inline bool WriteOffset(lua_State* L)
 		{
-			auto& self = GetSelf(L, 1); 
-			self->offsetRoot = self->dataLen;
-			self->CreatePtrDict(L);
-			return 0;
-		}
-
-		inline static int EndWrite(lua_State* L)
-		{
-			auto& self = GetSelf(L, 1);
-			self->ReleasePtrDict(L);
-			return 0;
-		}
-
-		// 针对 string, bbuffer, table, 写 dataLen - offsetRoot 到 buf, 返回是否第一次写入( 是: nil )
-		inline static int WriteOffset(lua_State* L)
-		{
-			auto& self = GetSelf(L, 2);
-			switch (lua_type(L, 2))
+			switch (lua_type(L, -1))							    // ..., o
 			{
 			case LUA_TSTRING:
 			case LUA_TTABLE:
 			case LUA_TUSERDATA:
-				self->PushPtrDict(L);								// bb, v, dict					定位到注册表中的 ptrDict
-				lua_pushvalue(L, 2);								// bb, v, dict, v				查询当前对象是否已经记录过
-				lua_rawget(L, -2);									// bb, v, dict, nil/offset
+				PushPtrDict(L);										// ..., o, dict					定位到注册表中的 ptrDict
+				lua_pushvalue(L, -2);								// ..., o, dict, o				查询当前对象是否已经记录过
+				lua_rawget(L, -2);									// ..., o, dict, nil/offset
 				if (lua_isnil(L, -1))								// 如果未记录则记录 + 写buf
 				{
-					auto offset = self->dataLen - self->offsetRoot;	
-					self->Write(offset);							// 写buf
+					auto offset = dataLen - offsetRoot;
+					Write(offset);									// 写buf
 
-					lua_pop(L, 1);									// bb, v, dict
-					lua_pushvalue(L, 2);							// bb, v, dict, v
-					lua_pushinteger(L, offset);						// bb, v, dict, v, offset
-					lua_rawset(L, 3);								// bb, v, dict
-					lua_pop(L, 1);									// bb, v
-					return 0;										// 返回 nil 表示首次出现
+					lua_pop(L, 1);									// ..., o, dict
+					lua_pushvalue(L, -2);							// ..., o, dict, o
+					lua_pushinteger(L, offset);						// ..., o, dict, o, offset
+					lua_rawset(L, -3);								// ..., o, dict
+					lua_pop(L, 1);									// ..., o
+					return true;									// 返回首次出现
 				}
 				else												// 记录过则取其 value 来写buf
 				{
 					auto offset = (uint32_t)lua_tointeger(L, -1);
-					self->Write(offset);							// 写buf
-					return 2;										// 返回 非nil 表示已出现过
+					Write(offset);									// 写buf
+					lua_pop(L, 2);									// ..., o
+					return false;
 				}
 			default:
 				luaL_error(L, "the arg's type must be a string / table / BBuffer");
+				return false;
 			}
+		}
+
+		inline static int WriteObject(lua_State* L)
+		{
+			auto& self = GetSelf(L, 2);				// bb, o
+			self->WriteObject_(L);					// bb, o
 			return 0;
 		}
 
 
-		inline static int BeginRead(lua_State* L)
+		// 写对象到 buf. 如果为空就写 typeId 0, 否则写 typeId, offset[, content ]
+		inline void WriteObject_(lua_State* L)
 		{
-			auto& self = GetSelf(L, 1);
-			self->offsetRoot = self->offset;
-			self->CreateIdxDict(L);
-			return 0;
-		}
-
-		inline static int EndRead(lua_State* L)
-		{
-			auto& self = GetSelf(L, 1);
-			self->ReleaseIdxDict(L);
-			return 0;
-		}
-
-
-		// 针对 string, bbuffer, table, 根据当前 offset - offsetRoot 的值, 判断是否已经读入过, 返回先前 或 新建的对象. 
-		// 需要传入对象的创建函数, 第二参数非 nil 表示该对象为新建, 需要填充
-		inline static int ReadOffset(lua_State* L)
-		{
-			auto& self = GetSelf(L, 2);
-			uint32_t ptr_offset = 0, bb_offset_bak = self->offset - self->offsetRoot;
-			if (self->Read(ptr_offset)) return luaL_error(L, "read offset error.");
-			if (ptr_offset == bb_offset_bak)
+			if (lua_isnil(L, -1) ||					// bb, o
+				lua_islightuserdata(L, -1) && (size_t)lua_touserdata(L, -1) == 0)
 			{
-				// 这里先不做严格检查了. 如果需要做, 则此处需要将 lua 的检查函数注册到 bb 才行
-				lua_pushvalue(L, 2);								// bb, f, f
-				lua_call(L, 0, 1);									// bb, f, rtv
-				self->PushIdxDict(L);								// bb, f, rtv, dict
-				lua_pushinteger(L, ptr_offset);						// bb, f, rtv, dict, offset
-				lua_pushvalue(L, 3);								// bb, f, rtv, dict, offset, rtv
-				lua_rawset(L, -3);									// bb, f, rtv, dict
-				return 2;											// 第二个参数非 nil
+				Write((uint8_t)0);
 			}
 			else
 			{
-				self->PushIdxDict(L);								// bb, f, dict
-				lua_pushinteger(L, ptr_offset);						// bb, f, dict, offset
-				lua_rawget(L, -2);									// bb, f, dict, rtv
-				lua_remove(L, 3);									// bb, f, rtv
-				return 1;											// 第二个参数为 nil
+				lua_pushstring(L, "__proto");		// bb, o, "__proto"
+				lua_rawget(L, -2);					// bb, o, proto
+				lua_pushstring(L, "typeId");		// bb, o, proto, "typeId"
+				lua_rawget(L, -2);					// bb, o, proto, num
+				auto typeId = (uint16_t)lua_tonumber(L, -1);
+				Write(typeId);
+				lua_pushvalue(L, -3);				// bb, o, proto, num, o
+				if (WriteOffset(L))					// bb, o, proto, num, o
+				{
+					lua_pop(L, 2);					// bb, o, proto
+					lua_pushstring(L, "ToBBuffer");	// bb, o, proto, "ToBBuffer"
+					lua_rawget(L, -2);				// bb, o, proto, func
+					lua_pushvalue(L, 1);			// bb, o, proto, func, bb
+					lua_pushvalue(L, -4);			// bb, o, proto, func, bb, o
+					lua_call(L, 2, 0);				// bb, o, proto
+					lua_pop(L, 1);					// bb, o
+				}
 			}
+		}
+
+		inline static int WriteRoot(lua_State* L)
+		{
+			auto& self = GetSelf(L, 2);				// bb, o
+			self->offsetRoot = self->dataLen;
+			self->CreatePtrDict(L);
+
+			self->WriteObject_(L);					// bb, o
+
+			self->ReleasePtrDict(L);
+			return 0;
+		}
+
+
+
+
+
+
+
+		inline static int ReadRoot(lua_State* L)
+		{
+			// todo
+			return 1;
 		}
 
 	};

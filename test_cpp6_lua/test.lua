@@ -1,4 +1,8 @@
-﻿BBuffer.ReadObject = function( bb )
+﻿-- todo: 下面几个函数的实现, 做进 cpp, TypeIdProtos 移进 BBuffer, 为 BBuffer 提供 Register 函数以映射 typeId -- Create 函数
+-- todo: List, enum support. List 根据 __childprototype 的指向来路由子的处理函数
+
+--[[
+BBuffer.ReadObject = function( bb )
 	local typeId = bb:ReadTypeId()
 	if typeId == 0 then
 		return BBuffer.null
@@ -17,7 +21,7 @@ BBuffer.WriteObject = function( bb, o )
 	if o == nil or o == BBuffer.null then
 		bb:WriteUInt8Zero()
 	else
-		local pt = o.__prototype
+		local pt = o.__proto
 		bb:WriteTypeId( pt.typeId )
 
 		if bb:WriteOffset( o ) == nil then
@@ -36,48 +40,168 @@ BBuffer.ReadRoot = function( bb )
 	bb:EndRead()
 	return rtv
 end
+]]
+
+
+
+-- 扩展一下 table 的功能以便于使用
+if table.__index ~= nil then
+	error( "table.__index ~= nil" )
+end
+
+-- 准备拿 table 来当元表
+table.__index = table
+
+-- 顺应一下使用习惯
+table.Add = table.insert
+table.Insert = table.insert
+table.Remove = table.remove
+
+-- 实现一个 Dump 功能以方便查看结果
+table.Dump = function()
+	for k, v in ipairs( self ) do
+		print( k, v )
+	end
+end
+
+
+
 
 TypeIdProtos = {}	-- 在每个类的位置填充 [ Xxxxxx.typeId ] = Xxxxxx
 
-PKG = PKG or {}		-- namespace PKG
-PKG.Node =			-- class Node { Node parent }
+PKG_Node =			-- class PKG.Node { PKG.Node parent; List<PKG.Node> childs; string msg; }
 {
-	typeName = "PKG.Node",
-	typeId = 5,
+	typeName = "PKG_Node",
+	typeId = 3,
 	Create = function()
 		local o = {}
-		o.__prototype = PKG.Node
+		o.__proto = PKG_Node
 		o.__index = o
 		o.__newindex = o
 
-		o.node = BBuffer.null	-- PKG.Node
-		o.xxx = BBuffer.null	-- string
-		-- setmetatable(o, BaseProto)
+		o.parent = BBuffer.null	-- PKG.Node
+		o.childs = BBuffer.null	-- List<PKG.Node>
+		o.ids = BBuffer.null	-- List_Int64_
+		o.msg = BBuffer.null	-- string
+
+		-- setmetatable( o, BaseProto.Create() )
 		return o
 	end,
 	FromBBuffer = function( bb, o )
-		rawset( o, "node", bb:ReadObject() )
-		rawset( o, "xxx", bb:ReadString() )
+		rawset( o, "parent", bb:ReadObject() )
+		rawset( o, "childs", bb:ReadObject() )
+		rawset( o, "ids", bb:ReadObject() )
+		rawset( o, "msg", bb:ReadString() )
 	end,
 	ToBBuffer = function( bb, o )
-		bb:WriteObject( rawget( o, "node" ) )
-		bb:WriteString( rawget( o, "xxx" ) )
+		bb:WriteObject( rawget( o, "parent" ) )
+		bb:WriteObject( rawget( o, "childs" ) )
+		bb:WriteObject( rawget( o, "ids" ) )
+		bb:WriteString( rawget( o, "msg" ) )
 	end
 }
-TypeIdProtos[ PKG.Node.typeId ] = PKG.Node
+TypeIdProtos[ PKG_Node.typeId ] = PKG_Node
+
+List_PKG_Node_ =		-- List<PKG.Node>
+{
+	typeName = "List_PKG_Node_",
+	typeId = 4,
+	Create = function()
+		local o = {}
+		o.__proto = List_PKG_Node_
+		o.__index = o
+		o.__newindex = o
+
+		setmetatable( o, table )
+		return o
+	end,
+	FromBBuffer = function( bb, o )
+		--bb:ReadList( o )
+	end,
+	ToBBuffer = function( bb, o )
+		bb:WriteUInt32( #o )
+		for k, v in ipairs( o ) do
+			bb:WriteObject( v )
+		end
+	end
+}
+TypeIdProtos[ List_PKG_Node_.typeId ] = List_PKG_Node_
+
+List_Int64_ =			-- List<long>
+{
+	typeName = "List_Int64_",
+	typeId = -5,
+	Create = function()
+		local o = {}
+		o.__proto = List_Int64_
+		o.__childprototype = BBuffer.Int64
+		o.__index = o
+		o.__newindex = o
+
+		setmetatable( o, table )
+		return o
+	end,
+	FromBBuffer = function( bb, o )
+		--bb:ReadList( o )
+	end,
+	ToBBuffer = function( bb, o )
+		bb:WriteUInt32( #o )
+		for k, v in ipairs( o ) do
+			bb:WriteInt64( v )
+		end
+	end
+}
+TypeIdProtos[ List_PKG_Node_.typeId ] = List_PKG_Node_
+
+-- List_Boolean 编码方式比较特殊, 暂时先不支持
 
 -- 测试
-local node = PKG.Node.Create()
-node.node = node
-node.xxx = "1234567"
+
+local node = PKG_Node.Create()
+
+node.parent = node
+
+node.childs = List_PKG_Node_.Create()
+node.childs:Add( node )
+node.childs:Add( node )
+
+node.ids = List_Int64_.Create()
+node.ids:Add( 1 )
+node.ids:Add( 2 )
+node.ids:Add( 3 )
+
+node.msg = "1234567"
 
 local bb = BBuffer.Create()
 bb:WriteRoot( node )
 print( bb:Dump() )
-local node2 = bb:ReadRoot()
-print( node2.xxx )
+
+--local node2 = bb:ReadRoot()
+--print( node2.msg )
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
 --[[
 local bb = BBuffer.Create()
 local xxx = PKG.Xxx.Create()
@@ -129,7 +253,7 @@ PKG.Request =
 	typeId = 3,
 	Create = function()
 		local o = {}
-		o.__prototype = PKG.Request
+		o.__proto = PKG.Request
 		o.__index = o
 		o.__newindex = o
 
@@ -153,7 +277,7 @@ PKG.Xxx =
 	typeId = 4,
 	Create = function()
 		local o = {}
-		o.__prototype = PKG.Xxx
+		o.__proto = PKG.Xxx
 		o.__index = o
 		o.__newindex = o
 
@@ -164,13 +288,13 @@ PKG.Xxx =
 	end,
 	FromBBuffer = function( bb, o )
 		local p = getmetatable( o )
-		p.__prototype.FromBBuffer( bb, p )
+		p.__proto.FromBBuffer( bb, p )
 		rawset( o, "ticks" ,bb:ReadInt64() )
 		rawset( o, "msg" ,bb:ReadString() )
 	end,
 	ToBBuffer = function( bb, o )
 		local p = getmetatable( o )
-		p.__prototype.ToBBuffer( bb, p )
+		p.__proto.ToBBuffer( bb, p )
 		bb:WriteInt64( rawget( o, "ticks" ) )
 		bb:WriteString( rawget( o, "msg" ) )
 	end
