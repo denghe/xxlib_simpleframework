@@ -20,6 +20,8 @@ namespace xx
 			{
 				{ "__gc", __gc },
 				{ "Create", Create },
+				{ "Register", Register },
+
 				{ "WriteBoolean", WriteBoolean },
 				{ "WriteInt8", WriteInt8 },
 				{ "WriteInt16", WriteInt16 },
@@ -35,7 +37,6 @@ namespace xx
 				{ "WriteBBuffer", WriteBBuffer },
 				{ "WriteRoot", WriteRoot },
 				{ "WriteObject", WriteObject },
-				//{ "WriteList", WriteList },
 
 				{ "ReadBoolean", ReadBoolean },
 				{ "ReadInt8", ReadInt8 },
@@ -51,20 +52,7 @@ namespace xx
 				{ "ReadString", ReadString },
 				{ "ReadBBuffer", ReadBBuffer },
 				{ "ReadRoot", ReadRoot },
-				//{ "ReadObject", ReadObject },
-				//{ "ReadList", ReadList },
-
-				//{ "WriteUInt8Zero", WriteUInt8Zero },
-				//{ "WriteTypeId", WriteTypeId },
-				//{ "ReadTypeId", ReadTypeId },
-
-				//{ "BeginWrite", BeginWrite },
-				//{ "EndWrite", EndWrite },
-				//{ "WriteOffset", WriteOffset },
-
-				//{ "BeginRead", BeginRead },
-				//{ "EndRead", EndRead },
-				//{ "ReadOffset", ReadOffset },
+				{ "ReadObject", ReadObject },
 
 				{ "GetDataLen", GetDataLen },
 				{ "GetOffset", GetOffset },
@@ -73,16 +61,29 @@ namespace xx
 
 				{ nullptr, nullptr }
 			};
-			lua_createtable(L, 0, _countof(funcs));		// mt
-			luaL_setfuncs(L, funcs, 0);					// mt
-			lua_pushvalue(L, -1);					    // mt, mt
-			lua_setfield(L, -2, "__index");				// mt
-			lua_pushlightuserdata(L, 0);				// mt, lud
-			lua_setfield(L, -2, "null");				// mt			用 lud: 0 来代表空值占位符的元素
-			lua_setglobal(L, name);						// 
+			lua_createtable(L, 0, _countof(funcs));	// mt
+			luaL_setfuncs(L, funcs, 0);				// mt
+
+			// 设成自查找 for metatable
+			lua_pushvalue(L, -1);					// mt, mt
+			lua_setfield(L, -2, "__index");			// mt
+
+			// 用 lud: 0 来代表空值占位符的元素
+			lua_pushlightuserdata(L, 0);			// mt, lud
+			lua_setfield(L, -2, "null");			// mt			
+
+			lua_setglobal(L, name);					// 
+
+			// 在注册表中创建 typeId 到 Proto 的映射表	
+			lua_pushlightuserdata(L, (void*)name);	// lud
+			lua_createtable(L, 128, 0);				// lud, typeIdProtos
+			lua_rawset(L, LUA_REGISTRYINDEX);		// 
+
 			return 0;
 		}
 
+
+		// 读 lua_State 的内存分配函数绑定来得到内存分配器的指针
 		inline static MemPool* GetMP(lua_State* L)
 		{
 			MemPool* mp;
@@ -90,31 +91,62 @@ namespace xx
 			return mp;
 		}
 
-
+		// 析构
 		inline static int __gc(lua_State* L)
 		{
 			auto& self = *(Lua_BBuffer_v*)lua_touserdata(L, -1);
 			self.~Lua_BBuffer_v();
-			self->ReleasePtrDict(L);					// 异常: 因为是移除, 应该不会抛
+			self->ReleasePtrDict(L);				// 异常: 因为是移除, 应该不会抛
 			self->ReleaseIdxDict(L);
 			return 0;
 		}
 
+		// 创建, 无参数
 		inline static int Create(lua_State* L)
 		{
+			if (lua_gettop(L) != 0)					// t
+			{
+				luaL_error(L, "bad args nums. expect 0");
+			}
 			auto& self = *(Lua_BBuffer_v*)lua_newuserdata(L, sizeof(Lua_BBuffer_v));	//	异常: 无副作用
-			auto mp = GetMP(L);							// ud
-			lua_getglobal(L, name);						// ud, mt							异常: 未执行构造函数, 不需要析构
-			new (&self) Lua_BBuffer_v(*mp);				//									异常: 因为未 bind 元表, 不会执行到析构
-			lua_setmetatable(L, -2);					// ud
+			auto mp = GetMP(L);						// ud
+			lua_getglobal(L, name);					// ud, mt							异常: 未执行构造函数, 不需要析构
+			new (&self) Lua_BBuffer_v(*mp);			//									异常: 因为未 bind 元表, 不会执行到析构
+			lua_setmetatable(L, -2);				// ud
 			return 1;
+		}
+
+		// 注册 Proto 表. 参数为 Proto 表.
+		inline static int Register(lua_State* L)
+		{
+			if (lua_gettop(L) != 1)				// t
+			{
+				luaL_error(L, "bad args nums. expect 1");
+			}
+			if (!lua_istable(L, 1))
+			{
+				luaL_error(L, "the arg's type must be a proto table");
+			}
+			lua_getfield(L, 1, "typeId");			// t, int
+			int isnum;
+			auto typeId = lua_tointegerx(L, -1, &isnum);
+			if (!isnum)
+			{
+				luaL_error(L, "the proto's typeId must be a int");
+			}
+
+			lua_rawgetp(L, LUA_REGISTRYINDEX, (void*)name);	// t, int, typeIdProtos
+			lua_pushvalue(L, 1);					// t, int, typeIdProtos, t
+			lua_rawseti(L, -2, typeId);				// t, int, typeIdProtos
+			lua_pop(L, 2);							// t
+			return 0;
 		}
 
 		inline static Lua_BBuffer_v& GetSelf(lua_State* L, int top)
 		{
 			if (lua_gettop(L) != top)
 			{
-				luaL_error(L, "bad args nums");
+				luaL_error(L, "bad args nums. expect %d", top);
 			}
 			auto selfptr = (Lua_BBuffer_v*)lua_touserdata(L, 1);
 			if (!selfptr)
@@ -342,119 +374,69 @@ namespace xx
 		}
 
 
-		//inline static int BeginRead(lua_State* L)
-		//{
-		//	auto& self = GetSelf(L, 1);
-		//	self->offsetRoot = self->offset;
-		//	self->CreateIdxDict(L);
-		//	return 0;
-		//}
-
-		//inline static int EndRead(lua_State* L)
-		//{
-		//	auto& self = GetSelf(L, 1);
-		//	self->ReleaseIdxDict(L);
-		//	return 0;
-		//}
-
-
-		//// 针对 string, bbuffer, table, 根据当前 offset - offsetRoot 的值, 判断是否已经读入过, 返回先前 或 新建的对象. 
-		//// 需要传入对象的创建函数, 第二参数非 nil 表示该对象为新建, 需要填充
-		//inline static int ReadOffset(lua_State* L)
-		//{
-		//	auto& self = GetSelf(L, 2);
-		//	uint32_t ptr_offset = 0, bb_offset_bak = self->offset - self->offsetRoot;
-		//	if (self->Read(ptr_offset)) return luaL_error(L, "read offset error.");
-		//	if (ptr_offset == bb_offset_bak)
-		//	{
-		//		// 这里先不做严格检查了. 如果需要做, 则此处需要将 lua 的检查函数注册到 bb 才行
-		//		lua_pushvalue(L, 2);								// bb, f, f
-		//		lua_call(L, 0, 1);									// bb, f, rtv
-		//		self->PushIdxDict(L);								// bb, f, rtv, dict
-		//		lua_pushinteger(L, ptr_offset);						// bb, f, rtv, dict, offset
-		//		lua_pushvalue(L, 3);								// bb, f, rtv, dict, offset, rtv
-		//		lua_rawset(L, -3);									// bb, f, rtv, dict
-		//		return 2;											// 第二个参数非 nil
-		//	}
-		//	else
-		//	{
-		//		self->PushIdxDict(L);								// bb, f, dict
-		//		lua_pushinteger(L, ptr_offset);						// bb, f, dict, offset
-		//		lua_rawget(L, -2);									// bb, f, dict, rtv
-		//		lua_remove(L, 3);									// bb, f, rtv
-		//		return 1;											// 第二个参数为 nil
-		//	}
-		//}
-
 
 
 
 		inline void CreatePtrDict(lua_State* L)
 		{
-			lua_pushlightuserdata(L, this);				// ud, &ud
-			lua_createtable(L, 0, 64);					// ud, &ud, t
-			lua_rawset(L, LUA_REGISTRYINDEX);			// ud
+			lua_createtable(L, 0, 64);
+			lua_rawsetp(L, LUA_REGISTRYINDEX, this);
 		}
 		inline void CreateIdxDict(lua_State* L)
 		{
-			lua_pushlightuserdata(L, (char*)this + 1);	// ud, &ud
-			lua_createtable(L, 0, 64);					// ud, &ud, t
-			lua_rawset(L, LUA_REGISTRYINDEX);			// ud
+			lua_createtable(L, 0, 64);
+			lua_rawsetp(L, LUA_REGISTRYINDEX, (char*)this + 1);
 		}
 
 		inline void ReleasePtrDict(lua_State* L)
 		{
-			lua_pushlightuserdata(L, this);				// &ud
-			lua_pushnil(L);								// &ud, nil
-			lua_rawset(L, LUA_REGISTRYINDEX);			//
+			lua_pushnil(L);
+			lua_rawsetp(L, LUA_REGISTRYINDEX, this);
 		}
 		inline void ReleaseIdxDict(lua_State* L)
 		{
-			lua_pushlightuserdata(L, (char*)this + 1);	// &ud
-			lua_pushnil(L);								// &ud, nil
-			lua_rawset(L, LUA_REGISTRYINDEX);			//
+			lua_pushnil(L);
+			lua_rawsetp(L, LUA_REGISTRYINDEX, (char*)this + 1);
 		}
 
 		inline void PushPtrDict(lua_State* L)
 		{
-			lua_pushlightuserdata(L, this);				// ... key
-			lua_rawget(L, LUA_REGISTRYINDEX);			// ... table
+			lua_rawgetp(L, LUA_REGISTRYINDEX, this);
 		}
 		inline void PushIdxDict(lua_State* L)
 		{
-			lua_pushlightuserdata(L, (char*)this + 1);	// ... key
-			lua_rawget(L, LUA_REGISTRYINDEX);			// ... table
+			lua_rawgetp(L, LUA_REGISTRYINDEX, (char*)this + 1);
 		}
 
 
 		// 针对 string, bbuffer, table, 写 dataLen - offsetRoot 到 buf, 返回是否第一次写入
 		inline bool WriteOffset(lua_State* L)
 		{
-			switch (lua_type(L, -1))							    // ..., o
+			switch (lua_type(L, -1))				// ..., o
 			{
 			case LUA_TSTRING:
 			case LUA_TTABLE:
 			case LUA_TUSERDATA:
-				PushPtrDict(L);										// ..., o, dict					定位到注册表中的 ptrDict
-				lua_pushvalue(L, -2);								// ..., o, dict, o				查询当前对象是否已经记录过
-				lua_rawget(L, -2);									// ..., o, dict, nil/offset
-				if (lua_isnil(L, -1))								// 如果未记录则记录 + 写buf
+				PushPtrDict(L);						// ..., o, dict					定位到注册表中的 ptrDict
+				lua_pushvalue(L, -2);				// ..., o, dict, o				查询当前对象是否已经记录过
+				lua_rawget(L, -2);					// ..., o, dict, nil/offset
+				if (lua_isnil(L, -1))				// 如果未记录则记录 + 写buf
 				{
 					auto offset = dataLen - offsetRoot;
-					Write(offset);									// 写buf
+					Write(offset);					// 写buf
 
-					lua_pop(L, 1);									// ..., o, dict
-					lua_pushvalue(L, -2);							// ..., o, dict, o
-					lua_pushinteger(L, offset);						// ..., o, dict, o, offset
-					lua_rawset(L, -3);								// ..., o, dict
-					lua_pop(L, 1);									// ..., o
-					return true;									// 返回首次出现
+					lua_pop(L, 1);					// ..., o, dict
+					lua_pushvalue(L, -2);			// ..., o, dict, o
+					lua_pushinteger(L, offset);		// ..., o, dict, o, offset
+					lua_rawset(L, -3);				// ..., o, dict
+					lua_pop(L, 1);					// ..., o
+					return true;					// 返回首次出现
 				}
-				else												// 记录过则取其 value 来写buf
+				else								// 记录过则取其 value 来写buf
 				{
 					auto offset = (uint32_t)lua_tointeger(L, -1);
-					Write(offset);									// 写buf
-					lua_pop(L, 2);									// ..., o
+					Write(offset);					// 写buf
+					lua_pop(L, 2);					// ..., o
 					return false;
 				}
 			default:
@@ -481,20 +463,18 @@ namespace xx
 			}
 			else
 			{
-				lua_pushstring(L, "__proto");		// bb, o, "__proto"
-				lua_rawget(L, -2);					// bb, o, proto
-				lua_pushstring(L, "typeId");		// bb, o, proto, "typeId"
-				lua_rawget(L, -2);					// bb, o, proto, num
+				lua_getfield(L, 2, "__proto");		// bb, o, proto
+				lua_getfield(L, 3, "typeId");		// bb, o, proto, typeId
 				auto typeId = (uint16_t)lua_tonumber(L, -1);
 				Write(typeId);
-				lua_pushvalue(L, -3);				// bb, o, proto, num, o
-				if (WriteOffset(L))					// bb, o, proto, num, o
+				lua_pop(L, 1);						// bb, o, proto
+				lua_insert(L, 2);					// bb, proto, o
+				if (WriteOffset(L))					// bb, proto, o
 				{
-					lua_pop(L, 2);					// bb, o, proto
-					lua_pushstring(L, "ToBBuffer");	// bb, o, proto, "ToBBuffer"
-					lua_rawget(L, -2);				// bb, o, proto, func
+					lua_insert(L, 2);				// bb, o, proto
+					lua_getfield(L, 3, "ToBBuffer");// bb, o, proto, func
 					lua_pushvalue(L, 1);			// bb, o, proto, func, bb
-					lua_pushvalue(L, -4);			// bb, o, proto, func, bb, o
+					lua_pushvalue(L, 2);			// bb, o, proto, func, bb, o
 					lua_call(L, 2, 0);				// bb, o, proto
 					lua_pop(L, 1);					// bb, o
 				}
@@ -517,12 +497,75 @@ namespace xx
 
 
 
-
-
 		inline static int ReadRoot(lua_State* L)
 		{
-			// todo
+			auto& self = GetSelf(L, 1);				// bb
+			self->offsetRoot = self->offset;
+			self->CreateIdxDict(L);
+
+			self->ReadObject_(L);					// bb, rtv
+
+			self->ReleaseIdxDict(L);
 			return 1;
+		}
+
+		inline static int ReadObject(lua_State* L)
+		{
+			auto& self = GetSelf(L, 1);				// bb
+			self->ReadObject_(L);					// bb, rtv
+			return 1;
+		}
+
+		inline void ReadObject_(lua_State* L)
+		{
+			uint16_t typeId;
+			if (Read(typeId))
+			{
+				luaL_error(L, "read typeId error.");
+			}
+			if (!typeId)
+			{
+				lua_pushlightuserdata(L, 0);		// bb, null
+				return;
+			}
+
+			// todo: 判断 typeId 是否为 1 或 2 ?
+
+			lua_rawgetp(L, LUA_REGISTRYINDEX, (void*)name);	// bb, typeIdProtos
+			lua_rawgeti(L, -1, typeId);				// bb, typeIdProtos, proto?
+			if (lua_isnil(L, -1))
+			{
+				luaL_error(L, "invalid typeId: %d", typeId);
+			}
+
+			uint32_t ptr_offset = 0, bb_offset_bak = offset - offsetRoot;
+			if (Read(ptr_offset))
+			{
+				luaL_error(L, "read offset error.");
+			}
+			if (ptr_offset == bb_offset_bak)		// 首次出现, 后面是内容
+			{
+				lua_remove(L, 2);					// bb, proto
+				lua_getfield(L, 2, "Create");		// bb, proto, Create
+				lua_call(L, 0, 1);					// bb, proto, o
+				lua_insert(L, 2);					// bb, o, proto
+				lua_getfield(L, -1, "FromBBuffer");	// bb, o, proto, FromBBuffer
+				lua_pushvalue(L, 1);				// bb, o, proto, FromBBuffer, bb
+				lua_pushvalue(L, 2);				// bb, o, proto, FromBBuffer, bb, o
+				lua_call(L, 2, 0);					// bb, o, proto
+				PushIdxDict(L);						// bb, o, proto, dict
+				lua_pushvalue(L, -3);				// bb, o, proto, dict, o
+				lua_rawseti(L, -2, ptr_offset);		// bb, o, proto, dict
+				lua_pop(L, 2);						// bb, o
+			}
+			else
+			{
+				lua_pop(L, 2);						// bb
+				PushIdxDict(L);						// bb, dict
+				lua_rawgeti(L, -1, ptr_offset);		// bb, dict, o
+				lua_insert(L, -2);					// bb, o, dict
+				lua_pop(L, 1);						// bb, o
+			}
 		}
 
 	};

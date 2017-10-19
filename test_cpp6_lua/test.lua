@@ -1,49 +1,4 @@
-﻿-- todo: 下面几个函数的实现, 做进 cpp, TypeIdProtos 移进 BBuffer, 为 BBuffer 提供 Register 函数以映射 typeId -- Create 函数
--- todo: List, enum support. List 根据 __childprototype 的指向来路由子的处理函数
-
---[[
-BBuffer.ReadObject = function( bb )
-	local typeId = bb:ReadTypeId()
-	if typeId == 0 then
-		return BBuffer.null
-	end
-	local pt = TypeIdProtos[ typeId ]
-	if pt == nil then
-		error( "invalid typeId: " .. typeId )
-	end
-	local o, isnew = bb:ReadOffset( pt.Create )
-	if isnew ~= nil then
-		pt.FromBBuffer( bb, o )
-	end
-	return o
-end
-BBuffer.WriteObject = function( bb, o )
-	if o == nil or o == BBuffer.null then
-		bb:WriteUInt8Zero()
-	else
-		local pt = o.__proto
-		bb:WriteTypeId( pt.typeId )
-
-		if bb:WriteOffset( o ) == nil then
-			pt.ToBBuffer( bb, o )
-		end
-	end
-end
-BBuffer.WriteRoot = function( bb, o )
-	bb:BeginWrite()
-	bb:WriteObject( o )
-	bb:EndWrite()
-end
-BBuffer.ReadRoot = function( bb )
-	bb:BeginRead()
-	local rtv = bb:ReadObject()
-	bb:EndRead()
-	return rtv
-end
-]]
-
-
-
+﻿
 -- 扩展一下 table 的功能以便于使用
 if table.__index ~= nil then
 	error( "table.__index ~= nil" )
@@ -65,9 +20,6 @@ table.Dump = function()
 end
 
 
-
-
-TypeIdProtos = {}	-- 在每个类的位置填充 [ Xxxxxx.typeId ] = Xxxxxx
 
 PKG_Node =			-- class PKG.Node { PKG.Node parent; List<PKG.Node> childs; string msg; }
 {
@@ -100,7 +52,7 @@ PKG_Node =			-- class PKG.Node { PKG.Node parent; List<PKG.Node> childs; string 
 		bb:WriteString( rawget( o, "msg" ) )
 	end
 }
-TypeIdProtos[ PKG_Node.typeId ] = PKG_Node
+BBuffer.Register( PKG_Node )
 
 List_PKG_Node_ =		-- List<PKG.Node>
 {
@@ -125,7 +77,7 @@ List_PKG_Node_ =		-- List<PKG.Node>
 		end
 	end
 }
-TypeIdProtos[ List_PKG_Node_.typeId ] = List_PKG_Node_
+BBuffer.Register( List_PKG_Node_ )
 
 List_Int64_ =			-- List<long>
 {
@@ -151,9 +103,8 @@ List_Int64_ =			-- List<long>
 		end
 	end
 }
-TypeIdProtos[ List_PKG_Node_.typeId ] = List_PKG_Node_
+BBuffer.Register( List_Int64_ )
 
--- List_Boolean 编码方式比较特殊, 暂时先不支持
 
 -- 测试
 
@@ -176,8 +127,8 @@ local bb = BBuffer.Create()
 bb:WriteRoot( node )
 print( bb:Dump() )
 
---local node2 = bb:ReadRoot()
---print( node2.msg )
+local node2 = bb:ReadRoot()
+print( node2.msg )
 
 
 
@@ -344,4 +295,27 @@ function TypeIdBaseOfCheck( pt, typeId )
 	end
 end
 
+]]
+--[[
+BBuffer.ReadObject = function( bb )
+	local typeId = bb:ReadTypeId()
+	if typeId == 0 then
+		return BBuffer.null
+	end
+	local pt = TypeIdProtos[ typeId ]
+	if pt == nil then
+		error( "invalid typeId: " .. typeId )
+	end
+	local o, isnew = bb:ReadOffset( pt.Create )
+	if isnew ~= nil then
+		pt.FromBBuffer( bb, o )
+	end
+	return o
+end
+BBuffer.ReadRoot = function( bb )
+	bb:BeginRead()
+	local rtv = bb:ReadObject()
+	bb:EndRead()
+	return rtv
+end
 ]]
