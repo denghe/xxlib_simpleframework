@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.27004.2002
+VisualStudioVersion = 15.0.27004.2005
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "test_csharp1", "test_csharp1\test_csharp1.csproj", "{40783734-2418-451C-8B7E-472A33C6D91B}"
 EndProject
@@ -56,6 +56,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test_cpp5", "test_cpp5\test_cpp5.vcxproj", "{9947D8D7-2CAB-4637-8F4B-4E2E3DCB7FAB}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test_cpp6_lua", "test_cpp6_lua\test_cpp6_lua.vcxproj", "{6ED55611-B66E-4B3E-B03A-DEC9AF0177A2}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test_cpp7_lua", "test_cpp7_lua\test_cpp7_lua.vcxproj", "{91368131-D56C-4FF9-BA82-4CCA8642CA1D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -155,6 +157,10 @@ Global
 		{6ED55611-B66E-4B3E-B03A-DEC9AF0177A2}.Debug|x64.Build.0 = Debug|x64
 		{6ED55611-B66E-4B3E-B03A-DEC9AF0177A2}.Release|x64.ActiveCfg = Release|x64
 		{6ED55611-B66E-4B3E-B03A-DEC9AF0177A2}.Release|x64.Build.0 = Release|x64
+		{91368131-D56C-4FF9-BA82-4CCA8642CA1D}.Debug|x64.ActiveCfg = Debug|x64
+		{91368131-D56C-4FF9-BA82-4CCA8642CA1D}.Debug|x64.Build.0 = Debug|x64
+		{91368131-D56C-4FF9-BA82-4CCA8642CA1D}.Release|x64.ActiveCfg = Release|x64
+		{91368131-D56C-4FF9-BA82-4CCA8642CA1D}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

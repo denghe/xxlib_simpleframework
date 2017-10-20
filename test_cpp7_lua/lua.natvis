@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+  <!-- only for lua 5.3.4 latest version -->
+  <Type Name="lua_State">
+    <DisplayString>[{top-(ci->func+1)}]</DisplayString>
+    <Expand>
+      <IndexListItems>
+        <Size>top-(ci->func+1)</Size>
+        <ValueNode>ci->func[$i+1]</ValueNode>
+      </IndexListItems>
+      <Item Name="[registry]">*(Table*)l_G->l_registry.value_.gc</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="TValue">
+    <DisplayString Condition="(tt_&amp;0xf)==0">nil</DisplayString>
+    <DisplayString Condition="(tt_&amp;0xf)==1">boolean</DisplayString>
+    <DisplayString Condition="(tt_&amp;0xf)==2">lightuserdata {value_.p}</DisplayString>
+    <DisplayString Condition="(tt_&amp;0xf)==3 &amp;&amp; (tt_&amp;0xf0)==0">double {value_.n}</DisplayString>
+    <DisplayString Condition="(tt_&amp;0xf)==3 &amp;&amp; (tt_&amp;0xf0)==16">integer {value_.i}</DisplayString>
+    <DisplayString Condition="(tt_&amp;0xf)==4">string {*(TString*)value_.gc}</DisplayString>
+    <DisplayString Condition="(tt_&amp;0xf)==5">table {*(Table*)value_.gc}</DisplayString>
+    <DisplayString Condition="(tt_&amp;0xf)==6">function</DisplayString>
+    <DisplayString Condition="(tt_&amp;0xf)==7">userdata {*(Udata*)value_.gc}</DisplayString>
+    <DisplayString Condition="(tt_&amp;0xf)==8">thread</DisplayString>
+    <DisplayString>unknown</DisplayString>
+    <Expand>
+      <Item Name="[table]" Condition="(tt_&amp;0xf)==5">*(Table*)value_.gc</Item>
+    </Expand>
+  </Type>
+  <Type Name="TString">
+    <DisplayString Condition="sizeof(size_t)==8">{(char*)this + 24}"</DisplayString>
+    <DisplayString Condition="sizeof(size_t)==4">{(char*)this + 20}"</DisplayString>
+  </Type>
+  <Type Name="Udata">
+    <DisplayString>{(void*)next}</DisplayString>
+    <Expand>
+      <Item Name="metatable" Condition="metatable!=0">*metatable</Item>
+    </Expand>
+  </Type>
+  <Type Name="CClosure">
+    <DisplayString>{f}</DisplayString>
+  </Type>
+  <Type Name="LClosure">
+    <DisplayString>Lua function</DisplayString>
+  </Type>
+  <Type Name="Closure">
+    <DisplayString>{c}</DisplayString>
+  </Type>
+  <Type Name="Table">
+    <DisplayString>[{sizearray}]</DisplayString>
+    <Expand>
+      <Item Name="[array size]">sizearray</Item>
+      <Item Name="metatable" Condition="metatable!=0">*metatable</Item>
+      <IndexListItems>
+        <Size>sizearray</Size>
+        <ValueNode>array[$i]</ValueNode>
+      </IndexListItems>
+      <IndexListItems>
+        <Size>1&lt;&lt;lsizenode</Size>
+        <ValueNode>node[$i]</ValueNode>
+      </IndexListItems>
+    </Expand>
+  </Type>
+
+  <Type Name="Node">
+    <DisplayString>{u} : {i_val}</DisplayString>
+  </Type>
+
+  <Type Name="Node::NodeKey">
+    <DisplayString Condition="(key_tt&amp;0xf)==0">nil</DisplayString>
+    <DisplayString Condition="(key_tt&amp;0xf)==1">boolean</DisplayString>
+    <DisplayString Condition="(key_tt&amp;0xf)==2">lightuserdata {key_val.p}</DisplayString>
+    <DisplayString Condition="(key_tt&amp;0xf)==3 &amp;&amp; (key_tt&amp;0xf0)==0">double {key_val.n}</DisplayString>
+    <DisplayString Condition="(key_tt&amp;0xf)==3 &amp;&amp; (key_tt&amp;0xf0)==16">integer {key_val.i}</DisplayString>
+    <DisplayString Condition="(key_tt&amp;0xf)==4">string {*(TString*)key_val.gc}</DisplayString>
+    <DisplayString Condition="(key_tt&amp;0xf)==5">table {*(Table*)key_val.gc}</DisplayString>
+    <DisplayString Condition="(key_tt&amp;0xf)==6">function</DisplayString>
+    <DisplayString Condition="(key_tt&amp;0xf)==7">userdata {*(Udata*)key_val.gc}</DisplayString>
+    <DisplayString Condition="(key_tt&amp;0xf)==8">thread</DisplayString>
+    <DisplayString>unknown</DisplayString>
+  </Type>
+
+</AutoVisualizer>
