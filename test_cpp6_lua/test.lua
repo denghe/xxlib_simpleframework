@@ -13,15 +13,15 @@ table.Insert = table.insert
 table.Remove = table.remove
 
 -- 实现一个 Dump 功能以方便查看结果
-table.Dump = function()
-	for k, v in ipairs( self ) do
+table.Dump = function( t )
+	for k, v in ipairs( t ) do
 		print( k, v )
 	end
 end
 
 
-
-PKG_Node =			-- class PKG.Node { PKG.Node parent; List<PKG.Node> childs; string msg; }
+-- class PKG.Node { PKG.Node parent; List<PKG.Node> childs; List<long> ids; string msg; }
+PKG_Node =
 {
 	typeName = "PKG_Node",
 	typeId = 3,
@@ -68,7 +68,10 @@ List_PKG_Node_ =		-- List<PKG.Node>
 		return o
 	end,
 	FromBBuffer = function( bb, o )
-		--bb:ReadList( o )
+		local len = bb:ReadUInt32()
+		for i = 1, len do
+			rawset( o, i, bb:ReadObject() )	-- 已知问题: 返回了 nil. 应该有值
+		end
 	end,
 	ToBBuffer = function( bb, o )
 		bb:WriteUInt32( #o )
@@ -82,11 +85,11 @@ BBuffer.Register( List_PKG_Node_ )
 List_Int64_ =			-- List<long>
 {
 	typeName = "List_Int64_",
-	typeId = -5,
+	typeId = 5,
 	Create = function()
 		local o = {}
 		o.__proto = List_Int64_
-		o.__childprototype = BBuffer.Int64
+		-- o.__childproto = BBuffer.Int64
 		o.__index = o
 		o.__newindex = o
 
@@ -94,7 +97,10 @@ List_Int64_ =			-- List<long>
 		return o
 	end,
 	FromBBuffer = function( bb, o )
-		--bb:ReadList( o )
+		local len = bb:ReadUInt32()
+		for i = 1, len do
+			o:Add( bb:ReadInt64() )
+		end
 	end,
 	ToBBuffer = function( bb, o )
 		bb:WriteUInt32( #o )
@@ -125,10 +131,26 @@ node.msg = "1234567"
 
 local bb = BBuffer.Create()
 bb:WriteRoot( node )
-print( bb:Dump() )
+
 
 local node2 = bb:ReadRoot()
+
+print( "dump node:" )
+print( node )
+node.childs:Dump()
+node.ids:Dump()
+print( node.msg )
+
+
+print( "dump node2:" )
+print( node2 )
+node2.childs:Dump()
+node2.ids:Dump()
 print( node2.msg )
+
+print( "dump bb:" )
+print( bb:Dump() )
+
 
 
 

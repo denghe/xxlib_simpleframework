@@ -521,7 +521,7 @@ namespace xx
 			uint16_t typeId;
 			if (Read(typeId))
 			{
-				luaL_error(L, "read typeId error.");
+				luaL_error(L, "buf read offset: %d, read typeId error", offset);
 			}
 			if (!typeId)
 			{
@@ -535,13 +535,13 @@ namespace xx
 			lua_rawgeti(L, -1, typeId);				// bb, typeIdProtos, proto?
 			if (lua_isnil(L, -1))
 			{
-				luaL_error(L, "invalid typeId: %d", typeId);
+				luaL_error(L, "buf read offset: %d, invalid typeId: %d", offset, typeId);
 			}
 
 			uint32_t ptr_offset = 0, bb_offset_bak = offset - offsetRoot;
 			if (Read(ptr_offset))
 			{
-				luaL_error(L, "read offset error.");
+				luaL_error(L, "buf read offset: %d, read offset error", offset);
 			}
 			if (ptr_offset == bb_offset_bak)		// 首次出现, 后面是内容
 			{
@@ -549,14 +549,15 @@ namespace xx
 				lua_getfield(L, 2, "Create");		// bb, proto, Create
 				lua_call(L, 0, 1);					// bb, proto, o
 				lua_insert(L, 2);					// bb, o, proto
+				PushIdxDict(L);						// bb, o, proto, dict
+				lua_pushvalue(L, -3);				// bb, o, proto, dict, o
+				lua_rawseti(L, -2, ptr_offset);		// bb, o, proto, dict
+				lua_pop(L, 1);						// bb, o, proto
 				lua_getfield(L, -1, "FromBBuffer");	// bb, o, proto, FromBBuffer
 				lua_pushvalue(L, 1);				// bb, o, proto, FromBBuffer, bb
 				lua_pushvalue(L, 2);				// bb, o, proto, FromBBuffer, bb, o
 				lua_call(L, 2, 0);					// bb, o, proto
-				PushIdxDict(L);						// bb, o, proto, dict
-				lua_pushvalue(L, -3);				// bb, o, proto, dict, o
-				lua_rawseti(L, -2, ptr_offset);		// bb, o, proto, dict
-				lua_pop(L, 2);						// bb, o
+				lua_pop(L, 1);						// bb, o
 			}
 			else
 			{
