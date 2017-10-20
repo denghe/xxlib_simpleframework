@@ -33,8 +33,8 @@ namespace xx
 				{ "WriteUInt64", WriteUInt64 },
 				{ "WriteFloat", WriteFloat },
 				{ "WriteDouble", WriteDouble },
-				{ "WriteString", WriteString },
-				{ "WriteBBuffer", WriteBBuffer },
+				//{ "WriteString", WriteString },
+				//{ "WriteBBuffer", WriteBBuffer },
 				{ "WriteRoot", WriteRoot },
 				{ "WriteObject", WriteObject },
 
@@ -49,8 +49,8 @@ namespace xx
 				{ "ReadUInt64", ReadUInt64 },
 				{ "ReadFloat", ReadFloat },
 				{ "ReadDouble", ReadDouble },
-				{ "ReadString", ReadString },
-				{ "ReadBBuffer", ReadBBuffer },
+				//{ "ReadString", ReadString },
+				//{ "ReadBBuffer", ReadBBuffer },
 				{ "ReadRoot", ReadRoot },
 				{ "ReadObject", ReadObject },
 
@@ -216,50 +216,28 @@ namespace xx
 		}
 
 
-		// nil 写入 0, 非 nil 写入 typeId(1) + 长度 + 内容
-		inline static int WriteString(lua_State* L)
+		// todo: String BBuffer 序列化函数 改为经由 WriteObject 根据 typeId 来路由调用, 不暴露在外
+
+
+		// 写入 长度 + 内容( typeId , offset 由调用方写入 )
+		inline void WriteString(lua_State* L)
 		{
-			auto& self = GetSelf(L, 2);
-			if (lua_isnil(L, 2))
+			size_t len;
+			auto v = lua_tolstring(L, 2, &len);
+			Reserve(dataLen + 5 + (uint32_t)len);
+			Write(len);
+			if (len)
 			{
-				self->Write((uint8_t)0);
-				return 0;
+				memcpy(buf + dataLen, v, len);
+				dataLen += (uint32_t)len;
 			}
-			if (!lua_isstring(L, 2))
-			{
-				luaL_error(L, "the arg's type must be a string / nil");
-			}
-			size_t dataLen;
-			auto v = lua_tolstring(L, 2, &dataLen);
-			self->Reserve(self->dataLen + 6 + (uint32_t)dataLen);
-			self->Write((uint8_t)1);
-			self->Write(dataLen);
-			if (dataLen)
-			{
-				memcpy(self->buf + self->dataLen, v, dataLen);
-				self->dataLen += (uint32_t)dataLen;
-			}
-			return 0;
 		}
 
-		// nil 写入 0, 非 nil 写入 typeId(2) + 长度 + 内容
-		inline static int WriteBBuffer(lua_State* L)
+		// 写入 长度 + 内容( typeId , offset 由调用方写入 )
+		inline void WriteBBuffer(lua_State* L)
 		{
-			auto& self = GetSelf(L, 2);
-			if (lua_isnil(L, 2))
-			{
-				self->Write((uint8_t)0);
-				return 0;
-			}
-			if (!lua_isuserdata(L, 2))	// 这里先这样简单检查. 暂不检查其是否具备特定元表
-			{
-				luaL_error(L, "the arg's type must be a BBuffer / nil");
-			}
-
 			auto& bb = *(Lua_BBuffer_v*)lua_touserdata(L, 2);
-			self->Write((uint8_t)2);
-			bb->ToBBuffer(*self);
-			return 0;
+			bb->ToBBuffer(*this);
 		}
 
 		inline static int Dump(lua_State* L)
@@ -316,61 +294,29 @@ namespace xx
 		inline static int ReadFloat(lua_State* L) { return  ReadNum<float>(L); }
 		inline static int ReadDouble(lua_State* L) { return ReadNum<double>(L); }
 
-		inline static int ReadString(lua_State* L)
+		inline void ReadString(lua_State* L)
 		{
-			auto& self = GetSelf(L, 1);
-			uint8_t typeId;
-			if (self->Read(typeId))
+			uint32_t len;
+			if (Read(len))
 			{
-				luaL_error(L, "read string typeId error");
+				luaL_error(L, "read string len error. buf.offset = %d", offset);
 			}
-			if (typeId)
+			if (offset + len > dataLen)
 			{
-				if (typeId != 1)
-				{
-					luaL_error(L, "read string typeId error: typeId != 1");
-				}
-				xx::String_v s(self->mempool());
-				if (self->Read(s))
-				{
-					luaL_error(L, "read string content error");
-				}
-				lua_pushlstring(L, s->C_str(), s->dataLen);
+				luaL_error(L, "string's len: %d out of range. buf.offset = %d, buf.dataLen = %d", len, offset, dataLen);
 			}
-			else
-			{
-				lua_pushnil(L);
-			}
-			return 1;
+			lua_pushlstring(L, buf + offset, len);
 		}
 
-		inline static int ReadBBuffer(lua_State* L)
+		inline void ReadBBuffer(lua_State* L)
 		{
-			auto& self = GetSelf(L, 1);
-			uint8_t typeId;
-			if (self->Read(typeId))
+			Create(L);											// ..., bb
+			auto& bb = *(Lua_BBuffer_v*)lua_touserdata(L, 2);
+			if (bb->FromBBuffer(*this))
 			{
-				luaL_error(L, "read BBuffer typeId error");
+				lua_pop(L, 1);									// ...
+				luaL_error(L, "read BBuffer len + data error. buf.offset = %d", offset);
 			}
-			if (typeId)
-			{
-				if (typeId != 2)
-				{
-					luaL_error(L, "read BBuffer typeId error: typeId != 2");
-				}
-				Create(L);											// self, bb
-				auto& bb = *(Lua_BBuffer_v*)lua_touserdata(L, 2);
-				if (bb->FromBBuffer(*self))
-				{
-					lua_pop(L, 1);									// self
-					luaL_error(L, "read string content error");
-				}
-			}
-			else
-			{
-				lua_pushnil(L);
-			}
-			return 1;
 		}
 
 
@@ -463,6 +409,25 @@ namespace xx
 			}
 			else
 			{
+				if (lua_isstring(L, 2))
+				{
+					Write((uint8_t)1);
+					if (WriteOffset(L))
+					{
+						WriteString(L);
+					}
+					return;
+				}
+				else if (lua_isuserdata(L, 2))
+				{
+					Write((uint8_t)2);
+					if (WriteOffset(L))
+					{
+						WriteBBuffer(L);
+					}
+					return;
+				}
+
 				lua_getfield(L, 2, "__proto");		// bb, o, proto
 				lua_getfield(L, 3, "typeId");		// bb, o, proto, typeId
 				auto typeId = (uint16_t)lua_tonumber(L, -1);
@@ -529,13 +494,14 @@ namespace xx
 				return;
 			}
 
-			// todo: 判断 typeId 是否为 1 或 2 ?
-
-			lua_rawgetp(L, LUA_REGISTRYINDEX, (void*)name);	// bb, typeIdProtos
-			lua_rawgeti(L, -1, typeId);				// bb, typeIdProtos, proto?
-			if (lua_isnil(L, -1))
+			if (typeId > 2)		// 1, 2 没有 proto
 			{
-				luaL_error(L, "buf read offset: %d, invalid typeId: %d", offset, typeId);
+				lua_rawgetp(L, LUA_REGISTRYINDEX, (void*)name);	// bb, typeIdProtos
+				lua_rawgeti(L, -1, typeId);				// bb, typeIdProtos, proto?
+				if (lua_isnil(L, -1))
+				{
+					luaL_error(L, "buf read offset: %d, invalid typeId: %d", offset, typeId);
+				}
 			}
 
 			uint32_t ptr_offset = 0, bb_offset_bak = offset - offsetRoot;
@@ -545,6 +511,17 @@ namespace xx
 			}
 			if (ptr_offset == bb_offset_bak)		// 首次出现, 后面是内容
 			{
+				if (typeId == 1)
+				{
+					ReadString(L);
+					return;
+				}
+				else if (typeId == 2)
+				{
+					ReadBBuffer(L);
+					return;
+				}
+
 				lua_remove(L, 2);					// bb, proto
 				lua_getfield(L, 2, "Create");		// bb, proto, Create
 				lua_call(L, 0, 1);					// bb, proto, o

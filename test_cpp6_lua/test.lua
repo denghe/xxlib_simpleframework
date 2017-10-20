@@ -43,13 +43,13 @@ PKG_Node =
 		rawset( o, "parent", bb:ReadObject() )
 		rawset( o, "childs", bb:ReadObject() )
 		rawset( o, "ids", bb:ReadObject() )
-		rawset( o, "msg", bb:ReadString() )
+		rawset( o, "msg", bb:ReadObject() )
 	end,
 	ToBBuffer = function( bb, o )
 		bb:WriteObject( rawget( o, "parent" ) )
 		bb:WriteObject( rawget( o, "childs" ) )
 		bb:WriteObject( rawget( o, "ids" ) )
-		bb:WriteString( rawget( o, "msg" ) )
+		bb:WriteObject( rawget( o, "msg" ) )
 	end
 }
 BBuffer.Register( PKG_Node )
@@ -148,9 +148,9 @@ node2.childs:Dump()
 node2.ids:Dump()
 print( node2.msg )
 
+
 print( "dump bb:" )
 print( bb:Dump() )
-
 
 
 
@@ -269,7 +269,7 @@ PKG.Xxx =
 		local p = getmetatable( o )
 		p.__proto.ToBBuffer( bb, p )
 		bb:WriteInt64( rawget( o, "ticks" ) )
-		bb:WriteString( rawget( o, "msg" ) )
+		bb:WriteObject( rawget( o, "msg" ) )
 	end
 }
 TypeIdProtos[ PKG.Xxx.typeId ] = PKG.Xxx
@@ -280,8 +280,6 @@ TypeIdProtos[ PKG.Xxx.typeId ] = PKG.Xxx
 local bb = BBuffer.Create()
 local bb2 = BBuffer.Create()
 bb2:WriteUInt8( 255 )
-bb2:WriteString( "中文" )
-bb:WriteBBuffer( bb2 )
 print( bb:Dump() )
 local bb3 = bb:ReadBBuffer()
 print( bb:Dump() )
