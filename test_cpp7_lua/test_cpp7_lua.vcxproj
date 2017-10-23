@@ -92,8 +92,6 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\luaex\lua_bbuffer.h" />
-    <ClInclude Include="..\luaex\lua_mempool.h" />
     <ClInclude Include="std_cout_helper.h" />
   </ItemGroup>
   <ItemGroup>

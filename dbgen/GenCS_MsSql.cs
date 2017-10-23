@@ -159,7 +159,7 @@ namespace " + iface.Namespace + @"
             }
 
             // class {
-            sb.Append(iface._GetDesc_Csharp(4) + @"
+            sb.Append(iface._GetDesc()._GetComment_CSharp(4) + @"
     public class " + iface.Name + @"
     {
         public SqlConnection conn;
@@ -199,7 +199,7 @@ namespace " + iface.Namespace + @"
                 var rtn = rt._GetTypeDecl_Csharp();
 
                 sb.Append(@"
-" + f._GetDesc_Csharp(8) + @"
+" + f._GetDesc()._GetComment_CSharp(8) + @"
         " + "public " + rtn + " " + f.Name + @"");
 
                 if (ps.Length > 0)
@@ -216,7 +216,7 @@ namespace " + iface.Namespace + @"
                         sb.Append(",");
                     }
 
-                    sb.Append(p._GetDesc_Csharp(12) + @"
+                    sb.Append(p._GetDesc()._GetComment_CSharp(12) + @"
             " + p.ParameterType._GetTypeDecl_Csharp() + " " + p.Name);
 
                     if (p.HasDefaultValue)

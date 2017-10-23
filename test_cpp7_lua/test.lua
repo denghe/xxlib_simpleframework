@@ -102,7 +102,7 @@ List_Int64_ =			-- List<long>
 	FromBBuffer = function( bb, o )
 		local len = bb:ReadUInt32()
 		for i = 1, len do
-			o:Add( bb:ReadInt64() )
+			table.insert( o, bb:ReadInt64() )
 		end
 	end,
 	ToBBuffer = function( bb, o )

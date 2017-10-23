@@ -35,7 +35,7 @@ namespace " + iface.Namespace + @"
             }
 
             // struct {
-            sb.Append(iface._GetDesc_Cpp(4) + @"
+            sb.Append(iface._GetDesc()._GetComment_Cpp(4) + @"
     struct " + iface.Name + @"
     {
 		xx::SQLite& sqlite;
@@ -68,7 +68,7 @@ namespace " + iface.Namespace + @"
                 sb2.Append(@"
 
 
-        xx::SQLiteQuery_p query_" + fn + @";" + f._GetDesc_Cpp(8) + @"
+        xx::SQLiteQuery_p query_" + fn + @";" + f._GetDesc()._GetComment_Cpp(8) + @"
         inline " + rtn + " " + fn);
 
                 if (ps.Length > 0)
@@ -86,7 +86,7 @@ namespace " + iface.Namespace + @"
                     }
                     var pt = p.ParameterType;
 
-                    sb2.Append(p._GetDesc_Cpp(12) + @"
+                    sb2.Append(p._GetDesc()._GetComment_Cpp(12) + @"
             " + pt._GetSafeTypeDecl_Cpp(templateName) + " const& " + p.Name);
 
                     if (p.HasDefaultValue)

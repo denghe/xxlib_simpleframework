@@ -752,7 +752,7 @@ public static class GenExtensions
     /// <summary>
     /// 获取 C# 风格的注释
     /// </summary>
-    public static string _GetCSharpComment(this string s, int space)
+    public static string _GetComment_CSharp(this string s, int space)
     {
         if (s.Trim() == "")
             return "";
@@ -782,6 +782,19 @@ public static class GenExtensions
  + sps + @"// " + s;
     }
 
+
+    /// <summary>
+    /// 获取 LUA 风格的注释
+    /// </summary>
+    public static string _GetComment_Lua(this string s, int space)
+    {
+        if (s.Trim() == "")
+            return "";
+        var sps = new string(' ', space);
+        return sps + @"--[[
+" + sps + s + @"
+" + sps + "]]";
+    }
 
 
 
@@ -1030,28 +1043,16 @@ public static class GenExtensions
     /// <summary>
     /// 获取 Attribute 之 Desc 注释. 未找到将返回 ""
     /// </summary>
-    public static string _GetDesc_Csharp<T>(this T t, int space) where T : ICustomAttributeProvider
+    public static string _GetDesc<T>(this T t) where T : ICustomAttributeProvider
     {
         foreach (var r_attribute in t.GetCustomAttributes(false))
         {
             if (r_attribute is TemplateLibrary.Desc)
-                return ((TemplateLibrary.Desc)r_attribute).value._GetCSharpComment(space);
+                return ((TemplateLibrary.Desc)r_attribute).value;
         }
         return "";
     }
 
-    /// <summary>
-    /// 获取 Attribute 之 Desc 注释. 未找到将返回 ""
-    /// </summary>
-    public static string _GetDesc_Cpp<T>(this T t, int space) where T : ICustomAttributeProvider
-    {
-        foreach (var r_attribute in t.GetCustomAttributes(false))
-        {
-            if (r_attribute is TemplateLibrary.Desc)
-                return ((TemplateLibrary.Desc)r_attribute).value._GetComment_Cpp(space);
-        }
-        return "";
-    }
 
 
     /// <summary>

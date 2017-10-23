@@ -35,7 +35,7 @@ namespace " + e.Namespace + @"
 
             // desc
             // public enum xxxxxxxxx : underlyingType
-            sb.Append(e._GetDesc_Csharp(4) + @"
+            sb.Append(e._GetDesc()._GetComment_CSharp(4) + @"
     public enum " + e.Name + @" : " + e._GetEnumUnderlyingTypeName_Csharp() + @"
     {");
 
@@ -44,7 +44,7 @@ namespace " + e.Namespace + @"
             var fs = e._GetEnumFields();
             foreach (var f in fs)
             {
-                sb.Append(f._GetDesc_Csharp(8) + @"
+                sb.Append(f._GetDesc()._GetComment_CSharp(8) + @"
         " + f.Name + " = " + f._GetEnumValue(e) + ",");
             }
 
@@ -79,7 +79,7 @@ namespace " + c.Namespace + @"
             // desc
             // public T xxxxxxxxx = defaultValue
             // public const T xxxxxxxxx = defaultValue
-            sb.Append(c._GetDesc_Csharp(4) + @"
+            sb.Append(c._GetDesc()._GetComment_CSharp(4) + @"
     public partial class " + c.Name + @"
     {");
 
@@ -92,12 +92,12 @@ namespace " + c.Namespace + @"
                 if (f._Has<TemplateLibrary.Property>())
                 {
                     if (f.IsStatic) throw new Exception("static con't be property");
-                    sb.Append(f._GetDesc_Csharp(8) + @"
+                    sb.Append(f._GetDesc()._GetComment_CSharp(8) + @"
         public " + ftn + " " + f.Name + " { get; set; }");
                 }
                 else
                 {
-                    sb.Append(f._GetDesc_Csharp(8) + @"
+                    sb.Append(f._GetDesc()._GetComment_CSharp(8) + @"
         public " + (f.IsStatic ? "const " : "") + ftn + " " + f.Name);
                 }
                 var v = f.GetValue(f.IsStatic ? null : o);

@@ -6,61 +6,32 @@ using System.Reflection;
 using System.Text;
 
 
-public static class GenCS_Class
+public static class GenLUA_Class
 {
     public static void Gen(Assembly asm, string outDir, string templateName)
     {
         var sb = new StringBuilder();
-
-        // usings
-        sb.Append(@"using System;
-using xx;");
-
-        // template namespace
-        sb.Append(@"
-namespace " + templateName + @"
-{");
 
         var ts = asm._GetTypes();
         var es = ts._GetEnums();
         for (int i = 0; i < es.Count; ++i)
         {
             var e = es[i];
+            var en = e.FullName.Replace(".", "_");
+            sb.Append(e._GetDesc()._GetComment_Lua(0) + @"
+" + en + @" = {");
 
-            // namespace e_ns {
-            if (e.Namespace != null && (i == 0 || (i > 0 && es[i - 1].Namespace != e.Namespace))) // namespace 去重
-            {
-                sb.Append(@"
-namespace " + e.Namespace + @"
-{");
-            }
-
-            // desc
-            // public enum xxxxxxxxx : underlyingType
-            sb.Append(e._GetDesc()._GetComment_CSharp(4) + @"
-    public enum " + e.Name + @" : " + e._GetEnumUnderlyingTypeName_Csharp() + @"
-    {");
-
-            // desc
-            // xxxxxx = val
             var fs = e._GetEnumFields();
             foreach (var f in fs)
             {
-                sb.Append(f._GetDesc()._GetComment_CSharp(8) + @"
-        " + f.Name + " = " + f._GetEnumValue(e) + ",");
+                sb.Append(f._GetDesc()._GetComment_Lua(4) + @"
+    " + f.Name + " = " + f._GetEnumValue(e) + ",");
             }
+            sb.Length--;
 
             // enum /
             sb.Append(@"
-    }");
-
-            // namespace }
-            if (e.Namespace != null && ((i < es.Count - 1 && es[i + 1].Namespace != e.Namespace) || i == es.Count - 1))
-            {
-                sb.Append(@"
 }");
-            }
-
         }
 
 
@@ -70,26 +41,15 @@ namespace " + e.Namespace + @"
             var c = cs[i];
             var o = asm.CreateInstance(c.FullName);
 
-            // namespace c_ns {
-            if (c.Namespace != null && (i == 0 || (i > 0 && cs[i - 1].Namespace != c.Namespace))) // namespace 去重
-            {
-                sb.Append(@"
-namespace " + c.Namespace + @"
-{");
-            }
-
-            // desc
-            // public T xxxxxxxxx = defaultValue
-            // public const T xxxxxxxxx = defaultValue
             if (c.IsValueType)
             {
-                sb.Append(c._GetDesc()._GetComment_CSharp(4) + @"
+                sb.Append(c._GetDesc()._GetComment_Lua(4) + @"
     public partial struct " + c.Name + @" : IBBuffer
     {");
             }
             else
             {
-                sb.Append(c._GetDesc()._GetComment_CSharp(4) + @"
+                sb.Append(c._GetDesc()._GetComment_Lua(4) + @"
     public partial class " + c.Name + @" : " + (c._HasBaseType() ? c.BaseType._GetTypeDecl_Csharp() : "IBBuffer") + @"
     {");
             }
@@ -100,7 +60,7 @@ namespace " + c.Namespace + @"
             {
                 var ft = f.FieldType;
                 var ftn = ft._GetTypeDecl_Csharp();
-                sb.Append(f._GetDesc()._GetComment_CSharp(8) + @"
+                sb.Append(f._GetDesc()._GetComment_Lua(8) + @"
         public " + (f.IsStatic ? "const " : "") + ftn + " " + f.Name);
 
                 var v = f.GetValue(f.IsStatic ? null : o);
@@ -218,13 +178,6 @@ namespace " + c.Namespace + @"
             sb.Append(@"
     }");
 
-            // namespace }
-            if (c.Namespace != null && ((i < cs.Count - 1 && cs[i + 1].Namespace != c.Namespace) || i == cs.Count - 1))
-            {
-                sb.Append(@"
-}");
-            }
-
         }
 
         // 遍历所有 type 及成员数据类型 生成  BBuffer.Register< T >( typeId ) 函数组. 0 不能占. string 占掉 1. BBuffer 占掉 2.
@@ -287,6 +240,6 @@ namespace " + c.Namespace + @"
 ");
 
 
-        sb._WriteToFile(Path.Combine(outDir, templateName + "_class.cs"));
+        sb._WriteToFile(Path.Combine(outDir, templateName + "_class.lua"));
     }
 }

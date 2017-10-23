@@ -40,7 +40,7 @@ namespace " + c.Namespace + @"
 
             // desc
             // enum class xxxxxxxxx : underlyingType
-            sb.Append(c._GetDesc_Cpp(4) + @"
+            sb.Append(c._GetDesc()._GetComment_Cpp(4) + @"
     struct " + c.Name + @";
     using " + c.Name + @"_p = xx::Ptr<" + c.Name + @">;
     using " + c.Name + @"_v = xx::Dock<" + c.Name + @">;
@@ -71,7 +71,7 @@ namespace " + e.Namespace + @"
 
             // desc
             // enum class xxxxxxxxx : underlyingType
-            sb.Append(e._GetDesc_Cpp(4) + @"
+            sb.Append(e._GetDesc()._GetComment_Cpp(4) + @"
     enum class " + e.Name + @" : " + e._GetEnumUnderlyingTypeName_Cpp() + @"
     {");
 
@@ -80,7 +80,7 @@ namespace " + e.Namespace + @"
             var fs = e._GetEnumFields();
             foreach (var f in fs)
             {
-                sb.Append(f._GetDesc_Cpp(8) + @"
+                sb.Append(f._GetDesc()._GetComment_Cpp(8) + @"
         " + f.Name + " = " + f._GetEnumValue(e) + ",");
             }
 
@@ -112,7 +112,7 @@ namespace " + c.Namespace + @"
 
             // desc
             // struct xxxxxxxxx
-            sb.Append(c._GetDesc_Cpp(4) + @"
+            sb.Append(c._GetDesc()._GetComment_Cpp(4) + @"
     struct " + c.Name + @"
     {");
 
@@ -124,7 +124,7 @@ namespace " + c.Namespace + @"
             {
                 var ft = f.FieldType;
                 var ftn = ft._GetSafeTypeDecl_Cpp(templateName);
-                sb.Append(f._GetDesc_Cpp(8) + @"
+                sb.Append(f._GetDesc()._GetComment_Cpp(8) + @"
         " + (f.IsStatic ? "constexpr " : "") + ftn + " " + f.Name);
 
                 var v = f.GetValue(f.IsStatic ? null : o);
@@ -177,7 +177,7 @@ namespace " + c.Namespace + @"
             // T xxxxxxxxx = defaultValue
             // constexpr T xxxxxxxxx = defaultValue
 
-            sb.Append(c._GetDesc_Cpp(4) + @"
+            sb.Append(c._GetDesc()._GetComment_Cpp(4) + @"
     struct " + c.Name + @" : " + btn + @"
     {");
 
@@ -187,7 +187,7 @@ namespace " + c.Namespace + @"
             {
                 var ft = f.FieldType;
                 var ftn = ft._GetSafeTypeDecl_Cpp(templateName);
-                sb.Append(f._GetDesc_Cpp(8) + @"
+                sb.Append(f._GetDesc()._GetComment_Cpp(8) + @"
         " + (f.IsStatic ? "constexpr " : "") + ftn + " " + f.Name);
 
                 var v = f.GetValue(f.IsStatic ? null : o);
