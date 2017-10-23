@@ -1,10 +1,88 @@
 ﻿#pragma execution_character_set("utf-8")
 #pragma once
 #include "lua_mempool.h"
+#include <string>
 
 struct Lua_BBuffer
 {
+	Lua_MemPool* mp;						// 指向内存池
+	char*		buf = nullptr;
+	uint32_t    dataLen = 0;
+	uint32_t	offset = 0;					// 读指针偏移量
+	uint32_t	offsetRoot = 0;				// offset 值写入修正
+	uint32_t	dataLenBak = 0;				// WritePackage 时用于备份当前数据写入偏移
+
+	// 从池中构造 BBuffer. 可能抛 lua 异常
+	Lua_BBuffer(lua_State* L)
+	{
+		lua_getallocf(L, (void**)&mp);		// 填充内存分配器
+		if (!mp)
+		{
+			luaL_error(L, "lua_State is not create by mempool ??");
+		}
+	}
+	Lua_BBuffer(Lua_BBuffer const&) = delete;
+	Lua_BBuffer& operator=(Lua_BBuffer const&) = delete;
+
+	~Lua_BBuffer()
+	{
+		if (buf)
+		{
+			mp->Free(buf);
+			buf = nullptr;
+		}
+	}
+
+	// 内容扩容( 可能失败而抛异常 )
+	void Reserve(lua_State* L, uint32_t const& capacity)
+	{
+		buf = (char*)mp->Realloc(buf, capacity, dataLen);
+		if (!buf)
+		{
+			luaL_error(L, "Lua_BBuffer Reserve fail. capacity = %d", capacity);
+		}
+	}
+
+	// 写入数据的简化调用
+	template<typename T>
+	void Write(lua_State* L, T const& v)
+	{
+		Reserve(L, dataLen + CalcWriteLen<T>());
+		dataLen += WriteTo(buf + dataLen, v);
+	}
+
+	// 写入 长度 + 内容
+	inline void Write(lua_State* L, char const* const& s, uint32_t const& len)
+	{
+		Reserve(L, dataLen + CalcWriteLen<uint32_t>() + len);
+		dataLen += WriteTo(buf + dataLen, len);
+		if (len)
+		{
+			memcpy(buf + dataLen, s, len);
+			dataLen += len;
+		}
+	}
+
+
+	// 读出数据的简化调用
+	template<typename T>
+	void Read(lua_State* L, T& v)
+	{
+		if (auto rtv = ReadFrom(buf, dataLen, offset, v))
+		{
+			if (rtv == 1)
+			{
+				luaL_error(L, "ReadFrom error: not enough data. offset = %d, dataLen = %d", offset, dataLen);
+			}
+			else // 2
+			{
+				luaL_error(L, "ReadFrom error: overflow. offset = %d, dataLen = %d", offset, dataLen);
+			}
+		}
+	}
+
 	constexpr static const char* name = "BBuffer";
+	constexpr static const char* hexs = "0123456789ABCDEF";
 
 	// 向 lua 映射全局的 BBuffer 表/元表
 	inline static int Init(lua_State *L)
@@ -45,7 +123,7 @@ struct Lua_BBuffer
 
 			{ "GetDataLen", GetDataLen },
 			{ "GetOffset", GetOffset },
-			{ "Dump", Dump },
+			{ "__tostring", __tostring },
 			// todo: write package ?
 
 			{ nullptr, nullptr }
@@ -57,9 +135,15 @@ struct Lua_BBuffer
 		lua_pushvalue(L, -1);					// mt, mt
 		lua_setfield(L, -2, "__index");			// mt
 
+		// 设置保护元表
+		lua_pushvalue(L, -1);					// mt, mt
+		lua_setfield(L, -2, "__metatable");		// mt
+
 		// 用 lud: 0 来代表空值占位符的元素
 		lua_pushlightuserdata(L, 0);			// mt, lud
-		lua_setfield(L, -2, "null");			// mt			
+		lua_setfield(L, -2, "null");			// mt
+
+
 
 		lua_setglobal(L, name);					// 
 
@@ -135,15 +219,36 @@ struct Lua_BBuffer
 		return *selfptr;
 	}
 
-	inline static int WriteBoolean(lua_State* L)
+	inline static int GetDataLen(lua_State* L)
 	{
-		auto& self = GetSelf(L, 2);
-		if (!lua_isboolean(L, 2))
+		auto& self = GetSelf(L, 1);
+		lua_pushinteger(L, self.dataLen);
+		return 1;
+	}
+
+	inline static int GetOffset(lua_State* L)
+	{
+		auto& self = GetSelf(L, 1);
+		lua_pushinteger(L, self.offset);
+		return 1;
+	}
+
+	inline static int __tostring(lua_State* L)
+	{
+		auto& self = GetSelf(L, 1);
+		std::string s;
+		s += "{ typeId = 2, dataLen = " + std::to_string(self.dataLen) + ", offset = " + std::to_string(self.offset) + ", data = {";
+		for (uint32_t i = 0; i < self.dataLen; ++i)
 		{
-			luaL_error(L, "the arg's type must be a bool");
+			s += i ? ", " : " ";
+			s += std::to_string((int)self.buf[i]);
+			//s += hexs[self.buf[i] % 16];
+			//s += hexs[self.buf[i] >> 4];
 		}
-		self.Write(lua_toboolean(L, 2) != 0);
-		return 0;
+		s += self.dataLen ? " }" : "}";
+		s += " }";
+		lua_pushlstring(L, s.c_str(), s.size());
+		return 1;
 	}
 
 	template<typename T>
@@ -165,10 +270,19 @@ struct Lua_BBuffer
 		{
 			luaL_error(L, "the arg's type must be a integer / number");
 		}
-		self.Write(v);
+		self.Write(L, v);
 		return 0;
 	}
-
+	inline static int WriteBoolean(lua_State* L)
+	{
+		auto& self = GetSelf(L, 2);
+		if (!lua_isboolean(L, 2))
+		{
+			luaL_error(L, "the arg's type must be a bool");
+		}
+		self.Write(L, lua_toboolean(L, 2) != 0);
+		return 0;
+	}
 	inline static int WriteInt8(lua_State* L) { return WriteNum<int8_t>(L); }
 	inline static int WriteInt16(lua_State* L) { return WriteNum<int16_t>(L); }
 	inline static int WriteInt32(lua_State* L) { return WriteNum<int32_t>(L); }
@@ -180,63 +294,7 @@ struct Lua_BBuffer
 	inline static int WriteFloat(lua_State* L) { return WriteNum<float>(L); }
 	inline static int WriteDouble(lua_State* L) { return WriteNum<double>(L); }
 
-	inline static int GetDataLen(lua_State* L)
-	{
-		auto& self = GetSelf(L, 1);
-		lua_pushinteger(L, self.dataLen);
-		return 1;
-	}
 
-	inline static int GetOffset(lua_State* L)
-	{
-		auto& self = GetSelf(L, 1);
-		lua_pushinteger(L, self.offset);
-		return 1;
-	}
-
-
-	// todo: String BBuffer 序列化函数 改为经由 WriteObject 根据 typeId 来路由调用, 不暴露在外
-
-
-	// 写入 长度 + 内容( typeId , offset 由调用方写入 )
-	inline void WriteString(lua_State* L)
-	{
-		size_t len;
-		auto v = lua_tolstring(L, 2, &len);
-		Reserve(dataLen + 5 + (uint32_t)len);
-		Write(len);
-		if (len)
-		{
-			memcpy(buf + dataLen, v, len);
-			dataLen += (uint32_t)len;
-		}
-	}
-
-	// 写入 长度 + 内容( typeId , offset 由调用方写入 )
-	inline void WriteBBuffer(lua_State* L)
-	{
-		auto& bb = *(Lua_BBuffer*)lua_touserdata(L, 2);
-		bb->ToBBuffer(*this);
-	}
-
-	inline static int Dump(lua_State* L)
-	{
-		// todo
-		return 0;
-	}
-
-
-	inline static int ReadBoolean(lua_State* L)
-	{
-		auto& self = GetSelf(L, 1);
-		bool v;
-		if (self.Read(v))
-		{
-			luaL_error(L, "read bool error!");
-		}
-		lua_pushboolean(L, v);
-		return 1;
-	}
 
 	template<typename T>
 	inline static int ReadNum(lua_State* L)
@@ -244,10 +302,7 @@ struct Lua_BBuffer
 		static_assert(std::is_arithmetic_v<T>);
 		auto& self = GetSelf(L, 1);
 		T v;
-		if (self.Read(v))
-		{
-			luaL_error(L, "read num error!");
-		}
+		self.Read(L, v);
 		if constexpr(std::is_integral_v<T>)
 		{
 			lua_pushinteger(L, (lua_Integer)v);
@@ -258,7 +313,14 @@ struct Lua_BBuffer
 		}
 		return 1;
 	}
-
+	inline static int ReadBoolean(lua_State* L)
+	{
+		auto& self = GetSelf(L, 1);
+		bool v;
+		self.Read(L, v);
+		lua_pushboolean(L, v);
+		return 1;
+	}
 	inline static int ReadInt8(lua_State* L) { return ReadNum<int8_t>(L); }
 	inline static int ReadInt16(lua_State* L) { return  ReadNum<int16_t>(L); }
 	inline static int ReadInt32(lua_State* L) { return  ReadNum<int32_t>(L); }
@@ -269,33 +331,6 @@ struct Lua_BBuffer
 	inline static int ReadUInt64(lua_State* L) { return ReadNum<uint64_t>(L); }
 	inline static int ReadFloat(lua_State* L) { return  ReadNum<float>(L); }
 	inline static int ReadDouble(lua_State* L) { return ReadNum<double>(L); }
-
-	inline void ReadString(lua_State* L)
-	{
-		uint32_t len;
-		if (Read(len))
-		{
-			luaL_error(L, "read string len error. buf.offset = %d", offset);
-		}
-		if (offset + len > dataLen)
-		{
-			luaL_error(L, "string's len: %d out of range. buf.offset = %d, buf.dataLen = %d", len, offset, dataLen);
-		}
-		lua_pushlstring(L, buf + offset, len);
-	}
-
-	inline void ReadBBuffer(lua_State* L)
-	{
-		Create(L);											// ..., bb
-		auto& bb = *(Lua_BBuffer*)lua_touserdata(L, 2);
-		if (bb->FromBBuffer(*this))
-		{
-			lua_pop(L, 1);									// ...
-			luaL_error(L, "read BBuffer len + data error. buf.offset = %d", offset);
-		}
-	}
-
-
 
 
 
@@ -345,7 +380,7 @@ struct Lua_BBuffer
 			if (lua_isnil(L, -1))				// 如果未记录则记录 + 写buf
 			{
 				auto offset = dataLen - offsetRoot;
-				Write(offset);					// 写buf
+				Write(L, offset);				// 写buf
 
 				lua_pop(L, 1);					// ..., o, dict
 				lua_pushvalue(L, -2);			// ..., o, dict, o
@@ -357,7 +392,7 @@ struct Lua_BBuffer
 			else								// 记录过则取其 value 来写buf
 			{
 				auto offset = (uint32_t)lua_tointeger(L, -1);
-				Write(offset);					// 写buf
+				Write(L, offset);				// 写buf
 				lua_pop(L, 2);					// ..., o
 				return false;
 			}
@@ -381,25 +416,28 @@ struct Lua_BBuffer
 		if (lua_isnil(L, -1) ||					// bb, o
 			lua_islightuserdata(L, -1) && (size_t)lua_touserdata(L, -1) == 0)
 		{
-			Write((uint8_t)0);
+			Write(L, (uint8_t)0);
 		}
 		else
 		{
-			if (lua_isstring(L, 2))
+			if (lua_isstring(L, 2))				// string
 			{
-				Write((uint8_t)1);
+				Write(L, (uint8_t)1);
 				if (WriteOffset(L))
 				{
-					WriteString(L);
+					size_t len;
+					auto s = lua_tolstring(L, 2, &len);
+					Write(L, s, (uint32_t)len);
 				}
 				return;
 			}
-			else if (lua_isuserdata(L, 2))
+			else if (lua_isuserdata(L, 2))		// bbuffer
 			{
-				Write((uint8_t)2);
+				Write(L, (uint8_t)2);
 				if (WriteOffset(L))
 				{
-					WriteBBuffer(L);
+					auto& bb = *(Lua_BBuffer*)lua_touserdata(L, 2);
+					Write(L, bb.buf, bb.dataLen);
 				}
 				return;
 			}
@@ -407,7 +445,7 @@ struct Lua_BBuffer
 			lua_getfield(L, 2, "__proto");		// bb, o, proto
 			lua_getfield(L, 3, "typeId");		// bb, o, proto, typeId
 			auto typeId = (uint16_t)lua_tonumber(L, -1);
-			Write(typeId);
+			Write(L, typeId);
 			lua_pop(L, 1);						// bb, o, proto
 			lua_insert(L, 2);					// bb, proto, o
 			if (WriteOffset(L))					// bb, proto, o
@@ -435,9 +473,6 @@ struct Lua_BBuffer
 	}
 
 
-
-
-
 	inline static int ReadRoot(lua_State* L)
 	{
 		auto& self = GetSelf(L, 1);				// bb
@@ -460,10 +495,7 @@ struct Lua_BBuffer
 	inline void ReadObject_(lua_State* L)
 	{
 		uint16_t typeId;
-		if (Read(typeId))
-		{
-			luaL_error(L, "buf read offset: %d, read typeId error", offset);
-		}
+		Read(L, typeId);
 		if (!typeId)
 		{
 			lua_pushlightuserdata(L, 0);		// bb, null
@@ -473,7 +505,7 @@ struct Lua_BBuffer
 		if (typeId > 2)		// 1, 2 没有 proto
 		{
 			lua_rawgetp(L, LUA_REGISTRYINDEX, (void*)name);	// bb, typeIdProtos
-			lua_rawgeti(L, -1, typeId);				// bb, typeIdProtos, proto?
+			lua_rawgeti(L, -1, typeId);			// bb, typeIdProtos, proto?
 			if (lua_isnil(L, -1))
 			{
 				luaL_error(L, "buf read offset: %d, invalid typeId: %d", offset, typeId);
@@ -481,20 +513,35 @@ struct Lua_BBuffer
 		}
 
 		uint32_t ptr_offset = 0, bb_offset_bak = offset - offsetRoot;
-		if (Read(ptr_offset))
-		{
-			luaL_error(L, "buf read offset: %d, read offset error", offset);
-		}
+		Read(L, ptr_offset);
 		if (ptr_offset == bb_offset_bak)		// 首次出现, 后面是内容
 		{
-			if (typeId == 1)
+			if (typeId == 1)	// string
 			{
-				ReadString(L);
+				uint32_t len;
+				Read(L, len);
+				if (offset + len > dataLen)
+				{
+					luaL_error(L, "string's len: %d out of range. buf.offset = %d, buf.dataLen = %d", len, offset, dataLen);
+				}
+				lua_pushlstring(L, buf + offset, len);
+				offset += len;
 				return;
 			}
-			else if (typeId == 2)
+			else if (typeId == 2)	// bbuffer
 			{
-				ReadBBuffer(L);
+				uint32_t len;
+				Read(L, len);
+				if (offset + len > dataLen)
+				{
+					lua_pop(L, 1);				// ...
+					luaL_error(L, "BBuffer's len: %d out of range. buf.offset = %d, buf.dataLen = %d", len, offset, dataLen);
+				}
+				Create(L);						// ..., bb
+				auto& bb = *(Lua_BBuffer*)lua_touserdata(L, -1);
+				bb.Reserve(L, len);
+				memcpy(bb.buf, buf + offset, len);
+				offset += len;
 				return;
 			}
 
@@ -610,10 +657,10 @@ struct Lua_BBuffer
 		return len;
 	}
 
-	// uint16_t 变长读, 可能会抛 lua error
-	inline static void VarRead7(lua_State* L, char const *srcBuf, uint32_t dataLen, uint32_t& offset, uint16_t &out)
+	// uint16_t 变长读, 返回错误码或 0( 成功 )
+	inline static int VarRead7(char const *srcBuf, uint32_t dataLen, uint32_t& offset, uint16_t &out) noexcept
 	{
-		if (offset >= dataLen) luaL_error(L, "uint16_t VarRead7 error: not enough data. offset = %d, dataLen = %d", offset, dataLen);
+		if (offset >= dataLen) return 1;
 		auto p = srcBuf + offset;
 		uint32_t i = 0, b7;
 		int32_t lshift = 0;
@@ -623,15 +670,15 @@ struct Lua_BBuffer
 		b7 = p[idx++];
 		if (b7 > 0x7F)
 		{
-			if (idx == 3) luaL_error(L, "uint16_t VarRead7 error: overflow. offset = %d, dataLen = %d", offset, dataLen);
-			if (idx >= dataLen) luaL_error(L, "uint16_t VarRead7 error: not enough data. offset = %d, dataLen = %d", offset, dataLen); 
+			if (idx == 3) return 2;
+			if (idx >= dataLen) return 1;
 			i |= (b7 & 0x7F) << lshift;
 			lshift += 7;
 			goto Lab1;
 		}
 		else
 		{
-			if (idx == 3 && b7 > 3) luaL_error(L, "uint16_t VarRead7 error: overflow. offset = %d, dataLen = %d", offset, dataLen);
+			if (idx == 3 && b7 > 3) return 2;
 			else
 			{
 				i |= b7 << lshift;
@@ -639,12 +686,13 @@ struct Lua_BBuffer
 		}
 		out = (uint16_t)i;
 		offset += idx;
+		return 0;
 	}
 
-	// uint32_t 变长读, 可能会抛 lua error
-	inline static void VarRead7(lua_State* L, char const *srcBuf, uint32_t dataLen, uint32_t& offset, uint32_t &out)
+	// uint32_t 变长读, 返回错误码或 0( 成功 )
+	inline static int VarRead7(char const *srcBuf, uint32_t dataLen, uint32_t& offset, uint32_t &out) noexcept
 	{
-		if (offset >= dataLen) luaL_error(L, "uint32_t VarRead7 error: not enough data. offset = %d, dataLen = %d", offset, dataLen);
+		if (offset >= dataLen) return 1;
 		auto p = srcBuf + offset;
 		uint32_t i = 0, b7;
 		int32_t lshift = 0;
@@ -654,15 +702,15 @@ struct Lua_BBuffer
 		b7 = p[idx++];
 		if (b7 > 0x7F)
 		{
-			if (idx == 5) luaL_error(L, "uint32_t VarRead7 error: not enough data. offset = %d, dataLen = %d", offset, dataLen);
-			if (idx >= dataLen) luaL_error(L, "uint32_t VarRead7 error: not enough data. offset = %d, dataLen = %d", offset, dataLen);
+			if (idx == 5) return 2;
+			if (idx >= dataLen) return 1;
 			i |= (b7 & 0x7F) << lshift;
 			lshift += 7;
 			goto Lab1;
 		}
 		else
 		{
-			if (idx == 5 && b7 > 15) luaL_error(L, "uint32_t VarRead7 error: not enough data. offset = %d, dataLen = %d", offset, dataLen);
+			if (idx == 5 && b7 > 15) return 2;
 			else
 			{
 				i |= b7 << lshift;
@@ -670,12 +718,13 @@ struct Lua_BBuffer
 		}
 		out = i;
 		offset += idx;
+		return 0;
 	}
 
-	// uint64_t 变长读, 可能会抛 lua error
-	inline static void VarRead7(lua_State* L, char const *srcBuf, uint32_t dataLen, uint32_t &offset, uint64_t &out)
+	// uint64_t 变长读, 返回错误码或 0( 成功 )
+	inline static int VarRead7(char const *srcBuf, uint32_t dataLen, uint32_t &offset, uint64_t &out) noexcept
 	{
-		if (offset >= dataLen) luaL_error(L, "uint64_t VarRead7 error: not enough data. offset = %d, dataLen = %d", offset, dataLen);
+		if (offset >= dataLen) return 1;
 		auto p = srcBuf + offset;
 		uint64_t i = 0, b7;
 		int32_t lshift = 0;
@@ -685,7 +734,7 @@ struct Lua_BBuffer
 		b7 = p[idx++];
 		if (b7 > 0x7F)
 		{
-			if (idx >= dataLen) luaL_error(L, "uint64_t VarRead7 error: not enough data. offset = %d, dataLen = %d", offset, dataLen);
+			if (idx >= dataLen) return 1;
 			if (idx < 8)
 			{
 				i |= (b7 & 0x7F) << lshift;
@@ -703,6 +752,7 @@ struct Lua_BBuffer
 		}
 		out = i;
 		offset += idx;
+		return 0;
 	}
 
 
@@ -712,7 +762,7 @@ struct Lua_BBuffer
 
 	// 计算写入 buf 后的最大长. 单字节 或 float 类型原样 copy, 其他类型均变长写入, 最长时会比原长 + 1
 	template<typename T>
-	static uint32_t CalcWriteLen(T const &in) noexcept
+	static uint32_t CalcWriteLen() noexcept
 	{
 		if constexpr(sizeof(T) == 1 || std::is_same_v<float, T>) return sizeof(T);
 		else return sizeof(T) + 1;
@@ -760,7 +810,7 @@ struct Lua_BBuffer
 				if (in == (double)i)
 				{
 					dstBuf[0] = 4;
-					return 1 + WriteTo(dstBuf + 1, i);
+					return 1 + VarWrite7(dstBuf, ZigZagEncode(i));
 				}
 				else
 				{
@@ -772,32 +822,34 @@ struct Lua_BBuffer
 		}
 	}
 
-	// 从 buf 读出数据. 可能抛 lua error.
+	// 从 buf 读出数据. 返回 0 表示成功, 非 0 是错误码. 不会抛错误
 	template<typename T>
-	static void ReadFrom(lua_State* L, char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, T &out)
+	static int ReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, T &out) noexcept
 	{
 		if constexpr(sizeof(T) == 1 || std::is_same_v<float, T>)
 		{
-			if (offset + sizeof(T) > dataLen) luaL_error(L, "1byte or float ReadFrom error: not enough data. offset = %d, dataLen = %d", offset, dataLen);
+			if (offset + sizeof(T) > dataLen) return 1;
 			memcpy(&out, srcBuf + offset, sizeof(T));
 			offset += sizeof(T);
+			return 0;
 		}
 		else if constexpr(std::is_integral_v<T>)
 		{
 			if constexpr(std::is_unsigned_v<T>)
 			{
-				VarRead7(L, srcBuf, dataLen, offset, out);
+				return VarRead7(srcBuf, dataLen, offset, out);
 			}
 			else
 			{
 				std::make_unsigned_t<T> i = 0;
-				VarRead7(L, srcBuf, dataLen, offset, i);
+				auto rtv = VarRead7(srcBuf, dataLen, offset, i);
 				out = ZigZagDecode(i);
+				return rtv;
 			}
 		}
 		else // should be double
 		{
-			if (offset >= dataLen) luaL_error(L, "double ReadFrom error: not enough data. offset = %d, dataLen = %d", offset, dataLen);
+			if (offset >= dataLen) return 1;
 			switch (srcBuf[offset++])				// 跳过 1 字节
 			{
 			case 0:
@@ -814,47 +866,23 @@ struct Lua_BBuffer
 				return 0;
 			case 4:
 			{
-				int32_t i = 0;
-				auto rtv = ReadFrom(L, srcBuf, dataLen, offset, i);
-				if (rtv) return rtv;
-				out = i;
-				return 0;
+				uint32_t i = 0;
+				auto rtv = VarRead7(srcBuf, dataLen, offset, i);
+				out = ZigZagDecode(i);
+				return rtv;
 			}
 			case 5:
 			{
-				if (dataLen < offset + sizeof(double)) return -1;
+				if (dataLen < offset + sizeof(double)) return 1;
 				memcpy(&out, srcBuf + offset, sizeof(double));
 				offset += sizeof(double);
 				return 0;
 			}
 			default:
-				luaL_error(L, "double ReadFrom error: bad double type. offset = %d, dataLen = %d", offset, dataLen);
+				return 2;
 			}
 		}
 	}
 
-	/**************************************************************************************************/
-	// 基于上面的模板封装写的成员函数
-	/**************************************************************************************************/
-
-	char*		buf;
-	uint32_t    bufLen;
-	uint32_t    dataLen;
-	uint32_t	offset = 0;					// 读指针偏移量
-	uint32_t	offsetRoot = 0;				// offset 值写入修正
-	uint32_t	dataLenBak = 0;				// WritePackage 时用于备份当前数据写入偏移
-
-	// 从池中构造 BBuffer. 可能抛 lua 异常
-	Lua_BBuffer(lua_State* L)
-	{
-		Lua_MemPool* mp;
-		lua_getallocf(L, (void**)&mp);		// 得到内存分配器
-		if (!mp)
-		{
-			luaL_error(L, "lua_State is not create by mempool ??");
-		}
-		// todo
-	}
-	Lua_BBuffer(Lua_BBuffer const&) = delete;
 
 };

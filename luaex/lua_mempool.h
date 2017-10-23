@@ -81,7 +81,7 @@ struct Lua_MemPool
 		if (originalSize >= newSize) return p;
 
 		auto np = Alloc(newSize);
-		std::memcpy(np, p, std::min(originalSize, dataLen));
+		memcpy(np, p, std::min(originalSize, dataLen));
 		Free(p);
 		return np;
 	}
@@ -104,5 +104,12 @@ struct Lua_MemPool
 		return int(32 - __builtin_clz(n));
 # endif
 #endif
+	}
+
+	inline static size_t Round2n(size_t n)
+	{
+		auto rtv = size_t(1) << Calc2n(n);
+		if (rtv == n) return n;
+		else return rtv << 1;
 	}
 };

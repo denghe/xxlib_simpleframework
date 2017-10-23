@@ -306,6 +306,7 @@ namespace xx
 				luaL_error(L, "string's len: %d out of range. buf.offset = %d, buf.dataLen = %d", len, offset, dataLen);
 			}
 			lua_pushlstring(L, buf + offset, len);
+			offset += len;
 		}
 
 		inline void ReadBBuffer(lua_State* L)

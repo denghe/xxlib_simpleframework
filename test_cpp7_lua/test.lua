@@ -1,4 +1,7 @@
 ﻿
+-- todo: 枚举的生成
+--PKG_EnumXXX = { x = 0, xx = 1, xxx = 2... }
+
 -- 扩展一下 table 的功能以便于使用
 if table.__index ~= nil then
 	error( "table.__index ~= nil" )
@@ -150,7 +153,7 @@ print( node2.msg )
 
 
 print( "dump bb:" )
-print( bb:Dump() )
+print( bb )
 
 
 
