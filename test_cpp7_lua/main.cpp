@@ -4,21 +4,23 @@
 #include "lua_bbuffer.h"
 #include "std_cout_helper.h"
 
-static int InitLua(lua_State *L)
+#include "../pkg/PKG2_class.h"
+
+int InitLua(lua_State *L)
 {
 	luaL_openlibs(L);
 	Lua_BBuffer::Init(L);
 	return 0;
 }
 
-static int TestBBuffer(lua_State *L)
+int TestBBuffer(lua_State *L)
 {
 	if (luaL_loadfile(L, "test2.lua")) return lua_error(L);
 	lua_call(L, 0, 0);
 	return 0;
 }
 
-int main()
+int TestLua()
 {
 	Lua_MemPool mp;
 	auto L = lua_newstate([](void *ud, void *ptr, size_t osize, size_t nsize)
@@ -47,5 +49,41 @@ int main()
 	!exec(InitLua) && !exec(TestBBuffer);
 
 	lua_close(L);
+	return 0;
+}
+
+void TestCpp()
+{
+	CoutLine("TestCpp");
+	PKG2::AllTypesRegister();
+	xx::MemPool mp;
+	xx::BBuffer_p bb(mp);
+
+	PKG2::基类_p o(mp);
+	o->不淋 = true; //Boolean
+	o->白特 = 1; //Byte
+	o->撕白特 = -2; //SByte
+	o->吸哦特 = -3; //Int16
+	o->又吸哦特 = 4; //UInt16
+	o->硬特 = -5; //Int32
+	o->又硬特 = 6; //UInt32
+	o->浪 = -7; //Int64
+	o->又浪 = 8; //UInt64
+	o->扶裸特 = 9.1f; //Single
+	o->大波 = 10.2; //Double
+	o->湿最硬.Create(mp, "这是个串儿"); // String
+	o->屄拔扶儿.Create(mp); // BBuffer
+	o->屄拔扶儿->Write((uint8_t)1);
+	o->屄拔扶儿->Write((uint8_t)2);
+	o->屄拔扶儿->Write((uint8_t)3);
+
+	bb->WriteRoot(o);
+	mp.Cout(bb);
+}
+
+int main()
+{
+	TestLua();
+	TestCpp();
 	return 0;
 }

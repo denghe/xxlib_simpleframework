@@ -129,6 +129,7 @@ struct Lua_BBuffer
 
 			{ "GetDataLen", GetDataLen },
 			{ "GetOffset", GetOffset },
+			{ "Clear", Clear },
 			{ "__tostring", __tostring },
 			// todo: write package ?
 
@@ -239,19 +240,27 @@ struct Lua_BBuffer
 		return 1;
 	}
 
+	inline static int Clear(lua_State* L)
+	{
+		auto& self = GetSelf(L, 1);
+		self.dataLen = 0;
+		self.offset = 0;
+		return 0;
+	}
+
 	inline static int __tostring(lua_State* L)
 	{
 		auto& self = GetSelf(L, 1);
 		std::string s;
-		s += "{ typeId = 2, dataLen = " + std::to_string(self.dataLen) + ", offset = " + std::to_string(self.offset) + ", data = {";
+		s += "{ \"len\" : " + std::to_string(self.dataLen) + ", \"offset\" : " + std::to_string(self.offset) + ", \"data\" : [";
 		for (uint32_t i = 0; i < self.dataLen; ++i)
 		{
 			s += i ? ", " : " ";
-			s += std::to_string((int)self.buf[i]);
+			s += std::to_string((uint8_t)self.buf[i]);
 			//s += hexs[self.buf[i] % 16];
 			//s += hexs[self.buf[i] >> 4];
 		}
-		s += self.dataLen ? " }" : "}";
+		s += self.dataLen ? " ]" : "]";
 		s += " }";
 		lua_pushlstring(L, s.c_str(), s.size());
 		return 1;

@@ -1,4 +1,5 @@
 ﻿dofile( "pkg2_class.lua" )
+print( "TestLua" )
 
 local bb = BBuffer.Create()
 
@@ -22,3 +23,4 @@ o.屄拔扶儿:WriteByte( 3 )
 
 bb:WriteRoot( o )
 print( bb )
+

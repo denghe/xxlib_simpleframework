@@ -691,7 +691,14 @@ namespace xx
         public override string ToString()
         {
             var s = new StringBuilder();
-            Dump(ref s);
+            s.Append("{ \"len\" : "+ dataLen + ", \"offset\" : "+ offset + ", \"data\" : [");
+            for (int i = 0; i < dataLen; ++i)
+            {
+                s.Append(i > 0 ? ", " : " ");
+                s.Append(buf[i]);
+            }
+            s.Append(dataLen > 0 ? " ]" : "]");
+            s.Append(" }");
             return s.ToString();
         }
 
