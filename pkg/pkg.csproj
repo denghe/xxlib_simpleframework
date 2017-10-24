@@ -41,6 +41,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="PKG2_class.cs" />
     <Compile Include="PKG_class.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -51,7 +52,12 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="PKG2_class.h" />
     <Content Include="PKG_class.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="PKG2_class.lua" />
+    <None Include="PKG_class.lua" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

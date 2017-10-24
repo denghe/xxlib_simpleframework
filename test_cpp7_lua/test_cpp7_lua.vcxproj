@@ -92,15 +92,14 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="std_cout_helper.h" />
-  </ItemGroup>
-  <ItemGroup>
+    <None Include="PKG2_class.lua" />
     <None Include="test.lua">
       <DeploymentContent>true</DeploymentContent>
     </None>
+    <None Include="test2.lua" />
   </ItemGroup>
   <ItemGroup>
-    <Natvis Include="lua.natvis" />
+    <Natvis Include="..\luaex\lua.natvis" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

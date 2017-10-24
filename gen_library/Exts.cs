@@ -371,6 +371,45 @@ public static class GenExtensions
 
 
     /// <summary>
+    /// 获取 LUA 的默认值填充代码
+    /// </summary>
+    public static string _GetDefaultValueDecl_Lua(this object v, string templateName)
+    {
+        if (v == null) return "BBuffer.null";
+        var t = v.GetType();
+        if (t.IsValueType)
+        {
+            if (t.IsEnum)
+            {
+                var sv = v._ToEnumInteger(t);
+                if (sv == "0") return "0";
+                // 如果 v 的值在枚举中找不到, 输出硬转格式. 否则输出枚举项
+                var fs = t._GetEnumFields();
+                if (fs.Exists(f => f._GetEnumValue(t).ToString() == sv))
+                {
+                    return _GetTypeDecl_Lua(t, templateName) + "." + v.ToString();
+                }
+                else
+                {
+                    return sv.ToString();
+                }
+            }
+            if (t._IsNumeric()) return v.ToString().ToLower();   // lower for Ture, False bool
+            else return "";
+        }
+        else if (t._IsString())
+        {
+            return "[[" + (string)v + "]]";
+        }
+        else
+        {
+            return v.ToString();
+        }
+        // todo: 其他需要引号的类型的处理, 诸如 DateTime, Guid 啥的
+    }
+
+
+    /// <summary>
     /// 获取 C# 的类型声明串
     /// </summary>
     public static string _GetTypeDecl_Csharp(this Type t)
@@ -658,6 +697,33 @@ public static class GenExtensions
     }
 
 
+    /// <summary>
+    /// 获取 C++ 的类型声明串
+    /// </summary>
+    public static string _GetTypeDecl_Lua(this Type t, string templateName)
+    {
+        if (t.IsGenericType)
+        {
+            string rtv = t.Name.Substring(0, t.Name.IndexOf('`')) + "_";
+            for (int i = 0; i < t.GenericTypeArguments.Length; ++i)
+            {
+                if (i > 0)
+                    rtv += "_";
+                rtv += _GetTypeDecl_Lua(t.GenericTypeArguments[i], templateName);
+            }
+            rtv += "_";
+            return rtv;
+        }
+        else if (t.Namespace == nameof(System) || t.Namespace == nameof(TemplateLibrary))
+        {
+            return t.Name;
+        }
+        return templateName + "_" + t.FullName.Replace(".", "_");
+    }
+
+
+
+
 
     /// <summary>
     /// 获取枚举对应的数字类型的类型名
@@ -791,7 +857,8 @@ public static class GenExtensions
         if (s.Trim() == "")
             return "";
         var sps = new string(' ', space);
-        return sps + @"--[[
+        return @"
+" + sps + @"--[[
 " + sps + s + @"
 " + sps + "]]";
     }

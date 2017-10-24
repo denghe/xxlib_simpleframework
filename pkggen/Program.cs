@@ -22,6 +22,7 @@ public static class Program
 
             GenCPP_Class.Gen(asm, path, tn);
             GenCS_Class.Gen(asm, path, tn);
+            GenLUA_Class.Gen(asm, path, tn);
         }
     }
 

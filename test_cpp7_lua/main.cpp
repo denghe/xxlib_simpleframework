@@ -13,7 +13,7 @@ static int InitLua(lua_State *L)
 
 static int TestBBuffer(lua_State *L)
 {
-	if (luaL_loadfile(L, "test.lua")) return lua_error(L);
+	if (luaL_loadfile(L, "test2.lua")) return lua_error(L);
 	lua_call(L, 0, 0);
 	return 0;
 }

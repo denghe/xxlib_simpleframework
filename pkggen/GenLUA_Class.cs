@@ -17,7 +17,7 @@ public static class GenLUA_Class
         for (int i = 0; i < es.Count; ++i)
         {
             var e = es[i];
-            var en = e.FullName.Replace(".", "_");
+            var en = e._GetTypeDecl_Lua(templateName);
             sb.Append(e._GetDesc()._GetComment_Lua(0) + @"
 " + en + @" = {");
 
@@ -34,160 +34,13 @@ public static class GenLUA_Class
 }");
         }
 
-
-        var cs = ts._GetClasssStructs();
-        for (int i = 0; i < cs.Count; ++i)
-        {
-            var c = cs[i];
-            var o = asm.CreateInstance(c.FullName);
-
-            if (c.IsValueType)
-            {
-                sb.Append(c._GetDesc()._GetComment_Lua(4) + @"
-    public partial struct " + c.Name + @" : IBBuffer
-    {");
-            }
-            else
-            {
-                sb.Append(c._GetDesc()._GetComment_Lua(4) + @"
-    public partial class " + c.Name + @" : " + (c._HasBaseType() ? c.BaseType._GetTypeDecl_Csharp() : "IBBuffer") + @"
-    {");
-            }
-
-            // consts( static ) / fields
-            var fs = c._GetFieldsConsts();
-            foreach (var f in fs)
-            {
-                var ft = f.FieldType;
-                var ftn = ft._GetTypeDecl_Csharp();
-                sb.Append(f._GetDesc()._GetComment_Lua(8) + @"
-        public " + (f.IsStatic ? "const " : "") + ftn + " " + f.Name);
-
-                var v = f.GetValue(f.IsStatic ? null : o);
-                var dv = v._GetDefaultValueDecl_Csharp();
-                if (dv != "")
-                {
-                    sb.Append(" = " + dv + ";");
-                }
-                //else if (f._Has<TemplateLibrary.CreateInstance>())
-                //{
-                //    sb.Append(" = new " + ftn + "();");
-                //}
-                else
-                {
-                    sb.Append(";");
-                }
-            }
-
-            sb.Append(@"
-
-        public " + (c.IsValueType ? "" : (c._HasBaseType() ? "override " : "virtual ")) + @"ushort GetPackageId()
-        {
-            return TypeIdMaps<" + c.Name + @">.typeId;
-        }
-
-        public " + (c.IsValueType ? "" : (c._HasBaseType() ? "override" : "virtual")) + @" void ToBBuffer(BBuffer bb)
-        {");
-
-            if (!c.IsValueType && c._HasBaseType())
-            {
-                sb.Append(@"
-            base.ToBBuffer(bb);");
-            }
-            fs = c._GetFields();
-            foreach (var f in fs)
-            {
-                var ft = f.FieldType;
-                if (f._Has<TemplateLibrary.NotSerialize>())
-                {
-                    sb.Append(@"
-            bb.Write(default(" + f.FieldType._GetTypeDecl_Csharp() + "));");
-                }
-                else if (f._Has<TemplateLibrary.CustomSerialize>())
-                {
-                    sb.Append(@"
-            bb.CustomWrite(bb, this, """ + f.Name + @""");");
-                }
-                else if (ft.IsEnum)
-                {
-                    sb.Append(@"
-            bb.Write((" + ft._GetEnumUnderlyingTypeName_Csharp() + ")this." + f.Name + ");");
-                }
-                else if (ft.IsValueType && !ft.IsPrimitive)
-                {
-                    sb.Append(@"
-            ((IBBuffer)this." + f.Name + ").ToBBuffer(bb);");
-                }
-                else
-                {
-                    sb.Append(@"
-            bb.Write(this." + f.Name + ");");
-                }
-            }
-
-            sb.Append(@"
-        }
-
-        public " + (c.IsValueType ? "" : (c._HasBaseType() ? "override" : "virtual")) + @" void FromBBuffer(BBuffer bb)
-        {");
-            if (!c.IsValueType && c._HasBaseType())
-            {
-                sb.Append(@"
-            base.FromBBuffer(bb);");
-            }
-            fs = c._GetFields();
-            foreach (var f in fs)
-            {
-                var ft = f.FieldType;
-
-                if (ft.IsEnum)
-                {
-                    var ftn = ft._GetTypeDecl_Csharp();
-                    var etn = ft._GetEnumUnderlyingTypeName_Csharp();
-                    sb.Append(@"
-            {
-                " + etn + @" tmp = 0;
-                bb.Read(ref tmp);
-                this." + f.Name + @" = (" + ftn + @")tmp;
-            }");
-                }
-                else if (ft.IsValueType && !ft.IsPrimitive)
-                {
-                    sb.Append(@"
-            ((IBBuffer)this." + f.Name + ").FromBBuffer(bb);");
-                }
-                else
-                {
-                    if (ft._IsContainer())
-                    {
-                        sb.Append(@"
-            bb.readLengthLimit = " + f._GetLimit() + ";");
-                    }
-                    sb.Append(@"
-            bb.Read(ref this." + f.Name + ");");
-                }
-            }
-            sb.Append(@"
-        }
-");
-
-            // todo: ToString support
-
-
-            // class /
-            sb.Append(@"
-    }");
-
-        }
-
-        // 遍历所有 type 及成员数据类型 生成  BBuffer.Register< T >( typeId ) 函数组. 0 不能占. string 占掉 1. BBuffer 占掉 2.
-        // 在基础命名空间中造一个静态类 AllTypes 静态方法 Register
+        // 遍历所有 type 及成员数据类型 生成  typeId. 0 不能占. string 占掉 1. BBuffer 占掉 2.
 
         var types = new Dictionary<Type, ushort>();
         types.Add(typeof(string), 1);
         types.Add(typeof(TemplateLibrary.BBuffer), 2);
         ushort typeId = 3;
-        cs = ts._GetClasss();
+        var cs = ts._GetClasss();
         foreach (var c in cs)
         {
             if (!types.ContainsKey(c)) types.Add(c, typeId++);
@@ -209,36 +62,119 @@ public static class GenLUA_Class
             }
         }
 
-        sb.Append(@"
-    public static class AllTypes
-    {
-        public static void Register()
-        {
-            // BBuffer.Register<string>(1);
-            BBuffer.Register<BBuffer>(2);");
 
         foreach (var kv in types)
         {
             if (kv.Key == typeof(string) || kv.Key == typeof(TemplateLibrary.BBuffer)) continue;
-            var ct = kv.Key;
-            var ctn = ct._GetTypeDecl_Cpp(templateName).CutLast();
+            var c = kv.Key;
             typeId = (ushort)kv.Value;
+            var cn = c._GetTypeDecl_Lua(templateName);
+            var o = asm.CreateInstance(c.FullName);
 
-            sb.Append(@"
-            BBuffer.Register<" + ct._GetTypeDecl_Csharp() + @">(" + typeId++ + ");");
-        }
-
-        sb.Append(@"
-
-            BBuffer.handlers = new Action<IBBuffer>[" + typeId + @"];
-        }
-    }");
-
-        // template namespace /
-        sb.Append(@"
-}
+            sb.Append(c._GetDesc()._GetComment_Lua(0) + @"
+" + cn + @" = {
+    typeName = """ + cn + @""",
+    typeId = " + typeId + @",
+    Create = function()
+        local o = {}
+        o.__proto = " + cn + @"
+        o.__index = o
+        o.__newindex = o
 ");
+            var fs = c._GetFieldsConsts();
+            foreach (var f in fs)
+            {
+                var ft = f.FieldType;
+                var v = f.GetValue(f.IsStatic ? null : o);
+                var dv = v._GetDefaultValueDecl_Lua(templateName);
+                sb.Append(f._GetDesc()._GetComment_Lua(8));
+                if (dv != "")
+                {
+                    sb.Append(@"
+        o." + f.Name + @" = " + dv);
+                }
+                else
+                {
+                    sb.Append(@"
+        o." + f.Name + " = BBuffer.null");
+                }
+                sb.Append(" -- " + ft._GetTypeDecl_Lua(templateName));
+            }
 
+            if (c._HasBaseType())
+            {
+                var bt = c.BaseType._GetTypeDecl_Lua(templateName);
+                sb.Append(@"
+        setmetatable( o, " + bt + @".Create() )");
+            }
+            sb.Append(@"
+        return o
+    end,
+    FromBBuffer = function( bb, o )");
+            if (c._HasBaseType())
+            {
+                var bt = c.BaseType._GetTypeDecl_Lua(templateName);
+                sb.Append(@"
+        local p = getmetatable( o )
+        rawget( p, ""__proto"" ).FromBBuffer( bb, p )");
+            }
+            foreach (var f in fs)
+            {
+                var ft = f.FieldType;
+                var ftn = ft._IsNumeric() ? ft.Name : "Object";
+                sb.Append(@"
+        rawset( o, """ + f.Name + @""", bb:Read" + ftn + @"() )");
+            }
+            if (c._IsList())
+            {
+                var fn = "ReadObject";
+                var ct = c.GenericTypeArguments[0];
+                if (!ct._IsUserClass())
+                {
+                    fn = "Read" + ct.Name;
+                }
+                sb.Append(@"
+		local len = bb:ReadUInt32()
+		for i = 1, len do
+			table.insert( o, bb:" + fn + @"() )
+		end");
+            }
+            sb.Append(@"
+    end,
+    ToBBuffer = function( bb, o )");
+            if (c._HasBaseType())
+            {
+                var bt = c.BaseType._GetTypeDecl_Lua(templateName);
+                sb.Append(@"
+        local p = getmetatable( o )
+        rawget( p, ""__proto"" ).ToBBuffer( bb, p )");
+            }
+            foreach (var f in fs)
+            {
+                var ft = f.FieldType;
+                var ftn = ft._IsNumeric() ? ft.Name : "Object";
+                sb.Append(@"
+        bb:Write" + ftn + @"( rawget( o, """ + f.Name + @""" ) )");
+            }
+            if (c._IsList())
+            {
+                var fn = "WriteObject";
+                var ct = c.GenericTypeArguments[0];
+                if (!ct._IsUserClass())
+                {
+                    fn = "Write" + ct.Name;
+                }
+                sb.Append(@"
+		bb:WriteUInt32( #o )
+		for k, v in ipairs( o ) do
+			bb:" + fn + @"( v )
+		end");
+            }
+            sb.Append(@"
+    end
+}
+BBuffer.Register( " + cn + @" )");
+        }
 
         sb._WriteToFile(Path.Combine(outDir, templateName + "_class.lua"));
     }

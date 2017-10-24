@@ -101,7 +101,7 @@ struct Lua_MemPool
 #if defined(__LP64__) || __WORDSIZE == 64
 		return int(63 - __builtin_clzl(n));
 # else
-		return int(32 - __builtin_clz(n));
+		return int(31 - __builtin_clz(n));
 # endif
 #endif
 	}

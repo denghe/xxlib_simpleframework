@@ -283,7 +283,7 @@ namespace xx
 # ifdef XX_64
 		return int(63 - __builtin_clzl(n));
 # else
-		return int(32 - __builtin_clz(n));
+		return int(31 - __builtin_clz(n));
 # endif
 #endif
 	}

@@ -4,13 +4,13 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{6F49DE2C-1F92-47C8-B03D-D3D5C66D3CBC}</ProjectGuid>
-    <OutputType>Exe</OutputType>
-    <RootNamespace>pkggen</RootNamespace>
-    <AssemblyName>pkggen</AssemblyName>
+    <ProjectGuid>{630421AF-33E7-4514-9437-5FCD83EBAD2E}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>pkggen_template_PKG2</RootNamespace>
+    <AssemblyName>pkggen_template_PKG2</AssemblyName>
     <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
     <DebugSymbols>true</DebugSymbols>
@@ -20,7 +20,6 @@
     <PlatformTarget>x64</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
-    <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
     <OutputPath>bin\x64\Release\</OutputPath>
@@ -30,12 +29,10 @@
     <PlatformTarget>x64</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
-    <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -44,27 +41,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="GenCPP_Class.cs" />
-    <Compile Include="GenLUA_Class.cs" />
-    <Compile Include="GenCS_Class.cs" />
-    <Compile Include="Program.cs" />
+    <Compile Include="Classs.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\gen_library\gen_library.csproj">
       <Project>{7f62e40f-e079-46d2-85e9-661fce50168c}</Project>
       <Name>gen_library</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\pkggen_template_PKG2\pkggen_template_PKG2.csproj">
-      <Project>{630421af-33e7-4514-9437-5fcd83ebad2e}</Project>
-      <Name>pkggen_template_PKG2</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\pkggen_template_PKG\pkggen_template_PKG.csproj">
-      <Project>{82112fe9-6a59-4f6d-a295-d4c7c039a977}</Project>
-      <Name>pkggen_template_PKG</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
