@@ -386,13 +386,13 @@ List_String_ = {
     FromBBuffer = function( bb, o )
 		local len = bb:ReadUInt32()
 		for i = 1, len do
-			table.insert( o, bb:ReadString() )
+			table.insert( o, bb:ReadObject() )
 		end
     end,
     ToBBuffer = function( bb, o )
 		bb:WriteUInt32( #o )
 		for k, v in ipairs( o ) do
-			bb:WriteString( v )
+			bb:WriteObject( v )
 		end
     end
 }
@@ -411,13 +411,13 @@ List_BBuffer_ = {
     FromBBuffer = function( bb, o )
 		local len = bb:ReadUInt32()
 		for i = 1, len do
-			table.insert( o, bb:ReadBBuffer() )
+			table.insert( o, bb:ReadObject() )
 		end
     end,
     ToBBuffer = function( bb, o )
 		bb:WriteUInt32( #o )
 		for k, v in ipairs( o ) do
-			bb:WriteBBuffer( v )
+			bb:WriteObject( v )
 		end
     end
 }

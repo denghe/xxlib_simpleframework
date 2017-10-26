@@ -11,3 +11,6 @@ extern "C"
 #include "../lua/lauxlib.h"
 #include "../lua/lualib.h"
 }
+
+void SetUtf8Console();
+

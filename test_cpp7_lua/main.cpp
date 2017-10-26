@@ -77,13 +77,31 @@ void TestCpp()
 	o->屄拔扶儿->Write((uint8_t)2);
 	o->屄拔扶儿->Write((uint8_t)3);
 
-	bb->WriteRoot(o);
-	mp.Cout(bb);
+	PKG2::派生类_p p(mp);
+	p->立丝特基类.Create(mp);
+	p->立丝特基类->Add(p.Copy<PKG2::基类>());
+	p->立丝特基类->Add(o.Move());
+	p->立丝特屄拔扶儿.Create(mp);
+	p->立丝特屄拔扶儿->Add(mp.CreatePtr<xx::BBuffer>());
+	p->立丝特白特.Create(mp);
+	p->立丝特白特->Add(1);
+	p->立丝特白特->Add(2);
+	p->立丝特白特->Add(3);
+	bb->Clear();
+	bb->WriteRoot(p);
+	mp.Cout(bb, '\n');
+
+	//mp.Cout(p, '\n');
+	//PKG2::基类_p p2;
+	//bb->ReadRoot(p2);
+	//mp.Cout(p2, '\n');
 }
 
 int main()
 {
+	SetUtf8Console();
 	TestLua();
 	TestCpp();
+
 	return 0;
 }

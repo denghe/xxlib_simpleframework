@@ -49,3 +49,10 @@ extern "C"
 #include "../lua/loadlib.c"				
 
 }
+
+void SetUtf8Console()
+{
+#ifdef _WIN32
+	SetConsoleOutputCP(65001);
+#endif
+}

@@ -274,6 +274,12 @@ namespace xx
 		//  其他工具函数
 		/*************************************************************************/
 
+		void Clear()
+		{
+			BaseType::Clear();
+			offset = 0;
+		}
+
 		// 根据数据类型往当前位置写入默认值
 		template<typename T>
 		void WriteDefaultValue()

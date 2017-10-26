@@ -128,6 +128,25 @@ namespace xx
 		//	}
 		//	return pointer;
 		//}
+
+		template<typename BT, typename U = std::enable_if_t<std::is_base_of_v<BT, T>>>
+		Ptr<BT>&& Move()
+		{
+			return std::move(*(Ptr<BT>*)this);
+		}
+		Ptr<T>&& Move()
+		{
+			return std::move(*this);
+		}
+		template<typename BT, typename U = std::enable_if_t<std::is_base_of_v<BT, T>>>
+		Ptr<BT> Copy() const
+		{
+			return (BT*)pointer;
+		}
+		Ptr<T> Copy() const
+		{
+			return pointer;
+		}
 	};
 
 

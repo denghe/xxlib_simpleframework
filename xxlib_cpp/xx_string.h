@@ -152,7 +152,7 @@ namespace xx
 		void AppendPtr(Object const* const& v)
 		{
 			if (v) v->ToString(*this);
-			else Append("nil");
+			else Append("null");
 		}
 
 		template<typename T>

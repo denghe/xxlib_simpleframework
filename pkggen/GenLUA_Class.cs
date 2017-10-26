@@ -131,7 +131,9 @@ public static class GenLUA_Class
                 var ct = c.GenericTypeArguments[0];
                 if (!ct._IsUserClass())
                 {
-                    fn = "Read" + ct.Name;
+                    var ctn = ct.Name;
+                    if (ct._IsBBuffer() || ct._IsString()) ctn = "Object";
+                    fn = "Read" + ctn;
                 }
                 sb.Append(@"
 		local len = bb:ReadUInt32()
@@ -162,7 +164,9 @@ public static class GenLUA_Class
                 var ct = c.GenericTypeArguments[0];
                 if (!ct._IsUserClass())
                 {
-                    fn = "Write" + ct.Name;
+                    var ctn = ct.Name;
+                    if (ct._IsBBuffer() || ct._IsString()) ctn = "Object";
+                    fn = "Write" + ctn;
                 }
                 sb.Append(@"
 		bb:WriteUInt32( #o )
