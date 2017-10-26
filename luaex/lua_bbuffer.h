@@ -3,6 +3,9 @@
 #include "lua_mempool.h"
 #include <string>
 
+
+// Read Write Object 当前暂不支持 多参数 多返回
+
 struct Lua_BBuffer
 {
 	Lua_MemPool* mp;						// 指向内存池
@@ -72,11 +75,11 @@ struct Lua_BBuffer
 		{
 			if (rtv == 1)
 			{
-				luaL_error(L, "ReadFrom error: not enough data. offset = %d, dataLen = %d", offset, dataLen);
+				luaL_error(L, "read error: not enough data. offset = %d, dataLen = %d", offset, dataLen);
 			}
 			else // 2
 			{
-				luaL_error(L, "ReadFrom error: overflow. offset = %d, dataLen = %d", offset, dataLen);
+				luaL_error(L, "read error: overflow. offset = %d, dataLen = %d", offset, dataLen);
 			}
 		}
 	}
@@ -129,6 +132,7 @@ struct Lua_BBuffer
 
 			{ "GetDataLen", GetDataLen },
 			{ "GetOffset", GetOffset },
+			{ "SetOffset", SetOffset },
 			{ "Clear", Clear },
 			{ "__tostring", __tostring },
 			// todo: write package ?
@@ -146,10 +150,10 @@ struct Lua_BBuffer
 		lua_pushvalue(L, -1);					// mt, mt
 		lua_setfield(L, -2, "__metatable");		// mt
 
-		// 用 lud: 0 来代表空值占位符的元素
+		// 用 null 来代表空值占位符的元素
 		lua_pushlightuserdata(L, 0);			// mt, lud
-		lua_setfield(L, -2, "null");			// mt
-
+		lua_setglobal(L, "null");
+		//lua_setfield(L, -2, "null");			// mt
 
 
 		lua_setglobal(L, name);					// 
@@ -167,7 +171,7 @@ struct Lua_BBuffer
 	{
 		auto& self = *(Lua_BBuffer*)lua_touserdata(L, -1);
 		self.~Lua_BBuffer();
-		self.ReleasePtrDict(L);				// 异常: 因为是移除, 应该不会抛
+		self.ReleasePtrDict(L);					// 异常: 因为是移除, 应该不会抛
 		self.ReleaseIdxDict(L);
 		return 0;
 	}
@@ -189,7 +193,7 @@ struct Lua_BBuffer
 	// 注册 Proto 表. 参数为 Proto 表.
 	inline static int Register(lua_State* L)
 	{
-		if (lua_gettop(L) != 1)				// t
+		if (lua_gettop(L) != 1)					// t
 		{
 			luaL_error(L, "bad args nums. expect 1");
 		}
@@ -214,9 +218,9 @@ struct Lua_BBuffer
 
 	inline static Lua_BBuffer& GetSelf(lua_State* L, int top)
 	{
-		if (lua_gettop(L) != top)
+		if (lua_gettop(L) < top)
 		{
-			luaL_error(L, "bad args nums. expect %d", top);
+			luaL_error(L, "less arg nums. expect %d", top);
 		}
 		auto selfptr = (Lua_BBuffer*)lua_touserdata(L, 1);
 		if (!selfptr)
@@ -238,6 +242,23 @@ struct Lua_BBuffer
 		auto& self = GetSelf(L, 1);
 		lua_pushinteger(L, self.offset);
 		return 1;
+	}
+
+	inline static int SetOffset(lua_State* L)
+	{
+		auto& self = GetSelf(L, 2);
+		int isnum;
+		auto offset = (uint32_t)lua_tointegerx(L, 2, &isnum);
+		if (!isnum)
+		{
+			luaL_error(L, "the args[ 2 ]'s type must be a integer");
+		}
+		if (offset > self.dataLen)
+		{
+			luaL_error(L, "the args[ 2 ] offset is out of range. dataLen = %d", self.dataLen);
+		}
+		self.offset = offset;
+		return 0;
 	}
 
 	inline static int Clear(lua_State* L)
@@ -271,33 +292,43 @@ struct Lua_BBuffer
 	{
 		static_assert(std::is_arithmetic_v<T>);
 		auto& self = GetSelf(L, 2);
-		int isnum;
-		T v;
-		if constexpr(!std::is_floating_point_v<T>)
+		auto top = lua_gettop(L);
+		for (int i = 2; i <= top; ++i)
 		{
-			v = (T)lua_tointegerx(L, 2, &isnum);
+			if constexpr(std::is_same_v<T, bool>)
+			{
+				if (!lua_isboolean(L, i))
+				{
+					luaL_error(L, "the args[ %d ]'s type must be a boolean", i);
+				}
+				self.Write(L, lua_toboolean(L, i) != 0);
+			}
+			else if constexpr(!std::is_floating_point_v<T>)
+			{
+				T v;
+				int isnum;
+				v = (T)lua_tointegerx(L, i, &isnum);
+				if (!isnum)
+				{
+					luaL_error(L, "the args[ %d ]'s type must be a integer", i);
+				}
+				self.Write(L, v);
+			}
+			else
+			{
+				T v;
+				int isnum;
+				v = (T)lua_tonumberx(L, i, &isnum);
+				if (!isnum)
+				{
+					luaL_error(L, "the args[ %d ]'s type must be a number", i);
+				}
+				self.Write(L, v);
+			}
 		}
-		else
-		{
-			v = (T)lua_tonumberx(L, 2, &isnum);
-		}
-		if (!isnum)
-		{
-			luaL_error(L, "the arg's type must be a integer / number");
-		}
-		self.Write(L, v);
 		return 0;
 	}
-	inline static int WriteBoolean(lua_State* L)
-	{
-		auto& self = GetSelf(L, 2);
-		if (!lua_isboolean(L, 2))
-		{
-			luaL_error(L, "the arg's type must be a bool");
-		}
-		self.Write(L, lua_toboolean(L, 2) != 0);
-		return 0;
-	}
+	inline static int WriteBoolean(lua_State* L) { return WriteNum<bool>(L); }
 	inline static int WriteInt8(lua_State* L) { return WriteNum<int8_t>(L); }
 	inline static int WriteInt16(lua_State* L) { return WriteNum<int16_t>(L); }
 	inline static int WriteInt32(lua_State* L) { return WriteNum<int32_t>(L); }
@@ -316,26 +347,41 @@ struct Lua_BBuffer
 	{
 		static_assert(std::is_arithmetic_v<T>);
 		auto& self = GetSelf(L, 1);
-		T v;
-		self.Read(L, v);
-		if constexpr(std::is_integral_v<T>)
+		auto top = lua_gettop(L);
+		int readCount = 1;
+		if (top == 2)
 		{
-			lua_pushinteger(L, (lua_Integer)v);
+			int isnum;
+			readCount = (int)lua_tointegerx(L, 2, &isnum);
+			if (!isnum)
+			{
+				luaL_error(L, "the args[ 2 ]: readCount's type must be a integer");
+			}
 		}
-		else
+		if (readCount > LUA_MINSTACK - 2 && !lua_checkstack(L, readCount))
 		{
-			lua_pushnumber(L, (lua_Number)v);
+			luaL_error(L, "lua_checkstack fail. current top = %d, expect +%d", top, readCount);
 		}
-		return 1;
+		for (int i = 0; i < readCount; ++i)
+		{
+			T v;
+			self.Read(L, v);
+			if constexpr(std::is_same_v<T, bool>)
+			{
+				lua_pushboolean(L, v);
+			}
+			else if constexpr(!std::is_floating_point_v<T>)
+			{
+				lua_pushinteger(L, (lua_Integer)v);
+			}
+			else
+			{
+				lua_pushnumber(L, (lua_Number)v);
+			}
+		}
+		return readCount;
 	}
-	inline static int ReadBoolean(lua_State* L)
-	{
-		auto& self = GetSelf(L, 1);
-		bool v;
-		self.Read(L, v);
-		lua_pushboolean(L, v);
-		return 1;
-	}
+	inline static int ReadBoolean(lua_State* L) { return ReadNum<bool>(L); }
 	inline static int ReadInt8(lua_State* L) { return ReadNum<int8_t>(L); }
 	inline static int ReadInt16(lua_State* L) { return  ReadNum<int16_t>(L); }
 	inline static int ReadInt32(lua_State* L) { return  ReadNum<int32_t>(L); }

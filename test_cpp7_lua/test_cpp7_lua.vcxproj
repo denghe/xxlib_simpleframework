@@ -97,6 +97,7 @@
       <DeploymentContent>true</DeploymentContent>
     </None>
     <None Include="test2.lua" />
+    <None Include="test3.lua" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="..\luaex\lua.natvis" />

@@ -161,6 +161,14 @@ public static class GenExtensions
         return t._IsString() || t._IsList() || t._IsBBuffer();
     }
 
+    /// <summary>
+    /// 返回 t 是否为引用类型
+    /// </summary>
+    public static bool _IsRef(this Type t)
+    {
+        return _IsContainer(t) || _IsUserClass(t);
+    }
+
 
     /// <summary>
     /// 获取字段是否只读属性
@@ -185,7 +193,7 @@ public static class GenExtensions
     }
 
     /// <summary>
-    /// 返回 t 是否为 用户类
+    /// 返回 t 是否为 数据库中的可空类型
     /// </summary>
     public static bool _IsSqlNullable(this Type t)
     {
@@ -235,7 +243,7 @@ public static class GenExtensions
     }
 
     /// <summary>
-    /// 返回 t 是否为数据库中的可空类型
+    /// 返回 t 是否为 C# 中的 Nullable<>
     /// </summary>
     public static bool _IsNullable(this Type t)
     {
@@ -375,7 +383,7 @@ public static class GenExtensions
     /// </summary>
     public static string _GetDefaultValueDecl_Lua(this object v, string templateName)
     {
-        if (v == null) return "BBuffer.null";
+        if (v == null) return "null";
         var t = v.GetType();
         if (t.IsValueType)
         {

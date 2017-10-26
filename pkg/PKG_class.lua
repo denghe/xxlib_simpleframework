@@ -24,10 +24,10 @@ PKG_Request = {
         return o
     end,
     FromBBuffer = function( bb, o )
-        rawset( o, "serial", bb:ReadInt32() )
+        o.serial = bb:ReadInt32()
     end,
     ToBBuffer = function( bb, o )
-        bb:WriteInt32( rawget( o, "serial" ) )
+        bb:WriteInt32( o.serial )
     end
 }
 BBuffer.Register( PKG_Request )
@@ -47,10 +47,10 @@ PKG_Response = {
         return o
     end,
     FromBBuffer = function( bb, o )
-        rawset( o, "requestSerial", bb:ReadInt32() )
+        o.requestSerial = bb:ReadInt32()
     end,
     ToBBuffer = function( bb, o )
-        bb:WriteInt32( rawget( o, "requestSerial" ) )
+        bb:WriteInt32( o.requestSerial )
     end
 }
 BBuffer.Register( PKG_Response )
@@ -71,11 +71,11 @@ PKG_Success = {
     end,
     FromBBuffer = function( bb, o )
         local p = getmetatable( o )
-        rawget( p, "__proto" ).FromBBuffer( bb, p )
+        p.__proto.FromBBuffer( bb, p )
     end,
     ToBBuffer = function( bb, o )
         local p = getmetatable( o )
-        rawget( p, "__proto" ).ToBBuffer( bb, p )
+        p.__proto.ToBBuffer( bb, p )
     end
 }
 BBuffer.Register( PKG_Success )
@@ -91,19 +91,20 @@ PKG_Fail = {
         o.__index = o
         o.__newindex = o
 
-        o.reason = BBuffer.null -- String
+        local null = _G.null
+        o.reason = null -- String
         setmetatable( o, PKG_Response.Create() )
         return o
     end,
     FromBBuffer = function( bb, o )
         local p = getmetatable( o )
-        rawget( p, "__proto" ).FromBBuffer( bb, p )
-        rawset( o, "reason", bb:ReadObject() )
+        p.__proto.FromBBuffer( bb, p )
+        o.reason = bb:ReadObject()
     end,
     ToBBuffer = function( bb, o )
         local p = getmetatable( o )
-        rawget( p, "__proto" ).ToBBuffer( bb, p )
-        bb:WriteObject( rawget( o, "reason" ) )
+        p.__proto.ToBBuffer( bb, p )
+        bb:WriteObject( o.reason )
     end
 }
 BBuffer.Register( PKG_Fail )
@@ -116,14 +117,15 @@ PKG_Property = {
         o.__index = o
         o.__newindex = o
 
-        o.name = BBuffer.null -- String
+        local null = _G.null
+        o.name = null -- String
         return o
     end,
     FromBBuffer = function( bb, o )
-        rawset( o, "name", bb:ReadObject() )
+        o.name = bb:ReadObject()
     end,
     ToBBuffer = function( bb, o )
-        bb:WriteObject( rawget( o, "name" ) )
+        bb:WriteObject( o.name )
     end
 }
 BBuffer.Register( PKG_Property )
@@ -142,13 +144,13 @@ PKG_Property_long = {
     end,
     FromBBuffer = function( bb, o )
         local p = getmetatable( o )
-        rawget( p, "__proto" ).FromBBuffer( bb, p )
-        rawset( o, "value", bb:ReadInt64() )
+        p.__proto.FromBBuffer( bb, p )
+        o.value = bb:ReadInt64()
     end,
     ToBBuffer = function( bb, o )
         local p = getmetatable( o )
-        rawget( p, "__proto" ).ToBBuffer( bb, p )
-        bb:WriteInt64( rawget( o, "value" ) )
+        p.__proto.ToBBuffer( bb, p )
+        bb:WriteInt64( o.value )
     end
 }
 BBuffer.Register( PKG_Property_long )
@@ -167,13 +169,13 @@ PKG_Property_double = {
     end,
     FromBBuffer = function( bb, o )
         local p = getmetatable( o )
-        rawget( p, "__proto" ).FromBBuffer( bb, p )
-        rawset( o, "value", bb:ReadDouble() )
+        p.__proto.FromBBuffer( bb, p )
+        o.value = bb:ReadDouble()
     end,
     ToBBuffer = function( bb, o )
         local p = getmetatable( o )
-        rawget( p, "__proto" ).ToBBuffer( bb, p )
-        bb:WriteDouble( rawget( o, "value" ) )
+        p.__proto.ToBBuffer( bb, p )
+        bb:WriteDouble( o.value )
     end
 }
 BBuffer.Register( PKG_Property_double )
@@ -186,19 +188,20 @@ PKG_Property_string = {
         o.__index = o
         o.__newindex = o
 
-        o.value = BBuffer.null -- String
+        local null = _G.null
+        o.value = null -- String
         setmetatable( o, PKG_Property.Create() )
         return o
     end,
     FromBBuffer = function( bb, o )
         local p = getmetatable( o )
-        rawget( p, "__proto" ).FromBBuffer( bb, p )
-        rawset( o, "value", bb:ReadObject() )
+        p.__proto.FromBBuffer( bb, p )
+        o.value = bb:ReadObject()
     end,
     ToBBuffer = function( bb, o )
         local p = getmetatable( o )
-        rawget( p, "__proto" ).ToBBuffer( bb, p )
-        bb:WriteObject( rawget( o, "value" ) )
+        p.__proto.ToBBuffer( bb, p )
+        bb:WriteObject( o.value )
     end
 }
 BBuffer.Register( PKG_Property_string )
@@ -211,19 +214,20 @@ PKG_Properties = {
         o.__index = o
         o.__newindex = o
 
-        o.value = BBuffer.null -- List_PKG_Property_
+        local null = _G.null
+        o.value = null -- List_PKG_Property_
         setmetatable( o, PKG_Property.Create() )
         return o
     end,
     FromBBuffer = function( bb, o )
         local p = getmetatable( o )
-        rawget( p, "__proto" ).FromBBuffer( bb, p )
-        rawset( o, "value", bb:ReadObject() )
+        p.__proto.FromBBuffer( bb, p )
+        o.value = bb:ReadObject()
     end,
     ToBBuffer = function( bb, o )
         local p = getmetatable( o )
-        rawget( p, "__proto" ).ToBBuffer( bb, p )
-        bb:WriteObject( rawget( o, "value" ) )
+        p.__proto.ToBBuffer( bb, p )
+        bb:WriteObject( o.value )
     end
 }
 BBuffer.Register( PKG_Properties )
@@ -235,19 +239,21 @@ List_PKG_Property_ = {
         o.__proto = List_PKG_Property_
         o.__index = o
         o.__newindex = o
-
         return o
     end,
     FromBBuffer = function( bb, o )
 		local len = bb:ReadUInt32()
+        local f = BBuffer.ReadObject
 		for i = 1, len do
-			rawset( o, i, bb:ReadObject() )
+			o[ i ] = f( bb )
 		end
     end,
     ToBBuffer = function( bb, o )
-		bb:WriteUInt32( #o )
-		for k, v in ipairs( o ) do
-			bb:WriteObject( v )
+        local len = #o
+		bb:WriteUInt32( len )
+        local f = BBuffer.WriteObject
+        for i = 1, len do
+			f( bb, o[ i ] )
 		end
     end
 }
@@ -261,17 +267,18 @@ PKG_UserInfo = {
         o.__index = o
         o.__newindex = o
 
+        local null = _G.null
         o.id = 0 -- Int64
-        o.props = BBuffer.null -- List_PKG_Property_
+        o.props = null -- List_PKG_Property_
         return o
     end,
     FromBBuffer = function( bb, o )
-        rawset( o, "id", bb:ReadInt64() )
-        rawset( o, "props", bb:ReadObject() )
+        o.id = bb:ReadInt64()
+        o.props = bb:ReadObject()
     end,
     ToBBuffer = function( bb, o )
-        bb:WriteInt64( rawget( o, "id" ) )
-        bb:WriteObject( rawget( o, "props" ) )
+        bb:WriteInt64( o.id )
+        bb:WriteObject( o.props )
     end
 }
 BBuffer.Register( PKG_UserInfo )
@@ -287,22 +294,25 @@ PKG_Client_Server_Join = {
         o.__index = o
         o.__newindex = o
 
-        o.username = BBuffer.null -- String
-        o.password = BBuffer.null -- String
+        local null = _G.null
+        o.username = null -- String
+        o.password = null -- String
         setmetatable( o, PKG_Request.Create() )
         return o
     end,
     FromBBuffer = function( bb, o )
         local p = getmetatable( o )
-        rawget( p, "__proto" ).FromBBuffer( bb, p )
-        rawset( o, "username", bb:ReadObject() )
-        rawset( o, "password", bb:ReadObject() )
+        p.__proto.FromBBuffer( bb, p )
+        local ReadObject = bb:ReadObject
+        o.username = ReadObject( bb )
+        o.password = ReadObject( bb )
     end,
     ToBBuffer = function( bb, o )
         local p = getmetatable( o )
-        rawget( p, "__proto" ).ToBBuffer( bb, p )
-        bb:WriteObject( rawget( o, "username" ) )
-        bb:WriteObject( rawget( o, "password" ) )
+        p.__proto.ToBBuffer( bb, p )
+        local WriteObject = bb:WriteObject
+        WriteObject( bb, o.username )
+        WriteObject( bb, o.password )
     end
 }
 BBuffer.Register( PKG_Client_Server_Join )
@@ -318,14 +328,15 @@ PKG_Client_Server_Message = {
         o.__index = o
         o.__newindex = o
 
-        o.text = BBuffer.null -- String
+        local null = _G.null
+        o.text = null -- String
         return o
     end,
     FromBBuffer = function( bb, o )
-        rawset( o, "text", bb:ReadObject() )
+        o.text = bb:ReadObject()
     end,
     ToBBuffer = function( bb, o )
-        bb:WriteObject( rawget( o, "text" ) )
+        bb:WriteObject( o.text )
     end
 }
 BBuffer.Register( PKG_Client_Server_Message )
@@ -361,22 +372,25 @@ PKG_Server_Client_JoinSuccess = {
         o.__index = o
         o.__newindex = o
 
-        o.self = BBuffer.null -- PKG_UserInfo
-        o.users = BBuffer.null -- List_PKG_UserInfo_
+        local null = _G.null
+        o.self = null -- PKG_UserInfo
+        o.users = null -- List_PKG_UserInfo_
         setmetatable( o, PKG_Response.Create() )
         return o
     end,
     FromBBuffer = function( bb, o )
         local p = getmetatable( o )
-        rawget( p, "__proto" ).FromBBuffer( bb, p )
-        rawset( o, "self", bb:ReadObject() )
-        rawset( o, "users", bb:ReadObject() )
+        p.__proto.FromBBuffer( bb, p )
+        local ReadObject = bb:ReadObject
+        o.self = ReadObject( bb )
+        o.users = ReadObject( bb )
     end,
     ToBBuffer = function( bb, o )
         local p = getmetatable( o )
-        rawget( p, "__proto" ).ToBBuffer( bb, p )
-        bb:WriteObject( rawget( o, "self" ) )
-        bb:WriteObject( rawget( o, "users" ) )
+        p.__proto.ToBBuffer( bb, p )
+        local WriteObject = bb:WriteObject
+        WriteObject( bb, o.self )
+        WriteObject( bb, o.users )
     end
 }
 BBuffer.Register( PKG_Server_Client_JoinSuccess )
@@ -388,19 +402,21 @@ List_PKG_UserInfo_ = {
         o.__proto = List_PKG_UserInfo_
         o.__index = o
         o.__newindex = o
-
         return o
     end,
     FromBBuffer = function( bb, o )
 		local len = bb:ReadUInt32()
+        local f = BBuffer.ReadObject
 		for i = 1, len do
-			rawset( o, i, bb:ReadObject() )
+			o[ i ] = f( bb )
 		end
     end,
     ToBBuffer = function( bb, o )
-		bb:WriteUInt32( #o )
-		for k, v in ipairs( o ) do
-			bb:WriteObject( v )
+        local len = #o
+		bb:WriteUInt32( len )
+        local f = BBuffer.WriteObject
+        for i = 1, len do
+			f( bb, o[ i ] )
 		end
     end
 }
@@ -417,19 +433,20 @@ PKG_Server_Client_JoinFail = {
         o.__index = o
         o.__newindex = o
 
-        o.reason = BBuffer.null -- String
+        local null = _G.null
+        o.reason = null -- String
         setmetatable( o, PKG_Response.Create() )
         return o
     end,
     FromBBuffer = function( bb, o )
         local p = getmetatable( o )
-        rawget( p, "__proto" ).FromBBuffer( bb, p )
-        rawset( o, "reason", bb:ReadObject() )
+        p.__proto.FromBBuffer( bb, p )
+        o.reason = bb:ReadObject()
     end,
     ToBBuffer = function( bb, o )
         local p = getmetatable( o )
-        rawget( p, "__proto" ).ToBBuffer( bb, p )
-        bb:WriteObject( rawget( o, "reason" ) )
+        p.__proto.ToBBuffer( bb, p )
+        bb:WriteObject( o.reason )
     end
 }
 BBuffer.Register( PKG_Server_Client_JoinFail )
@@ -449,10 +466,10 @@ PKG_Server_Client_PushJoin = {
         return o
     end,
     FromBBuffer = function( bb, o )
-        rawset( o, "id", bb:ReadInt64() )
+        o.id = bb:ReadInt64()
     end,
     ToBBuffer = function( bb, o )
-        bb:WriteInt64( rawget( o, "id" ) )
+        bb:WriteInt64( o.id )
     end
 }
 BBuffer.Register( PKG_Server_Client_PushJoin )
@@ -468,17 +485,18 @@ PKG_Server_Client_PushMessage = {
         o.__index = o
         o.__newindex = o
 
+        local null = _G.null
         o.id = 0 -- Int64
-        o.text = BBuffer.null -- String
+        o.text = null -- String
         return o
     end,
     FromBBuffer = function( bb, o )
-        rawset( o, "id", bb:ReadInt64() )
-        rawset( o, "text", bb:ReadObject() )
+        o.id = bb:ReadInt64()
+        o.text = bb:ReadObject()
     end,
     ToBBuffer = function( bb, o )
-        bb:WriteInt64( rawget( o, "id" ) )
-        bb:WriteObject( rawget( o, "text" ) )
+        bb:WriteInt64( o.id )
+        bb:WriteObject( o.text )
     end
 }
 BBuffer.Register( PKG_Server_Client_PushMessage )
@@ -494,20 +512,21 @@ PKG_Server_Client_PushLogout = {
         o.__index = o
         o.__newindex = o
 
+        local null = _G.null
         o.id = 0 -- Int64
         --[[
         退出原因( 主动? 掉线?
         ]]
-        o.reason = BBuffer.null -- String
+        o.reason = null -- String
         return o
     end,
     FromBBuffer = function( bb, o )
-        rawset( o, "id", bb:ReadInt64() )
-        rawset( o, "reason", bb:ReadObject() )
+        o.id = bb:ReadInt64()
+        o.reason = bb:ReadObject()
     end,
     ToBBuffer = function( bb, o )
-        bb:WriteInt64( rawget( o, "id" ) )
-        bb:WriteObject( rawget( o, "reason" ) )
+        bb:WriteInt64( o.id )
+        bb:WriteObject( o.reason )
     end
 }
 BBuffer.Register( PKG_Server_Client_PushLogout )
@@ -523,22 +542,25 @@ PKG_Manage_DB_Login = {
         o.__index = o
         o.__newindex = o
 
-        o.username = BBuffer.null -- String
-        o.password = BBuffer.null -- String
+        local null = _G.null
+        o.username = null -- String
+        o.password = null -- String
         setmetatable( o, PKG_Request.Create() )
         return o
     end,
     FromBBuffer = function( bb, o )
         local p = getmetatable( o )
-        rawget( p, "__proto" ).FromBBuffer( bb, p )
-        rawset( o, "username", bb:ReadObject() )
-        rawset( o, "password", bb:ReadObject() )
+        p.__proto.FromBBuffer( bb, p )
+        local ReadObject = bb:ReadObject
+        o.username = ReadObject( bb )
+        o.password = ReadObject( bb )
     end,
     ToBBuffer = function( bb, o )
         local p = getmetatable( o )
-        rawget( p, "__proto" ).ToBBuffer( bb, p )
-        bb:WriteObject( rawget( o, "username" ) )
-        bb:WriteObject( rawget( o, "password" ) )
+        p.__proto.ToBBuffer( bb, p )
+        local WriteObject = bb:WriteObject
+        WriteObject( bb, o.username )
+        WriteObject( bb, o.password )
     end
 }
 BBuffer.Register( PKG_Manage_DB_Login )
@@ -559,11 +581,11 @@ PKG_Manage_DB_Logout = {
     end,
     FromBBuffer = function( bb, o )
         local p = getmetatable( o )
-        rawget( p, "__proto" ).FromBBuffer( bb, p )
+        p.__proto.FromBBuffer( bb, p )
     end,
     ToBBuffer = function( bb, o )
         local p = getmetatable( o )
-        rawget( p, "__proto" ).ToBBuffer( bb, p )
+        p.__proto.ToBBuffer( bb, p )
     end
 }
 BBuffer.Register( PKG_Manage_DB_Logout )
@@ -592,15 +614,15 @@ PKG_Manage_DB_SelectManageAccountIds = {
     end,
     FromBBuffer = function( bb, o )
         local p = getmetatable( o )
-        rawget( p, "__proto" ).FromBBuffer( bb, p )
-        rawset( o, "limit", bb:ReadInt32() )
-        rawset( o, "sort", bb:ReadObject() )
+        p.__proto.FromBBuffer( bb, p )
+        o.limit = bb:ReadInt32()
+        o.sort = bb:ReadObject()
     end,
     ToBBuffer = function( bb, o )
         local p = getmetatable( o )
-        rawget( p, "__proto" ).ToBBuffer( bb, p )
-        bb:WriteInt32( rawget( o, "limit" ) )
-        bb:WriteObject( rawget( o, "sort" ) )
+        p.__proto.ToBBuffer( bb, p )
+        bb:WriteInt32( o.limit )
+        bb:WriteObject( o.sort )
     end
 }
 BBuffer.Register( PKG_Manage_DB_SelectManageAccountIds )
@@ -616,22 +638,23 @@ PKG_Manage_DB_SelectManageAccounts = {
         o.__index = o
         o.__newindex = o
 
+        local null = _G.null
         --[[
         要拉的 id 列表
         ]]
-        o.ids = BBuffer.null -- List_Int64_
+        o.ids = null -- List_Int64_
         setmetatable( o, PKG_Request.Create() )
         return o
     end,
     FromBBuffer = function( bb, o )
         local p = getmetatable( o )
-        rawget( p, "__proto" ).FromBBuffer( bb, p )
-        rawset( o, "ids", bb:ReadObject() )
+        p.__proto.FromBBuffer( bb, p )
+        o.ids = bb:ReadObject()
     end,
     ToBBuffer = function( bb, o )
         local p = getmetatable( o )
-        rawget( p, "__proto" ).ToBBuffer( bb, p )
-        bb:WriteObject( rawget( o, "ids" ) )
+        p.__proto.ToBBuffer( bb, p )
+        bb:WriteObject( o.ids )
     end
 }
 BBuffer.Register( PKG_Manage_DB_SelectManageAccounts )
@@ -643,19 +666,21 @@ List_Int64_ = {
         o.__proto = List_Int64_
         o.__index = o
         o.__newindex = o
-
         return o
     end,
     FromBBuffer = function( bb, o )
 		local len = bb:ReadUInt32()
+        local f = BBuffer.ReadInt64
 		for i = 1, len do
-			rawset( o, i, bb:ReadInt64() )
+			o[ i ] = f( bb )
 		end
     end,
     ToBBuffer = function( bb, o )
-		bb:WriteUInt32( #o )
-		for k, v in ipairs( o ) do
-			bb:WriteInt64( v )
+        local len = #o
+		bb:WriteUInt32( len )
+        local f = BBuffer.WriteInt64
+        for i = 1, len do
+			f( bb, o[ i ] )
 		end
     end
 }
@@ -672,17 +697,18 @@ PKG_Manage_Account = {
         o.__index = o
         o.__newindex = o
 
+        local null = _G.null
         o.id = 0 -- Int64
-        o.username = BBuffer.null -- String
+        o.username = null -- String
         return o
     end,
     FromBBuffer = function( bb, o )
-        rawset( o, "id", bb:ReadInt64() )
-        rawset( o, "username", bb:ReadObject() )
+        o.id = bb:ReadInt64()
+        o.username = bb:ReadObject()
     end,
     ToBBuffer = function( bb, o )
-        bb:WriteInt64( rawget( o, "id" ) )
-        bb:WriteObject( rawget( o, "username" ) )
+        bb:WriteInt64( o.id )
+        bb:WriteObject( o.username )
     end
 }
 BBuffer.Register( PKG_Manage_Account )
@@ -698,20 +724,23 @@ PKG_Manage_Role = {
         o.__index = o
         o.__newindex = o
 
+        local null = _G.null
         o.id = 0 -- Int32
-        o.name = BBuffer.null -- String
-        o.desc = BBuffer.null -- String
+        o.name = null -- String
+        o.desc = null -- String
         return o
     end,
     FromBBuffer = function( bb, o )
-        rawset( o, "id", bb:ReadInt32() )
-        rawset( o, "name", bb:ReadObject() )
-        rawset( o, "desc", bb:ReadObject() )
+        local ReadObject = bb:ReadObject
+        o.id = bb:ReadInt32()
+        o.name = ReadObject( bb )
+        o.desc = ReadObject( bb )
     end,
     ToBBuffer = function( bb, o )
-        bb:WriteInt32( rawget( o, "id" ) )
-        bb:WriteObject( rawget( o, "name" ) )
-        bb:WriteObject( rawget( o, "desc" ) )
+        local WriteObject = bb:WriteObject
+        bb:WriteInt32( o.id )
+        WriteObject( bb, o.name )
+        WriteObject( bb, o.desc )
     end
 }
 BBuffer.Register( PKG_Manage_Role )
@@ -727,23 +756,26 @@ PKG_Manage_Permission = {
         o.__index = o
         o.__newindex = o
 
+        local null = _G.null
         o.id = 0 -- Int32
-        o.group = BBuffer.null -- String
-        o.name = BBuffer.null -- String
-        o.desc = BBuffer.null -- String
+        o.group = null -- String
+        o.name = null -- String
+        o.desc = null -- String
         return o
     end,
     FromBBuffer = function( bb, o )
-        rawset( o, "id", bb:ReadInt32() )
-        rawset( o, "group", bb:ReadObject() )
-        rawset( o, "name", bb:ReadObject() )
-        rawset( o, "desc", bb:ReadObject() )
+        local ReadObject = bb:ReadObject
+        o.id = bb:ReadInt32()
+        o.group = ReadObject( bb )
+        o.name = ReadObject( bb )
+        o.desc = ReadObject( bb )
     end,
     ToBBuffer = function( bb, o )
-        bb:WriteInt32( rawget( o, "id" ) )
-        bb:WriteObject( rawget( o, "group" ) )
-        bb:WriteObject( rawget( o, "name" ) )
-        bb:WriteObject( rawget( o, "desc" ) )
+        local WriteObject = bb:WriteObject
+        bb:WriteInt32( o.id )
+        WriteObject( bb, o.group )
+        WriteObject( bb, o.name )
+        WriteObject( bb, o.desc )
     end
 }
 BBuffer.Register( PKG_Manage_Permission )
@@ -764,12 +796,14 @@ PKG_Manage_BindAccountRole = {
         return o
     end,
     FromBBuffer = function( bb, o )
-        rawset( o, "account_id", bb:ReadInt32() )
-        rawset( o, "role_id", bb:ReadInt32() )
+        local ReadInt32 = bb:ReadInt32
+        o.account_id = ReadInt32( bb )
+        o.role_id = ReadInt32( bb )
     end,
     ToBBuffer = function( bb, o )
-        bb:WriteInt32( rawget( o, "account_id" ) )
-        bb:WriteInt32( rawget( o, "role_id" ) )
+        local WriteInt32 = bb:WriteInt32
+        WriteInt32( bb, o.account_id )
+        WriteInt32( bb, o.role_id )
     end
 }
 BBuffer.Register( PKG_Manage_BindAccountRole )
@@ -790,12 +824,14 @@ PKG_Manage_BindRolePermission = {
         return o
     end,
     FromBBuffer = function( bb, o )
-        rawset( o, "role_id", bb:ReadInt32() )
-        rawset( o, "permission_id", bb:ReadInt32() )
+        local ReadInt32 = bb:ReadInt32
+        o.role_id = ReadInt32( bb )
+        o.permission_id = ReadInt32( bb )
     end,
     ToBBuffer = function( bb, o )
-        bb:WriteInt32( rawget( o, "role_id" ) )
-        bb:WriteInt32( rawget( o, "permission_id" ) )
+        local WriteInt32 = bb:WriteInt32
+        WriteInt32( bb, o.role_id )
+        WriteInt32( bb, o.permission_id )
     end
 }
 BBuffer.Register( PKG_Manage_BindRolePermission )
@@ -811,22 +847,23 @@ PKG_DB_Manage_LoginSuccess = {
         o.__index = o
         o.__newindex = o
 
+        local null = _G.null
         o.id = 0 -- Int64
-        o.token = BBuffer.null -- String
+        o.token = null -- String
         setmetatable( o, PKG_Success.Create() )
         return o
     end,
     FromBBuffer = function( bb, o )
         local p = getmetatable( o )
-        rawget( p, "__proto" ).FromBBuffer( bb, p )
-        rawset( o, "id", bb:ReadInt64() )
-        rawset( o, "token", bb:ReadObject() )
+        p.__proto.FromBBuffer( bb, p )
+        o.id = bb:ReadInt64()
+        o.token = bb:ReadObject()
     end,
     ToBBuffer = function( bb, o )
         local p = getmetatable( o )
-        rawget( p, "__proto" ).ToBBuffer( bb, p )
-        bb:WriteInt64( rawget( o, "id" ) )
-        bb:WriteObject( rawget( o, "token" ) )
+        p.__proto.ToBBuffer( bb, p )
+        bb:WriteInt64( o.id )
+        bb:WriteObject( o.token )
     end
 }
 BBuffer.Register( PKG_DB_Manage_LoginSuccess )
@@ -847,11 +884,11 @@ PKG_DB_Manage_LoginFail = {
     end,
     FromBBuffer = function( bb, o )
         local p = getmetatable( o )
-        rawget( p, "__proto" ).FromBBuffer( bb, p )
+        p.__proto.FromBBuffer( bb, p )
     end,
     ToBBuffer = function( bb, o )
         local p = getmetatable( o )
-        rawget( p, "__proto" ).ToBBuffer( bb, p )
+        p.__proto.ToBBuffer( bb, p )
     end
 }
 BBuffer.Register( PKG_DB_Manage_LoginFail )
@@ -872,11 +909,11 @@ PKG_DB_Manage_LogoutSuccess = {
     end,
     FromBBuffer = function( bb, o )
         local p = getmetatable( o )
-        rawget( p, "__proto" ).FromBBuffer( bb, p )
+        p.__proto.FromBBuffer( bb, p )
     end,
     ToBBuffer = function( bb, o )
         local p = getmetatable( o )
-        rawget( p, "__proto" ).ToBBuffer( bb, p )
+        p.__proto.ToBBuffer( bb, p )
     end
 }
 BBuffer.Register( PKG_DB_Manage_LogoutSuccess )
@@ -897,11 +934,11 @@ PKG_DB_Manage_LogoutFail = {
     end,
     FromBBuffer = function( bb, o )
         local p = getmetatable( o )
-        rawget( p, "__proto" ).FromBBuffer( bb, p )
+        p.__proto.FromBBuffer( bb, p )
     end,
     ToBBuffer = function( bb, o )
         local p = getmetatable( o )
-        rawget( p, "__proto" ).ToBBuffer( bb, p )
+        p.__proto.ToBBuffer( bb, p )
     end
 }
 BBuffer.Register( PKG_DB_Manage_LogoutFail )
@@ -917,19 +954,20 @@ PKG_DB_Manage_SelectManageAccountIdsSuccess = {
         o.__index = o
         o.__newindex = o
 
-        o.ids = BBuffer.null -- List_Int64_
+        local null = _G.null
+        o.ids = null -- List_Int64_
         setmetatable( o, PKG_Success.Create() )
         return o
     end,
     FromBBuffer = function( bb, o )
         local p = getmetatable( o )
-        rawget( p, "__proto" ).FromBBuffer( bb, p )
-        rawset( o, "ids", bb:ReadObject() )
+        p.__proto.FromBBuffer( bb, p )
+        o.ids = bb:ReadObject()
     end,
     ToBBuffer = function( bb, o )
         local p = getmetatable( o )
-        rawget( p, "__proto" ).ToBBuffer( bb, p )
-        bb:WriteObject( rawget( o, "ids" ) )
+        p.__proto.ToBBuffer( bb, p )
+        bb:WriteObject( o.ids )
     end
 }
 BBuffer.Register( PKG_DB_Manage_SelectManageAccountIdsSuccess )
@@ -950,11 +988,11 @@ PKG_DB_Manage_SelectManageAccountIdsFail = {
     end,
     FromBBuffer = function( bb, o )
         local p = getmetatable( o )
-        rawget( p, "__proto" ).FromBBuffer( bb, p )
+        p.__proto.FromBBuffer( bb, p )
     end,
     ToBBuffer = function( bb, o )
         local p = getmetatable( o )
-        rawget( p, "__proto" ).ToBBuffer( bb, p )
+        p.__proto.ToBBuffer( bb, p )
     end
 }
 BBuffer.Register( PKG_DB_Manage_SelectManageAccountIdsFail )
@@ -970,19 +1008,20 @@ PKG_DB_Manage_SelectManageAccountsSuccess = {
         o.__index = o
         o.__newindex = o
 
-        o.rows = BBuffer.null -- List_PKG_Manage_Account_
+        local null = _G.null
+        o.rows = null -- List_PKG_Manage_Account_
         setmetatable( o, PKG_Success.Create() )
         return o
     end,
     FromBBuffer = function( bb, o )
         local p = getmetatable( o )
-        rawget( p, "__proto" ).FromBBuffer( bb, p )
-        rawset( o, "rows", bb:ReadObject() )
+        p.__proto.FromBBuffer( bb, p )
+        o.rows = bb:ReadObject()
     end,
     ToBBuffer = function( bb, o )
         local p = getmetatable( o )
-        rawget( p, "__proto" ).ToBBuffer( bb, p )
-        bb:WriteObject( rawget( o, "rows" ) )
+        p.__proto.ToBBuffer( bb, p )
+        bb:WriteObject( o.rows )
     end
 }
 BBuffer.Register( PKG_DB_Manage_SelectManageAccountsSuccess )
@@ -994,19 +1033,21 @@ List_PKG_Manage_Account_ = {
         o.__proto = List_PKG_Manage_Account_
         o.__index = o
         o.__newindex = o
-
         return o
     end,
     FromBBuffer = function( bb, o )
 		local len = bb:ReadUInt32()
+        local f = BBuffer.ReadObject
 		for i = 1, len do
-			rawset( o, i, bb:ReadObject() )
+			o[ i ] = f( bb )
 		end
     end,
     ToBBuffer = function( bb, o )
-		bb:WriteUInt32( #o )
-		for k, v in ipairs( o ) do
-			bb:WriteObject( v )
+        local len = #o
+		bb:WriteUInt32( len )
+        local f = BBuffer.WriteObject
+        for i = 1, len do
+			f( bb, o[ i ] )
 		end
     end
 }
@@ -1028,11 +1069,11 @@ PKG_DB_Manage_SelectManageAccountsFail = {
     end,
     FromBBuffer = function( bb, o )
         local p = getmetatable( o )
-        rawget( p, "__proto" ).FromBBuffer( bb, p )
+        p.__proto.FromBBuffer( bb, p )
     end,
     ToBBuffer = function( bb, o )
         local p = getmetatable( o )
-        rawget( p, "__proto" ).ToBBuffer( bb, p )
+        p.__proto.ToBBuffer( bb, p )
     end
 }
 BBuffer.Register( PKG_DB_Manage_SelectManageAccountsFail )

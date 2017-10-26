@@ -70,6 +70,7 @@ public static class GenLUA_Class
             typeId = (ushort)kv.Value;
             var cn = c._GetTypeDecl_Lua(templateName);
             var o = asm.CreateInstance(c.FullName);
+            var fs = c._GetFieldsConsts();
 
             sb.Append(c._GetDesc()._GetComment_Lua(0) + @"
 " + cn + @" = {
@@ -79,9 +80,17 @@ public static class GenLUA_Class
         local o = {}
         o.__proto = " + cn + @"
         o.__index = o
-        o.__newindex = o
+        o.__newindex = o");
+            if (!c._IsList())
+            {
+                sb.Append(@"
 ");
-            var fs = c._GetFieldsConsts();
+                if (fs.Exists(f => f.FieldType._IsRef()))
+                {
+                    sb.Append(@"
+        local null = _G.null");
+                }
+            }
             foreach (var f in fs)
             {
                 var ft = f.FieldType;
@@ -96,7 +105,7 @@ public static class GenLUA_Class
                 else
                 {
                     sb.Append(@"
-        o." + f.Name + " = BBuffer.null");
+        o." + f.Name + " = null");
                 }
                 sb.Append(" -- " + ft._GetTypeDecl_Lua(templateName));
             }
@@ -116,14 +125,38 @@ public static class GenLUA_Class
                 var bt = c.BaseType._GetTypeDecl_Lua(templateName);
                 sb.Append(@"
         local p = getmetatable( o )
-        rawget( p, ""__proto"" ).FromBBuffer( bb, p )");
+        p.__proto.FromBBuffer( bb, p )");
+            }
+            var ftns = new Dictionary<string, int>();
+            foreach (var f in fs)
+            {
+                var ft = f.FieldType;
+                var ftn = ft._IsNumeric() ? ft.Name : "Object";
+                if (ftns.ContainsKey(ftn)) ftns[ftn]++;
+                else ftns.Add(ftn, 1);
+            }
+            foreach (var kvp in ftns)
+            {
+                if (kvp.Value > 1)
+                {
+                    sb.Append(@"
+        local Read" + kvp.Key + @" = bb:Read" + kvp.Key);
+                }
             }
             foreach (var f in fs)
             {
                 var ft = f.FieldType;
                 var ftn = ft._IsNumeric() ? ft.Name : "Object";
-                sb.Append(@"
-        rawset( o, """ + f.Name + @""", bb:Read" + ftn + @"() )");
+                if (ftns[ftn] > 1)
+                {
+                    sb.Append(@"
+        o." + f.Name + @" = Read" + ftn + @"( bb )");
+                }
+                else
+                {
+                    sb.Append(@"
+        o." + f.Name + @" = bb:Read" + ftn + @"()");
+                }
             }
             if (c._IsList())
             {
@@ -137,8 +170,9 @@ public static class GenLUA_Class
                 }
                 sb.Append(@"
 		local len = bb:ReadUInt32()
+        local f = BBuffer." + fn + @"
 		for i = 1, len do
-			rawset( o, i, bb:" + fn + @"() )
+			o[ i ] = f( bb )
 		end");
             }
             sb.Append(@"
@@ -149,14 +183,30 @@ public static class GenLUA_Class
                 var bt = c.BaseType._GetTypeDecl_Lua(templateName);
                 sb.Append(@"
         local p = getmetatable( o )
-        rawget( p, ""__proto"" ).ToBBuffer( bb, p )");
+        p.__proto.ToBBuffer( bb, p )");
+            }
+            foreach (var kvp in ftns)
+            {
+                if (kvp.Value > 1)
+                {
+                    sb.Append(@"
+        local Write" + kvp.Key + @" = bb:Write" + kvp.Key);
+                }
             }
             foreach (var f in fs)
             {
                 var ft = f.FieldType;
                 var ftn = ft._IsNumeric() ? ft.Name : "Object";
-                sb.Append(@"
-        bb:Write" + ftn + @"( rawget( o, """ + f.Name + @""" ) )");
+                if (ftns[ftn] > 1)
+                {
+                    sb.Append(@"
+        Write" + ftn + @"( bb, o." + f.Name + @" )");
+                }
+                else
+                {
+                    sb.Append(@"
+        bb:Write" + ftn + @"( o." + f.Name + @" )");
+                }
             }
             if (c._IsList())
             {
@@ -169,9 +219,11 @@ public static class GenLUA_Class
                     fn = "Write" + ctn;
                 }
                 sb.Append(@"
-		bb:WriteUInt32( #o )
-		for k, v in ipairs( o ) do
-			bb:" + fn + @"( v )
+        local len = #o
+		bb:WriteUInt32( len )
+        local f = BBuffer." + fn + @"
+        for i = 1, len do
+			f( bb, o[ i ] )
 		end");
             }
             sb.Append(@"
