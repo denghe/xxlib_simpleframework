@@ -56,9 +56,12 @@ struct Lua_BBuffer
 			{ "Clear", Clear },
 			{ "__tostring", __tostring },
 
-			{ "Write", WriteFormat },
+			{ "Write", WriteRootFormat },
+			{ "WriteRootFormat", WriteRootFormat },
 			{ "WriteFormat", WriteFormat },
-			{ "Read", ReadFormat },
+
+			{ "Read", ReadRootFormat },
+			{ "ReadRootFormat", ReadRootFormat },
 			{ "ReadFormat", ReadFormat },
 
 			{ "BeginWrite", BeginWrite },
@@ -856,23 +859,19 @@ struct Lua_BBuffer
 			"int: 1248   unsigned: !@$* ( shift-1248 )  boolean: b   float: f   double: d    string / bbuffer / table: o");
 	}
 
-	// bb:Write( "format str", args... )
-	inline static int WriteFormat(lua_State* L)
+	inline void WriteFormat_(lua_State* L)
 	{
-		auto& self = GetSelf(L, 3);
 		if (!lua_isstring(L, 2))
 		{
-			return FormatError(L);
+			FormatError(L);
 		}
 		auto top = lua_gettop(L);
 		size_t len;
 		auto s = lua_tolstring(L, 2, &len);
 		if (len == 0 || len != top - 2)
 		{
-			return luaL_error(L, "bad format string. len must be == args's count");
+			luaL_error(L, "bad format string. len must be == args's count");
 		}
-
-		self.BeginWrite_(L);
 
 		for (int i = 3; i <= top; ++i)
 		{
@@ -880,20 +879,29 @@ struct Lua_BBuffer
 			auto f = writeFuncs[asciiFuncIndex[c]];
 			if (!f)
 			{
-				self.EndWrite_(L);			// end write
-				return FormatError(L);
+				FormatError(L);
 			}
-			(self.*f)(L, i);
+			(this->*f)(L, i);
 		}
-
-		self.EndWrite_(L);					// end write
+	}
+	// bb:Write( "format str", args... )
+	inline static int WriteFormat(lua_State* L)
+	{
+		auto& self = GetSelf(L, 3);
+		self.WriteFormat_(L);
+		return 0;
+	}
+	inline static int WriteRootFormat(lua_State* L)
+	{
+		auto& self = GetSelf(L, 3);
+		self.BeginWrite_(L);
+		self.WriteFormat_(L);
+		self.EndWrite_(L);
 		return 0;
 	}
 
-	// bb:Read( "format str" )
-	inline static int ReadFormat(lua_State* L)
+	inline int ReadFormat_(lua_State* L)
 	{
-		auto& self = GetSelf(L, 2);
 		if (!lua_isstring(L, 2))
 		{
 			return FormatError(L);
@@ -909,24 +917,33 @@ struct Lua_BBuffer
 			luaL_error(L, "lua_checkstack fail. current top = %d, expect +%d", lua_gettop(L), readCount);
 		}
 
-		self.BeginRead_(L);
-
 		for (size_t i = 0; i < readCount; ++i)
 		{
 			auto c = (uint8_t)s[i];
 			auto f = readFuncs[asciiFuncIndex[c]];
 			if (!f)
 			{
-				self.EndRead_(L);			// end read
 				return FormatError(L);
 			}
-			(self.*f)(L);
+			(this->*f)(L);
 		}
-
-		self.EndRead_(L);					// end read
 		return (int)readCount;
 	}
 
+	// bb:Read( "format str" )
+	inline static int ReadFormat(lua_State* L)
+	{
+		auto& self = GetSelf(L, 2);
+		return self.ReadFormat_(L);
+	}
+	inline static int ReadRootFormat(lua_State* L)
+	{
+		auto& self = GetSelf(L, 2);
+		self.BeginRead_(L);
+		auto rtv = self.ReadFormat_(L);
+		self.EndRead_(L);
+		return rtv;
+	}
 
 
 
