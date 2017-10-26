@@ -138,7 +138,7 @@ public static class GenLUA_Class
                 sb.Append(@"
 		local len = bb:ReadUInt32()
 		for i = 1, len do
-			table.insert( o, bb:" + fn + @"() )
+			rawset( o, i, bb:" + fn + @"() )
 		end");
             }
             sb.Append(@"

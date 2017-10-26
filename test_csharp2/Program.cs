@@ -28,8 +28,22 @@ public static class Program
         o.屄拔扶儿.Write((byte)2);
         o.屄拔扶儿.Write((byte)3);
 
-        bb.WriteRoot(o);
+        var p = new PKG2.派生类();
+        p.立丝特基类 = new xx.List<PKG2.基类>();
+        p.立丝特基类.Add(p);
+        p.立丝特基类.Add(o);
+        p.立丝特屄拔扶儿 = new xx.List<xx.BBuffer>();
+        p.立丝特屄拔扶儿.Add(new xx.BBuffer());
+        p.立丝特白特 = new xx.List<byte>();
+        p.立丝特白特.Add(1);
+        p.立丝特白特.Add(2);
+        p.立丝特白特.Add(3);
+        bb.Clear();
+        bb.WriteRoot(p);
         Console.WriteLine(bb);
+
+        //bb.WriteRoot(o);
+        //Console.WriteLine(bb);
     }
 }
 

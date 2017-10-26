@@ -390,6 +390,10 @@ struct Lua_BBuffer
 		case LUA_TTABLE:
 		case LUA_TUSERDATA:
 			PushPtrDict(L);						// ..., o, dict					定位到注册表中的 ptrDict
+			if (lua_isnil(L, -1))
+			{
+				luaL_error(L, "the ptrDict is nil. forget WriteRoot?");
+			}
 			lua_pushvalue(L, -2);				// ..., o, dict, o				查询当前对象是否已经记录过
 			lua_rawget(L, -2);					// ..., o, dict, nil/offset
 			if (lua_isnil(L, -1))				// 如果未记录则记录 + 写buf

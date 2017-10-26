@@ -136,7 +136,7 @@ List_Byte_ = {
     FromBBuffer = function( bb, o )
 		local len = bb:ReadUInt32()
 		for i = 1, len do
-			table.insert( o, bb:ReadByte() )
+			rawset( o, i, bb:ReadByte() )
 		end
     end,
     ToBBuffer = function( bb, o )
@@ -161,7 +161,7 @@ List_SByte_ = {
     FromBBuffer = function( bb, o )
 		local len = bb:ReadUInt32()
 		for i = 1, len do
-			table.insert( o, bb:ReadSByte() )
+			rawset( o, i, bb:ReadSByte() )
 		end
     end,
     ToBBuffer = function( bb, o )
@@ -186,7 +186,7 @@ List_Int16_ = {
     FromBBuffer = function( bb, o )
 		local len = bb:ReadUInt32()
 		for i = 1, len do
-			table.insert( o, bb:ReadInt16() )
+			rawset( o, i, bb:ReadInt16() )
 		end
     end,
     ToBBuffer = function( bb, o )
@@ -211,7 +211,7 @@ List_UInt16_ = {
     FromBBuffer = function( bb, o )
 		local len = bb:ReadUInt32()
 		for i = 1, len do
-			table.insert( o, bb:ReadUInt16() )
+			rawset( o, i, bb:ReadUInt16() )
 		end
     end,
     ToBBuffer = function( bb, o )
@@ -236,7 +236,7 @@ List_Int32_ = {
     FromBBuffer = function( bb, o )
 		local len = bb:ReadUInt32()
 		for i = 1, len do
-			table.insert( o, bb:ReadInt32() )
+			rawset( o, i, bb:ReadInt32() )
 		end
     end,
     ToBBuffer = function( bb, o )
@@ -261,7 +261,7 @@ List_UInt32_ = {
     FromBBuffer = function( bb, o )
 		local len = bb:ReadUInt32()
 		for i = 1, len do
-			table.insert( o, bb:ReadUInt32() )
+			rawset( o, i, bb:ReadUInt32() )
 		end
     end,
     ToBBuffer = function( bb, o )
@@ -286,7 +286,7 @@ List_Int64_ = {
     FromBBuffer = function( bb, o )
 		local len = bb:ReadUInt32()
 		for i = 1, len do
-			table.insert( o, bb:ReadInt64() )
+			rawset( o, i, bb:ReadInt64() )
 		end
     end,
     ToBBuffer = function( bb, o )
@@ -311,7 +311,7 @@ List_UInt64_ = {
     FromBBuffer = function( bb, o )
 		local len = bb:ReadUInt32()
 		for i = 1, len do
-			table.insert( o, bb:ReadUInt64() )
+			rawset( o, i, bb:ReadUInt64() )
 		end
     end,
     ToBBuffer = function( bb, o )
@@ -336,7 +336,7 @@ List_Single_ = {
     FromBBuffer = function( bb, o )
 		local len = bb:ReadUInt32()
 		for i = 1, len do
-			table.insert( o, bb:ReadSingle() )
+			rawset( o, i, bb:ReadSingle() )
 		end
     end,
     ToBBuffer = function( bb, o )
@@ -361,7 +361,7 @@ List_Double_ = {
     FromBBuffer = function( bb, o )
 		local len = bb:ReadUInt32()
 		for i = 1, len do
-			table.insert( o, bb:ReadDouble() )
+			rawset( o, i, bb:ReadDouble() )
 		end
     end,
     ToBBuffer = function( bb, o )
@@ -386,7 +386,7 @@ List_String_ = {
     FromBBuffer = function( bb, o )
 		local len = bb:ReadUInt32()
 		for i = 1, len do
-			table.insert( o, bb:ReadObject() )
+			rawset( o, i, bb:ReadObject() )
 		end
     end,
     ToBBuffer = function( bb, o )
@@ -411,7 +411,7 @@ List_BBuffer_ = {
     FromBBuffer = function( bb, o )
 		local len = bb:ReadUInt32()
 		for i = 1, len do
-			table.insert( o, bb:ReadObject() )
+			rawset( o, i, bb:ReadObject() )
 		end
     end,
     ToBBuffer = function( bb, o )
@@ -436,7 +436,7 @@ List_PKG2_基类_ = {
     FromBBuffer = function( bb, o )
 		local len = bb:ReadUInt32()
 		for i = 1, len do
-			table.insert( o, bb:ReadObject() )
+			rawset( o, i, bb:ReadObject() )
 		end
     end,
     ToBBuffer = function( bb, o )

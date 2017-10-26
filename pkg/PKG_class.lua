@@ -241,7 +241,7 @@ List_PKG_Property_ = {
     FromBBuffer = function( bb, o )
 		local len = bb:ReadUInt32()
 		for i = 1, len do
-			table.insert( o, bb:ReadObject() )
+			rawset( o, i, bb:ReadObject() )
 		end
     end,
     ToBBuffer = function( bb, o )
@@ -394,7 +394,7 @@ List_PKG_UserInfo_ = {
     FromBBuffer = function( bb, o )
 		local len = bb:ReadUInt32()
 		for i = 1, len do
-			table.insert( o, bb:ReadObject() )
+			rawset( o, i, bb:ReadObject() )
 		end
     end,
     ToBBuffer = function( bb, o )
@@ -649,7 +649,7 @@ List_Int64_ = {
     FromBBuffer = function( bb, o )
 		local len = bb:ReadUInt32()
 		for i = 1, len do
-			table.insert( o, bb:ReadInt64() )
+			rawset( o, i, bb:ReadInt64() )
 		end
     end,
     ToBBuffer = function( bb, o )
@@ -1000,7 +1000,7 @@ List_PKG_Manage_Account_ = {
     FromBBuffer = function( bb, o )
 		local len = bb:ReadUInt32()
 		for i = 1, len do
-			table.insert( o, bb:ReadObject() )
+			rawset( o, i, bb:ReadObject() )
 		end
     end,
     ToBBuffer = function( bb, o )
