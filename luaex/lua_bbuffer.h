@@ -3,11 +3,104 @@
 #include "lua_mempool.h"
 #include <string>
 
-
-// Read Write Object 当前暂不支持 多参数 多返回
-
 struct Lua_BBuffer
 {
+	constexpr static const char* name = "BBuffer";
+
+	// 向 lua 映射全局的 BBuffer 表/元表
+	inline static int Init(lua_State *L)
+	{
+		luaL_Reg funcs[] =
+		{
+			{ "__gc", __gc },
+			{ "Create", Create },
+			{ "Register", Register },
+
+			{ "WriteBoolean", WriteBoolean },
+			{ "WriteSByte", WriteInt8 },
+			{ "WriteInt8", WriteInt8 },
+			{ "WriteInt16", WriteInt16 },
+			{ "WriteInt32", WriteInt32 },
+			{ "WriteInt64", WriteInt64 },
+			{ "WriteByte", WriteUInt8 },
+			{ "WriteUInt8", WriteUInt8 },
+			{ "WriteUInt16", WriteUInt16 },
+			{ "WriteUInt32", WriteUInt32 },
+			{ "WriteUInt64", WriteUInt64 },
+			{ "WriteSingle", WriteFloat },
+			{ "WriteFloat", WriteFloat },
+			{ "WriteDouble", WriteDouble },
+			{ "WriteObject", WriteObject },
+			{ "WriteRoot", WriteRoot },
+
+			{ "ReadBoolean", ReadBoolean },
+			{ "ReadSByte", ReadInt8 },
+			{ "ReadInt8", ReadInt8 },
+			{ "ReadInt16", ReadInt16 },
+			{ "ReadInt32", ReadInt32 },
+			{ "ReadInt64", ReadInt64 },
+			{ "ReadByte", ReadUInt8 },
+			{ "ReadUInt8", ReadUInt8 },
+			{ "ReadUInt16", ReadUInt16 },
+			{ "ReadUInt32", ReadUInt32 },
+			{ "ReadUInt64", ReadUInt64 },
+			{ "ReadFloat", ReadFloat },
+			{ "ReadSingle", ReadFloat },
+			{ "ReadDouble", ReadDouble },
+			{ "ReadObject", ReadObject },
+			{ "ReadRoot", ReadRoot },
+
+			{ "GetDataLen", GetDataLen },
+			{ "GetOffset", GetOffset },
+			{ "SetOffset", SetOffset },
+			{ "Clear", Clear },
+			{ "__tostring", __tostring },
+
+			{ "Write", WriteFormat },
+			{ "WriteFormat", WriteFormat },
+			{ "Read", ReadFormat },
+			{ "ReadFormat", ReadFormat },
+
+			{ "BeginWrite", BeginWrite },
+			{ "EndWrite", EndWrite },
+
+			{ "BeginRead", BeginRead },
+			{ "EndRead", EndRead },
+
+
+			// todo: write package ?
+
+			{ nullptr, nullptr }
+		};
+		lua_createtable(L, 0, _countof(funcs));	// mt
+		luaL_setfuncs(L, funcs, 0);				// mt
+
+		// 设成自查找 for metatable
+		lua_pushvalue(L, -1);					// mt, mt
+		lua_setfield(L, -2, "__index");			// mt
+
+		// 设置保护元表
+		lua_pushvalue(L, -1);					// mt, mt
+		lua_setfield(L, -2, "__metatable");		// mt
+
+		// 用 null 来代表空值占位符的元素
+		lua_pushlightuserdata(L, 0);			// mt, lud
+		lua_setglobal(L, "null");
+		//lua_setfield(L, -2, "null");			// mt
+
+
+		lua_setglobal(L, name);					// 
+
+		// 在注册表中创建 typeId 到 Proto 的映射表	
+		lua_pushlightuserdata(L, (void*)name);	// lud
+		lua_createtable(L, 128, 0);				// lud, typeIdProtos
+		lua_rawset(L, LUA_REGISTRYINDEX);		// 
+
+		return 0;
+	}
+
+
+	// 数据结构
 	Lua_MemPool* mp;						// 指向内存池
 	char*		buf = nullptr;
 	uint32_t    dataLen = 0;
@@ -15,7 +108,7 @@ struct Lua_BBuffer
 	uint32_t	offsetRoot = 0;				// offset 值写入修正
 	uint32_t	dataLenBak = 0;				// WritePackage 时用于备份当前数据写入偏移
 
-	// 从池中构造 BBuffer. 可能抛 lua 异常
+											// 从池中构造 BBuffer. 可能抛 lua 异常
 	Lua_BBuffer(lua_State* L)
 	{
 		lua_getallocf(L, (void**)&mp);		// 填充内存分配器
@@ -84,87 +177,8 @@ struct Lua_BBuffer
 		}
 	}
 
-	constexpr static const char* name = "BBuffer";
-	constexpr static const char* hexs = "0123456789ABCDEF";
-
-	// 向 lua 映射全局的 BBuffer 表/元表
-	inline static int Init(lua_State *L)
-	{
-		luaL_Reg funcs[] =
-		{
-			{ "__gc", __gc },
-			{ "Create", Create },
-			{ "Register", Register },
-
-			{ "WriteBoolean", WriteBoolean },
-			{ "WriteSByte", WriteInt8 },
-			{ "WriteInt8", WriteInt8 },
-			{ "WriteInt16", WriteInt16 },
-			{ "WriteInt32", WriteInt32 },
-			{ "WriteInt64", WriteInt64 },
-			{ "WriteByte", WriteUInt8 },
-			{ "WriteUInt8", WriteUInt8 },
-			{ "WriteUInt16", WriteUInt16 },
-			{ "WriteUInt32", WriteUInt32 },
-			{ "WriteUInt64", WriteUInt64 },
-			{ "WriteSingle", WriteFloat },
-			{ "WriteFloat", WriteFloat },
-			{ "WriteDouble", WriteDouble },
-			{ "WriteObject", WriteObject },
-			{ "WriteRoot", WriteRoot },
-
-			{ "ReadBoolean", ReadBoolean },
-			{ "ReadSByte", ReadInt8 },
-			{ "ReadInt8", ReadInt8 },
-			{ "ReadInt16", ReadInt16 },
-			{ "ReadInt32", ReadInt32 },
-			{ "ReadInt64", ReadInt64 },
-			{ "ReadByte", ReadUInt8 },
-			{ "ReadUInt8", ReadUInt8 },
-			{ "ReadUInt16", ReadUInt16 },
-			{ "ReadUInt32", ReadUInt32 },
-			{ "ReadUInt64", ReadUInt64 },
-			{ "ReadFloat", ReadFloat },
-			{ "ReadSingle", ReadFloat },
-			{ "ReadDouble", ReadDouble },
-			{ "ReadObject", ReadObject },
-			{ "ReadRoot", ReadRoot },
-
-			{ "GetDataLen", GetDataLen },
-			{ "GetOffset", GetOffset },
-			{ "SetOffset", SetOffset },
-			{ "Clear", Clear },
-			{ "__tostring", __tostring },
-			// todo: write package ?
-
-			{ nullptr, nullptr }
-		};
-		lua_createtable(L, 0, _countof(funcs));	// mt
-		luaL_setfuncs(L, funcs, 0);				// mt
-
-		// 设成自查找 for metatable
-		lua_pushvalue(L, -1);					// mt, mt
-		lua_setfield(L, -2, "__index");			// mt
-
-		// 设置保护元表
-		lua_pushvalue(L, -1);					// mt, mt
-		lua_setfield(L, -2, "__metatable");		// mt
-
-		// 用 null 来代表空值占位符的元素
-		lua_pushlightuserdata(L, 0);			// mt, lud
-		lua_setglobal(L, "null");
-		//lua_setfield(L, -2, "null");			// mt
 
 
-		lua_setglobal(L, name);					// 
-
-		// 在注册表中创建 typeId 到 Proto 的映射表	
-		lua_pushlightuserdata(L, (void*)name);	// lud
-		lua_createtable(L, 128, 0);				// lud, typeIdProtos
-		lua_rawset(L, LUA_REGISTRYINDEX);		// 
-
-		return 0;
-	}
 
 	// 析构
 	inline static int __gc(lua_State* L)
@@ -179,14 +193,10 @@ struct Lua_BBuffer
 	// 创建, 无参数
 	inline static int Create(lua_State* L)
 	{
-		if (lua_gettop(L) != 0)					// t
-		{
-			luaL_error(L, "bad args nums. expect 0");
-		}
 		auto& self = *(Lua_BBuffer*)lua_newuserdata(L, sizeof(Lua_BBuffer));	//	异常: 无副作用
-		lua_getglobal(L, name);					// ud, mt							异常: 未执行构造函数, 不需要析构
+		lua_getglobal(L, name);					// ..., ud, mt						异常: 未执行构造函数, 不需要析构
 		new (&self) Lua_BBuffer(L);				//									异常: 因为未 bind 元表, 不会执行到析构
-		lua_setmetatable(L, -2);				// ud
+		lua_setmetatable(L, -2);				// ..., ud
 		return 1;
 	}
 
@@ -220,7 +230,7 @@ struct Lua_BBuffer
 	{
 		if (lua_gettop(L) < top)
 		{
-			luaL_error(L, "less arg nums. expect %d", top);
+			luaL_error(L, "less arg nums. expect %d+", top);
 		}
 		auto selfptr = (Lua_BBuffer*)lua_touserdata(L, 1);
 		if (!selfptr)
@@ -288,6 +298,41 @@ struct Lua_BBuffer
 	}
 
 	template<typename T>
+	inline void WriteNum_(lua_State* L, int i)
+	{
+		if constexpr(std::is_same_v<T, bool>)
+		{
+			if (!lua_isboolean(L, i))
+			{
+				luaL_error(L, "the args[ %d ]'s type must be a boolean", i);
+			}
+			Write(L, lua_toboolean(L, i) != 0);
+		}
+		else if constexpr(!std::is_floating_point_v<T>)
+		{
+			T v;
+			int isnum;
+			v = (T)lua_tointegerx(L, i, &isnum);
+			if (!isnum)
+			{
+				luaL_error(L, "the args[ %d ]'s type must be a integer", i);
+			}
+			Write(L, v);
+		}
+		else
+		{
+			T v;
+			int isnum;
+			v = (T)lua_tonumberx(L, i, &isnum);
+			if (!isnum)
+			{
+				luaL_error(L, "the args[ %d ]'s type must be a number", i);
+			}
+			Write(L, v);
+		}
+	}
+
+	template<typename T>
 	inline static int WriteNum(lua_State* L)
 	{
 		static_assert(std::is_arithmetic_v<T>);
@@ -295,36 +340,7 @@ struct Lua_BBuffer
 		auto top = lua_gettop(L);
 		for (int i = 2; i <= top; ++i)
 		{
-			if constexpr(std::is_same_v<T, bool>)
-			{
-				if (!lua_isboolean(L, i))
-				{
-					luaL_error(L, "the args[ %d ]'s type must be a boolean", i);
-				}
-				self.Write(L, lua_toboolean(L, i) != 0);
-			}
-			else if constexpr(!std::is_floating_point_v<T>)
-			{
-				T v;
-				int isnum;
-				v = (T)lua_tointegerx(L, i, &isnum);
-				if (!isnum)
-				{
-					luaL_error(L, "the args[ %d ]'s type must be a integer", i);
-				}
-				self.Write(L, v);
-			}
-			else
-			{
-				T v;
-				int isnum;
-				v = (T)lua_tonumberx(L, i, &isnum);
-				if (!isnum)
-				{
-					luaL_error(L, "the args[ %d ]'s type must be a number", i);
-				}
-				self.Write(L, v);
-			}
+			self.WriteNum_<T>(L, i);
 		}
 		return 0;
 	}
@@ -343,7 +359,26 @@ struct Lua_BBuffer
 
 
 	template<typename T>
-	inline static int ReadNum(lua_State* L)
+	void ReadNum_(lua_State* L)
+	{
+		T v;
+		Read(L, v);
+		if constexpr(std::is_same_v<T, bool>)
+		{
+			lua_pushboolean(L, v);
+		}
+		else if constexpr(!std::is_floating_point_v<T>)
+		{
+			lua_pushinteger(L, (lua_Integer)v);
+		}
+		else
+		{
+			lua_pushnumber(L, (lua_Number)v);
+		}
+	}
+
+	template<typename T>
+	static int ReadNum(lua_State* L)
 	{
 		static_assert(std::is_arithmetic_v<T>);
 		auto& self = GetSelf(L, 1);
@@ -364,20 +399,7 @@ struct Lua_BBuffer
 		}
 		for (int i = 0; i < readCount; ++i)
 		{
-			T v;
-			self.Read(L, v);
-			if constexpr(std::is_same_v<T, bool>)
-			{
-				lua_pushboolean(L, v);
-			}
-			else if constexpr(!std::is_floating_point_v<T>)
-			{
-				lua_pushinteger(L, (lua_Integer)v);
-			}
-			else
-			{
-				lua_pushnumber(L, (lua_Number)v);
-			}
+			self.ReadNum_<T>(L);
 		}
 		return readCount;
 	}
@@ -420,45 +442,54 @@ struct Lua_BBuffer
 	inline void PushPtrDict(lua_State* L)
 	{
 		lua_rawgetp(L, LUA_REGISTRYINDEX, this);
+		if (lua_isnil(L, -1))
+		{
+			luaL_error(L, "the ptrDict is nil. forget WriteRoot?");
+		}
 	}
 	inline void PushIdxDict(lua_State* L)
 	{
 		lua_rawgetp(L, LUA_REGISTRYINDEX, (char*)this + 1);
+		if (lua_isnil(L, -1))
+		{
+			luaL_error(L, "the idxDict is nil. forget ReadRoot?");
+		}
 	}
 
 
 	// 针对 string, bbuffer, table, 写 dataLen - offsetRoot 到 buf, 返回是否第一次写入
-	inline bool WriteOffset(lua_State* L)
+	inline bool WriteOffset(lua_State* L, int i)
 	{
-		switch (lua_type(L, -1))				// ..., o
+		if (!lua_checkstack(L, 3))
+		{
+			luaL_error(L, "lua_checkstack fail. current top = %d, expect +3", lua_gettop(L));
+		}
+
+		switch (lua_type(L, i))					// ..., o, ...
 		{
 		case LUA_TSTRING:
 		case LUA_TTABLE:
 		case LUA_TUSERDATA:
-			PushPtrDict(L);						// ..., o, dict					定位到注册表中的 ptrDict
-			if (lua_isnil(L, -1))
-			{
-				luaL_error(L, "the ptrDict is nil. forget WriteRoot?");
-			}
-			lua_pushvalue(L, -2);				// ..., o, dict, o				查询当前对象是否已经记录过
-			lua_rawget(L, -2);					// ..., o, dict, nil/offset
+			PushPtrDict(L);						// ..., o, ..., dict				定位到注册表中的 ptrDict
+			lua_pushvalue(L, i);				// ..., o, ..., dict, o				查询当前对象是否已经记录过
+			lua_rawget(L, -2);					// ..., o, ..., dict, nil/offset
 			if (lua_isnil(L, -1))				// 如果未记录则记录 + 写buf
 			{
 				auto offset = dataLen - offsetRoot;
 				Write(L, offset);				// 写buf
 
-				lua_pop(L, 1);					// ..., o, dict
-				lua_pushvalue(L, -2);			// ..., o, dict, o
-				lua_pushinteger(L, offset);		// ..., o, dict, o, offset
-				lua_rawset(L, -3);				// ..., o, dict
-				lua_pop(L, 1);					// ..., o
+				lua_pop(L, 1);					// ..., o, ..., dict
+				lua_pushvalue(L, i);			// ..., o, ..., dict, o
+				lua_pushinteger(L, offset);		// ..., o, ..., dict, o, offset
+				lua_rawset(L, -3);				// ..., o, ..., dict
+				lua_pop(L, 1);					// ..., o, ...
 				return true;					// 返回首次出现
 			}
 			else								// 记录过则取其 value 来写buf
 			{
 				auto offset = (uint32_t)lua_tointeger(L, -1);
 				Write(L, offset);				// 写buf
-				lua_pop(L, 2);					// ..., o
+				lua_pop(L, 2);					// ..., o, ...
 				return false;
 			}
 		default:
@@ -469,92 +500,165 @@ struct Lua_BBuffer
 
 	inline static int WriteObject(lua_State* L)
 	{
-		auto& self = GetSelf(L, 2);				// bb, o
-		self.WriteObject_(L);					// bb, o
+		auto& self = GetSelf(L, 2);				// bb, o1, o2, ...
+		auto top = lua_gettop(L);
+		for (int i = 2; i <= top; ++i)
+		{
+			self.WriteObject_(L, i);
+		}
 		return 0;
 	}
 
 
 	// 写对象到 buf. 如果为空就写 typeId 0, 否则写 typeId, offset[, content ]
-	inline void WriteObject_(lua_State* L)
+	inline void WriteObject_(lua_State* L, int i)
 	{
-		if (lua_isnil(L, -1) ||					// bb, o
-			lua_islightuserdata(L, -1) && (size_t)lua_touserdata(L, -1) == 0)
+		if (lua_isnil(L, i) ||					// bb, ..., o, ...
+			lua_islightuserdata(L, i) && (size_t)lua_touserdata(L, i) == 0)
 		{
 			Write(L, (uint8_t)0);
 		}
 		else
 		{
-			if (lua_isstring(L, 2))				// string
+			if (!lua_checkstack(L, 5))
+			{
+				luaL_error(L, "lua_checkstack fail. current top = %d, expect +5", lua_gettop(L));
+			}
+
+			if (lua_isstring(L, i))				// string
 			{
 				Write(L, (uint8_t)1);
-				if (WriteOffset(L))
+				if (WriteOffset(L, i))
 				{
 					size_t len;
-					auto s = lua_tolstring(L, 2, &len);
+					auto s = lua_tolstring(L, i, &len);
 					Write(L, s, (uint32_t)len);
 				}
 				return;
 			}
-			else if (lua_isuserdata(L, 2))		// bbuffer
+			else if (lua_isuserdata(L, i))		// bbuffer
 			{
 				Write(L, (uint8_t)2);
-				if (WriteOffset(L))
+				if (WriteOffset(L, i))
 				{
-					auto& bb = *(Lua_BBuffer*)lua_touserdata(L, 2);
+					auto& bb = *(Lua_BBuffer*)lua_touserdata(L, i);
 					Write(L, bb.buf, bb.dataLen);
 				}
 				return;
 			}
 
-			lua_getfield(L, 2, "__proto");		// bb, o, proto
-			lua_getfield(L, 3, "typeId");		// bb, o, proto, typeId
+			lua_getfield(L, i, "__proto");		// bb, ..., o, ..., proto
+			lua_getfield(L, -1, "typeId");		// bb, ..., o, ..., proto, typeId
 			auto typeId = (uint16_t)lua_tonumber(L, -1);
 			Write(L, typeId);
-			lua_pop(L, 1);						// bb, o, proto
-			lua_insert(L, 2);					// bb, proto, o
-			if (WriteOffset(L))					// bb, proto, o
+			lua_pop(L, 1);						// bb, ..., o, ..., proto
+			lua_pushvalue(L, i);				// bb, ..., o, ..., proto, o
+			if (WriteOffset(L, i))				// bb, ..., o, ..., proto, o
 			{
-				lua_insert(L, 2);				// bb, o, proto
-				lua_getfield(L, 3, "ToBBuffer");// bb, o, proto, func
-				lua_pushvalue(L, 1);			// bb, o, proto, func, bb
-				lua_pushvalue(L, 2);			// bb, o, proto, func, bb, o
-				lua_call(L, 2, 0);				// bb, o, proto
-				lua_pop(L, 1);					// bb, o
+				lua_getfield(L, -2, "ToBBuffer");//bb, ..., o, ..., proto, o, func
+				lua_pushvalue(L, 1);			// bb, ..., o, ..., proto, o, func, bb
+				lua_pushvalue(L, i);			// bb, ..., o, ..., proto, o, func, bb, o
+				lua_call(L, 2, 0);				// bb, ..., o, ..., proto, o
+				lua_pop(L, 2);					// bb, ..., o, ...
 			}
 		}
+	}
+
+	inline void BeginWrite_(lua_State* L)
+	{
+		offsetRoot = dataLen;
+		CreatePtrDict(L);
+	}
+	inline static int BeginWrite(lua_State* L)
+	{
+		auto& self = GetSelf(L, 1);
+		self.BeginWrite_(L);
+		return 0;
+	}
+
+	inline void EndWrite_(lua_State* L)
+	{
+		ReleasePtrDict(L);
+	}
+	inline static int EndWrite(lua_State* L)
+	{
+		auto& self = GetSelf(L, 1);
+		self.EndWrite_(L);
+		return 0;
+	}
+
+	inline void BeginRead_(lua_State* L)
+	{
+		offsetRoot = offset;
+		CreateIdxDict(L);
+	}
+	inline static int BeginRead(lua_State* L)
+	{
+		auto& self = GetSelf(L, 1);
+		self.BeginRead_(L);
+		return 1;
+	}
+
+	inline void EndRead_(lua_State* L)
+	{
+		ReleaseIdxDict(L);
+	}
+	inline static int EndRead(lua_State* L)
+	{
+		auto& self = GetSelf(L, 1);
+		self.EndRead_(L);
+		return 1;
 	}
 
 	inline static int WriteRoot(lua_State* L)
 	{
 		auto& self = GetSelf(L, 2);				// bb, o
-		self.offsetRoot = self.dataLen;
-		self.CreatePtrDict(L);
-
-		self.WriteObject_(L);					// bb, o
-
-		self.ReleasePtrDict(L);
+		self.BeginWrite_(L);
+		self.WriteObject_(L, 2);				// bb, o
+		self.EndWrite_(L);
 		return 0;
 	}
-
 
 	inline static int ReadRoot(lua_State* L)
 	{
 		auto& self = GetSelf(L, 1);				// bb
-		self.offsetRoot = self.offset;
-		self.CreateIdxDict(L);
-
+		self.BeginRead_(L);
 		self.ReadObject_(L);					// bb, rtv
-
-		self.ReleaseIdxDict(L);
+		self.EndRead_(L);
 		return 1;
 	}
 
 	inline static int ReadObject(lua_State* L)
 	{
-		auto& self = GetSelf(L, 1);				// bb
-		self.ReadObject_(L);					// bb, rtv
-		return 1;
+		auto& self = GetSelf(L, 1);
+		auto top = lua_gettop(L);
+		int readCount = 1;
+		if (top == 2)
+		{
+			int isnum;
+			readCount = (int)lua_tointegerx(L, 2, &isnum);
+			if (!isnum)
+			{
+				luaL_error(L, "the args[ 2 ]: readCount's type must be a integer");
+			}
+		}
+		if (readCount > LUA_MINSTACK - 2 && !lua_checkstack(L, readCount))
+		{
+			luaL_error(L, "lua_checkstack fail. current top = %d, expect +%d", top, readCount);
+		}
+		for (int i = 0; i < readCount; ++i)
+		{
+			self.ReadObject_(L);
+		}
+		return readCount;
+	}
+
+	inline void StoreOffset(lua_State* L, uint32_t ptr_offset)
+	{
+		PushIdxDict(L);						// ..., o, dict
+		lua_pushvalue(L, -2);				// ..., o, dict, o
+		lua_rawseti(L, -2, ptr_offset);		// ..., o, dict
+		lua_pop(L, 1);						// ..., o, 
 	}
 
 	inline void ReadObject_(lua_State* L)
@@ -563,19 +667,20 @@ struct Lua_BBuffer
 		Read(L, typeId);
 		if (!typeId)
 		{
-			lua_pushlightuserdata(L, 0);		// bb, null
+			lua_pushlightuserdata(L, 0);		// bb, ..., null
 			return;
 		}
 
 		if (typeId > 2)		// 1, 2 没有 proto
 		{
-			lua_rawgetp(L, LUA_REGISTRYINDEX, (void*)name);	// bb, typeIdProtos
-			lua_rawgeti(L, -1, typeId);			// bb, typeIdProtos, proto?
+			lua_rawgetp(L, LUA_REGISTRYINDEX, (void*)name);	// bb, ..., typeIdProtos
+			lua_rawgeti(L, -1, typeId);			// bb, ..., typeIdProtos, proto?
 			if (lua_isnil(L, -1))
 			{
 				luaL_error(L, "buf read offset: %d, invalid typeId: %d", offset, typeId);
 			}
 		}
+		// else									// bb, ...
 
 		uint32_t ptr_offset = 0, bb_offset_bak = offset - offsetRoot;
 		Read(L, ptr_offset);
@@ -589,8 +694,9 @@ struct Lua_BBuffer
 				{
 					luaL_error(L, "string's len: %d out of range. buf.offset = %d, buf.dataLen = %d", len, offset, dataLen);
 				}
-				lua_pushlstring(L, buf + offset, len);
+				lua_pushlstring(L, buf + offset, len);	// ..., str
 				offset += len;
+				StoreOffset(L, ptr_offset);
 				return;
 			}
 			else if (typeId == 2)	// bbuffer
@@ -603,35 +709,222 @@ struct Lua_BBuffer
 					luaL_error(L, "BBuffer's len: %d out of range. buf.offset = %d, buf.dataLen = %d", len, offset, dataLen);
 				}
 				Create(L);						// ..., bb
-				auto& bb = *(Lua_BBuffer*)lua_touserdata(L, -1);
-				bb.Reserve(L, len);
-				memcpy(bb.buf, buf + offset, len);
-				offset += len;
+				if (len)
+				{
+					auto& bb = *(Lua_BBuffer*)lua_touserdata(L, -1);
+					bb.Reserve(L, len);
+					memcpy(bb.buf, buf + offset, len);
+					offset += len;
+				}
+				StoreOffset(L, ptr_offset);
 				return;
 			}
-
-			lua_remove(L, 2);					// bb, proto
-			lua_getfield(L, 2, "Create");		// bb, proto, Create
-			lua_call(L, 0, 1);					// bb, proto, o
-			lua_insert(L, 2);					// bb, o, proto
-			PushIdxDict(L);						// bb, o, proto, dict
-			lua_pushvalue(L, -3);				// bb, o, proto, dict, o
-			lua_rawseti(L, -2, ptr_offset);		// bb, o, proto, dict
-			lua_pop(L, 1);						// bb, o, proto
-			lua_getfield(L, -1, "FromBBuffer");	// bb, o, proto, FromBBuffer
-			lua_pushvalue(L, 1);				// bb, o, proto, FromBBuffer, bb
-			lua_pushvalue(L, 2);				// bb, o, proto, FromBBuffer, bb, o
-			lua_call(L, 2, 0);					// bb, o, proto
-			lua_pop(L, 1);						// bb, o
+			// bb, ..., typeIdProtos, proto
+			lua_remove(L, -2);					// bb, ..., proto
+			lua_getfield(L, -1, "Create");		// bb, ..., proto, Create
+			lua_call(L, 0, 1);					// bb, ..., proto, o
+			StoreOffset(L, ptr_offset);
+			lua_insert(L, -2);					// bb, ..., o, proto
+			lua_getfield(L, -1, "FromBBuffer");	// bb, ..., o, proto, FromBBuffer
+			lua_pushvalue(L, 1);				// bb, ..., o, proto, FromBBuffer, bb
+			lua_pushvalue(L, -4);				// bb, ..., o, proto, FromBBuffer, bb, o
+			lua_call(L, 2, 0);					// bb, ..., o, proto
+			lua_pop(L, 1);						// bb, ..., o
 		}
 		else
 		{
-			lua_pop(L, 2);						// bb
-			PushIdxDict(L);						// bb, dict
-			lua_rawgeti(L, -1, ptr_offset);		// bb, dict, o
-			lua_insert(L, -2);					// bb, o, dict
-			lua_pop(L, 1);						// bb, o
+			if (typeId > 2)						// bb, ..., typeIdProtos, proto
+			{
+				lua_pop(L, 2);					// bb, ..., 
+			}
+			PushIdxDict(L);						// bb, ..., dict
+			lua_rawgeti(L, -1, ptr_offset);		// bb, ..., dict, o
+			lua_insert(L, -2);					// bb, ..., o, dict
+			lua_pop(L, 1);						// bb, ..., o
 		}
+	}
+
+
+	typedef void (Lua_BBuffer::*WriteFunc)(lua_State*, int);
+	inline void WriteBoolean_(lua_State* L, int i) { WriteNum_<bool>(L, i); }
+	inline void WriteInt8_(lua_State* L, int i) { WriteNum_<int8_t>(L, i); }
+	inline void WriteInt16_(lua_State* L, int i) { WriteNum_<int16_t>(L, i); }
+	inline void WriteInt32_(lua_State* L, int i) { WriteNum_<int32_t>(L, i); }
+	inline void WriteInt64_(lua_State* L, int i) { WriteNum_<int64_t>(L, i); }
+	inline void WriteUInt8_(lua_State* L, int i) { WriteNum_<uint8_t>(L, i); }
+	inline void WriteUInt16_(lua_State* L, int i) { WriteNum_<uint16_t>(L, i); }
+	inline void WriteUInt32_(lua_State* L, int i) { WriteNum_<uint32_t>(L, i); }
+	inline void WriteUInt64_(lua_State* L, int i) { WriteNum_<uint64_t>(L, i); }
+	inline void WriteFloat_(lua_State* L, int i) { WriteNum_<float>(L, i); }
+	inline void WriteDouble_(lua_State* L, int i) { WriteNum_<double>(L, i); }
+
+	constexpr static WriteFunc writeFuncs[] =
+	{
+		nullptr,
+		&WriteBoolean_,
+		&WriteInt8_,
+		&WriteInt16_,
+		&WriteInt32_,
+		&WriteInt64_,
+		&WriteUInt8_,
+		&WriteUInt16_,
+		&WriteUInt32_,
+		&WriteUInt64_,
+		&WriteFloat_,
+		&WriteDouble_,
+		&WriteObject_
+	};
+	constexpr static int asciiFuncIndex[] =
+	{
+		0,0,0,0,0,0,0,0,0,0,		0,0,0,0,0,0,0,0,0,0,
+		0,0,0,0,0,0,0,0,0,0,
+		0,0,0,						// NUL ~ (space)
+		6,0,0,8,0,0,0,0,0,9,		// !"#$%&'()*      !$*
+		0,0,0,0,0,0,				// + ~ 0
+		2,3,0,4,0,0,0,5,			// 1 ~ 8
+		0,0,0,0,0,0,0,				// 9 ~ ?
+		7,							//					@
+		0,0,0,0,0,0,0,0,0,0,		0,0,0,0,0,0,0,0,0,0,
+		0,0,0,0,0,0,0,0,0,0,
+		0,0,0,						// A ~ a
+		1,0,11,0,10,				// b ~ f			bdf
+		0,0,0,0,0,0,0,0,			// g ~ n
+		12,							//					o
+		0,0,0,0,0,0,0,0,0,0,
+		0,0,0,0,0,0,				// p ~ DEL
+		0,0,0,0,0,0,0,0,0,0,		0,0,0,0,0,0,0,0,0,0,
+		0,0,0,0,0,0,0,0,0,0,		0,0,0,0,0,0,0,0,0,0,
+		0,0,0,0,0,0,0,0,0,0,		0,0,0,0,0,0,0,0,0,0,
+		0,0,0,0,0,0,0,0,0,0,		0,0,0,0,0,0,0,0,0,0,
+		0,0,0,0,0,0,0,0,0,0,		0,0,0,0,0,0,0,0,0,0,
+		0,0,0,0,0,0,0,0,0,0,		0,0,0,0,0,0,0,0,0,0,
+		0,0,0,0,0,0,0,0
+	};
+	static_assert(
+		_countof(asciiFuncIndex) == 256
+		&& asciiFuncIndex['1'] == 2
+		&& asciiFuncIndex['2'] == 3
+		&& asciiFuncIndex['4'] == 4
+		&& asciiFuncIndex['8'] == 5
+
+		&& asciiFuncIndex['!'] == 6
+		&& asciiFuncIndex['@'] == 7
+		&& asciiFuncIndex['$'] == 8
+		&& asciiFuncIndex['*'] == 9
+
+		&& asciiFuncIndex['b'] == 1
+		&& asciiFuncIndex['f'] == 10
+		&& asciiFuncIndex['d'] == 11
+		&& asciiFuncIndex['o'] == 12
+		);
+
+	typedef void (Lua_BBuffer::*ReadFunc)(lua_State*);
+	inline void ReadBoolean_(lua_State* L) { ReadNum_<bool>(L); }
+	inline void ReadInt8_(lua_State* L) { ReadNum_<int8_t>(L); }
+	inline void ReadInt16_(lua_State* L) { ReadNum_<int16_t>(L); }
+	inline void ReadInt32_(lua_State* L) { ReadNum_<int32_t>(L); }
+	inline void ReadInt64_(lua_State* L) { ReadNum_<int64_t>(L); }
+	inline void ReadUInt8_(lua_State* L) { ReadNum_<uint8_t>(L); }
+	inline void ReadUInt16_(lua_State* L) { ReadNum_<uint16_t>(L); }
+	inline void ReadUInt32_(lua_State* L) { ReadNum_<uint32_t>(L); }
+	inline void ReadUInt64_(lua_State* L) { ReadNum_<uint64_t>(L); }
+	inline void ReadFloat_(lua_State* L) { ReadNum_<float>(L); }
+	inline void ReadDouble_(lua_State* L) { ReadNum_<double>(L); }
+
+	constexpr static ReadFunc readFuncs[] =
+	{
+		nullptr,
+		&ReadBoolean_,
+		&ReadInt8_,
+		&ReadInt16_,
+		&ReadInt32_,
+		&ReadInt64_,
+		&ReadUInt8_,
+		&ReadUInt16_,
+		&ReadUInt32_,
+		&ReadUInt64_,
+		&ReadFloat_,
+		&ReadDouble_,
+		&ReadObject_
+	};
+
+
+
+	inline static int FormatError(lua_State* L)
+	{
+		return luaL_error(L, "args[2] must be a valid format string. "
+			"int: 1248   unsigned: !@$* ( shift-1248 )  boolean: b   float: f   double: d    string / bbuffer / table: o");
+	}
+
+	// bb:Write( "format str", args... )
+	inline static int WriteFormat(lua_State* L)
+	{
+		auto& self = GetSelf(L, 3);
+		if (!lua_isstring(L, 2))
+		{
+			return FormatError(L);
+		}
+		auto top = lua_gettop(L);
+		size_t len;
+		auto s = lua_tolstring(L, 2, &len);
+		if (len == 0 || len != top - 2)
+		{
+			return luaL_error(L, "bad format string. len must be == args's count");
+		}
+
+		self.BeginWrite_(L);
+
+		for (int i = 3; i <= top; ++i)
+		{
+			auto c = (uint8_t)s[i - 3];
+			auto f = writeFuncs[asciiFuncIndex[c]];
+			if (!f)
+			{
+				self.EndWrite_(L);			// end write
+				return FormatError(L);
+			}
+			(self.*f)(L, i);
+		}
+
+		self.EndWrite_(L);					// end write
+		return 0;
+	}
+
+	// bb:Read( "format str" )
+	inline static int ReadFormat(lua_State* L)
+	{
+		auto& self = GetSelf(L, 2);
+		if (!lua_isstring(L, 2))
+		{
+			return FormatError(L);
+		}
+		size_t readCount;
+		auto s = lua_tolstring(L, 2, &readCount);
+		if (readCount == 0)
+		{
+			return FormatError(L);
+		}
+		if (!lua_checkstack(L, (int)readCount))
+		{
+			luaL_error(L, "lua_checkstack fail. current top = %d, expect +%d", lua_gettop(L), readCount);
+		}
+
+		self.BeginRead_(L);
+
+		for (size_t i = 0; i < readCount; ++i)
+		{
+			auto c = (uint8_t)s[i];
+			auto f = readFuncs[asciiFuncIndex[c]];
+			if (!f)
+			{
+				self.EndRead_(L);			// end read
+				return FormatError(L);
+			}
+			(self.*f)(L);
+		}
+
+		self.EndRead_(L);					// end read
+		return (int)readCount;
 	}
 
 

@@ -1,6 +1,11 @@
 ﻿dofile( "pkg2_class.lua" )
 print( "TestLua" )
+local bb = BBuffer.Create()
+bb:Write( "1o1o1o1", 0, "asdfqwer", 1, "asdfqwer", 2, "asdfqwer", 3 )
+print( bb )
+print( bb:Read( "1o1o1o1" ) )
 
+--[[
 local bb = BBuffer.Create()
 bb:WriteByte( 1,2,3,4,5 )
 bb:WriteInt32( -1, -2, -3, -4, -5 )
@@ -9,9 +14,10 @@ print( bb:ReadByte( 5 ) )
 print( bb:ReadInt32( 5 ) )
 bb:SetOffset( 0 )
 print( bb:ReadByte( 11 ) )	-- error
-
+]]
 
 --[[
+local bb = BBuffer.Create()
 local o = PKG2_基类.Create()
 o.不淋 = true -- Boolean
 o.白特 = 1 -- Byte
@@ -43,5 +49,7 @@ table.insert( p.立丝特白特, 3 )
 bb:Clear()
 bb:WriteRoot( p )
 print( bb )
-]]
 
+
+local p2 = bb:ReadRoot()
+]]
