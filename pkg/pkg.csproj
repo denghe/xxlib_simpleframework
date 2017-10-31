@@ -42,7 +42,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="PKG2_class.cs" />
+    <None Include="PKG2_TypeIdMappings.cs" />
     <Compile Include="PKG_class.cs" />
+    <None Include="PKG_TypeIdMappings.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

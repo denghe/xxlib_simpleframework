@@ -20,6 +20,12 @@ public static class Program
             var path = Path.Combine(Application.StartupPath, outputPath);
             var tn = shortfn.Substring(templatePrefix.Length);
 
+            if (!GenTypeId.Gen(asm, path, tn))
+            {
+                System.Console.WriteLine(tn + "_TypeIdMappings.cs 已生成. 请将其放入模板项目并再次生成. 按`回车`继续.");
+                System.Console.ReadLine();
+                continue;
+            }
             GenCPP_Class.Gen(asm, path, tn);
             GenCS_Class.Gen(asm, path, tn);
             GenLUA_Class.Gen(asm, path, tn);

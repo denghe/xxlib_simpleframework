@@ -477,39 +477,14 @@ namespace xx
         // 遍历所有 type 及成员数据类型 生成  BBuffer.Register< T >( typeId ) 函数组. 0 不能占. String 占掉 1. BBuffer 占掉 2.
         // 在基础命名空间中造一个静态类 AllTypes 静态方法 Register
 
-        var types = new Dictionary<Type, ushort>();
-        types.Add(typeof(string), 1);
-        types.Add(typeof(TemplateLibrary.BBuffer), 2);
-        ushort typeId = 3;
-        cs = ts._GetClasss();
-        foreach (var c in cs)
+        var typeIds = new TemplateLibrary.TypeIds(asm);
+        foreach (var kv in typeIds.types)
         {
-            if (!types.ContainsKey(c)) types.Add(c, typeId++);
-
-            if (c._HasBaseType())
-            {
-                var bt = c.BaseType;
-                if (!types.ContainsKey(bt)) types.Add(bt, typeId++);
-            }
-
-            var fs = c._GetFields();
-            foreach (var f in fs)
-            {
-                var ft = f.FieldType;
-                if (ft._IsUserClass() || ft.IsGenericType)
-                {
-                    if (!types.ContainsKey(ft)) types.Add(ft, typeId++);
-                }
-            }
-        }
-
-        foreach (var kv in types)
-        {
+            var typeId = kv.Value;
             var ct = kv.Key;
             string ctn;
             if (ct._IsList()) ctn = ct._GetSafeTypeDecl_Cpp(templateName, true);
             else ctn = ct._GetTypeDecl_Cpp(templateName).CutLast();
-            typeId = kv.Value;
 
             sb.Append(@"
 	template<> struct TypeId<" + ctn + @"> { static const uint16_t value = " + typeId + @"; };");
@@ -522,7 +497,7 @@ namespace " + templateName + @"
 {
 	inline void AllTypesRegister()
 	{");
-        foreach (var kv in types)
+        foreach (var kv in typeIds.types)
         {
             var ct = kv.Key;
             string ctn;

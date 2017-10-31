@@ -129,6 +129,15 @@ public static class GenExtensions
 
 
     /// <summary>
+    /// 获取类型( 特指interface )的 property 列表
+    /// </summary>
+    public static List<PropertyInfo> _GetProperties(this Type t)
+    {
+        return t.GetProperties(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance).ToList();
+    }
+
+
+    /// <summary>
     /// 获取 t( enum ) 的成员列表
     /// </summary>
     public static List<FieldInfo> _GetEnumFields(this Type t)

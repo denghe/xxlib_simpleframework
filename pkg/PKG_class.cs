@@ -969,7 +969,7 @@ namespace DB_Manage
             BBuffer.Register<List<Manage.Account>>(40);
             BBuffer.Register<DB_Manage.SelectManageAccountsFail>(41);
 
-            BBuffer.handlers = new Action<IBBuffer>[42];
+            BBuffer.handlers = new Action<IBBuffer>[41];
         }
     }
 }

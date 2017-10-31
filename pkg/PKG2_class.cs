@@ -159,7 +159,7 @@ namespace PKG2
             BBuffer.Register<List<BBuffer>>(16);
             BBuffer.Register<List<基类>>(17);
 
-            BBuffer.handlers = new Action<IBBuffer>[18];
+            BBuffer.handlers = new Action<IBBuffer>[17];
         }
     }
 }

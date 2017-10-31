@@ -230,32 +230,7 @@ namespace " + c.Namespace + @"
         // 遍历所有 type 及成员数据类型 生成  BBuffer.Register< T >( typeId ) 函数组. 0 不能占. string 占掉 1. BBuffer 占掉 2.
         // 在基础命名空间中造一个静态类 AllTypes 静态方法 Register
 
-        var types = new Dictionary<Type, ushort>();
-        types.Add(typeof(string), 1);
-        types.Add(typeof(TemplateLibrary.BBuffer), 2);
-        ushort typeId = 3;
-        cs = ts._GetClasss();
-        foreach (var c in cs)
-        {
-            if (!types.ContainsKey(c)) types.Add(c, typeId++);
-
-            if (c._HasBaseType())
-            {
-                var bt = c.BaseType;
-                if (!types.ContainsKey(bt)) types.Add(bt, typeId++);
-            }
-
-            var fs = c._GetFields();
-            foreach (var f in fs)
-            {
-                var ft = f.FieldType;
-                if (ft._IsUserClass() || ft.IsGenericType)
-                {
-                    if (!types.ContainsKey(ft)) types.Add(ft, typeId++);
-                }
-            }
-        }
-
+        var typeIds = new TemplateLibrary.TypeIds(asm);
         sb.Append(@"
     public static class AllTypes
     {
@@ -264,12 +239,12 @@ namespace " + c.Namespace + @"
             // BBuffer.Register<string>(1);
             BBuffer.Register<BBuffer>(2);");
 
-        foreach (var kv in types)
+        foreach (var kv in typeIds.types)
         {
             if (kv.Key == typeof(string) || kv.Key == typeof(TemplateLibrary.BBuffer)) continue;
             var ct = kv.Key;
             var ctn = ct._GetTypeDecl_Cpp(templateName).CutLast();
-            typeId = (ushort)kv.Value;
+            var typeId = kv.Value;
 
             sb.Append(@"
             BBuffer.Register<" + ct._GetTypeDecl_Csharp() + @">(" + typeId++ + ");");
@@ -277,7 +252,7 @@ namespace " + c.Namespace + @"
 
         sb.Append(@"
 
-            BBuffer.handlers = new Action<IBBuffer>[" + typeId + @"];
+            BBuffer.handlers = new Action<IBBuffer>[" + typeIds.maxId + @"];
         }
     }");
 

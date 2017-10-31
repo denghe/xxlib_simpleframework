@@ -78,6 +78,14 @@ namespace TemplateLibrary
     }
 
     /// <summary>
+    /// 用来做类型到 typeId 的固定映射生成. 对应的 interface 的成员长相为  Type _id { get; }
+    /// </summary>
+    [System.AttributeUsage(System.AttributeTargets.Interface)]
+    public class TypeIdMappings : System.Attribute
+    {
+    }
+
+    /// <summary>
     /// 标记一个类成员不参与序列化
     /// </summary>
     [System.AttributeUsage(System.AttributeTargets.Field)]

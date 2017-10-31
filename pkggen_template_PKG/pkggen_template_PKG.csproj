@@ -45,6 +45,7 @@
     <Compile Include="DB_Server.cs" />
     <Compile Include="DB_Manage.cs" />
     <Compile Include="Manage.cs" />
+    <Compile Include="PKG_TypeIdMappings.cs" />
     <Compile Include="Server_DB.cs" />
     <Compile Include="Manage_DB.cs" />
     <Compile Include="Server_Client.cs" />

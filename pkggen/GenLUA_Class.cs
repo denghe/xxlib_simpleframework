@@ -36,38 +36,12 @@ public static class GenLUA_Class
 
         // 遍历所有 type 及成员数据类型 生成  typeId. 0 不能占. string 占掉 1. BBuffer 占掉 2.
 
-        var types = new Dictionary<Type, ushort>();
-        types.Add(typeof(string), 1);
-        types.Add(typeof(TemplateLibrary.BBuffer), 2);
-        ushort typeId = 3;
-        var cs = ts._GetClasss();
-        foreach (var c in cs)
-        {
-            if (!types.ContainsKey(c)) types.Add(c, typeId++);
-
-            if (c._HasBaseType())
-            {
-                var bt = c.BaseType;
-                if (!types.ContainsKey(bt)) types.Add(bt, typeId++);
-            }
-
-            var fs = c._GetFields();
-            foreach (var f in fs)
-            {
-                var ft = f.FieldType;
-                if (ft._IsUserClass() || ft.IsGenericType)
-                {
-                    if (!types.ContainsKey(ft)) types.Add(ft, typeId++);
-                }
-            }
-        }
-
-
-        foreach (var kv in types)
+        var typeIds = new TemplateLibrary.TypeIds(asm);
+        foreach (var kv in typeIds.types)
         {
             if (kv.Key == typeof(string) || kv.Key == typeof(TemplateLibrary.BBuffer)) continue;
             var c = kv.Key;
-            typeId = (ushort)kv.Value;
+            var typeId = (ushort)kv.Value;
             var cn = c._GetTypeDecl_Lua(templateName);
             var o = asm.CreateInstance(c.FullName);
             var fs = c._GetFieldsConsts();

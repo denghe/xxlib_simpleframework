@@ -45,6 +45,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="GenCPP_Class.cs" />
+    <Compile Include="GenTypeId.cs" />
     <Compile Include="GenLUA_Class.cs" />
     <Compile Include="GenCS_Class.cs" />
     <Compile Include="Program.cs" />
