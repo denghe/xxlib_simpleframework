@@ -1,0 +1,1194 @@
+#include "Precompile.h"
+//: AnySDK
+#if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID || CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
+#include "anysdkbindings.h"
+#include "anysdk_manual_bindings.h"
+#endif
+//.
+
+
+/*********************************************************************/
+/* C++ 测试代码区 vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv */
+/*********************************************************************/
+
+
+void test_for_crash_in_event_dispatcher( Scene* scene, Label* lbl )
+{
+    if( lbl )
+    {
+        lbl->removeFromParentAndCleanup( true );
+    }
+
+    //auto d = Director::getInstance();
+    unsigned char rawData[] = {
+        0xEF, 0xBB, 0xBF, 0xE4, 0xBD, 0x9C, 0xE7, 0xBB, 0x88, 0xE4, 0xB8, 0xAD,
+        0xE7, 0xBD, 0xAE, 0xE8, 0x87, 0xB3, 0xE6, 0x94, 0xAF, 0xE6, 0xAD, 0xA3,
+        0xE5, 0x9C, 0xA8, 0xE8, 0xAF, 0xAD, 0xE4, 0xBA, 0x8E, 0xE7, 0x94, 0xB1,
+        0xE7, 0x94, 0xA8, 0xE8, 0xAF, 0x91, 0xE8, 0xAE, 0xAE, 0xE5, 0xB7, 0xB2,
+        0xE4, 0xBA, 0x9A, 0xE5, 0x8D, 0x8F, 0xE8, 0xAF, 0xA6, 0xE9, 0x97, 0xB2,
+        0xE4, 0xB8, 0x8B, 0xE5, 0x8A, 0xA1, 0xE6, 0x97, 0xA0, 0xE6, 0x96, 0x87,
+        0xE7, 0xBD, 0x91, 0xE8, 0xB7, 0xB3, 0xE4, 0xBD, 0x93, 0xE7, 0xB4, 0xA2,
+        0xE9, 0x80, 0x9F, 0xE6, 0x90, 0x9C, 0xE9, 0x80, 0x81, 0xE6, 0x96, 0xAF,
+        0xE6, 0x97, 0xB6, 0xE6, 0xB2, 0x99, 0xE5, 0xA1, 0x9E, 0xE8, 0xAF, 0xB7,
+        0xE6, 0x83, 0x85, 0xE5, 0x99, 0xA8, 0xE9, 0x85, 0x8D, 0xE5, 0xB0, 0xBC,
+        0xE8, 0x83, 0xBD, 0x0D, 0x0A, 0xE6, 0x85, 0xA2, 0xE7, 0xBB, 0x9C, 0xE7,
+        0xBD, 0x97, 0xE8, 0xBF, 0x9E, 0xE5, 0x88, 0xA9, 0xE4, 0xBA, 0x86, 0xE5,
+        0x85, 0xB0, 0xE6, 0x8B, 0x89, 0xE5, 0x86, 0xB5, 0xE7, 0xA9, 0xBA, 0xE5,
+        0x85, 0x8B, 0xE5, 0x8F, 0xAF, 0xE5, 0xBC, 0x80, 0xE5, 0xA2, 0x83, 0xE8,
+        0xBF, 0x9B, 0xE8, 0xA7, 0xA3, 0xE6, 0x8E, 0xA5, 0xE7, 0x96, 0x86, 0xE9,
+        0x94, 0xAE, 0xE7, 0xAE, 0x80, 0xE5, 0x8A, 0xA0, 0xE5, 0x8D, 0xB3, 0xE6,
+        0x9C, 0xBA, 0xE6, 0x88, 0x96, 0xE4, 0xBC, 0x9A, 0xE5, 0x9B, 0x9E, 0xE7,
+        0x8E, 0xAF, 0xE8, 0xAF, 0x9D, 0x00
+    };
+
+    TTFConfig ttfcfg( "fonts/game-sc.ttf", 32 );
+    lbl = Label::createWithTTF( ttfcfg, (char *)rawData );
+    lbl->enableOutline( Color4B::RED, 2 );
+    lbl->setPosition( 800, 800 );
+    scene->addChild( lbl );
+
+    auto listener = EventListenerTouchOneByOne::create();
+    listener->setSwallowTouches( true );
+    listener->onTouchBegan = [ scene, lbl ]( Touch * t, Event * e )
+    {
+        if( !lbl->getBoundingBox().containsPoint(
+            lbl->getParent()->convertToNodeSpace( t->getLocation() )
+            ) ) return false;
+        test_for_crash_in_event_dispatcher( scene, lbl );
+        return false;
+    };
+    lbl->getEventDispatcher()->addEventListenerWithSceneGraphPriority( listener, lbl );
+}
+
+
+
+void test()
+{
+    auto director = Director::getInstance();
+    auto scene = director->getRunningScene();
+    auto winsize = director->getWinSize();
+    if( !scene )
+    {
+        scene = Scene::create();
+        director->runWithScene( scene );
+    }
+
+    auto strings = FileUtils::getInstance()->getValueMapFromFile("fonts/wp8_lost_glyph.xml");
+
+    TTFConfig ttf;
+    ttf.fontFilePath = "fonts/game-sc.ttf";
+    ttf.fontSize = 48;
+    Size sz = Director::getInstance()->getWinSize();
+
+    int i=0;
+    auto sz2 = sz;
+    sz2.width /= 2;
+    sz2.height -= 100;
+    for (auto &s : strings)
+    {
+        sz2.height -= ttf.fontSize;
+        auto label = Label::createWithTTF(ttf, s.second.asString());
+        label->setPosition(sz2);
+        label->setVisible( ((++i) & 1) == 1 );
+        scene->addChild(label);
+    }
+
+    auto listener = EventListenerTouchAllAtOnce::create();
+    listener->onTouchesBegan = [=](const std::vector<Touch*>& touches, Event *event) {
+        for (auto &s : scene->getChildren())
+        {
+            s->setVisible(true);
+        }
+    };
+    director->getEventDispatcher()->addEventListenerWithFixedPriority(listener, -1);
+
+    //test_for_crash_in_event_dispatcher(scene, nullptr);
+
+    //auto s = spine::SkeletonAnimation::createWithFile("cs/c.1401.json", "cs/c.1401.atlas", 1.0f);
+    //s->setPosition(winsize/2);
+    //s->setAnimation2("idle");
+    //scene->addChild(s);
+
+
+    ////auto s = Sprite::create("_/a.png");
+    ////s->setPosition(winsize/2);
+    ////scene->addChild(s);
+
+    ////auto b = RTTBlur::create(winsize.width / 2, winsize.height / 2);
+    ////b->setBlurRadius(3.0f);
+    ////b->setSampleNum(2.0f);
+    ////b->addRTTNode(s);
+    ////b->setPosition(winsize/2);
+    ////b->setScale(2.0f);
+    ////b->setColor(Color3B(127, 127, 127));
+    ////scene->addChild(b);
+
+    //auto listener = EventListenerTouchAllAtOnce::create();
+    //listener->onTouchesBegan = [s](const std::vector<Touch*>& touches, Event *event) {
+    //   s->isGray() ? s->clearGray() : s->setGray();
+    //};
+    //director->getEventDispatcher()->addEventListenerWithFixedPriority(listener, -1);
+
+ //   auto sa = spine::SkeletonAnimation::createWithFile( "cs/c.1401.json", "cs/c.1401.atlas" );
+ //   sa->setAnimation2("atk", true);
+	//sa->setCascadeOpacityEnabled( true );
+ //   sa->setPosition(winsize / 2);
+	//scene->addChild( sa );
+
+    //auto fm = FontManager::getInstance();
+    //fm->addColor( Color3B::WHITE, "white" );
+    //fm->addColor( Color3B::RED, "red" );
+    //fm->addColor( Color3B::ORANGE, "orange" );
+    //fm->addColor( Color3B::BLUE, "blue" );
+
+    //fm->addFont( "", 22 );
+    //fm->addFont( "", 33 );
+    //fm->addFont( "", 44 );
+    //fm->addFont( "", 55 );
+
+    //auto r = RichTextEx::create( "", 600 );
+    //r->setPosition( 100, 1000 );
+    //r->registerErrorEventHandler( []( string const & err )
+    //{
+    //    CCLOG( "%s", err.c_str() );
+    //} );
+    //r->registerVariantEventHandler( []( string const& key, string& val )->bool
+    //{
+    //    CCLOG( "%s", key.c_str() );
+    //    return true;
+    //} );
+    //r->registerTouchEventHandler( []( string const & key )
+    //{
+    //    CCLOG( "%s touched!", key.c_str() );
+    //} );
+
+    //r->assign( "<red>" );
+    //scene->addChild( r );
+
+}
+
+
+/*********************************************************************/
+/* C++ 测试代码区 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ */
+/*********************************************************************/
+
+
+AppDelegate::AppDelegate()
+    : _testMode( false )
+    , _entry( "launcher" )
+    , _dbName( "game.db" )
+{
+}
+
+AppDelegate::~AppDelegate()
+{
+    // end simple audio engine here, or it may crashed on win32
+    SimpleAudioEngine::getInstance()->end();
+
+    myFree();
+}
+
+bool AppDelegate::applicationDidFinishLaunching()
+{
+    // initialize director
+    auto director = Director::getInstance();
+    auto glview = director->getOpenGLView();
+
+    auto win_sz = glview->getFrameSize();
+    auto design_w = win_sz.width / win_sz.height * 1080;
+#if (CC_TARGET_PLATFORM == CC_PLATFORM_WP8) || (CC_TARGET_PLATFORM == CC_PLATFORM_WINRT)
+    glview->setDesignResolutionSize( design_w, 1080, ResolutionPolicy::SHOW_ALL );
+#else
+    glview->setDesignResolutionSize( design_w, 1080, ResolutionPolicy::NO_BORDER );
+#endif
+
+    // turn on display FPS
+    director->setDisplayStats( true );
+
+    // set FPS. the default value is 1.0/60 if you don't call this
+    director->setAnimationInterval( 1.0 / 60 );
+
+    myInit();
+    return true;
+}
+
+// This function will be called when the app is inactive. When comes a phone call,it's be invoked too
+void AppDelegate::applicationDidEnterBackground()
+{
+    if( Hosts::getInstance()->_toForegroundHandler ) Hosts::getInstance()->_toForegroundHandler();
+
+    Director::getInstance()->stopAnimation();
+
+    SimpleAudioEngine::getInstance()->pauseBackgroundMusic();
+}
+
+// this function will be c alled when the app is active again
+void AppDelegate::applicationWillEnterForeground()
+{
+    if( Hosts::getInstance()->_toBackgroundHandler ) Hosts::getInstance()->_toBackgroundHandler();
+
+    Director::getInstance()->startAnimation();
+
+    SimpleAudioEngine::getInstance()->resumeBackgroundMusic();
+}
+
+
+void AppDelegate::myInit()
+{
+    // register lua engine
+    auto engine = LuaEngine::getInstance();
+    ScriptEngineManager::getInstance()->setScriptEngine( engine );
+
+    auto LS = engine->getLuaStack();
+    auto L = LS->getLuaState();
+
+    tolua_beginmodule( L, nullptr );   // 官方 c2dx 有 bug ，故加这个
+    register_all_ww( L );
+    register_all_ww_manual( L );
+    tolua_endmodule( L );              // 官方 c2dx 有 bug ，故加这个
+    luaopen_lua_extensions_ww( L );    // 扩展 lua lib ( 当前只扩展了 cjson )
+
+#ifdef CHANNEL_UC
+    tolua_beginmodule(L, nullptr);
+    register_all_wwuc(L);
+    register_all_wwuc_manual(L);
+    tolua_endmodule( L );
+#endif
+
+#ifdef CHANNEL_VIVO
+    tolua_beginmodule(L, nullptr);
+    register_all_wwvivo(L);
+    register_all_wwvivo_manual(L);
+    tolua_endmodule( L );
+#endif
+
+    //: AnySDK
+#if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID || CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
+    tolua_beginmodule( L, nullptr );   
+    tolua_anysdk_open( L );
+    tolua_anysdk_manual_open( L );
+    tolua_endmodule( L );
+#endif
+    //.
+
+
+    // 定位到 FileUtils 实例以方便使用
+    auto &fs = *FileUtils::getInstance();
+
+
+    // 取资源目录根 取可写目录
+    auto waPath = fs.getWritablePath();
+
+    auto resPath = fs.getResPath();
+    Utils::simpleReplace( resPath, '\\', '/' );             // 替换 \ 为 /
+
+
+    // 得到项目自用的可写目录( 项目数据都写到 data 下 )
+    waPath += "data"; //"\xE4\xB8\x9C";   // E4 B8 9C  东
+
+    // 确保可写目录的存在
+    Utils::ensureDirectory( waPath );
+
+    // 标记该目录不备份到 iCloud
+    Utils::fileSkipBackup( waPath );
+
+    // 附个 / 以方便后面的使用
+    waPath += "/";
+
+    // search path defines
+    const char* res_search_paths[] =
+    {
+        "",
+        "scripts",
+#if __WIN
+        "ext",
+        "ext/scripts",
+        "base",
+        "base/scripts",
+#endif
+    };
+
+    // 构造 search path
+    vector<string> searchPaths;             // index db 中用到的 search path
+    vector<string> searchPathsFU;           // FileUtils 中用到的 search path
+    for( auto s : res_search_paths )
+    {
+        searchPaths.push_back( string( s ) + ( strlen( s ) ? "/" : "" ) );
+        searchPathsFU.emplace_back( waPath + s );
+        searchPathsFU.emplace_back( resPath + s );
+    }
+
+    // 设 search path
+    fs.setSearchPaths( searchPathsFU );
+
+    // 初始化各种单例, 环境, 设 db search path
+    Global::init( LS, L, move( waPath ), move( resPath ), move( searchPaths ) );    // 后面不能再使用这几个参数变量
+
+
+    /*********************************************************************/
+    // C++ 测试代码调用判断
+    /*********************************************************************/
+    if( _testMode )
+    {
+        test();
+        return;
+    }
+    auto path = fs.getResPath();
+    auto path2 = fs.getSearchPaths();
+
+    Hosts::getInstance()->enabledNotify();
+
+    Hosts::getInstance()->getMAC();
+
+    CCLOG("sdkType: %s", Hosts::getInstance()->sdkType().c_str());
+
+    // register callback
+    auto evt = EventListenerKeyboard::create();
+    evt->onKeyReleased = [](EventKeyboard::KeyCode code, Event *e) {
+        switch (code)
+        {
+        case EventKeyboard::KeyCode::KEY_MENU:
+            break;
+        case EventKeyboard::KeyCode::KEY_BACK:
+#if CHANNEL_UC
+            UCSdk::getInstance()->exitSDK();
+#endif
+            break;
+        case EventKeyboard::KeyCode::KEY_HOME:
+            break;
+        default:break;
+        }
+    };
+    auto director = Director::getInstance();
+    director->getEventDispatcher()->addEventListenerWithFixedPriority(evt, -1);
+
+    // 执行 lua 起始脚本
+    string cmd = "require \"";
+    if( _entry.size() )
+        cmd = cmd + _entry + "\"";
+    else
+        cmd.append( "launcher\"" );
+
+    LS->executeString( cmd.c_str() );
+    // engine->executeScriptFile("src/main.lua");
+}
+
+void AppDelegate::myFree()
+{
+    Global::free();     // 各种单例, 环境析构
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//void test()
+//{
+//    CCLOG( "void test()" );
+//    //auto audio = SimpleAudioEngine::getInstance();
+//    auto director = Director::getInstance();
+//    auto sz = director->getWinSize();
+//    auto scene = director->getRunningScene();
+//    if( !scene )
+//    {
+//        scene = Scene::create();
+//        director->runWithScene( scene );
+//    }
+//
+//
+//
+//    auto fm = FontManager::getInstance();
+//    fm->addColor( Color3B::WHITE, "white" );
+//    fm->addColor( Color3B::RED, "red" );
+//    fm->addColor( Color3B::ORANGE, "orange" );
+//    fm->addColor( Color3B::BLUE, "blue" );
+//
+//    fm->addFont( "", 22 );
+//    fm->addFont( "", 33 );
+//    fm->addFont( "", 44 );
+//    fm->addFont( "", 55 );
+//
+//    auto r = RichTextEx::create( "", 600 );
+//    r->setPosition( 100, 1000 );
+//    r->registerErrorEventHandler( []( string const & err )
+//    {
+//        CCLOG( "%s", err.c_str() );
+//    } );
+//    r->registerVariantEventHandler( []( string const& key, string& val )->bool
+//    {
+//        CCLOG( "%s", key.c_str() );
+//        return true;
+//    } );
+//    r->registerTouchEventHandler( []( string const & key )
+//    {
+//        CCLOG( "%s touched!", key.c_str() );
+//    } );
+//
+//    auto d = Utils::fileGetText( "c:\\a.rtf" );
+//
+//    CCLOG( "%s", d.c_str() );
+//
+//    //r->assign( "@s[100,100]@a[t]afha@a[m]sdfdf@a[b]ewfewf@c[1]kdsjfl\n@a[m]asjfl@f[1]hdsafhas@f[0]kfhsadh@c[orange]f\nsahdflhs@f[1]adlkfhsafkja@c[0]sdfhjadfsafh" );
+//    //r->assign( "@a[l]asdf@a[c]qwer@a[r]zxcv\ncaocaocao" );
+//    //r->assign( "@p[]@h[30,T]@a[c]@c[2]*@!h[]*xxxxxeeeaaaaaaaaaaaaaaaaaaaaaaaaaaaaaxxxx@!p[]" );
+//    //r->assign( "aaaaaaaaaaaaa@b[xxx]erererererere@!b[]aaaaaaaaaaaaa" );
+//    r->assign( d );
+//    //r->assign( "@i[#c.0.png]" );
+//
+//    scene->addChild( r );
+//
+//
+//    scene->addChild( Utils::drawRichTextRect( r ) );
+//
+//
+//
+//    auto dn = DrawNode::create();
+//    dn->drawDot( r->getPosition(), 5, Color4F::YELLOW );
+//    scene->addChild( dn );
+//
+//
+//
+//
+//    //
+//    //xxx(scene, nullptr);
+//    //return;
+//
+//    //static unsigned char s1[] = {
+//    //    0xE5, 0xBC, 0x80, 0xE5, 0xA7, 0x8B, 0xE6, 0xB8, 0xB8, 0xE6, 0x88, 0x8F,
+//    //    0
+//    //};
+//    //
+//    //auto s9 = Scale9Sprite::create( Rect( 22, 22, 1, 1 ), "1.png" );
+//    //s9->setPreferredSize( Size( 200, 44 ) );
+//    //auto eb = ExtButton::create( s9 );
+//    //scene->addChild( eb );
+//    //eb->setPosition( 200, 200 );
+//    //eb->registerTouchEventHandler( [ = ]( ExtButton* sender, ButtonTouchEvents e, float x, float y )
+//    //{
+//    //    if( e == ButtonTouchEvents::UpInside )
+//    //    {
+//    //        Hosts::getInstance()->notify( 0, 100, (char*)s1 );
+//    //    }
+//    //} );
+//    //
+//
+//
+//
+//    //auto c = Node::create();
+//    //auto ecn = ExtClippingNode::create( Rect( -150, -100, 300, 200 ) );
+//    //c->addChild( ecn );
+//    //c->setPosition( 500, 500 );
+//    //c->setScale( 0.5 );
+//    //scene->addChild( c );
+//
+//    //auto sp = spine::SkeletonAnimation::createWithFile( "_/qiqi.json", "_/qiqi.atlas", 3 );
+//    //sp->setAnimation2( "animation", true );
+//    //sp->setAnchorPoint( Vec2( 0.5, 0.5 ) );
+//    //sp->ignoreAnchorPointForPosition( false );
+//    //sp->setPosition( 100, -300 );
+//    //ecn->addChild( sp );
+//
+//
+//    //
+//    //    auto lyr = LayerColor::create( Color4B::WHITE );
+//    //    scene->addChild( lyr );
+//
+//
+//    //auto spr = Sprite::create();    // cc_2x2_white_image
+//    //spr->setTextureRect( Rect( 0, 0, 2, 2 ) );
+//    //spr->setContentSize( Size( 2, 2 ) );
+//    //spr->setAnchorPoint( Vec2( 0.5, 0.5 ) );
+//    //spr->ignoreAnchorPointForPosition( false );
+//
+//    //auto cn = ClippingNode::create( spr );
+//    //cn->setAlphaThreshold( 1 );
+//    //cn->setAnchorPoint( Vec2( 0.5, 0.5 ) );
+//    //cn->ignoreAnchorPointForPosition( false );
+//
+//    //auto sp = spine::SkeletonAnimation::createWithFile( "_/qiqi.json", "_/qiqi.atlas", 3 );
+//    //sp->setAnimation2( "animation", true );
+//    //sp->setAnchorPoint( Vec2( 0.5, 0.5 ) );
+//    //sp->ignoreAnchorPointForPosition( false );
+//    //sp->setPosition( 0, -200 );
+//    //cn->addChild( sp );
+//
+//    //spr->setScaleX( 300 );
+//    //spr->setScaleY( 200 );
+//    //
+//    //cn->setPosition( sz.width / 2, sz.height / 2 );
+//    //scene->addChild( cn );
+//
+//    //spr->runAction( RepeatForever::create( RotateBy::create( 1, 180 ) ) );
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//    //
+//    //
+//    //    unsigned char rawData[] = {
+//    //        0xE5, 0xBC, 0x80, 0xE5, 0xA7, 0x8B, 0xE6, 0xB8, 0xB8, 0xE6, 0x88, 0x8F
+//    //        , 0
+//    //    };
+//    //
+//    //    char buf[ 32 ];
+//    //    for( int i = 0; i <= 30; i+=2 )
+//    //    {
+//    //        TTFConfig ttfcfg( "fonts/ww-sc.ttf", 30 + i );
+//    //        auto lbl = Label::createWithTTF( ttfcfg, (char *)rawData );
+//    //        //lbl->enableOutline( Color4B::RED, 2 );
+//    //        lbl->setColor( Color3B::BLACK );
+//    //        lbl->setPosition( 400, 50 + i * 33 );
+//    //        scene->addChild( lbl );
+//    //        Utils::fill( buf, 30 + i );
+//    //
+//    //        lbl = Label::createWithTTF( ttfcfg, buf );
+//    //        //lbl->enableOutline( Color4B::RED, 2 );
+//    //        lbl->setPosition( 100, 50 + i * 33 );
+//    //        lbl->setColor( Color3B::BLACK );
+//    //        scene->addChild( lbl );
+//    //    }
+//
+//    //auto sp = spine::SkeletonAnimation::createWithFile( "_/qiqi.json", "_/qiqi.atlas", 1 );
+//    //sp->setPosition( sz.width / 2, sz.height / 2 );
+//    //sp->setAnimation2( "animation", true );
+//    //scene->addChild( sp );
+//
+//
+//    // xxx( scene, nullptr );
+//}
+
+
+
+//
+//void test()
+//{
+//
+//    //auto director = Director::getInstance();
+//    //auto scene = director->getRunningScene();
+//    //if( !scene )
+//    //{
+//    //    scene = Scene::create();
+//    //    director->runWithScene( scene );
+//    //}
+//
+//    //char s[] = {0xEF, 0xBB, 0xBF, 0xE7, 0x8E, 0x8B, 0xE5, 0x9B, 0xBD, 0xE5, 0x86, 0x9B, 0xE5, 0x9B, 0xA2, 0x00 };
+//
+//    //TTFConfig ttfcfg( "fonts/ww-sc.ttf", 32 );
+//    //auto lbl = Label::createWithTTF( ttfcfg, s );
+//    //lbl->enableOutline( Color4B::RED, 2 );
+//    //lbl->setPosition( 200, 200 );
+//    //scene->addChild( lbl );
+//
+//
+//    CCLOG( "void test()" );
+//    auto audio = SimpleAudioEngine::getInstance();
+//    auto director = Director::getInstance();
+//    auto scene = director->getRunningScene();
+//    if( !scene )
+//    {
+//        scene = Scene::create();
+//        director->runWithScene( scene );
+//    }
+//
+//    TTFConfig ttfcfg( "fonts/ww-sc.ttf", 32 );
+//    auto lbl = Label::createWithTTF( ttfcfg, "asdfqwer" );
+//    lbl->enableOutline( Color4B::RED, 2 );
+//    lbl->setPosition( 200, 200 );
+//    scene->addChild( lbl );
+//
+//
+//    auto s9 = Scale9Sprite::create( Rect( 22, 22, 1, 1 ), "_/1.png" );
+//    s9->setPreferredSize( Size( 200, 44 ) );
+//    auto eb = ExtButton::create( s9 );
+//    scene->addChild( eb );
+//    eb->setPosition( 200, 200 );
+//    eb->registerTouchEventHandler( [ = ]( ExtButton* sender, ButtonTouchEvents e, float x, float y )
+//    {
+//        if( e == ButtonTouchEvents::UpInside )
+//        {
+//            CCLOG( "restarting..." );
+//            Hosts::getInstance()->restart();
+//            CCLOG( "restarted" );
+//        }
+//    } );
+//
+//
+//
+//
+//    //Sqlite::Connection conn( "C:\\erere.db" );
+//    //conn.open();
+//
+//    //Sqlite::Table t( "ttt" );
+//
+//    //t.addColumn( "id", Sqlite::Column::DataTypes::INTEGER, true, true );
+//    //t.addColumn( "name", Sqlite::Column::DataTypes::TEXT );
+//    //t.addColumn( "double", Sqlite::Column::DataTypes::REAL );
+//
+//    //conn.dropTable( t.name );
+//    //conn.createTable( t );
+//
+//    //conn.beginTransaction();
+//    //auto& q = *conn.newQuery( "INSERT INTO `ttt` ( `name`, `double` ) VALUES ( ?, ? )" );
+//    //q << "eeeeeee" << 123.4;
+//    //q.execute();
+//    //q << "qwer" << 11.0;
+//    //q.execute();
+//    //q << "zxcv" << ( char const* )nullptr;
+//    //q.execute();
+//    //conn.commit();
+//
+//    //q->assign( "UPDATE xxx set state = ? where name = ?" );
+//    //( *q ) << 333 << "name11";
+//    //q->execute();
+//    /*
+//        _updateQuery = newQuery( "UPDATE fileindex set state = ? where name = ?" );
+//        }
+//        ( *_updateQuery ) << row->state << row->name;*/
+//
+//    //conn.close();
+//
+//
+//
+//
+//
+//    //FileIndexRow row =
+//    //{
+//    //    "doc/FileDownloader.lua",//name;
+//    //    (FileTypes)0,//type;
+//    //    0,//size;
+//    //    0,//version;
+//    //    0,//crc32;
+//    //    "",//md5;
+//    //    "",//desc;
+//    //    (FileStates)22,//state;
+//    //    0//in_pkg;
+//    //};
+//    //string fn( "C:\\Users\\Administrator\\Documents\\ww\\dev\\client\\frameworks\\runtime-src\\proj.win32\\Debug.win32\\data\\ww.db" );
+//    //string sql( "UPDATE fileindex set state = ? where name = ?" );
+//
+//    ////sqlite3 * c;
+//    ////sqlite3_open_v2( fn.c_str(), &c, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, nullptr );
+//    ////sqlite3_stmt* s;
+//    ////int ok = -1;
+//    ////ok = sqlite3_prepare_v2( c, sql.c_str(), sql.size(), &s, nullptr );
+//    ////ok = sqlite3_bind_int( s, 1, (int)row.state );
+//    ////ok = sqlite3_bind_text( s, 2, row.name.c_str(), row.name.size(), SQLITE_STATIC );
+//    ////ok = sqlite3_step( s );
+//    ////ok = sqlite3_finalize( s );
+//    ////sqlite3_close_v2( c );
+//
+//    //Sqlite::Connection c( fn );
+//    //c.open();
+//    //auto& q = *c.newQuery( sql );
+//    //q << row.state << row.name;
+//    //q.execute( [ ]( Sqlite::DataReader& dr )
+//    //{
+//    //    dr >> o.name >> o.xxx >> o.eee;
+//    //} );
+//    //c.close();
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//    //Sqlite::Parameters ps;
+//    //Sqlite::Table t( "test1" );
+//    //t.addColumn( "id", Sqlite::Column::DataTypes::INTEGER, true, true );
+//    //t.addColumn( "name", Sqlite::Column::DataTypes::TEXT );
+//    //t.addColumn( "desc", Sqlite::Column::DataTypes::TEXT );
+//
+//    //conn.dropTable( t );
+//    //conn.createTable( t );
+//
+//    //exists = conn.exists( "test1" );
+//
+//    //conn.beginTranslation();
+//    //auto q = conn.newQuery( "INSERT INTO test1 ( `name`, `desc` ) VALUES ( ?, ? )" );
+//    //for( int i = 0; i < 22; ++i )
+//    //{
+//    //    char buf[ 32 ];
+//    //    ps.clear();
+//    //    ps << string( buf, Utils::fill( buf, "name-", i ) )
+//    //       << string( buf, Utils::fill( buf, "desc-", i ) );
+//    //    q->execute( &ps );
+//    //}
+//    //conn.commit();
+//    //q->assign( "SELECT * from test1" );
+//    //q->execute( nullptr, []( Sqlite::DataReader& dr )
+//    //{
+//    //    CCLOG(
+//    //        "id = %d, name = %s, desc = %s"
+//    //        , dr.readInt32At( 0 )
+//    //        , dr.readCStringAt( 1 )
+//    //        , dr.readCStringAt( 2 )
+//    //    );
+//    //} );
+//
+//    //return;
+//
+//
+//    //    auto scene = Scene::create();
+//    //    auto layer = Layer::create();
+//    //    scene->addChild( layer );
+//    //    di->runWithScene( scene );
+//    //    auto a = SimpleAudioEngine::getInstance();
+//    //
+//    //    a->playBackgroundMusic( "as/m.0001.mp3" );
+//    //
+//    //    auto s9 = Scale9Sprite::create( Rect( 22, 22, 1, 1 ), "1.png" );
+//    //    s9->setPreferredSize( Size( 200, 44 ) );
+//    //    auto eb = ExtButton::create( s9 );
+//    //    layer->addChild( eb );
+//    //    eb->setPosition( 200, 200 );
+//    //    eb->registerTouchEventHandler( [a]( ExtButton* sender, ButtonTouchEvents e, float x, float y )
+//    //    {
+//    //        a->setBackgroundMusicVolume( a->getBackgroundMusicVolume() - 0.1 );
+//    //    } );
+//    //
+//    //    auto s92 = Scale9Sprite::create( Rect( 22, 22, 1, 1 ), "1.png" );
+//    //    s92->setPreferredSize( Size( 200, 44 ) );
+//    //    auto eb2 = ExtButton::create( s92 );
+//    //    layer->addChild( eb2 );
+//    //    eb2->setPosition( 400, 400 );
+//    //    eb2->registerTouchEventHandler( [a]( ExtButton* sender, ButtonTouchEvents e, float x, float y )
+//    //    {
+//    //        a->setBackgroundMusicVolume( a->getBackgroundMusicVolume() + 0.1 );
+//    //    } );
+//    //
+//}
+
+
+
+
+
+
+
+//void xxx( Scene* scene, Label* lbl )
+//{
+//    if( lbl )
+//    {
+//        lbl->removeFromParentAndCleanup( true );
+//        auto ed = Director::getInstance()->getEventDispatcher();
+//        ed->isEnabled();// 有残余?
+//    }
+//
+//    auto d = Director::getInstance();
+//    unsigned char rawData[] = {
+//        0xEF, 0xBB, 0xBF, 0xE4, 0xBD, 0x9C, 0xE7, 0xBB, 0x88, 0xE4, 0xB8, 0xAD,
+//        0xE7, 0xBD, 0xAE, 0xE8, 0x87, 0xB3, 0xE6, 0x94, 0xAF, 0xE6, 0xAD, 0xA3,
+//        0xE5, 0x9C, 0xA8, 0xE8, 0xAF, 0xAD, 0xE4, 0xBA, 0x8E, 0xE7, 0x94, 0xB1,
+//        0xE7, 0x94, 0xA8, 0xE8, 0xAF, 0x91, 0xE8, 0xAE, 0xAE, 0xE5, 0xB7, 0xB2,
+//        0xE4, 0xBA, 0x9A, 0xE5, 0x8D, 0x8F, 0xE8, 0xAF, 0xA6, 0xE9, 0x97, 0xB2,
+//        0xE4, 0xB8, 0x8B, 0xE5, 0x8A, 0xA1, 0xE6, 0x97, 0xA0, 0xE6, 0x96, 0x87,
+//        0xE7, 0xBD, 0x91, 0xE8, 0xB7, 0xB3, 0xE4, 0xBD, 0x93, 0xE7, 0xB4, 0xA2,
+//        0xE9, 0x80, 0x9F, 0xE6, 0x90, 0x9C, 0xE9, 0x80, 0x81, 0xE6, 0x96, 0xAF,
+//        0xE6, 0x97, 0xB6, 0xE6, 0xB2, 0x99, 0xE5, 0xA1, 0x9E, 0xE8, 0xAF, 0xB7,
+//        0xE6, 0x83, 0x85, 0xE5, 0x99, 0xA8, 0xE9, 0x85, 0x8D, 0xE5, 0xB0, 0xBC,
+//        0xE8, 0x83, 0xBD, 0x0D, 0x0A, 0xE6, 0x85, 0xA2, 0xE7, 0xBB, 0x9C, 0xE7,
+//        0xBD, 0x97, 0xE8, 0xBF, 0x9E, 0xE5, 0x88, 0xA9, 0xE4, 0xBA, 0x86, 0xE5,
+//        0x85, 0xB0, 0xE6, 0x8B, 0x89, 0xE5, 0x86, 0xB5, 0xE7, 0xA9, 0xBA, 0xE5,
+//        0x85, 0x8B, 0xE5, 0x8F, 0xAF, 0xE5, 0xBC, 0x80, 0xE5, 0xA2, 0x83, 0xE8,
+//        0xBF, 0x9B, 0xE8, 0xA7, 0xA3, 0xE6, 0x8E, 0xA5, 0xE7, 0x96, 0x86, 0xE9,
+//        0x94, 0xAE, 0xE7, 0xAE, 0x80, 0xE5, 0x8A, 0xA0, 0xE5, 0x8D, 0xB3, 0xE6,
+//        0x9C, 0xBA, 0xE6, 0x88, 0x96, 0xE4, 0xBC, 0x9A, 0xE5, 0x9B, 0x9E, 0xE7,
+//        0x8E, 0xAF, 0xE8, 0xAF, 0x9D, 0xE8, 0xA1, 0x8C, 0xE5, 0x85, 0xB3, 0xE8,
+//        0xAF, 0xA5, 0xE6, 0x9C, 0x8D, 0xE5, 0x8F, 0x8D, 0xE7, 0xBF, 0xBB, 0xE5,
+//        0x8F, 0x91, 0xE5, 0xB0, 0x94, 0xE4, 0xBF, 0x84, 0xE6, 0x96, 0xAD, 0xE7,
+//        0xAB, 0xAF, 0xE7, 0x9A, 0x84, 0x0D, 0x0A, 0xE5, 0xBE, 0x97, 0xE6, 0xAD,
+//        0xA4, 0xE5, 0x90, 0xB9, 0xE8, 0x88, 0xB9, 0xE7, 0xA9, 0xBF, 0xE5, 0xA4,
+//        0x84, 0xE7, 0xA1, 0x80, 0xE9, 0x99, 0xA4, 0xE5, 0x88, 0x9D, 0xE5, 0x87,
+//        0xBA, 0xE8, 0x80, 0xBB, 0xE9, 0xBD, 0xBF, 0xE6, 0x8C, 0x81, 0xE8, 0xBF,
+//        0x9F, 0xE5, 0x90, 0x83, 0xE7, 0xA8, 0x8B, 0xE6, 0x88, 0x90, 0xE6, 0xB2,
+//        0x89, 0xE5, 0xBD, 0xBB, 0xE8, 0xBD, 0xA6, 0xE6, 0x9C, 0x9D, 0xE8, 0xB6,
+//        0x85, 0xE5, 0xB8, 0xB8, 0xE5, 0xB0, 0x9D, 0xE6, 0x9F, 0xA5, 0xE6, 0x9B,
+//        0xBE, 0xE6, 0x93, 0x8D, 0xE9, 0xA4, 0x90, 0xE5, 0x8F, 0x82, 0xE8, 0xB8,
+//        0xA9, 0xE6, 0x89, 0x8D, 0xE9, 0x83, 0xA8, 0xE6, 0xAD, 0xA5, 0xE4, 0xB8,
+//        0x8D, 0xE8, 0xA1, 0xA5, 0xE4, 0xBC, 0xAF, 0xE5, 0xB9, 0xB6, 0xE5, 0x85,
+//        0xB5, 0xE5, 0x88, 0xAB, 0xE8, 0xA1, 0xA8, 0x0D, 0x0A, 0xE6, 0xA0, 0x87,
+//        0xE9, 0x81, 0x8D, 0xE8, 0xBE, 0xB9, 0xE9, 0x97, 0xAD, 0xE5, 0xBF, 0x85,
+//        0xE7, 0xAC, 0x94, 0xE6, 0xAF, 0x94, 0xE9, 0x80, 0xBC, 0xE6, 0x9C, 0xAC,
+//        0xE8, 0xBE, 0x88, 0xE8, 0xA2, 0xAB, 0xE8, 0x83, 0x8C, 0xE5, 0xA4, 0x87,
+//        0xE5, 0x8C, 0x97, 0xE6, 0x8A, 0xA5, 0xE4, 0xBF, 0x9D, 0xE5, 0xB8, 0xAE,
+//        0xE7, 0x89, 0x88, 0xE6, 0x9D, 0xBF, 0xE8, 0x88, 0xAC, 0xE6, 0x8B, 0x9C,
+//        0xE6, 0x91, 0x86, 0xE7, 0x99, 0xBE, 0xE7, 0x99, 0xBD, 0xE5, 0x90, 0xA7,
+//        0xE6, 0x8A, 0x8A, 0xE7, 0x96, 0xA4, 0xE5, 0xB7, 0xB4, 0xE6, 0x8C, 0x89,
+//        0xE7, 0x88, 0xB1, 0xE9, 0x98, 0xBF, 0xE7, 0xA2, 0x8D, 0xE5, 0xAE, 0x89,
+//        0xE6, 0xA1, 0x88, 0xE6, 0x9A, 0x97, 0xE5, 0x85, 0xAB, 0xE7, 0xBD, 0xA2,
+//        0xE9, 0x9C, 0xB8, 0xE5, 0x8D, 0x8A, 0xE6, 0x89, 0xAE, 0x0D, 0x0A, 0xE6,
+//        0x8A, 0xB1, 0xE6, 0x82, 0xB2, 0xE5, 0x80, 0x8D, 0xE5, 0xA5, 0x94, 0xE6,
+//        0xAF, 0x95, 0xE7, 0xBC, 0x96, 0xE5, 0x8F, 0x98, 0xE4, 0xBE, 0xBF, 0xE6,
+//        0x92, 0xAD, 0xE5, 0xB8, 0x83, 0xE6, 0x93, 0xA6, 0xE6, 0x9D, 0x90, 0xE9,
+//        0x87, 0x87, 0xE5, 0xBD, 0xA9, 0xE8, 0x8D, 0x89, 0xE6, 0xB5, 0x8B, 0xE7,
+//        0xAD, 0x96, 0xE5, 0xB7, 0xAE, 0xE4, 0xBA, 0xA7, 0xE9, 0x98, 0x90, 0xE5,
+//        0x9C, 0xBA, 0xE6, 0x89, 0xBF, 0xE5, 0x85, 0x85, 0xE9, 0x85, 0xAC, 0xE4,
+//        0xBC, 0xA0, 0xE5, 0x88, 0x9B, 0xE8, 0xAF, 0x8D, 0xE6, 0xAC, 0xA1, 0xE4,
+//        0xBB, 0x8E, 0xE6, 0x9D, 0x91, 0xE5, 0xAD, 0x98, 0xE8, 0xBE, 0xBE, 0xE6,
+//        0x89, 0x93, 0xE5, 0xA4, 0xA7, 0xE5, 0xBE, 0x85, 0xE6, 0x8B, 0x85, 0xE8,
+//        0x80, 0xBD, 0xE4, 0xBD, 0x86, 0xE5, 0xBD, 0x93, 0xE6, 0xA1, 0xA3, 0x0D,
+//        0x0A, 0xE5, 0xAF, 0xBC, 0xE5, 0x88, 0xB0, 0xE9, 0x81, 0x93, 0xE5, 0xBE,
+//        0xB7, 0xE7, 0xAD, 0x89, 0xE4, 0xBD, 0x8E, 0xE5, 0x9C, 0xB0, 0xE7, 0xAC,
+//        0xAC, 0xE5, 0x85, 0xB8, 0xE7, 0x82, 0xB9, 0xE7, 0x94, 0xB5, 0xE8, 0xAE,
+//        0xA2, 0xE5, 0xAE, 0x9A, 0xE5, 0x8A, 0xA8, 0xE9, 0x83, 0xBD, 0xE5, 0xBA,
+//        0xA6, 0xE7, 0x9F, 0xAD, 0xE6, 0xAE, 0xB5, 0xE5, 0xAF, 0xB9, 0xE5, 0xA4,
+//        0x9A, 0xE5, 0xA4, 0xBA, 0xE5, 0x84, 0xBF, 0xE8, 0x80, 0x8C, 0xE4, 0xBA,
+//        0x8C, 0xE6, 0xB3, 0x95, 0xE8, 0x8C, 0x83, 0xE6, 0x96, 0xB9, 0xE6, 0x94,
+//        0xBE, 0xE9, 0x9D, 0x9E, 0xE5, 0x88, 0x86, 0xE4, 0xBB, 0xBD, 0xE9, 0xA3,
+//        0x8E, 0xE7, 0xA6, 0x8F, 0xE5, 0xA4, 0x8D, 0xE6, 0x94, 0xB9, 0xE6, 0xA6,
+//        0x82, 0xE6, 0x84, 0x9F, 0xE5, 0xB9, 0xB2, 0xE5, 0x91, 0x8A, 0xE6, 0xA0,
+//        0xBC, 0x0D, 0x0A, 0xE4, 0xB8, 0xAA, 0xE5, 0x90, 0x84, 0xE7, 0xBB, 0x99,
+//        0xE6, 0xA0, 0xB9, 0xE6, 0x9B, 0xB4, 0xE5, 0xB7, 0xA5, 0xE5, 0x85, 0xAC,
+//        0xE4, 0xBE, 0x9B, 0xE7, 0x8B, 0x97, 0xE6, 0x9E, 0x84, 0xE8, 0xB4, 0xAD,
+//        0xE5, 0xA4, 0x9F, 0xE5, 0x8F, 0xA4, 0xE5, 0x9B, 0xBA, 0xE6, 0x95, 0x85,
+//        0xE9, 0xA1, 0xBE, 0xE8, 0xA7, 0x82, 0xE7, 0xAE, 0xA1, 0xE5, 0xB9, 0xBF,
+//        0xE8, 0xA7, 0x84, 0xE6, 0xA3, 0x8D, 0xE5, 0x9B, 0xBD, 0xE6, 0x9E, 0x9C,
+//        0xE8, 0xBF, 0x87, 0xE8, 0xBF, 0x98, 0xE5, 0x90, 0xAB, 0xE9, 0x9F, 0xA9,
+//        0xE5, 0xA5, 0xBD, 0xE5, 0x90, 0x88, 0xE4, 0xBD, 0x95, 0xE5, 0x92, 0x8C,
+//        0xE6, 0xA0, 0xB8, 0xE5, 0xBE, 0x88, 0xE5, 0x90, 0x8E, 0xE5, 0x80, 0x99,
+//        0xE5, 0xBF, 0xBD, 0xE6, 0xB9, 0x96, 0xE5, 0x88, 0x92, 0xE6, 0xBB, 0x91,
+//        0xE5, 0x8C, 0x96, 0x0D, 0x0A, 0xE7, 0x94, 0xBB, 0xE5, 0xBE, 0x8A, 0xE9,
+//        0xBB, 0x84, 0xE6, 0x83, 0xA0, 0xE6, 0xB4, 0xBB, 0xE8, 0x8E, 0xB7, 0xE7,
+//        0xA5, 0xB8, 0xE5, 0x9F, 0xBA, 0xE5, 0x8F, 0x8A, 0xE9, 0x9B, 0x86, 0xE8,
+//        0xBE, 0x91, 0xE5, 0xB7, 0xB1, 0xE8, 0xAE, 0xA1, 0xE9, 0x99, 0x85, 0xE5,
+//        0xAD, 0xA3, 0xE6, 0x97, 0xA2, 0xE4, 0xBD, 0xB3, 0xE5, 0xAE, 0xB6, 0xE5,
+//        0x81, 0x87, 0xE4, 0xBB, 0xB7, 0xE9, 0x97, 0xB4, 0xE5, 0x87, 0x8F, 0xE5,
+//        0x89, 0xAA, 0xE8, 0xA7, 0x81, 0xE4, 0xBB, 0xB6, 0xE5, 0xBB, 0xBA, 0xE8,
+//        0xB7, 0xB5, 0xE5, 0xB0, 0x86, 0xE9, 0x99, 0x8D, 0xE4, 0xBA, 0xA4, 0xE8,
+//        0xA7, 0x92, 0xE8, 0xA7, 0x89, 0xE8, 0xBE, 0x83, 0xE9, 0x98, 0xB6, 0xE8,
+//        0x8A, 0x82, 0xE7, 0xBB, 0x93, 0xE6, 0x88, 0xAA, 0xE7, 0x95, 0x8C, 0xE5,
+//        0x80, 0x9F, 0xE9, 0x87, 0x91, 0x0D, 0x0A, 0xE4, 0xBB, 0x85, 0xE7, 0xB4,
+//        0xA7, 0xE5, 0xB0, 0xBD, 0xE8, 0xBF, 0x91, 0xE7, 0xBB, 0x8F, 0xE7, 0xB2,
+//        0xBE, 0xE6, 0x99, 0xAF, 0xE5, 0xBE, 0x84, 0xE9, 0x95, 0x9C, 0xE5, 0xB0,
+//        0xB1, 0xE5, 0xB1, 0x80, 0xE5, 0xB7, 0xA8, 0xE5, 0x85, 0xB7, 0xE5, 0x89,
+//        0xA7, 0xE6, 0x8D, 0xAE, 0xE5, 0x86, 0xB3, 0xE5, 0x9D, 0x87, 0xE7, 0x9C,
+//        0x8B, 0xE6, 0x8A, 0x97, 0xE8, 0x80, 0x83, 0xE6, 0x89, 0xA9, 0xE6, 0x9D,
+//        0xA5, 0xE8, 0x80, 0x81, 0xE4, 0xB9, 0x90, 0xE7, 0xB1, 0xBB, 0xE7, 0xA4,
+//        0xBC, 0xE9, 0x87, 0x8C, 0xE7, 0x90, 0x86, 0xE5, 0x8A, 0x9B, 0xE4, 0xBE,
+//        0x8B, 0xE8, 0x81, 0x94, 0xE4, 0xB8, 0xA4, 0xE9, 0x87, 0x8F, 0xE5, 0x88,
+//        0x97, 0xE4, 0xB8, 0xB4, 0xE9, 0xA2, 0x86, 0xE5, 0x8F, 0xA6, 0xE6, 0xB5,
+//        0x81, 0xE9, 0xBE, 0x99, 0xE8, 0xA3, 0xB8, 0x0D, 0x0A, 0xE8, 0x99, 0x91,
+//        0xE7, 0x8E, 0x87, 0xE7, 0x95, 0xA5, 0xE4, 0xB9, 0xB0, 0xE5, 0x8D, 0x96,
+//        0xE5, 0xBF, 0x99, 0xE8, 0xB2, 0x8C, 0xE6, 0xAF, 0x8F, 0xE7, 0xBE, 0x8E,
+//        0xE9, 0x97, 0xA8, 0xE4, 0xBB, 0xAC, 0xE6, 0xA2, 0xA6, 0xE8, 0xBF, 0xB7,
+//        0xE5, 0x85, 0x8D, 0xE9, 0x9D, 0xA2, 0xE6, 0x8F, 0x8F, 0xE6, 0xB0, 0x91,
+//        0xE5, 0x90, 0x8D, 0xE6, 0x98, 0x8E, 0xE6, 0xA8, 0xA1, 0xE6, 0x9F, 0x90,
+//        0xE6, 0x9C, 0xA8, 0xE7, 0x9B, 0xAE, 0xE5, 0xB9, 0x95, 0xE9, 0x82, 0xA3,
+//        0xE5, 0xA5, 0x88, 0xE5, 0x8D, 0x97, 0xE9, 0x9A, 0xBE, 0xE5, 0x86, 0x85,
+//        0xE4, 0xBD, 0xA0, 0xE5, 0xB9, 0xB4, 0xE5, 0xBF, 0xB5, 0xE5, 0xA5, 0xB3,
+//        0xE5, 0x81, 0xB6, 0xE6, 0x8B, 0x8D, 0xE6, 0x8E, 0x92, 0xE5, 0xBE, 0x98,
+//        0xE7, 0x89, 0x8C, 0xE5, 0x88, 0xA4, 0xE6, 0x89, 0xB9, 0x0D, 0x0A, 0xE7,
+//        0xAF, 0x87, 0xE7, 0x89, 0x87, 0xE9, 0xA2, 0x91, 0xE5, 0xB9, 0xB3, 0xE5,
+//        0xB1, 0x8F, 0xE8, 0xBF, 0xAB, 0xE6, 0x9C, 0xB4, 0xE6, 0x9C, 0x9F, 0xE9,
+//        0xBD, 0x90, 0xE5, 0x85, 0xB6, 0xE8, 0xB5, 0xB7, 0xE6, 0xB0, 0x94, 0xE7,
+//        0xAD, 0xBE, 0xE5, 0x89, 0x8D, 0xE9, 0x92, 0xB1, 0xE6, 0xBD, 0x9C, 0xE5,
+//        0xBC, 0xBA, 0xE5, 0x80, 0xBE, 0xE6, 0xB1, 0x82, 0xE7, 0x90, 0x83, 0xE5,
+//        0x8F, 0x96, 0xE5, 0x8E, 0xBB, 0xE5, 0x85, 0xA8, 0xE7, 0xA1, 0xAE, 0xE7,
+//        0x84, 0xB6, 0xE7, 0x83, 0xAD, 0xE4, 0xBA, 0xBA, 0xE8, 0xAE, 0xA4, 0xE4,
+//        0xBB, 0xBB, 0xE4, 0xBB, 0x8D, 0xE6, 0x97, 0xA5, 0xE5, 0xAE, 0xB9, 0xE5,
+//        0xA6, 0x82, 0xE5, 0x85, 0xA5, 0xE4, 0xB8, 0x89, 0xE4, 0xBC, 0xA4, 0xE5,
+//        0x95, 0x86, 0xE4, 0xB8, 0x8A, 0xE5, 0xB0, 0x91, 0xE8, 0xAE, 0xBE, 0x0D,
+//        0x0A, 0xE6, 0xB6, 0x89, 0xE6, 0x91, 0x84, 0xE8, 0xBA, 0xAB, 0xE6, 0xB2,
+//        0x88, 0xE5, 0xAE, 0xA1, 0xE7, 0x94, 0x9A, 0xE7, 0x94, 0x9F, 0xE6, 0x96,
+//        0xBD, 0xE5, 0x8D, 0x81, 0xE5, 0xAE, 0x9E, 0xE7, 0xA4, 0xBA, 0xE5, 0xB8,
+//        0x82, 0xE5, 0xBC, 0x8F, 0xE4, 0xBC, 0xBC, 0xE4, 0xBA, 0x8B, 0xE8, 0xA7,
+//        0x86, 0xE6, 0x98, 0xAF, 0xE9, 0x87, 0x8A, 0xE6, 0x94, 0xB6, 0xE6, 0x89,
+//        0x8B, 0xE9, 0xA6, 0x96, 0xE5, 0x8F, 0x97, 0xE5, 0x94, 0xAE, 0xE6, 0x9A,
+//        0x91, 0xE7, 0xBD, 0xB2, 0xE6, 0x9C, 0xAF, 0xE6, 0x95, 0xB0, 0xE5, 0x8F,
+//        0x8C, 0xE6, 0xB0, 0xB4, 0xE9, 0xA1, 0xBA, 0xE5, 0x8F, 0xB8, 0xE6, 0x80,
+//        0x9D, 0xE8, 0xAE, 0xBC, 0xE8, 0xAF, 0x89, 0xE7, 0xB4, 0xA0, 0xE7, 0xAE,
+//        0x97, 0xE9, 0x9A, 0x8B, 0xE9, 0x9A, 0x8F, 0xE7, 0xBC, 0xA9, 0xE6, 0x89,
+//        0x80, 0x0D, 0x0A, 0xE4, 0xBB, 0x96, 0xE5, 0x8F, 0xB0, 0xE8, 0xB0, 0x88,
+//        0xE5, 0x94, 0x90, 0xE6, 0x8F, 0x90, 0xE9, 0xA2, 0x98, 0xE5, 0xA4, 0xA9,
+//        0xE6, 0x9D, 0xA1, 0xE8, 0xB0, 0x83, 0xE5, 0xBA, 0xAD, 0xE5, 0x81, 0x9C,
+//        0xE9, 0x80, 0x9A, 0xE5, 0x90, 0x8C, 0xE5, 0xA4, 0xB4, 0xE6, 0x8A, 0x95,
+//        0xE5, 0x87, 0xB8, 0xE7, 0xAA, 0x81, 0xE6, 0x8E, 0xA8, 0xE6, 0x89, 0x98,
+//        0xE6, 0x8B, 0x93, 0xE5, 0xA4, 0x96, 0xE5, 0xAE, 0x8C, 0xE6, 0x99, 0x9A,
+//        0xE4, 0xBA, 0xA1, 0xE7, 0x8E, 0x8B, 0xE5, 0xBE, 0x80, 0xE5, 0x8D, 0xB1,
+//        0xE5, 0xBE, 0xAE, 0xE4, 0xB8, 0xBA, 0xE8, 0xBF, 0x9D, 0xE7, 0xBB, 0xB4,
+//        0xE5, 0xA7, 0x94, 0xE5, 0x8D, 0xAB, 0xE6, 0x9C, 0xAA, 0xE4, 0xBD, 0x8D,
+//        0xE7, 0xA8, 0xB3, 0xE6, 0x88, 0x91, 0xE4, 0xBA, 0x94, 0xE8, 0xAF, 0xAF,
+//        0xE6, 0x9E, 0x90, 0x0D, 0x0A, 0xE6, 0x81, 0xAF, 0xE7, 0xB3, 0xBB, 0xE7,
+//        0xBB, 0x86, 0xE5, 0x85, 0x88, 0xE8, 0xA1, 0x94, 0xE9, 0x99, 0xA9, 0xE5,
+//        0x8E, 0xBF, 0xE7, 0x8E, 0xB0, 0xE9, 0x99, 0x90, 0xE4, 0xB9, 0xA1, 0xE7,
+//        0x9B, 0xB8, 0xE5, 0x93, 0x8D, 0xE6, 0x83, 0xB3, 0xE5, 0x90, 0x91, 0xE9,
+//        0xA1, 0xB9, 0xE8, 0xB1, 0xA1, 0xE5, 0x83, 0x8F, 0xE5, 0xB0, 0x8F, 0xE6,
+//        0x95, 0x88, 0xE4, 0xBA, 0x9B, 0xE5, 0x86, 0x99, 0xE5, 0xBF, 0x83, 0xE6,
+//        0x96, 0xB0, 0xE8, 0x96, 0xAA, 0xE4, 0xBF, 0xA1, 0xE6, 0x98, 0x9F, 0xE5,
+//        0xBD, 0xA2, 0xE5, 0x9E, 0x8B, 0xE6, 0x80, 0xA7, 0xE9, 0x9B, 0x84, 0xE4,
+//        0xBC, 0x91, 0xE4, 0xBF, 0xAE, 0xE9, 0xA1, 0xBB, 0xE9, 0x9C, 0x80, 0xE8,
+//        0xAE, 0xB8, 0xE7, 0xBB, 0xAD, 0xE5, 0xAC, 0x9B, 0xE9, 0x80, 0x89, 0xE6,
+//        0xBC, 0x94, 0xE5, 0xA4, 0xAE, 0x0D, 0x0A, 0xE9, 0x98, 0xB3, 0xE6, 0xA0,
+//        0xB7, 0xE8, 0xA6, 0x81, 0xE4, 0xB9, 0x9F, 0xE4, 0xB8, 0x9A, 0xE4, 0xB8,
+//        0x80, 0xE4, 0xBE, 0x9D, 0xE5, 0xAE, 0x9C, 0xE4, 0xBB, 0xA5, 0xE4, 0xB9,
+//        0x89, 0xE8, 0x89, 0xBA, 0xE4, 0xBA, 0xA6, 0xE5, 0xBC, 0x82, 0xE6, 0x98,
+//        0x93, 0xE7, 0x9B, 0x8A, 0xE6, 0x84, 0x8F, 0xE5, 0x9B, 0xA0, 0xE9, 0x9F,
+//        0xB3, 0xE8, 0x8B, 0xB1, 0xE8, 0x90, 0xA5, 0xE5, 0xBD, 0xB1, 0xE5, 0xBA,
+//        0x94, 0xE6, 0x98, 0xA0, 0xE5, 0xB0, 0xA4, 0xE6, 0x9C, 0x89, 0xE5, 0x8F,
+//        0x88, 0xE5, 0xA8, 0xB1, 0xE4, 0xB8, 0x8E, 0xE4, 0xBA, 0x88, 0xE7, 0x8B,
+//        0xB1, 0xE9, 0xA2, 0x84, 0xE9, 0x81, 0x87, 0xE5, 0x85, 0x83, 0xE5, 0x91,
+//        0x98, 0xE5, 0x8E, 0x9F, 0xE7, 0xBC, 0x98, 0xE7, 0xBA, 0xA6, 0xE6, 0x9C,
+//        0x88, 0xE9, 0x98, 0x85, 0xE8, 0xB6, 0x8A, 0x0D, 0x0A, 0xE8, 0xBF, 0x90,
+//        0xE5, 0x93, 0x89, 0xE4, 0xBB, 0x94, 0xE5, 0x86, 0x8D, 0xE9, 0x81, 0xAD,
+//        0xE5, 0x88, 0x99, 0xE6, 0x8B, 0xA9, 0xE5, 0xA2, 0x9E, 0xE5, 0xB1, 0x95,
+//        0xE7, 0xAB, 0x99, 0xE5, 0xBC, 0xA0, 0xE9, 0x95, 0xBF, 0xE6, 0x8B, 0x9B,
+//        0xE6, 0x89, 0xBE, 0xE7, 0x85, 0xA7, 0xE8, 0xBF, 0x99, 0xE7, 0x9D, 0x80,
+//        0xE9, 0x92, 0x88, 0xE7, 0x9C, 0x9F, 0xE7, 0x94, 0x84, 0xE4, 0xBA, 0x89,
+//        0xE6, 0x95, 0xB4, 0xE8, 0xAF, 0x81, 0xE6, 0x94, 0xBF, 0xE4, 0xB9, 0x8B,
+//        0xE5, 0x8F, 0xAA, 0xE7, 0x9F, 0xA5, 0xE7, 0xBB, 0x87, 0xE7, 0x9B, 0xB4,
+//        0xE8, 0x81, 0x8C, 0xE6, 0x8C, 0x87, 0xE5, 0x88, 0xB6, 0xE8, 0xB4, 0xA8,
+//        0xE8, 0x87, 0xB4, 0xE4, 0xBC, 0x97, 0xE9, 0x87, 0x8D, 0xE5, 0x91, 0xA8,
+//        0xE4, 0xB8, 0xBB, 0xE6, 0xB3, 0xA8, 0xE8, 0xA3, 0x85, 0x00
+//    };
+//
+//    TTFConfig ttfcfg( "fonts/game-sc.ttf", 32 );
+//    lbl = Label::createWithTTF( ttfcfg, (char *)rawData );
+//    lbl->enableOutline( Color4B::RED, 2 );
+//    lbl->setPosition( 800, 800 );
+//    scene->addChild( lbl );
+//
+//    auto listener = EventListenerTouchOneByOne::create();
+//    listener->setSwallowTouches( true );
+//    listener->onTouchBegan = [ scene, lbl ]( Touch * t, Event * e )
+//    {
+//        if( !lbl->getBoundingBox().containsPoint(
+//            lbl->getParent()->convertToNodeSpace( t->getLocation() )
+//            ) ) return false;
+//        xxx( scene, lbl );
+//        return false;
+//    };
+//    lbl->getEventDispatcher()->addEventListenerWithSceneGraphPriority( listener, lbl );
+//}
+
+//auto fm = FontManager::getInstance();
+//fm->addColor( Color3B::WHITE, "white" );
+//fm->addColor( Color3B::RED, "red" );
+//fm->addColor( Color3B::ORANGE, "orange" );
+//fm->addColor( Color3B::BLUE, "blue" );
+
+//fm->addFont( "", 22 );
+//fm->addFont( "", 33 );
+//fm->addFont( "", 44 );
+//fm->addFont( "", 55 );
+
+//auto r = RichTextEx::create( "<c white>\xE4\xB8\x9C\xE4\xB8\x9C""<c red>11\xE4\xB8\x9C""11\xE4\xB8\x9C", 600
+//                             , []( string const & err )
+//{
+//    CCLOG( "%s", err.c_str() );
+//}
+//    , []( string const& key, string& val )->bool
+//{
+//    CCLOG( "%s", key.c_str() );
+//    return true;
+//}
+//    , []( string const & key )
+//{
+//    CCLOG( "%s touched!", key.c_str() );
+//}
+//);
+////r->setPosition( 100, 1000 );
+////r->assign( "1111" );
+////scene->addChild( r );
+//scene->addChild( Utils::drawRichTextRect( r ) );
+
+
+
+
+
+
+
+//Purchase::getInstance()->registerEventHandler( []( GenericEvent<PurchaseEventTypes> const& e )
+//{
+//    auto s = Utils::toString( "eventType = ", (int)e.eventType );
+//    for( auto& p : e.parameters )
+//    {
+//        if( p.isNumeric ) s += ", " + Utils::toString( p.value_numeric );
+//        else s += ", " + p.value_string;
+//    }
+//    CCLOG( "%s", s.c_str() );
+
+//    if( e.eventType == PurchaseEventTypes::PullSuccess )
+//    {
+//        auto ps = Purchase::getInstance()->getProducts();
+//        for( auto& p : ps->_data )
+//        {
+//            CCLOG( "%s\n%s\n%s\n%s", p->getPid().c_str()
+//                   , p->getTitle().c_str()
+//                   , p->getDesc().c_str()
+//                   , p->getPrice().c_str() );
+//        }
+//    }
+//} );
+
+
+//{
+//    auto s9 = Scale9Sprite::create( Rect( 22, 22, 1, 1 ), "1.png" );
+//    s9->setPreferredSize( Size( 200, 44 ) );
+
+//    auto eb = ExtButton::create( s9 );
+//    scene->addChild( eb );
+//    eb->setPosition( 300, 300 );
+//    eb->registerTouchEventHandler( [ = ]( ExtButton * sender
+//        , ButtonTouchEvents e, float x, float y )
+//    {
+//        if( e == ButtonTouchEvents::UpInside )
+//        {
+//            vector<string> pids;
+//            pids.push_back( "co.weeplay.game.ww.p1" );
+//            pids.push_back( "co.weeplay.game.ww.p2" );
+//            Purchase::getInstance()->pull( pids );
+//        }
+
+//    } );
+//}
+
+
+//{
+//    auto s9 = Scale9Sprite::create( Rect( 22, 22, 1, 1 ), "1.png" );
+//    s9->setPreferredSize( Size( 200, 44 ) );
+
+//    auto eb = ExtButton::create( s9 );
+//    scene->addChild( eb );
+//    eb->setPosition( 600, 400 );
+//    eb->registerTouchEventHandler( [ = ]( ExtButton * sender
+//        , ButtonTouchEvents e, float x, float y )
+//    {
+//        if( e == ButtonTouchEvents::UpInside )
+//        {
+//            Purchase::getInstance()->buy( "co.weeplay.game.ww.p1" );
+//        }
+
+//    } );
+//}
+
+//// url, charid, accid, regionid, accname
+//Purchase::getInstance()->start( "http://10.8.51.231/xx/", 385, 1730, 1004, "lzh001" );
+
+
+
+
+
+
+
+
+
+
+//auto s = Sprite::create( "2.png" );
+//s->setPosition( 500, 500 );
+//scene->addChild( s );
+
+//auto p = s->setUV2Animation(); 
+//p->setT1( "3.png" );
+//p->setS1( Vec2( 4, 4 ) );
+//p->setC1( Vec4( 1, 1, 1, 0 ) );
+//p->setUV1( Vec2( 0, 0 ) );
+
+//p->setT2( "3.png" );
+//p->setS2( Vec2( 8, 8 ) );
+//p->setC2( Vec4( 1, 1, 1, 0 ) );
+//p->setUV2( Vec2( 0, 0 ) );
+
+//auto a = s->runUV2Animation( 0, 0.01f, 0.002f, -0.01f, -0.002f );
+
+//auto a = RepeatForever::create( Sequence::create(
+//    //DelayTime::create( 0.1 ),
+//    CallFunc::create( [ p ]
+//{
+//    auto uv = p->getUV1();
+//    uv.x += 0.01f;
+//    uv.y += 0.002f;
+//    p->setUV1( uv );
+
+//    uv = p->getUV2();
+//    uv.x -= 0.01f;
+//    uv.y -= 0.002f;
+//    p->setUV2( uv );
+//} ),
+//    nullptr ) );
+
+//s->runAction( a );
+
+
+
+//Random rnd( 321 );
+//auto d = rnd.nextDouble();
+//auto i = rnd.nextInt( 3 );
+
+
+//{
+//    auto c = LayerColor::create( Color4B::BLUE, 1500, 1000 );
+//    auto sv1 = ExtScrollView::create( Size( 1500, 1000 ), c );
+//    sv1->setDirection( ScrollViewDirection::Horizontal );
+//    sv1->setBounceable( true );
+//    sv1->setClippingToBounds( true );
+
+//    sv1->setPosition( 0, 0 );
+//    scene->addChild( sv1 );
+//}
+
+//{
+//    auto c = Node::create();
+//    c->setContentSize( Size( 900, 400 ) );
+//    auto L = LayerColor::create( Color4B::YELLOW, 900, 400 );
+//    L->setAnchorPoint( Vec2::ANCHOR_MIDDLE );
+//    L->ignoreAnchorPointForPosition( false );
+//    L->setPosition( 0, 0 );
+//    c->addChild( L );
+//    auto b = ExtButton::create( c );
+//    b->registerTouchEventHandler( []( ExtButton *, ButtonTouchEvents, float, float ) 
+//    {
+//        CCLOG( "!!!!!!!!!!!!!!!!!!" );
+//    } );
+
+//    b->setPosition( 150 + 450, 150 + 200 );
+//    scene->addChild( b );
+//}
+
+//{
+//    auto c = LayerColor::create( Color4B::RED, 800, 300 );
+//    auto s = Sprite::create( "1.png" );
+//    s->setPosition( 400, 150 );
+//    c->addChild( s );
+//    auto sv1 = ExtScrollView::create( Size( 800, 300 ), c );
+//    sv1->setDirection( ScrollViewDirection::Horizontal );
+//    sv1->setBounceable( true );
+//    sv1->setClippingToBounds( true );
+//    //sv1->setZoomScaleLimit( 1, 3 );
+
+//    sv1->setPosition( 200, 200 );
+//    scene->addChild( sv1 );
+//}
+
+//auto lyr = LayerColor::create( Color4B::WHITE );
+//scene->addChild( lyr );
+
+//auto sp = spine::SkeletonAnimation::createWithFile( "skeleton.json", "skeleton.atlas", 1 );
+//sp->setAnimation2( "atk3", true );
+//sp->setAnchorPoint( Vec2( 0.5, 0.5 ) );
+//sp->ignoreAnchorPointForPosition( false );
+//sp->setPosition( 666, 666 );
+//scene->addChild( sp );
+
+//auto spr = Sprite::create( "fg.png" );
+//spr->setPosition( 333, 333 );
+//spr->runAction( FadeOut::create( 10 ) );
+//scene->addChild( spr );
