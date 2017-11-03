@@ -1,8 +1,12 @@
 ﻿using System;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace xx
 {
+    /// <summary>
+    /// 所有可序列化类均需要实现该接口, 包括 BBuffer 本身
+    /// </summary>
     public interface IBBuffer
     {
         // 获取包编号( 不能用 get, 无法虚覆盖 )
@@ -13,18 +17,11 @@ namespace xx
 
         // 序列化接口之从 bb 还原 /  填充数据( 这个需要 try )
         void FromBBuffer(BBuffer bb);
-
-        // todo
-
-        //// 方便 Dump 对象数据的高速 ToString 接口1 之输出 type 和外包围用
-        //void ToStringBuilder(ref StringBuilder sb);
-
-        //// 方便 Dump 对象数据的高速 ToString 接口2 之继承的情况下填充内容用
-        //void ToStringBuilderCore(ref StringBuilder sb);
     }
 
-    // C# safe 版的 BBuffer 并不方便在 buf 前面空出一片填充包头的区域
-
+    /// <summary>
+    /// ByteBuffer 序列化类. Stream 的替代品. 带各种 Write Read 函数.
+    /// </summary>
     public class BBuffer : IBBuffer
     {
         public byte[] buf;
@@ -161,11 +158,11 @@ namespace xx
         #region float
         public void WriteDirect(float v)
         {
-            var tmpbuf = BitConverter.GetBytes(v);
-            buf[dataLen + 0] = tmpbuf[0];
-            buf[dataLen + 1] = tmpbuf[1];
-            buf[dataLen + 2] = tmpbuf[2];
-            buf[dataLen + 3] = tmpbuf[3];
+            var fu = new FloatingInteger { f = v };
+            buf[dataLen + 0] = fu.b0;
+            buf[dataLen + 1] = fu.b1;
+            buf[dataLen + 2] = fu.b2;
+            buf[dataLen + 3] = fu.b3;
             dataLen += 4;
         }
         public void Write(float v)
@@ -178,7 +175,14 @@ namespace xx
         }
         public void Read(ref float v)
         {
-            v = BitConverter.ToSingle(buf, offset);
+            var fu = new FloatingInteger
+            {
+                b0 = buf[offset + 0],
+                b1 = buf[offset + 1],
+                b2 = buf[offset + 2],
+                b3 = buf[offset + 3]
+            };
+            v = fu.f;
             offset += 4;
         }
         #endregion
@@ -215,8 +219,15 @@ namespace xx
                     else
                     {
                         buf[dataLen++] = 5;
-                        var tmpbuf = BitConverter.GetBytes(v);
-                        Array.Copy(tmpbuf, 0, buf, dataLen, 8);
+                        var du = new FloatingInteger { d = v };
+                        buf[dataLen + 0] = du.b0;
+                        buf[dataLen + 1] = du.b1;
+                        buf[dataLen + 2] = du.b2;
+                        buf[dataLen + 3] = du.b3;
+                        buf[dataLen + 4] = du.b4;
+                        buf[dataLen + 5] = du.b5;
+                        buf[dataLen + 6] = du.b6;
+                        buf[dataLen + 7] = du.b7;
                         dataLen += 8;
                     }
                 }
@@ -252,7 +263,18 @@ namespace xx
                     v = ZigZagDecode(tmp);
                     break;
                 case 5:
-                    v = BitConverter.ToDouble(buf, offset);
+                    var du = new FloatingInteger
+                    {
+                        b0 = buf[offset + 0],
+                        b1 = buf[offset + 1],
+                        b2 = buf[offset + 2],
+                        b3 = buf[offset + 3],
+                        b4 = buf[offset + 4],
+                        b5 = buf[offset + 5],
+                        b6 = buf[offset + 6],
+                        b7 = buf[offset + 7]
+                    };
+                    v = du.d;
                     offset += 8;
                     break;
                 default:
@@ -691,7 +713,7 @@ namespace xx
         public override string ToString()
         {
             var s = new StringBuilder();
-            s.Append("{ \"len\" : "+ dataLen + ", \"offset\" : "+ offset + ", \"data\" : [");
+            s.Append("{ \"len\" : " + dataLen + ", \"offset\" : " + offset + ", \"data\" : [");
             for (int i = 0; i < dataLen; ++i)
             {
                 s.Append(i > 0 ? ", " : " ");
@@ -1081,5 +1103,25 @@ namespace xx
         }
 
         #endregion
+    }
+
+    /// <summary>
+    /// 用于浮点到各长度整型的快速转换 
+    /// </summary>
+    [StructLayout(LayoutKind.Explicit, Size = 8, CharSet = CharSet.Ansi)]
+    public struct FloatingInteger
+    {
+        [FieldOffset(0)] public double d;
+        [FieldOffset(0)] public ulong ul;
+        [FieldOffset(0)] public float f;
+        [FieldOffset(0)] public uint u;
+        [FieldOffset(0)] public byte b0;
+        [FieldOffset(1)] public byte b1;
+        [FieldOffset(2)] public byte b2;
+        [FieldOffset(3)] public byte b3;
+        [FieldOffset(4)] public byte b4;
+        [FieldOffset(5)] public byte b5;
+        [FieldOffset(6)] public byte b6;
+        [FieldOffset(7)] public byte b7;
     }
 }
