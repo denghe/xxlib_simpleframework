@@ -8,7 +8,7 @@ struct Lua_BBuffer
 	constexpr static const char* name = "BBuffer";
 
 	// 向 lua 映射全局的 BBuffer 表/元表
-	inline static int Init(lua_State *L)
+	inline static void Init(lua_State *L)
 	{
 		luaL_Reg funcs[] =
 		{
@@ -98,8 +98,6 @@ struct Lua_BBuffer
 		lua_pushlightuserdata(L, (void*)name);	// lud
 		lua_createtable(L, 128, 0);				// lud, typeIdProtos
 		lua_rawset(L, LUA_REGISTRYINDEX);		// 
-
-		return 0;
 	}
 
 

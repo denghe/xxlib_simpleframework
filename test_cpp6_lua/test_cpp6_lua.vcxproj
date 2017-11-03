@@ -92,8 +92,7 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="lua_xx_bbuffer.h" />
-    <ClInclude Include="std_cout_helper.h" />
+    <ClInclude Include="lua_socket.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="map.cpp.bak1" />
