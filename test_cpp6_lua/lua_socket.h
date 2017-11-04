@@ -1,8 +1,10 @@
 ﻿#pragma execution_character_set("utf-8")
 #pragma once
 
+#include <memory>
 #ifdef _WIN32
 #include <WinSock2.h>
+#pragma comment(lib, "WS2_32") 
 #undef min
 #undef max
 #endif
@@ -11,7 +13,7 @@ struct Lua_Socket
 {
 
 #ifdef _WIN32
-	static_assert(SOCKET_ERROR == -1);
+	static_assert(SOCKET_ERROR == -1 && INVALID_SOCKET == -1);
 	typedef SOCKET      Socket_t;
 	typedef int         SockLen_t;
 #else
@@ -43,7 +45,7 @@ struct Lua_Socket
 #endif
 	}
 
-	inline static int GetSockOpt(Socket_t s, int level, int optname, void* optval, SockLen_t* optlen)
+	inline int GetSockOpt(int level, int optname, void* optval, SockLen_t* optlen)
 	{
 #ifdef _WIN32
 		return ::getsockopt(s, level, optname, (char*)optval, optlen);
@@ -52,7 +54,7 @@ struct Lua_Socket
 #endif
 	}
 
-	inline static int CloseSocket(Socket_t s)
+	inline int CloseSocket()
 	{
 #ifdef _WIN32
 		return ::closesocket(s);
@@ -61,7 +63,14 @@ struct Lua_Socket
 #endif
 	}
 
-	inline static int SetNonBlock(Socket_t s)
+	inline int CloseSocket(int r)
+	{
+		CloseSocket();
+		s = -1;
+		return r;
+	}
+
+	inline int SetNonBlock()
 	{
 #ifdef _WIN32
 		u_long v = -1;
@@ -96,7 +105,6 @@ struct Lua_Socket
 
 	inline static int WaitForReadable(Socket_t s, int timeoutMS)
 	{
-		static_assert(SOCKET_ERROR == -1);
 		timeval tv;
 		if (timeoutMS > 0)
 		{
@@ -111,88 +119,89 @@ struct Lua_Socket
 		return r;
 	}
 
-	// 成功返回 socket. 失败返回 -1.
-	inline static Socket_t Connect(uint32_t ip, uint16_t port, int timeoutMS)
+
+	inline void OnStateChanged()
 	{
-		Socket_t s = socket(AF_INET, SOCK_STREAM, 0);      // create socket
+		// todo: call registerd lua func
+	}
 
-		sockaddr_in addr;                                   // create addr ipv4
-		addr.sin_family = AF_INET;
-		addr.sin_port = htons(port);
+	// 设置 Connect 的地址. 
+	// 只能在状态为 Disconnected 时使用
+	// 返回 0 成功, 负数各种失败
+	inline int SetAddress_(uint32_t ip, uint16_t port)
+	{
+		if (state != States::Disconnected) return -1;
 		addr.sin_addr.s_addr = ip;
-		memset(addr.sin_zero, 0, sizeof(addr.sin_zero));
+		addr.sin_port = htons(port);
+		return 0;
+	}
 
-		int r;
-		do
-		{
-			SetNonBlock(s);
-			do
-			{
-				r = ::connect(s, (sockaddr *)&addr, sizeof(addr));
-			} while (r == -1 && GetErrorNumber() == EINTR);
+	// 开始连接目标址.
+	// 只能在状态为 Disconnected 时使用
+	// 返回 0 成功, 非 0 各种失败
+	inline int Connect_(uint32_t ip, uint16_t port, int timeoutMS)
+	{
+		if (state != States::Disconnected) return 1;	// wrong state
+		if (!addr.sin_port) return 2;					// not set address ?
+		if (s != -1) return 3;							// socket is opened
 
-			if (r == -1)
-			{
-				r = GetErrorNumber();
-				if (r != EINPROGRESS && r != EWOULDBLOCK)
-				{
-					break;
-				}
+		s = socket(AF_INET, SOCK_STREAM, 0);			// create socket
+		if (s == -1) return 4;							// create fail
 
-				r = WaitForWritable(s, timeoutMS);
-				if (r <= 0)
-				{
-					r = -1;
-				}
-				else
-				{
-					SockLen_t len = sizeof(SockLen_t);
-					if (GetSockOpt(s, SOL_SOCKET, SO_ERROR, &r, &len) == -1 || r != 0)
-					{
-						r = -1;
-					}
-				}
-			}
-		} while (0);
+		int r = SetNonBlock();
+		if (r) return CloseSocket(5);					// set non block fail
+
+		do {
+			r = ::connect(s, (sockaddr *)&addr, sizeof(addr));
+		} while (r == -1 && GetErrorNumber() == EINTR);
 
 		if (r == -1)
 		{
-			CloseSocket(s);
-			return -1;
+			r = GetErrorNumber();
+			if (r != EINPROGRESS && r != EWOULDBLOCK) return CloseSocket(6);	// connect fail
+
+			r = WaitForWritable(s, timeoutMS);
+			if (r <= 0) return CloseSocket(7);			// wait writable fail
+			else
+			{
+				SockLen_t len = sizeof(r);
+				if (GetSockOpt(SOL_SOCKET, SO_ERROR, &r, &len) == -1) return CloseSocket(9);	// get sock opt fail
+				if (r) return CloseSocket(10);
+			}
 		}
-		return s;
+		return r;
 	}
 
-	inline static int Receive(Socket_t s, char* buf, int bufLen, int timeoutMS)
+	inline int Receive(int timeoutMS)
 	{
 		int n = WaitForReadable(s, timeoutMS);
 		if (n > 0)
 		{
 			do
 			{
-				n = ::recv(s, buf, bufLen, 0);
-				if (n == -1)
-				{
-					n = GetErrorNumber();
-					if (n == EINTR) continue;
-					if (n != EAGAIN && n != EWOULDBLOCK)
-					{
-						CloseSocket(s);
-					}
-					return -1;
-				}
-				else if (n == 0)
-				{
-					CloseSocket(s);
-					return -1;
-				}
-				else if (n > 0)
-				{
-					//CCLOG("\trecv data: %u", n);
-					//_readBuf.woffset(_readBuf.woffset() + n);
-					//onReceived(_readBuf);
-					//return 0;
-				}
+				//n = ::recv(s, buf, bufLen, 0);
+				//if (n == -1)
+				//{
+				//	n = GetErrorNumber();
+				//	if (n == EINTR) continue;
+				//	if (n != EAGAIN && n != EWOULDBLOCK)
+				//	{
+				//		CloseSocket(s);
+				//	}
+				//	return -1;
+				//}
+				//else if (n == 0)
+				//{
+				//	CloseSocket(s);
+				//	return -1;
+				//}
+				//else if (n > 0)
+				//{
+				//	//CCLOG("\trecv data: %u", n);
+				//	//_readBuf.woffset(_readBuf.woffset() + n);
+				//	//onReceived(_readBuf);
+				//	//return 0;
+				//}
 				//else
 				//{
 				//	e = NetUtils::getSockErrNo();
@@ -209,5 +218,40 @@ struct Lua_Socket
 			} while (true);
 
 		}
+	}
+
+
+
+	enum class States
+	{
+		Disconnected,			// 初始状态, 可以发起 Connect
+		Connecting,
+		Connected,
+		Disconnecting,
+		Closed
+	};
+
+	// todo: 允许注册 OnStateChanged OnReceivePackage lua 函数
+	// todo: GetState 函数
+	// todo: SetAddress 函数
+	// todo: Connect 函数( 只允许 State 位于 Disconnected 状态才能执行 )
+
+	Socket_t s = -1;									// current socket
+	sockaddr_in addr;                                   // ipv4 address
+	States state = States::Disconnected;				// current state
+
+	Lua_BBuffer bbReceive;					// 常规接收容器. 每收够一个包就发起一个回调
+	Lua_BBuffer bbReceiveLeft;				// 积攒 OnReceive 处理时剩下的数据
+	Lua_BBuffer bbReceivePackage;			// for OnReceivePackage 传参, 引用 bbReceive 或 bbReceiveLeft 的内存
+
+	Lua_Socket(lua_State* L)
+		: bbReceive(L)
+		, bbReceiveLeft(L)
+		, bbReceivePackage(L)
+	{
+		memset(addr.sin_zero, 0, sizeof(addr.sin_zero));
+		addr.sin_family = AF_INET;
+		addr.sin_addr.s_addr = 0;
+		addr.sin_port = 0;
 	}
 };

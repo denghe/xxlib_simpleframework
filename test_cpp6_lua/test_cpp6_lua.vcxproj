@@ -95,6 +95,7 @@
     <ClInclude Include="lua_socket.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="main.cpp.bak2" />
     <None Include="map.cpp.bak1" />
     <None Include="test.lua">
       <DeploymentContent>true</DeploymentContent>
