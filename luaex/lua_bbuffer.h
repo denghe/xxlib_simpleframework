@@ -109,8 +109,8 @@ struct Lua_BBuffer
 	uint32_t	offsetRoot = 0;				// offset 值写入修正
 	uint32_t	dataLenBak = 0;				// WritePackage 时用于备份当前数据写入偏移
 
-											// 从池中构造 BBuffer. 可能抛 lua 异常
-	Lua_BBuffer(lua_State* L)
+
+	Lua_BBuffer(lua_State* L)				// 从池中构造 BBuffer. 可能抛 lua 异常
 	{
 		lua_getallocf(L, (void**)&mp);		// 填充内存分配器
 		if (!mp)

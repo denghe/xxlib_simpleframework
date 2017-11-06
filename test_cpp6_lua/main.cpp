@@ -1,4 +1,6 @@
 ﻿#pragma execution_character_set("utf-8")
+#include "lua_mempool.h"
+
 #include "std_cout_helper.h"
 #include <thread>
 #include <chrono>
@@ -20,6 +22,7 @@ typedef int         Socket_t;
 typedef socklen_t   SockLen_t;
 #endif
 
+
 enum class NBSocketStates
 {
 	Disconnected,				// 初始状态 / 出错 / 成功断开后
@@ -30,30 +33,46 @@ enum class NBSocketStates
 
 struct NBSocket
 {
-	// todo: 提供 SetAddress, Connect, GetState, Send, GetRecv, Disconnect, Clear, Update, GetElapsedMS
+	// todo: 提供 SetAddress, Connect, GetState, Send, GetRecv, Disconnect, Clear, Update, GetTicks
 
-	Socket_t sock = -1;
-	NBSocketStates state = NBSocketStates::Disconnected;
-	sockaddr_in addr;
+	// 结构说明 + 变长数据区. 因为只是用于 client 发送, 此处并不试图省掉秒种内存复制. 
+	struct Buf
+	{
+		uint32_t    dataLen;
+		uint32_t	offset;						// 已 读 | 发送 长度
+		Buf*		next;						// 指向下一段待发送数据
+
+		inline char* GetData()					// 指向数据区
+		{
+			return (char*)(this + 1);
+		}
+	};
+
+	Lua_MemPool*	mempool;					// 指向内存池
+	Socket_t		sock = -1;
+	NBSocketStates	state = NBSocketStates::Disconnected;
+	int				ticks = 0;					// 当前状态持续 ticks 计数 ( Disconnecting 时例外, 该值为负, 当变到 0 时, 执行 Close )
+	sockaddr_in		addr;
+	Buf*			curr = nullptr;				// 正在发送的数据块
+	Buf*			last = nullptr;				// 指向尾数据块
 
 	NBSocket()
 	{
 		addr.sin_port = 0;	// 用这个来做是否有设置过 addr 的标记
 	}
+
+	~NBSocket()
+	{
+		// todo: close socket? 回收 curr last?
+	}
+
+	// 设置目标地址
 	inline void SetAddress(char const* const& ip, uint16_t const& port)
 	{
 		SockSetAddress(addr, ip, port);
 	}
 
-	// 简化同时关连接改状态的代码
-	inline int E(int e)
-	{
-		SockClose(sock);
-		sock = -1;
-		state = NBSocketStates::Disconnected;
-		return e;
-	}
-
+	// 返回负数 表示出错. 0 表示没发生错误 但也没连上. 1 表示连接成功
 	inline int Connect(int const& sec = 0, int const& usec = 0)
 	{
 		if (state != NBSocketStates::Disconnected) return -2;	// wrong state
@@ -84,8 +103,25 @@ struct NBSocket
 		return 1;												// success
 	}
 
+	// 断开连接
+	inline void Disconnect(int delayTicks = 0)
+	{
+		if (state == NBSocketStates::Disconnected) return;
+		if (!delayTicks)
+		{
+			E(0);
+		}
+		else
+		{
+			state = NBSocketStates::Disconnecting;
+			ticks = -delayTicks;
+		}
+	}
+
+	// 返回负数表示出错. 0 表示没发生错误
 	inline int Update(int const& sec = 0, int const& usec = 0)
 	{
+		++ticks;
 		switch (state)
 		{
 		case NBSocketStates::Disconnected:
@@ -95,8 +131,8 @@ struct NBSocket
 		case NBSocketStates::Connecting:
 		{
 			int r = SockWaitWritable(sock, sec, usec);
-			if (r < 0) return E(-8);							// wait writable fail
-			else if (r == 0) return 0;							// timeout( not error )
+			if (r < 0) return E(-8);			// wait writable fail
+			else if (r == 0) return 0;			// timeout( not error )
 			else
 			{
 				state = NBSocketStates::Connected;
@@ -106,15 +142,31 @@ struct NBSocket
 		case NBSocketStates::Connected:
 		{
 			// todo: 判断是否有待发数据, 持续发. 有数据收则收到队列. 
+			if (curr)
+			{
+				auto buf = curr->GetData() + curr->offset;
+				auto len = curr->dataLen - curr->offset;
+				auto r = SockSend(sock, buf, len);
+				if (r.first) return E(-2);
+				if (r.second < len)
+				{
+					curr->offset += r.second;
+				}
+				else // todo
+				{
+					curr = curr->next;
+				}
+			}
+
 			return 0;
 		}
 		case NBSocketStates::Disconnecting:
 		{
-			// todo: 状态检查 / 超时后close
+			if (!ticks) E(0);
 			return 0;
 		}
 		default:
-			return -1;
+			return -1;							// unknown state
 		}
 	}
 
@@ -123,6 +175,75 @@ struct NBSocket
 		return state;
 	}
 
+	inline int const& GetTicks() const noexcept
+	{
+		return ticks;
+	}
+
+	// 返回负数表示出错. 0 表示成功放入待发送链表或无数据可发. > 0 表示已立刻发送成功的长度. 
+	// 如果有剩下部分, 会放入待发送链表, 在下次 Update 时继续发
+	inline int Send(char const* const& buf, int dataLen, int const& offset)
+	{
+		if (dataLen < 0 || offset < 0 || offset > dataLen) return -1;
+		if (offset == dataLen) return 0;
+
+		// 算从哪发, 发多长
+		auto p = buf + offset;
+		auto len = dataLen - offset;
+
+		// 判断当前是否存在待发数据. 如果有就追加到后面
+		if (last)
+		{
+			PushBuf(p, len);
+			return 0;
+		}
+
+		// 直接发. 如果出错则关闭 socket, 改 state 并返回错误码.
+		auto r = SockSend(sock, p, len);
+		if (r.first) return E(-2);
+
+		// 将没发完的数据追加到待发
+		if (len < r.second)
+		{
+			PushBuf(p + r.second, len - r.second);
+		}
+		return r.second;
+	}
+
+	inline void PushBuf(char const* const& buf, int const& len)
+	{
+		auto b = (Buf*)mempool->Alloc(sizeof(Buf) + len);
+		b->dataLen = len;
+		b->offset = 0;
+		b->next = nullptr;
+		memcpy(b + 1, buf, len);
+
+		if (last)
+		{
+			assert(curr);
+			last->next = b;
+		}
+		else
+		{
+			assert(!curr);
+			curr = b;
+		}
+	}
+
+private:
+
+	// 简化同时关连接改状态的代码
+	inline int E(int e)
+	{
+		SockClose(sock);
+		sock = -1;
+		state = NBSocketStates::Disconnected;
+		ticks = 0;
+		// todo: 清各种 buf
+		return e;
+	}
+
+public:
 
 	// todo: 将 run() 改造成靠 update() 更新的状态机. 
 
@@ -199,7 +320,7 @@ struct NBSocket
 #else
 		signal(SIGPIPE, SIG_IGN);	// 防止 write 一个已断开 socket 时引发该信号量
 #endif
-}
+	}
 
 	inline static int SockGetErrNo() noexcept
 	{
@@ -307,34 +428,89 @@ struct NBSocket
 
 	inline static std::pair<int, int> SockSend(Socket_t const& s, char const* const& buf, int len)
 	{
-		std::pair<int, int> rtv(0, 0);		// err, sent len
-		if (len < 1)
+		std::pair<int, int> rtv(0, 0);		// errno, sent len
+		assert(buf && len > 0);
+		int left = len;
+		while (left)
 		{
-			rtv.first = -1;
-			return rtv;
-		}
-		while (len)							// 一直发，直到 发完 或 出错
-		{
-			int r = ::send(s, buf, len, 0);
+			int r = ::send(s, buf + len - left, left, 0);
 			if (r == -1)
 			{
 				int e = SockGetErrNo();
-				if (e == EAGAIN && e == EWOULDBLOCK) return rtv;
-				rtv.first = e;
-				return rtv;
+				if (e == EAGAIN && e == EWOULDBLOCK) break;
+				rtv.first = -1;
+				break;
 			}
-			len -= r;
-			rtv.second += r;
+			left -= r;
 		}
+		rtv.second = len - left;
 		return rtv;
 	}
 };
 
 
+void DumpState(NBSocketStates s)
+{
+	static char const* ss[] =
+	{
+		"Disconnected",
+		"Connecting",
+		"Connected",
+		"Disconnecting"
+	};
+	CoutLine("state = ", ss[(int)s]);
+}
 
 int main()
 {
-	CoutLine(NBSocket::Run());
+	//CoutLine(NBSocket::Run());
+
+	NBSocket::SockInit();
+	NBSocket nbs;
+
+	auto s = nbs.GetState();
+	DumpState(s);
+
+	nbs.SetAddress("127.0.0.1", 12345);
+	nbs.Connect();
+
+	DumpState(s = nbs.GetState());
+	while (true)
+	{
+		s = nbs.GetState();
+		switch (s)
+		{
+		case NBSocketStates::Disconnected:
+		{
+			goto LabEnd;
+		}
+		case NBSocketStates::Connecting:
+		{
+			if (nbs.GetTicks() > 10)	// 1 秒连不上就算超时吧
+			{
+				nbs.Disconnect();
+			}
+			break;
+		}
+		case NBSocketStates::Connected:
+		{
+			// todo: Send
+			nbs.Disconnect(2);		// 延迟 2 帧杀掉
+			break;
+		}
+		case NBSocketStates::Disconnecting:
+			break;
+
+		default:
+			break;
+		}
+		DumpState(s = nbs.GetState());
+		std::this_thread::sleep_for(100ms);
+		nbs.Update();
+	}
+LabEnd:
+	DumpState(s = nbs.GetState());
+	CoutLine("press any key to continue...");
 	std::cin.get();
 	return 0;
 }
