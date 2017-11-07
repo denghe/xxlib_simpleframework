@@ -304,8 +304,7 @@ namespace xx
                 Reserve(dataLen + 5 + sbufLen);
             }
             Bit7Write(buf, ref dataLen, (uint)sbufLen);
-
-            Array.Copy(sbuf, 0, buf, dataLen, sbufLen);
+            Buffer.BlockCopy(sbuf, 0, buf, dataLen, sbufLen);
             dataLen += sbufLen;
         }
         public void Write(string v)
@@ -589,7 +588,7 @@ namespace xx
         public void WriteBuf(byte[] buf, int offset, int dataLen)
         {
             Reserve(offset + dataLen);
-            Array.Copy(buf, offset, this.buf, this.dataLen, dataLen);
+            Buffer.BlockCopy(buf, offset, this.buf, this.dataLen, dataLen);
             this.dataLen += dataLen;
         }
         #endregion
@@ -675,7 +674,7 @@ namespace xx
         public byte[] DumpData()
         {
             var rtv = new byte[dataLen];
-            Array.Copy(buf, rtv, dataLen);
+            Buffer.BlockCopy(buf, 0, rtv, 0, dataLen);
             return rtv;
         }
 
@@ -768,7 +767,7 @@ namespace xx
             bb.WriteLength(len);
             if (len == 0) return;
             bb.Ensure(len);
-            Array.Copy(buf, 0, bb.buf, bb.dataLen, len);
+            Buffer.BlockCopy(buf, 0, bb.buf, bb.dataLen, len);
             bb.dataLen += len;
         }
 
@@ -779,7 +778,7 @@ namespace xx
             Resize(len);
             offset = 0;
             if (len == 0) return;
-            Array.Copy(bb.buf, bb.offset, buf, 0, len);
+            Buffer.BlockCopy(bb.buf, bb.offset, buf, 0, len);
             bb.offset += len;
         }
 

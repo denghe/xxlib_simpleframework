@@ -4,6 +4,10 @@ using System.Threading;
 
 public static class Program
 {
+    public enum E
+    {
+        a, b, c
+    }
     static void Main(string[] args)
     {
         var sw = Stopwatch.StartNew();

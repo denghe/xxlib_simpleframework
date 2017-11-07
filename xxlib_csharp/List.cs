@@ -860,13 +860,7 @@ namespace xx
             if (vsDataLen == 0) return;
 
             bb.Reserve(bb.dataLen + vsDataLen * 1);
-            var bbBuf = bb.buf;
-            var vsBuf = vs.buf;
-            var bbDataLen = bb.dataLen;
-            for (int i = 0; i < vsDataLen; i++)
-            {
-                bbBuf[bbDataLen + i] = (byte)vsBuf[i];
-            }
+            Buffer.BlockCopy(vs.buf, 0, bb.buf, bb.dataLen, vsDataLen);
             bb.dataLen += vsDataLen;
         }
         public override void FromBBuffer(BBuffer bb, List<sbyte> vs)
@@ -876,13 +870,7 @@ namespace xx
             vs.Resize(len);
             if (len == 0) return;
 
-            var bbBuf = bb.buf;
-            var vsBuf = vs.buf;
-            var bbOffset = bb.offset;
-            for (int i = 0; i < len; i++)
-            {
-                vsBuf[i] = (sbyte)bbBuf[bbOffset + i];
-            }
+            Buffer.BlockCopy(bb.buf, bb.offset, vs.buf, 0, len);
             bb.offset += len;
         }
     }
@@ -895,7 +883,7 @@ namespace xx
             if (vsDataLen == 0) return;
 
             bb.Reserve(bb.dataLen + vsDataLen * 1);
-            Array.Copy(vs.buf, 0, bb.buf, bb.dataLen, vsDataLen);
+            Buffer.BlockCopy(vs.buf, 0, bb.buf, bb.dataLen, vsDataLen);
             bb.dataLen += vsDataLen;
         }
         public override void FromBBuffer(BBuffer bb, List<byte> vs)
@@ -905,7 +893,7 @@ namespace xx
             vs.Resize(len);
             if (len == 0) return;
 
-            Array.Copy(bb.buf, bb.offset, vs.buf, 0, len);
+            Buffer.BlockCopy(bb.buf, bb.offset, vs.buf, 0, len);
             bb.offset += len;
         }
     }
@@ -1110,10 +1098,7 @@ namespace xx
             if (vsDataLen == 0) return;
 
             bb.Reserve(bb.dataLen + vsDataLen * 4);
-            for (int i = 0; i < vsDataLen; i++)
-            {
-                bb.WriteDirect(vs[i]);
-            }
+            Buffer.BlockCopy(vs.buf, 0, bb.buf, bb.dataLen, vsDataLen * 4);
         }
         public override void FromBBuffer(BBuffer bb, List<float> vs)
         {
@@ -1122,13 +1107,7 @@ namespace xx
             vs.Resize(len);
             if (len == 0) return;
 
-            var bbBuf = bb.buf;
-            var bbOffset = bb.offset;
-            var vsBuf = vs.buf;
-            for (int i = 0; i < len; i++)
-            {
-                vsBuf[i] = BitConverter.ToSingle(bbBuf, bbOffset + i * 4);
-            }
+            Buffer.BlockCopy(bb.buf, bb.offset, vs.buf, 0, len * 4);
             bb.offset += len * 4;
         }
     }
