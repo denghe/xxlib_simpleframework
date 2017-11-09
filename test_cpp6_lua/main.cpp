@@ -96,10 +96,12 @@ struct NBSocket
 			else if (r == 0)
 			{
 				state = NBSocketStates::Connecting;
+				// ticks = 0?
 				return 0;										// timeout( not error )
 			}
 		}
 		state = NBSocketStates::Connected;
+		// ticks = 0?
 		return 1;												// success
 	}
 

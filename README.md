@@ -1,6 +1,6 @@
-基于 libuv C++ 轮子封装 再进行 CLI 封装的, 适合用 C# 开发服务器端的基础框架
+﻿基于 libuv C++ 轮子封装 再进行 CLI 封装的, 适合用 C# 开发服务器端的基础框架
 
-运行需要 vs2017 并勾安 CLI/C++ 旧crt 支持和 win81 sdk, 打开 all.sln, 同时设置 test_cpp1, test_csharp1 为启动项目
+运行需要 vs2017( 升级到最新 ) 并勾安 CLI/C++ 旧crt 支持和 win81 sdk, 打开 all.sln, 同时设置 test_cpp1, test_csharp1 为启动项目
 
 技术讨论群: 125081098
 
@@ -9,7 +9,7 @@
 1. 生成器
 2. 模板
 3. 依赖库
-4. 测试项目
+
 
 生成器通过对模板的读取解析, 产生具体项目代码, 向指定生成目录覆盖写入
 
@@ -36,11 +36,6 @@ pkggen
 pkggen_template_PKG
 通信包结构描述模板
 
-test_cpp1
-chat room 测试客户端 C++ 实现
-
-test_csharp1
-chat room 测试服务器端 C# 实现
 
 xxlib_csharp
 为 c# 项目服务的库, 命名空间为 xx
@@ -59,7 +54,5 @@ docs
 
 
 
-
-下列项目为实验性质, 未竣工
-test_cpp2
-server_db
+后续更新: 为测试 SQL SERVER 2017 的加密效果, 放入了 localdb2017.mdf
+SSMS 中于服务器地址处输入 (LocalDb)\MSSQLLocalDB , windows身份验证, 挂载 浏览到 mdf 即可开搞. 
