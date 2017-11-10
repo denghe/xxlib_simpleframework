@@ -393,17 +393,17 @@ namespace xx
 			return EndWritePackage<SizeType>();
 		}
 
-		//// 在已知数据长度的情况下, 直接以包头格式写入长度. 成功返回 true
-		//template<typename SizeType = uint16_t, typename T>
-		//bool WritePackageLength(T const& len)
-		//{
-		//	if (len > std::numeric_limits<SizeType>::max()) return false;
-		//	Reserve(dataLen + sizeof(SizeType) + len);
-		//	auto tmp = (SizeType)len;
-		//	memcpy(buf + dataLen, &tmp, sizeof(SizeType));
-		//	dataLen += sizeof(SizeType);
-		//	return true;
-		//}
+		// 在已知数据长度的情况下, 直接以包头格式写入长度. 成功返回 true
+		template<typename SizeType = uint16_t, typename T>
+		bool WritePackageLength(T const& len)
+		{
+			if (len > std::numeric_limits<SizeType>::max()) return false;
+			Reserve(dataLen + sizeof(SizeType) + len);
+			auto tmp = (SizeType)len;
+			memcpy(buf + dataLen, &tmp, sizeof(SizeType));
+			dataLen += sizeof(SizeType);
+			return true;
+		}
 
 		// 尝试一次性反序列化一到多个包, 将结果填充到 outPkgs, 返回包个数 或 错误码
 		// 注意: 注意其元素的 引用计数, 通通为 1( 即便是递归互引 )

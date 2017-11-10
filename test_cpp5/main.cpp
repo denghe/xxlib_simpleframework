@@ -5,7 +5,7 @@ struct Listener;
 struct Peer : xx::UVServerPeer
 {
 	Peer(Listener* listener);
-	virtual void OnReceive() override;
+	//virtual void OnReceive() override;
 	virtual void OnReceivePackage(xx::BBuffer& bb) override;
 	virtual void OnDisconnect() override;
 };
@@ -31,16 +31,22 @@ inline Peer::Peer(Listener* listener)
 {
 	Cout(GetPeerName(), " connected!\n");
 }
+//inline void Peer::OnReceive()
+//{
+//	Cout(tmpStr, " recv = ", bbReceive, "\n");
+//}
+inline void Peer::OnReceivePackage(xx::BBuffer& bb)
+{
+	// echo
+	auto sendBB = GetSendBB();
+	sendBB->WritePackageLength((uint16_t)bb.dataLen);
+	sendBB->WriteBuf(bb);
+	Send(sendBB);
+	Cout(tmpStr, " recvPkg = ", bb, "\n");
+}
 inline void Peer::OnDisconnect()
 {
 	Cout(tmpStr, " disconnected!\n");
-}
-inline void Peer::OnReceive()
-{
-	Cout(tmpStr, " recv = ", bbReceive, "\n");
-}
-inline void Peer::OnReceivePackage(xx::BBuffer& bb)
-{
 }
 
 
