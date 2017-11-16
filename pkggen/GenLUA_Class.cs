@@ -8,7 +8,7 @@ using System.Text;
 
 public static class GenLUA_Class
 {
-    public static void Gen(Assembly asm, string outDir, string templateName)
+    public static void Gen(Assembly asm, string outDir, string templateName, string md5)
     {
         var sb = new StringBuilder();
 

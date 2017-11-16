@@ -1,4 +1,4 @@
-extern "C"
+ï»¿extern "C"
 {
 #include "../lua/lapi.c"
 #include "../lua/lauxlib.c"
@@ -8,14 +8,14 @@ extern "C"
 #include "../lua/lcorolib.c"
 
 //#include "../lua/lctype.c"
-#include "lctype.c"				// Ö§³ÖÁËÖĞÎÄ±äÁ¿Ãû
+#include "lctype.c"				// æ”¯æŒäº†ä¸­æ–‡å˜é‡å
 
 #include "../lua/ldblib.c"
 #include "../lua/ldebug.c"
 #include "../lua/ldo.c"
 
 //#include "../lua/ldump.c"
-#include "ldump.c"				// Ö§³ÖÁË 32/64 Î» bytecode µÄ¿çÔ½
+#include "ldump.c"				// æ”¯æŒäº† 32/64 ä½ bytecode çš„è·¨è¶Š
 
 #include "../lua/lfunc.c"
 #include "../lua/lgc.c"
@@ -36,16 +36,16 @@ extern "C"
 #include "../lua/ltests.c"
 #include "../lua/ltm.c"
 
-//#include "../lua/lua.c"		// ÕâÊÇÃüÁîĞĞ°ælua, ²¢²»ĞèÒª
+//#include "../lua/lua.c"		// è¿™æ˜¯å‘½ä»¤è¡Œç‰ˆlua, å¹¶ä¸éœ€è¦
 
 //#include "../lua/lundump.c"
-#include "lundump.c"			// Ö§³ÖÁË 32/64 Î» bytecode µÄ¿çÔ½
+#include "lundump.c"			// æ”¯æŒäº† 32/64 ä½ bytecode çš„è·¨è¶Š
 
 #include "../lua/lutf8lib.c"
 #include "../lua/lvm.c"
 #include "../lua/lzio.c"
 
-// Õâ¸öÄÚº¬ windows.h Ö® include, ¹Ê·Åµ½×îÏÂÃæ ±ÜÃâÎÛÈ¾ÉÏÃæµÄº¯ÊıÃû
+// è¿™ä¸ªå†…å« windows.h ä¹‹ include, æ•…æ”¾åˆ°æœ€ä¸‹é¢ é¿å…æ±¡æŸ“ä¸Šé¢çš„å‡½æ•°å
 #include "../lua/loadlib.c"				
 
 }
@@ -53,6 +53,6 @@ extern "C"
 void SetUtf8Console()
 {
 #ifdef _WIN32
-	SetConsoleOutputCP(65001);
+	::SetConsoleOutputCP(CP_UTF8);
 #endif
 }

@@ -92,7 +92,7 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="lua_socket.h" />
+    <ClInclude Include="lua_nbsocket.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="main.cpp.bak2" />

@@ -75,6 +75,12 @@
       <Filter>xxlib</Filter>
     </ClInclude>
     <ClInclude Include="..\pkg\PKG_class.h" />
+    <ClInclude Include="..\xxlib_cpp\xx_logger.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\xxlib_cpp\xx_sqlite.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="xxlib">

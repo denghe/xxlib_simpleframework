@@ -8,7 +8,7 @@ using System.Text;
 
 public static class GenCS_Class
 {
-    public static void Gen(Assembly asm, string outDir, string templateName)
+    public static void Gen(Assembly asm, string outDir, string templateName, string md5)
     {
         var sb = new StringBuilder();
 
@@ -19,7 +19,12 @@ using xx;");
         // template namespace
         sb.Append(@"
 namespace " + templateName + @"
-{");
+{
+    public static class PkgGenMd5
+    {
+        public const string value = """ + md5 + @"""; 
+    }
+");
 
         var ts = asm._GetTypes();
         var es = ts._GetEnums();
