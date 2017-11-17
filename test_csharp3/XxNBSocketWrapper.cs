@@ -243,9 +243,9 @@ public class XxNBSocket : IDisposable
 
     /// <summary>
     /// 如果接收缓冲区有包, 将返回 buf 指针填充长度. 否则返回 null( 表示无数据可取 )
-    /// 流程: while( buf = PeekRecv( &dataLen ) ) {  ... PopRecv(); }
+    /// 流程: Begin: buf = PopRecv(); if buf is null break; else ....... goto Begin;
     /// </summary>
-    public byte[] PeekRecv()
+    public byte[] PopRecv()
     {
         if (disposed) throw new ObjectDisposedException("NBSocket is disposed.");
         int dataLen = 0;
@@ -253,16 +253,8 @@ public class XxNBSocket : IDisposable
         if (bufPtr == IntPtr.Zero) return null;
         var rtv = new byte[dataLen];
         Marshal.Copy(bufPtr, rtv, 0, dataLen);
-        return rtv;
-    }
-
-    /// <summary>
-    /// 对于已处理的 PeekRecv 的数据, 用这个函数来弹出删掉, 以便继续 Peek 下一条.
-    /// </summary>
-    public void PopRecv()
-    {
-        if (disposed) throw new ObjectDisposedException("NBSocket is disposed.");
         XxNBSocketInterop.PopRecv(nbs);
+        return rtv;
     }
 
     #region Dispose

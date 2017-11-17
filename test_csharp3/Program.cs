@@ -45,11 +45,10 @@ public static class Program
 
                             // dump 收到的包
                             LabRetry:
-                            var buf = nbs.PeekRecv();
+                            var buf = nbs.PopRecv();
                             if (buf != null)
                             {
                                 Console.WriteLine("recv pkg. len = " + buf.Length);
-                                nbs.PopRecv();
                                 goto LabRetry;
                             }
 
