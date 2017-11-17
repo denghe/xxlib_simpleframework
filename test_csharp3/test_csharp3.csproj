@@ -45,6 +45,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="XxNBSocketWrapper.cs" />
+    <Content Include="Program - Copy.cs.txt" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -62,6 +64,11 @@
       <Project>{6dd7a5a2-3411-4ecb-a811-2421be960743}</Project>
       <Name>xxlib_csharp</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="..\x64\Release\xxnbsocketlib.dll">
+      <Link>xxnbsocketlib.dll</Link>
+    </Content>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

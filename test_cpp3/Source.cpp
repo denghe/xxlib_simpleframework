@@ -54,13 +54,65 @@ void RegFunc(std::function<void(T*)> f)
 	};
 }
 
+//template<typename T>
+//struct F2T;
+//
+//template<typename R, typename T>
+//struct F2T<std::function<R(T*)>>
+//{
+//	using type = T;
+//};
+//
+//template<typename F>
+//void RegFunc2(F f)
+//{
+//	using T = typename F2T<F>::type;
+//	fs[TypeId_v<T>] = [f = std::move(f)](void* in)
+//	{
+//		f((T*)in);
+//	};
+//}
+
 void CallFunc(Base* o)
 {
 	fs[o->GetTypeId()](o);
 }
 
-int main()
+//#include <windows.h>
+//#undef min
+//#undef max
+//#include "xx_logger.h"
+
+int main(int argc, char* argv[])
 {
+	//std::string fn = argv[0];
+	//fn += ".log.db";
+	//xx::Logger logger(fn.c_str());
+
+	//xx::Stopwatch sw;
+	//logger.SetDefaultValue("machine1", "service1", "instance1");
+	//for (int i = 0; i < 10000000; ++i)
+	//{
+	//	logger.Write(xx::LogLevel::Warning, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", 123
+	//		, "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
+	//	//logger.WriteAll(xx::LogLevel::Warning, i, "machine1", "service1", "instance1", "title1", 123, "desc");
+	//}
+	//std::cout << sw() << std::endl;
+	//Sleep(5000);
+	//sw.Reset();
+	//for (int i = 0; i < 10000000; ++i)
+	//{
+	//	logger.Write(xx::LogLevel::Warning, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", 123
+	//		, "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
+	//}
+	//std::cout << sw() << std::endl;
+	//return 0;
+
+
+
+
+
+
 	A a;
 	B b;
 	std::cout << a.GetTypeId() << b.GetTypeId() << std::endl;

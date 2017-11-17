@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.27004.2005
+VisualStudioVersion = 15.0.27004.2009
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "test_csharp1", "test_csharp1\test_csharp1.csproj", "{40783734-2418-451C-8B7E-472A33C6D91B}"
 EndProject
@@ -60,6 +60,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test_cpp7_lua", "test_cpp7_lua\test_cpp7_lua.vcxproj", "{91368131-D56C-4FF9-BA82-4CCA8642CA1D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "pkggen_template_PKG2", "pkggen_template_PKG2\pkggen_template_PKG2.csproj", "{630421AF-33E7-4514-9437-5FCD83EBAD2E}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "xxnbsocketlib", "xxnbsocketlib\xxnbsocketlib.vcxproj", "{597BC47D-B1A6-4707-8C29-F27B9C8CB711}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -167,6 +169,10 @@ Global
 		{630421AF-33E7-4514-9437-5FCD83EBAD2E}.Debug|x64.Build.0 = Debug|x64
 		{630421AF-33E7-4514-9437-5FCD83EBAD2E}.Release|x64.ActiveCfg = Release|x64
 		{630421AF-33E7-4514-9437-5FCD83EBAD2E}.Release|x64.Build.0 = Release|x64
+		{597BC47D-B1A6-4707-8C29-F27B9C8CB711}.Debug|x64.ActiveCfg = Debug|x64
+		{597BC47D-B1A6-4707-8C29-F27B9C8CB711}.Debug|x64.Build.0 = Debug|x64
+		{597BC47D-B1A6-4707-8C29-F27B9C8CB711}.Release|x64.ActiveCfg = Release|x64
+		{597BC47D-B1A6-4707-8C29-F27B9C8CB711}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
