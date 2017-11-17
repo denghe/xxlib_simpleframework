@@ -8,6 +8,12 @@ using System.Threading.Tasks;
 public static class XxNBSocketInterop
 {
     /// <summary>
+    /// 初始化网络系统( WSAStartup / signal ). 只需要一开始执行一次.
+    /// </summary>
+    [DllImport("xxnbsocketlib", CallingConvention = CallingConvention.Cdecl)]
+    internal static extern void SockInit();
+
+    /// <summary>
     /// 建 XxMemPool
     /// </summary>
     /// <returns></returns>
@@ -147,10 +153,19 @@ public class XxNBSocket : IDisposable
     }
 
     /// <summary>
+    /// 初始化网络系统( WSAStartup / signal ). 只需要一开始执行一次.
+    /// </summary>
+    public static void SockInit()
+    {
+        XxNBSocketInterop.SockInit();
+    }
+
+    /// <summary>
     /// 设 ip & port
     /// </summary>
     public void SetAddress(string ip, ushort port)
     {
+        if (disposed) throw new ObjectDisposedException("NBSocket is disposed.");
         XxNBSocketInterop.SetAddress(nbs, ip, port);
     }
 
@@ -158,16 +173,18 @@ public class XxNBSocket : IDisposable
     /// 开始连接. 可传入阻塞时长
     /// 返回负数 表示出错. 0 表示没发生错误 但也没连上. 1 表示连接成功
     /// </summary>
-    public int Connect(int sec, int usec)
+    public int Connect(int sec = 0, int usec = 0)
     {
+        if (disposed) throw new ObjectDisposedException("NBSocket is disposed.");
         return XxNBSocketInterop.Connect(nbs, sec, usec);
     }
 
     /// <summary>
     /// 断开连接. 可传入延迟多少 ticks 断开. 0 立即断开.
     /// </summary>
-    public void Disconnect(int delayTicks)
+    public void Disconnect(int delayTicks = 0)
     {
+        if (disposed) throw new ObjectDisposedException("NBSocket is disposed.");
         XxNBSocketInterop.Disconnect(nbs, delayTicks);
     }
 
@@ -175,26 +192,39 @@ public class XxNBSocket : IDisposable
     /// 帧驱动. 可传入阻塞时长( 仅对 Connecting 状态有效 )
     /// 返回负数表示出错. 0 表示没发生错误
     /// </summary>
-    public int Update(int sec, int usec)
+    public int Update(int sec = 0, int usec = 0)
     {
+        if (disposed) throw new ObjectDisposedException("NBSocket is disposed.");
         return XxNBSocketInterop.Update(nbs, sec, usec);
     }
 
     /// <summary>
     /// 取当前状态. 
     /// </summary>
-    public States GetState(IntPtr nbs)
+    public States GetState()
     {
+        if (disposed) throw new ObjectDisposedException("NBSocket is disposed.");
         return (States)XxNBSocketInterop.GetState(nbs);
+    }
+
+    /// <summary>
+    /// 取当前状态. 
+    /// </summary>
+    public States state { get { return GetState(); } }
+
+    /// <summary>
+    /// 取当前状态已持续的 ticks( Disconnecting 除外 )
+    /// </summary>
+    public int GetTicks()
+    {
+        if (disposed) throw new ObjectDisposedException("NBSocket is disposed.");
+        return XxNBSocketInterop.GetTicks(nbs);
     }
 
     /// <summary>
     /// 取当前状态已持续的 ticks( Disconnecting 除外 )
     /// </summary>
-    public int GetTicks(IntPtr nbs)
-    {
-        return XxNBSocketInterop.GetTicks(nbs);
-    }
+    public int ticks { get { return GetTicks(); } }
 
     /// <summary>
     /// 发一段数据. 复制模式. 发送方不需要保持该数据不变.
@@ -203,6 +233,7 @@ public class XxNBSocket : IDisposable
     /// </summary>
     public int Send(byte[] buf, int dataLen = 0)
     {
+        if (disposed) throw new ObjectDisposedException("NBSocket is disposed.");
         if (dataLen == 0) dataLen = buf.Length;
         var h = GCHandle.Alloc(buf, GCHandleType.Pinned);
         var r = XxNBSocketInterop.Send(nbs, h.AddrOfPinnedObject(), dataLen);
@@ -216,8 +247,10 @@ public class XxNBSocket : IDisposable
     /// </summary>
     public byte[] PeekRecv()
     {
+        if (disposed) throw new ObjectDisposedException("NBSocket is disposed.");
         int dataLen = 0;
         var bufPtr = XxNBSocketInterop.PeekRecv(nbs, ref dataLen);
+        if (bufPtr == IntPtr.Zero) return null;
         var rtv = new byte[dataLen];
         Marshal.Copy(bufPtr, rtv, 0, dataLen);
         return rtv;
@@ -228,6 +261,7 @@ public class XxNBSocket : IDisposable
     /// </summary>
     public void PopRecv()
     {
+        if (disposed) throw new ObjectDisposedException("NBSocket is disposed.");
         XxNBSocketInterop.PopRecv(nbs);
     }
 
@@ -253,7 +287,9 @@ public class XxNBSocket : IDisposable
             // Free your own state (unmanaged objects).
             // Set large fields to null.
             XxNBSocketInterop.DeleteXxNBSocket(nbs);
+            nbs = IntPtr.Zero;
             XxNBSocketInterop.DeleteXxMemPool(mp);
+            mp = IntPtr.Zero;
             disposed = true;
         }
         // Call Dispose in the base class.

@@ -16,6 +16,9 @@
 extern "C" {
 #endif
 
+	// 初始化网络系统( WSAStartup / signal ). 只需要一开始执行一次.
+	XXNBSOCKETLIB_API void SockInit();
+
 	// 建 XxMemPool
 	XXNBSOCKETLIB_API void* NewXxMemPool();
 

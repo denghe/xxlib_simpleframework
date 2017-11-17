@@ -21,6 +21,12 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 
 #endif
 
+XXNBSOCKETLIB_API void SockInit()
+{
+	XxNBSocket::SockInit();
+}
+
+
 
 XXNBSOCKETLIB_API void* NewXxMemPool()
 {
@@ -58,7 +64,8 @@ XXNBSOCKETLIB_API void DeleteXxMemPool(void* mp)
 
 XXNBSOCKETLIB_API void SetAddress(void* nbs, char* ip, uint16_t port)
 {
-
+	auto self = (XxNBSocket*)nbs;
+	return self->SetAddress(ip, port);
 }
 
 XXNBSOCKETLIB_API int Connect(void* nbs, int sec, int usec)
