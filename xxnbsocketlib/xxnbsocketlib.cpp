@@ -42,9 +42,10 @@ XXNBSOCKETLIB_API void* NewXxMemPool()
 
 XXNBSOCKETLIB_API void* NewXxNBSocket(void* mp)
 {
+	if (!mp) return nullptr;
 	try
 	{
-		return new XxNBSocket((XxMemPool*)mp);
+		return ((XxMemPool*)mp)->Create<XxNBSocket>();
 	}
 	catch (...)
 	{
@@ -54,7 +55,8 @@ XXNBSOCKETLIB_API void* NewXxNBSocket(void* mp)
 
 XXNBSOCKETLIB_API void DeleteXxNBSocket(void* nbs)
 {
-	delete (XxNBSocket*)nbs;
+	if (!nbs) return;
+	XxMemPool::Get(nbs).Release((XxNBSocket*)nbs);
 }
 
 XXNBSOCKETLIB_API void DeleteXxMemPool(void* mp)

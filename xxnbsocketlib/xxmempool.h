@@ -100,4 +100,47 @@ struct XxMemPool
 		if (rtv == n) return n;
 		else return rtv << 1;
 	}
+
+
+	template<typename T>
+	T* Alloc()
+	{
+		static_assert(std::is_pod_v<T>);
+		return (T*)Alloc(sizeof(T));
+	}
+
+	template<typename T, typename ...Args>
+	T* Create(Args &&... args)
+	{
+		auto p = (void**)Alloc(sizeof(T) + sizeof(void*));
+		*p = this;
+		try
+		{
+			return new (p + 1) T(std::forward<Args>(args)...);
+		}
+		catch (...)
+		{
+			Free(p);
+			throw -1;
+		}
+	}
+
+	template<typename T>
+	void Release(T* p)
+	{
+		p->~T();
+		Free((void**)p - 1);
+	}
+
+	template<typename T>
+	void SafeRelease(T*& p)
+	{
+		Release(p);
+		p = nullptr;
+	}
+
+	inline static XxMemPool& Get(void* thiz)
+	{
+		return *(XxMemPool*)*((void**)thiz - 1);
+	}
 };
