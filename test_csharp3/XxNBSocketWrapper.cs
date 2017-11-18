@@ -11,58 +11,45 @@ public static class XxNBSocketInterop
     /// 初始化网络系统( WSAStartup / signal ). 只需要一开始执行一次.
     /// </summary>
     [DllImport("xxnbsocketlib", CallingConvention = CallingConvention.Cdecl)]
-    internal static extern void SockInit();
-
-    /// <summary>
-    /// 建 XxMemPool
-    /// </summary>
-    /// <returns></returns>
-    [DllImport("xxnbsocketlib", CallingConvention = CallingConvention.Cdecl)]
-    internal static extern IntPtr NewXxMemPool();
+    internal static extern void Init_Sock();
 
     /// <summary>
     /// 建 XxNBSocket( 传入 XxMemPool )
     /// </summary>
     [DllImport("xxnbsocketlib", CallingConvention = CallingConvention.Cdecl)]
-    internal static extern IntPtr NewXxNBSocket(IntPtr mp);
+    internal static extern IntPtr XxNBSocket_New(IntPtr mp);
 
     /// <summary>
     /// 杀 XxNBSocket
     /// </summary>
     [DllImport("xxnbsocketlib", CallingConvention = CallingConvention.Cdecl)]
-    internal static extern void DeleteXxNBSocket(IntPtr nbs);
-
-    /// <summary>
-    /// 杀 XxMemPool( 在 XxNBSocket 之后再杀 )
-    /// </summary>
-    [DllImport("xxnbsocketlib", CallingConvention = CallingConvention.Cdecl)]
-    internal static extern void DeleteXxMemPool(IntPtr mp);
+    internal static extern void XxNBSocket_Delete(IntPtr nbs);
 
     /// <summary>
     /// 设 ip & port
     /// </summary>
     [DllImport("xxnbsocketlib", CallingConvention = CallingConvention.Cdecl)]
-    internal static extern void SetAddress(IntPtr nbs, string ip, ushort port);
+    internal static extern void XxNBSocket_SetAddress(IntPtr nbs, string ip, ushort port);
 
     /// <summary>
     /// 开始连接. 可传入阻塞时长
     /// 返回负数 表示出错. 0 表示没发生错误 但也没连上. 1 表示连接成功
     /// </summary>
     [DllImport("xxnbsocketlib", CallingConvention = CallingConvention.Cdecl)]
-    internal static extern int Connect(IntPtr nbs, int sec, int usec);
+    internal static extern int XxNBSocket_Connect(IntPtr nbs, int sec, int usec);
 
     /// <summary>
     /// 断开连接. 可传入延迟多少 ticks 断开. 0 立即断开.
     /// </summary>
     [DllImport("xxnbsocketlib", CallingConvention = CallingConvention.Cdecl)]
-    internal static extern void Disconnect(IntPtr nbs, int delayTicks);
+    internal static extern void XxNBSocket_Disconnect(IntPtr nbs, int delayTicks);
 
     /// <summary>
     /// 帧驱动. 可传入阻塞时长( 仅对 Connecting 状态有效 )
     /// 返回负数表示出错. 0 表示没发生错误
     /// </summary>
     [DllImport("xxnbsocketlib", CallingConvention = CallingConvention.Cdecl)]
-    internal static extern int Update(IntPtr nbs, int sec, int usec);
+    internal static extern int XxNBSocket_Update(IntPtr nbs, int sec, int usec);
 
     /// <summary>
     /// 取当前状态. 
@@ -72,13 +59,13 @@ public static class XxNBSocketInterop
     /// Disconnecting,		// 3: 执行 Disconnect( 延迟断开时长 ) 之后
     /// </summary>
     [DllImport("xxnbsocketlib", CallingConvention = CallingConvention.Cdecl)]
-    internal static extern int GetState(IntPtr nbs);
+    internal static extern int XxNBSocket_GetState(IntPtr nbs);
 
     /// <summary>
     /// 取当前状态已持续的 ticks( Disconnecting 除外 )
     /// </summary>
     [DllImport("xxnbsocketlib", CallingConvention = CallingConvention.Cdecl)]
-    internal static extern int GetTicks(IntPtr nbs);
+    internal static extern int XxNBSocket_GetTicks(IntPtr nbs);
 
     /// <summary>
     /// 发一段数据. 复制模式. 发送方不需要保持该数据不变.
@@ -86,20 +73,33 @@ public static class XxNBSocketInterop
     /// 如果有剩下部分, 会放入待发送队列, 在下次 Update 时继续发
     /// </summary>
     [DllImport("xxnbsocketlib", CallingConvention = CallingConvention.Cdecl)]
-    internal static extern int Send(IntPtr nbs, IntPtr buf, int dataLen);
+    internal static extern int XxNBSocket_Send(IntPtr nbs, IntPtr buf, int dataLen);
 
     /// <summary>
     /// 如果接收缓冲区有包, 将返回 buf 指针填充长度. 否则返回 null( 表示无数据可取 )
     /// 流程: while( buf = PeekRecv( &dataLen ) ) {  ... PopRecv(); }
     /// </summary>
     [DllImport("xxnbsocketlib", CallingConvention = CallingConvention.Cdecl)]
-    internal static extern IntPtr PeekRecv(IntPtr nbs, ref int dataLen);
+    internal static extern IntPtr XxNBSocket_PeekRecv(IntPtr nbs, ref int dataLen);
 
     /// <summary>
     /// 对于已处理的 PeekRecv 的数据, 用这个函数来弹出删掉, 以便继续 Peek 下一条.
     /// </summary>
     [DllImport("xxnbsocketlib", CallingConvention = CallingConvention.Cdecl)]
-    internal static extern void PopRecv(IntPtr nbs);
+    internal static extern void XxNBSocket_PopRecv(IntPtr nbs);
+
+    /// <summary>
+    /// XxNBSocket_Send 的 XxBBuffer 版
+    /// </summary>
+    [DllImport("xxnbsocketlib", CallingConvention = CallingConvention.Cdecl)]
+    internal static extern int XxNBSocket_SendXxBBuffer(IntPtr nbs, IntPtr bb);
+
+    /// <summary>
+    /// XxNBSocket_PeekRecv 的 XxBBuffer 版
+    /// </summary>
+    [DllImport("xxnbsocketlib", CallingConvention = CallingConvention.Cdecl)]
+    internal static extern IntPtr XxNBSocket_PeekRecvXxBBuffer(IntPtr nbs);
+
 }
 
 
@@ -129,26 +129,22 @@ public class XxNBSocket : IDisposable
     }
 
     /// <summary>
-    /// 内存池 指针
+    /// 指向内存池
     /// </summary>
-    IntPtr mp;
+    XxMemPool mempool;
 
     /// <summary>
     /// XxNBSocket 指针
     /// </summary>
-    IntPtr nbs;
+    IntPtr pointer;
 
-    public XxNBSocket()
+    public XxNBSocket(XxMemPool mempool)
     {
-        mp = XxNBSocketInterop.NewXxMemPool();
-        if (mp == IntPtr.Zero)
+        this.mempool = mempool;
+        pointer = XxNBSocketInterop.XxNBSocket_New(mempool.pointer);
+        if (pointer == IntPtr.Zero)
         {
-            throw new Exception("NewXxMemPool failed.");
-        }
-        nbs = XxNBSocketInterop.NewXxNBSocket(mp);
-        if (nbs == IntPtr.Zero)
-        {
-            throw new Exception("NewXxNBSocket failed.");
+            throw new Exception("XxNBSocket_New failed.");
         }
     }
 
@@ -157,7 +153,7 @@ public class XxNBSocket : IDisposable
     /// </summary>
     public static void SockInit()
     {
-        XxNBSocketInterop.SockInit();
+        XxNBSocketInterop.Init_Sock();
     }
 
     /// <summary>
@@ -165,8 +161,7 @@ public class XxNBSocket : IDisposable
     /// </summary>
     public void SetAddress(string ip, ushort port)
     {
-        if (disposed) throw new ObjectDisposedException("NBSocket is disposed.");
-        XxNBSocketInterop.SetAddress(nbs, ip, port);
+        XxNBSocketInterop.XxNBSocket_SetAddress(pointer, ip, port);
     }
 
     /// <summary>
@@ -175,8 +170,7 @@ public class XxNBSocket : IDisposable
     /// </summary>
     public int Connect(int sec = 0, int usec = 0)
     {
-        if (disposed) throw new ObjectDisposedException("NBSocket is disposed.");
-        return XxNBSocketInterop.Connect(nbs, sec, usec);
+        return XxNBSocketInterop.XxNBSocket_Connect(pointer, sec, usec);
     }
 
     /// <summary>
@@ -184,8 +178,7 @@ public class XxNBSocket : IDisposable
     /// </summary>
     public void Disconnect(int delayTicks = 0)
     {
-        if (disposed) throw new ObjectDisposedException("NBSocket is disposed.");
-        XxNBSocketInterop.Disconnect(nbs, delayTicks);
+        XxNBSocketInterop.XxNBSocket_Disconnect(pointer, delayTicks);
     }
 
     /// <summary>
@@ -194,37 +187,30 @@ public class XxNBSocket : IDisposable
     /// </summary>
     public int Update(int sec = 0, int usec = 0)
     {
-        if (disposed) throw new ObjectDisposedException("NBSocket is disposed.");
-        return XxNBSocketInterop.Update(nbs, sec, usec);
+        return XxNBSocketInterop.XxNBSocket_Update(pointer, sec, usec);
     }
 
     /// <summary>
     /// 取当前状态. 
     /// </summary>
-    public States GetState()
+    public States state
     {
-        if (disposed) throw new ObjectDisposedException("NBSocket is disposed.");
-        return (States)XxNBSocketInterop.GetState(nbs);
-    }
-
-    /// <summary>
-    /// 取当前状态. 
-    /// </summary>
-    public States state { get { return GetState(); } }
-
-    /// <summary>
-    /// 取当前状态已持续的 ticks( Disconnecting 除外 )
-    /// </summary>
-    public int GetTicks()
-    {
-        if (disposed) throw new ObjectDisposedException("NBSocket is disposed.");
-        return XxNBSocketInterop.GetTicks(nbs);
+        get
+        {
+            return (States)XxNBSocketInterop.XxNBSocket_GetState(pointer);
+        }
     }
 
     /// <summary>
     /// 取当前状态已持续的 ticks( Disconnecting 除外 )
     /// </summary>
-    public int ticks { get { return GetTicks(); } }
+    public int ticks
+    {
+        get
+        {
+            return XxNBSocketInterop.XxNBSocket_GetTicks(pointer);
+        }
+    }
 
     /// <summary>
     /// 发一段数据. 复制模式. 发送方不需要保持该数据不变.
@@ -233,10 +219,9 @@ public class XxNBSocket : IDisposable
     /// </summary>
     public int Send(byte[] buf, int dataLen = 0)
     {
-        if (disposed) throw new ObjectDisposedException("NBSocket is disposed.");
         if (dataLen == 0) dataLen = buf.Length;
         var h = GCHandle.Alloc(buf, GCHandleType.Pinned);
-        var r = XxNBSocketInterop.Send(nbs, h.AddrOfPinnedObject(), dataLen);
+        var r = XxNBSocketInterop.XxNBSocket_Send(pointer, h.AddrOfPinnedObject(), dataLen);
         h.Free();
         return r;
     }
@@ -247,13 +232,22 @@ public class XxNBSocket : IDisposable
     /// </summary>
     public byte[] PopRecv()
     {
-        if (disposed) throw new ObjectDisposedException("NBSocket is disposed.");
         int dataLen = 0;
-        var bufPtr = XxNBSocketInterop.PeekRecv(nbs, ref dataLen);
+        var bufPtr = XxNBSocketInterop.XxNBSocket_PeekRecv(pointer, ref dataLen);
         if (bufPtr == IntPtr.Zero) return null;
         var rtv = new byte[dataLen];
         Marshal.Copy(bufPtr, rtv, 0, dataLen);
-        XxNBSocketInterop.PopRecv(nbs);
+        XxNBSocketInterop.XxNBSocket_PopRecv(pointer);
+        return rtv;
+    }
+
+    public XxBBuffer PopRecvBB()
+    {
+        var bbPtr = XxNBSocketInterop.XxNBSocket_PeekRecvXxBBuffer(pointer);
+        if (bbPtr == IntPtr.Zero) return null;
+        // todo: auth mempool is same
+        var rtv = new XxBBuffer(mempool, bbPtr);
+        XxNBSocketInterop.XxNBSocket_PopRecv(pointer);
         return rtv;
     }
 
@@ -278,10 +272,9 @@ public class XxNBSocket : IDisposable
             }
             // Free your own state (unmanaged objects).
             // Set large fields to null.
-            XxNBSocketInterop.DeleteXxNBSocket(nbs);
-            nbs = IntPtr.Zero;
-            XxNBSocketInterop.DeleteXxMemPool(mp);
-            mp = IntPtr.Zero;
+            XxNBSocketInterop.XxNBSocket_Delete(pointer);
+            pointer = IntPtr.Zero;
+            mempool = null;
             disposed = true;
         }
         // Call Dispose in the base class.

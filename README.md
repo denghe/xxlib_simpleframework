@@ -51,8 +51,3 @@ xxuvlibex_csharp
 
 docs
 有一些小零碎
-
-
-
-后续更新: 为测试 SQL SERVER 2017 的加密效果, 放入了 localdb2017.mdf
-SSMS 中于服务器地址处输入 (LocalDb)\MSSQLLocalDB , windows身份验证, 挂载 浏览到 mdf 即可开搞. 

@@ -85,6 +85,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="xxbbuffer.h" />
     <ClInclude Include="xxmempool.h" />
     <ClInclude Include="xxnbsocket.h" />
     <ClInclude Include="xxnbsocketlib.h" />

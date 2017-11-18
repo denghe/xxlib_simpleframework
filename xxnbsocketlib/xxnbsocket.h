@@ -16,7 +16,7 @@ typedef int         Socket_t;
 typedef socklen_t   SockLen_t;
 #endif
 
-#include "xxmempool.h"
+#include "xxbbuffer.h"
 #include <deque>
 #include <array>
 
@@ -31,40 +31,20 @@ struct XxNBSocket
 		Disconnecting,								// 执行 Disconnect( 延迟断开时长 ) 之后
 	};
 
-	struct Buf
-	{
-		char*					buf;
-		int						dataLen;
-		int						offset;				// 已 读 | 发送 长度
-		XxMemPool*				mempool;			// 因为是 std 容器托管, 故没办法带在内存头
-		Buf(XxMemPool& mempool, char const* const& buf, int const& len)
-			: dataLen(len)
-			, offset(0)
-			, mempool(&mempool)
-		{
-			this->buf = (char*)mempool.Alloc(len);
-			memcpy(this->buf, buf, len);
-		}
-		~Buf()
-		{
-			mempool->Free(buf);
-		}
-		Buf(Buf const&) = delete;
-		Buf& operator=(Buf const&) = delete;
-	};
-
+	XxMemPool*					mempool;
 	Socket_t					sock = -1;
 	States						state = States::Disconnected;
 	int							ticks = 0;			// 当前状态持续 ticks 计数 ( Disconnecting 时例外, 该值为负, 当变到 0 时, 执行 Close )
 	sockaddr_in					addr;
 
-	std::deque<Buf>				sendBufs;			// 未及时发走的数据将堆积在此
-	std::deque<Buf>				recvBufs;			// 收到的"包"数据将堆积在此
+	std::deque<XxBBuffer>		sendBufs;			// 未及时发走的数据将堆积在此
+	std::deque<XxBBuffer>		recvBufs;			// 收到的"包"数据将堆积在此
 
 	int							readLen = 0;		// 接收缓冲区已存在的数据长度
 	std::array<char, 131075>	readBuf;			// 接收缓冲区( 至少能含 1 个 64k 完整包 + 1 段上次处理剩下的数据 即 64k * 2 + 1.5 个包头 3 字节 )
 
-	XxNBSocket()
+	XxNBSocket(XxMemPool* mempool)
+		: mempool(mempool)
 	{
 		addr.sin_port = 0;							// 用这个来做是否有设置过 addr 的标记
 	}
@@ -190,7 +170,7 @@ struct XxNBSocket
 						}
 
 						// 将数据弄到 recvBufs
-						recvBufs.emplace_back(XxMemPool::Get(this), (char*)buf + offset, dataLen);
+						recvBufs.emplace_back(mempool, (char*)buf + offset, dataLen);
 						offset += dataLen;
 					}
 
@@ -250,7 +230,7 @@ struct XxNBSocket
 		// 判断当前是否存在待发数据. 如果有就追加到后面 并返回 0
 		if (!sendBufs.empty())
 		{
-			sendBufs.emplace_back(XxMemPool::Get(this), buf, dataLen);
+			sendBufs.emplace_back(mempool, buf, dataLen);
 			return 0;
 		}
 
@@ -261,9 +241,15 @@ struct XxNBSocket
 		// 将没发完的数据追加到待发
 		if (dataLen > r.second)
 		{
-			sendBufs.emplace_back(XxMemPool::Get(this), buf + r.second, dataLen - r.second);
+			sendBufs.emplace_back(mempool, buf + r.second, dataLen - r.second);
 		}
 		return r.second;
+	}
+
+	// Send 之 BB 版
+	inline int Send(XxBBuffer const* const& bb)
+	{
+		return Send(bb->buf, bb->dataLen);
 	}
 
 private:

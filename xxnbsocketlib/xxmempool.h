@@ -14,12 +14,12 @@ struct XxMemPool
 	static_assert(sizeof(size_t) <= sizeof(void*), "");
 	std::array<void*, sizeof(void*) * 8> headers;
 
-	XxMemPool()
+	XxMemPool() noexcept
 	{
 		headers.fill(nullptr);
 	}
 
-	~XxMemPool()
+	~XxMemPool() noexcept
 	{
 		for (auto header : headers)
 		{
@@ -31,8 +31,10 @@ struct XxMemPool
 			}
 		}
 	}
+	XxMemPool(XxMemPool const&) = delete;
+	XxMemPool& operator=(XxMemPool const&) = delete;
 
-	inline void* Alloc(size_t siz)
+	inline void* Alloc(size_t siz) noexcept
 	{
 		assert(siz);
 		siz += sizeof(void*);
@@ -47,7 +49,7 @@ struct XxMemPool
 		return (void**)p + 1;
 	}
 
-	inline void Free(void* p)
+	inline void Free(void* p) noexcept
 	{
 		if (!p) return;
 		p = (void**)p - 1;
@@ -56,7 +58,7 @@ struct XxMemPool
 		headers[idx] = p;
 	}
 
-	inline void* Realloc(void *p, size_t newSize, size_t dataLen = -1)
+	inline void* Realloc(void *p, size_t newSize, size_t dataLen = -1) noexcept
 	{
 		if (!newSize)
 		{
@@ -74,7 +76,7 @@ struct XxMemPool
 		return np;
 	}
 
-	inline static size_t Calc2n(size_t n)
+	inline static size_t Calc2n(size_t n) noexcept
 	{
 		assert(n);
 #ifdef _MSC_VER
@@ -94,7 +96,7 @@ struct XxMemPool
 #endif
 	}
 
-	inline static size_t Round2n(size_t n)
+	inline static size_t Round2n(size_t n) noexcept
 	{
 		auto rtv = size_t(1) << Calc2n(n);
 		if (rtv == n) return n;
@@ -103,7 +105,7 @@ struct XxMemPool
 
 
 	template<typename T>
-	T* Alloc()
+	T* Alloc() noexcept
 	{
 		static_assert(std::is_pod_v<T>);
 		return (T*)Alloc(sizeof(T));
@@ -112,11 +114,10 @@ struct XxMemPool
 	template<typename T, typename ...Args>
 	T* Create(Args &&... args)
 	{
-		auto p = (void**)Alloc(sizeof(T) + sizeof(void*));
-		*p = this;
+		auto p = (void**)Alloc(sizeof(T));
 		try
 		{
-			return new (p + 1) T(std::forward<Args>(args)...);
+			return new (p) T(this, std::forward<Args>(args)...);
 		}
 		catch (...)
 		{
@@ -129,7 +130,7 @@ struct XxMemPool
 	void Release(T* p)
 	{
 		p->~T();
-		Free((void**)p - 1);
+		Free(p);
 	}
 
 	template<typename T>
@@ -137,10 +138,5 @@ struct XxMemPool
 	{
 		Release(p);
 		p = nullptr;
-	}
-
-	inline static XxMemPool& Get(void* thiz)
-	{
-		return *(XxMemPool*)*((void**)thiz - 1);
 	}
 };
