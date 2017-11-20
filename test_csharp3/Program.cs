@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Threading;
 
 public static class Program
@@ -47,10 +48,10 @@ public static class Program
 
                                 // dump 收到的包
                                 LabRetry:
-                                var buf = nbs.PopRecvBB();
+                                var buf = nbs.PopRecv();
                                 if (buf != null)
                                 {
-                                    Console.WriteLine("recv pkg. len = " + buf.dataLen);
+                                    Console.WriteLine("recv pkg. len = " + buf.Length);
                                     goto LabRetry;
                                 }
 

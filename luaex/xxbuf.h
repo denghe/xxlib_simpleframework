@@ -2,7 +2,9 @@
 #pragma once
 #include "xxmempool.h"
 
-struct XxBBuffer
+
+// 含有最基础的数据序列化功能, 针对 c#, c++, lua 需要各自扩展相应的 引用 继承 部分
+struct XxBuf
 {
 
 	// 数据结构
@@ -11,7 +13,7 @@ struct XxBBuffer
 	uint32_t				offset = 0;			// 已 读 | 发送 长度
 	XxMemPool*				mempool;			// 因为是 std 容器托管, 故没办法带在内存头
 
-	XxBBuffer(XxMemPool* mempool, char const* const& s, int const& len)
+	XxBuf(XxMemPool* mempool, char const* const& s, int const& len)
 		: dataLen(len)
 		, offset(0)
 		, mempool(mempool)
@@ -25,19 +27,20 @@ struct XxBBuffer
 		if (!buf) throw 1;
 		memcpy(buf, s, len);
 	}
-	~XxBBuffer()
+	~XxBuf()
 	{
 		mempool->Free(buf);
 	}
-	XxBBuffer(XxBBuffer const&) = delete;
-	XxBBuffer& operator=(XxBBuffer const&) = delete;
+	XxBuf(XxBuf const&) = delete;
+	XxBuf& operator=(XxBuf const&) = delete;
 
 
 	// 内容扩容
+	// 为简化设计, 内存不足时并不抛异常, 而是置空. 故下列所有 Write 操作均不会异常
 	inline void Reserve(uint32_t const& capacity) noexcept
 	{
 		buf = (char*)mempool->Realloc(buf, capacity, dataLen);
-		if (!buf) dataLen = 0;					// 为简化设计, 内存不足时并不抛异常, 而是置空
+		if (!buf) dataLen = 0;					
 	}
 
 	// 变长写入数值类型

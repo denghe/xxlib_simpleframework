@@ -241,16 +241,6 @@ public class XxNBSocket : IDisposable
         return rtv;
     }
 
-    public XxBBuffer PopRecvBB()
-    {
-        var bbPtr = XxNBSocketInterop.XxNBSocket_PeekRecvXxBBuffer(pointer);
-        if (bbPtr == IntPtr.Zero) return null;
-        // todo: auth mempool is same
-        var rtv = new XxBBuffer(mempool, bbPtr);
-        XxNBSocketInterop.XxNBSocket_PopRecv(pointer);
-        return rtv;
-    }
-
     #region Dispose
 
     private bool disposed = false;

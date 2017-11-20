@@ -1,4 +1,7 @@
 ﻿#pragma once
+
+// 这个封装主要为 C# 服务. LUA 啥的直接引用具体实现的 .h
+
 #ifdef _WIN32
 #include <SDKDDKVer.h>
 #define WIN32_LEAN_AND_MEAN
@@ -19,17 +22,22 @@ extern "C" {
 	// 初始化网络系统( WSAStartup / signal ). 只需要一开始执行一次.
 	XXNBSOCKETLIB_API void Init_Sock();
 
+
+
 	// 建 XxMemPool
 	XXNBSOCKETLIB_API void* XxMemPool_New();
+
+	// 杀 XxMemPool( 在 XxNBSocket 之后再杀 )
+	XXNBSOCKETLIB_API void XxMemPool_Delete(void* mp);
+
+
+
 
 	// 建 XxNBSocket( 传入 XxMemPool )
 	XXNBSOCKETLIB_API void* XxNBSocket_New(void* mp);
 
 	// 杀 XxNBSocket
 	XXNBSOCKETLIB_API void XxNBSocket_Delete(void* nbs);
-
-	// 杀 XxMemPool( 在 XxNBSocket 之后再杀 )
-	XXNBSOCKETLIB_API void XxMemPool_Delete(void* mp);
 
 	// 设 ip & port
 	XXNBSOCKETLIB_API void XxNBSocket_SetAddress(void* nbs, char* ip, uint16_t port);
@@ -66,97 +74,6 @@ extern "C" {
 
 	// 对于已处理的 PeekRecv 的数据, 用这个函数来弹出删掉, 以便继续 Peek 下一条.
 	XXNBSOCKETLIB_API void XxNBSocket_PopRecv(void* nbs);
-
-
-
-	// XxNBSocket_Send 的 XxBBuffer 版
-	XXNBSOCKETLIB_API int XxNBSocket_SendXxBBuffer(void* nbs, void* bb);
-
-	// XxNBSocket_PeekRecv 的 XxBBuffer 版
-	XXNBSOCKETLIB_API void* XxNBSocket_PeekRecvXxBBuffer(void* nbs);
-
-	/********************************************************************************************/
-	// XxBBuffer 相关
-	/********************************************************************************************/
-
-	// 建 XxBBuffer( 传入 XxMemPool )
-	XXNBSOCKETLIB_API void* XxBBuffer_New(void* mp, char* buf, int dataLen);
-
-	// 删 XxBBuffer
-	XXNBSOCKETLIB_API void XxBBuffer_Delete(void* bb);
-
-	// 扩容
-	XXNBSOCKETLIB_API void XxBBuffer_Reserve(void* bb, int capacity);
-
-	// 清长度和读偏移
-	XXNBSOCKETLIB_API void XxBBuffer_Clear(void* bb);
-
-	// 返回数据长度
-	XXNBSOCKETLIB_API int XxBBuffer_GetDataLen(void* bb);
-
-	// 返回读偏移量
-	XXNBSOCKETLIB_API int XxBBuffer_GetOffset(void* bb);
-
-
-	// 各种变长写入指定数据类型, 成功返回 0. 失败返回错误码.
-	XXNBSOCKETLIB_API void XxBBuffer_WriteBoolean(void* bb, bool v);
-	XXNBSOCKETLIB_API void XxBBuffer_WriteInt8(void* bb, char v);
-	XXNBSOCKETLIB_API void XxBBuffer_WriteInt16(void* bb, short v);
-	XXNBSOCKETLIB_API void XxBBuffer_WriteInt32(void* bb, int v);
-	XXNBSOCKETLIB_API void XxBBuffer_WriteInt64(void* bb, long long v);
-	XXNBSOCKETLIB_API void XxBBuffer_WriteUInt8(void* bb, unsigned char v);
-	XXNBSOCKETLIB_API void XxBBuffer_WriteUInt16(void* bb, unsigned short v);
-	XXNBSOCKETLIB_API void XxBBuffer_WriteUInt32(void* bb, unsigned int v);
-	XXNBSOCKETLIB_API void XxBBuffer_WriteUInt64(void* bb, unsigned long long v);
-	XXNBSOCKETLIB_API void XxBBuffer_WriteFloat(void* bb, float v);
-	XXNBSOCKETLIB_API void XxBBuffer_WriteDouble(void* bb, double v);
-
-	// 各种定长写入指定数据类型, 成功返回 0. 失败返回错误码.
-	XXNBSOCKETLIB_API void XxBBuffer_WritePodBoolean(void* bb, bool v);
-	XXNBSOCKETLIB_API void XxBBuffer_WritePodInt8(void* bb, char v);
-	XXNBSOCKETLIB_API void XxBBuffer_WritePodInt16(void* bb, short v);
-	XXNBSOCKETLIB_API void XxBBuffer_WritePodInt32(void* bb, int v);
-	XXNBSOCKETLIB_API void XxBBuffer_WritePodInt64(void* bb, long long v);
-	XXNBSOCKETLIB_API void XxBBuffer_WritePodUInt8(void* bb, unsigned char v);
-	XXNBSOCKETLIB_API void XxBBuffer_WritePodUInt16(void* bb, unsigned short v);
-	XXNBSOCKETLIB_API void XxBBuffer_WritePodUInt32(void* bb, unsigned int v);
-	XXNBSOCKETLIB_API void XxBBuffer_WritePodUInt64(void* bb, unsigned long long v);
-	XXNBSOCKETLIB_API void XxBBuffer_WritePodFloat(void* bb, float v);
-	XXNBSOCKETLIB_API void XxBBuffer_WritePodDouble(void* bb, double v);
-
-	// 写入 变长长度 + 内容
-	XXNBSOCKETLIB_API void XxBBuffer_WriteLenData(void* bb, char* s, int len);
-
-	// 各种变长读指定数据类型, 成功返回 0. 失败返回错误码.
-	XXNBSOCKETLIB_API int XxBBuffer_ReadBoolean(void* bb, bool* v);
-	XXNBSOCKETLIB_API int XxBBuffer_ReadInt8(void* bb, char* v);
-	XXNBSOCKETLIB_API int XxBBuffer_ReadInt16(void* bb, short* v);
-	XXNBSOCKETLIB_API int XxBBuffer_ReadInt32(void* bb, int* v);
-	XXNBSOCKETLIB_API int XxBBuffer_ReadInt64(void* bb, long long* v);
-	XXNBSOCKETLIB_API int XxBBuffer_ReadUInt8(void* bb, unsigned char* v);
-	XXNBSOCKETLIB_API int XxBBuffer_ReadUInt16(void* bb, unsigned short* v);
-	XXNBSOCKETLIB_API int XxBBuffer_ReadUInt32(void* bb, unsigned int* v);
-	XXNBSOCKETLIB_API int XxBBuffer_ReadUInt64(void* bb, unsigned long long* v);
-	XXNBSOCKETLIB_API int XxBBuffer_ReadFloat(void* bb, float* v);
-	XXNBSOCKETLIB_API int XxBBuffer_ReadDouble(void* bb, double* v);
-
-	// 各种定长读指定数据类型, 成功返回 0. 失败返回错误码.
-	XXNBSOCKETLIB_API int XxBBuffer_ReadPodBoolean(void* bb, bool* v);
-	XXNBSOCKETLIB_API int XxBBuffer_ReadPodInt8(void* bb, char* v);
-	XXNBSOCKETLIB_API int XxBBuffer_ReadPodInt16(void* bb, short* v);
-	XXNBSOCKETLIB_API int XxBBuffer_ReadPodInt32(void* bb, int* v);
-	XXNBSOCKETLIB_API int XxBBuffer_ReadPodInt64(void* bb, long long* v);
-	XXNBSOCKETLIB_API int XxBBuffer_ReadPodUInt8(void* bb, unsigned char* v);
-	XXNBSOCKETLIB_API int XxBBuffer_ReadPodUInt16(void* bb, unsigned short* v);
-	XXNBSOCKETLIB_API int XxBBuffer_ReadPodUInt32(void* bb, unsigned int* v);
-	XXNBSOCKETLIB_API int XxBBuffer_ReadPodUInt64(void* bb, unsigned long long* v);
-	XXNBSOCKETLIB_API int XxBBuffer_ReadPodFloat(void* bb, float* v);
-	XXNBSOCKETLIB_API int XxBBuffer_ReadPodDouble(void* bb, double* v);
-
-	// 读出 变长长度 + 内容, 成功返回 0. 失败返回错误码.
-	XXNBSOCKETLIB_API int XxBBuffer_ReadLenData(void* bb, char** s, int* len);
-
-	// todo: 读出数据到另一个 XxBBuffer, 只读引用模式支持??
 
 #ifdef __cplusplus
 }

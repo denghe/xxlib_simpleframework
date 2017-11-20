@@ -46,9 +46,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="XxMemPoolWrapper.cs" />
-    <Compile Include="XxBBufferWrapper.cs" />
     <Compile Include="XxNBSocketWrapper.cs" />
-    <Content Include="..\x64\Debug\xxnbsocketlib.dll">
+    <Content Include="..\x64\Release\xxnbsocketlib.dll">
       <Link>xxnbsocketlib.dll</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

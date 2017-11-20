@@ -16,7 +16,7 @@ typedef int         Socket_t;
 typedef socklen_t   SockLen_t;
 #endif
 
-#include "xxbbuffer.h"
+#include "xxbuf.h"
 #include <deque>
 #include <array>
 
@@ -37,8 +37,8 @@ struct XxNBSocket
 	int							ticks = 0;			// 当前状态持续 ticks 计数 ( Disconnecting 时例外, 该值为负, 当变到 0 时, 执行 Close )
 	sockaddr_in					addr;
 
-	std::deque<XxBBuffer>		sendBufs;			// 未及时发走的数据将堆积在此
-	std::deque<XxBBuffer>		recvBufs;			// 收到的"包"数据将堆积在此
+	std::deque<XxBuf>			sendBufs;			// 未及时发走的数据将堆积在此
+	std::deque<XxBuf>			recvBufs;			// 收到的"包"数据将堆积在此
 
 	int							readLen = 0;		// 接收缓冲区已存在的数据长度
 	std::array<char, 131075>	readBuf;			// 接收缓冲区( 至少能含 1 个 64k 完整包 + 1 段上次处理剩下的数据 即 64k * 2 + 1.5 个包头 3 字节 )
@@ -211,15 +211,6 @@ struct XxNBSocket
 		}
 	}
 
-	//inline States const& GetState() const noexcept
-	//{
-	//	return state;
-	//}
-
-	//inline int const& GetTicks() const noexcept
-	//{
-	//	return ticks;
-	//}
 
 	// 返回负数表示出错. 0 表示成功放入待发送队列或无数据可发. > 0 表示已立刻发送成功的长度. 
 	// 如果有剩下部分, 会放入待发送队列, 在下次 Update 时继续发
@@ -247,7 +238,7 @@ struct XxNBSocket
 	}
 
 	// Send 之 BB 版
-	inline int Send(XxBBuffer const* const& bb)
+	inline int Send(XxBuf const* const& bb)
 	{
 		return Send(bb->buf, bb->dataLen);
 	}
