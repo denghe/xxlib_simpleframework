@@ -20,7 +20,6 @@ void DumpState(NBSocket::States s, int ticks)
 
 int main()
 {
-	//CoutLine(NBSocket::Run());
 	Lua_MemPool mp;
 	NBSocket::SockInit();
 	NBSocket nbs(&mp);

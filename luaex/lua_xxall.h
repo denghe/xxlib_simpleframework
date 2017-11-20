@@ -24,12 +24,12 @@ inline static XxMemPool* GetMemPool(lua_State* L)
 }
 
 // 提供以内存池创建 lua state 的快捷函数
-inline static lua_State* CreateLuaState(XxMemPool* mp)
+inline static lua_State* LuaNewState(XxMemPool* mp)
 {
 	return lua_newstate([](void *ud, void *ptr, size_t osize, size_t nsize)
 	{
 		return ((XxMemPool*)ud)->Realloc(ptr, nsize, osize);
-	}, &mp);
+	}, mp);
 }
 
 // 带类型校验的 userdata -> T*. 需求 创建时 lua_setuservalue  T::name
@@ -38,7 +38,7 @@ inline static T* GetPointer(lua_State* L, int idx)
 {
 	auto p = (T*)lua_touserdata(L, idx);
 	if (!p) return nullptr;
-	auto t = lua_getuservalue(L, -1);
+	auto t = lua_getuservalue(L, idx);
 	if (t != LUA_TLIGHTUSERDATA || lua_touserdata(L, -1) != T::name)
 	{
 		p = nullptr;

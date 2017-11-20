@@ -291,6 +291,7 @@ struct Lua_XxNBSocket : XxNBSocket
 		rtv.dataLen = bb.dataLen;
 		bb.buf = nullptr;
 		bb.dataLen = 0;
+		self.recvBufs.pop_front();
 		return 1;
 	}
 

@@ -1,4 +1,4 @@
-﻿print( "TestLua" )
+﻿print( "test2.lua" )
 
 dofile( "pkg2_class.lua" )
 local bb = BBuffer.Create()
