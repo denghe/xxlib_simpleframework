@@ -1,7 +1,6 @@
 ﻿#pragma execution_character_set("utf-8")
 
-#include "luaex.h"
-#include "lua_xxbbuffer.h"
+#include "lua_xxall.h"
 #include "std_cout_helper.h"
 
 #include "../pkg/PKG2_class.h"
@@ -22,10 +21,10 @@ int TestBBuffer(lua_State *L)
 
 int TestLua()
 {
-	Lua_MemPool mp;
+	XxMemPool mp;
 	auto L = lua_newstate([](void *ud, void *ptr, size_t osize, size_t nsize)
 	{
-		return ((Lua_MemPool*)ud)->Realloc(ptr, nsize, osize);
+		return ((XxMemPool*)ud)->Realloc(ptr, nsize, osize);
 	}, &mp);
 	if (!L)
 	{

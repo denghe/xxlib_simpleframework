@@ -145,6 +145,8 @@ struct Lua_XxBBuffer : XxBuf
 		lua_getglobal(L, name);					// ..., ud, mt						出异常: self 被 LUA gc 回收
 		new (&self) Lua_XxBBuffer(L);			//									出异常: 因为未绑元表, 不会执行 __gc
 		lua_setmetatable(L, -2);				// ..., ud							不出异常, 绑上元表
+		lua_pushlightuserdata(L, (void*)name);	// ..., ud, uv
+		lua_setuservalue(L, -2);				// ..., ud							不出异常, 设置不需要回收的 lightuserdata 以用于类型标记
 		return 1;
 	}
 
@@ -174,18 +176,19 @@ struct Lua_XxBBuffer : XxBuf
 		return 0;
 	}
 
+
 	inline static Lua_XxBBuffer& GetSelf(lua_State* L, int top)
 	{
 		if (lua_gettop(L) < top)
 		{
 			luaL_error(L, "less arg nums. expect %d+", top);
 		}
-		auto selfptr = (Lua_XxBBuffer*)lua_touserdata(L, 1);
-		if (!selfptr)
+		auto p = GetPointer<Lua_XxBBuffer>(L, 1);
+		if (!p)
 		{
 			luaL_error(L, "first arg isn't BBuffer( forget \":\" ? )");
 		}
-		return *selfptr;
+		return *p;
 	}
 
 	inline static int GetDataLen(lua_State* L)
