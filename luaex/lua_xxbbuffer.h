@@ -8,7 +8,6 @@ struct Lua_XxBBuffer : XxBuf
 {
 	// 补充高级数据结构
 	uint32_t	offsetRoot = 0;				// offset 值写入修正
-	uint32_t	dataLenBak = 0;				// WritePackage 时用于备份当前数据写入偏移
 
 	// 提供 L 到 mempool 的转换, 以方便写各种构造函数( 可公用. 以后移走 )
 	inline static XxMemPool* GetMemPool(lua_State* L)
@@ -77,6 +76,7 @@ struct Lua_XxBBuffer : XxBuf
 			{ "Clear", Clear },
 			{ "__tostring", __tostring },
 
+			{ "WritePackage", WritePackage },
 			// todo: write package ? write package length ?
 
 #ifdef ENABLE_LUA_XXBBUFFER_READ_WRITE_FORMAT_SUPPORT
@@ -554,6 +554,30 @@ struct Lua_XxBBuffer : XxBuf
 		ReleaseIdxDict(L);
 	}
 
+
+	inline static int WritePackage(lua_State* L)
+	{
+		auto& self = GetSelf(L, 2);
+
+		auto lenBak = self.dataLen;
+		self.Reserve(self.dataLen + 2);
+		self.dataLen += 2;
+
+		self.BeginWrite_(L);
+		self.WriteObject_(L, 2);
+		self.EndWrite_(L);
+
+		auto pkgLen = self.dataLen - lenBak - 2;
+		if (pkgLen > std::numeric_limits<uint16_t>::max())
+		{
+			self.dataLen = lenBak;
+			return false;
+		}
+		memcpy(self.buf + lenBak, &pkgLen, 2);
+		return 0;
+	}
+
+	
 
 	inline static int WriteRoot(lua_State* L)
 	{
