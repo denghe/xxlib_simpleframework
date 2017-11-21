@@ -36,3 +36,17 @@ class 派生类 : 基类
     [Desc("可以放入 基类 或 派生类")]
     List<基类> 立丝特基类;
 }
+
+
+class Base
+{
+    int i1, i2;
+}
+class Derive1 : Base
+{
+    double d1, d2, d3;
+}
+class Derive2 : Base
+{
+    float f1, f2, f3;
+}

@@ -5,10 +5,38 @@ public static class Program
 {
     static void Main(string[] args)
     {
-
         Console.WriteLine("TestC#");
         PKG2.AllTypes.Register();
         var bb = new xx.BBuffer();
+        var d1 = new PKG2.Derive1
+        {
+            i1 = 1,
+            i2 = 2,
+            d1 = 1,
+            d2 = 2,
+            d3 = 3
+        };
+        bb.WriteRoot(d1);
+        Console.WriteLine(bb);
+
+        if (bb.SeekToFirstField())
+        {
+            int i1 = 0, i2 = 0;
+            bb.Read(ref i1);
+            bb.Read(ref i2);
+            Console.WriteLine(i1 + ", " + i2);
+        }
+        return;
+
+
+
+
+
+
+
+
+
+
 
         var o = new PKG2.基类();
         o.不淋 = true; //Boolean

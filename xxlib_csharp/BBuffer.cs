@@ -756,6 +756,18 @@ namespace xx
             dataLen = len;
         }
 
+        // 跳过 typeId & offset, 定位到首个 field 的数据区, 为直读首个 field 或 按基类直读创造便利
+        public bool SeekToFirstField()
+        {
+            this.offset = 0;
+            ushort typeId = 0;
+            Read(ref typeId);
+            if (typeId == 0) return false;
+            uint offset = 0;
+            int offsetBak = this.offset;
+            Read(ref offset);
+            return offset == offsetBak;
+        }
 
         // interface impl
 

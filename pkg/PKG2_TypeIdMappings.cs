@@ -1,7 +1,8 @@
 ﻿#pragma warning disable 0169, 0414
 using TemplateLibrary;
 
-interface TypeIdMappings
+[TypeIdMappings]
+interface ITypeIdMappings
 {
     基类 _3 { get; }
 
@@ -32,5 +33,11 @@ interface TypeIdMappings
     List<BBuffer> _16 { get; }
 
     List<基类> _17 { get; }
+
+    Base _18 { get; }
+
+    Derive1 _19 { get; }
+
+    Derive2 _20 { get; }
 
 }

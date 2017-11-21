@@ -2,6 +2,11 @@
 using xx;
 namespace PKG2
 {
+    public static class PkgGenMd5
+    {
+        public const string value = "8735411f4f2791056e9edb3a2fdab50a"; 
+    }
+
     /// <summary>
     /// 测试一下各种数据类型
     /// </summary>
@@ -137,6 +142,85 @@ namespace PKG2
         }
 
     }
+    public partial class Base : IBBuffer
+    {
+        public int i1;
+        public int i2;
+
+        public virtual ushort GetPackageId()
+        {
+            return TypeIdMaps<Base>.typeId;
+        }
+
+        public virtual void ToBBuffer(BBuffer bb)
+        {
+            bb.Write(this.i1);
+            bb.Write(this.i2);
+        }
+
+        public virtual void FromBBuffer(BBuffer bb)
+        {
+            bb.Read(ref this.i1);
+            bb.Read(ref this.i2);
+        }
+
+    }
+    public partial class Derive1 : Base
+    {
+        public double d1;
+        public double d2;
+        public double d3;
+
+        public override ushort GetPackageId()
+        {
+            return TypeIdMaps<Derive1>.typeId;
+        }
+
+        public override void ToBBuffer(BBuffer bb)
+        {
+            base.ToBBuffer(bb);
+            bb.Write(this.d1);
+            bb.Write(this.d2);
+            bb.Write(this.d3);
+        }
+
+        public override void FromBBuffer(BBuffer bb)
+        {
+            base.FromBBuffer(bb);
+            bb.Read(ref this.d1);
+            bb.Read(ref this.d2);
+            bb.Read(ref this.d3);
+        }
+
+    }
+    public partial class Derive2 : Base
+    {
+        public float f1;
+        public float f2;
+        public float f3;
+
+        public override ushort GetPackageId()
+        {
+            return TypeIdMaps<Derive2>.typeId;
+        }
+
+        public override void ToBBuffer(BBuffer bb)
+        {
+            base.ToBBuffer(bb);
+            bb.Write(this.f1);
+            bb.Write(this.f2);
+            bb.Write(this.f3);
+        }
+
+        public override void FromBBuffer(BBuffer bb)
+        {
+            base.FromBBuffer(bb);
+            bb.Read(ref this.f1);
+            bb.Read(ref this.f2);
+            bb.Read(ref this.f3);
+        }
+
+    }
     public static class AllTypes
     {
         public static void Register()
@@ -158,8 +242,11 @@ namespace PKG2
             BBuffer.Register<List<string>>(15);
             BBuffer.Register<List<BBuffer>>(16);
             BBuffer.Register<List<基类>>(17);
+            BBuffer.Register<Base>(18);
+            BBuffer.Register<Derive1>(19);
+            BBuffer.Register<Derive2>(20);
 
-            BBuffer.handlers = new Action<IBBuffer>[17];
+            BBuffer.handlers = new Action<IBBuffer>[20];
         }
     }
 }

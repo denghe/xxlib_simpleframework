@@ -34,4 +34,10 @@ interface ITypeIdMappings
 
     List<基类> _17 { get; }
 
+    Base _18 { get; }
+
+    Derive1 _19 { get; }
+
+    Derive2 _20 { get; }
+
 }

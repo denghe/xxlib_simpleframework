@@ -12,6 +12,34 @@ namespace PKG2
     using 派生类_p = xx::Ptr<派生类>;
     using 派生类_v = xx::Dock<派生类>;
 
+    struct Base;
+    using Base_p = xx::Ptr<Base>;
+    using Base_v = xx::Dock<Base>;
+
+    struct Derive1;
+    using Derive1_p = xx::Ptr<Derive1>;
+    using Derive1_v = xx::Dock<Derive1>;
+
+    struct Derive2;
+    using Derive2_p = xx::Ptr<Derive2>;
+    using Derive2_v = xx::Dock<Derive2>;
+
+    struct Base : xx::Object
+    {
+        int32_t i1 = 0;
+        int32_t i2 = 0;
+
+        typedef Base ThisType;
+        typedef xx::Object BaseType;
+	    Base();
+	    Base(xx::BBuffer *bb);
+		Base(Base const&) = delete;
+		Base& operator=(Base const&) = delete;
+        virtual void ToString(xx::String &str) const override;
+        virtual void ToStringCore(xx::String &str) const override;
+        virtual void ToBBuffer(xx::BBuffer &bb) const override;
+        virtual int FromBBuffer(xx::BBuffer &bb) override;
+    };
     // 测试一下各种数据类型
     struct 基类 : xx::Object
     {
@@ -63,6 +91,40 @@ namespace PKG2
 	    派生类(xx::BBuffer *bb);
 		派生类(派生类 const&) = delete;
 		派生类& operator=(派生类 const&) = delete;
+        virtual void ToString(xx::String &str) const override;
+        virtual void ToStringCore(xx::String &str) const override;
+        virtual void ToBBuffer(xx::BBuffer &bb) const override;
+        virtual int FromBBuffer(xx::BBuffer &bb) override;
+    };
+    struct Derive1 : PKG2::Base
+    {
+        double d1 = 0;
+        double d2 = 0;
+        double d3 = 0;
+
+        typedef Derive1 ThisType;
+        typedef PKG2::Base BaseType;
+	    Derive1();
+	    Derive1(xx::BBuffer *bb);
+		Derive1(Derive1 const&) = delete;
+		Derive1& operator=(Derive1 const&) = delete;
+        virtual void ToString(xx::String &str) const override;
+        virtual void ToStringCore(xx::String &str) const override;
+        virtual void ToBBuffer(xx::BBuffer &bb) const override;
+        virtual int FromBBuffer(xx::BBuffer &bb) override;
+    };
+    struct Derive2 : PKG2::Base
+    {
+        float f1 = 0;
+        float f2 = 0;
+        float f3 = 0;
+
+        typedef Derive2 ThisType;
+        typedef PKG2::Base BaseType;
+	    Derive2();
+	    Derive2(xx::BBuffer *bb);
+		Derive2(Derive2 const&) = delete;
+		Derive2& operator=(Derive2 const&) = delete;
         virtual void ToString(xx::String &str) const override;
         virtual void ToStringCore(xx::String &str) const override;
         virtual void ToBBuffer(xx::BBuffer &bb) const override;
@@ -280,6 +342,157 @@ namespace PKG2
     }
 
 
+	inline Base::Base()
+	{
+	}
+	inline Base::Base(xx::BBuffer *bb)
+	{
+	    int rtv = 0;
+        if (rtv = bb->Read(i1)) throw rtv;
+        if (rtv = bb->Read(i2)) throw rtv;
+	}
+    inline void Base::ToBBuffer(xx::BBuffer &bb) const
+    {
+        bb.Write(this->i1);
+        bb.Write(this->i2);
+    }
+    inline int Base::FromBBuffer(xx::BBuffer &bb)
+    {
+        int rtv = 0;
+        if (rtv = bb.Read(this->i1)) return rtv;
+        if (rtv = bb.Read(this->i2)) return rtv;
+        return rtv;
+    }
+
+    inline void Base::ToString(xx::String &str) const
+    {
+        if (tsFlags())
+        {
+        	str.Append("[ \"***** recursived *****\" ]");
+        	return;
+        }
+        else tsFlags() = 1;
+
+        str.Append("{ \"type\" : \"Base\"");
+        ToStringCore(str);
+        str.Append(" }");
+        
+        tsFlags() = 0;
+    }
+    inline void Base::ToStringCore(xx::String &str) const
+    {
+        this->BaseType::ToStringCore(str);
+        str.Append(", \"i1\" : ", this->i1);
+        str.Append(", \"i2\" : ", this->i2);
+    }
+
+
+	inline Derive1::Derive1()
+        : PKG2::Base()
+	{
+	}
+	inline Derive1::Derive1(xx::BBuffer *bb)
+        : PKG2::Base(bb)
+	{
+	    int rtv = 0;
+        if (rtv = bb->Read(d1)) throw rtv;
+        if (rtv = bb->Read(d2)) throw rtv;
+        if (rtv = bb->Read(d3)) throw rtv;
+	}
+    inline void Derive1::ToBBuffer(xx::BBuffer &bb) const
+    {
+        this->BaseType::ToBBuffer(bb);
+        bb.Write(this->d1);
+        bb.Write(this->d2);
+        bb.Write(this->d3);
+    }
+    inline int Derive1::FromBBuffer(xx::BBuffer &bb)
+    {
+        int rtv = 0;
+        if (rtv = this->BaseType::FromBBuffer(bb)) return rtv;
+        if (rtv = bb.Read(this->d1)) return rtv;
+        if (rtv = bb.Read(this->d2)) return rtv;
+        if (rtv = bb.Read(this->d3)) return rtv;
+        return rtv;
+    }
+
+    inline void Derive1::ToString(xx::String &str) const
+    {
+        if (tsFlags())
+        {
+        	str.Append("[ \"***** recursived *****\" ]");
+        	return;
+        }
+        else tsFlags() = 1;
+
+        str.Append("{ \"type\" : \"Derive1\"");
+        ToStringCore(str);
+        str.Append(" }");
+        
+        tsFlags() = 0;
+    }
+    inline void Derive1::ToStringCore(xx::String &str) const
+    {
+        this->BaseType::ToStringCore(str);
+        str.Append(", \"d1\" : ", this->d1);
+        str.Append(", \"d2\" : ", this->d2);
+        str.Append(", \"d3\" : ", this->d3);
+    }
+
+
+	inline Derive2::Derive2()
+        : PKG2::Base()
+	{
+	}
+	inline Derive2::Derive2(xx::BBuffer *bb)
+        : PKG2::Base(bb)
+	{
+	    int rtv = 0;
+        if (rtv = bb->Read(f1)) throw rtv;
+        if (rtv = bb->Read(f2)) throw rtv;
+        if (rtv = bb->Read(f3)) throw rtv;
+	}
+    inline void Derive2::ToBBuffer(xx::BBuffer &bb) const
+    {
+        this->BaseType::ToBBuffer(bb);
+        bb.Write(this->f1);
+        bb.Write(this->f2);
+        bb.Write(this->f3);
+    }
+    inline int Derive2::FromBBuffer(xx::BBuffer &bb)
+    {
+        int rtv = 0;
+        if (rtv = this->BaseType::FromBBuffer(bb)) return rtv;
+        if (rtv = bb.Read(this->f1)) return rtv;
+        if (rtv = bb.Read(this->f2)) return rtv;
+        if (rtv = bb.Read(this->f3)) return rtv;
+        return rtv;
+    }
+
+    inline void Derive2::ToString(xx::String &str) const
+    {
+        if (tsFlags())
+        {
+        	str.Append("[ \"***** recursived *****\" ]");
+        	return;
+        }
+        else tsFlags() = 1;
+
+        str.Append("{ \"type\" : \"Derive2\"");
+        ToStringCore(str);
+        str.Append(" }");
+        
+        tsFlags() = 0;
+    }
+    inline void Derive2::ToStringCore(xx::String &str) const
+    {
+        this->BaseType::ToStringCore(str);
+        str.Append(", \"f1\" : ", this->f1);
+        str.Append(", \"f2\" : ", this->f2);
+        str.Append(", \"f3\" : ", this->f3);
+    }
+
+
 }
 namespace xx
 {
@@ -300,6 +513,9 @@ namespace xx
 	template<> struct TypeId<xx::List<xx::String_p>> { static const uint16_t value = 15; };
 	template<> struct TypeId<xx::List<xx::BBuffer_p>> { static const uint16_t value = 16; };
 	template<> struct TypeId<xx::List<PKG2::基类_p>> { static const uint16_t value = 17; };
+	template<> struct TypeId<PKG2::Base> { static const uint16_t value = 18; };
+	template<> struct TypeId<PKG2::Derive1> { static const uint16_t value = 19; };
+	template<> struct TypeId<PKG2::Derive2> { static const uint16_t value = 20; };
 }
 namespace PKG2
 {
@@ -322,5 +538,8 @@ namespace PKG2
 	    xx::MemPool::Register<xx::List<xx::String_p>, xx::Object>();
 	    xx::MemPool::Register<xx::List<xx::BBuffer_p>, xx::Object>();
 	    xx::MemPool::Register<xx::List<PKG2::基类_p>, xx::Object>();
+	    xx::MemPool::Register<PKG2::Base, xx::Object>();
+	    xx::MemPool::Register<PKG2::Derive1, PKG2::Base>();
+	    xx::MemPool::Register<PKG2::Derive2, PKG2::Base>();
 	}
 }

@@ -2,6 +2,11 @@
 using xx;
 namespace PKG
 {
+    public static class PkgGenMd5
+    {
+        public const string value = "ab4a27a4d28ff2a674e3a6e75fce0c7c"; 
+    }
+
 namespace Manage
 {
     /// <summary>

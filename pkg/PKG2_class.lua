@@ -479,3 +479,94 @@ List_PKG2_基类_ = {
     end
 }
 BBuffer.Register( List_PKG2_基类_ )
+PKG2_Base = {
+    typeName = "PKG2_Base",
+    typeId = 18,
+    Create = function()
+        local o = {}
+        o.__proto = PKG2_Base
+        o.__index = o
+        o.__newindex = o
+
+        o.i1 = 0 -- Int32
+        o.i2 = 0 -- Int32
+        return o
+    end,
+    FromBBuffer = function( bb, o )
+        local ReadInt32 = bb:ReadInt32
+        o.i1 = ReadInt32( bb )
+        o.i2 = ReadInt32( bb )
+    end,
+    ToBBuffer = function( bb, o )
+        local WriteInt32 = bb:WriteInt32
+        WriteInt32( bb, o.i1 )
+        WriteInt32( bb, o.i2 )
+    end
+}
+BBuffer.Register( PKG2_Base )
+PKG2_Derive1 = {
+    typeName = "PKG2_Derive1",
+    typeId = 19,
+    Create = function()
+        local o = {}
+        o.__proto = PKG2_Derive1
+        o.__index = o
+        o.__newindex = o
+
+        o.d1 = 0 -- Double
+        o.d2 = 0 -- Double
+        o.d3 = 0 -- Double
+        setmetatable( o, PKG2_Base.Create() )
+        return o
+    end,
+    FromBBuffer = function( bb, o )
+        local p = getmetatable( o )
+        p.__proto.FromBBuffer( bb, p )
+        local ReadDouble = bb:ReadDouble
+        o.d1 = ReadDouble( bb )
+        o.d2 = ReadDouble( bb )
+        o.d3 = ReadDouble( bb )
+    end,
+    ToBBuffer = function( bb, o )
+        local p = getmetatable( o )
+        p.__proto.ToBBuffer( bb, p )
+        local WriteDouble = bb:WriteDouble
+        WriteDouble( bb, o.d1 )
+        WriteDouble( bb, o.d2 )
+        WriteDouble( bb, o.d3 )
+    end
+}
+BBuffer.Register( PKG2_Derive1 )
+PKG2_Derive2 = {
+    typeName = "PKG2_Derive2",
+    typeId = 20,
+    Create = function()
+        local o = {}
+        o.__proto = PKG2_Derive2
+        o.__index = o
+        o.__newindex = o
+
+        o.f1 = 0 -- Single
+        o.f2 = 0 -- Single
+        o.f3 = 0 -- Single
+        setmetatable( o, PKG2_Base.Create() )
+        return o
+    end,
+    FromBBuffer = function( bb, o )
+        local p = getmetatable( o )
+        p.__proto.FromBBuffer( bb, p )
+        local ReadSingle = bb:ReadSingle
+        o.f1 = ReadSingle( bb )
+        o.f2 = ReadSingle( bb )
+        o.f3 = ReadSingle( bb )
+    end,
+    ToBBuffer = function( bb, o )
+        local p = getmetatable( o )
+        p.__proto.ToBBuffer( bb, p )
+        local WriteSingle = bb:WriteSingle
+        WriteSingle( bb, o.f1 )
+        WriteSingle( bb, o.f2 )
+        WriteSingle( bb, o.f3 )
+    end
+}
+BBuffer.Register( PKG2_Derive2 )
