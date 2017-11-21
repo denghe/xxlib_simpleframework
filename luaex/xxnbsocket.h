@@ -20,7 +20,7 @@ typedef socklen_t   SockLen_t;
 #include <deque>
 #include <array>
 
-// 需要用 XxMemPool Create 来创建
+// 非阻塞, 帧 update 状态机用法的 tcp client
 struct XxNBSocket
 {
 	enum class States
@@ -60,6 +60,7 @@ struct XxNBSocket
 		SockSetAddress(addr, ip, port);
 	}
 
+	// 连接目标地址服务器. 可设阻塞时长. 
 	// 返回负数 表示出错. 0 表示没发生错误 但也没连上. 1 表示连接成功
 	inline int Connect(int const& sec = 0, int const& usec = 0)
 	{

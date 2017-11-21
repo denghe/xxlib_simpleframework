@@ -6,17 +6,15 @@
 // 含有最基础的数据序列化功能, 针对 c#, c++, lua 需要各自扩展相应的 引用 继承 部分
 struct XxBuf
 {
-
-	// 数据结构
+	XxMemPool*				mempool;
 	char*					buf = nullptr;
 	uint32_t				dataLen = 0;
 	uint32_t				offset = 0;			// 已 读 | 发送 长度
-	XxMemPool*				mempool;			// 因为是 std 容器托管, 故没办法带在内存头
 
 	XxBuf(XxMemPool* mempool, char const* const& s, int const& len)
-		: dataLen(len)
+		: mempool(mempool)
+		, dataLen(len)
 		, offset(0)
-		, mempool(mempool)
 	{
 		if (!len)
 		{

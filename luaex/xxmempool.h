@@ -9,6 +9,7 @@
 #include <intrin.h>     // _BitScanReverse  64
 #endif
 
+// 粗暴快速的非线程安全内存池
 struct XxMemPool
 {
 	static_assert(sizeof(size_t) <= sizeof(void*), "");
@@ -58,6 +59,7 @@ struct XxMemPool
 		headers[idx] = p;
 	}
 
+	// 可用于创建 lua state
 	inline void* Realloc(void *p, size_t newSize, size_t dataLen = -1) noexcept
 	{
 		if (!newSize)
@@ -75,6 +77,10 @@ struct XxMemPool
 		Free(p);
 		return np;
 	}
+
+	/**************************************************************************************************/
+	// utils
+	/**************************************************************************************************/
 
 	inline static size_t Calc2n(size_t n) noexcept
 	{
@@ -104,11 +110,21 @@ struct XxMemPool
 	}
 
 
+	/**************************************************************************************************/
+	// exts for easy use
+	/**************************************************************************************************/
+
 	template<typename T>
 	T* Alloc() noexcept
 	{
 		static_assert(std::is_pod_v<T>);
 		return (T*)Alloc(sizeof(T));
+	}
+
+	inline void SafeFree(void*& p) noexcept
+	{
+		Free(p);
+		p = nullptr;
 	}
 
 	template<typename T, typename ...Args>
