@@ -328,12 +328,11 @@ namespace " + iface.Namespace + @"
 
                             if (ct.IsValueType)
                             {
-                                var nullable = (ct.Namespace == "System" && ct.Name == "Nullable`1");
                                 sb.Append(@"
                 var rtv" + ii + @" = new List<" + ctn + @">();
                 while (r.Read())
                 {
-                    rtv" + ii + @".Add(" + (nullable ? ("r.IsDBNull(0) ? null : (" + ctn + ")") : "") + ct._GetDataReaderFuncName() + @"(0));
+                    rtv" + ii + @".Add(" + (ct._IsSqlNullable() ? ("r.IsDBNull(0) ? null : (" + ctn + ")") : "") + ct._GetDataReaderFuncName() + @"(0));
                 }");
                             }
                             else
@@ -360,7 +359,7 @@ namespace " + iface.Namespace + @"
                                         sb.Append(",");
                                     }
                                     sb.Append(@"
-                        " + mn + @" = " + (ct._IsNullable() ? ("r.IsDBNull(" + i + ") ? null : (" + ctn + ")") : "") + getfn + @"(" + i + @")");
+                        " + mn + @" = " + (ct._IsSqlNullable() ? ("r.IsDBNull(" + i + ") ? null : (" + ctn + ")") : "") + getfn + @"(" + i + @")");
                                 }
                                 sb.Append(@"
                     });
@@ -488,7 +487,7 @@ namespace " + iface.Namespace + @"
                                 sb.Append(",");
                             }
                             sb.Append(@"
-                        " + mn + @" = " + (ct._IsNullable() ? ("r.IsDBNull(" + i + ") ? null : (" + ctn + ")") : "") + getfn + @"(" + i + @")");
+                        " + mn + @" = " + (ct._IsSqlNullable() ? ("r.IsDBNull(" + i + ") ? null : (" + ctn + ")") : "") + getfn + @"(" + i + @")");
                         }
                         sb.Append(@"
                     });
