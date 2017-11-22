@@ -350,16 +350,19 @@ namespace " + iface.Namespace + @"
                                 for (int i = 0; i < ctfs.Count; ++i)
                                 {
                                     var m = ctfs[i];
+                                    var mt = m.FieldType;
+                                    var mtn = mt._GetTypeDecl_Csharp();
                                     var mn = m.Name;
 
-                                    var getfn = m.FieldType._GetDataReaderFuncName();
+
+                                    var getfn = mt._GetDataReaderFuncName();
 
                                     if (i > 0)
                                     {
                                         sb.Append(",");
                                     }
                                     sb.Append(@"
-                        " + mn + @" = " + (ct._IsSqlNullable() ? ("r.IsDBNull(" + i + ") ? null : (" + ctn + ")") : "") + getfn + @"(" + i + @")");
+                        " + mn + @" = " + (mt._IsSqlNullable() ? ("r.IsDBNull(" + i + ") ? null : (" + mtn + ")") : "") + getfn + @"(" + i + @")");
                                 }
                                 sb.Append(@"
                     });
@@ -386,6 +389,7 @@ namespace " + iface.Namespace + @"
                                 {
                                     var m = rtfs[i];
                                     var mt = m.FieldType;
+                                    var mtn = mt._GetTypeDecl_Csharp();
                                     var mn = m.Name;
 
                                     var getfn = mt._GetDataReaderFuncName();
@@ -395,7 +399,7 @@ namespace " + iface.Namespace + @"
                                         sb.Append(", ");
                                     }
                                     sb.Append(@"
-                    " + mn + @" = " + (mt._IsSqlNullable() ? ("r.IsDBNull(" + i + ") ? null : (" + mt._GetTypeDecl_Csharp() + ")") : "") + getfn + @"(" + i + @")");
+                    " + mn + @" = " + (mt._IsSqlNullable() ? ("r.IsDBNull(" + i + ") ? null : (" + mtn + ")") : "") + getfn + @"(" + i + @")");
                                 }
                                 sb.Append(@"
                     };
@@ -447,7 +451,6 @@ namespace " + iface.Namespace + @"
 
                     if (ct.IsValueType)
                     {
-                        var nullable = (ct.Namespace == "System" && ct.Name == "Nullable`1");
                         sb.Append(@"
             var rtv = new List<" + ctn + @">();
             using (var r = cmd.ExecuteReader())
@@ -455,7 +458,7 @@ namespace " + iface.Namespace + @"
                 recordsAffecteds.Add(r.RecordsAffected);
                 while (r.Read())
                 {
-                    rtv.Add(" + (nullable ? ("r.IsDBNull(0) ? null : (" + ctn + ")") : "") + ct._GetDataReaderFuncName() + @"(0));
+                    rtv.Add(" + (ct._IsSqlNullable() ? ("r.IsDBNull(0) ? null : (" + ctn + ")") : "") + ct._GetDataReaderFuncName() + @"(0));
                 }
             }
             return rtv;");
@@ -478,16 +481,18 @@ namespace " + iface.Namespace + @"
                         for (int i = 0; i < ctfs.Count; ++i)
                         {
                             var m = ctfs[i];
+                            var mt = m.FieldType;
+                            var mtn = mt._GetTypeDecl_Csharp();
                             var mn = m.Name;
 
-                            var getfn = m.FieldType._GetDataReaderFuncName();
+                            var getfn = mt._GetDataReaderFuncName();
 
                             if (i > 0)
                             {
                                 sb.Append(",");
                             }
                             sb.Append(@"
-                        " + mn + @" = " + (ct._IsSqlNullable() ? ("r.IsDBNull(" + i + ") ? null : (" + ctn + ")") : "") + getfn + @"(" + i + @")");
+                        " + mn + @" = " + (mt._IsSqlNullable() ? ("r.IsDBNull(" + i + ") ? null : (" + mtn + ")") : "") + getfn + @"(" + i + @")");
                         }
                         sb.Append(@"
                     });
@@ -520,6 +525,7 @@ namespace " + iface.Namespace + @"
                         {
                             var m = rtfs[i];
                             var mt = m.FieldType;
+                            var mtn = mt._GetTypeDecl_Csharp();
                             var mn = m.Name;
 
                             var getfn = mt._GetDataReaderFuncName();
@@ -529,7 +535,7 @@ namespace " + iface.Namespace + @"
                                 sb.Append(", ");
                             }
                             sb.Append(@"
-                    " + mn + @" = " + (mt._IsSqlNullable() ? ("r.IsDBNull(" + i + ") ? null : (" + mt._GetTypeDecl_Csharp() + ")") : "") + getfn + @"(" + i + @")");
+                    " + mn + @" = " + (mt._IsSqlNullable() ? ("r.IsDBNull(" + i + ") ? null : (" + mtn + ")") : "") + getfn + @"(" + i + @")");
                         }
                         sb.Append(@"
                 };
