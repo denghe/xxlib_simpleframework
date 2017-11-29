@@ -3,6 +3,8 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 
+// 纯 C#, 非 DLLIMPORT 的实现, 不依赖 Plugins ( 用法不太一样, Connect 时会导致起线程 )
+
 namespace xx
 {
 
