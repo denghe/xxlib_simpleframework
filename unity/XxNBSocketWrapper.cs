@@ -1,54 +1,56 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 
 public static class XxNBSocketInterop
 {
+#if !UNITY_EDITOR && UNITY_IPHONE
+        const string DLL_NAME = "__Internal";
+#else
+    const string DLL_NAME = "xxnbsocketlib";
+#endif
+
     /// <summary>
     /// 初始化网络系统( WSAStartup / signal ). 只需要一开始执行一次.
     /// </summary>
-    [DllImport("xxnbsocketlib", CallingConvention = CallingConvention.Cdecl)]
+    [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
     internal static extern void Init_Sock();
 
     /// <summary>
     /// 建 XxNBSocket( 传入 XxMemPool )
     /// </summary>
-    [DllImport("xxnbsocketlib", CallingConvention = CallingConvention.Cdecl)]
+    [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
     internal static extern IntPtr XxNBSocket_New(IntPtr mp);
 
     /// <summary>
     /// 杀 XxNBSocket
     /// </summary>
-    [DllImport("xxnbsocketlib", CallingConvention = CallingConvention.Cdecl)]
+    [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
     internal static extern void XxNBSocket_Delete(IntPtr nbs);
 
     /// <summary>
     /// 设 ip & port
     /// </summary>
-    [DllImport("xxnbsocketlib", CallingConvention = CallingConvention.Cdecl)]
+    [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
     internal static extern void XxNBSocket_SetAddress(IntPtr nbs, string ip, ushort port);
 
     /// <summary>
     /// 开始连接. 可传入阻塞时长
     /// 返回负数 表示出错. 0 表示没发生错误 但也没连上. 1 表示连接成功
     /// </summary>
-    [DllImport("xxnbsocketlib", CallingConvention = CallingConvention.Cdecl)]
+    [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
     internal static extern int XxNBSocket_Connect(IntPtr nbs, int sec, int usec);
 
     /// <summary>
     /// 断开连接. 可传入延迟多少 ticks 断开. 0 立即断开.
     /// </summary>
-    [DllImport("xxnbsocketlib", CallingConvention = CallingConvention.Cdecl)]
+    [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
     internal static extern void XxNBSocket_Disconnect(IntPtr nbs, int delayTicks);
 
     /// <summary>
     /// 帧驱动. 可传入阻塞时长( 仅对 Connecting 状态有效 )
     /// 返回负数表示出错. 0 表示没发生错误
     /// </summary>
-    [DllImport("xxnbsocketlib", CallingConvention = CallingConvention.Cdecl)]
+    [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
     internal static extern int XxNBSocket_Update(IntPtr nbs, int sec, int usec);
 
     /// <summary>
@@ -58,13 +60,13 @@ public static class XxNBSocketInterop
     /// Connected,			// 2: 握手并进入可收发状态之后
     /// Disconnecting,		// 3: 执行 Disconnect( 延迟断开时长 ) 之后
     /// </summary>
-    [DllImport("xxnbsocketlib", CallingConvention = CallingConvention.Cdecl)]
+    [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
     internal static extern int XxNBSocket_GetState(IntPtr nbs);
 
     /// <summary>
     /// 取当前状态已持续的 ticks( Disconnecting 除外 )
     /// </summary>
-    [DllImport("xxnbsocketlib", CallingConvention = CallingConvention.Cdecl)]
+    [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
     internal static extern int XxNBSocket_GetTicks(IntPtr nbs);
 
     /// <summary>
@@ -72,32 +74,32 @@ public static class XxNBSocketInterop
     /// 返回负数表示出错. 0 表示成功放入待发送队列或无数据可发. > 0 表示已立刻发送成功的长度.
     /// 如果有剩下部分, 会放入待发送队列, 在下次 Update 时继续发
     /// </summary>
-    [DllImport("xxnbsocketlib", CallingConvention = CallingConvention.Cdecl)]
+    [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
     internal static extern int XxNBSocket_Send(IntPtr nbs, IntPtr buf, int dataLen);
 
     /// <summary>
     /// 如果接收缓冲区有包, 将返回 buf 指针填充长度. 否则返回 null( 表示无数据可取 )
     /// 流程: while( buf = PeekRecv( &dataLen ) ) {  ... PopRecv(); }
     /// </summary>
-    [DllImport("xxnbsocketlib", CallingConvention = CallingConvention.Cdecl)]
+    [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
     internal static extern IntPtr XxNBSocket_PeekRecv(IntPtr nbs, ref int dataLen);
 
     /// <summary>
     /// 对于已处理的 PeekRecv 的数据, 用这个函数来弹出删掉, 以便继续 Peek 下一条.
     /// </summary>
-    [DllImport("xxnbsocketlib", CallingConvention = CallingConvention.Cdecl)]
+    [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
     internal static extern void XxNBSocket_PopRecv(IntPtr nbs);
 
     /// <summary>
     /// XxNBSocket_Send 的 XxBBuffer 版
     /// </summary>
-    [DllImport("xxnbsocketlib", CallingConvention = CallingConvention.Cdecl)]
+    [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
     internal static extern int XxNBSocket_SendXxBBuffer(IntPtr nbs, IntPtr bb);
 
     /// <summary>
     /// XxNBSocket_PeekRecv 的 XxBBuffer 版
     /// </summary>
-    [DllImport("xxnbsocketlib", CallingConvention = CallingConvention.Cdecl)]
+    [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
     internal static extern IntPtr XxNBSocket_PeekRecvXxBBuffer(IntPtr nbs);
 
 }

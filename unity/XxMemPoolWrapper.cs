@@ -1,24 +1,25 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 
 public static class XxMemPoolInterop
 {
+#if !UNITY_EDITOR && UNITY_IPHONE
+        const string DLL_NAME = "__Internal";
+#else
+    const string DLL_NAME = "xxnbsocketlib";
+#endif
 
     /// <summary>
     /// 建 XxMemPool
     /// </summary>
     /// <returns></returns>
-    [DllImport("xxnbsocketlib", CallingConvention = CallingConvention.Cdecl)]
+    [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
     internal static extern IntPtr XxMemPool_New();
 
     /// <summary>
     /// 杀 XxMemPool( 最后再杀 )
     /// </summary>
-    [DllImport("xxnbsocketlib", CallingConvention = CallingConvention.Cdecl)]
+    [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
     internal static extern void XxMemPool_Delete(IntPtr mp);
 
 }
