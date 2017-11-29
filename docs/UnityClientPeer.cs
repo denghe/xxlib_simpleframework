@@ -109,14 +109,15 @@ namespace xx
                     bbReceive.offset += 2;
 
                     // 简单合法判断
-                    if (dataLen == 0 || dataLen > 65536)
+                    if (dataLen == 0)
                         break; // todo: log
 
                     // 如果包数据区没收够, 将剩余数据移到最前面跳出
                     var left = bbReceive.dataLen - bbReceive.offset;
                     if (left < dataLen)
                     {
-                        Array.Copy(bbReceive.buf, bbReceive.offset, bbReceive.buf, 0, left);
+                        left += 2;
+                        Array.Copy(bbReceive.buf, bbReceive.offset - 2, bbReceive.buf, 0, left);
                         bbReceive.dataLen = left;
                         continue;
                     }
