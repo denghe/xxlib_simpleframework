@@ -23,8 +23,10 @@ public class test : MonoBehaviour
     // Use this for initialization
     void Start()
     {
+        Dump();
         nbs.SetAddress("192.168.1.111", 12345);
         nbs.Connect();
+        Dump();
     }
 
     void Dump()
