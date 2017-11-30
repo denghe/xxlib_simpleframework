@@ -89,19 +89,6 @@ public static class XxNBSocketInterop
     /// </summary>
     [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
     internal static extern void XxNBSocket_PopRecv(IntPtr nbs);
-
-    /// <summary>
-    /// XxNBSocket_Send 的 XxBBuffer 版
-    /// </summary>
-    [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
-    internal static extern int XxNBSocket_SendXxBBuffer(IntPtr nbs, IntPtr bb);
-
-    /// <summary>
-    /// XxNBSocket_PeekRecv 的 XxBBuffer 版
-    /// </summary>
-    [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
-    internal static extern IntPtr XxNBSocket_PeekRecvXxBBuffer(IntPtr nbs);
-
 }
 
 
