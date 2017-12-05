@@ -46,7 +46,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>$(SolutionDir);$(SolutionDir)xxlib_cpp;$(SolutionDir)libuv\include;$(SolutionDir)sqlite3;$(SolutionDir)luaex;$(SolutionDir)lua;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)libuv\lib\debug;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)libuv\lib\release;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>

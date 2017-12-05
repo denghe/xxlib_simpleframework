@@ -1,38 +1,25 @@
-#pragma once
+ï»¿#pragma once
+
 #ifdef _WIN32
 	#include <SDKDDKVer.h>
 	#define WIN32_LEAN_AND_MEAN
 	#include <windows.h>
-	#ifdef xxloglib_EXPORTS
-	#define XXLOGLIB_API __declspec(dllexport)
+	#ifdef xxuvlib_EXPORTS
+	#define XXUVLIB_API __declspec(dllexport)
 	#else
-	#define XXLOGLIB_API __declspec(dllimport)
+	#define XXUVLIB_API __declspec(dllimport)
 	#endif
 #else
-	#define XXLOGLIB_API
+	#define XXUVLIB_API
 #endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-	// ¸ù¾İÎÄ¼şÃû ´´½¨ÈÕÖ¾ db ÎÄ¼ş. ³É¹¦·µ»Ø Logger µÄÖ¸Õë ctx. Ê§°Ü·µ»Ø ¿Õ
-	XXLOGLIB_API void* xxlogNew(char const* fn);
+	XXUVLIB_API void* xxuvNew();
 
-	// Ö±½Ó´«ËùÓĞÈÕÖ¾²ÎÊı, ¼ÇÂ¼ÈÕÖ¾. ·µ»Ø nullptr ±íÊ¾³É¹¦( Ê§°Ü·µ»Ø´íÎóĞÅÏ¢ )
-	XXLOGLIB_API void xxlogWriteAll(void* ctx, int level, long long time, char const* machine, char const* service, char const* instanceId, char const* title, long long opcode, char const* desc);
-
-	// ¼ÇÂ¼ÈÕÖ¾( Ïà±È WriteAll È±Ê§µÄ²ÎÊı »áÈ¥¶ÁÄ¬ÈÏÖµ ). ·µ»Ø nullptr ±íÊ¾³É¹¦( Ê§°Ü·µ»Ø´íÎóĞÅÏ¢ )
-	XXLOGLIB_API void xxlogWrite(void* ctx, int level, char const* title, long long opcode, char const* desc);
-
-	// ÉèÖÃÒ»Ğ©²»ÈİÒ×±ä»¯µÄÏîÄ¿µÄÄ¬ÈÏÖµ, ÒÔ±ãÊ¹ÓÃ Write Ê±ÄÜ·´¸´Ğ´ÈëÕâĞ©Êı¾İ ¶ø²»ĞèÒªÔÙ´«
-	XXLOGLIB_API void xxlogSetDefaultValue(void* ctx, char const* machine, char const* service, char const* instanceId);
-
-	// »ñÈ¡ÒÑĞ´Èë¼ÇÂ¼Êı( ÒÑ½øÈëÊÂÎñ µ«Ò²ÓĞ¿ÉÄÜÒòÎª×îºóµÄÊÂÎñÎ´³É¹¦Ìá½»»òĞ´ÅÌ¶ø³öÏÖ²»Ò»ÖÂ )
-	XXLOGLIB_API long long xxlogGetCounter(void*);
-
-	// Îö¹¹ Logger
-	XXLOGLIB_API void xxlogDelete(void*);
+	XXUVLIB_API void xxuvDelete();
 
 #ifdef __cplusplus
 }

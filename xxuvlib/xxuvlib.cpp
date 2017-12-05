@@ -1,5 +1,4 @@
-#include "xxloglib.h"
-#include "xx_logger.h"
+ï»¿#include "xxuvlib.h"
 
 #ifdef _WIN32
 
@@ -21,50 +20,4 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 
 #endif
 
-
-// ¸ù¾ÝÎÄ¼þÃû ´´½¨ÈÕÖ¾ db ÎÄ¼þ. ³É¹¦·µ»Ø Logger µÄÖ¸Õë ctx. Ê§°Ü·µ»Ø ¿Õ
-XXLOGLIB_API void* xxlogNew(char const* fn)
-{
-	try
-	{
-		return new xx::Logger(fn);
-	}
-	catch (...)
-	{
-		return nullptr;
-	}
-}
-
-// todo: ³¢ÊÔ char* ×ªÎª uint16_t* ÔÙ×ªÎª utf8, ²»ÓÃÔÙÔÚ C# ÄÇ±ß×ö, C# ÄÇ±ßÖ±½Ó string
-
-// Ö±½Ó´«ËùÓÐÈÕÖ¾²ÎÊý, ¼ÇÂ¼ÈÕÖ¾. ·µ»Ø nullptr ±íÊ¾³É¹¦( Ê§°Ü·µ»Ø´íÎóÐÅÏ¢ )
-XXLOGLIB_API void xxlogWriteAll(void* ctx, int level, long long time, char const* machine, char const* service, char const* instanceId, char const* title, long long opcode, char const* desc)
-{
-	((xx::Logger*)ctx)->WriteAll((xx::LogLevel)level, time, machine, service, instanceId, title, opcode, desc);
-}
-
-// ¼ÇÂ¼ÈÕÖ¾( Ïà±È WriteAll È±Ê§µÄ²ÎÊý »áÈ¥¶ÁÄ¬ÈÏÖµ ). ·µ»Ø nullptr ±íÊ¾³É¹¦( Ê§°Ü·µ»Ø´íÎóÐÅÏ¢ )
-XXLOGLIB_API void xxlogWrite(void* ctx, int level, char const* title, long long opcode, char const* desc)
-{
-	((xx::Logger*)ctx)->Write((xx::LogLevel)level, title, opcode, desc);
-}
-
-// ÉèÖÃÒ»Ð©²»ÈÝÒ×±ä»¯µÄÏîÄ¿µÄÄ¬ÈÏÖµ, ÒÔ±ãÊ¹ÓÃ Write Ê±ÄÜ·´¸´Ð´ÈëÕâÐ©Êý¾Ý ¶ø²»ÐèÒªÔÙ´«
-XXLOGLIB_API void xxlogSetDefaultValue(void* ctx, char const* machine, char const* service, char const* instanceId)
-{
-	((xx::Logger*)ctx)->SetDefaultValue(machine, service, instanceId);
-}
-
-// Îö¹¹ Logger
-XXLOGLIB_API long long xxlogGetCounter(void* ctx)
-{
-	return ((xx::Logger*)ctx)->counter;
-}
-
-
-// Îö¹¹ Logger
-XXLOGLIB_API void xxlogDelete(void* ctx)
-{
-	delete (xx::Logger*)ctx;
-}
 

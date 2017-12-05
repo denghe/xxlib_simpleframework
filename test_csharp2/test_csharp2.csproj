@@ -50,6 +50,7 @@
     <Compile Include="..\pkg\PKG2_class.cs">
       <Link>PKG2_class.cs</Link>
     </Compile>
+    <None Include="Program - Copy2.bak" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
