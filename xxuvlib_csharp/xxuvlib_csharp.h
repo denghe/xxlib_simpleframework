@@ -2,7 +2,6 @@
 
 #pragma once
 
-#pragma unmanaged
 #include <xx_uv.h>
 #include <xx_helpers.h>
 
@@ -154,7 +153,6 @@ struct MyUVServerPeer : xx::UVServerPeer
 
 
 
-#pragma managed
 
 // 交换删除法
 #define SYSTEM_LIST_SWAP_REMOVE( listPtr, tarPtr, indexName )	\
