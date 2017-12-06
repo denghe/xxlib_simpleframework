@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -19,9 +20,6 @@ public static class XxUvInterop
 #else
     const string DLL_NAME = "xxuvlib";
 #endif
-
-    [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
-    public static extern int xxuv_is_unix();
 
     [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
     public static extern IntPtr xxuv_alloc_uv_loop_t();
@@ -120,21 +118,10 @@ public static class XxUvInterop
         }
 
         // for uv_read_cb
-        public byte[] ToBytes()
+        public byte[] ToBytes(int len)
         {
-            IntPtr buf;
-            int len;
-            if (Environment.OSVersion.Platform == PlatformID.Unix || Environment.OSVersion.Platform == PlatformID.MacOSX)
-            {
-                buf = f0;
-                len = (int)f1;
-            }
-            else
-            {
-                len = (int)f0;
-                buf = f1;
-            }
-            if (len == 0) return null;
+            IntPtr buf = (Environment.OSVersion.Platform == PlatformID.Unix
+                || Environment.OSVersion.Platform == PlatformID.MacOSX) ? f0 : f1;
             var rtv = new byte[len];
             Marshal.Copy(buf, rtv, 0, len);
             return rtv;
@@ -168,50 +155,44 @@ public static class XxUvInterop
 
     [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
     public static extern int xxuv_write_(IntPtr stream, IntPtr buf, uint len);
+
+    [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
+    public static extern int xxuv_fill_client_ip(IntPtr stream, IntPtr buf, int buf_len, ref int data_len);
+
+
+
+    public static void TryThrow(int n)
+    {
+        if (n != 0) throw new Exception(XxUvInterop.xxuv_strerror(n));
+    }
 }
 
-/*
- 
-    // object to IntPtr (before calling WinApi):
-List<string> list1 = new List<string>();
-GCHandle handle1 = GCHandle.Alloc(list1);
-IntPtr parameter = (IntPtr) handle1;
-// call WinAPi and pass the parameter here
-// then free the handle when not needed:
-handle1.Free();
 
-// back to object (in callback function):
-GCHandle handle2 = (GCHandle) parameter;
-List<string> list2 = (handle2.Target as List<string>);
-list2.Add("hello world");
-
-     */
+// todo: 加上 disposed throw 检测
 
 public class XxUvLoop : IDisposable
 {
-    public IntPtr loop;
+    public object userData;
 
+    public IntPtr ptr;
     public XxUvLoop()
     {
-        loop = XxUvInterop.xxuv_alloc_uv_loop_t();
-        if (loop == IntPtr.Zero)
-        {
-            throw new Exception("xxuv_alloc_uv_loop_t failed.");
-        }
+        ptr = XxUvInterop.xxuv_alloc_uv_loop_t();
+        if (ptr == IntPtr.Zero) throw new NullReferenceException();
 
-        int r = XxUvInterop.xxuv_loop_init(loop);
-        if (r != 0)
-        {
-            throw new Exception(XxUvInterop.xxuv_strerror(r));
-        }
+        XxUvInterop.TryThrow(XxUvInterop.xxuv_loop_init(ptr));
 
-        var h = GCHandle.Alloc(this);
-        XxUvInterop.xxuv_set_data(loop, (IntPtr)h);
+        XxUvInterop.xxuv_set_data(ptr, (IntPtr)GCHandle.Alloc(this));
+    }
+
+    public void Run(XxUvRunMode mode = XxUvRunMode.Default)
+    {
+        XxUvInterop.TryThrow(XxUvInterop.xxuv_run(ptr, mode));
     }
 
     #region Dispose
 
-    private bool disposed = false;
+    private bool disposed;
 
     //Implement IDisposable.
     public void Dispose()
@@ -231,11 +212,15 @@ public class XxUvLoop : IDisposable
             // Free your own state (unmanaged objects).
             // Set large fields to null.
 
-            XxUvInterop.xxuv_loop_close(loop);
-            var p = XxUvInterop.xxuv_get_data(loop);
+            var p = XxUvInterop.xxuv_get_data(ptr);
+            if (p == IntPtr.Zero) throw new NullReferenceException();
             ((GCHandle)p).Free();
-            XxUvInterop.xxuv_free(loop);
-            loop = IntPtr.Zero;
+
+            int r = XxUvInterop.xxuv_loop_close(ptr);
+            if (r != 0) throw new Exception(XxUvInterop.xxuv_strerror(r));
+
+            XxUvInterop.xxuv_free(ptr);
+            ptr = IntPtr.Zero;
             disposed = true;
         }
         // Call Dispose in the base class.
@@ -253,4 +238,247 @@ public class XxUvLoop : IDisposable
     // them from the base class.
 
     #endregion
+}
+
+
+public class XxUvTcp : IDisposable
+{
+    public object userData;                 // 随便填
+    public Action<byte[]> OnRead;
+    public Action OnDispose;
+    public Action<XxUvTcp> OnConnect;
+    public XxSimpleList<XxUvTcp> clients;   // 需要用就 new
+    public int index_at_clients;            // 需要用就填, 配合 clients
+
+
+    // 内部变量
+    public XxUvLoop loop;
+    public XxUvTcp server;
+
+
+    public IntPtr ptr;
+    public IntPtr addrPtr;
+    public XxUvTcp(XxUvLoop loop)
+    {
+        this.loop = loop;
+
+        ptr = XxUvInterop.xxuv_alloc_uv_tcp_t();
+        if (ptr == IntPtr.Zero) throw new OverflowException();
+
+        XxUvInterop.TryThrow(XxUvInterop.xxuv_tcp_init(loop.ptr, ptr));
+
+        XxUvInterop.xxuv_set_data(ptr, (IntPtr)GCHandle.Alloc(this));
+
+        addrPtr = XxUvInterop.xxuv_alloc_sockaddr_in();
+        if (addrPtr == IntPtr.Zero) throw new OverflowException();
+    }
+
+
+
+    public void Bind(string ipv4, int port)
+    {
+        XxUvInterop.TryThrow(XxUvInterop.xxuv_ip4_addr(ipv4, port, addrPtr));
+        XxUvInterop.TryThrow(XxUvInterop.xxuv_tcp_bind_(ptr, addrPtr));
+    }
+
+
+
+    static XxUvInterop.uv_connection_cb OnConnectCB = OnConnectCBImpl;
+    static void OnConnectCBImpl(IntPtr stream, int status)
+    {
+        XxUvInterop.TryThrow(status);
+        var server = (XxUvTcp)((GCHandle)XxUvInterop.xxuv_get_data(stream)).Target;
+        var client = server.Accept();
+        if (client != null)
+        {
+            server.OnConnect(client);
+        }
+    }
+    public void Listen(int backlog = 128)
+    {
+        XxUvInterop.TryThrow(XxUvInterop.xxuv_listen(ptr, backlog, OnConnectCB));
+    }
+
+
+
+    static XxUvInterop.uv_read_cb OnReadCB = OnReadCBImpl;
+    static void OnReadCBImpl(IntPtr stream, IntPtr nread, XxUvInterop.uv_buf_t buf)
+    {
+        var client = (XxUvTcp)((GCHandle)XxUvInterop.xxuv_get_data(stream)).Target;
+        int len = (int)nread;
+        if (len > 0)
+        {
+            client.OnRead(buf.ToBytes(len));
+        }
+        else if (len < 0)
+        {
+            client.Dispose();
+        }
+        buf.Free();
+    }
+    public XxUvTcp Accept()
+    {
+        var client = new XxUvTcp(loop);
+        if (XxUvInterop.xxuv_accept(ptr, client.ptr) == 0)
+        {
+            XxUvInterop.TryThrow(XxUvInterop.xxuv_read_start_(client.ptr, OnReadCB));
+            client.server = this;
+            return client;
+        }
+        else
+        {
+            client.Dispose();
+            return null;
+        }
+    }
+
+
+
+    public void Send(byte[] data, uint len = 0)
+    {
+        if (server == null) throw new InvalidOperationException();
+        if (data == null || data.Length == 0) throw new NullReferenceException();
+        if (len > data.Length) throw new IndexOutOfRangeException();
+        if (len == 0) len = (uint)data.Length;
+        var h = GCHandle.Alloc(data, GCHandleType.Pinned);
+        XxUvInterop.xxuv_write_(ptr, h.AddrOfPinnedObject(), len);
+        h.Free();
+    }
+
+
+    byte[] ipBuf = new byte[64];
+    string ip_ = null;
+    public string ip
+    {
+        get
+        {
+            if (ip_ != null) return ip_;
+            int len = 0;
+            var h = GCHandle.Alloc(ipBuf, GCHandleType.Pinned);
+            try
+            {
+                XxUvInterop.TryThrow(XxUvInterop.xxuv_fill_client_ip(ptr, h.AddrOfPinnedObject(), ipBuf.Length, ref len));
+                ip_ = Encoding.ASCII.GetString(ipBuf, 0, len);
+                return ip_;
+            }
+            finally
+            {
+                h.Free();
+            }
+        }
+    }
+
+    #region Dispose
+
+    private bool disposed;
+
+    //Implement IDisposable.
+    public void Dispose()
+    {
+        if (OnDispose != null) OnDispose();
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!disposed)
+        {
+            if (disposing)
+            {
+                // Free other state (managed objects).
+            }
+            // Free your own state (unmanaged objects).
+            // Set large fields to null.
+            var p = XxUvInterop.xxuv_get_data(ptr);
+            if (p == IntPtr.Zero) throw new NullReferenceException();
+            ((GCHandle)p).Free();
+
+            XxUvInterop.xxuv_close_(ptr);
+            ptr = IntPtr.Zero;
+
+            XxUvInterop.xxuv_free(addrPtr);
+            addrPtr = IntPtr.Zero;
+
+            loop = null;
+            disposed = true;
+        }
+        // Call Dispose in the base class.
+        //base.Dispose(disposing);
+    }
+
+    // Use C# destructor syntax for finalization code.
+    ~XxUvTcp()
+    {
+        Dispose(false);
+    }
+
+    // The derived class does not have a Finalize method
+    // or a Dispose method without parameters because it inherits
+    // them from the base class.
+
+    #endregion
+}
+
+
+public class XxSimpleList<T>
+{
+    public T[] buf;
+    public int bufLen { get { return buf.Length; } }
+    public int dataLen;
+
+    private const int defaultCapacity = 4;
+    static readonly T[] emptyBuf = new T[0];
+
+    public XxSimpleList(int capacity = 0)
+    {
+        buf = emptyBuf;
+        Reserve(capacity);
+    }
+
+    public T this[int index]
+    {
+        get { return buf[index]; }
+        set { buf[index] = value; }
+    }
+
+    public void Add(T item)
+    {
+        if (dataLen == buf.Length) Reserve(dataLen + 1);
+        buf[dataLen++] = item;
+    }
+
+    public void Reserve(int min)
+    {
+        if (buf.Length < min)
+        {
+            int newCapacity = buf.Length == 0 ? defaultCapacity : buf.Length * 2;
+            if (newCapacity < min) newCapacity = min;
+            if (newCapacity < buf.Length) return;
+            T[] newItems = new T[newCapacity];
+            if (dataLen > 0)
+            {
+                Array.Copy(buf, 0, newItems, 0, dataLen);
+            }
+            buf = newItems;
+        }
+    }
+
+    public void SwapRemoveAt(int index)
+    {
+        if (index + 1 < dataLen)
+        {
+            buf[index] = buf[dataLen - 1];
+        }
+        dataLen--;
+        buf[dataLen] = default(T);
+    }
+
+    public void ForEach(Action<T> action)
+    {
+        for (int i = dataLen - 1; i >= 0; --i)
+        {
+            action(buf[i]);
+        }
+    }
 }

@@ -21,15 +21,6 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 
 #endif
 
-XXUVLIB_API int xxuv_is_unix() noexcept
-{
-#ifdef _WIN32
-	return 0;
-#else
-	return 1;
-#endif
-}
-
 static void* Alloc(size_t size)
 {
 	return std::malloc(size);
@@ -159,7 +150,7 @@ XXUVLIB_API int xxuv_write(uv_write_t* req, uv_stream_t* stream, const uv_buf_t 
 	return uv_write(req, stream, bufs, nbufs, cb);
 }
 
-XXUVLIB_API int xxuv_write_(uv_stream_t* stream, char* buf, unsigned int len) noexcept
+XXUVLIB_API int xxuv_write_(uv_stream_t* stream, char* inBuf, unsigned int len) noexcept
 {
 	struct write_req_t
 	{
@@ -167,6 +158,8 @@ XXUVLIB_API int xxuv_write_(uv_stream_t* stream, char* buf, unsigned int len) no
 		uv_buf_t buf;
 	};
 	auto req = Alloc<write_req_t>();
+	auto buf = (char*)Alloc(len);
+	memcpy(buf, inBuf, len);
 	req->buf = uv_buf_init(buf, (uint32_t)len);
 	return uv_write((uv_write_t*)req, stream, &req->buf, 1, [](uv_write_t *req, int status)
 	{
@@ -181,4 +174,16 @@ XXUVLIB_API int xxuv_write_(uv_stream_t* stream, char* buf, unsigned int len) no
 XXUVLIB_API int xxuv_run(uv_loop_t* loop, uv_run_mode mode) noexcept
 {
 	return uv_run(loop, mode);
+}
+
+XXUVLIB_API int xxuv_fill_client_ip(uv_tcp_t* stream, char* buf, int buf_len, int* data_len) noexcept
+{
+	sockaddr_in saddr;
+	int len = sizeof(saddr);
+	int r = 0;
+	if (r = uv_tcp_getpeername(stream, (sockaddr*)&saddr, &len)) return r;
+	if (r = uv_inet_ntop(AF_INET, &saddr.sin_addr, buf, buf_len)) return r;
+	*data_len = (int)strlen(buf);
+	*data_len += sprintf_s(buf + *data_len, buf_len - *data_len, ":%d", ntohs(saddr.sin_port));
+	return r;
 }

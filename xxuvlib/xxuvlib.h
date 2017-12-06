@@ -18,7 +18,6 @@
 extern "C" {
 #endif
 
-	XXUVLIB_API int xxuv_is_unix() noexcept;
 	XXUVLIB_API uv_loop_t* xxuv_alloc_uv_loop_t() noexcept;
 	XXUVLIB_API uv_tcp_t* xxuv_alloc_uv_tcp_t() noexcept;
 	XXUVLIB_API sockaddr_in* xxuv_alloc_sockaddr_in() noexcept;
@@ -51,6 +50,8 @@ extern "C" {
 	XXUVLIB_API int xxuv_read_start_(uv_stream_t* client, uv_read_cb read_cb) noexcept;
 	XXUVLIB_API int xxuv_write(uv_write_t* req, uv_stream_t* stream, const uv_buf_t bufs[], unsigned int nbufs, uv_write_cb cb) noexcept;
 	XXUVLIB_API int xxuv_write_(uv_stream_t* stream, char* buf, unsigned int len) noexcept;
+	XXUVLIB_API int xxuv_fill_client_ip(uv_tcp_t* stream, char* buf, int buf_len, int* data_len) noexcept;
+
 
 	// todo
 	XXUVLIB_API int xxuv_is_readable(const uv_stream_t* stream) noexcept;
