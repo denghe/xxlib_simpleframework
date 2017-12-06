@@ -21,6 +21,15 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 
 #endif
 
+XXUVLIB_API int xxuv_is_unix() noexcept
+{
+#ifdef _WIN32
+	return 0;
+#else
+	return 1;
+#endif
+}
+
 static void* Alloc(size_t size)
 {
 	return std::malloc(size);
@@ -46,6 +55,17 @@ XXUVLIB_API const char* xxuv_err_name(int n) noexcept
 {
 	return uv_err_name(n);
 }
+
+
+XXUVLIB_API void xxuv_set_data(uv_handle_t* handle, void* data) noexcept
+{
+	handle->data = data;
+}
+XXUVLIB_API void* xxuv_get_data(uv_handle_t* handle) noexcept
+{
+	return handle->data;
+}
+
 
 XXUVLIB_API void xxuv_close(uv_handle_t* handle, uv_close_cb close_cb) noexcept
 {
@@ -134,12 +154,12 @@ XXUVLIB_API int xxuv_read_start_(uv_stream_t* client, uv_read_cb read_cb) noexce
 	, read_cb);
 }
 
-XXUVLIB_API int xxuv_write(uv_write_t* req, uv_stream_t* stream, const uv_buf_t bufs[], unsigned int nbufs, uv_write_cb cb)
+XXUVLIB_API int xxuv_write(uv_write_t* req, uv_stream_t* stream, const uv_buf_t bufs[], unsigned int nbufs, uv_write_cb cb) noexcept
 {
 	return uv_write(req, stream, bufs, nbufs, cb);
 }
 
-XXUVLIB_API int xxuv_write_(uv_stream_t* stream, char* buf, unsigned int len)
+XXUVLIB_API int xxuv_write_(uv_stream_t* stream, char* buf, unsigned int len) noexcept
 {
 	struct write_req_t
 	{
