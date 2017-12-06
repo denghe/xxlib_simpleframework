@@ -121,23 +121,23 @@ XXUVLIB_API int xxuv_tcp_bind_(uv_tcp_t* tcp, const sockaddr* addr) noexcept
 }
 
 
-XXUVLIB_API int xxuv_listen(uv_stream_t* tcp, int backlog, uv_connection_cb cb) noexcept
+XXUVLIB_API int xxuv_listen(uv_stream_t* listener, int backlog, uv_connection_cb cb) noexcept
 {
-	return uv_listen(tcp, backlog, cb);
+	return uv_listen(listener, backlog, cb);
 }
 
-XXUVLIB_API int xxuv_accept(uv_stream_t* server, uv_stream_t* client) noexcept
+XXUVLIB_API int xxuv_accept(uv_stream_t* listener, uv_stream_t* peer) noexcept
 {
-	return uv_accept(server, client);
+	return uv_accept(listener, peer);
 }
 
-XXUVLIB_API int xxuv_read_start(uv_stream_t* client, uv_alloc_cb alloc_cb, uv_read_cb read_cb) noexcept
+XXUVLIB_API int xxuv_read_start(uv_stream_t* stream, uv_alloc_cb alloc_cb, uv_read_cb read_cb) noexcept
 {
-	return uv_read_start(client, alloc_cb, read_cb);
+	return uv_read_start(stream, alloc_cb, read_cb);
 }
-XXUVLIB_API int xxuv_read_start_(uv_stream_t* client, uv_read_cb read_cb) noexcept
+XXUVLIB_API int xxuv_read_start_(uv_stream_t* stream, uv_read_cb read_cb) noexcept
 {
-	return uv_read_start(client, [](uv_handle_t*, size_t suggested_size, uv_buf_t* buf)
+	return uv_read_start(stream, [](uv_handle_t*, size_t suggested_size, uv_buf_t* buf)
 	{
 		buf->base = (char*)Alloc(suggested_size);
 		buf->len = decltype(buf->len)(suggested_size);

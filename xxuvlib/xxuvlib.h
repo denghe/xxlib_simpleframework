@@ -44,10 +44,10 @@ extern "C" {
 	XXUVLIB_API int xxuv_tcp_init(uv_loop_t* loop, uv_tcp_t* tcp) noexcept;
 	XXUVLIB_API int xxuv_tcp_bind(uv_tcp_t* tcp, const sockaddr* addr, unsigned int flags) noexcept;
 	XXUVLIB_API int xxuv_tcp_bind_(uv_tcp_t* tcp, const sockaddr* addr) noexcept;
-	XXUVLIB_API int xxuv_listen(uv_stream_t* tcp, int backlog, uv_connection_cb cb) noexcept;
-	XXUVLIB_API int xxuv_accept(uv_stream_t* server, uv_stream_t* client) noexcept;
-	XXUVLIB_API int xxuv_read_start(uv_stream_t* client, uv_alloc_cb alloc_cb, uv_read_cb read_cb) noexcept;
-	XXUVLIB_API int xxuv_read_start_(uv_stream_t* client, uv_read_cb read_cb) noexcept;
+	XXUVLIB_API int xxuv_listen(uv_stream_t* listener, int backlog, uv_connection_cb cb) noexcept;
+	XXUVLIB_API int xxuv_accept(uv_stream_t* listener, uv_stream_t* peer) noexcept;
+	XXUVLIB_API int xxuv_read_start(uv_stream_t* stream, uv_alloc_cb alloc_cb, uv_read_cb read_cb) noexcept;
+	XXUVLIB_API int xxuv_read_start_(uv_stream_t* stream, uv_read_cb read_cb) noexcept;
 	XXUVLIB_API int xxuv_write(uv_write_t* req, uv_stream_t* stream, const uv_buf_t bufs[], unsigned int nbufs, uv_write_cb cb) noexcept;
 	XXUVLIB_API int xxuv_write_(uv_stream_t* stream, char* buf, unsigned int len) noexcept;
 	XXUVLIB_API int xxuv_fill_client_ip(uv_tcp_t* stream, char* buf, int buf_len, int* data_len) noexcept;

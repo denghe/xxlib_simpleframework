@@ -9,26 +9,26 @@ public static class Program
     {
         var loop = new XxUvLoop();
         var listener = new XxUvTcp(loop);
-        listener.clients = new XxSimpleList<XxUvTcp>(1024);
-        listener.OnConnect = client =>
+        listener.peers = new XxSimpleList<XxUvTcp>(1024);
+        listener.OnConnect = peer =>
         {
-            client.index_at_clients = listener.clients.bufLen;
-            listener.clients.Add(client);
-            client.OnRead = bytes =>
+            peer.index_at_container = listener.peers.bufLen;
+            listener.peers.Add(peer);
+            peer.OnRead = bytes =>
             {
-                if (bytes[0] == 32) client.Dispose();           // SPACE disconnect
+                if (bytes[0] == 32) peer.Dispose();             // SPACE disconnect
                 else if (bytes[0] == 27) listener.Dispose();    // ESC exit
-                else client.Send(bytes);                        // echo
+                else peer.Send(bytes);                          // echo
             };
-            client.OnDispose = () =>
+            peer.OnDispose = () =>
             {
-                listener.clients.SwapRemoveAt(client.index_at_clients);
+                listener.peers.SwapRemoveAt(peer.index_at_container);
             };
-            Console.WriteLine(client.ip + " connected.");
+            Console.WriteLine(peer.ip + " connected.");
         };
         listener.OnDispose = () =>
         {
-            listener.clients.ForEach(c => c.Dispose());
+            listener.peers.ForEach(c => c.Dispose());
         };
         listener.Bind("0.0.0.0", 12345);
         listener.Listen();

@@ -31,7 +31,7 @@ public static class XxUvInterop
     public static extern IntPtr xxuv_alloc_sockaddr_in();
 
     [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
-    public static extern void xxuv_free(IntPtr p);
+    public static extern void xxuv_free(IntPtr ptr);
 
 
 
@@ -86,16 +86,16 @@ public static class XxUvInterop
     //public static extern int xxuv_tcp_bind(IntPtr tcp, IntPtr addr, uint flags);
 
     [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
-    public static extern int xxuv_tcp_bind_(IntPtr tcp, IntPtr addr);
+    public static extern int xxuv_tcp_bind_(IntPtr listener, IntPtr addr);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate void uv_connection_cb(IntPtr server, int status);
+    public delegate void uv_connection_cb(IntPtr listener, int status);
 
     [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
-    public static extern int xxuv_listen(IntPtr tcp, int backlog, uv_connection_cb cb);
+    public static extern int xxuv_listen(IntPtr listener, int backlog, uv_connection_cb cb);
 
     [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
-    public static extern int xxuv_accept(IntPtr server, IntPtr client);
+    public static extern int xxuv_accept(IntPtr listener, IntPtr peer);
 
     [StructLayout(LayoutKind.Sequential)]
     public struct uv_buf_t
@@ -147,7 +147,7 @@ public static class XxUvInterop
     //public static extern int xxuv_read_start(IntPtr client, uv_alloc_cb alloc_cb, uv_read_cb read_cb);
 
     [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
-    public static extern int xxuv_read_start_(IntPtr client, uv_read_cb read_cb);
+    public static extern int xxuv_read_start_(IntPtr stream, uv_read_cb read_cb);
 
     //public delegate void uv_write_cb(IntPtr req, int status);
     //[DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
@@ -172,7 +172,9 @@ public static class XxUvInterop
 
 public class XxUvLoop : IDisposable
 {
-    public object userData;
+    public object userData;                     // 随便填
+    public XxSimpleList<XxUvTcp> listeners;     // 需要用就 new
+    public XxSimpleList<XxUvTcp> clients;       // 需要用就 new
 
     public IntPtr ptr;
     public XxUvLoop()
@@ -247,13 +249,13 @@ public class XxUvTcp : IDisposable
     public Action<byte[]> OnRead;
     public Action OnDispose;
     public Action<XxUvTcp> OnConnect;
-    public XxSimpleList<XxUvTcp> clients;   // 需要用就 new
-    public int index_at_clients;            // 需要用就填, 配合 clients
+    public XxSimpleList<XxUvTcp> peers;     // 需要用就 new
+    public int index_at_container;          // 于容器中的 下标. 需要就填
 
 
     // 内部变量
     public XxUvLoop loop;
-    public XxUvTcp server;
+    public XxUvTcp listener;                // 空: client, 非空: peer
 
 
     public IntPtr ptr;
@@ -287,11 +289,11 @@ public class XxUvTcp : IDisposable
     static void OnConnectCBImpl(IntPtr stream, int status)
     {
         XxUvInterop.TryThrow(status);
-        var server = (XxUvTcp)((GCHandle)XxUvInterop.xxuv_get_data(stream)).Target;
-        var client = server.Accept();
-        if (client != null)
+        var listener = (XxUvTcp)((GCHandle)XxUvInterop.xxuv_get_data(stream)).Target;
+        var peer = listener.Accept();
+        if (peer != null)
         {
-            server.OnConnect(client);
+            listener.OnConnect(peer);
         }
     }
     public void Listen(int backlog = 128)
@@ -304,30 +306,30 @@ public class XxUvTcp : IDisposable
     static XxUvInterop.uv_read_cb OnReadCB = OnReadCBImpl;
     static void OnReadCBImpl(IntPtr stream, IntPtr nread, XxUvInterop.uv_buf_t buf)
     {
-        var client = (XxUvTcp)((GCHandle)XxUvInterop.xxuv_get_data(stream)).Target;
+        var peer = (XxUvTcp)((GCHandle)XxUvInterop.xxuv_get_data(stream)).Target;
         int len = (int)nread;
         if (len > 0)
         {
-            client.OnRead(buf.ToBytes(len));
+            peer.OnRead(buf.ToBytes(len));
         }
         else if (len < 0)
         {
-            client.Dispose();
+            peer.Dispose();
         }
         buf.Free();
     }
     public XxUvTcp Accept()
     {
-        var client = new XxUvTcp(loop);
-        if (XxUvInterop.xxuv_accept(ptr, client.ptr) == 0)
+        var peer = new XxUvTcp(loop);
+        if (XxUvInterop.xxuv_accept(ptr, peer.ptr) == 0)
         {
-            XxUvInterop.TryThrow(XxUvInterop.xxuv_read_start_(client.ptr, OnReadCB));
-            client.server = this;
-            return client;
+            XxUvInterop.TryThrow(XxUvInterop.xxuv_read_start_(peer.ptr, OnReadCB));
+            peer.listener = this;
+            return peer;
         }
         else
         {
-            client.Dispose();
+            peer.Dispose();
             return null;
         }
     }
@@ -336,7 +338,7 @@ public class XxUvTcp : IDisposable
 
     public void Send(byte[] data, uint len = 0)
     {
-        if (server == null) throw new InvalidOperationException();
+        if (listener == null) throw new InvalidOperationException();
         if (data == null || data.Length == 0) throw new NullReferenceException();
         if (len > data.Length) throw new IndexOutOfRangeException();
         if (len == 0) len = (uint)data.Length;
