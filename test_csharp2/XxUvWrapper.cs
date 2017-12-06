@@ -247,8 +247,9 @@ public class XxUvTcp : IDisposable
 {
     public object userData;                 // 随便填
     public Action<byte[]> OnRead;
-    public Action OnDispose;
     public Action<XxUvTcp> OnConnect;
+    // todo: OnDisconnect
+    public Action OnDispose;
     public XxSimpleList<XxUvTcp> peers;     // 需要用就 new
     public int index_at_container;          // 于容器中的 下标. 需要就填
 
@@ -274,6 +275,10 @@ public class XxUvTcp : IDisposable
         addrPtr = XxUvInterop.xxuv_alloc_sockaddr_in();
         if (addrPtr == IntPtr.Zero) throw new OverflowException();
     }
+
+
+
+    // todo: SetAddress, Connect, Disconnect
 
 
 

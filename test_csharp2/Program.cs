@@ -32,6 +32,7 @@ public static class Program
         };
         listener.Bind("0.0.0.0", 12345);
         listener.Listen();
+        Console.WriteLine("begin.");
         loop.Run();
         Console.WriteLine("end.");
         Console.Read();
