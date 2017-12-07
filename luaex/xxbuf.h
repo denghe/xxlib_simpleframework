@@ -1,6 +1,7 @@
 ﻿#pragma execution_character_set("utf-8")
 #pragma once
 #include "xxmempool.h"
+#include <cmath>
 
 
 // 含有最基础的数据序列化功能, 针对 c#, c++, lua 需要各自扩展相应的 引用 继承 部分

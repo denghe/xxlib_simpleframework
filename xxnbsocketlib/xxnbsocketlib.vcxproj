@@ -90,10 +90,10 @@
     <ClInclude Include="..\luaex\xxbuf.h" />
     <ClInclude Include="..\luaex\xxmempool.h" />
     <ClInclude Include="..\luaex\xxnbsocket.h" />
-    <ClInclude Include="xxnbsocketlib.h" />
+    <ClInclude Include="..\luaex\xxnbsocketlib.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="xxnbsocketlib.cpp" />
+    <ClCompile Include="..\luaex\xxnbsocketlib.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

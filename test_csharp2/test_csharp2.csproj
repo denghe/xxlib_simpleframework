@@ -45,6 +45,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="XxSimpleList.cs" />
     <Compile Include="XxUvWrapper.cs" />
     <None Include="CreateMaJiangHuPaiType.cs" />
     <None Include="Program - Copy.bak" />

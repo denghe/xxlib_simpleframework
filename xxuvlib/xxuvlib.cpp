@@ -65,6 +65,9 @@ XXUVLIB_API void xxuv_close(uv_handle_t* handle, uv_close_cb close_cb) noexcept
 
 XXUVLIB_API void xxuv_close_(uv_handle_t* handle) noexcept
 {
+#ifndef NDEBUG
+	if (uv_is_closing(handle)) return;
+#endif
 	uv_close(handle, [](uv_handle_t* handle)
 	{
 		xxuv_free(handle);
@@ -186,4 +189,15 @@ XXUVLIB_API int xxuv_fill_client_ip(uv_tcp_t* stream, char* buf, int buf_len, in
 	*data_len = (int)strlen(buf);
 	*data_len += sprintf_s(buf + *data_len, buf_len - *data_len, ":%d", ntohs(saddr.sin_port));
 	return r;
+}
+
+
+XXUVLIB_API int xxuv_tcp_connect(uv_connect_t* req, uv_tcp_t* handle, const sockaddr* addr, uv_connect_cb cb)
+{
+	return uv_tcp_connect(req, handle, addr, cb);
+}
+XXUVLIB_API int xxuv_tcp_connect_(uv_tcp_t* handle, const struct sockaddr* addr, uv_connect_cb cb)
+{
+	auto req = Alloc<uv_connect_t>();
+	return uv_tcp_connect(req, handle, addr, cb);
 }

@@ -12,6 +12,11 @@ static_assert(SOCKET_ERROR == -1 && INVALID_SOCKET == -1);
 typedef SOCKET      Socket_t;
 typedef int         SockLen_t;
 #else
+#include <unistd.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <errno.h>
+#include <fcntl.h>
 typedef int         Socket_t;
 typedef socklen_t   SockLen_t;
 #endif

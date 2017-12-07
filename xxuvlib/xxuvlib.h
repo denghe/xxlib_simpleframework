@@ -2,21 +2,24 @@
 #include <uv.h>
 
 #ifdef _WIN32
-	#include <SDKDDKVer.h>
-	#define WIN32_LEAN_AND_MEAN
-	#include <windows.h>
-	#ifdef xxuvlib_EXPORTS
-	#define XXUVLIB_API __declspec(dllexport)
-	#else
-	#define XXUVLIB_API __declspec(dllimport)
-	#endif
+#include <SDKDDKVer.h>
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#ifdef xxuvlib_EXPORTS
+#define XXUVLIB_API __declspec(dllexport)
 #else
-	#define XXUVLIB_API
+#define XXUVLIB_API __declspec(dllimport)
+#endif
+#else
+#define XXUVLIB_API
 #endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+
+
 
 	XXUVLIB_API uv_loop_t* xxuv_alloc_uv_loop_t() noexcept;
 	XXUVLIB_API uv_tcp_t* xxuv_alloc_uv_tcp_t() noexcept;
@@ -42,8 +45,8 @@ extern "C" {
 	XXUVLIB_API int xxuv_ip4_addr(const char* ip, int port, sockaddr_in* addr) noexcept;
 
 	XXUVLIB_API int xxuv_tcp_init(uv_loop_t* loop, uv_tcp_t* tcp) noexcept;
-	XXUVLIB_API int xxuv_tcp_bind(uv_tcp_t* tcp, const sockaddr* addr, unsigned int flags) noexcept;
-	XXUVLIB_API int xxuv_tcp_bind_(uv_tcp_t* tcp, const sockaddr* addr) noexcept;
+	XXUVLIB_API int xxuv_tcp_bind(uv_tcp_t* tcp, const struct sockaddr* addr, unsigned int flags) noexcept;
+	XXUVLIB_API int xxuv_tcp_bind_(uv_tcp_t* tcp, const struct sockaddr* addr) noexcept;
 	XXUVLIB_API int xxuv_listen(uv_stream_t* listener, int backlog, uv_connection_cb cb) noexcept;
 	XXUVLIB_API int xxuv_accept(uv_stream_t* listener, uv_stream_t* peer) noexcept;
 	XXUVLIB_API int xxuv_read_start(uv_stream_t* stream, uv_alloc_cb alloc_cb, uv_read_cb read_cb) noexcept;
@@ -51,6 +54,8 @@ extern "C" {
 	XXUVLIB_API int xxuv_write(uv_write_t* req, uv_stream_t* stream, const uv_buf_t bufs[], unsigned int nbufs, uv_write_cb cb) noexcept;
 	XXUVLIB_API int xxuv_write_(uv_stream_t* stream, char* buf, unsigned int len) noexcept;
 	XXUVLIB_API int xxuv_fill_client_ip(uv_tcp_t* stream, char* buf, int buf_len, int* data_len) noexcept;
+	XXUVLIB_API int xxuv_tcp_connect(uv_connect_t* req, uv_tcp_t* handle, const struct sockaddr* addr, uv_connect_cb cb);
+	XXUVLIB_API int xxuv_tcp_connect_(uv_tcp_t* handle, const struct sockaddr* addr, uv_connect_cb cb);
 
 
 	// todo

@@ -8,9 +8,9 @@ public static class Program
     static void Main(string[] args)
     {
         var loop = new XxUvLoop();
-        var listener = new XxUvTcp(loop);
-        listener.peers = new XxSimpleList<XxUvTcp>(1024);
-        listener.OnConnect = peer =>
+        var listener = new XxUvTcpListener(loop);
+        listener.peers = new XxSimpleList<XxUvTcpPeer>(1024);
+        listener.OnAccept = peer =>
         {
             peer.index_at_container = listener.peers.bufLen;
             listener.peers.Add(peer);

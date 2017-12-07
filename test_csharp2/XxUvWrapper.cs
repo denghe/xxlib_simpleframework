@@ -1,10 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading.Tasks;
+
+// todo: 加上 disposed throw 检测
+// todo: 构造函数中的失败回滚回收内存, 不可滥用 XxUvInterop.TryThrow
+// todo: dispose 时的 ptr Zero 检测
+// todo: ptr 状态跟踪( 记录是否需要 close + free 或只是 free )
+// todo: XxUvTcpClient 的生命周期并不会跟随 ptr, 运行时 ptr 可以为空. 构造函数中不建. Connect 时检测并创建 tcp.
 
 public enum XxUvRunMode
 {
@@ -12,6 +14,14 @@ public enum XxUvRunMode
     Once,
     NoWait
 }
+
+public enum XxUvTcpStates
+{
+    Disconnected,
+    Connecting,
+    Connected,
+    Disconnecting,
+};
 
 public static class XxUvInterop
 {
@@ -35,6 +45,7 @@ public static class XxUvInterop
 
 
 
+
     [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
     public static extern string xxuv_strerror(int n);
 
@@ -43,11 +54,13 @@ public static class XxUvInterop
 
 
 
+
     [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
     public static extern void xxuv_set_data(IntPtr handle, IntPtr data);
 
     [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
     public static extern IntPtr xxuv_get_data(IntPtr handle);
+
 
 
 
@@ -62,8 +75,11 @@ public static class XxUvInterop
 
 
 
+
     [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
     public static extern int xxuv_loop_init(IntPtr loop);
+
+
 
 
     [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
@@ -74,8 +90,10 @@ public static class XxUvInterop
 
 
 
+
     [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
     public static extern int xxuv_ip4_addr(string ip, int port, IntPtr addr);
+
 
 
 
@@ -159,6 +177,13 @@ public static class XxUvInterop
     [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
     public static extern int xxuv_fill_client_ip(IntPtr stream, IntPtr buf, int buf_len, ref int data_len);
 
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate void uv_connect_cb(IntPtr req, int status);
+
+    //[DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
+    //public static extern int xxuv_tcp_connect(IntPtr req, IntPtr stream, IntPtr addr, uv_connect_cb cb);
+    [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
+    public static extern int xxuv_tcp_connect(IntPtr stream, IntPtr addr, uv_connect_cb cb);
 
 
     public static void TryThrow(int n)
@@ -167,14 +192,11 @@ public static class XxUvInterop
     }
 }
 
-
-// todo: 加上 disposed throw 检测
-
 public class XxUvLoop : IDisposable
 {
-    public object userData;                     // 随便填
-    public XxSimpleList<XxUvTcp> listeners;     // 需要用就 new
-    public XxSimpleList<XxUvTcp> clients;       // 需要用就 new
+    public object userData;                             // 随便填
+    public XxSimpleList<XxUvTcpListener> listeners;     // 需要用就 new
+    public XxSimpleList<XxUvTcpClient> clients;         // 需要用就 new
 
     public IntPtr ptr;
     public XxUvLoop()
@@ -242,45 +264,35 @@ public class XxUvLoop : IDisposable
     #endregion
 }
 
-
-public class XxUvTcp : IDisposable
+public class XxUvTcpListener : IDisposable
 {
     public object userData;                 // 随便填
-    public Action<byte[]> OnRead;
-    public Action<XxUvTcp> OnConnect;
-    // todo: OnDisconnect
+    public Action<XxUvTcpPeer> OnAccept;
     public Action OnDispose;
-    public XxSimpleList<XxUvTcp> peers;     // 需要用就 new
+    public XxSimpleList<XxUvTcpPeer> peers; // 需要用就 new
     public int index_at_container;          // 于容器中的 下标. 需要就填
 
-
-    // 内部变量
+    // 只读
     public XxUvLoop loop;
-    public XxUvTcp listener;                // 空: client, 非空: peer
-
 
     public IntPtr ptr;
     public IntPtr addrPtr;
-    public XxUvTcp(XxUvLoop loop)
+    public XxUvTcpListener(XxUvLoop loop)
     {
         this.loop = loop;
 
         ptr = XxUvInterop.xxuv_alloc_uv_tcp_t();
-        if (ptr == IntPtr.Zero) throw new OverflowException();
+        if (ptr == IntPtr.Zero) throw new OutOfMemoryException();
 
         XxUvInterop.TryThrow(XxUvInterop.xxuv_tcp_init(loop.ptr, ptr));
 
         XxUvInterop.xxuv_set_data(ptr, (IntPtr)GCHandle.Alloc(this));
 
         addrPtr = XxUvInterop.xxuv_alloc_sockaddr_in();
-        if (addrPtr == IntPtr.Zero) throw new OverflowException();
+        if (addrPtr == IntPtr.Zero) throw new OutOfMemoryException();
+
+        OnAcceptCB = OnAcceptCBImpl;
     }
-
-
-
-    // todo: SetAddress, Connect, Disconnect
-
-
 
     public void Bind(string ipv4, int port)
     {
@@ -288,30 +300,113 @@ public class XxUvTcp : IDisposable
         XxUvInterop.TryThrow(XxUvInterop.xxuv_tcp_bind_(ptr, addrPtr));
     }
 
-
-
-    static XxUvInterop.uv_connection_cb OnConnectCB = OnConnectCBImpl;
-    static void OnConnectCBImpl(IntPtr stream, int status)
+    XxUvInterop.uv_connection_cb OnAcceptCB;
+    void OnAcceptCBImpl(IntPtr stream, int status)
     {
         XxUvInterop.TryThrow(status);
-        var listener = (XxUvTcp)((GCHandle)XxUvInterop.xxuv_get_data(stream)).Target;
-        var peer = listener.Accept();
-        if (peer != null)
+        XxUvTcpPeer peer = null;
+        try
         {
-            listener.OnConnect(peer);
+            peer = new XxUvTcpPeer(loop, this);
         }
+        catch
+        {
+            return;
+        }
+        OnAccept(peer);
     }
     public void Listen(int backlog = 128)
     {
-        XxUvInterop.TryThrow(XxUvInterop.xxuv_listen(ptr, backlog, OnConnectCB));
+        XxUvInterop.TryThrow(XxUvInterop.xxuv_listen(ptr, backlog, OnAcceptCB));
     }
 
+    #region Dispose
 
+    private bool disposed;
+
+    //Implement IDisposable.
+    public void Dispose()
+    {
+        if (OnDispose != null) OnDispose();
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!disposed)
+        {
+            if (disposing)
+            {
+                // Free other state (managed objects).
+            }
+            // Free your own state (unmanaged objects).
+            // Set large fields to null.
+            var p = XxUvInterop.xxuv_get_data(ptr);
+            if (p == IntPtr.Zero) throw new NullReferenceException();
+            ((GCHandle)p).Free();
+
+            XxUvInterop.xxuv_close_(ptr);
+            ptr = IntPtr.Zero;
+
+            XxUvInterop.xxuv_free(addrPtr);
+            addrPtr = IntPtr.Zero;
+
+            loop = null;
+            disposed = true;
+        }
+        // Call Dispose in the base class.
+        //base.Dispose(disposing);
+    }
+
+    // Use C# destructor syntax for finalization code.
+    ~XxUvTcpListener()
+    {
+        Dispose(false);
+    }
+
+    // The derived class does not have a Finalize method
+    // or a Dispose method without parameters because it inherits
+    // them from the base class.
+
+    #endregion
+}
+
+public class XxUvTcpPeer : IDisposable
+{
+    public object userData;                 // 随便填
+    public Action<byte[]> OnRead;
+    public Action OnDispose;
+    public int index_at_container;          // 于容器中的 下标. 需要就填
+
+    // 只读
+    public XxUvLoop loop;
+    public XxUvTcpListener listener;
+
+    public IntPtr ptr;
+    public IntPtr addrPtr;
+    public XxUvTcpPeer(XxUvLoop loop, XxUvTcpListener listener)
+    {
+        this.loop = loop;
+        this.listener = listener;
+
+        ptr = XxUvInterop.xxuv_alloc_uv_tcp_t();
+        if (ptr == IntPtr.Zero) throw new OutOfMemoryException();
+
+        XxUvInterop.TryThrow(XxUvInterop.xxuv_tcp_init(loop.ptr, ptr));
+        XxUvInterop.TryThrow(XxUvInterop.xxuv_accept(listener.ptr, ptr));
+        XxUvInterop.TryThrow(XxUvInterop.xxuv_read_start_(ptr, OnReadCB));
+
+        addrPtr = XxUvInterop.xxuv_alloc_sockaddr_in();
+        if (addrPtr == IntPtr.Zero) throw new OutOfMemoryException();
+
+        XxUvInterop.xxuv_set_data(ptr, (IntPtr)GCHandle.Alloc(this));
+    }
 
     static XxUvInterop.uv_read_cb OnReadCB = OnReadCBImpl;
     static void OnReadCBImpl(IntPtr stream, IntPtr nread, XxUvInterop.uv_buf_t buf)
     {
-        var peer = (XxUvTcp)((GCHandle)XxUvInterop.xxuv_get_data(stream)).Target;
+        var peer = (XxUvTcpPeer)((GCHandle)XxUvInterop.xxuv_get_data(stream)).Target;
         int len = (int)nread;
         if (len > 0)
         {
@@ -323,23 +418,6 @@ public class XxUvTcp : IDisposable
         }
         buf.Free();
     }
-    public XxUvTcp Accept()
-    {
-        var peer = new XxUvTcp(loop);
-        if (XxUvInterop.xxuv_accept(ptr, peer.ptr) == 0)
-        {
-            XxUvInterop.TryThrow(XxUvInterop.xxuv_read_start_(peer.ptr, OnReadCB));
-            peer.listener = this;
-            return peer;
-        }
-        else
-        {
-            peer.Dispose();
-            return null;
-        }
-    }
-
-
 
     public void Send(byte[] data, uint len = 0)
     {
@@ -351,7 +429,6 @@ public class XxUvTcp : IDisposable
         XxUvInterop.xxuv_write_(ptr, h.AddrOfPinnedObject(), len);
         h.Free();
     }
-
 
     byte[] ipBuf = new byte[64];
     string ip_ = null;
@@ -415,7 +492,7 @@ public class XxUvTcp : IDisposable
     }
 
     // Use C# destructor syntax for finalization code.
-    ~XxUvTcp()
+    ~XxUvTcpPeer()
     {
         Dispose(false);
     }
@@ -427,65 +504,197 @@ public class XxUvTcp : IDisposable
     #endregion
 }
 
-
-public class XxSimpleList<T>
+public class XxUvTcpClient : IDisposable
 {
-    public T[] buf;
-    public int bufLen { get { return buf.Length; } }
-    public int dataLen;
+    public object userData;                 // 随便填
+    public Action<byte[]> OnRead;
+    public Action<int> OnConnect;
+    public Action OnDispose;
+    public int index_at_container;          // 于容器中的 下标. 需要就填
 
-    private const int defaultCapacity = 4;
-    static readonly T[] emptyBuf = new T[0];
+    // 只读
+    public XxUvLoop loop;
+    public XxUvTcpStates state;
 
-    public XxSimpleList(int capacity = 0)
+
+    public IntPtr handle;
+    void Handle()
     {
-        buf = emptyBuf;
-        Reserve(capacity);
+        if (handle != IntPtr.Zero) throw new InvalidOperationException();
+        handle = (IntPtr)GCHandle.Alloc(this);
+    }
+    void Unhandle()
+    {
+        if (handle != IntPtr.Zero) return;
+        ((GCHandle)handle).Free();
+        handle = IntPtr.Zero;
     }
 
-    public T this[int index]
-    {
-        get { return buf[index]; }
-        set { buf[index] = value; }
-    }
 
-    public void Add(T item)
+    public IntPtr addrPtr;
+    void CreateAddrPtr()
     {
-        if (dataLen == buf.Length) Reserve(dataLen + 1);
-        buf[dataLen++] = item;
+        if (addrPtr != IntPtr.Zero) throw new InvalidOperationException();
+        addrPtr = XxUvInterop.xxuv_alloc_sockaddr_in();
+        if (addrPtr == IntPtr.Zero) throw new OutOfMemoryException();
     }
-
-    public void Reserve(int min)
+    void ReleaseAddrPtr()
     {
-        if (buf.Length < min)
+        if (addrPtr != IntPtr.Zero)
         {
-            int newCapacity = buf.Length == 0 ? defaultCapacity : buf.Length * 2;
-            if (newCapacity < min) newCapacity = min;
-            if (newCapacity < buf.Length) return;
-            T[] newItems = new T[newCapacity];
-            if (dataLen > 0)
+            XxUvInterop.xxuv_free(addrPtr);
+            addrPtr = IntPtr.Zero;
+        }
+    }
+
+
+    public IntPtr ptr;
+    void CreatePtr()
+    {
+        if (ptr != IntPtr.Zero) throw new InvalidOperationException();
+
+        ptr = XxUvInterop.xxuv_alloc_uv_tcp_t();
+        if (ptr == IntPtr.Zero) throw new OutOfMemoryException();
+
+        int r = XxUvInterop.xxuv_tcp_init(loop.ptr, ptr);
+        if (r != 0)
+        {
+            XxUvInterop.xxuv_free(ptr);
+            ptr = IntPtr.Zero;
+            throw new Exception(XxUvInterop.xxuv_strerror(r));
+        }
+
+        XxUvInterop.xxuv_set_data(ptr, handle);
+    }
+    void ReleasePtr()
+    {
+        if (ptr != IntPtr.Zero)
+        {
+            XxUvInterop.xxuv_close_(ptr);
+            ptr = IntPtr.Zero;
+        }
+    }
+
+
+    public XxUvTcpClient(XxUvLoop loop)
+    {
+        CreateAddrPtr();
+        this.loop = loop;
+        OnConnectCB = OnConnectCBImpl;
+        Handle();
+    }
+
+    public void SetAddress(string ipv4, int port)
+    {
+        XxUvInterop.TryThrow(XxUvInterop.xxuv_ip4_addr(ipv4, port, addrPtr));
+    }
+
+    XxUvInterop.uv_connect_cb OnConnectCB;
+    public void OnConnectCBImpl(IntPtr req, int status)
+    {
+        XxUvInterop.xxuv_free(req);
+        if (status < 0)
+        {
+            state = XxUvTcpStates.Disconnected;
+            ReleasePtr();
+        }
+        else
+        {
+            state = XxUvTcpStates.Connected;
+            XxUvInterop.xxuv_read_start_(ptr, OnReadCB);
+        }
+        if (OnConnect != null) OnConnect(status);
+    }
+
+    public void Connect()
+    {
+        if (state != XxUvTcpStates.Disconnected) throw new InvalidOperationException();
+
+        CreatePtr();
+
+        var r = XxUvInterop.xxuv_tcp_connect(ptr, addrPtr, OnConnectCB);
+        if (r != 0)
+        {
+            ReleasePtr();
+            throw new Exception(XxUvInterop.xxuv_strerror(r));
+        }
+        state = XxUvTcpStates.Connecting;
+    }
+
+    static XxUvInterop.uv_read_cb OnReadCB = OnReadCBImpl;
+    static void OnReadCBImpl(IntPtr stream, IntPtr nread, XxUvInterop.uv_buf_t buf)
+    {
+        var client = (XxUvTcpClient)((GCHandle)XxUvInterop.xxuv_get_data(stream)).Target;
+        int len = (int)nread;
+        if (len > 0)
+        {
+            client.OnRead(buf.ToBytes(len));
+        }
+        else if (len < 0)
+        {
+            client.Dispose();
+        }
+        buf.Free();
+    }
+
+    public void Send(byte[] data, uint len = 0)
+    {
+        if (data == null || data.Length == 0) throw new NullReferenceException();
+        if (len > data.Length) throw new IndexOutOfRangeException();
+        if (len == 0) len = (uint)data.Length;
+        var h = GCHandle.Alloc(data, GCHandleType.Pinned);
+        XxUvInterop.xxuv_write_(ptr, h.AddrOfPinnedObject(), len);
+        h.Free();
+    }
+
+    public void Disconnect()
+    {
+        if (state == XxUvTcpStates.Disconnected) throw new InvalidOperationException();
+        ReleasePtr();
+        state = XxUvTcpStates.Disconnected;
+    }
+
+    #region Dispose
+
+    private bool disposed;
+
+    //Implement IDisposable.
+    public void Dispose()
+    {
+        if (OnDispose != null) OnDispose();
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!disposed)
+        {
+            if (disposing)
             {
-                Array.Copy(buf, 0, newItems, 0, dataLen);
+                // Free other state (managed objects).
             }
-            buf = newItems;
+            // Free your own state (unmanaged objects).
+            // Set large fields to null.
+            Unhandle();
+            if (state != XxUvTcpStates.Disconnected) Disconnect();
+            ReleaseAddrPtr();
+            loop = null;
+            disposed = true;
         }
+        // Call Dispose in the base class.
+        //base.Dispose(disposing);
     }
 
-    public void SwapRemoveAt(int index)
+    // Use C# destructor syntax for finalization code.
+    ~XxUvTcpClient()
     {
-        if (index + 1 < dataLen)
-        {
-            buf[index] = buf[dataLen - 1];
-        }
-        dataLen--;
-        buf[dataLen] = default(T);
+        Dispose(false);
     }
 
-    public void ForEach(Action<T> action)
-    {
-        for (int i = dataLen - 1; i >= 0; --i)
-        {
-            action(buf[i]);
-        }
-    }
+    // The derived class does not have a Finalize method
+    // or a Dispose method without parameters because it inherits
+    // them from the base class.
+
+    #endregion
 }

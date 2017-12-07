@@ -21,6 +21,8 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 
 #endif
 
+extern "C" {
+
 XXNBSOCKETLIB_API void Init_Sock() noexcept
 {
 	XxNBSocket::SockInit();
@@ -122,3 +124,6 @@ XXNBSOCKETLIB_API void XxNBSocket_PopRecv(void* nbs) noexcept
 	auto self = (XxNBSocket*)nbs;
 	self->recvBufs.pop_front();
 }
+
+}
+
