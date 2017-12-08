@@ -7,7 +7,10 @@ public static class Program
 {
     static void Main(string[] args)
     {
+        // loop
         var loop = new XxUvLoop();
+
+        // echo server
         var listener = new XxUvTcpListener(loop);
         listener.peers = new XxSimpleList<XxUvTcpPeer>(1024);
         listener.OnAccept = peer =>
@@ -32,6 +35,16 @@ public static class Program
         };
         listener.Bind("0.0.0.0", 12345);
         listener.Listen();
+
+        // client
+        var client = new XxUvTcpClient(loop);
+        client.OnConnect = status =>
+        {
+            Console.WriteLine("client " + client.state);
+        };
+        client.SetAddress("127.0.0.1", 12345);
+        client.Connect();
+
         Console.WriteLine("begin.");
         loop.Run();
         Console.WriteLine("end.");

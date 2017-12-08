@@ -50,11 +50,11 @@ public static class XxUvInterop
 
 
     [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
-    public static extern string xxuv_strerror(int n);
+    public static extern IntPtr xxuv_strerror(int n);
 
 
     [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
-    public static extern string xxuv_err_name(int n);
+    public static extern IntPtr xxuv_err_name(int n);
 
 
 
@@ -177,15 +177,18 @@ public static class XxUvInterop
     public static extern int xxuv_tcp_connect(IntPtr stream, IntPtr addr, uv_connect_cb cb);
 
 
-    public static void TryThrow(this int n)
-    {
-        if (n != 0) throw new Exception(XxUvInterop.xxuv_strerror(n));
-    }
-
     public static void Throw(this int n)
     {
-        throw new Exception(XxUvInterop.xxuv_strerror(n));
+        var p = XxUvInterop.xxuv_strerror(n);
+        var s = Marshal.PtrToStringAnsi(p);
+        throw new Exception("uv exception: " + s);
     }
+
+    public static void TryThrow(this int n)
+    {
+        if (n != 0) Throw(n);
+    }
+
 
     public static T To<T>(this IntPtr p)
     {
@@ -246,7 +249,7 @@ public class XxUvLoop : IDisposable
 
     public void Run(XxUvRunMode mode = XxUvRunMode.Default)
     {
-        XxUvInterop.TryThrow(XxUvInterop.xxuv_run(ptr, mode));
+        XxUvInterop.xxuv_run(ptr, mode).TryThrow();
     }
 
     #region Dispose
@@ -323,7 +326,7 @@ public class XxUvTcpListener : IDisposable
         {
             this.Free(ref ptr);
             this.Unhandle(ref handle);
-            throw new Exception(XxUvInterop.xxuv_strerror(r));
+            r.Throw();
         }
 
         addrPtr = XxUvInterop.xxuv_alloc_sockaddr_in(IntPtr.Zero);
@@ -355,14 +358,14 @@ public class XxUvTcpListener : IDisposable
     }
     public void Listen(int backlog = 128)
     {
-        XxUvInterop.TryThrow(XxUvInterop.xxuv_listen(ptr, backlog, OnAcceptCB));
+        XxUvInterop.xxuv_listen(ptr, backlog, OnAcceptCB).TryThrow();
     }
 
 
     public void Bind(string ipv4, int port)
     {
-        XxUvInterop.TryThrow(XxUvInterop.xxuv_ip4_addr(ipv4, port, addrPtr));
-        XxUvInterop.TryThrow(XxUvInterop.xxuv_tcp_bind_(ptr, addrPtr));
+        XxUvInterop.xxuv_ip4_addr(ipv4, port, addrPtr).TryThrow();
+        XxUvInterop.xxuv_tcp_bind_(ptr, addrPtr).TryThrow();
     }
 
 
@@ -514,7 +517,7 @@ public class XxUvTcpPeer : IDisposable
             var h = GCHandle.Alloc(ipBuf, GCHandleType.Pinned);
             try
             {
-                XxUvInterop.TryThrow(XxUvInterop.xxuv_fill_client_ip(ptr, h.AddrOfPinnedObject(), ipBuf.Length, ref len));
+                XxUvInterop.xxuv_fill_client_ip(ptr, h.AddrOfPinnedObject(), ipBuf.Length, ref len).TryThrow();
                 ip_ = Encoding.ASCII.GetString(ipBuf, 0, len);
                 return ip_;
             }
@@ -600,18 +603,9 @@ public class XxUvTcpClient : IDisposable
             throw new OutOfMemoryException();
         }
 
-        int r = XxUvInterop.xxuv_tcp_init(loop.ptr, ptr);
-        if (r != 0)
-        {
-            this.Free(ref ptr);
-            this.Unhandle(ref handle);
-            r.Throw();
-        }
-
         addrPtr = XxUvInterop.xxuv_alloc_sockaddr_in(IntPtr.Zero);
         if (addrPtr == IntPtr.Zero)
         {
-            XxUvInterop.xxuv_close_(ptr);
             this.Free(ref ptr);
             this.Unhandle(ref handle);
             throw new OutOfMemoryException();
@@ -620,7 +614,7 @@ public class XxUvTcpClient : IDisposable
 
     public void SetAddress(string ipv4, int port)
     {
-        XxUvInterop.TryThrow(XxUvInterop.xxuv_ip4_addr(ipv4, port, addrPtr));
+        XxUvInterop.xxuv_ip4_addr(ipv4, port, addrPtr).TryThrow();
     }
 
     static XxUvInterop.uv_connect_cb OnConnectCB = OnConnectCBImpl;
@@ -643,26 +637,13 @@ public class XxUvTcpClient : IDisposable
     public void Connect()
     {
         if (state != XxUvTcpStates.Disconnected) throw new InvalidOperationException();
-        if (ptr != IntPtr.Zero) throw new InvalidOperationException();
 
-        ptr = XxUvInterop.xxuv_alloc_uv_tcp_t(handle);
-        if (ptr == IntPtr.Zero)
-        {
-            throw new OutOfMemoryException();
-        }
+        XxUvInterop.xxuv_tcp_init(loop.ptr, ptr).TryThrow();
 
-        int r = XxUvInterop.xxuv_tcp_init(loop.ptr, ptr);
-        if (r != 0)
-        {
-            this.Free(ref ptr);
-            r.Throw();
-        }
-
-        r = XxUvInterop.xxuv_tcp_connect(ptr, addrPtr, OnConnectCB);
+        int r = XxUvInterop.xxuv_tcp_connect(ptr, addrPtr, OnConnectCB);
         if (r != 0)
         {
             XxUvInterop.xxuv_close_(ptr);
-            this.Free(ref ptr);
             r.Throw();
         }
 
@@ -699,7 +680,6 @@ public class XxUvTcpClient : IDisposable
     {
         if (state == XxUvTcpStates.Disconnected) throw new InvalidOperationException();
         XxUvInterop.xxuv_close_(ptr);
-        this.Free(ref ptr);
         state = XxUvTcpStates.Disconnected;
     }
 
@@ -726,7 +706,8 @@ public class XxUvTcpClient : IDisposable
             // Free your own state (unmanaged objects).
             // Set large fields to null.
 
-            if (state != XxUvTcpStates.Disconnected) Disconnect();
+            XxUvInterop.xxuv_close_(ptr);
+            this.Free(ref ptr);
             this.Free(ref addrPtr);
             this.Unhandle(ref handle);
             loop = null;
