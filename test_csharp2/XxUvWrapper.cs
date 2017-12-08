@@ -174,7 +174,7 @@ public static class XxUvInterop
     //[DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
     //public static extern int xxuv_tcp_connect(IntPtr req, IntPtr stream, IntPtr addr, uv_connect_cb cb);
     [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
-    public static extern int xxuv_tcp_connect(IntPtr stream, IntPtr addr, uv_connect_cb cb);
+    public static extern int xxuv_tcp_connect_(IntPtr stream, IntPtr addr, uv_connect_cb cb);
 
 
     public static void Throw(this int n)
@@ -640,7 +640,7 @@ public class XxUvTcpClient : IDisposable
 
         XxUvInterop.xxuv_tcp_init(loop.ptr, ptr).TryThrow();
 
-        int r = XxUvInterop.xxuv_tcp_connect(ptr, addrPtr, OnConnectCB);
+        int r = XxUvInterop.xxuv_tcp_connect_(ptr, addrPtr, OnConnectCB);
         if (r != 0)
         {
             XxUvInterop.xxuv_close_(ptr);

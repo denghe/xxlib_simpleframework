@@ -19,15 +19,17 @@ public static class Program
             listener.peers.Add(peer);
             peer.OnRead = bytes =>
             {
+                Console.WriteLine("peer: " + peer.ip + " read bytes " + BitConverter.ToString(bytes));
                 if (bytes[0] == 32) peer.Dispose();             // SPACE disconnect
                 else if (bytes[0] == 27) listener.Dispose();    // ESC exit
                 else peer.Send(bytes);                          // echo
             };
             peer.OnDispose = () =>
             {
+                Console.WriteLine("peer: " + peer.ip + " Disconnected.");
                 listener.peers.SwapRemoveAt(peer.index_at_container);
             };
-            Console.WriteLine(peer.ip + " connected.");
+            Console.WriteLine("listener: " + peer.ip + " connected.");
         };
         listener.OnDispose = () =>
         {
@@ -40,7 +42,7 @@ public static class Program
         var client = new XxUvTcpClient(loop);
         client.OnConnect = status =>
         {
-            Console.WriteLine("client " + client.state);
+            Console.WriteLine("client: " + client.state);
         };
         client.SetAddress("127.0.0.1", 12345);
         client.Connect();

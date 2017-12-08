@@ -51,8 +51,8 @@ XXUVLIB_API uv_loop_t* xxuv_alloc_uv_loop_t(void* ud) noexcept
 XXUVLIB_API uv_tcp_t* xxuv_alloc_uv_tcp_t(void* ud) noexcept
 {
 	return (uv_tcp_t*)Alloc(sizeof(uv_tcp_t), ud);
-
 }
+
 XXUVLIB_API sockaddr_in* xxuv_alloc_sockaddr_in(void* ud) noexcept
 {
 	return (sockaddr_in*)Alloc(sizeof(sockaddr_in), ud);
