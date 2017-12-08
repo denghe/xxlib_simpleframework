@@ -18,21 +18,16 @@
 extern "C" {
 #endif
 
+	XXUVLIB_API uv_loop_t* xxuv_alloc_uv_loop_t(void* ud) noexcept;
+	XXUVLIB_API uv_tcp_t* xxuv_alloc_uv_tcp_t(void* ud) noexcept;
+	XXUVLIB_API sockaddr_in* xxuv_alloc_sockaddr_in(void* ud) noexcept;
 
-
-
-	XXUVLIB_API uv_loop_t* xxuv_alloc_uv_loop_t() noexcept;
-	XXUVLIB_API uv_tcp_t* xxuv_alloc_uv_tcp_t() noexcept;
-	XXUVLIB_API sockaddr_in* xxuv_alloc_sockaddr_in() noexcept;
 	XXUVLIB_API void xxuv_free(void* p) noexcept;
-
+	XXUVLIB_API void* xxuv_get_ud(void* p) noexcept;
+	XXUVLIB_API void* xxuv_get_ud_from_uv_connect_t(uv_connect_t* req) noexcept;
 
 	XXUVLIB_API const char* xxuv_strerror(int n) noexcept;
 	XXUVLIB_API const char* xxuv_err_name(int n) noexcept;
-
-
-	XXUVLIB_API void xxuv_set_data(uv_handle_t* handle, void* data) noexcept;
-	XXUVLIB_API void* xxuv_get_data(uv_handle_t* handle) noexcept;
 
 
 	XXUVLIB_API void xxuv_close(uv_handle_t* handle, uv_close_cb close_cb) noexcept;

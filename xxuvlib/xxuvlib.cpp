@@ -21,21 +21,59 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 
 #endif
 
-static void* Alloc(size_t size)
+
+// 分配内存时保留一个头空间并填充
+static void* Alloc(size_t size, void* ud)
 {
-	return std::malloc(size);
+	auto p = (void**)malloc(size + sizeof(void*));
+	p[0] = ud;
+	return &p[1];
 }
 
-template<typename T>
-static T* Alloc()
+// 容忍浪费, 简化 Free 流程
+static void* Alloc(size_t size)
 {
-	return (T*)Alloc(sizeof(T));
+	return (void**)malloc(size + sizeof(void*)) + 1;
+}
+
+// 还原真实指针, 释放
+static void Free(void* p) noexcept
+{
+	free((void**)p - 1);
+}
+
+
+XXUVLIB_API uv_loop_t* xxuv_alloc_uv_loop_t(void* ud) noexcept
+{
+	return (uv_loop_t*)Alloc(sizeof(uv_loop_t), ud);
+}
+
+XXUVLIB_API uv_tcp_t* xxuv_alloc_uv_tcp_t(void* ud) noexcept
+{
+	return (uv_tcp_t*)Alloc(sizeof(uv_tcp_t), ud);
+
+}
+XXUVLIB_API sockaddr_in* xxuv_alloc_sockaddr_in(void* ud) noexcept
+{
+	return (sockaddr_in*)Alloc(sizeof(sockaddr_in), ud);
 }
 
 XXUVLIB_API void xxuv_free(void* p) noexcept
 {
-	std::free(p);
+	Free(p);
 }
+
+XXUVLIB_API void* xxuv_get_ud(void* p) noexcept
+{
+	return *((void**)p - 1);
+}
+
+XXUVLIB_API void* xxuv_get_ud_from_uv_connect_t(uv_connect_t* req) noexcept
+{
+	return xxuv_get_ud(req->handle);
+}
+
+
 
 
 XXUVLIB_API const char* xxuv_strerror(int n) noexcept
@@ -48,14 +86,9 @@ XXUVLIB_API const char* xxuv_err_name(int n) noexcept
 }
 
 
-XXUVLIB_API void xxuv_set_data(uv_handle_t* handle, void* data) noexcept
-{
-	handle->data = data;
-}
-XXUVLIB_API void* xxuv_get_data(uv_handle_t* handle) noexcept
-{
-	return handle->data;
-}
+
+
+
 
 
 XXUVLIB_API void xxuv_close(uv_handle_t* handle, uv_close_cb close_cb) noexcept
@@ -70,24 +103,12 @@ XXUVLIB_API void xxuv_close_(uv_handle_t* handle) noexcept
 #endif
 	uv_close(handle, [](uv_handle_t* handle)
 	{
-		xxuv_free(handle);
+		Free(handle);
 	});
 }
 
-XXUVLIB_API uv_loop_t* xxuv_alloc_uv_loop_t() noexcept
-{
-	return ::Alloc<uv_loop_t>();
-}
 
-XXUVLIB_API uv_tcp_t* xxuv_alloc_uv_tcp_t() noexcept
-{
-	return ::Alloc<uv_tcp_t>();
-}
 
-XXUVLIB_API sockaddr_in* xxuv_alloc_sockaddr_in() noexcept
-{
-	return ::Alloc<sockaddr_in>();
-}
 
 
 XXUVLIB_API int xxuv_loop_init(uv_loop_t* p) noexcept
@@ -95,10 +116,17 @@ XXUVLIB_API int xxuv_loop_init(uv_loop_t* p) noexcept
 	return uv_loop_init(p);
 }
 
+XXUVLIB_API int xxuv_run(uv_loop_t* loop, uv_run_mode mode) noexcept
+{
+	return uv_run(loop, mode);
+}
+
 XXUVLIB_API int xxuv_loop_close(uv_loop_t* p) noexcept
 {
 	return uv_loop_close(p);
 }
+
+
 
 
 
@@ -160,7 +188,7 @@ XXUVLIB_API int xxuv_write_(uv_stream_t* stream, char* inBuf, unsigned int len) 
 		uv_write_t req;
 		uv_buf_t buf;
 	};
-	auto req = Alloc<write_req_t>();
+	auto req = (write_req_t*)Alloc(sizeof(write_req_t));
 	auto buf = (char*)Alloc(len);
 	memcpy(buf, inBuf, len);
 	req->buf = uv_buf_init(buf, (uint32_t)len);
@@ -168,16 +196,11 @@ XXUVLIB_API int xxuv_write_(uv_stream_t* stream, char* inBuf, unsigned int len) 
 	{
 		if (status) fprintf(stderr, "Write error: %s\n", uv_strerror(status));
 		write_req_t *wr = (write_req_t*)req;
-		xxuv_free(wr->buf.base);
-		xxuv_free(wr);
+		Free(wr->buf.base);
+		Free(wr);
 	});
 }
 
-
-XXUVLIB_API int xxuv_run(uv_loop_t* loop, uv_run_mode mode) noexcept
-{
-	return uv_run(loop, mode);
-}
 
 XXUVLIB_API int xxuv_fill_client_ip(uv_tcp_t* stream, char* buf, int buf_len, int* data_len) noexcept
 {
@@ -196,8 +219,9 @@ XXUVLIB_API int xxuv_tcp_connect(uv_connect_t* req, uv_tcp_t* handle, const sock
 {
 	return uv_tcp_connect(req, handle, addr, cb);
 }
+
 XXUVLIB_API int xxuv_tcp_connect_(uv_tcp_t* handle, const struct sockaddr* addr, uv_connect_cb cb)
 {
-	auto req = Alloc<uv_connect_t>();
+	auto req = (uv_connect_t*)Alloc(sizeof(uv_connect_t));
 	return uv_tcp_connect(req, handle, addr, cb);
 }
