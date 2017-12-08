@@ -1,5 +1,7 @@
 ﻿#include "xxuvlib.h"
-#include <cstdlib>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
 
 #ifdef _WIN32
 
@@ -18,7 +20,8 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 	}
 	return TRUE;
 }
-
+#else
+#define sprintf_s snprintf
 #endif
 
 
