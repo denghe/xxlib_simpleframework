@@ -1,0 +1,22 @@
+
+为 root 设密码
+$ passwd root
+
+带减号, 同时切换上下文
+$ su - root
+
+安 ssh 服务
+$ sudo apt-get install openssh-server  
+
+改配置, 开启 root 远程登录
+$ vim /etc/ssh/sshd_config
+# Authentication:  
+LoginGraceTime 120  
+#PermitRootLogin without-password  
+PermitRootLogin yes  
+StrictModes yes  
+
+重启 ssh 服务
+$ service ssh restart
+
+
