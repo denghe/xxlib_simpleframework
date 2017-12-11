@@ -9,19 +9,8 @@ public static class Program
     {
         // loop
         var loop = new XxUvLoop();
-
-        // client
-        var client = new XxUvTcpClient(loop);
-        client.OnConnect = status =>
-        {
-            Console.WriteLine("client: " + client.state);
-        };
-        client.SetAddress("127.0.0.1", 12345);
-        client.Connect();
-
-        Console.WriteLine("begin.");
+        var timer = new XxUvTimer(loop, 1000, 100);
+        timer.OnFire = () => Console.Write(".");
         loop.Run();
-        Console.WriteLine("end.");
-        Console.Read();
     }
 }

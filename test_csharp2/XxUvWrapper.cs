@@ -4,188 +4,12 @@ using System.Text;
 
 // todo: 加上 disposed throw 检测
 
-public enum XxUvRunMode
-{
-    Default = 0,
-    Once,
-    NoWait
-}
-
-public enum XxUvTcpStates
-{
-    Disconnected,
-    Connecting,
-    Connected,
-    Disconnecting,
-};
-
-public static class XxUvInterop
-{
-#if !UNITY_EDITOR && UNITY_IPHONE
-        const string DLL_NAME = "__Internal";
-#else
-    const string DLL_NAME = "xxuvlib";
-#endif
-
-    [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
-    public static extern IntPtr xxuv_alloc_uv_loop_t(IntPtr ud);
-
-    [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
-    public static extern IntPtr xxuv_alloc_uv_tcp_t(IntPtr ud);
-
-    [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
-    public static extern IntPtr xxuv_alloc_sockaddr_in(IntPtr ud);
-
-
-
-    [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
-    public static extern void xxuv_free(IntPtr p);
-
-    [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
-    public static extern IntPtr xxuv_get_ud(IntPtr p);
-
-    [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
-    public static extern IntPtr xxuv_get_ud_from_uv_connect_t(IntPtr req);
-
-    [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
-    public static extern IntPtr xxuv_get_buf(IntPtr buf_t);
-
-
-
-    [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
-    public static extern IntPtr xxuv_strerror(int n);
-
-
-    [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
-    public static extern IntPtr xxuv_err_name(int n);
-
-
-
-    //[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    //public delegate void uv_close_cb(IntPtr handle);
-
-    //[DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
-    //public static extern void xxuv_close(IntPtr handle, uv_close_cb close_cb);
-
-    [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
-    public static extern void xxuv_close_(IntPtr handle);
-
-
-
-
-    [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
-    public static extern int xxuv_loop_init(IntPtr loop);
-
-    [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
-    public static extern int xxuv_run(IntPtr loop, XxUvRunMode mode);
-
-    [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
-    public static extern int xxuv_loop_close(IntPtr loop);
-
-
-
-
-    [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
-    public static extern int xxuv_ip4_addr(string ip, int port, IntPtr addr);
-
-
-
-
-    [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
-    public static extern int xxuv_tcp_init(IntPtr loop, IntPtr tcp);
-
-    //[DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
-    //public static extern int xxuv_tcp_bind(IntPtr tcp, IntPtr addr, uint flags);
-
-    [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
-    public static extern int xxuv_tcp_bind_(IntPtr listener, IntPtr addr);
-
-    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate void uv_connection_cb(IntPtr listener, int status);
-
-    [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
-    public static extern int xxuv_listen(IntPtr listener, int backlog, uv_connection_cb cb);
-
-    [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
-    public static extern int xxuv_accept(IntPtr listener, IntPtr peer);
-
-    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate void uv_read_cb(IntPtr stream, IntPtr nread, IntPtr buf_t);
-
-    //public delegate void uv_alloc_cb (IntPtr handle, IntPtr suggested_size, IntPtr buf);
-    //[DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
-    //public static extern int xxuv_read_start(IntPtr client, uv_alloc_cb alloc_cb, uv_read_cb read_cb);
-
-    [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
-    public static extern int xxuv_read_start_(IntPtr stream, uv_read_cb read_cb);
-
-    //public delegate void uv_write_cb(IntPtr req, int status);
-    //[DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
-    //public static extern int xxuv_write(IntPtr req, IntPtr stream, uv_buf_t[] bufs, uint nbufs, uv_write_cb cb);
-
-    [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
-    public static extern int xxuv_write_(IntPtr stream, IntPtr buf, uint len);
-
-    [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
-    public static extern int xxuv_fill_client_ip(IntPtr stream, IntPtr buf, int buf_len, ref int data_len);
-
-    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate void uv_connect_cb(IntPtr req, int status);
-
-    //[DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
-    //public static extern int xxuv_tcp_connect(IntPtr req, IntPtr stream, IntPtr addr, uv_connect_cb cb);
-    [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
-    public static extern int xxuv_tcp_connect_(IntPtr stream, IntPtr addr, uv_connect_cb cb);
-
-
-    public static void Throw(this int n)
-    {
-        var p = XxUvInterop.xxuv_strerror(n);
-        var s = Marshal.PtrToStringAnsi(p);
-        throw new Exception("uv exception: " + s);
-    }
-
-    public static void TryThrow(this int n)
-    {
-        if (n != 0) Throw(n);
-    }
-
-
-    public static T To<T>(this IntPtr p)
-    {
-        return (T)((GCHandle)xxuv_get_ud(p)).Target;
-    }
-
-    public static void Handle(this IDisposable self, ref IntPtr handle)
-    {
-        handle = (IntPtr)GCHandle.Alloc(self);
-    }
-
-    // self 用不到. 只是为便于写扩展, 说明语义
-    public static void Unhandle(this IDisposable self, ref IntPtr handle)
-    {
-        if (handle != IntPtr.Zero)
-        {
-            ((GCHandle)handle).Free();
-            handle = IntPtr.Zero;
-        }
-    }
-
-    // self 用不到. 只是为便于写扩展, 说明语义
-    public static void Free(this IDisposable self, ref IntPtr ptr)
-    {
-        if (ptr != IntPtr.Zero)
-        {
-            xxuv_free(ptr);
-            ptr = IntPtr.Zero;
-        }
-    }
-}
-
 public class XxUvLoop : IDisposable
 {
-    public XxSimpleList<XxUvTcpListener> listeners;     // 需要用就 new
-    public XxSimpleList<XxUvTcpClient> clients;         // 需要用就 new
+    public XxSimpleList<XxUvTcpListener> listeners = new XxSimpleList<XxUvTcpListener>();
+    public XxSimpleList<XxUvTcpClient> clients = new XxSimpleList<XxUvTcpClient>();
+    public XxSimpleList<XxUvTimer> timers = new XxSimpleList<XxUvTimer>();
+    public XxSimpleList<XxUvAsync> asyncs = new XxSimpleList<XxUvAsync>();
 
     public IntPtr ptr;
     public IntPtr handle;
@@ -215,7 +39,7 @@ public class XxUvLoop : IDisposable
 
     #region Dispose
 
-    private bool disposed;
+    public bool disposed;
 
     //Implement IDisposable.
     public void Dispose()
@@ -259,13 +83,13 @@ public class XxUvLoop : IDisposable
 
 public class XxUvTcpListener : IDisposable
 {
+    public Func<XxUvTcpPeer> OnCreatePeer;
     public Action<XxUvTcpPeer> OnAccept;
     public Action OnDispose;
-    public XxSimpleList<XxUvTcpPeer> peers; // 需要用就 new
-    public int index_at_container;          // 于容器中的 下标. 需要就填
 
-    // 只读
     public XxUvLoop loop;
+    public XxSimpleList<XxUvTcpPeer> peers = new XxSimpleList<XxUvTcpPeer>();
+    public int index_at_container;          // 于容器中的 下标. 需要就填
 
     public IntPtr ptr;
     public IntPtr handle;
@@ -298,6 +122,9 @@ public class XxUvTcpListener : IDisposable
             this.Unhandle(ref handle);
             throw new OutOfMemoryException();
         }
+
+        index_at_container = loop.listeners.dataLen;
+        loop.listeners.Add(this);
     }
 
 
@@ -309,7 +136,8 @@ public class XxUvTcpListener : IDisposable
         XxUvTcpPeer peer = null;
         try
         {
-            peer = new XxUvTcpPeer(listener.loop, listener);
+            if (listener.OnCreatePeer != null) peer = listener.OnCreatePeer();
+            else peer = new XxUvTcpPeer(listener.loop, listener);
         }
         catch
         {
@@ -332,7 +160,7 @@ public class XxUvTcpListener : IDisposable
 
     #region Dispose
 
-    private bool disposed;
+    public bool disposed;
 
     //Implement IDisposable.
     public void Dispose()
@@ -353,10 +181,14 @@ public class XxUvTcpListener : IDisposable
             // Free your own state (unmanaged objects).
             // Set large fields to null.
 
+            peers.ForEach(c => c.Dispose());
+
             XxUvInterop.xxuv_close_(ptr);
             this.Free(ref ptr);
             this.Free(ref addrPtr);
             this.Unhandle(ref handle);
+
+            loop.listeners.SwapRemoveAt(index_at_container);
             loop = null;
             disposed = true;
         }
@@ -379,14 +211,13 @@ public class XxUvTcpListener : IDisposable
 
 public class XxUvTcpPeer : IDisposable
 {
-    public object userData;                 // 随便填
     public Action<byte[]> OnRead;
     public Action OnDispose;
-    public int index_at_container;          // 于容器中的 下标. 需要就填
 
     // 只读
     public XxUvLoop loop;
     public XxUvTcpListener listener;
+    public int index_at_container;
 
     public IntPtr ptr;
     public IntPtr handle;
@@ -438,6 +269,9 @@ public class XxUvTcpPeer : IDisposable
             this.Unhandle(ref handle);
             throw new OutOfMemoryException();
         }
+
+        index_at_container = listener.peers.dataLen;
+        listener.peers.Add(this);
     }
 
     static XxUvInterop.uv_read_cb OnReadCB = OnReadCBImpl;
@@ -494,7 +328,7 @@ public class XxUvTcpPeer : IDisposable
 
     #region Dispose
 
-    private bool disposed;
+    public bool disposed;
 
     //Implement IDisposable.
     public void Dispose()
@@ -520,6 +354,8 @@ public class XxUvTcpPeer : IDisposable
             this.Free(ref addrPtr);
             this.Unhandle(ref handle);
 
+            listener.peers.SwapRemoveAt(index_at_container);
+            listener = null;
             loop = null;
             disposed = true;
         }
@@ -542,7 +378,6 @@ public class XxUvTcpPeer : IDisposable
 
 public class XxUvTcpClient : IDisposable
 {
-    public object userData;                 // 随便填
     public Action<byte[]> OnRead;
     public Action<int> OnConnect;
     public Action OnDispose;
@@ -574,6 +409,9 @@ public class XxUvTcpClient : IDisposable
             this.Unhandle(ref handle);
             throw new OutOfMemoryException();
         }
+
+        index_at_container = loop.clients.dataLen;
+        loop.clients.Add(this);
     }
 
     public void SetAddress(string ipv4, int port)
@@ -652,7 +490,7 @@ public class XxUvTcpClient : IDisposable
 
     #region Dispose
 
-    private bool disposed;
+    public bool disposed;
 
     //Implement IDisposable.
     public void Dispose()
@@ -677,6 +515,8 @@ public class XxUvTcpClient : IDisposable
             this.Free(ref ptr);
             this.Free(ref addrPtr);
             this.Unhandle(ref handle);
+
+            loop.clients.SwapRemoveAt(index_at_container);
             loop = null;
             disposed = true;
         }
@@ -686,6 +526,214 @@ public class XxUvTcpClient : IDisposable
 
     // Use C# destructor syntax for finalization code.
     ~XxUvTcpClient()
+    {
+        Dispose(false);
+    }
+
+    // The derived class does not have a Finalize method
+    // or a Dispose method without parameters because it inherits
+    // them from the base class.
+
+    #endregion
+}
+
+public class XxUvTimer : IDisposable
+{
+    public Action OnFire;
+    public Action OnDispose;
+
+    public XxUvLoop loop;
+    public int index_at_container;          // 于容器中的 下标. 需要就填
+
+    public IntPtr ptr;
+    public IntPtr handle;
+    public XxUvTimer(XxUvLoop loop, ulong timeoutMS, ulong repeatIntervalMS)
+    {
+        this.Handle(ref handle);
+        this.loop = loop;
+
+        ptr = XxUvInterop.xxuv_alloc_uv_timer_t(handle);
+        if (ptr == IntPtr.Zero)
+        {
+            this.Unhandle(ref handle);
+            throw new OutOfMemoryException();
+        }
+
+        int r = XxUvInterop.xxuv_timer_init(loop.ptr, ptr);
+        if (r != 0)
+        {
+            this.Free(ref ptr);
+            this.Unhandle(ref handle);
+            r.Throw();
+        }
+
+        r = XxUvInterop.xxuv_timer_start(ptr, OnTimerCB, timeoutMS, repeatIntervalMS);
+        if (r != 0)
+        {
+            XxUvInterop.xxuv_close_(ptr);
+            this.Free(ref ptr);
+            this.Unhandle(ref handle);
+            r.Throw();
+        }
+
+        index_at_container = loop.timers.dataLen;
+        loop.timers.Add(this);
+    }
+
+    static XxUvInterop.uv_timer_cb OnTimerCB = OnTimerCBImpl;
+    static void OnTimerCBImpl(IntPtr handle)
+    {
+        var timer = handle.To<XxUvTimer>();
+        timer.OnFire();
+    }
+
+    public void SetRepeat(ulong repeatIntervalMS)
+    {
+        XxUvInterop.xxuv_timer_set_repeat(ptr, repeatIntervalMS);
+    }
+
+    public void Again()
+    {
+        XxUvInterop.xxuv_timer_again(ptr).TryThrow();
+    }
+
+    public void Stop()
+    {
+        XxUvInterop.xxuv_timer_stop(ptr).TryThrow();
+    }
+
+
+    #region Dispose
+
+    public bool disposed;
+
+    //Implement IDisposable.
+    public void Dispose()
+    {
+        if (OnDispose != null) OnDispose();
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!disposed)
+        {
+            if (disposing)
+            {
+                // Free other state (managed objects).
+            }
+            // Free your own state (unmanaged objects).
+            // Set large fields to null.
+
+            XxUvInterop.xxuv_close_(ptr);
+            this.Free(ref ptr);
+            this.Unhandle(ref handle);
+
+            loop.timers.SwapRemoveAt(index_at_container);
+            loop = null;
+            disposed = true;
+        }
+        // Call Dispose in the base class.
+        //base.Dispose(disposing);
+    }
+
+    // Use C# destructor syntax for finalization code.
+    ~XxUvTimer()
+    {
+        Dispose(false);
+    }
+
+    // The derived class does not have a Finalize method
+    // or a Dispose method without parameters because it inherits
+    // them from the base class.
+
+    #endregion
+}
+
+public class XxUvAsync : IDisposable
+{
+    public Action OnFire;
+    public Action OnDispose;
+
+    public XxUvLoop loop;
+    public int index_at_container;          // 于容器中的 下标. 需要就填
+
+    public IntPtr ptr;
+    public IntPtr handle;
+    public XxUvAsync(XxUvLoop loop)
+    {
+        this.Handle(ref handle);
+        this.loop = loop;
+
+        ptr = XxUvInterop.xxuv_alloc_uv_async_t(handle);
+        if (ptr == IntPtr.Zero)
+        {
+            this.Unhandle(ref handle);
+            throw new OutOfMemoryException();
+        }
+
+        int r = XxUvInterop.xxuv_async_init(loop.ptr, ptr, AsyncCB);
+        if (r != 0)
+        {
+            this.Free(ref ptr);
+            this.Unhandle(ref handle);
+            r.Throw();
+        }
+
+        index_at_container = loop.asyncs.dataLen;
+        loop.asyncs.Add(this);
+    }
+
+    static XxUvInterop.uv_async_cb AsyncCB = OnAsyncCBImpl;
+    static void OnAsyncCBImpl(IntPtr handle)
+    {
+        var self = handle.To<XxUvAsync>();
+        self.OnFire();
+    }
+
+    public void Fire()
+    {
+        XxUvInterop.xxuv_async_send(ptr).TryThrow();
+    }
+
+    #region Dispose
+
+    public bool disposed;
+
+    //Implement IDisposable.
+    public void Dispose()
+    {
+        if (OnDispose != null) OnDispose();
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!disposed)
+        {
+            if (disposing)
+            {
+                // Free other state (managed objects).
+            }
+            // Free your own state (unmanaged objects).
+            // Set large fields to null.
+
+            XxUvInterop.xxuv_close_(ptr);
+            this.Free(ref ptr);
+            this.Unhandle(ref handle);
+
+            loop.asyncs.SwapRemoveAt(index_at_container);
+            loop = null;
+            disposed = true;
+        }
+        // Call Dispose in the base class.
+        //base.Dispose(disposing);
+    }
+
+    // Use C# destructor syntax for finalization code.
+    ~XxUvAsync()
     {
         Dispose(false);
     }

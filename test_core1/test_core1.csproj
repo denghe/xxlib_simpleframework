@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <Compile Include="..\test_csharp2\XxSimpleList.cs" Link="XxSimpleList.cs" />
+    <Compile Include="..\test_csharp2\XxUvInterop.cs" Link="XxUvInterop.cs" />
     <Compile Include="..\test_csharp2\XxUvWrapper.cs" Link="XxUvWrapper.cs" />
   </ItemGroup>
 

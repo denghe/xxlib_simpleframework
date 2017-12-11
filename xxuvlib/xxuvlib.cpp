@@ -61,9 +61,21 @@ XXUVLIB_API sockaddr_in* xxuv_alloc_sockaddr_in(void* ud) noexcept
 	return (sockaddr_in*)Alloc(sizeof(sockaddr_in), ud);
 }
 
+
+XXUVLIB_API uv_timer_t* xxuv_alloc_uv_timer_t(void* ud) noexcept
+{
+	return (uv_timer_t*)Alloc(sizeof(uv_timer_t), ud);
+}
+
+XXUVLIB_API uv_async_t* xxuv_alloc_uv_async_t(void* ud) noexcept
+{
+	return (uv_async_t*)Alloc(sizeof(uv_async_t), ud);
+}
+
+
 XXUVLIB_API void xxuv_free(void* p) noexcept
 {
-	Free(p);
+	if (p) Free(p);
 }
 
 XXUVLIB_API void* xxuv_get_ud(void* p) noexcept
@@ -224,13 +236,48 @@ XXUVLIB_API int xxuv_fill_client_ip(uv_tcp_t* stream, char* buf, int buf_len, in
 }
 
 
-XXUVLIB_API int xxuv_tcp_connect(uv_connect_t* req, uv_tcp_t* handle, const sockaddr* addr, uv_connect_cb cb)
+XXUVLIB_API int xxuv_tcp_connect(uv_connect_t* req, uv_tcp_t* handle, const sockaddr* addr, uv_connect_cb cb) noexcept
 {
 	return uv_tcp_connect(req, handle, addr, cb);
 }
 
-XXUVLIB_API int xxuv_tcp_connect_(uv_tcp_t* handle, const struct sockaddr* addr, uv_connect_cb cb)
+XXUVLIB_API int xxuv_tcp_connect_(uv_tcp_t* handle, const struct sockaddr* addr, uv_connect_cb cb) noexcept
 {
 	auto req = (uv_connect_t*)Alloc(sizeof(uv_connect_t));
 	return uv_tcp_connect(req, handle, addr, cb);
+}
+
+
+
+
+
+XXUVLIB_API int xxuv_timer_init(uv_loop_t* loop, uv_timer_t* timer_req) noexcept
+{
+	return uv_timer_init(loop, timer_req);
+}
+XXUVLIB_API int xxuv_timer_start(uv_timer_t* timer_req, uv_timer_cb cb, unsigned long long timeoutMS, unsigned long long repeatIntervalMS) noexcept
+{
+	return uv_timer_start(timer_req, cb, timeoutMS, repeatIntervalMS);
+}
+XXUVLIB_API void xxuv_timer_set_repeat(uv_timer_t* timer_req, unsigned long long repeatIntervalMS) noexcept
+{
+	uv_timer_set_repeat(timer_req, repeatIntervalMS);
+}
+XXUVLIB_API int xxuv_timer_again(uv_timer_t* timer_req) noexcept
+{
+	return uv_timer_again(timer_req);
+}
+XXUVLIB_API int xxuv_timer_stop(uv_timer_t* timer_req) noexcept
+{
+	return uv_timer_stop(timer_req);
+}
+
+
+XXUVLIB_API int xxuv_async_init(uv_loop_t* loop, uv_async_t* async_req, uv_async_cb cb) noexcept
+{
+	return uv_async_init(loop, async_req, cb);
+}
+XXUVLIB_API int xxuv_async_send(uv_async_t* async_req) noexcept
+{
+	return uv_async_send(async_req);
 }

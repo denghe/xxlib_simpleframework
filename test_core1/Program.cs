@@ -41,6 +41,6 @@ public static class Program
         Console.WriteLine("begin.");
         loop.Run();
         Console.WriteLine("end.");
-        Console.Read();
+        Console.ReadKey();
     }
 }

@@ -46,6 +46,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="XxSimpleList.cs" />
+    <Compile Include="XxUvInterop.cs" />
     <Compile Include="XxUvWrapper.cs" />
     <None Include="CreateMaJiangHuPaiType.cs" />
     <None Include="Program - Copy.bak" />

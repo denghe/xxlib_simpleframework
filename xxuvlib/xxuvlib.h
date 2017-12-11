@@ -21,12 +21,14 @@ extern "C" {
 	XXUVLIB_API uv_loop_t* xxuv_alloc_uv_loop_t(void* ud) noexcept;
 	XXUVLIB_API uv_tcp_t* xxuv_alloc_uv_tcp_t(void* ud) noexcept;
 	XXUVLIB_API sockaddr_in* xxuv_alloc_sockaddr_in(void* ud) noexcept;
+	XXUVLIB_API uv_timer_t* xxuv_alloc_uv_timer_t(void* ud) noexcept;
+	XXUVLIB_API uv_async_t* xxuv_alloc_uv_async_t(void* ud) noexcept;
 
 	XXUVLIB_API void xxuv_free(void* p) noexcept;
 	XXUVLIB_API void* xxuv_get_ud(void* p) noexcept;
 	XXUVLIB_API void* xxuv_get_ud_from_uv_connect_t(uv_connect_t* req) noexcept;
 	XXUVLIB_API void* xxuv_get_buf(uv_buf_t* p) noexcept;
-	
+
 
 	XXUVLIB_API const char* xxuv_strerror(int n) noexcept;
 	XXUVLIB_API const char* xxuv_err_name(int n) noexcept;
@@ -51,8 +53,19 @@ extern "C" {
 	XXUVLIB_API int xxuv_write(uv_write_t* req, uv_stream_t* stream, const uv_buf_t bufs[], unsigned int nbufs, uv_write_cb cb) noexcept;
 	XXUVLIB_API int xxuv_write_(uv_stream_t* stream, char* buf, unsigned int len) noexcept;
 	XXUVLIB_API int xxuv_fill_client_ip(uv_tcp_t* stream, char* buf, int buf_len, int* data_len) noexcept;
-	XXUVLIB_API int xxuv_tcp_connect(uv_connect_t* req, uv_tcp_t* handle, const struct sockaddr* addr, uv_connect_cb cb);
-	XXUVLIB_API int xxuv_tcp_connect_(uv_tcp_t* handle, const struct sockaddr* addr, uv_connect_cb cb);
+	XXUVLIB_API int xxuv_tcp_connect(uv_connect_t* req, uv_tcp_t* handle, const struct sockaddr* addr, uv_connect_cb cb) noexcept;
+	XXUVLIB_API int xxuv_tcp_connect_(uv_tcp_t* handle, const struct sockaddr* addr, uv_connect_cb cb) noexcept;
+
+
+	XXUVLIB_API int xxuv_timer_init(uv_loop_t* loop, uv_timer_t* timer_req) noexcept;
+	XXUVLIB_API int xxuv_timer_start(uv_timer_t* timer_req, uv_timer_cb cb, unsigned long long timeoutMS, unsigned long long repeatIntervalMS) noexcept;
+	XXUVLIB_API void xxuv_timer_set_repeat(uv_timer_t* timer_req, unsigned long long repeatIntervalMS) noexcept;
+	XXUVLIB_API int xxuv_timer_again(uv_timer_t* timer_req) noexcept;
+	XXUVLIB_API int xxuv_timer_stop(uv_timer_t* timer_req) noexcept;
+
+
+	XXUVLIB_API int xxuv_async_init(uv_loop_t* loop, uv_async_t* async_req, uv_async_cb cb) noexcept;
+	XXUVLIB_API int xxuv_async_send(uv_async_t* async_req) noexcept;
 
 
 	// todo
