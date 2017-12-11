@@ -48,7 +48,7 @@ public static class XxUvInterop
     public static extern IntPtr xxuv_get_ud_from_uv_connect_t(IntPtr req);
 
     [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
-    public static extern IntPtr xxuv_get_uv_buf_t(IntPtr buf_t);
+    public static extern IntPtr xxuv_get_buf(IntPtr buf_t);
 
 
 
@@ -444,7 +444,7 @@ public class XxUvTcpPeer : IDisposable
     static void OnReadCBImpl(IntPtr stream, IntPtr nread, IntPtr buf_t)
     {
         var peer = stream.To<XxUvTcpPeer>();
-        var bufPtr = XxUvInterop.xxuv_get_uv_buf_t(buf_t);
+        var bufPtr = XxUvInterop.xxuv_get_buf(buf_t);
         int len = (int)nread;
         if (len > 0)
         {
@@ -618,7 +618,7 @@ public class XxUvTcpClient : IDisposable
     static void OnReadCBImpl(IntPtr stream, IntPtr nread, IntPtr buf_t)
     {
         var client = stream.To<XxUvTcpClient>();
-        var bufPtr = XxUvInterop.xxuv_get_uv_buf_t(buf_t);
+        var bufPtr = XxUvInterop.xxuv_get_buf(buf_t);
         int len = (int)nread;
         if (len > 0)
         {

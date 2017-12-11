@@ -38,15 +38,6 @@ public static class Program
         listener.Bind("0.0.0.0", 12345);
         listener.Listen();
 
-        // client
-        var client = new XxUvTcpClient(loop);
-        client.OnConnect = status =>
-        {
-            Console.WriteLine("client: " + client.state);
-        };
-        client.SetAddress("127.0.0.1", 12345);
-        client.Connect();
-
         Console.WriteLine("begin.");
         loop.Run();
         Console.WriteLine("end.");

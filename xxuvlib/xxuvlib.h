@@ -25,7 +25,7 @@ extern "C" {
 	XXUVLIB_API void xxuv_free(void* p) noexcept;
 	XXUVLIB_API void* xxuv_get_ud(void* p) noexcept;
 	XXUVLIB_API void* xxuv_get_ud_from_uv_connect_t(uv_connect_t* req) noexcept;
-	XXUVLIB_API void* xxuv_get_uv_buf_t(uv_buf_t* p) noexcept;
+	XXUVLIB_API void* xxuv_get_buf(uv_buf_t* p) noexcept;
 	
 
 	XXUVLIB_API const char* xxuv_strerror(int n) noexcept;

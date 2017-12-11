@@ -76,7 +76,7 @@ XXUVLIB_API void* xxuv_get_ud_from_uv_connect_t(uv_connect_t* req) noexcept
 	return xxuv_get_ud(req->handle);
 }
 
-XXUVLIB_API void* xxuv_get_uv_buf_t(uv_buf_t* p) noexcept
+XXUVLIB_API void* xxuv_get_buf(uv_buf_t* p) noexcept
 {
 	return p->base;
 }
