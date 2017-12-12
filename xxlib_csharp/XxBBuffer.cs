@@ -5,6 +5,14 @@ using System.Text;
 namespace xx
 {
     /// <summary>
+    /// 存放类型到 typeid 的映射 for 序列化
+    /// </summary>
+    public sealed class TypeIdMaps<T>
+    {
+        public static ushort typeId = 0xFFFF;
+    }
+
+    /// <summary>
     /// 所有可序列化类均需要实现该接口, 包括 BBuffer 本身
     /// </summary>
     public interface IBBuffer

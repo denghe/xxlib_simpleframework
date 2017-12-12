@@ -7,15 +7,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\test_csharp2\XxSimpleList.cs" Link="XxSimpleList.cs" />
-    <Compile Include="..\test_csharp2\XxUvInterop.cs" Link="XxUvInterop.cs" />
-    <Compile Include="..\test_csharp2\XxUvWrapper.cs" Link="XxUvWrapper.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <None Include="..\x64\Debug\xxuvlib.dll" Link="xxuvlib.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\xxlib_csharp\xxlib_csharp.csproj" />
   </ItemGroup>
 
 </Project>

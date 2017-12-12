@@ -4,7 +4,7 @@ using System.Diagnostics;
 
 namespace xx
 {
-    // 抄自 MS 代码并删除小改加料
+    // 抄自 MS 代码并删除小改加料( 支持多级序列化 )
 
     public class List<T> : IBBuffer
     {
@@ -139,6 +139,14 @@ namespace xx
         {
             Debug.Assert(action != null);
             for (int i = 0; i < dataLen; i++)
+            {
+                action(buf[i]);
+            }
+        }
+        public void ForEachReverse(Action<T> action)
+        {
+            Debug.Assert(action != null);
+            for (int i = dataLen - 1; i >= 0; --i)
             {
                 action(buf[i]);
             }

@@ -5,19 +5,20 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
+using xx;
 
 public static class Program
 {
     static void Main(string[] args)
     {
         // uv主循环体
-        var loop = new XxUvLoop();
+        var loop = new UvLoop();
 
         // 非主线程事件通知器
-        var async = new XxUvAsync(loop);
+        var async = new UvAsync(loop);
 
         // lag echo server
-        var listener = new XxUvTcpListener(loop);
+        var listener = new UvTcpListener(loop);
         listener.OnAccept = peer =>
         {
             Console.WriteLine("listener: " + peer.ip + " connected.");
@@ -35,7 +36,7 @@ public static class Program
         listener.Listen();
 
         // timer test
-        var timer = new XxUvTimer(loop, 100, 1000);
+        var timer = new UvTimer(loop, 100, 1000);
         timer.OnFire = () => Console.Write(".");
 
         loop.Run();
