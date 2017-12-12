@@ -1,11 +1,13 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
 using System.Text;
 
-// todo: 加上 disposed throw 检测
+// todo: c api 过来的 cb 可能要加 try
 
 public class XxUvLoop : IDisposable
 {
+    public bool disposed;
     public XxSimpleList<XxUvTcpListener> listeners = new XxSimpleList<XxUvTcpListener>();
     public XxSimpleList<XxUvTcpClient> clients = new XxSimpleList<XxUvTcpClient>();
     public XxSimpleList<XxUvTimer> timers = new XxSimpleList<XxUvTimer>();
@@ -13,6 +15,7 @@ public class XxUvLoop : IDisposable
 
     public IntPtr ptr;
     public IntPtr handle;
+
     public XxUvLoop()
     {
         this.Handle(ref handle);
@@ -34,12 +37,11 @@ public class XxUvLoop : IDisposable
 
     public void Run(XxUvRunMode mode = XxUvRunMode.Default)
     {
+        if (disposed) throw new ObjectDisposedException("XxUvLoop");
         XxUvInterop.xxuv_run(ptr, mode).TryThrow();
     }
 
     #region Dispose
-
-    public bool disposed;
 
     //Implement IDisposable.
     public void Dispose()
@@ -83,17 +85,22 @@ public class XxUvLoop : IDisposable
 
 public class XxUvTcpListener : IDisposable
 {
+    /******************************************************************************/
+    // 用户事件绑定区
     public Func<XxUvTcpPeer> OnCreatePeer;
     public Action<XxUvTcpPeer> OnAccept;
     public Action OnDispose;
+    /******************************************************************************/
 
+    public bool disposed;
     public XxUvLoop loop;
     public XxSimpleList<XxUvTcpPeer> peers = new XxSimpleList<XxUvTcpPeer>();
-    public int index_at_container;          // 于容器中的 下标. 需要就填
+    public int index_at_container;
 
     public IntPtr ptr;
     public IntPtr handle;
     public IntPtr addrPtr;
+
     public XxUvTcpListener(XxUvLoop loop)
     {
         this.Handle(ref handle);
@@ -147,20 +154,19 @@ public class XxUvTcpListener : IDisposable
     }
     public void Listen(int backlog = 128)
     {
+        if (disposed) throw new ObjectDisposedException("XxUvTcpListener");
         XxUvInterop.xxuv_listen(ptr, backlog, OnAcceptCB).TryThrow();
     }
 
 
     public void Bind(string ipv4, int port)
     {
+        if (disposed) throw new ObjectDisposedException("XxUvTcpListener");
         XxUvInterop.xxuv_ip4_addr(ipv4, port, addrPtr).TryThrow();
         XxUvInterop.xxuv_tcp_bind_(ptr, addrPtr).TryThrow();
     }
 
-
     #region Dispose
-
-    public bool disposed;
 
     //Implement IDisposable.
     public void Dispose()
@@ -209,24 +215,105 @@ public class XxUvTcpListener : IDisposable
     #endregion
 }
 
-public class XxUvTcpPeer : IDisposable
+public abstract class XxUvTcpBase
 {
-    public Action<byte[]> OnRead;
+    /******************************************************************************/
+    // 用户事件绑定
+    public Action<byte[]> OnRecv;
+    public Action<byte[], int, int> OnRecvPkg;
     public Action OnDispose;
+    /******************************************************************************/
 
-    // 只读
+    public bool disposed;
     public XxUvLoop loop;
-    public XxUvTcpListener listener;
     public int index_at_container;
 
     public IntPtr ptr;
     public IntPtr handle;
     public IntPtr addrPtr;
+
+    protected static XxUvInterop.uv_read_cb OnReadCB = OnReadCBImpl;
+    static void OnReadCBImpl(IntPtr stream, IntPtr nread, IntPtr buf_t)
+    {
+        var peer = stream.To<XxUvTcpPeer>();
+        var bufPtr = XxUvInterop.xxuv_get_buf(buf_t);
+        int len = (int)nread;
+        if (len > 0)
+        {
+            var buf = new byte[len];
+            Marshal.Copy(bufPtr, buf, 0, len);
+            peer.OnRecv(buf);
+        }
+        else if (len < 0)
+        {
+            peer.Dispose();
+        }
+        XxUvInterop.xxuv_free(bufPtr);
+    }
+
+    protected byte[] buf;
+    protected int offset;
+    public void OnRecvImpl(byte[] bytes)
+    {
+        if (buf == null)    // likely
+        {
+            buf = bytes;
+        }
+        else
+        {
+            var left = buf.Length - offset;
+            var newBuf = new byte[left + bytes.Length];
+            Buffer.BlockCopy(buf, offset, newBuf, 0, left);
+            Buffer.BlockCopy(bytes, 0, newBuf, left, bytes.Length);
+            buf = newBuf;
+        }
+
+        offset = 0;
+        while (buf.Length - offset >= 2)            // 确保 2字节 包头长度
+        {
+            // 读出头
+            var dataLen = buf[offset] + (buf[offset + 1] << 8);
+            offset += 2;
+
+            // todo: 特殊判断: 如果 dataLen 为 0 ?? 后续跟控制包? 当前直接认为是出错
+            if (dataLen == 0) throw new InvalidCastException();
+
+            // 确保数据长
+            if (buf.Length - offset < dataLen)
+            {
+                offset -= 2;                        // 回滚偏移量, 停在 包头 位置
+                break;
+            }
+
+            // 发起包回调
+            if (OnRecvPkg != null) OnRecvPkg(buf, offset, dataLen);
+
+            // 继续处理剩余数据
+            offset += dataLen;
+        }
+    }
+
+    public void Send(byte[] data, uint len = 0)
+    {
+        if (disposed) throw new ObjectDisposedException("XxUvTcpBase");
+        if (data == null || data.Length == 0) throw new NullReferenceException();
+        if (len > data.Length) throw new IndexOutOfRangeException();
+        if (len == 0) len = (uint)data.Length;
+        var h = GCHandle.Alloc(data, GCHandleType.Pinned);
+        XxUvInterop.xxuv_write_(ptr, h.AddrOfPinnedObject(), len);
+        h.Free();
+    }
+}
+
+public class XxUvTcpPeer : XxUvTcpBase, IDisposable
+{
+    public XxUvTcpListener listener;
     public XxUvTcpPeer(XxUvLoop loop, XxUvTcpListener listener)
     {
         this.Handle(ref handle);
         this.loop = loop;
         this.listener = listener;
+        this.OnRecv = this.OnRecvImpl;
 
         ptr = XxUvInterop.xxuv_alloc_uv_tcp_t(handle);
         if (ptr == IntPtr.Zero)
@@ -274,42 +361,13 @@ public class XxUvTcpPeer : IDisposable
         listener.peers.Add(this);
     }
 
-    static XxUvInterop.uv_read_cb OnReadCB = OnReadCBImpl;
-    static void OnReadCBImpl(IntPtr stream, IntPtr nread, IntPtr buf_t)
-    {
-        var peer = stream.To<XxUvTcpPeer>();
-        var bufPtr = XxUvInterop.xxuv_get_buf(buf_t);
-        int len = (int)nread;
-        if (len > 0)
-        {
-            var buf = new byte[len];
-            Marshal.Copy(bufPtr, buf, 0, len);
-            peer.OnRead(buf);
-        }
-        else if (len < 0)
-        {
-            peer.Dispose();
-        }
-        XxUvInterop.xxuv_free(bufPtr);
-    }
-
-    public void Send(byte[] data, uint len = 0)
-    {
-        if (listener == null) throw new InvalidOperationException();
-        if (data == null || data.Length == 0) throw new NullReferenceException();
-        if (len > data.Length) throw new IndexOutOfRangeException();
-        if (len == 0) len = (uint)data.Length;
-        var h = GCHandle.Alloc(data, GCHandleType.Pinned);
-        XxUvInterop.xxuv_write_(ptr, h.AddrOfPinnedObject(), len);
-        h.Free();
-    }
-
     byte[] ipBuf = new byte[64];
     string ip_ = null;
     public string ip
     {
         get
         {
+            if (disposed) throw new ObjectDisposedException("XxUvTcpPeer");
             if (ip_ != null) return ip_;
             int len = 0;
             var h = GCHandle.Alloc(ipBuf, GCHandleType.Pinned);
@@ -327,8 +385,6 @@ public class XxUvTcpPeer : IDisposable
     }
 
     #region Dispose
-
-    public bool disposed;
 
     //Implement IDisposable.
     public void Dispose()
@@ -376,24 +432,20 @@ public class XxUvTcpPeer : IDisposable
     #endregion
 }
 
-public class XxUvTcpClient : IDisposable
+public class XxUvTcpClient : XxUvTcpBase, IDisposable
 {
-    public Action<byte[]> OnRead;
+    /******************************************************************************/
+    // 用户事件绑定
     public Action<int> OnConnect;
-    public Action OnDispose;
-    public int index_at_container;          // 于容器中的 下标. 需要就填
+    /******************************************************************************/
 
-    // 只读
-    public XxUvLoop loop;
     public XxUvTcpStates state;
 
-    public IntPtr ptr;
-    public IntPtr handle;
-    public IntPtr addrPtr;
     public XxUvTcpClient(XxUvLoop loop)
     {
         this.Handle(ref handle);
         this.loop = loop;
+        this.OnRecv = this.OnRecvImpl;
 
         ptr = XxUvInterop.xxuv_alloc_uv_tcp_t(handle);
         if (ptr == IntPtr.Zero)
@@ -416,6 +468,7 @@ public class XxUvTcpClient : IDisposable
 
     public void SetAddress(string ipv4, int port)
     {
+        if (disposed) throw new ObjectDisposedException("XxUvTcpClient");
         XxUvInterop.xxuv_ip4_addr(ipv4, port, addrPtr).TryThrow();
     }
 
@@ -438,6 +491,7 @@ public class XxUvTcpClient : IDisposable
 
     public void Connect()
     {
+        if (disposed) throw new ObjectDisposedException("XxUvTcpClient");
         if (state != XxUvTcpStates.Disconnected) throw new InvalidOperationException();
 
         XxUvInterop.xxuv_tcp_init(loop.ptr, ptr).TryThrow();
@@ -452,45 +506,15 @@ public class XxUvTcpClient : IDisposable
         state = XxUvTcpStates.Connecting;
     }
 
-    static XxUvInterop.uv_read_cb OnReadCB = OnReadCBImpl;
-    static void OnReadCBImpl(IntPtr stream, IntPtr nread, IntPtr buf_t)
-    {
-        var client = stream.To<XxUvTcpClient>();
-        var bufPtr = XxUvInterop.xxuv_get_buf(buf_t);
-        int len = (int)nread;
-        if (len > 0)
-        {
-            var buf = new byte[len];
-            Marshal.Copy(bufPtr, buf, 0, len);
-            client.OnRead(buf);
-        }
-        else if (len < 0)
-        {
-            client.Dispose();
-        }
-        XxUvInterop.xxuv_free(bufPtr);
-    }
-
-    public void Send(byte[] data, uint len = 0)
-    {
-        if (data == null || data.Length == 0) throw new NullReferenceException();
-        if (len > data.Length) throw new IndexOutOfRangeException();
-        if (len == 0) len = (uint)data.Length;
-        var h = GCHandle.Alloc(data, GCHandleType.Pinned);
-        XxUvInterop.xxuv_write_(ptr, h.AddrOfPinnedObject(), len);
-        h.Free();
-    }
-
     public void Disconnect()
     {
+        if (disposed) throw new ObjectDisposedException("XxUvTcpClient");
         if (state == XxUvTcpStates.Disconnected) throw new InvalidOperationException();
         XxUvInterop.xxuv_close_(ptr);
         state = XxUvTcpStates.Disconnected;
     }
 
     #region Dispose
-
-    public bool disposed;
 
     //Implement IDisposable.
     public void Dispose()
@@ -539,14 +563,19 @@ public class XxUvTcpClient : IDisposable
 
 public class XxUvTimer : IDisposable
 {
+    /******************************************************************************/
+    // 用户事件绑定
     public Action OnFire;
     public Action OnDispose;
+    /******************************************************************************/
 
+    public bool disposed;
     public XxUvLoop loop;
-    public int index_at_container;          // 于容器中的 下标. 需要就填
+    public int index_at_container;
 
     public IntPtr ptr;
     public IntPtr handle;
+
     public XxUvTimer(XxUvLoop loop, ulong timeoutMS, ulong repeatIntervalMS)
     {
         this.Handle(ref handle);
@@ -589,23 +618,23 @@ public class XxUvTimer : IDisposable
 
     public void SetRepeat(ulong repeatIntervalMS)
     {
+        if (disposed) throw new ObjectDisposedException("XxUvTimer");
         XxUvInterop.xxuv_timer_set_repeat(ptr, repeatIntervalMS);
     }
 
     public void Again()
     {
+        if (disposed) throw new ObjectDisposedException("XxUvTimer");
         XxUvInterop.xxuv_timer_again(ptr).TryThrow();
     }
 
     public void Stop()
     {
+        if (disposed) throw new ObjectDisposedException("XxUvTimer");
         XxUvInterop.xxuv_timer_stop(ptr).TryThrow();
     }
 
-
     #region Dispose
-
-    public bool disposed;
 
     //Implement IDisposable.
     public void Dispose()
@@ -653,11 +682,16 @@ public class XxUvTimer : IDisposable
 
 public class XxUvAsync : IDisposable
 {
+    /******************************************************************************/
+    // 用户事件绑定
     public Action OnFire;
     public Action OnDispose;
+    /******************************************************************************/
 
+    public bool disposed;
     public XxUvLoop loop;
-    public int index_at_container;          // 于容器中的 下标. 需要就填
+    public int index_at_container;
+    public ConcurrentQueue<Action> actions = new ConcurrentQueue<Action>();
 
     public IntPtr ptr;
     public IntPtr handle;
@@ -665,6 +699,7 @@ public class XxUvAsync : IDisposable
     {
         this.Handle(ref handle);
         this.loop = loop;
+        this.OnFire = this.OnFireImpl;
 
         ptr = XxUvInterop.xxuv_alloc_uv_async_t(handle);
         if (ptr == IntPtr.Zero)
@@ -692,14 +727,19 @@ public class XxUvAsync : IDisposable
         self.OnFire();
     }
 
-    public void Fire()
+    public void Fire(Action a)
     {
+        if (disposed) throw new ObjectDisposedException("XxUvAsync");
+        actions.Enqueue(a);
         XxUvInterop.xxuv_async_send(ptr).TryThrow();
     }
 
-    #region Dispose
+    public void OnFireImpl()
+    {
+        while (actions.TryDequeue(out var a)) a();
+    }
 
-    public bool disposed;
+    #region Dispose
 
     //Implement IDisposable.
     public void Dispose()

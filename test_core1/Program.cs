@@ -17,7 +17,7 @@ public static class Program
         {
             peer.index_at_container = listener.peers.bufLen;
             listener.peers.Add(peer);
-            peer.OnRead = bytes =>
+            peer.OnRecv = bytes =>
             {
                 Console.WriteLine("peer: " + peer.ip + " read bytes " + BitConverter.ToString(bytes));
                 if (bytes[0] == 32) peer.Dispose();             // SPACE disconnect
