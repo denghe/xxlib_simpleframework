@@ -27,7 +27,10 @@ public static class Program
                 new Task(() =>  // 模拟一个耗时异步操作之后回发
                 {
                     Thread.Sleep(1000);
-                    async.Fire(() => { if (!peer.disposed) peer.Send(bytes); });
+                    async.Fire(() => 
+                    {
+                        if (!peer.disposed) peer.Send(bytes);
+                    });
                 }).Start();
             };
             peer.OnDispose = () => Console.WriteLine("peer: " + peer.ip + " Disconnected.");
@@ -36,9 +39,12 @@ public static class Program
         listener.Listen();
 
         // timer test
-        var timer = new UvTimer(loop, 100, 1000);
-        timer.OnFire = () => Console.Write(".");
+        var timer = new UvTimer(loop, 5000, 0);
+        timer.OnFire = () => loop.Stop();
 
         loop.Run();
+        loop.Dispose();
+        Console.WriteLine("press anykey");
+        Console.ReadKey();
     }
 }

@@ -93,6 +93,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="main.cpp.bak" />
+    <None Include="main.cpp.bak2" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

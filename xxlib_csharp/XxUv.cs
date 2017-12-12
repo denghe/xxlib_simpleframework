@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 
 // todo: 有子容器的 Dispose 时清子
 // todo: c api 过来的 cb 可能要加 try
@@ -41,7 +42,23 @@ namespace xx
         public void Run(UvRunMode mode = UvRunMode.Default)
         {
             if (disposed) throw new ObjectDisposedException("XxUvLoop");
-            UvInterop.xxuv_run(ptr, mode).TryThrow();
+            int r = UvInterop.xxuv_run(ptr, mode);
+            if (r != 0 && r != 1) r.Throw();    // 1: uv_stop( loop )
+        }
+
+        public void Stop()
+        {
+            if (disposed) throw new ObjectDisposedException("XxUvLoop");
+            UvInterop.xxuv_stop(ptr);
+        }
+
+        public bool alive
+        {
+            get
+            {
+                if (disposed) throw new ObjectDisposedException("XxUvLoop");
+                return UvInterop.xxuv_loop_alive(ptr) != 0;
+            }
         }
 
         #region Dispose
@@ -57,12 +74,15 @@ namespace xx
             if (!disposed)
             {
                 // if (disposing) // Free other state (managed objects).
+
                 asyncs.ForEachReverse(o => o.Dispose());
                 timers.ForEachReverse(o => o.Dispose());
                 clients.ForEachReverse(o => o.Dispose());
                 listeners.ForEachReverse(o => o.Dispose());
 
-                UvInterop.xxuv_loop_close(ptr).TryThrow();
+                UvInterop.xxuv_loop_close(ptr);                         // busy
+                UvInterop.xxuv_run(ptr, UvRunMode.Default).TryThrow();  // success
+                UvInterop.xxuv_loop_close(ptr).TryThrow();              // success
                 this.Free(ref ptr);
                 this.Unhandle(ref handle);
                 disposed = true;
@@ -120,7 +140,7 @@ namespace xx
             if (addrPtr == IntPtr.Zero)
             {
                 UvInterop.xxuv_close_(ptr);
-                this.Free(ref ptr);
+                ptr = IntPtr.Zero;
                 this.Unhandle(ref handle);
                 throw new OutOfMemoryException();
             }
@@ -179,7 +199,7 @@ namespace xx
                 peers.ForEachReverse(o => o.Dispose());
 
                 UvInterop.xxuv_close_(ptr);
-                this.Free(ref ptr);
+                ptr = IntPtr.Zero;
                 this.Free(ref addrPtr);
                 this.Unhandle(ref handle);
 
@@ -317,7 +337,7 @@ namespace xx
             if (r != 0)
             {
                 UvInterop.xxuv_close_(ptr);
-                this.Free(ref ptr);
+                ptr = IntPtr.Zero;
                 this.Unhandle(ref handle);
                 r.Throw();
             }
@@ -326,7 +346,7 @@ namespace xx
             if (r != 0)
             {
                 UvInterop.xxuv_close_(ptr);
-                this.Free(ref ptr);
+                ptr = IntPtr.Zero;
                 this.Unhandle(ref handle);
                 r.Throw();
             }
@@ -335,7 +355,7 @@ namespace xx
             if (addrPtr == IntPtr.Zero)
             {
                 UvInterop.xxuv_close_(ptr);
-                this.Free(ref ptr);
+                ptr = IntPtr.Zero;
                 this.Unhandle(ref handle);
                 throw new OutOfMemoryException();
             }
@@ -389,7 +409,7 @@ namespace xx
                 // Set large fields to null.
 
                 UvInterop.xxuv_close_(ptr);
-                this.Free(ref ptr);
+                ptr = IntPtr.Zero;
                 this.Free(ref addrPtr);
                 this.Unhandle(ref handle);
 
@@ -483,6 +503,7 @@ namespace xx
             if (r != 0)
             {
                 UvInterop.xxuv_close_(ptr);
+                ptr = IntPtr.Zero;
                 r.Throw();
             }
 
@@ -494,6 +515,7 @@ namespace xx
             if (disposed) throw new ObjectDisposedException("XxUvTcpClient");
             if (state == UvTcpStates.Disconnected) throw new InvalidOperationException();
             UvInterop.xxuv_close_(ptr);
+            ptr = IntPtr.Zero;
             state = UvTcpStates.Disconnected;
         }
 
@@ -513,7 +535,7 @@ namespace xx
                 // if (disposing) // Free other state (managed objects).
 
                 UvInterop.xxuv_close_(ptr);
-                this.Free(ref ptr);
+                ptr = IntPtr.Zero;
                 this.Free(ref addrPtr);
                 this.Unhandle(ref handle);
 
@@ -571,7 +593,7 @@ namespace xx
             if (r != 0)
             {
                 UvInterop.xxuv_close_(ptr);
-                this.Free(ref ptr);
+                ptr = IntPtr.Zero;
                 this.Unhandle(ref handle);
                 r.Throw();
             }
@@ -621,7 +643,7 @@ namespace xx
                 // if (disposing) // Free other state (managed objects).
 
                 UvInterop.xxuv_close_(ptr);
-                this.Free(ref ptr);
+                ptr = IntPtr.Zero;
                 this.Unhandle(ref handle);
 
                 loop.timers.SwapRemoveAt(index_at_container);
@@ -715,7 +737,7 @@ namespace xx
                 actions = null;
 
                 UvInterop.xxuv_close_(ptr);
-                this.Free(ref ptr);
+                ptr = IntPtr.Zero;
                 this.Unhandle(ref handle);
 
                 loop.asyncs.SwapRemoveAt(index_at_container);
@@ -772,6 +794,9 @@ namespace xx
         [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr xxuv_alloc_uv_async_t(IntPtr ud);
 
+        [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
+        public static extern IntPtr xxuv_alloc_uv_signal_t(IntPtr ud);
+
 
 
         [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
@@ -804,7 +829,7 @@ namespace xx
         //public static extern void xxuv_close(IntPtr handle, uv_close_cb close_cb);
 
         [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
-        public static extern void xxuv_close_(IntPtr handle);
+        public static extern void xxuv_close_(IntPtr handle);   // auto free
 
 
 
@@ -816,7 +841,13 @@ namespace xx
         public static extern int xxuv_run(IntPtr loop, UvRunMode mode);
 
         [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
+        public static extern void xxuv_stop(IntPtr loop);
+
+        [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
         public static extern int xxuv_loop_close(IntPtr loop);
+
+        [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int xxuv_loop_alive(IntPtr loop);
 
 
 
@@ -905,8 +936,6 @@ namespace xx
 
         [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
         public static extern int xxuv_async_send(IntPtr async_req);
-
-
 
 
 

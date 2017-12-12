@@ -23,6 +23,7 @@ extern "C" {
 	XXUVLIB_API sockaddr_in* xxuv_alloc_sockaddr_in(void* ud) noexcept;
 	XXUVLIB_API uv_timer_t* xxuv_alloc_uv_timer_t(void* ud) noexcept;
 	XXUVLIB_API uv_async_t* xxuv_alloc_uv_async_t(void* ud) noexcept;
+	XXUVLIB_API uv_signal_t* xxuv_alloc_uv_signal_t(void* ud) noexcept;
 
 	XXUVLIB_API void xxuv_free(void* p) noexcept;
 	XXUVLIB_API void* xxuv_get_ud(void* p) noexcept;
@@ -39,7 +40,9 @@ extern "C" {
 
 	XXUVLIB_API int xxuv_loop_init(uv_loop_t* loop) noexcept;
 	XXUVLIB_API int xxuv_run(uv_loop_t* loop, uv_run_mode mode) noexcept;
+	XXUVLIB_API void xxuv_stop(uv_loop_t* loop) noexcept;
 	XXUVLIB_API int xxuv_loop_close(uv_loop_t* loop) noexcept;
+	XXUVLIB_API int xxuv_loop_alive(uv_loop_t* loop) noexcept;
 
 	XXUVLIB_API int xxuv_ip4_addr(const char* ip, int port, sockaddr_in* addr) noexcept;
 
@@ -66,6 +69,11 @@ extern "C" {
 
 	XXUVLIB_API int xxuv_async_init(uv_loop_t* loop, uv_async_t* async_req, uv_async_cb cb) noexcept;
 	XXUVLIB_API int xxuv_async_send(uv_async_t* async_req) noexcept;
+
+
+	XXUVLIB_API int xxuv_signal_init(uv_loop_t* loop, uv_signal_t* signal) noexcept;
+	XXUVLIB_API int xxuv_signal_start(uv_signal_t* signal, uv_signal_cb cb) noexcept;
+	XXUVLIB_API void xxuv_walk(uv_loop_t* loop, uv_walk_cb cb, void* arg) noexcept;
 
 
 	// todo

@@ -61,7 +61,6 @@ XXUVLIB_API sockaddr_in* xxuv_alloc_sockaddr_in(void* ud) noexcept
 	return (sockaddr_in*)Alloc(sizeof(sockaddr_in), ud);
 }
 
-
 XXUVLIB_API uv_timer_t* xxuv_alloc_uv_timer_t(void* ud) noexcept
 {
 	return (uv_timer_t*)Alloc(sizeof(uv_timer_t), ud);
@@ -71,6 +70,14 @@ XXUVLIB_API uv_async_t* xxuv_alloc_uv_async_t(void* ud) noexcept
 {
 	return (uv_async_t*)Alloc(sizeof(uv_async_t), ud);
 }
+
+XXUVLIB_API uv_signal_t* xxuv_alloc_uv_signal_t(void* ud) noexcept
+{
+	return (uv_signal_t*)Alloc(sizeof(uv_signal_t), ud);
+}
+
+
+
 
 
 XXUVLIB_API void xxuv_free(void* p) noexcept
@@ -122,10 +129,11 @@ XXUVLIB_API void xxuv_close_(uv_handle_t* handle) noexcept
 #ifndef NDEBUG
 	if (uv_is_closing(handle)) return;
 #endif
-	uv_close(handle, [](uv_handle_t* handle)
-	{
-		Free(handle);
-	});
+	//uv_close(handle, [](uv_handle_t* handle)
+	//{
+	//	Free(handle);
+	//});
+	uv_close(handle, nullptr);
 }
 
 
@@ -142,9 +150,19 @@ XXUVLIB_API int xxuv_run(uv_loop_t* loop, uv_run_mode mode) noexcept
 	return uv_run(loop, mode);
 }
 
+XXUVLIB_API void xxuv_stop(uv_loop_t* loop) noexcept
+{
+	uv_stop(loop);
+}
+
 XXUVLIB_API int xxuv_loop_close(uv_loop_t* p) noexcept
 {
 	return uv_loop_close(p);
+}
+
+XXUVLIB_API int xxuv_loop_alive(uv_loop_t* p) noexcept
+{
+	return uv_loop_alive(p);
 }
 
 
@@ -273,6 +291,8 @@ XXUVLIB_API int xxuv_timer_stop(uv_timer_t* timer_req) noexcept
 }
 
 
+
+
 XXUVLIB_API int xxuv_async_init(uv_loop_t* loop, uv_async_t* async_req, uv_async_cb cb) noexcept
 {
 	return uv_async_init(loop, async_req, cb);
@@ -280,4 +300,20 @@ XXUVLIB_API int xxuv_async_init(uv_loop_t* loop, uv_async_t* async_req, uv_async
 XXUVLIB_API int xxuv_async_send(uv_async_t* async_req) noexcept
 {
 	return uv_async_send(async_req);
+}
+
+
+
+
+XXUVLIB_API int xxuv_signal_init(uv_loop_t* loop, uv_signal_t* signal) noexcept
+{
+	return uv_signal_init(loop, signal);
+}
+XXUVLIB_API int xxuv_signal_start(uv_signal_t* signal, uv_signal_cb cb) noexcept
+{
+	return uv_signal_start(signal, cb, SIGINT);
+}
+XXUVLIB_API void xxuv_walk(uv_loop_t* loop, uv_walk_cb cb, void* arg) noexcept
+{
+	uv_walk(loop, cb, arg);
 }
