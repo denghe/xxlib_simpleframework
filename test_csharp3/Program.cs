@@ -2,75 +2,50 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading;
+using xx;
 
 public static class Program
 {
     static void Main(string[] args)
     {
-        XxNBSocket.SockInit();
-        using (var mp = new XxMemPool())
+        long counter = 0;
+        long successConns = 0;
+        using (var loop = new UvLoop())
         {
-            using (var nbs = new XxNBSocket(mp))
+            for (int i = 0; i < 10000; ++i)
             {
-                var dump = new Action(() =>
+                var client = new UvTcpClient(loop);
+                client.SetAddress("192.168.1.250", 10000 + (i % 20));
+                client.Connect();
+                client.OnConnect = status =>
                 {
-                    Console.WriteLine("state = " + nbs.state.ToString() + ", ticks = " + nbs.ticks);
-                });
-                dump();
-                nbs.SetAddress("127.0.0.1", 12345);
-                nbs.Connect();
-                dump();
-
-                while (true)
-                {
-                    switch (nbs.state)
+                    if (client.state == UvTcpStates.Connected)
                     {
-                        case XxNBSocket.States.Disconnected:
-                            goto LabEnd;
-                        case XxNBSocket.States.Connecting:
-                            if (nbs.ticks > 10)    // 1 秒连不上就算超时吧
-                            {
-                                nbs.Disconnect();
-                            }
-                            break;
-                        case XxNBSocket.States.Connected:
-                            // 刚连上时发包
-                            if (nbs.ticks == 0) nbs.Send(new byte[] 
-                            {
-                                4, 0, 49, 50, 51, 52,
-                                4, 0, 53, 54, 55, 56
-                            });
-
-                            // dump 收到的包
-                            LabRetry:
-                            var buf = nbs.PopRecv();
-                            if (buf != null)
-                            {
-                                Console.WriteLine("recv pkg. len = " + buf.Length);
-                                goto LabRetry;
-                            }
-
-                            if (nbs.ticks > 10) nbs.Disconnect(2);  // 存活 10 帧后, 延迟 2 帧杀掉
-                            break;
-                        case XxNBSocket.States.Disconnecting:
-                            break;
-
-                        default:
-                            break;
+                        ++successConns;
+                        client.Send(new byte[] { 4, 0, 1, 2, 3, 4 });
                     }
-                    dump();
-
-                    Thread.Sleep(100);
-                    nbs.Update();
-                }
-                LabEnd:
-                dump();
-
-                Console.WriteLine("press any key to continue...");
-                Console.ReadKey();
+                    else
+                    {
+                        Console.WriteLine("connect failed.");
+                        client.Connect();
+                    }
+                };
+                client.OnRecvPkg = (bs, offset, len) =>
+                {
+                    client.Send(new byte[] { 4, 0, 1, 2, 3, 4 });
+                    ++counter;
+                };
+                client.OnDisconnect = () =>
+                {
+                    Console.WriteLine("disconnected.");
+                    --successConns;
+                    client.Connect();
+                };
             }
-        }
+            var timer = new UvTimer(loop, 0, 1000);
+            timer.OnFire = () => { Console.WriteLine(successConns + ", " + counter); };
 
+            loop.Run();
+        }
     }
 }
-

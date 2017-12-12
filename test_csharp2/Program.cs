@@ -9,42 +9,47 @@ using xx;
 
 public static class Program
 {
+    static object mtx = new object();
     static void Main(string[] args)
     {
-        // uv主循环体
-        var loop = new UvLoop();
-
-        // 非主线程事件通知器
-        var async = new UvAsync(loop);
-
-        // lag echo server
-        var listener = new UvTcpListener(loop);
-        listener.OnAccept = peer =>
+        for (int ii = 10000; ii < 10020; ++ii)
         {
-            Console.WriteLine("listener: " + peer.ip + " connected.");
-            peer.OnRecv = bytes =>
+            int i = ii;
+            new Task(() =>
             {
-                new Task(() =>  // 模拟一个耗时异步操作之后回发
+                // uv主循环体
+                var loop = new UvLoop();
+
+                var listener = new UvTcpListener(loop);
+                listener.OnAccept = peer =>
                 {
-                    Thread.Sleep(1000);
-                    async.Fire(() => 
+                    peer.OnRecv = bytes => peer.Send(bytes);
+                };
+                listener.Bind("0.0.0.0", i);
+                listener.Listen();
+
+                // timer test
+                var timer = new UvTimer(loop, 100, 1000);
+                timer.OnFire = () =>
+                {
+                    if (listener.peers.dataLen > 0)
                     {
-                        if (!peer.disposed) peer.Send(bytes);
-                    });
-                }).Start();
-            };
-            peer.OnDispose = () => Console.WriteLine("peer: " + peer.ip + " Disconnected.");
-        };
-        listener.Bind("0.0.0.0", 12345);
-        listener.Listen();
+                        lock (mtx)
+                        {
+                            Console.WriteLine("port: " + i + ", peers count = " + listener.peers.dataLen);
+                        }
+                    }
+                };
 
-        // timer test
-        var timer = new UvTimer(loop, 5000, 0);
-        timer.OnFire = () => loop.Stop();
-
-        loop.Run();
-        loop.Dispose();
-        Console.WriteLine("press anykey");
-        Console.ReadKey();
+                lock (mtx)
+                {
+                    Console.WriteLine("listing port = " + i);
+                }
+                loop.Run();
+                loop.Dispose();
+            })
+            .Start();
+        }
+        Console.ReadLine();
     }
 }

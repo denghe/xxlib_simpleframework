@@ -80,9 +80,11 @@ namespace xx
                 clients.ForEachReverse(o => o.Dispose());
                 listeners.ForEachReverse(o => o.Dispose());
 
-                UvInterop.xxuv_loop_close(ptr);                         // busy
-                UvInterop.xxuv_run(ptr, UvRunMode.Default).TryThrow();  // success
-                UvInterop.xxuv_loop_close(ptr).TryThrow();              // success
+                if (UvInterop.xxuv_loop_close(ptr) != 0)                    // busy
+                {
+                    UvInterop.xxuv_run(ptr, UvRunMode.Default).TryThrow();  // success
+                    UvInterop.xxuv_loop_close(ptr).TryThrow();              // success
+                }
                 this.Free(ref ptr);
                 this.Unhandle(ref handle);
                 disposed = true;
@@ -238,18 +240,18 @@ namespace xx
         protected static UvInterop.uv_read_cb OnReadCB = OnReadCBImpl;
         static void OnReadCBImpl(IntPtr stream, IntPtr nread, IntPtr buf_t)
         {
-            var peer = stream.To<UvTcpPeer>();
+            var tcp = stream.To<UvTcpBase>();
             var bufPtr = UvInterop.xxuv_get_buf(buf_t);
             int len = (int)nread;
             if (len > 0)
             {
                 var buf = new byte[len];
                 Marshal.Copy(bufPtr, buf, 0, len);
-                peer.OnRecv(buf);
+                tcp.OnRecv(buf);
             }
             else if (len < 0)
             {
-                peer.Dispose();
+                tcp.DisconnectImpl();
             }
             UvInterop.xxuv_free(bufPtr);
         }
@@ -306,6 +308,8 @@ namespace xx
             UvInterop.xxuv_write_(ptr, h.AddrOfPinnedObject(), len);
             h.Free();
         }
+
+        protected abstract void DisconnectImpl();
     }
 
     public class UvTcpPeer : UvTcpBase, IDisposable
@@ -362,6 +366,11 @@ namespace xx
 
             index_at_container = listener.peers.dataLen;
             listener.peers.Add(this);
+        }
+
+        protected override void DisconnectImpl()
+        {
+            Dispose();
         }
 
         byte[] ipBuf = new byte[64];
@@ -440,6 +449,7 @@ namespace xx
         /******************************************************************************/
         // 用户事件绑定
         public Action<int> OnConnect;
+        public Action OnDisconnect;
         /******************************************************************************/
 
         public UvTcpStates state;
@@ -450,17 +460,9 @@ namespace xx
             this.loop = loop;
             this.OnRecv = this.OnRecvImpl;
 
-            ptr = UvInterop.xxuv_alloc_uv_tcp_t(handle);
-            if (ptr == IntPtr.Zero)
-            {
-                this.Unhandle(ref handle);
-                throw new OutOfMemoryException();
-            }
-
             addrPtr = UvInterop.xxuv_alloc_sockaddr_in(IntPtr.Zero);
             if (addrPtr == IntPtr.Zero)
             {
-                this.Free(ref ptr);
                 this.Unhandle(ref handle);
                 throw new OutOfMemoryException();
             }
@@ -497,9 +499,17 @@ namespace xx
             if (disposed) throw new ObjectDisposedException("XxUvTcpClient");
             if (state != UvTcpStates.Disconnected) throw new InvalidOperationException();
 
-            UvInterop.xxuv_tcp_init(loop.ptr, ptr).TryThrow();
+            ptr = UvInterop.xxuv_alloc_uv_tcp_t(handle);
+            if (ptr == IntPtr.Zero) throw new OutOfMemoryException();
 
-            int r = UvInterop.xxuv_tcp_connect_(ptr, addrPtr, OnConnectCB);
+            int r = UvInterop.xxuv_tcp_init(loop.ptr, ptr);
+            if (r != 0)
+            {
+                this.Free(ref ptr);
+                r.Throw();
+            }
+
+            r = UvInterop.xxuv_tcp_connect_(ptr, addrPtr, OnConnectCB);
             if (r != 0)
             {
                 UvInterop.xxuv_close_(ptr);
@@ -519,6 +529,12 @@ namespace xx
             state = UvTcpStates.Disconnected;
         }
 
+        protected override void DisconnectImpl()
+        {
+            Disconnect();
+            if (OnDisconnect != null) OnDisconnect();
+        }
+
         #region Dispose
 
         public void Dispose()
@@ -534,8 +550,11 @@ namespace xx
             {
                 // if (disposing) // Free other state (managed objects).
 
-                UvInterop.xxuv_close_(ptr);
-                ptr = IntPtr.Zero;
+                if (ptr != IntPtr.Zero)
+                {
+                    UvInterop.xxuv_close_(ptr);
+                    ptr = IntPtr.Zero;
+                }
                 this.Free(ref addrPtr);
                 this.Unhandle(ref handle);
 

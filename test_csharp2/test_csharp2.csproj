@@ -64,7 +64,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="..\x64\Debug\xxuvlib.dll">
+    <Content Include="..\x64\Release\xxuvlib.dll">
       <Link>xxuvlib.dll</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

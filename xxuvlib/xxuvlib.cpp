@@ -129,11 +129,11 @@ XXUVLIB_API void xxuv_close_(uv_handle_t* handle) noexcept
 #ifndef NDEBUG
 	if (uv_is_closing(handle)) return;
 #endif
-	//uv_close(handle, [](uv_handle_t* handle)
-	//{
-	//	Free(handle);
-	//});
-	uv_close(handle, nullptr);
+	uv_close(handle, [](uv_handle_t* handle)
+	{
+		Free(handle);
+	});
+	//uv_close(handle, nullptr);
 }
 
 

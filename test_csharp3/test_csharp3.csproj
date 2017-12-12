@@ -45,8 +45,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Program - Copy.cs" />
     <Compile Include="XxMemPoolWrapper.cs" />
     <Compile Include="XxNBSocketWrapper.cs" />
+    <Content Include="..\x64\Release\xxuvlib.dll">
+      <Link>xxuvlib.dll</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="..\x64\Release\xxnbsocketlib.dll">
       <Link>xxnbsocketlib.dll</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
