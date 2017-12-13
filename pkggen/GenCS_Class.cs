@@ -256,8 +256,6 @@ namespace " + c.Namespace + @"
         }
 
         sb.Append(@"
-
-            BBuffer.handlers = new Action<IBBuffer>[" + typeIds.maxId + @"];
         }
     }");
 

@@ -245,8 +245,6 @@ namespace PKG2
             BBuffer.Register<Base>(18);
             BBuffer.Register<Derive1>(19);
             BBuffer.Register<Derive2>(20);
-
-            BBuffer.handlers = new Action<IBBuffer>[20];
         }
     }
 }

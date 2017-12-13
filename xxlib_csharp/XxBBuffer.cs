@@ -4,28 +4,6 @@ using System.Text;
 
 namespace xx
 {
-    /// <summary>
-    /// 存放类型到 typeid 的映射 for 序列化
-    /// </summary>
-    public sealed class TypeIdMaps<T>
-    {
-        public static ushort typeId = 0xFFFF;
-    }
-
-    /// <summary>
-    /// 所有可序列化类均需要实现该接口, 包括 BBuffer 本身
-    /// </summary>
-    public interface IBBuffer
-    {
-        // 获取包编号( 不能用 get, 无法虚覆盖 )
-        ushort GetPackageId();
-
-        // 序列化接口之序列化数据到 bb
-        void ToBBuffer(BBuffer bb);
-
-        // 序列化接口之从 bb 还原 /  填充数据( 这个需要 try )
-        void FromBBuffer(BBuffer bb);
-    }
 
     /// <summary>
     /// ByteBuffer 序列化类. Stream 的替代品. 带各种 Write Read 函数.
@@ -646,6 +624,11 @@ namespace xx
             Assign(buf, dataLen);
         }
 
+        public BBuffer(byte[] buf, int offset, int pkgLen)
+        {
+            Assign(buf, offset, pkgLen);
+        }
+
         public static implicit operator BBuffer(byte[] buf)
         {
             return new BBuffer(buf, buf.Length);
@@ -656,6 +639,13 @@ namespace xx
             offset = 0;
             this.buf = buf;
             this.dataLen = dataLen;
+        }
+
+        public void Assign(byte[] buf, int offset = 0, int dataLen = 0)
+        {
+            this.buf = buf;
+            this.offset = offset;
+            this.dataLen = offset + dataLen;
         }
 
         public void Clear()
@@ -800,6 +790,24 @@ namespace xx
             if (len == 0) return;
             Buffer.BlockCopy(bb.buf, bb.offset, buf, 0, len);
             bb.offset += len;
+        }
+
+        /// <summary>
+        /// 返回非 combine 规则的多个包的序列化结果 byte[] for 广播 / 缓存
+        /// </summary>
+        public byte[] ToBytes(params xx.IBBuffer[] pkgs)
+        {
+            if (pkgs == null || pkgs.Length == 0) throw new NullReferenceException();
+            Clear();
+            var len = pkgs.Length;
+            for (int i = 0; i < len; ++i)
+            {
+                var pkg = pkgs[i];
+                BeginWritePackage();
+                WriteRoot(pkg);
+                if (!EndWritePackage()) throw new OverflowException();
+            }
+            return DumpData();
         }
 
         #endregion
@@ -1075,52 +1083,6 @@ namespace xx
             return null;
         }
 
-        public static Action<IBBuffer>[] handlers;  // 这个需要外部创建
-
-        public static void RegisterHandler<T>(Action<IBBuffer> a)
-        {
-            handlers[TypeIdMaps<T>.typeId] = a;
-        }
-
-        public static void ClearHandlers()
-        {
-            Array.Clear(handlers, 0, handlers.Length);
-        }
-
-        public static List<IBBuffer> ibbs = new List<IBBuffer>();
-        public static bool Handle(BBuffer bb)
-        {
-            // 先一次全解出来, 如果中途解失败就认为整个失败
-            ibbs.Clear();
-            try                                                         // 大 try
-            {
-                while (bb.offset < bb.dataLen)
-                {
-                    IBBuffer ibb = null;
-                    bb.ReadRoot(ref ibb);                                // 这里可能 throw
-                    if (ibb == null) throw new ArgumentNullException();
-                    if (handlers[ibb.GetPackageId()] != null)           // 这里可能越界, handlers 也可能为空
-                    {
-                        ibbs.Add(ibb);
-                    }
-                }
-                if (ibbs.dataLen == 0) return false;
-
-                for (int i = 0; i < ibbs.dataLen; i++)
-                {
-                    var ibb = ibbs[i];
-                    var pkgId = ibb.GetPackageId();
-                    handlers[pkgId](ibb);
-                }
-                return true;
-            }
-            catch (Exception)
-            {
-                // todo: log?
-            }
-            return false;
-        }
-
         #endregion
     }
 
@@ -1143,4 +1105,28 @@ namespace xx
         [FieldOffset(6)] public byte b6;
         [FieldOffset(7)] public byte b7;
     }
+
+    /// <summary>
+    /// 存放类型到 typeid 的映射 for 序列化
+    /// </summary>
+    public sealed class TypeIdMaps<T>
+    {
+        public static ushort typeId = 0xFFFF;
+    }
+
+    /// <summary>
+    /// 所有可序列化类均需要实现该接口, 包括 BBuffer 本身
+    /// </summary>
+    public interface IBBuffer
+    {
+        // 获取包编号( 不能用 get, 无法虚覆盖 )
+        ushort GetPackageId();
+
+        // 序列化接口之序列化数据到 bb
+        void ToBBuffer(BBuffer bb);
+
+        // 序列化接口之从 bb 还原 /  填充数据( 这个需要 try )
+        void FromBBuffer(BBuffer bb);
+    }
+
 }

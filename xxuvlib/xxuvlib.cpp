@@ -220,7 +220,7 @@ XXUVLIB_API int xxuv_write(uv_write_t* req, uv_stream_t* stream, const uv_buf_t 
 	return uv_write(req, stream, bufs, nbufs, cb);
 }
 
-XXUVLIB_API int xxuv_write_(uv_stream_t* stream, char* inBuf, unsigned int len) noexcept
+XXUVLIB_API int xxuv_write_(uv_stream_t* stream, char* inBuf, unsigned int offset, unsigned int len) noexcept
 {
 	struct write_req_t
 	{
@@ -229,7 +229,7 @@ XXUVLIB_API int xxuv_write_(uv_stream_t* stream, char* inBuf, unsigned int len) 
 	};
 	auto req = (write_req_t*)Alloc(sizeof(write_req_t));
 	auto buf = (char*)Alloc(len);
-	memcpy(buf, inBuf, len);
+	memcpy(buf, inBuf + offset, len);
 	req->buf = uv_buf_init(buf, (uint32_t)len);
 	return uv_write((uv_write_t*)req, stream, &req->buf, 1, [](uv_write_t *req, int status)
 	{

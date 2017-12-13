@@ -1,55 +1,41 @@
 ﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using xx;
 
 public static class Program
 {
-    static object mtx = new object();
     static void Main(string[] args)
     {
-        for (int ii = 10000; ii < 10020; ++ii)
+        using (var loop = new UvLoop())
         {
-            int i = ii;
-            new Task(() =>
+            var tcpTimer = new UvTcpTimer(loop, b => ((UvTcpPeer)b).Dispose(), 1000, 5);
+            var listener = new UvTcpListener(loop);
+            listener.OnAccept = peer =>
             {
-                // uv主循环体
-                var loop = new UvLoop();
-
-                var listener = new UvTcpListener(loop);
-                listener.OnAccept = peer =>
+                Console.WriteLine(peer.ip + " accepted");
+                tcpTimer.AddOrUpdate(peer);
+                peer.OnRecv = (bytes) =>
                 {
-                    peer.OnRecv = bytes => peer.Send(bytes);
+                    tcpTimer.AddOrUpdate(peer);
+                    peer.Send(bytes);    // echo
                 };
-                listener.Bind("0.0.0.0", i);
-                listener.Listen();
-
-                // timer test
-                var timer = new UvTimer(loop, 100, 1000);
-                timer.OnFire = () =>
+                peer.OnDispose = () => 
                 {
-                    if (listener.peers.dataLen > 0)
-                    {
-                        lock (mtx)
-                        {
-                            Console.WriteLine("port: " + i + ", peers count = " + listener.peers.dataLen);
-                        }
-                    }
+                    Console.WriteLine(peer.ip + " disposed");
                 };
+            };
+            listener.Bind("0.0.0.0", 12345);
+            listener.Listen();
 
-                lock (mtx)
-                {
-                    Console.WriteLine("listing port = " + i);
-                }
-                loop.Run();
-                loop.Dispose();
-            })
-            .Start();
+            new UvTimer(loop, 100, 1000).OnFire = () =>
+            {
+                Console.WriteLine("peers count = " + listener.peers.dataLen);
+            };
+
+            Console.WriteLine("listing");
+            loop.Run();
         }
-        Console.ReadLine();
     }
 }

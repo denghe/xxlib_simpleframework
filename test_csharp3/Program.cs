@@ -12,15 +12,16 @@ public static class Program
         long successConns = 0;
         using (var loop = new UvLoop())
         {
-            for (int i = 0; i < 10000; ++i)
+            for (int i = 0; i < 1; ++i)
             {
                 var client = new UvTcpClient(loop);
-                client.SetAddress("192.168.1.250", 10000 + (i % 20));
+                client.SetAddress("127.0.0.1", 12345);
                 client.Connect();
                 client.OnConnect = status =>
                 {
                     if (client.state == UvTcpStates.Connected)
                     {
+                        Console.WriteLine("connected.");
                         ++successConns;
                         client.Send(new byte[] { 4, 0, 1, 2, 3, 4 });
                     }
@@ -30,16 +31,16 @@ public static class Program
                         client.Connect();
                     }
                 };
-                client.OnRecvPkg = (bs, offset, len) =>
+                client.OnRecvPkg = (bb) =>
                 {
-                    client.Send(new byte[] { 4, 0, 1, 2, 3, 4 });
+                    client.SendRecvPkg(bb);
                     ++counter;
                 };
                 client.OnDisconnect = () =>
                 {
                     Console.WriteLine("disconnected.");
                     --successConns;
-                    client.Connect();
+                    //client.Connect();
                 };
             }
             var timer = new UvTimer(loop, 0, 1000);
