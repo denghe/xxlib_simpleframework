@@ -903,6 +903,7 @@ namespace xx
         int cursor = 0;                         // 环形游标
         int defaultInterval;
 
+        // intervalMS: 帧间隔毫秒数;    wheelLen: 轮子尺寸( 需求的最大计时帧数 + 1 );    defaultInterval: 默认计时帧数
         public UvTimerManager(UvLoop loop, ulong intervalMS, int wheelLen, int defaultInterval)
         {
             timer = new UvTimer(loop, 0, intervalMS, Process);
@@ -982,6 +983,76 @@ namespace xx
             Add(t, interval);
         }
 
+    }
+
+    public class UvRpcManager
+    {
+        UvTimer timer;
+
+        // 循环使用的自增流水号
+        int serial;
+
+        // 流水号 与 上下文 的映射
+        Dict<int, object> mapping = new Dict<int, object>();
+
+        // 用一个队列记录流水号的超时时间, 以便删掉超时的
+        Queue<Pair<int, int>> serials = new Queue<Pair<int, int>>();
+
+        // 默认计时帧数
+        int defaultInterval;
+
+        // 帧步进值
+        int ticks;
+
+        // intervalMS: 帧间隔毫秒数;    defaultInterval: 默认计时帧数
+        public UvRpcManager(UvLoop loop, ulong intervalMS, int defaultInterval)
+        {
+            if (defaultInterval <= 0) throw new ArgumentException();
+            timer = new UvTimer(loop, 0, intervalMS, Process);
+            this.defaultInterval = defaultInterval;
+        }
+
+        // 不断将超时的从字典移除, 直到 Pop 到未超时的停止.
+        public void Process()
+        {
+            ++ticks;
+            if (serials.IsEmpty) return;
+            while (!serials.IsEmpty && serials.Top().second >= ticks)
+            {
+                mapping.Remove(serials.Top().second);
+                serials.Pop();
+            }
+        }
+
+        // 放入上下文, 返回流水号
+        public int Add(object p, int interval = 0)
+        {
+            if (interval == 0) interval = defaultInterval;
+            unchecked { ++serial; }                     // 循环自增
+            var r = mapping.Add(serial, p, true);
+            serials.Push(new Pair<int, int>
+            {
+                first = serial,
+                second = ticks + interval       // 算出超时 ticks
+            });
+            return serial;
+        }
+
+        // 根据 流水号 取出 上下文. 可能返回空( 找不到或已失效 )
+        public object Remove(int serial)
+        {
+            int idx = mapping.Find(serial);
+            if (idx == -1) return null;
+            var pc = mapping.ValueAt(idx);
+            mapping.RemoveAt(idx);
+            return pc;
+        }
+    }
+
+    public struct Pair<First, Second>
+    {
+        public First first;
+        public Second second;
     }
 
     public enum UvRunMode

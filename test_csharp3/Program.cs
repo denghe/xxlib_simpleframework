@@ -6,6 +6,9 @@ using xx;
 
 public static class Program
 {
+
+    // todo: 模拟 RPC 调用
+
     static void Main(string[] args)
     {
         long counter = 0;
@@ -15,7 +18,7 @@ public static class Program
             // timer 管理器: 1 秒一跳, 池长 6 跳, 默认 TimerStart 参数为 2
             var tm = new UvTimerManager(loop, 1000, 6, 2);
 
-            for (int i = 0; i < 10; ++i)
+            for (int i = 0; i < 1; ++i)
             {
                 var client = new UvTcpClient(loop);
                 client.SetAddress("127.0.0.1", 12345);
@@ -74,8 +77,12 @@ public static class Program
                     //client.Connect();
                 };
             }
-            var timer = new UvTimer(loop, 0, 1000);
-            timer.OnFire = () => { Console.WriteLine(successConns + ", " + counter); };
+
+            // 每秒输出一次 连接成功数 & 当前已发送的包数
+            new UvTimer(loop, 0, 1000).OnFire = () =>
+            {
+                Console.WriteLine(successConns + ", " + counter);
+            };
 
             loop.Run();
         }
