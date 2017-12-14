@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
@@ -222,7 +223,16 @@ namespace xx
         #endregion
     }
 
-    public abstract class UvTcpBase
+    public class UvTimerBase
+    {
+        // TimerManager 于 Add 时填充下列成员
+        public UvTimerBase prevTimer;               // 指向同一 ticks 下的上一 timer
+        public UvTimerBase nextTimer;               // 指向同一 ticks 下的下一 timer
+        public int index_at_timerManager = -1;      // 位于管理器 timerss 数组的下标
+        public Action OnTimerFire;                  // 时间到达后要执行的函数
+    }
+
+    public abstract class UvTcpBase : UvTimerBase
     {
         /******************************************************************************/
         // 用户事件绑定
@@ -234,8 +244,6 @@ namespace xx
         public bool disposed;
         public UvLoop loop;
         public int index_at_container;
-        public int index_at_peerkiller_dict = -1;
-        public int index_at_peerkiller_list = -1;
 
         public IntPtr ptr;
         public IntPtr handle;
@@ -862,57 +870,98 @@ namespace xx
         #endregion
     }
 
-    public class UvTcpTimer
+    public class UvTimerManager
     {
         UvTimer timer;
-        int ticks = 0;
-        Dict<int, List<UvTcpBase>> dict = new Dict<int, xx.List<UvTcpBase>>();
-        List<UvTcpBase> ps = new List<UvTcpBase>(); // todo: pool
-        int capcacity, defaultElapsedTicks;
+        List<UvTimerBase> timerss = new List<UvTimerBase>();
+        int cursor = 0;                         // 环形游标
+        int defaultInterval;
 
-        public UvTcpTimer(UvLoop loop, Action<UvTcpBase> handler, ulong intervalMS, int defaultTickOffset, int capcacity = 1024)
+        public UvTimerManager(UvLoop loop, ulong intervalMS, int wheelLen, int defaultInterval)
         {
-            timer = new UvTimer(loop, 0, intervalMS, () =>
-            {
-                ++ticks;
-                var idx = dict.Find(ticks);
-                if (idx == -1) return;
-                dict.ValueAt(idx).ForEach(p => 
-                {
-                    handler(p);
-                    p.index_at_peerkiller_dict = -1;
-                });
-                dict.RemoveAt(idx); // todo: pool
-            });
-            this.capcacity = capcacity;
-            this.defaultElapsedTicks = defaultTickOffset;
-            ps.Reserve(capcacity);
+            timer = new UvTimer(loop, 0, intervalMS, Process);
+            timerss.Resize(wheelLen);
+            this.defaultInterval = defaultInterval;
         }
 
-        public void AddOrUpdate(UvTcpBase p, int elapsedTicks = 0)
+        public void Process()
         {
-            var r = dict.Add(ticks + (elapsedTicks <= 0 ? defaultElapsedTicks : elapsedTicks), ps, false);
-            if (r.success)
+            var t = timerss[cursor];            // 遍历当前 ticks 链表
+            while (t != null)
             {
-                ps = new List<UvTcpBase>();
-                ps.Reserve(capcacity);
-            }
-            var v = dict.ValueAt(r.index);
-            if (p.index_at_peerkiller_dict != -1)
-            {
-                dict.ValueAt(p.index_at_peerkiller_dict)
-                    .SwapRemoveAt(p.index_at_peerkiller_list);
-            }
-            p.index_at_peerkiller_dict = r.index;
-            p.index_at_peerkiller_list = v.dataLen;
-            v.Add(p);
+                t.OnTimerFire();                // 执行
+                var nt = t.nextTimer;
+                t.nextTimer = null;
+                t.prevTimer = null;
+                t = nt;
+            };
+
+            timerss[cursor] = null;             // 清空链表头
+            cursor++;                           // 环移游标
+            if (cursor == timerss.dataLen) cursor = 0;
         }
 
+        // 不触发 OnTimerFire
         public void Clear()
         {
-            ticks = 0;
-            dict.Clear();
+            // 遍历所有 ticks 链表并 Release
+            timerss.ForEach(t =>
+            {
+                while (t != null)
+                {
+                    var nt = t.nextTimer;
+                    t.nextTimer = null;
+                    t.prevTimer = null;
+                    t = nt;
+                };
+            });
+            cursor = 0;
         }
+
+        // 于指定 interval 所在 timers 链表处放入一个 timer
+        public void Add(UvTimerBase t, int interval = 0)
+        {
+            if (t.index_at_timerManager != -1 || t.prevTimer != null) throw new InvalidOperationException();
+            var timerssLen = timerss.dataLen;
+            if (t == null || (interval < 0 && interval >= timerss.dataLen)) throw new ArgumentException();
+            if (interval == 0) interval = defaultInterval;
+
+             // 环形定位到 timers 下标
+             interval += cursor;
+            if (interval >= timerssLen) interval -= timerssLen;
+
+            // 填充 链表信息
+            t.prevTimer = null;
+            t.index_at_timerManager = interval;
+            t.nextTimer = timerss[interval];
+            if (t.nextTimer != null)            // 有就链起来
+            {
+                t.nextTimer.prevTimer = t;
+            }
+            timerss[interval] = t;              // 成为链表头
+        }
+
+        // 移除
+        public void Remove(UvTimerBase t)
+        {
+            if (t.nextTimer != null) t.nextTimer.prevTimer = t.prevTimer;
+            if (t.prevTimer != null) t.prevTimer.nextTimer = t.nextTimer;
+            else timerss[t.index_at_timerManager] = t.nextTimer;
+            t.nextTimer = null;
+            t.prevTimer = null;
+            t.index_at_timerManager = -1;
+        }
+
+        // 如果存在就移除并放置到新的时间点
+        public void AddOrUpdate(UvTimerBase t, int interval = 0)
+        {
+            if (t.index_at_timerManager != -1 || t.prevTimer != null)
+            {
+                Remove(t);
+            }
+            Add(t, interval);
+        }
+
     }
 
     public enum UvRunMode

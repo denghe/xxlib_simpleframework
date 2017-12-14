@@ -72,14 +72,9 @@ namespace xx
 			t->timerManager = this;
 			t->prevTimer = nullptr;
 			t->timerssIndex = interval;
-			if (timerss[interval])				// 有就链起来
+			if ((t->nextTimer = timerss[interval]))		// 有就链起来
 			{
-				t->nextTimer = timerss[interval];
-				timerss[interval]->prevTimer = t;
-			}
-			else
-			{
-				t->nextTimer = nullptr;
+				t->nextTimer->prevTimer = t;
 			}
 			timerss[interval] = t;				// 成为链表头
 		}
@@ -118,7 +113,7 @@ namespace xx
 				t = nt;
 			};
 
-			timerss[cursor] = 0;				// 清空链表头
+			timerss[cursor] = nullptr;			// 清空链表头
 			cursor++;							// 环移游标
 			if (cursor == timerssLen) cursor = 0;
 		}
