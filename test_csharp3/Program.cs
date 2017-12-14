@@ -47,7 +47,7 @@ public static class Program
                         client.TimerStop();
 
                         // 随便发个包
-                        client.Send(new byte[] { 4, 0, 1, 2, 3, 4 });
+                        client.Send(new byte[] { 0, 4, 1, 2, 3, 4 });
                     }
                     else                                    // 连接失败
                     {
@@ -64,8 +64,7 @@ public static class Program
                 // 绑 收到完整包 事件回调
                 client.OnRecvPkg = (bb) =>
                 {
-                    // echo
-                    client.SendRecvPkg(bb);
+                    client.Send(new byte[] { 0, 4, 1, 2, 3, 4 });
                     ++counter;
                 };
 

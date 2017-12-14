@@ -11,6 +11,11 @@ namespace xx
 {
     public class UvLoop : IDisposable
     {
+        /******************************************************************************/
+        // 需要用就要 new 出来
+        public UvRpcManager rpcMgr;
+        /******************************************************************************/
+
         public bool disposed;
         public List<UvTcpListener> listeners = new List<UvTcpListener>();
         public List<UvTcpClient> clients = new List<UvTcpClient>();
@@ -222,55 +227,13 @@ namespace xx
         #endregion
     }
 
-    public class UvTimerBase
-    {
-        // TimerManager 于 Add 时填充下列成员
-        public UvTimerManager timerManager;         // 指向时间管理( 初始为空 )
-        public UvTimerBase timerPrev;               // 指向同一 ticks 下的上一 timer
-        public UvTimerBase timerNext;               // 指向同一 ticks 下的下一 timer
-        public int timerIndex = -1;                 // 位于管理器 timerss 数组的下标
-        public Action OnTimerFire;                  // 时间到达后要执行的函数
-
-        public void TimerClear()
-        {
-            timerPrev = null;
-            timerNext = null;
-            timerIndex = -1;
-        }
-
-        public void TimerStart(int interval = 0)
-        {
-            if (timerManager == null) throw new InvalidOperationException();
-            timerManager.AddOrUpdate(this, interval);
-        }
-        public void TimerStop()
-        {
-            if (timerManager == null) throw new InvalidOperationException();
-            if (timering) timerManager.Remove(this);
-        }
-
-        public void BindTo(UvTimerManager tm)
-        {
-            if (timerManager != null) throw new InvalidOperationException();
-            timerManager = tm;
-        }
-
-        public void UnbindTimerManager()
-        {
-            if (timering) timerManager.Remove(this);
-            timerManager = null;
-        }
-
-        public bool timering { get { return timerManager != null && (timerIndex != -1 || timerPrev != null); } }
-    }
-
     public abstract class UvTcpBase : UvTimerBase
     {
         /******************************************************************************/
         // 用户事件绑定
         public Action<BBuffer> OnRecvPkg;
         public Action OnDispose;
-        public Action<byte[]> OnRecv;   // 默认以 2字节包头 拆解数据, 发起 OnRecvPkg
+        public Action<byte[]> OnRecv;   // 默认会拆解数据, 进一步发起各种 OnRecvXxxxx
         /******************************************************************************/
 
         public bool disposed;
@@ -304,7 +267,7 @@ namespace xx
 
         protected byte[] buf;
         protected int offset;
-        protected BBuffer bbRecv = new BBuffer();
+        protected BBuffer bbRecv = new BBuffer();   // 利用 BBuffer 做壳来封送上面的 buf
         public void OnRecvImpl(byte[] bytes)
         {
             if (buf == null)    // likely
@@ -313,6 +276,7 @@ namespace xx
             }
             else
             {
+                // 拼接上次残余的数据
                 var left = buf.Length - offset;
                 var newBuf = new byte[left + bytes.Length];
                 Buffer.BlockCopy(buf, offset, newBuf, 0, left);
@@ -320,14 +284,39 @@ namespace xx
                 buf = newBuf;
             }
 
-            offset = 0;
-            while (buf.Length - offset >= 2)            // 确保 2字节 包头长度
-            {
-                // 读出头
-                var dataLen = buf[offset] + (buf[offset + 1] << 8);
-                offset += 2;
+            // 包头设计: 1 + N ( 当前不考虑校验位啥的 )
+            // 首字节为类型路由. 2进制结构为 4bit 类型 + 2bit 长度变量长1 + 2 bit 长度变量长2
+            // 类型有 0: 一般数据包   1: RPC包   2+: 其他( todo )
+            // 0: 长1 为 0, 即整个字节只含 2bit 长2. 有效值为  0, 1, 2  ( 即 1, 2, 4 字节 )
+            // 1: 长1 为 0, 1, 2, 3 ( 即 1, 2, 4, 8 字节 ), 意指 RPC 流水号的空间占用, 长度2 同 0
 
-                // todo: 特殊判断: 如果 dataLen 为 0 ?? 后续跟控制包? 当前直接认为是出错
+            offset = 0;
+            while (buf.Length > offset)                     // 确保 1字节 包头长度
+            {
+                long serial = 0, dataLen = 0;
+                var offsetBak = offset;                     // 为回滚 备份偏移量
+                var h = buf[offset++];                      // 读出 1字节 固定包头
+                var t = (h & 0b11110000) >> 4;              // 得到类型 id
+                if (t == 0)
+                {
+                    serial = 0;
+                    if (!ReadLen(ref buf, ref offset, ref dataLen, h & 0b00000011))
+                    {
+                        offset = offsetBak;
+                        return;
+                    }
+                }
+                else // t == 1
+                {
+                    if (!ReadLen(ref buf, ref offset, ref serial, (h & 0b00001100) >> 2)
+                        || !ReadLen(ref buf, ref offset, ref dataLen, h & 0b00000011))
+                    {
+                        offset = offsetBak;
+                        return;
+                    }
+                    break;
+                }
+
                 if (dataLen == 0)
                 {
                     buf = null;
@@ -336,24 +325,85 @@ namespace xx
                 }
 
                 // 确保数据长
-                if (buf.Length - offset < dataLen)
+                if (dataLen + offset > buf.Length)
                 {
-                    offset -= 2;                        // 回滚偏移量, 停在 包头 位置
-                    break;
+                    offset = offsetBak;
+                    return;
                 }
 
                 // 发起包回调
-                if (OnRecvPkg != null)
+                if (t == 0)
                 {
-                    bbRecv.Assign(buf, offset, dataLen);
-                    OnRecvPkg(bbRecv);
+                    if (OnRecvPkg != null)
+                    {
+                        bbRecv.Assign(buf, offset, (int)dataLen);
+                        OnRecvPkg(bbRecv);
+                    }
+                }
+                else // t == 1
+                {
+                    if (loop.rpcMgr != null)
+                    {
+                        bbRecv.Assign(buf, offset, (int)dataLen);
+                        loop.rpcMgr.Callback((uint)serial, bbRecv);
+                    }
                 }
 
                 // 继续处理剩余数据
-                offset += dataLen;
+                offset += (int)dataLen;
             }
         }
 
+        // 读长度或流水号. 如果不够读, 就返回 false
+        public static bool ReadLen(ref byte[] buf, ref int offset, ref long len, int lenShift)
+        {
+            switch (lenShift)
+            {
+                case 0:
+                    if (buf.Length > offset)            // 确保 1字节 长度值
+                    {
+                        len = buf[offset++];
+                        return true;
+                    }
+                    return false;
+                case 1:
+                    if (buf.Length > offset + 1)        // 确保 2字节 长度值
+                    {
+                        len = buf[offset] | (buf[offset + 1] << 8);
+                        offset += 2;
+                        return true;
+                    }
+                    return false;
+                case 2:
+                    if (buf.Length > offset + 3)        // 确保 4字节 长度值
+                    {
+                        len = buf[offset]
+                            | (buf[offset + 1] << 8)
+                            | (buf[offset + 2] << 16)
+                            | (buf[offset + 3] << 24);
+                        offset += 4;
+                        return true;
+                    }
+                    return false;
+                case 3:
+                    if (buf.Length > offset + 7)        // 确保 8字节 长度值
+                    {
+                        len = buf[offset]
+                            | (buf[offset + 1] << 8)
+                            | (buf[offset + 2] << 16)
+                            | (buf[offset + 3] << 24)
+                            | (buf[offset + 4] << 32)
+                            | (buf[offset + 5] << 40)
+                            | (buf[offset + 6] << 48)
+                            | (buf[offset + 7] << 56);
+                        offset += 8;
+                        return true;
+                    }
+                    return false;
+                default:
+                    throw new InvalidCastException();
+            }
+        }
 
         public void Send(byte[] data, int offset = 0, int len = 0)
         {
@@ -387,9 +437,9 @@ namespace xx
             {
                 var pkg = pkgs[i];
                 bbSend.Clear();
-                bbSend.BeginWritePackage();
+                bbSend.BeginWritePackageEx(0, 2);
                 bbSend.WriteRoot(pkg);
-                if (!bbSend.EndWritePackage()) throw new OverflowException();
+                if (!bbSend.EndWritePackageEx(-1, 1)) throw new OverflowException();
                 sum += bbSend.dataLen;
                 Send(bbSend.buf, 0, bbSend.dataLen);
             }
@@ -400,23 +450,28 @@ namespace xx
         {
             if (bbSend == null) bbSend = new BBuffer(65536);
             bbSend.Clear();
-            bbSend.BeginWritePackage();
+            bbSend.BeginWritePackageEx(0, 2);
             var len = pkgs.Length;
             for (int i = 0; i < len; ++i)
             {
                 var ibb = pkgs[i];
                 bbSend.WriteRoot(ibb);
             }
-            if (!bbSend.EndWritePackage()) throw new OverflowException();
+            if (!bbSend.EndWritePackageEx(-1, 1)) throw new OverflowException();
             Send(bbSend.buf, 0, bbSend.dataLen);
             return bbSend.dataLen;
         }
 
-
-        // 专为 echo 回发包数据而写( 非 常用 )
-        public void SendRecvPkg(BBuffer bb)
+        public int SendRpcPackage(xx.IBBuffer pkg, Action<BBuffer> cb, int interval = 0)
         {
-            Send(bb.buf, bb.offset - 2, bb.dataLen - bb.offset + 2);
+            if (bbSend == null) bbSend = new BBuffer(65536);
+            var serial = loop.rpcMgr.Register(cb, interval);
+            bbSend.Clear();
+            bbSend.BeginWritePackageEx(4, 2);
+            bbSend.WriteRoot(pkg);
+            if (!bbSend.EndWritePackageEx(2, 1, (ulong)serial)) throw new OverflowException();
+            Send(bbSend.buf, 0, bbSend.dataLen);
+            return bbSend.dataLen;
         }
     }
 
@@ -801,6 +856,137 @@ namespace xx
         #endregion
     }
 
+    public class UvTimerBase
+    {
+        // TimerManager 于 Add 时填充下列成员
+        public UvTimerManager timerManager;         // 指向时间管理( 初始为空 )
+        public UvTimerBase timerPrev;               // 指向同一 ticks 下的上一 timer
+        public UvTimerBase timerNext;               // 指向同一 ticks 下的下一 timer
+        public int timerIndex = -1;                 // 位于管理器 timerss 数组的下标
+        public Action OnTimerFire;                  // 时间到达后要执行的函数
+
+        public void TimerClear()
+        {
+            timerPrev = null;
+            timerNext = null;
+            timerIndex = -1;
+        }
+
+        public void TimerStart(int interval = 0)
+        {
+            if (timerManager == null) throw new InvalidOperationException();
+            timerManager.AddOrUpdate(this, interval);
+        }
+        public void TimerStop()
+        {
+            if (timerManager == null) throw new InvalidOperationException();
+            if (timering) timerManager.Remove(this);
+        }
+
+        public void BindTo(UvTimerManager tm)
+        {
+            if (timerManager != null) throw new InvalidOperationException();
+            timerManager = tm;
+        }
+
+        public void UnbindTimerManager()
+        {
+            if (timering) timerManager.Remove(this);
+            timerManager = null;
+        }
+
+        public bool timering { get { return timerManager != null && (timerIndex != -1 || timerPrev != null); } }
+    }
+
+    public class UvTimerManager
+    {
+        UvTimer timer;
+        List<UvTimerBase> timerss = new List<UvTimerBase>();
+        int cursor = 0;                         // 环形游标
+        int defaultInterval;
+
+        // intervalMS: 帧间隔毫秒数;    wheelLen: 轮子尺寸( 需求的最大计时帧数 + 1 );    defaultInterval: 默认计时帧数
+        public UvTimerManager(UvLoop loop, ulong intervalMS, int wheelLen, int defaultInterval)
+        {
+            timer = new UvTimer(loop, 0, intervalMS, Process);
+            timerss.Resize(wheelLen);
+            this.defaultInterval = defaultInterval;
+        }
+
+        public void Process()
+        {
+            var t = timerss[cursor];            // 遍历当前 ticks 链表
+            while (t != null)
+            {
+                t.OnTimerFire();                // 执行
+                var nt = t.timerNext;
+                t.TimerClear();
+                t = nt;
+            };
+            timerss[cursor] = null;
+            cursor++;                           // 环移游标
+            if (cursor == timerss.dataLen) cursor = 0;
+        }
+
+        // 不触发 OnTimerFire
+        public void Clear()
+        {
+            for (int i = 0; i < timerss.dataLen; ++i)
+            {
+                var t = timerss[i];
+                while (t != null)               // 遍历链表
+                {
+                    var nt = t.timerNext;
+                    t.TimerClear();             // 清理关联
+                    t = nt;
+                };
+                timerss[i] = null;              // 清空链表头
+            }
+            cursor = 0;
+        }
+
+        // 于指定 interval 所在 timers 链表处放入一个 timer
+        public void Add(UvTimerBase t, int interval = 0)
+        {
+            if (t.timering) throw new InvalidOperationException();
+            var timerssLen = timerss.dataLen;
+            if (t == null || (interval < 0 && interval >= timerss.dataLen)) throw new ArgumentException();
+            if (interval == 0) interval = defaultInterval;
+
+            // 环形定位到 timers 下标
+            interval += cursor;
+            if (interval >= timerssLen) interval -= timerssLen;
+
+            // 填充 链表信息
+            t.timerPrev = null;
+            t.timerIndex = interval;
+            t.timerNext = timerss[interval];
+            if (t.timerNext != null)            // 有就链起来
+            {
+                t.timerNext.timerPrev = t;
+            }
+            timerss[interval] = t;              // 成为链表头
+        }
+
+        // 移除
+        public void Remove(UvTimerBase t)
+        {
+            if (!t.timering) throw new InvalidOperationException();
+            if (t.timerNext != null) t.timerNext.timerPrev = t.timerPrev;
+            if (t.timerPrev != null) t.timerPrev.timerNext = t.timerNext;
+            else timerss[t.timerIndex] = t.timerNext;
+            t.TimerClear();
+        }
+
+        // 如果存在就移除并放置到新的时间点
+        public void AddOrUpdate(UvTimerBase t, int interval = 0)
+        {
+            if (t.timering) Remove(t);
+            Add(t, interval);
+        }
+
+    }
+
     public class UvAsync : IDisposable
     {
         /******************************************************************************/
@@ -896,107 +1082,18 @@ namespace xx
         #endregion
     }
 
-    public class UvTimerManager
-    {
-        UvTimer timer;
-        List<UvTimerBase> timerss = new List<UvTimerBase>();
-        int cursor = 0;                         // 环形游标
-        int defaultInterval;
-
-        // intervalMS: 帧间隔毫秒数;    wheelLen: 轮子尺寸( 需求的最大计时帧数 + 1 );    defaultInterval: 默认计时帧数
-        public UvTimerManager(UvLoop loop, ulong intervalMS, int wheelLen, int defaultInterval)
-        {
-            timer = new UvTimer(loop, 0, intervalMS, Process);
-            timerss.Resize(wheelLen);
-            this.defaultInterval = defaultInterval;
-        }
-
-        public void Process()
-        {
-            var t = timerss[cursor];            // 遍历当前 ticks 链表
-            while (t != null)
-            {
-                t.OnTimerFire();                // 执行
-                var nt = t.timerNext;
-                t.TimerClear();
-                t = nt;
-            };
-            timerss[cursor] = null;
-            cursor++;                           // 环移游标
-            if (cursor == timerss.dataLen) cursor = 0;
-        }
-
-        // 不触发 OnTimerFire
-        public void Clear()
-        {
-            for (int i = 0; i < timerss.dataLen; ++i)
-            {
-                var t = timerss[i];
-                while (t != null)               // 遍历链表
-                {
-                    var nt = t.timerNext;
-                    t.TimerClear();             // 清理关联
-                    t = nt;
-                };
-                timerss[i] = null;              // 清空链表头
-            }
-            cursor = 0;
-        }
-
-        // 于指定 interval 所在 timers 链表处放入一个 timer
-        public void Add(UvTimerBase t, int interval = 0)
-        {
-            if (t.timering) throw new InvalidOperationException();
-            var timerssLen = timerss.dataLen;
-            if (t == null || (interval < 0 && interval >= timerss.dataLen)) throw new ArgumentException();
-            if (interval == 0) interval = defaultInterval;
-
-            // 环形定位到 timers 下标
-            interval += cursor;
-            if (interval >= timerssLen) interval -= timerssLen;
-
-            // 填充 链表信息
-            t.timerPrev = null;
-            t.timerIndex = interval;
-            t.timerNext = timerss[interval];
-            if (t.timerNext != null)            // 有就链起来
-            {
-                t.timerNext.timerPrev = t;
-            }
-            timerss[interval] = t;              // 成为链表头
-        }
-
-        // 移除
-        public void Remove(UvTimerBase t)
-        {
-            if (!t.timering) throw new InvalidOperationException();
-            if (t.timerNext != null) t.timerNext.timerPrev = t.timerPrev;
-            if (t.timerPrev != null) t.timerPrev.timerNext = t.timerNext;
-            else timerss[t.timerIndex] = t.timerNext;
-            t.TimerClear();
-        }
-
-        // 如果存在就移除并放置到新的时间点
-        public void AddOrUpdate(UvTimerBase t, int interval = 0)
-        {
-            if (t.timering) Remove(t);
-            Add(t, interval);
-        }
-
-    }
-
     public class UvRpcManager
     {
         UvTimer timer;
 
         // 循环使用的自增流水号
-        int serial;
+        uint serial;
 
-        // 流水号 与 上下文 的映射
-        Dict<int, object> mapping = new Dict<int, object>();
+        // 流水号 与 cb(bb) 回调 的映射. bb 为空表示超时调用
+        Dict<uint, Action<BBuffer>> mapping = new Dict<uint, Action<BBuffer>>();
 
-        // 用一个队列记录流水号的超时时间, 以便删掉超时的
-        Queue<Pair<int, int>> serials = new Queue<Pair<int, int>>();
+        // 用一个队列记录流水号的超时时间, 以便删掉超时的. first: timeout ticks
+        Queue<Pair<int, uint>> serials = new Queue<Pair<int, uint>>();
 
         // 默认计时帧数
         int defaultInterval;
@@ -1012,40 +1109,44 @@ namespace xx
             this.defaultInterval = defaultInterval;
         }
 
-        // 不断将超时的从字典移除, 直到 Pop 到未超时的停止.
+        // 不断将超时的从字典移除( 以 false 参数 call 之 ), 直到 Pop 到未超时的停止.
         public void Process()
         {
             ++ticks;
             if (serials.IsEmpty) return;
-            while (!serials.IsEmpty && serials.Top().second >= ticks)
+            while (!serials.IsEmpty && serials.Top().first >= ticks)
             {
-                mapping.Remove(serials.Top().second);
+                var idx = mapping.Find(serials.Top().second);
                 serials.Pop();
+                if (idx != -1)
+                {
+                    mapping.ValueAt(idx)(null);
+                    mapping.RemoveAt(idx);
+                }
             }
         }
 
         // 放入上下文, 返回流水号
-        public int Add(object p, int interval = 0)
+        public uint Register(Action<BBuffer> cb, int interval = 0)
         {
             if (interval == 0) interval = defaultInterval;
             unchecked { ++serial; }                     // 循环自增
-            var r = mapping.Add(serial, p, true);
-            serials.Push(new Pair<int, int>
+            var r = mapping.Add(serial, cb, true);
+            serials.Push(new Pair<int, uint>
             {
-                first = serial,
-                second = ticks + interval       // 算出超时 ticks
+                first = ticks + interval,       // 算出超时 ticks
+                second = serial
             });
             return serial;
         }
 
-        // 根据 流水号 取出 上下文. 可能返回空( 找不到或已失效 )
-        public object Remove(int serial)
+        // 根据 流水号 定位到 回调函数并调用( 由 UvTcpXxxx 来 call )
+        public void Callback(uint serial, BBuffer bb)
         {
             int idx = mapping.Find(serial);
-            if (idx == -1) return null;
-            var pc = mapping.ValueAt(idx);
+            if (idx == -1) return;              // 已超时移除
+            mapping.ValueAt(idx)(bb);
             mapping.RemoveAt(idx);
-            return pc;
         }
     }
 

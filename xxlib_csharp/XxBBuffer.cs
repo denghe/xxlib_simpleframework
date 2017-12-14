@@ -812,6 +812,64 @@ namespace xx
 
         #endregion
 
+        #region 1+n header misc utils
+
+        public void BeginWritePackageEx(int serialSize, int lenSize)
+        {
+            dataLenBak = dataLen;
+            Reserve(dataLen + 1 + serialSize + lenSize);
+            dataLen += 2;
+        }
+
+        public bool EndWritePackageEx(int serialShift, int lenShift, ulong serial = 0)
+        {
+            var pkgLen = (uint)(dataLen - dataLenBak);
+            if (pkgLen > (1 << lenShift))
+            {
+                dataLen = dataLenBak;
+                return false;
+            }
+            if (serialShift < 0)
+                buf[dataLenBak] = (byte)lenShift;
+            else
+                buf[dataLenBak] = (byte)((1 << 4) | (serialShift << 2) | lenShift);
+
+            if (serialShift > -1)   // 1
+            {
+                buf[dataLenBak++] = (byte)(serial);
+                if (serialShift > 0)    // 2
+                {
+                    buf[dataLenBak++] = (byte)(serial >> 8);
+                    if (serialShift > 1)    // 4
+                    {
+                        buf[dataLenBak++] = (byte)(serial >> 16);
+                        buf[dataLenBak++] = (byte)(serial >> 24);
+                        if (serialShift > 2)    // 8
+                        {
+                            buf[dataLenBak++] = (byte)(serial >> 32);
+                            buf[dataLenBak++] = (byte)(serial >> 40);
+                            buf[dataLenBak++] = (byte)(serial >> 48);
+                            buf[dataLenBak++] = (byte)(serial >> 56);
+                        }
+                    }
+                }
+            }
+
+            buf[dataLenBak++] = (byte)(pkgLen);
+            if (lenShift > 0)    // 2
+            {
+                buf[dataLenBak++] = (byte)(pkgLen >> 8);
+                if (lenShift > 1)    // 4
+                {
+                    buf[dataLenBak++] = (byte)(pkgLen >> 16);
+                    buf[dataLenBak++] = (byte)(pkgLen >> 24);
+                }
+            }
+            return true;
+        }
+
+        #endregion
+
         #region static utils
 
         /// <summary>

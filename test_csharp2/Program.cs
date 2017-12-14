@@ -22,10 +22,10 @@ public static class Program
                 peer.OnTimerFire = () => peer.Dispose();
                 peer.TimerStart();
 
-                peer.OnRecvPkg = bb =>
+                peer.OnRecv = bs =>
                 {
                     peer.TimerStart();      // 更新 timer
-                    peer.SendRecvPkg(bb);   // echo
+                    peer.Send(bs);          // echo
                 };
 
                 peer.OnDispose = () =>
