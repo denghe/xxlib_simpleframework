@@ -10,25 +10,26 @@ public static class Program
     {
         using (var loop = new UvLoop())
         {
-            var tcpTimer = new UvTimerManager(loop, 1000, 6, 5);
+            var tm = new UvTimerManager(loop, 1000, 6, 5);
             var listener = new UvTcpListener(loop);
             listener.OnAccept = peer =>
             {
-                Console.WriteLine(peer.ip + " accepted");
+                peer.BindTo(tm);
+                //Console.WriteLine(peer.ip + " accepted");
 
                 peer.OnTimerFire = () => peer.Dispose();
-                tcpTimer.AddOrUpdate(peer);
+                peer.TimerStart();
 
                 peer.OnRecv = (bytes) =>
                 {
-                    tcpTimer.AddOrUpdate(peer);
+                    peer.TimerStart();
                     peer.Send(bytes);    // echo
                 };
 
-                peer.OnDispose = () =>
-                {
-                    Console.WriteLine(peer.ip + " disposed");
-                };
+                //peer.OnDispose = () =>
+                //{
+                //    Console.WriteLine(peer.ip + " disposed");
+                //};
             };
             listener.Bind("0.0.0.0", 12345);
             listener.Listen();

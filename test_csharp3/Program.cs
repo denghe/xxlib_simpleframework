@@ -15,10 +15,10 @@ public static class Program
             // timer 管理器: 1 秒一跳, 池长 6 跳, 默认 TimerStart 参数为 2
             var tm = new UvTimerManager(loop, 1000, 6, 2);
 
-            for (int i = 0; i < 1; ++i)
+            for (int i = 0; i < 10; ++i)
             {
                 var client = new UvTcpClient(loop);
-                client.SetAddress("192.168.1.250", 12345);
+                client.SetAddress("127.0.0.1", 12345);
 
                 // 开始连( 实际执行是在 uv.loop 中 )
                 client.Connect();
@@ -35,22 +35,22 @@ public static class Program
                 // 绑 连接事件回调
                 client.OnConnect = status =>
                 {
-                    // 关闭 timer
-                    client.TimerStop();
-
-                    if (client.state == UvTcpStates.Connected)      // 连接成功
+                    if (client.alive)                       // 连接成功
                     {
                         Console.WriteLine("connected.");
                         ++successConns;
 
-                        // echo
+                        // 关闭 timer
+                        client.TimerStop();
+
+                        // 随便发个包
                         client.Send(new byte[] { 4, 0, 1, 2, 3, 4 });
                     }
-                    else                                            // 连接失败
+                    else                                    // 连接失败
                     {
                         Console.WriteLine("connect failed.");
 
-                        // 启用 timer
+                        // 启用或更新 timer
                         client.TimerStart();
 
                         // 再次发起连接
@@ -58,9 +58,10 @@ public static class Program
                     }
                 };
 
-                // 绑 收到数据 事件回调
+                // 绑 收到完整包 事件回调
                 client.OnRecvPkg = (bb) =>
                 {
+                    // echo
                     client.SendRecvPkg(bb);
                     ++counter;
                 };

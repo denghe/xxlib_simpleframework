@@ -413,7 +413,7 @@ namespace xx
         }
 
 
-        // echo
+        // 专为 echo 回发包数据而写( 非 常用 )
         public void SendRecvPkg(BBuffer bb)
         {
             Send(bb.buf, bb.offset - 2, bb.dataLen - bb.offset + 2);
