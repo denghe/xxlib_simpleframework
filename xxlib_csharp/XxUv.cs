@@ -5,7 +5,6 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 
-// todo: 有子容器的 Dispose 时清子
 // todo: c api 过来的 cb 可能要加 try
 
 namespace xx
@@ -66,7 +65,7 @@ namespace xx
 
         public void Dispose()
         {
-            if(disposed) return;
+            if (disposed) return;
             Dispose(true);
             GC.SuppressFinalize(this);
         }
@@ -189,7 +188,7 @@ namespace xx
 
         public void Dispose()
         {
-            if(disposed) return;
+            if (disposed) return;
             if (OnDispose != null) OnDispose();
             Dispose(true);
             GC.SuppressFinalize(this);
@@ -226,10 +225,43 @@ namespace xx
     public class UvTimerBase
     {
         // TimerManager 于 Add 时填充下列成员
-        public UvTimerBase prevTimer;               // 指向同一 ticks 下的上一 timer
-        public UvTimerBase nextTimer;               // 指向同一 ticks 下的下一 timer
-        public int index_at_timerManager = -1;      // 位于管理器 timerss 数组的下标
+        public UvTimerManager timerManager;         // 指向时间管理( 初始为空 )
+        public UvTimerBase timerPrev;               // 指向同一 ticks 下的上一 timer
+        public UvTimerBase timerNext;               // 指向同一 ticks 下的下一 timer
+        public int timerIndex = -1;                 // 位于管理器 timerss 数组的下标
         public Action OnTimerFire;                  // 时间到达后要执行的函数
+
+        public void TimerClear()
+        {
+            timerPrev = null;
+            timerNext = null;
+            timerIndex = -1;
+        }
+
+        public void TimerStart(int interval = 0)
+        {
+            if (timerManager == null) throw new InvalidOperationException();
+            timerManager.AddOrUpdate(this, interval);
+        }
+        public void TimerStop()
+        {
+            if (timerManager == null) throw new InvalidOperationException();
+            if (timering) timerManager.Remove(this);
+        }
+
+        public void BindTo(UvTimerManager tm)
+        {
+            if (timerManager != null) throw new InvalidOperationException();
+            timerManager = tm;
+        }
+
+        public void UnbindTimerManager()
+        {
+            if (timering) timerManager.Remove(this);
+            timerManager = null;
+        }
+
+        public bool timering { get { return timerManager != null && (timerIndex != -1 || timerPrev != null); } }
     }
 
     public abstract class UvTcpBase : UvTimerBase
@@ -476,10 +508,9 @@ namespace xx
 
         #region Dispose
 
-        //Implement IDisposable.
         public void Dispose()
         {
-            if(disposed) return;
+            if (disposed) return;
             if (OnDispose != null) OnDispose();
             Dispose(true);
             GC.SuppressFinalize(this);
@@ -489,17 +520,15 @@ namespace xx
         {
             if (!disposed)
             {
-                if (disposing)
-                {
-                    // Free other state (managed objects).
-                }
-                // Free your own state (unmanaged objects).
-                // Set large fields to null.
+                // if (disposing) // Free other state (managed objects).
 
                 UvInterop.xxuv_close_(ptr);
                 ptr = IntPtr.Zero;
                 this.Free(ref addrPtr);
                 this.Unhandle(ref handle);
+
+                UnbindTimerManager();
+                OnTimerFire = null;
 
                 buf = null;
                 bbSend = null;
@@ -509,19 +538,13 @@ namespace xx
                 loop = null;
                 disposed = true;
             }
-            // Call Dispose in the base class.
             //base.Dispose(disposing);
         }
 
-        // Use C# destructor syntax for finalization code.
         ~UvTcpPeer()
         {
             Dispose(false);
         }
-
-        // The derived class does not have a Finalize method
-        // or a Dispose method without parameters because it inherits
-        // them from the base class.
 
         #endregion
     }
@@ -606,7 +629,7 @@ namespace xx
         public void Disconnect()
         {
             if (disposed) throw new ObjectDisposedException("XxUvTcpClient");
-            if (state == UvTcpStates.Disconnected) throw new InvalidOperationException();
+            if (state == UvTcpStates.Disconnected) return;
             UvInterop.xxuv_close_(ptr);
             ptr = IntPtr.Zero;
             state = UvTcpStates.Disconnected;
@@ -622,7 +645,7 @@ namespace xx
 
         public void Dispose()
         {
-            if(disposed) return;
+            if (disposed) return;
             if (OnDispose != null) OnDispose();
             Dispose(true);
             GC.SuppressFinalize(this);
@@ -642,6 +665,9 @@ namespace xx
                 }
                 this.Free(ref addrPtr);
                 this.Unhandle(ref handle);
+
+                UnbindTimerManager();
+                OnTimerFire = null;
 
                 buf = null;
                 bbSend = null;
@@ -744,7 +770,7 @@ namespace xx
 
         public void Dispose()
         {
-            if(disposed) return;
+            if (disposed) return;
             if (OnDispose != null) OnDispose();
             Dispose(true);
             GC.SuppressFinalize(this);
@@ -838,7 +864,7 @@ namespace xx
 
         public void Dispose()
         {
-            if(disposed) return;
+            if (disposed) return;
             if (OnDispose != null) OnDispose();
             Dispose(true);
             GC.SuppressFinalize(this);
@@ -890,13 +916,11 @@ namespace xx
             while (t != null)
             {
                 t.OnTimerFire();                // 执行
-                var nt = t.nextTimer;
-                t.nextTimer = null;
-                t.prevTimer = null;
+                var nt = t.timerNext;
+                t.TimerClear();
                 t = nt;
             };
-
-            timerss[cursor] = null;             // 清空链表头
+            timerss[cursor] = null;
             cursor++;                           // 环移游标
             if (cursor == timerss.dataLen) cursor = 0;
         }
@@ -904,39 +928,39 @@ namespace xx
         // 不触发 OnTimerFire
         public void Clear()
         {
-            // 遍历所有 ticks 链表并 Release
-            timerss.ForEach(t =>
+            for (int i = 0; i < timerss.dataLen; ++i)
             {
-                while (t != null)
+                var t = timerss[i];
+                while (t != null)               // 遍历链表
                 {
-                    var nt = t.nextTimer;
-                    t.nextTimer = null;
-                    t.prevTimer = null;
+                    var nt = t.timerNext;
+                    t.TimerClear();             // 清理关联
                     t = nt;
                 };
-            });
+                timerss[i] = null;              // 清空链表头
+            }
             cursor = 0;
         }
 
         // 于指定 interval 所在 timers 链表处放入一个 timer
         public void Add(UvTimerBase t, int interval = 0)
         {
-            if (t.index_at_timerManager != -1 || t.prevTimer != null) throw new InvalidOperationException();
+            if (t.timering) throw new InvalidOperationException();
             var timerssLen = timerss.dataLen;
             if (t == null || (interval < 0 && interval >= timerss.dataLen)) throw new ArgumentException();
             if (interval == 0) interval = defaultInterval;
 
-             // 环形定位到 timers 下标
-             interval += cursor;
+            // 环形定位到 timers 下标
+            interval += cursor;
             if (interval >= timerssLen) interval -= timerssLen;
 
             // 填充 链表信息
-            t.prevTimer = null;
-            t.index_at_timerManager = interval;
-            t.nextTimer = timerss[interval];
-            if (t.nextTimer != null)            // 有就链起来
+            t.timerPrev = null;
+            t.timerIndex = interval;
+            t.timerNext = timerss[interval];
+            if (t.timerNext != null)            // 有就链起来
             {
-                t.nextTimer.prevTimer = t;
+                t.timerNext.timerPrev = t;
             }
             timerss[interval] = t;              // 成为链表头
         }
@@ -944,21 +968,17 @@ namespace xx
         // 移除
         public void Remove(UvTimerBase t)
         {
-            if (t.nextTimer != null) t.nextTimer.prevTimer = t.prevTimer;
-            if (t.prevTimer != null) t.prevTimer.nextTimer = t.nextTimer;
-            else timerss[t.index_at_timerManager] = t.nextTimer;
-            t.nextTimer = null;
-            t.prevTimer = null;
-            t.index_at_timerManager = -1;
+            if (!t.timering) throw new InvalidOperationException();
+            if (t.timerNext != null) t.timerNext.timerPrev = t.timerPrev;
+            if (t.timerPrev != null) t.timerPrev.timerNext = t.timerNext;
+            else timerss[t.timerIndex] = t.timerNext;
+            t.TimerClear();
         }
 
         // 如果存在就移除并放置到新的时间点
         public void AddOrUpdate(UvTimerBase t, int interval = 0)
         {
-            if (t.index_at_timerManager != -1 || t.prevTimer != null)
-            {
-                Remove(t);
-            }
+            if (t.timering) Remove(t);
             Add(t, interval);
         }
 
@@ -1191,5 +1211,4 @@ namespace xx
         }
 
     }
-
 }
