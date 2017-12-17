@@ -604,6 +604,16 @@ namespace xx
             return outPkgs.dataLen;
         }
 
+        /// <summary>
+        /// 为方便直接返回 new List. 需要 try.
+        /// </summary>
+        public List<IBBuffer> ReadPackages()
+        {
+            var rtv = new List<IBBuffer>();
+            ReadPackages(ref rtv);
+            return rtv;
+        }
+
         #endregion
 
         #endregion
