@@ -44,6 +44,11 @@ namespace xx
             }
         }
 
+        public UvLoop(ulong rpcIntervalMS, int rpcDefaultInterval) : this()
+        {
+            rpcMgr = new UvRpcManager(this, 1000, 5);
+        }
+
         public void Run(UvRunMode mode = UvRunMode.Default)
         {
             if (disposed) throw new ObjectDisposedException("XxUvLoop");
@@ -234,7 +239,6 @@ namespace xx
         public Action<BBuffer> OnReceivePackage;
         public Action<uint, BBuffer> OnReceiveRequest;
         public Action OnDispose;
-        public Action<byte[]> OnReceive;   // 默认会拆解数据, 进一步发起各种 OnRecvXxxxx
         /******************************************************************************/
 
         public bool disposed;
@@ -255,9 +259,7 @@ namespace xx
             int len = (int)nread;
             if (len > 0)
             {
-                var buf = new byte[len];                        // todo: 直接利用 bbRecv 来做?
-                Marshal.Copy(bufPtr, buf, 0, len);
-                tcp.OnReceive(buf);
+                tcp.OnReceiveImpl(bufPtr, len);
             }
             else if (len < 0)
             {
@@ -266,24 +268,10 @@ namespace xx
             UvInterop.xxuv_free(bufPtr);
         }
 
-        protected byte[] buf;
-        protected int offset;
-        protected BBuffer bbRecv = new BBuffer();   // 利用 BBuffer 做壳来封送上面的 buf
-        public void OnRecvImpl(byte[] bytes)
+        protected BBuffer bbRecv = new BBuffer();           // 复用的接收缓冲区
+        public void OnReceiveImpl(IntPtr bufPtr, int len)
         {
-            if (buf == null)    // likely
-            {
-                buf = bytes;
-            }
-            else
-            {
-                // 拼接上次残余的数据
-                var left = buf.Length - offset;
-                var newBuf = new byte[left + bytes.Length];
-                Buffer.BlockCopy(buf, offset, newBuf, 0, left);
-                Buffer.BlockCopy(bytes, 0, newBuf, left, bytes.Length);
-                buf = newBuf;
-            }
+            bbRecv.WriteBuf(bufPtr, len);                   // 追加收到的数据到接收缓冲区
 
             // 包头设计: 1 + N ( 当前不考虑校验位啥的 )
             // 首字节为类型路由. 2进制结构为 4bit 类型 + 2bit 长度变量长1 + 2 bit 长度变量长2
@@ -291,8 +279,9 @@ namespace xx
             // 0:   长1 为 0, 即整个字节只含 2bit 长2. 有效值为  0, 1, 2  ( 即 1, 2, 4 字节 )
             // 1&2: 长1 为 0, 1, 2, 3 ( 即 1, 2, 4, 8 字节 ), 意指 RPC 流水号的空间占用, 长度2 同 0
 
-            offset = 0;
-            while (buf.Length > offset)                     // 确保 1字节 包头长度
+            var buf = bbRecv.buf;                           // 来点本地变量
+            int offset = 0;
+            while (bbRecv.dataLen > offset)                 // 确保 1字节 包头长度
             {
                 long serial = 0, dataLen = 0;
                 var offsetBak = offset;                     // 为回滚 备份偏移量
@@ -301,19 +290,19 @@ namespace xx
                 if (t == 0)
                 {
                     serial = 0;
-                    if (!ReadLen(ref buf, ref offset, ref dataLen, h & 0b00000011))
+                    if (!ReadHeader(ref buf, ref offset, ref dataLen, h & 0b00000011))
                     {
                         offset = offsetBak;
-                        return;
+                        goto LabEnd;
                     }
                 }
                 else // t == 1 or 2
                 {
-                    if (!ReadLen(ref buf, ref offset, ref serial, (h & 0b00001100) >> 2)
-                        || !ReadLen(ref buf, ref offset, ref dataLen, h & 0b00000011))
+                    if (!ReadHeader(ref buf, ref offset, ref serial, (h & 0b00001100) >> 2)
+                        || !ReadHeader(ref buf, ref offset, ref dataLen, h & 0b00000011))
                     {
                         offset = offsetBak;
-                        return;
+                        goto LabEnd;
                     }
                 }
 
@@ -321,63 +310,59 @@ namespace xx
                 {
                     buf = null;
                     DisconnectImpl();
-                    break;
+                    return;
                 }
 
                 // 确保数据长
                 if (dataLen + offset > buf.Length)
                 {
                     offset = offsetBak;
-                    return;
+                    goto LabEnd;
                 }
+
+                // 修正读偏移
+                bbRecv.offset = offset;
 
                 // 发起包回调
                 if (t == 0)
                 {
-                    if (OnReceivePackage != null)
-                    {
-                        bbRecv.Assign(buf, offset, (int)dataLen);
-                        OnReceivePackage(bbRecv);
-                    }
+                    if (OnReceivePackage != null) OnReceivePackage(bbRecv);
                 }
                 else if (t == 1)
                 {
-                    if (OnReceiveRequest != null)
-                    {
-                        bbRecv.Assign(buf, offset, (int)dataLen);
-                        OnReceiveRequest((uint)serial, bbRecv);
-                    }
+                    if (OnReceiveRequest != null) OnReceiveRequest((uint)serial, bbRecv);
                 }
                 else // t == 2
                 {
-                    if (loop.rpcMgr != null)
-                    {
-                        bbRecv.Assign(buf, offset, (int)dataLen);
-                        loop.rpcMgr.Callback((uint)serial, bbRecv);
-                    }
+                    if (loop.rpcMgr != null) loop.rpcMgr.Callback((uint)serial, bbRecv);
                 }
 
                 // 继续处理剩余数据
                 offset += (int)dataLen;
             }
+
+            // 将剩余的数据移到最前面
+            LabEnd:
+            Buffer.BlockCopy(buf, offset, buf, 0, bbRecv.dataLen - offset);
+            bbRecv.dataLen -= offset;
         }
 
         // 读长度或流水号. 如果不够读, 就返回 false
-        public static bool ReadLen(ref byte[] buf, ref int offset, ref long len, int lenShift)
+        public static bool ReadHeader(ref byte[] buf, ref int offset, ref long n, int shift)
         {
-            switch (lenShift)
+            switch (shift)
             {
                 case 0:
                     if (buf.Length > offset)            // 确保 1字节 长度值
                     {
-                        len = buf[offset++];
+                        n = buf[offset++];
                         return true;
                     }
                     return false;
                 case 1:
                     if (buf.Length > offset + 1)        // 确保 2字节 长度值
                     {
-                        len = buf[offset] | (buf[offset + 1] << 8);
+                        n = buf[offset] | (buf[offset + 1] << 8);
                         offset += 2;
                         return true;
                     }
@@ -385,7 +370,7 @@ namespace xx
                 case 2:
                     if (buf.Length > offset + 3)        // 确保 4字节 长度值
                     {
-                        len = buf[offset]
+                        n = buf[offset]
                             | (buf[offset + 1] << 8)
                             | (buf[offset + 2] << 16)
                             | (buf[offset + 3] << 24);
@@ -396,7 +381,7 @@ namespace xx
                 case 3:
                     if (buf.Length > offset + 7)        // 确保 8字节 长度值
                     {
-                        len = buf[offset]
+                        n = buf[offset]
                             | (buf[offset + 1] << 8)
                             | (buf[offset + 2] << 16)
                             | (buf[offset + 3] << 24)
@@ -510,7 +495,6 @@ namespace xx
             this.Handle(ref handle);
             this.loop = loop;
             this.listener = listener;
-            this.OnReceive = this.OnRecvImpl;
 
             ptr = UvInterop.xxuv_alloc_uv_tcp_t(handle);
             if (ptr == IntPtr.Zero)
@@ -610,7 +594,6 @@ namespace xx
                 UnbindTimerManager();
                 OnTimerFire = null;
 
-                buf = null;
                 bbSend = null;
                 bbRecv = null;
                 listener.peers.SwapRemoveAt(index_at_container);
@@ -644,7 +627,6 @@ namespace xx
         {
             this.Handle(ref handle);
             this.loop = loop;
-            this.OnReceive = this.OnRecvImpl;
 
             addrPtr = UvInterop.xxuv_alloc_sockaddr_in(IntPtr.Zero);
             if (addrPtr == IntPtr.Zero)
@@ -749,7 +731,6 @@ namespace xx
                 UnbindTimerManager();
                 OnTimerFire = null;
 
-                buf = null;
                 bbSend = null;
                 bbRecv = null;
                 loop.clients.SwapRemoveAt(index_at_container);

@@ -577,6 +577,17 @@ namespace xx
             Buffer.BlockCopy(buf, offset, this.buf, this.dataLen, dataLen);
             this.dataLen += dataLen;
         }
+
+        /// <summary>
+        /// 直接追加写入一段2进制数据之指针版
+        /// </summary>
+        public void WriteBuf(IntPtr bufPtr, int len)
+        {
+            Reserve(dataLen + len);
+            Marshal.Copy(bufPtr, buf, dataLen, len);
+            dataLen += len;
+        }
+
         #endregion
 
         #region ToPackages

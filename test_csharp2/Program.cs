@@ -17,7 +17,7 @@ public static class Program
             var listener = new UvTcpListener(loop);
             listener.OnAccept = peer =>
             {
-                Console.WriteLine(peer.ip + " accepted");
+                //Console.WriteLine(peer.ip + " accepted");
 
                 // 接入 timer 管理器, 如果 5 秒没收到数据就断开
                 peer.BindTo(tm);
@@ -29,7 +29,7 @@ public static class Program
                 {
                     peer.TimerStart();                  // 更新 timer
                     var b = bb.ReadPackage<BBuffer>();  // 读出 BB包
-                    long n = 0;
+                    uint n = 0;
                     b.Read(ref n);                      // 读出 BB包 中的 counter
                     b.Clear();
                     b.Write(n + 1);                     // 将就 BB包 填充 counter + 1 用作应答
