@@ -614,6 +614,16 @@ namespace xx
             return rtv;
         }
 
+        /// <summary>
+        /// 为方便直接返回 new T. 需要 try.
+        /// </summary>
+        public T ReadPackage<T>() where T : IBBuffer
+        {
+            T t = default(T);
+            ReadRoot(ref t);
+            return t;
+        }
+
         #endregion
 
         #endregion
@@ -827,26 +837,28 @@ namespace xx
         public void BeginWritePackageEx(int serialSize, int lenSize)
         {
             dataLenBak = dataLen;
-            Reserve(dataLen + 1 + serialSize + lenSize);
-            dataLen += 2;
+            var headerLen = 1 + serialSize + lenSize;
+            Reserve(dataLen + headerLen);
+            dataLen += headerLen;
         }
 
-        public bool EndWritePackageEx(int serialShift, int lenShift, ulong serial = 0)
+        public void EndWritePackageEx(int pkgTypeId, int serialShift, int lenShift, ulong serial = 0)
         {
-            var pkgLen = (uint)(dataLen - dataLenBak);
-            if (pkgLen > (1 << lenShift))
+            var headerLen = 1 + (pkgTypeId > 0 ? (1 << serialShift) : 0) + (1 << lenShift);
+            var pkgLen = (uint)(dataLen - dataLenBak - headerLen);
+            if (lenShift > 1 && pkgLen > (1 << ((1 << lenShift) * 8)))
             {
                 dataLen = dataLenBak;
-                return false;
+                throw new OverflowException();
             }
-            if (serialShift < 0)
-                buf[dataLenBak] = (byte)lenShift;
-            else
-                buf[dataLenBak] = (byte)((1 << 4) | (serialShift << 2) | lenShift);
-
-            if (serialShift > -1)   // 1
+            if (pkgTypeId == 0)
             {
-                buf[dataLenBak++] = (byte)(serial);
+                buf[dataLenBak++] = (byte)lenShift;
+            }
+            else
+            {
+                buf[dataLenBak++] = (byte)((pkgTypeId << 4) | (serialShift << 2) | lenShift);
+                buf[dataLenBak++] = (byte)(serial); // 1
                 if (serialShift > 0)    // 2
                 {
                     buf[dataLenBak++] = (byte)(serial >> 8);
@@ -875,7 +887,6 @@ namespace xx
                     buf[dataLenBak++] = (byte)(pkgLen >> 24);
                 }
             }
-            return true;
         }
 
         #endregion

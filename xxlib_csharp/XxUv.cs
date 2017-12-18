@@ -231,9 +231,10 @@ namespace xx
     {
         /******************************************************************************/
         // 用户事件绑定
-        public Action<BBuffer> OnRecvPkg;
+        public Action<BBuffer> OnReceivePackage;
+        public Action<uint, BBuffer> OnReceiveRequest;
         public Action OnDispose;
-        public Action<byte[]> OnRecv;   // 默认会拆解数据, 进一步发起各种 OnRecvXxxxx
+        public Action<byte[]> OnReceive;   // 默认会拆解数据, 进一步发起各种 OnRecvXxxxx
         /******************************************************************************/
 
         public bool disposed;
@@ -254,9 +255,9 @@ namespace xx
             int len = (int)nread;
             if (len > 0)
             {
-                var buf = new byte[len];
+                var buf = new byte[len];                        // todo: 直接利用 bbRecv 来做?
                 Marshal.Copy(bufPtr, buf, 0, len);
-                tcp.OnRecv(buf);
+                tcp.OnReceive(buf);
             }
             else if (len < 0)
             {
@@ -286,9 +287,9 @@ namespace xx
 
             // 包头设计: 1 + N ( 当前不考虑校验位啥的 )
             // 首字节为类型路由. 2进制结构为 4bit 类型 + 2bit 长度变量长1 + 2 bit 长度变量长2
-            // 类型有 0: 一般数据包   1: RPC包   2+: 其他( todo )
-            // 0: 长1 为 0, 即整个字节只含 2bit 长2. 有效值为  0, 1, 2  ( 即 1, 2, 4 字节 )
-            // 1: 长1 为 0, 1, 2, 3 ( 即 1, 2, 4, 8 字节 ), 意指 RPC 流水号的空间占用, 长度2 同 0
+            // 类型有 0: 一般数据包   1: RPC请求包   2: RPC回应包   3+: 其他( todo )
+            // 0:   长1 为 0, 即整个字节只含 2bit 长2. 有效值为  0, 1, 2  ( 即 1, 2, 4 字节 )
+            // 1&2: 长1 为 0, 1, 2, 3 ( 即 1, 2, 4, 8 字节 ), 意指 RPC 流水号的空间占用, 长度2 同 0
 
             offset = 0;
             while (buf.Length > offset)                     // 确保 1字节 包头长度
@@ -306,7 +307,7 @@ namespace xx
                         return;
                     }
                 }
-                else // t == 1
+                else // t == 1 or 2
                 {
                     if (!ReadLen(ref buf, ref offset, ref serial, (h & 0b00001100) >> 2)
                         || !ReadLen(ref buf, ref offset, ref dataLen, h & 0b00000011))
@@ -314,7 +315,6 @@ namespace xx
                         offset = offsetBak;
                         return;
                     }
-                    break;
                 }
 
                 if (dataLen == 0)
@@ -334,13 +334,21 @@ namespace xx
                 // 发起包回调
                 if (t == 0)
                 {
-                    if (OnRecvPkg != null)
+                    if (OnReceivePackage != null)
                     {
                         bbRecv.Assign(buf, offset, (int)dataLen);
-                        OnRecvPkg(bbRecv);
+                        OnReceivePackage(bbRecv);
                     }
                 }
-                else // t == 1
+                else if (t == 1)
+                {
+                    if (OnReceiveRequest != null)
+                    {
+                        bbRecv.Assign(buf, offset, (int)dataLen);
+                        OnReceiveRequest((uint)serial, bbRecv);
+                    }
+                }
+                else // t == 2
                 {
                     if (loop.rpcMgr != null)
                     {
@@ -405,7 +413,7 @@ namespace xx
             }
         }
 
-        public void Send(byte[] data, int offset = 0, int len = 0)
+        public void SendBytes(byte[] data, int offset = 0, int len = 0)
         {
             if (disposed) throw new ObjectDisposedException("XxUvTcpBase");
             if (data == null || data.Length == 0) throw new NullReferenceException();
@@ -417,7 +425,7 @@ namespace xx
             h.Free();
         }
 
-        public void Send(BBuffer bb)
+        public void SendBytes(BBuffer bb)
         {
             if (bb.dataLen == 0) throw new NullReferenceException();
             var h = GCHandle.Alloc(bb.buf, GCHandleType.Pinned);
@@ -425,9 +433,11 @@ namespace xx
             h.Free();
         }
 
-
+        // 复用
         protected BBuffer bbSend;
-        public int SendPackages(params xx.IBBuffer[] pkgs)
+
+        // 每个类一个包, 返回总字节数
+        public int Send(params xx.IBBuffer[] pkgs)
         {
             if (pkgs == null || pkgs.Length == 0) throw new NullReferenceException();
             if (bbSend == null) bbSend = new BBuffer(65536);
@@ -439,13 +449,14 @@ namespace xx
                 bbSend.Clear();
                 bbSend.BeginWritePackageEx(0, 2);
                 bbSend.WriteRoot(pkg);
-                if (!bbSend.EndWritePackageEx(-1, 1)) throw new OverflowException();
+                bbSend.EndWritePackageEx(0, -1, 1);
                 sum += bbSend.dataLen;
-                Send(bbSend.buf, 0, bbSend.dataLen);
+                SendBytes(bbSend.buf, 0, bbSend.dataLen);
             }
             return sum;
         }
 
+        // 合并所有类一个包, 返回总字节数
         public int SendCombine(params xx.IBBuffer[] pkgs)
         {
             if (bbSend == null) bbSend = new BBuffer(65536);
@@ -457,20 +468,34 @@ namespace xx
                 var ibb = pkgs[i];
                 bbSend.WriteRoot(ibb);
             }
-            if (!bbSend.EndWritePackageEx(-1, 1)) throw new OverflowException();
-            Send(bbSend.buf, 0, bbSend.dataLen);
+            bbSend.EndWritePackageEx(0, -1, 1);
+            SendBytes(bbSend.buf, 0, bbSend.dataLen);
             return bbSend.dataLen;
         }
 
-        public int SendRpcPackage(xx.IBBuffer pkg, Action<BBuffer> cb, int interval = 0)
+        // 只能单发一个类, 返回流水号
+        public uint SendRequest(xx.IBBuffer pkg, Action<uint, BBuffer> cb, int interval = 0)
         {
+            if (loop.rpcMgr == null) throw new NullReferenceException();
             if (bbSend == null) bbSend = new BBuffer(65536);
             var serial = loop.rpcMgr.Register(cb, interval);
             bbSend.Clear();
             bbSend.BeginWritePackageEx(4, 2);
             bbSend.WriteRoot(pkg);
-            if (!bbSend.EndWritePackageEx(2, 1, (ulong)serial)) throw new OverflowException();
-            Send(bbSend.buf, 0, bbSend.dataLen);
+            bbSend.EndWritePackageEx(1, 2, 1, serial);
+            SendBytes(bbSend.buf, 0, bbSend.dataLen);
+            return serial;
+        }
+
+        // 发送 RPC 的应答包, 返回字节数
+        public int SendResponse(uint serial, xx.IBBuffer pkg)
+        {
+            if (bbSend == null) bbSend = new BBuffer(65536);
+            bbSend.Clear();
+            bbSend.BeginWritePackageEx(4, 2);
+            bbSend.WriteRoot(pkg);
+            bbSend.EndWritePackageEx(2, 2, 1, serial);
+            SendBytes(bbSend.buf, 0, bbSend.dataLen);
             return bbSend.dataLen;
         }
     }
@@ -485,7 +510,7 @@ namespace xx
             this.Handle(ref handle);
             this.loop = loop;
             this.listener = listener;
-            this.OnRecv = this.OnRecvImpl;
+            this.OnReceive = this.OnRecvImpl;
 
             ptr = UvInterop.xxuv_alloc_uv_tcp_t(handle);
             if (ptr == IntPtr.Zero)
@@ -619,7 +644,7 @@ namespace xx
         {
             this.Handle(ref handle);
             this.loop = loop;
-            this.OnRecv = this.OnRecvImpl;
+            this.OnReceive = this.OnRecvImpl;
 
             addrPtr = UvInterop.xxuv_alloc_sockaddr_in(IntPtr.Zero);
             if (addrPtr == IntPtr.Zero)
@@ -1090,7 +1115,7 @@ namespace xx
         uint serial;
 
         // 流水号 与 cb(bb) 回调 的映射. bb 为空表示超时调用
-        Dict<uint, Action<BBuffer>> mapping = new Dict<uint, Action<BBuffer>>();
+        Dict<uint, Action<uint, BBuffer>> mapping = new Dict<uint, Action<uint, BBuffer>>();
 
         // 用一个队列记录流水号的超时时间, 以便删掉超时的. first: timeout ticks
         Queue<Pair<int, uint>> serials = new Queue<Pair<int, uint>>();
@@ -1114,20 +1139,21 @@ namespace xx
         {
             ++ticks;
             if (serials.IsEmpty) return;
-            while (!serials.IsEmpty && serials.Top().first >= ticks)
+            while (!serials.IsEmpty && serials.Top().first <= ticks)
             {
                 var idx = mapping.Find(serials.Top().second);
-                serials.Pop();
                 if (idx != -1)
                 {
-                    mapping.ValueAt(idx)(null);
+                    var a = mapping.ValueAt(idx);
                     mapping.RemoveAt(idx);
+                    a(serial, null);
                 }
+                serials.Pop();
             }
         }
 
         // 放入上下文, 返回流水号
-        public uint Register(Action<BBuffer> cb, int interval = 0)
+        public uint Register(Action<uint, BBuffer> cb, int interval = 0)
         {
             if (interval == 0) interval = defaultInterval;
             unchecked { ++serial; }                     // 循环自增
@@ -1145,8 +1171,9 @@ namespace xx
         {
             int idx = mapping.Find(serial);
             if (idx == -1) return;              // 已超时移除
-            mapping.ValueAt(idx)(bb);
+            var a = mapping.ValueAt(idx);
             mapping.RemoveAt(idx);
+            a(serial, bb);
         }
     }
 

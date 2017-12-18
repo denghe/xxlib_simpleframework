@@ -253,7 +253,7 @@ namespace xx
         {
             get
             {
-                return count == 0;
+                return Count == 0;
             }
         }
 

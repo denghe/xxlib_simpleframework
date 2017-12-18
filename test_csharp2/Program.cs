@@ -8,6 +8,8 @@ public static class Program
 {
     static void Main(string[] args)
     {
+        BBuffer.Register<BBuffer>(2);   // 要用到 BBuffer 的收发
+
         using (var loop = new UvLoop())
         {
             // timer 管理器: 1 秒一跳, 池长 6 跳, 默认 TimerStart 参数为 5
@@ -22,10 +24,16 @@ public static class Program
                 peer.OnTimerFire = () => peer.Dispose();
                 peer.TimerStart();
 
-                peer.OnRecv = bs =>
+                // RPC 请求事件
+                peer.OnReceiveRequest = (serial, bb) =>
                 {
-                    peer.TimerStart();      // 更新 timer
-                    peer.Send(bs);          // echo
+                    peer.TimerStart();                  // 更新 timer
+                    var b = bb.ReadPackage<BBuffer>();  // 读出 BB包
+                    long n = 0;
+                    b.Read(ref n);                      // 读出 BB包 中的 counter
+                    b.Clear();
+                    b.Write(n + 1);                     // 将就 BB包 填充 counter + 1 用作应答
+                    peer.SendResponse(serial, b);       // 应答
                 };
 
                 peer.OnDispose = () =>
