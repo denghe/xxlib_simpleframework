@@ -69,7 +69,7 @@ public static class Program
             // timer 管理器: 1 秒一跳, 池长 6 跳, 默认 TimerStart 参数为 2
             var tm = new UvTimerManager(loop, 1000, 6, 2);
 
-            for (int i = 0; i < 10000; ++i)     // 创建多个连接
+            for (int i = 0; i < 1; ++i)     // 创建多个连接
             {
                 var client = new MyClient(loop, tm);
                 client.SetAddress("127.0.0.1", 12345);

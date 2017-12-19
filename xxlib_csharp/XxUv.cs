@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Collections.Concurrent;
-using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Collections.Concurrent;
 using System.Text;
-using System.Threading;
 
 // todo: c api 过来的 cb 可能要加 try
 
@@ -973,7 +971,8 @@ namespace xx
 
         public void OnFireImpl()
         {
-            while (actions.TryDequeue(out var a)) a();
+            Action a;
+            while (actions.TryDequeue(out a)) a();
         }
 
         #region Dispose
@@ -1315,4 +1314,24 @@ namespace xx
         }
 
     }
+
+
+    // 模拟 ConcurrentQueue 的用法, 用 lock + queue 浅封 for unity
+#if NET_2_0 || NET_2_0_SUBSET
+    public class ConcurrentQueue<T>
+    {
+        protected xx.Queue<T> queue;
+
+        public void Enqueue(T a)
+        {
+            lock (queue) queue.Enqueue(a);
+        }
+
+        public bool TryDequeue(out T a)
+        {
+            lock (queue) return queue.TryDequeue(out a);
+        }
+    }
+#endif
+
 }
