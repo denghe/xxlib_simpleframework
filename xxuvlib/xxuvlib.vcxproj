@@ -90,6 +90,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="xxmempool.h" />
     <ClInclude Include="xxuvlib.h" />
   </ItemGroup>
   <ItemGroup>

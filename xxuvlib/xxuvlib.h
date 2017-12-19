@@ -26,6 +26,8 @@ extern "C" {
 	XXUVLIB_API uv_signal_t* xxuv_alloc_uv_signal_t(void* ud) noexcept;
 
 	XXUVLIB_API void xxuv_free(void* p) noexcept;
+	XXUVLIB_API void xxuv_pool_free(uv_loop_t* loop, void* p) noexcept;
+
 	XXUVLIB_API void* xxuv_get_ud(void* p) noexcept;
 	XXUVLIB_API void* xxuv_get_ud_from_uv_connect_t(uv_connect_t* req) noexcept;
 	XXUVLIB_API void* xxuv_get_buf(uv_buf_t* p) noexcept;

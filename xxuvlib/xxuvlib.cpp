@@ -1,4 +1,5 @@
-﻿#include "xxuvlib.h"
+﻿#include "xxmempool.h"
+#include "xxuvlib.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -84,6 +85,10 @@ XXUVLIB_API void xxuv_free(void* p) noexcept
 {
 	if (p) Free(p);
 }
+XXUVLIB_API void xxuv_pool_free(uv_loop_t* loop, void* p) noexcept
+{
+	if (p) ((XxMemPool*)loop->data)->Free(p);
+}
 
 XXUVLIB_API void* xxuv_get_ud(void* p) noexcept
 {
@@ -133,7 +138,6 @@ XXUVLIB_API void xxuv_close_(uv_handle_t* handle) noexcept
 	{
 		Free(handle);
 	});
-	//uv_close(handle, nullptr);
 }
 
 
@@ -142,7 +146,12 @@ XXUVLIB_API void xxuv_close_(uv_handle_t* handle) noexcept
 
 XXUVLIB_API int xxuv_loop_init(uv_loop_t* p) noexcept
 {
-	return uv_loop_init(p);
+	auto r = uv_loop_init(p);
+	if (!r)
+	{
+		p->data = new XxMemPool();
+	}
+	return r;
 }
 
 XXUVLIB_API int xxuv_run(uv_loop_t* loop, uv_run_mode mode) noexcept
@@ -157,7 +166,13 @@ XXUVLIB_API void xxuv_stop(uv_loop_t* loop) noexcept
 
 XXUVLIB_API int xxuv_loop_close(uv_loop_t* p) noexcept
 {
-	return uv_loop_close(p);
+	auto r = uv_loop_close(p);
+	if (!r && p->data)
+	{
+		delete (XxMemPool*)p->data;
+		p->data = nullptr;
+	}
+	return r;
 }
 
 XXUVLIB_API int xxuv_loop_alive(uv_loop_t* p) noexcept
@@ -207,9 +222,9 @@ XXUVLIB_API int xxuv_read_start(uv_stream_t* stream, uv_alloc_cb alloc_cb, uv_re
 }
 XXUVLIB_API int xxuv_read_start_(uv_stream_t* stream, uv_read_cb read_cb) noexcept
 {
-	return uv_read_start(stream, [](uv_handle_t*, size_t suggested_size, uv_buf_t* buf)
+	return uv_read_start(stream, [](uv_handle_t* h, size_t suggested_size, uv_buf_t* buf)
 	{
-		buf->base = (char*)Alloc(suggested_size);
+		buf->base = (char*)((XxMemPool*)h->loop->data)->Alloc(suggested_size);
 		buf->len = decltype(buf->len)(suggested_size);
 	}
 	, read_cb);
@@ -224,19 +239,22 @@ XXUVLIB_API int xxuv_write_(uv_stream_t* stream, char* inBuf, unsigned int offse
 {
 	struct write_req_t
 	{
+		XxMemPool* mp;
 		uv_write_t req;
 		uv_buf_t buf;
 	};
-	auto req = (write_req_t*)Alloc(sizeof(write_req_t));
-	auto buf = (char*)Alloc(len);
+	auto mp = (XxMemPool*)stream->loop->data;
+	auto req = mp->Alloc<write_req_t>();
+	req->mp = mp;
+	auto buf = (char*)mp->Alloc(len);
 	memcpy(buf, inBuf + offset, len);
 	req->buf = uv_buf_init(buf, (uint32_t)len);
 	return uv_write((uv_write_t*)req, stream, &req->buf, 1, [](uv_write_t *req, int status)
 	{
 		//if (status) fprintf(stderr, "Write error: %s\n", uv_strerror(status));
-		write_req_t *wr = (write_req_t*)req;
-		Free(wr->buf.base);
-		Free(wr);
+		auto *wr = (write_req_t*)req;
+		wr->mp->Free(wr->buf.base);
+		wr->mp->Free(wr);
 	});
 }
 

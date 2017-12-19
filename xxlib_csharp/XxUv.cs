@@ -260,11 +260,11 @@ namespace xx
             {
                 tcp.OnReceiveImpl(bufPtr, len);
             }
-            else if (len < 0)
+            UvInterop.xxuv_pool_free(tcp.loop.ptr, bufPtr);
+            if (len < 0)
             {
                 tcp.DisconnectImpl();
             }
-            UvInterop.xxuv_free(bufPtr);
         }
 
         protected BBuffer bbRecv = new BBuffer();           // 复用的接收缓冲区
@@ -1133,6 +1133,11 @@ namespace xx
 
         [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
         public static extern void xxuv_free(IntPtr p);
+
+        [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
+        public static extern void xxuv_pool_free(IntPtr loop, IntPtr p);
+
+
 
         [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr xxuv_get_ud(IntPtr p);

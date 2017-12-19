@@ -57,8 +57,8 @@ public class MyClient : UvTcpClient
     public void SendRpc()
     {
         if (state != UvTcpStates.Connected) return;
-        if (Program.counter1 - Program.counter2 > 10000) return;
-        if (loop.rpcMgr.count > 1000000) return;
+        if (Program.counter1 - Program.counter2 > 1000) return;
+        if (loop.rpcMgr.count > 2000000) return;
         for (int i = 0; i < 1000; i++)
         {
             ++Program.counter1;
