@@ -3,8 +3,6 @@ using System.Runtime.InteropServices;
 using System.Collections.Concurrent;
 using System.Text;
 
-// todo: c api 过来的 cb 可能要加 try
-
 namespace xx
 {
     public class UvLoop : IDisposable
@@ -44,7 +42,7 @@ namespace xx
 
         public UvLoop(ulong rpcIntervalMS, int rpcDefaultInterval) : this()
         {
-            rpcMgr = new UvRpcManager(this, 1000, 5);
+            rpcMgr = new UvRpcManager(this, rpcIntervalMS, rpcDefaultInterval);
         }
 
         public void Run(UvRunMode mode = UvRunMode.Default)
@@ -296,8 +294,7 @@ namespace xx
                 else
                 {
                     uint serial = 0;
-                    try { bbRecv.Read(ref serial); }
-                    catch
+                    if (!bbRecv.TryRead(ref serial))
                     {
                         DisconnectImpl();
                         return;
@@ -1013,6 +1010,7 @@ namespace xx
 
     public class UvRpcManager
     {
+        // 已知问题: 当 uv 太繁忙时, timer 可能无法及时回调, 导致超时和队列清理行为无法及时发生
         UvTimer timer;
 
         // 循环使用的自增流水号
@@ -1029,6 +1027,9 @@ namespace xx
 
         // 帧步进值
         int ticks;
+
+        // 返回队列深度
+        public int count { get { return serials.Count; } }
 
         // intervalMS: 帧间隔毫秒数;    defaultInterval: 默认计时帧数
         public UvRpcManager(UvLoop loop, ulong intervalMS, int defaultInterval)

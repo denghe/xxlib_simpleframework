@@ -25,9 +25,10 @@ public class MyClient : UvTcpClient
             CW("connected.");
             ++Program.successConns;             // 同步一下成功连接数统计
             TimerStop();                        // 关闭连接超时 timer
-            var b = new BBuffer();              // 造个 BB包
-            b.Write((uint)0);
-            SendRequest(b, OnReceiveResponse);  // 发起 RPC 请求
+            //var b = new BBuffer();              // 造个 BB包
+            bbRpc.Clear();
+            bbRpc.Write((uint)0);
+            SendRequest(bbRpc, OnReceiveResponse);  // 发起 RPC 请求
         }
         else                                    // 连接失败
         {
@@ -43,28 +44,41 @@ public class MyClient : UvTcpClient
             CW("rpc timeout. serial = " + serial);
             return; // 超时
         }
-        ++Program.counter;                      // 同步一下收发计数统计
-        var b = bb.ReadPackage<BBuffer>();      // 读出 BB包
-        uint n = 0;
-        b.Read(ref n);                          // 从 BB包中解出 n
-        b.Clear();
-        b.Write(n + 1);                         // 将就 BB包 做发送数据
-        SendRequest(b, OnReceiveResponse);      // 继续发起RPC请求
-        CW($"SendRequest serial = {serial}, n = {n}");
+        ++Program.counter2;
+        //var b = bb.ReadPackage<BBuffer>();      // 读出 BB包
+        //uint n = 0;
+        //b.Read(ref n);                          // 从 BB包中解出 n
+        //b.Clear();
+        //b.Write(n + 1);                         // 将就 BB包 做发送数据
+        //SendRequest(b, OnReceiveResponse);      // 继续发起RPC请求
+        //CW($"SendRequest serial = {serial}, n = {n}");
+    }
+    BBuffer bbRpc = new BBuffer();
+    public void SendRpc()
+    {
+        if (state != UvTcpStates.Connected) return;
+        if (Program.counter1 - Program.counter2 > 10000) return;
+        if (loop.rpcMgr.count > 1000000) return;
+        for (int i = 0; i < 1000; i++)
+        {
+            ++Program.counter1;
+            SendRequest(bbRpc, OnReceiveResponse);  // 发起 RPC 请求
+        }
     }
 }
 
 public static class Program
 {
-    public static long counter = 0;
+    public static long counter1 = 0;
+    public static long counter2 = 0;
     public static long successConns = 0;
 
     static void Main(string[] args)
     {
         BBuffer.Register<BBuffer>(2);           // 要用到 BBuffer 的收发
 
-        // 初始化 loop 的同时初始化 rpc 管理器. 计时精度 1 秒. 默认 5 秒超时
-        using (var loop = new UvLoop(1000, 5))
+        // 初始化 loop 的同时初始化 rpc 管理器. 计时精度 1 秒. 默认 2 秒超时
+        using (var loop = new UvLoop(1000, 2))
         {
             // timer 管理器: 1 秒一跳, 池长 6 跳, 默认 TimerStart 参数为 2
             var tm = new UvTimerManager(loop, 1000, 6, 2);
@@ -87,12 +101,18 @@ public static class Program
                     --successConns;
                     client.Connect();           // 再次重连
                 };
+
+                // 来个 timer 不停的从 client 发包
+                new UvTimer(loop, 0, 1).OnFire = () =>
+                {
+                    client.SendRpc();
+                };
             }
 
             // 每秒输出一次 连接成功数 & 当前已发送的包数
             new UvTimer(loop, 0, 1000).OnFire = () =>
             {
-                Console.WriteLine(successConns + ", " + counter);
+                Console.WriteLine($"{successConns}, {counter1}, {counter2}");
             };
 
             loop.Run();

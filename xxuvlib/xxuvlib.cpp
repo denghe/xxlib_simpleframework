@@ -233,7 +233,7 @@ XXUVLIB_API int xxuv_write_(uv_stream_t* stream, char* inBuf, unsigned int offse
 	req->buf = uv_buf_init(buf, (uint32_t)len);
 	return uv_write((uv_write_t*)req, stream, &req->buf, 1, [](uv_write_t *req, int status)
 	{
-		if (status) fprintf(stderr, "Write error: %s\n", uv_strerror(status));
+		//if (status) fprintf(stderr, "Write error: %s\n", uv_strerror(status));
 		write_req_t *wr = (write_req_t*)req;
 		Free(wr->buf.base);
 		Free(wr);

@@ -90,6 +90,10 @@ namespace xx
         {
             Bit7Read(ref v, buf, ref offset, dataLen);
         }
+        public bool TryRead(ref uint v)
+        {
+            return Bit7TryRead(ref v, buf, ref offset, dataLen);
+        }
         #endregion
 
         #region int
@@ -1017,6 +1021,30 @@ namespace xx
                 else
                     v |= b7 << lshift;
             }
+        }
+        public static bool Bit7TryRead(ref uint v, byte[] buf, ref int offset, int dataLen)
+        {
+            var idx5 = offset + 5;
+            int lshift = 0;
+            v = 0;
+            Lab1:
+            uint b7 = buf[offset++];
+            if (b7 > 0x7F)
+            {
+                if (offset == idx5)
+                    return false;
+                v |= (b7 & 0x7F) << lshift;
+                lshift += 7;
+                goto Lab1;
+            }
+            else
+            {
+                if (offset == idx5 && b7 > 15)
+                    return false;
+                else
+                    v |= b7 << lshift;
+            }
+            return true;
         }
 
         public static void Bit7Read(ref ushort v, byte[] buf, ref int offset, int dataLen)
