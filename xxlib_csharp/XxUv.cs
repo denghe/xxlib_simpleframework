@@ -232,6 +232,9 @@ namespace xx
         #endregion
     }
 
+    // 包头设计: mask( 1 byte ) + len( 2 bytes ) + [serial( varlen uinteger )] + data( byte[len - sizeof(serial)] )
+    // 首字节为类型路由: 0: 一般数据包   1: RPC请求包   2: RPC回应包   3+: 其他( custom )
+    // RPC包将会在 data 的起始区域夹带一个变长无符号整数 作为 流水号
     public abstract class UvTcpBase : UvTimerBase
     {
         /******************************************************************************/
@@ -273,129 +276,50 @@ namespace xx
         {
             bbRecv.WriteBuf(bufPtr, len);                   // 追加收到的数据到接收缓冲区
 
-            // 包头设计: 1 + N ( 当前不考虑校验位啥的 )
-            // 首字节为类型路由. 2进制结构为 4bit 类型 + 2bit 长度变量长1 + 2 bit 长度变量长2
-            // 类型有 0: 一般数据包   1: RPC请求包   2: RPC回应包   3+: 其他( todo )
-            // 0:   长1 为 0, 即整个字节只含 2bit 长2. 有效值为  0, 1, 2  ( 即 1, 2, 4 字节 )
-            // 1&2: 长1 为 0, 1, 2, 3 ( 即 1, 2, 4, 8 字节 ), 意指 RPC 流水号的空间占用, 长度2 同 0
-
-            var buf = bbRecv.buf;                           // 来点本地变量
-            int offset = 0;
-            while (bbRecv.dataLen > offset)                 // 确保 1字节 包头长度
+            var buf = bbRecv.buf;                           // 方便使用
+            int offset = 0;                                 // 提速
+            while (offset + 3 <= bbRecv.dataLen)            // 确保 3字节 包头长度
             {
-                long serial = 0, dataLen = 0;
-                var offsetBak = offset;                     // 为回滚 备份偏移量
-                var h = buf[offset++];                      // 读出 1字节 固定包头
-                var t = (h & 0b11110000) >> 4;              // 得到类型 id
-                if (t == 0)
+                var typeId = buf[offset];                   // 读出头
+                var dataLen = buf[offset + 1] + (buf[offset + 2] << 8);
+                if (dataLen <= 0)                           // 数据异常
                 {
-                    serial = 0;
-                    if (!ReadHeader(ref buf, ref offset, ref dataLen, h & 0b00000011))
-                    {
-                        offset = offsetBak;
-                        goto LabEnd;
-                    }
-                }
-                else // t == 1 or 2
-                {
-                    if (!ReadHeader(ref buf, ref offset, ref serial, (h & 0b00001100) >> 2)
-                        || !ReadHeader(ref buf, ref offset, ref dataLen, h & 0b00000011))
-                    {
-                        offset = offsetBak;
-                        goto LabEnd;
-                    }
-                }
-
-                if (dataLen == 0)
-                {
-                    buf = null;
                     DisconnectImpl();
                     return;
                 }
+                if (offset + 3 + dataLen > bbRecv.dataLen) break;   // 确保数据长
+                offset += 3;
 
-                // 确保数据长
-                if (dataLen + offset > buf.Length)
-                {
-                    offset = offsetBak;
-                    goto LabEnd;
-                }
-
-                // 修正读偏移
                 bbRecv.offset = offset;
-
-                // 发起包回调
-                if (t == 0)
+                if (typeId == 0)
                 {
-                    if (OnReceivePackage != null) OnReceivePackage(bbRecv);
+                    OnReceivePackage(bbRecv);
                 }
-                else if (t == 1)
+                else
                 {
-                    if (OnReceiveRequest != null) OnReceiveRequest((uint)serial, bbRecv);
+                    uint serial = 0;
+                    try { bbRecv.Read(ref serial); }
+                    catch
+                    {
+                        DisconnectImpl();
+                        return;
+                    }
+                    if (typeId == 1)
+                    {
+                        OnReceiveRequest(serial, bbRecv);
+                    }
+                    else if (typeId == 2)
+                    {
+                        loop.rpcMgr.Callback(serial, bbRecv);
+                    }
                 }
-                else // t == 2
-                {
-                    if (loop.rpcMgr != null) loop.rpcMgr.Callback((uint)serial, bbRecv);
-                }
-
-                // 继续处理剩余数据
-                offset += (int)dataLen;
+                offset += dataLen;                          // 继续处理剩余数据
             }
-
-            // 将剩余的数据移到最前面
-            LabEnd:
-            Buffer.BlockCopy(buf, offset, buf, 0, bbRecv.dataLen - offset);
-            bbRecv.dataLen -= offset;
-        }
-
-        // 读长度或流水号. 如果不够读, 就返回 false
-        public static bool ReadHeader(ref byte[] buf, ref int offset, ref long n, int shift)
-        {
-            switch (shift)
+            if (offset < bbRecv.dataLen)                    // 还有剩余的数据: 移到最前面
             {
-                case 0:
-                    if (buf.Length > offset)            // 确保 1字节 长度值
-                    {
-                        n = buf[offset++];
-                        return true;
-                    }
-                    return false;
-                case 1:
-                    if (buf.Length > offset + 1)        // 确保 2字节 长度值
-                    {
-                        n = buf[offset] | (buf[offset + 1] << 8);
-                        offset += 2;
-                        return true;
-                    }
-                    return false;
-                case 2:
-                    if (buf.Length > offset + 3)        // 确保 4字节 长度值
-                    {
-                        n = buf[offset]
-                            | (buf[offset + 1] << 8)
-                            | (buf[offset + 2] << 16)
-                            | (buf[offset + 3] << 24);
-                        offset += 4;
-                        return true;
-                    }
-                    return false;
-                case 3:
-                    if (buf.Length > offset + 7)        // 确保 8字节 长度值
-                    {
-                        n = buf[offset]
-                            | (buf[offset + 1] << 8)
-                            | (buf[offset + 2] << 16)
-                            | (buf[offset + 3] << 24)
-                            | (buf[offset + 4] << 32)
-                            | (buf[offset + 5] << 40)
-                            | (buf[offset + 6] << 48)
-                            | (buf[offset + 7] << 56);
-                        offset += 8;
-                        return true;
-                    }
-                    return false;
-                default:
-                    throw new InvalidCastException();
+                Buffer.BlockCopy(buf, offset, buf, 0, bbRecv.dataLen - offset);
             }
+            bbRecv.dataLen -= offset;
         }
 
         public void SendBytes(byte[] data, int offset = 0, int len = 0)
@@ -432,9 +356,9 @@ namespace xx
             {
                 var pkg = pkgs[i];
                 bbSend.Clear();
-                bbSend.BeginWritePackageEx(0, 2);
+                bbSend.BeginWritePackageEx();
                 bbSend.WriteRoot(pkg);
-                bbSend.EndWritePackageEx(0, -1, 1);
+                bbSend.EndWritePackageEx();
                 sum += bbSend.dataLen;
                 SendBytes(bbSend.buf, 0, bbSend.dataLen);
             }
@@ -446,14 +370,14 @@ namespace xx
         {
             if (bbSend == null) bbSend = new BBuffer(65536);
             bbSend.Clear();
-            bbSend.BeginWritePackageEx(0, 2);
+            bbSend.BeginWritePackageEx();
             var len = pkgs.Length;
             for (int i = 0; i < len; ++i)
             {
                 var ibb = pkgs[i];
                 bbSend.WriteRoot(ibb);
             }
-            bbSend.EndWritePackageEx(0, -1, 1);
+            bbSend.EndWritePackageEx();
             SendBytes(bbSend.buf, 0, bbSend.dataLen);
             return bbSend.dataLen;
         }
@@ -465,9 +389,9 @@ namespace xx
             if (bbSend == null) bbSend = new BBuffer(65536);
             var serial = loop.rpcMgr.Register(cb, interval);
             bbSend.Clear();
-            bbSend.BeginWritePackageEx(4, 2);
+            bbSend.BeginWritePackageEx(true, serial);
             bbSend.WriteRoot(pkg);
-            bbSend.EndWritePackageEx(1, 2, 1, serial);
+            bbSend.EndWritePackageEx(1);
             SendBytes(bbSend.buf, 0, bbSend.dataLen);
             return serial;
         }
@@ -477,9 +401,9 @@ namespace xx
         {
             if (bbSend == null) bbSend = new BBuffer(65536);
             bbSend.Clear();
-            bbSend.BeginWritePackageEx(4, 2);
+            bbSend.BeginWritePackageEx(true, serial);
             bbSend.WriteRoot(pkg);
-            bbSend.EndWritePackageEx(2, 2, 1, serial);
+            bbSend.EndWritePackageEx(2);
             SendBytes(bbSend.buf, 0, bbSend.dataLen);
             return bbSend.dataLen;
         }

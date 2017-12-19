@@ -3,6 +3,16 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading;
 using xx;
+using static ConsoleHelpeer;
+public static class ConsoleHelpeer
+{
+    public static void CW(object o)
+    {
+#if DEBUG
+        Console.WriteLine(o);
+#endif
+    }
+}
 
 public class MyClient : UvTcpClient
 {
@@ -12,7 +22,7 @@ public class MyClient : UvTcpClient
     {
         if (alive)                              // 连接成功
         {
-            //Console.WriteLine("connected.");
+            CW("connected.");
             ++Program.successConns;             // 同步一下成功连接数统计
             TimerStop();                        // 关闭连接超时 timer
             var b = new BBuffer();              // 造个 BB包
@@ -21,7 +31,7 @@ public class MyClient : UvTcpClient
         }
         else                                    // 连接失败
         {
-            Console.WriteLine("connect failed.");
+            CW("connect failed.");
             TimerStart();                       // 启用或更新 timer
             Connect();                          // 再次发起连接
         }
@@ -30,7 +40,7 @@ public class MyClient : UvTcpClient
     {
         if (bb == null)
         {
-            Console.WriteLine("rpc timeout. serial = " + serial);
+            CW("rpc timeout. serial = " + serial);
             return; // 超时
         }
         ++Program.counter;                      // 同步一下收发计数统计
@@ -40,6 +50,7 @@ public class MyClient : UvTcpClient
         b.Clear();
         b.Write(n + 1);                         // 将就 BB包 做发送数据
         SendRequest(b, OnReceiveResponse);      // 继续发起RPC请求
+        CW($"SendRequest serial = {serial}, n = {n}");
     }
 }
 
@@ -72,7 +83,7 @@ public static class Program
 
                 client.OnDisconnect = () =>     // 绑 断开后 事件回调
                 {
-                    Console.WriteLine("disconnected.");
+                    CW("disconnected.");
                     --successConns;
                     client.Connect();           // 再次重连
                 };

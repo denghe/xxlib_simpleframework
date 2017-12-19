@@ -843,61 +843,27 @@ namespace xx
 
         #endregion
 
-        #region 1+n header misc utils
+        #region 3bytes header misc utils
 
-        public void BeginWritePackageEx(int serialSize, int lenSize)
+        public void BeginWritePackageEx(bool isRpc = false, uint serial = 0)
         {
             dataLenBak = dataLen;
-            var headerLen = 1 + serialSize + lenSize;
-            Reserve(dataLen + headerLen);
-            dataLen += headerLen;
+            Reserve(dataLen + 8);
+            dataLen += 3;
+            if (isRpc) Write(serial);
         }
 
-        public void EndWritePackageEx(int pkgTypeId, int serialShift, int lenShift, ulong serial = 0)
+        public void EndWritePackageEx(byte pkgTypeId = 0)
         {
-            var headerLen = 1 + (pkgTypeId > 0 ? (1 << serialShift) : 0) + (1 << lenShift);
-            var pkgLen = (uint)(dataLen - dataLenBak - headerLen);
-            if (lenShift > 1 && pkgLen > (1 << ((1 << lenShift) * 8)))
+            var pkgLen = dataLen - dataLenBak - 3;
+            if (pkgLen > ushort.MaxValue)
             {
                 dataLen = dataLenBak;
                 throw new OverflowException();
             }
-            if (pkgTypeId == 0)
-            {
-                buf[dataLenBak++] = (byte)lenShift;
-            }
-            else
-            {
-                buf[dataLenBak++] = (byte)((pkgTypeId << 4) | (serialShift << 2) | lenShift);
-                buf[dataLenBak++] = (byte)(serial); // 1
-                if (serialShift > 0)    // 2
-                {
-                    buf[dataLenBak++] = (byte)(serial >> 8);
-                    if (serialShift > 1)    // 4
-                    {
-                        buf[dataLenBak++] = (byte)(serial >> 16);
-                        buf[dataLenBak++] = (byte)(serial >> 24);
-                        if (serialShift > 2)    // 8
-                        {
-                            buf[dataLenBak++] = (byte)(serial >> 32);
-                            buf[dataLenBak++] = (byte)(serial >> 40);
-                            buf[dataLenBak++] = (byte)(serial >> 48);
-                            buf[dataLenBak++] = (byte)(serial >> 56);
-                        }
-                    }
-                }
-            }
-
-            buf[dataLenBak++] = (byte)(pkgLen);
-            if (lenShift > 0)    // 2
-            {
-                buf[dataLenBak++] = (byte)(pkgLen >> 8);
-                if (lenShift > 1)    // 4
-                {
-                    buf[dataLenBak++] = (byte)(pkgLen >> 16);
-                    buf[dataLenBak++] = (byte)(pkgLen >> 24);
-                }
-            }
+            buf[dataLenBak] = pkgTypeId;
+            buf[dataLenBak + 1] = (byte)(pkgLen);
+            buf[dataLenBak + 2] = (byte)(pkgLen >> 8);
         }
 
         #endregion
