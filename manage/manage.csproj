@@ -118,10 +118,6 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\pkg\pkg.csproj">
-      <Project>{60e4f812-e4ca-43ff-b6f3-2ec043b2afd8}</Project>
-      <Name>pkg</Name>
-    </ProjectReference>
     <ProjectReference Include="..\xxlib_csharp\xxlib_csharp.csproj">
       <Project>{6dd7a5a2-3411-4ecb-a811-2421be960743}</Project>
       <Name>xxlib_csharp</Name>
@@ -135,5 +131,6 @@
       <Name>xxuvlib_csharp</Name>
     </ProjectReference>
   </ItemGroup>
+  <Import Project="..\pkg\pkg.projitems" Label="Shared" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

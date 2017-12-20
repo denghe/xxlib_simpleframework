@@ -13,7 +13,7 @@ public static class Program
         using (var loop = new UvLoop())
         {
             // timer 管理器: 1 秒一跳, 池长 6 跳, 默认 TimerStart 参数为 5
-            var tm = new UvTimerManager(loop, 1000, 6, 5);
+            var tm = new UvTimeouter(loop, 1000, 6, 5);
             var listener = new UvTcpListener(loop);
             listener.OnAccept = peer =>
             {
@@ -21,13 +21,13 @@ public static class Program
 
                 // 接入 timer 管理器, 如果 5 秒没收到数据就断开
                 peer.BindTo(tm);
-                peer.OnTimerFire = () => peer.Dispose();
-                peer.TimerStart();
+                peer.OnTimeout = () => peer.Dispose();
+                peer.TimeoutReset();
 
                 // RPC 请求事件
                 peer.OnReceiveRequest = (serial, bb) =>
                 {
-                    peer.TimerStart();                  // 更新 timer
+                    peer.TimeoutReset();                  // 更新 timer
                     var b = bb.ReadPackage<BBuffer>();  // 读出 BB包
                     uint n = 0;
                     b.Read(ref n);                      // 读出 BB包 中的 counter

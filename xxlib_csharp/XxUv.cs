@@ -168,7 +168,7 @@ namespace xx
             try
             {
                 if (listener.OnCreatePeer != null) peer = listener.OnCreatePeer();
-                else peer = new UvTcpPeer(listener.loop, listener);
+                else peer = new UvTcpPeer(listener);
             }
             catch
             {
@@ -409,11 +409,11 @@ namespace xx
         public bool alive { get { return !disposed; } }
 
         public UvTcpListener listener;
-        public UvTcpPeer(UvLoop loop, UvTcpListener listener)
+        public UvTcpPeer(UvTcpListener listener)
         {
             this.Handle(ref handle);
-            this.loop = loop;
             this.listener = listener;
+            this.loop = listener.loop;
 
             ptr = UvInterop.xxuv_alloc_uv_tcp_t(handle);
             if (ptr == IntPtr.Zero)
@@ -511,7 +511,7 @@ namespace xx
                 this.Unhandle(ref handle);
 
                 UnbindTimerManager();
-                OnTimerFire = null;
+                OnTimeout = null;
 
                 bbSend = null;
                 bbRecv = null;
@@ -648,7 +648,7 @@ namespace xx
                 this.Unhandle(ref handle);
 
                 UnbindTimerManager();
-                OnTimerFire = null;
+                OnTimeout = null;
 
                 bbSend = null;
                 bbRecv = null;
@@ -784,11 +784,11 @@ namespace xx
     public class UvTimerBase
     {
         // TimerManager 于 Add 时填充下列成员
-        public UvTimerManager timerManager;         // 指向时间管理( 初始为空 )
+        public UvTimeouter timerManager;         // 指向时间管理( 初始为空 )
         public UvTimerBase timerPrev;               // 指向同一 ticks 下的上一 timer
         public UvTimerBase timerNext;               // 指向同一 ticks 下的下一 timer
         public int timerIndex = -1;                 // 位于管理器 timerss 数组的下标
-        public Action OnTimerFire;                  // 时间到达后要执行的函数
+        public Action OnTimeout;                  // 时间到达后要执行的函数
 
         public void TimerClear()
         {
@@ -797,7 +797,7 @@ namespace xx
             timerIndex = -1;
         }
 
-        public void TimerStart(int interval = 0)
+        public void TimeoutReset(int interval = 0)
         {
             if (timerManager == null) throw new InvalidOperationException();
             timerManager.AddOrUpdate(this, interval);
@@ -808,7 +808,7 @@ namespace xx
             if (timering) timerManager.Remove(this);
         }
 
-        public void BindTo(UvTimerManager tm)
+        public void BindTo(UvTimeouter tm)
         {
             if (timerManager != null) throw new InvalidOperationException();
             timerManager = tm;
@@ -823,7 +823,7 @@ namespace xx
         public bool timering { get { return timerManager != null && (timerIndex != -1 || timerPrev != null); } }
     }
 
-    public class UvTimerManager
+    public class UvTimeouter
     {
         UvTimer timer;
         List<UvTimerBase> timerss = new List<UvTimerBase>();
@@ -831,7 +831,7 @@ namespace xx
         int defaultInterval;
 
         // intervalMS: 帧间隔毫秒数;    wheelLen: 轮子尺寸( 需求的最大计时帧数 + 1 );    defaultInterval: 默认计时帧数
-        public UvTimerManager(UvLoop loop, ulong intervalMS, int wheelLen, int defaultInterval)
+        public UvTimeouter(UvLoop loop, ulong intervalMS, int wheelLen, int defaultInterval)
         {
             timer = new UvTimer(loop, 0, intervalMS, Process);
             timerss.Resize(wheelLen);
@@ -843,7 +843,7 @@ namespace xx
             var t = timerss[cursor];            // 遍历当前 ticks 链表
             while (t != null)
             {
-                t.OnTimerFire();                // 执行
+                t.OnTimeout();                // 执行
                 var nt = t.timerNext;
                 t.TimerClear();
                 t = nt;
@@ -959,7 +959,7 @@ namespace xx
             self.OnFire();
         }
 
-        public void Fire(Action a)
+        public void Dispatch(Action a)
         {
             if (disposed) throw new ObjectDisposedException("XxUvAsync");
             actions.Enqueue(a);
@@ -1078,8 +1078,80 @@ namespace xx
             if (idx == -1) return;              // 已超时移除
             var a = mapping.ValueAt(idx);
             mapping.RemoveAt(idx);
-            a(serial, bb);
+            if (a != null) a(serial, bb);
         }
+    }
+
+    public abstract class UvContextBase
+    {
+        public UvTcpPeer peer;
+        public bool peerAlive { get { return peer != null && peer.alive; } }
+
+        // 绑连接. 成功返回 true
+        public bool BindPeer(UvTcpPeer p)
+        {
+            if (this.peer != null) return false;
+            p.OnReceiveRequest = OnPeerReceiveRequest;
+            p.OnReceivePackage = OnPeerReceivePackage;
+            p.OnDispose = OnPeerDisconnect;
+            this.peer = p;
+            return true;
+        }
+
+        // T 掉已有连接, 不会产生 OnDispose 调用( 如果非立即断开, 则会在几秒后被 timeouter 干掉 )
+        public void KickPeer(bool immediately = true)
+        {
+            if (peer != null)
+            {
+                peer.OnDispose = null;              // 防止产生 OnDispose 调用
+                peer.OnReceivePackage = null;       // 清空收发包回调
+                peer.OnReceiveRequest = null;
+
+                if (immediately)
+                {
+                    peer.Dispose();                 // 立即断开
+                }
+                peer = null;
+            }
+        }
+
+        // RPC 请求解包, 调处理函数
+        public void OnPeerReceiveRequest(uint serial, BBuffer bb)
+        {
+            var ibb = bb.TryReadPackage<IBBuffer>();
+            if (ibb == null)
+            {
+                KickPeer();
+                return;
+            }
+            peer.TimeoutReset();
+            HandleRequest(serial, ibb);
+        }
+
+        // 普通 解包, 调处理函数
+        public void OnPeerReceivePackage(BBuffer bb)
+        {
+            var ibb = bb.TryReadPackage<IBBuffer>();
+            if (ibb == null)
+            {
+                KickPeer();
+                return;
+            }
+            peer.TimeoutReset();
+            HandlePackage(ibb);
+        }
+
+        public void OnPeerDisconnect()
+        {
+            KickPeer(false);
+            HandleDisconnect();
+        }
+
+
+        // 需要实现的函数些
+        public abstract void HandleRequest(uint serial, IBBuffer ibb);
+        public abstract void HandlePackage(IBBuffer ibb);
+        public abstract void HandleDisconnect();
     }
 
     public struct Pair<First, Second>
@@ -1322,7 +1394,7 @@ namespace xx
     }
 
 
-    // 模拟 ConcurrentQueue 的用法, 用 lock + queue 浅封 for unity
+    // u3d 下 模拟 ConcurrentQueue 的用法, 用 lock + queue 浅封 for unity
 #if NET_2_0 || NET_2_0_SUBSET
     public class ConcurrentQueue<T>
     {

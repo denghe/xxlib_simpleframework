@@ -639,6 +639,20 @@ namespace xx
             return t;
         }
 
+        /// <summary>
+        /// 为方便直接返回 new T. 通常返回 null 表示解析失败.
+        /// </summary>
+        public T TryReadPackage<T>() where T : IBBuffer
+        {
+            T t = default(T);
+            try
+            {
+                ReadRoot(ref t);
+            }
+            catch { }
+            return t;
+        }
+
         #endregion
 
         #endregion

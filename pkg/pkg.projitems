@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <HasSharedItems>true</HasSharedItems>
+    <SharedGUID>160a3ee0-261c-4ed1-9194-4c6e75dbc7cf</SharedGUID>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration">
+    <Import_RootNamespace>pkg</Import_RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)PKG2_class.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)PKG_class.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)RPC_class.cs" />
+  </ItemGroup>
+</Project>

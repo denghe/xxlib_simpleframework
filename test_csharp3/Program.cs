@@ -17,7 +17,7 @@ public static class ConsoleHelpeer
 public class MyClient : UvTcpClient
 {
     public MyClient(UvLoop loop) : base(loop) => OnConnect = OnConnectImpl;             // 绑 连接事件回调
-    public MyClient(UvLoop loop, UvTimerManager tm) : this(loop) => this.BindTo(tm);    // 绑 timer管理器
+    public MyClient(UvLoop loop, UvTimeouter tm) : this(loop) => this.BindTo(tm);    // 绑 timer管理器
     public void OnConnectImpl(int status)
     {
         if (alive)                              // 连接成功
@@ -33,7 +33,7 @@ public class MyClient : UvTcpClient
         else                                    // 连接失败
         {
             CW("connect failed.");
-            TimerStart();                       // 启用或更新 timer
+            TimeoutReset();                       // 启用或更新 timer
             Connect();                          // 再次发起连接
         }
     }
@@ -81,18 +81,18 @@ public static class Program
         using (var loop = new UvLoop(1000, 2))
         {
             // timer 管理器: 1 秒一跳, 池长 6 跳, 默认 TimerStart 参数为 2
-            var tm = new UvTimerManager(loop, 1000, 6, 2);
+            var tm = new UvTimeouter(loop, 1000, 6, 2);
 
             for (int i = 0; i < 1; ++i)     // 创建多个连接
             {
                 var client = new MyClient(loop, tm);
-                client.SetAddress("127.0.0.1", 12345);
+                client.SetAddress("192.168.1.111", 12345);
 
-                client.OnTimerFire = () =>      // 设置时间到的事件: 超时就直接断开
+                client.OnTimeout = () =>      // 设置时间到的事件: 超时就直接断开
                 {
                     if (!client.disposed) client.Disconnect();
                 };
-                client.TimerStart();            // 开始计时
+                client.TimeoutReset();            // 开始计时
                 client.Connect();               // 开始连( 实际执行是在 uv.loop 中 )
 
                 client.OnDisconnect = () =>     // 绑 断开后 事件回调

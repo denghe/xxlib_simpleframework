@@ -25,6 +25,7 @@ public static class Program
     {
 #if !DEBUG
         global::System.Console.WriteLine("please run generater in debug mode!");
+        global::System.Console.ReadKey();
         return;
 #endif
         // 扫所有添加过引用的, 名字前缀为 templatePrefix 的 dll, 执行相应的生成

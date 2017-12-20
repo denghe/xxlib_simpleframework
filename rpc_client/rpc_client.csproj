@@ -4,10 +4,10 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{6F49DE2C-1F92-47C8-B03D-D3D5C66D3CBC}</ProjectGuid>
+    <ProjectGuid>{4CBFFEF7-AF1B-452F-8059-EAACC95B446B}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>pkggen</RootNamespace>
-    <AssemblyName>pkggen</AssemblyName>
+    <RootNamespace>rpc_client</RootNamespace>
+    <AssemblyName>rpc_client</AssemblyName>
     <TargetFrameworkVersion>v4.7.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -22,6 +22,7 @@
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <Prefer32Bit>true</Prefer32Bit>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
     <OutputPath>bin\x64\Release\</OutputPath>
@@ -32,11 +33,11 @@
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <Prefer32Bit>true</Prefer32Bit>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -45,33 +46,21 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="GenCPP_Class.cs" />
-    <Compile Include="GenCS_Class.cs" />
-    <Compile Include="GenLUA_Class.cs" />
-    <Compile Include="GenTypeId.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config" />
+    <ProjectReference Include="..\xxlib_csharp\xxlib_csharp.csproj">
+      <Project>{6dd7a5a2-3411-4ecb-a811-2421be960743}</Project>
+      <Name>xxlib_csharp</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\gen_library\gen_library.csproj">
-      <Project>{7f62e40f-e079-46d2-85e9-661fce50168c}</Project>
-      <Name>gen_library</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\pkggen_template_PKG2\pkggen_template_PKG2.csproj">
-      <Project>{630421af-33e7-4514-9437-5fcd83ebad2e}</Project>
-      <Name>pkggen_template_PKG2</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\pkggen_template_PKG\pkggen_template_PKG.csproj">
-      <Project>{82112fe9-6a59-4f6d-a295-d4c7c039a977}</Project>
-      <Name>pkggen_template_PKG</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\pkggen_template_RPC\pkggen_template_RPC.csproj">
-      <Project>{081fd731-af90-4ec5-8cac-603fc9d3a4cb}</Project>
-      <Name>pkggen_template_RPC</Name>
-    </ProjectReference>
+    <Content Include="..\x64\Release\xxuvlib.dll">
+      <Link>xxuvlib.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
+  <Import Project="..\pkg\pkg.projitems" Label="Shared" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
