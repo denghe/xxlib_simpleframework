@@ -185,12 +185,15 @@ public class DbClient : UvTcpClient
     // Dispose 时把 timer 杀了
     protected override void Dispose(bool disposing)
     {
-        base.Dispose(disposing);
-        if (timer != null)
+        if (!disposed)
         {
-            timer.Dispose();
-            timer = null;
+            if (timer != null)
+            {
+                timer.Dispose();
+                timer = null;
+            }
         }
+        base.Dispose(disposing);
     }
 }
 

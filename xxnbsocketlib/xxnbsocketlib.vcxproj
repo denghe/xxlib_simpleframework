@@ -10,6 +10,14 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="xxbuf.h" />
+    <ClInclude Include="xxnbsocket.h" />
+    <ClInclude Include="xxnbsocketlib.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="xxnbsocketlib.cpp" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{597BC47D-B1A6-4707-8C29-F27B9C8CB711}</ProjectGuid>
@@ -86,15 +94,6 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClInclude Include="..\luaex\xxbuf.h" />
-    <ClInclude Include="..\luaex\xxmempool.h" />
-    <ClInclude Include="..\luaex\xxnbsocket.h" />
-    <ClInclude Include="..\luaex\xxnbsocketlib.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="..\luaex\xxnbsocketlib.cpp" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

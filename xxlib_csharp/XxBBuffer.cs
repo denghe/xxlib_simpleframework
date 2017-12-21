@@ -468,7 +468,7 @@ namespace xx
             }
             else
             {
-                System.Diagnostics.Debug.Assert(v.GetPackageId() != ushort.MaxValue);
+                System.Diagnostics.Debug.Assert(v.GetPackageId() != ushort.MaxValue);   // 通常是没有执行 XXXPKG.AllTypes.Register() 所致
                 Write(v.GetPackageId());
                 if (ptrStore != null)
                 {

@@ -56,8 +56,8 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="..\x64\Release\xxuvlib.dll">
-      <Link>xxuvlib.dll</Link>
+    <Content Include="..\x64\Release\xxnbsocketlib.dll">
+      <Link>xxnbsocketlib.dll</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

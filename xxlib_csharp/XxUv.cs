@@ -7,21 +7,17 @@ namespace xx
 {
     public class UvLoop : IDisposable
     {
-        /******************************************************************************/
-        // 需要用就要 new 出来
-        public UvRpcManager rpcMgr;
-        /******************************************************************************/
-
         public bool disposed;
         public List<UvTcpListener> listeners = new List<UvTcpListener>();
         public List<UvTcpClient> clients = new List<UvTcpClient>();
         public List<UvTimer> timers = new List<UvTimer>();
         public List<UvAsync> asyncs = new List<UvAsync>();
+        public UvRpcManager rpcMgr;
 
         public IntPtr ptr;
         public IntPtr handle;
 
-        public UvLoop()
+        public UvLoop(ulong rpcIntervalMS = 1000, int rpcDefaultInterval = 5)
         {
             this.Handle(ref handle);
             ptr = UvInterop.xxuv_alloc_uv_loop_t(handle);
@@ -38,10 +34,7 @@ namespace xx
                 this.Unhandle(ref handle);
                 r.Throw();
             }
-        }
 
-        public UvLoop(ulong rpcIntervalMS, int rpcDefaultInterval) : this()
-        {
             rpcMgr = new UvRpcManager(this, rpcIntervalMS, rpcDefaultInterval);
         }
 
@@ -162,7 +155,7 @@ namespace xx
         static UvInterop.uv_connection_cb OnAcceptCB = OnAcceptCBImpl;
         static void OnAcceptCBImpl(IntPtr stream, int status)
         {
-            status.TryThrow();
+            if (status != 0) return;
             var listener = stream.To<UvTcpListener>();
             UvTcpPeer peer = null;
             try
@@ -174,7 +167,7 @@ namespace xx
             {
                 return;
             }
-            listener.OnAccept(peer);
+            if (listener.OnAccept != null) listener.OnAccept(peer);
         }
         public void Listen(int backlog = 128)
         {
@@ -254,13 +247,14 @@ namespace xx
         static void OnReadCBImpl(IntPtr stream, IntPtr nread, IntPtr buf_t)
         {
             var tcp = stream.To<UvTcpBase>();
+            var loopPtr = tcp.loop.ptr;        // 防事件 Dispose 先取出来
             var bufPtr = UvInterop.xxuv_get_buf(buf_t);
             int len = (int)nread;
             if (len > 0)
             {
                 tcp.OnReceiveImpl(bufPtr, len);
             }
-            UvInterop.xxuv_pool_free(tcp.loop.ptr, bufPtr);
+            UvInterop.xxuv_pool_free(loopPtr, bufPtr);
             if (len < 0)
             {
                 tcp.DisconnectImpl();
@@ -290,6 +284,7 @@ namespace xx
                 if (typeId == 0)
                 {
                     OnReceivePackage(bbRecv);
+                    if (disposed) return;
                 }
                 else
                 {
@@ -302,10 +297,12 @@ namespace xx
                     if (typeId == 1)
                     {
                         OnReceiveRequest(serial, bbRecv);
+                        if (disposed) return;
                     }
                     else if (typeId == 2)
                     {
                         loop.rpcMgr.Callback(serial, bbRecv);
+                        if (disposed) return;
                     }
                 }
                 offset += dataLen;                          // 继续处理剩余数据
@@ -331,6 +328,7 @@ namespace xx
 
         public void SendBytes(BBuffer bb)
         {
+            if (disposed) throw new ObjectDisposedException("XxUvTcpBase");
             if (bb.dataLen == 0) throw new NullReferenceException();
             var h = GCHandle.Alloc(bb.buf, GCHandleType.Pinned);
             UvInterop.xxuv_write_(ptr, h.AddrOfPinnedObject(), 0, (uint)bb.dataLen);
@@ -343,6 +341,7 @@ namespace xx
         // 每个类一个包, 返回总字节数
         public int Send(params xx.IBBuffer[] pkgs)
         {
+            if (disposed) throw new ObjectDisposedException("XxUvTcpBase");
             if (pkgs == null || pkgs.Length == 0) throw new NullReferenceException();
             if (bbSend == null) bbSend = new BBuffer(65536);
             var sum = 0;
@@ -363,6 +362,7 @@ namespace xx
         // 合并所有类一个包, 返回总字节数
         public int SendCombine(params xx.IBBuffer[] pkgs)
         {
+            if (disposed) throw new ObjectDisposedException("XxUvTcpBase");
             if (bbSend == null) bbSend = new BBuffer(65536);
             bbSend.Clear();
             bbSend.BeginWritePackageEx();
@@ -380,6 +380,7 @@ namespace xx
         // 只能单发一个类, 返回流水号
         public uint SendRequest(xx.IBBuffer pkg, Action<uint, BBuffer> cb, int interval = 0)
         {
+            if (disposed) throw new ObjectDisposedException("XxUvTcpBase");
             if (loop.rpcMgr == null) throw new NullReferenceException();
             if (bbSend == null) bbSend = new BBuffer(65536);
             var serial = loop.rpcMgr.Register(cb, interval);
@@ -394,6 +395,7 @@ namespace xx
         // 发送 RPC 的应答包, 返回字节数
         public int SendResponse(uint serial, xx.IBBuffer pkg)
         {
+            if (disposed) throw new ObjectDisposedException("XxUvTcpBase");
             if (bbSend == null) bbSend = new BBuffer(65536);
             bbSend.Clear();
             bbSend.BeginWritePackageEx(true, serial);
