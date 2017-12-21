@@ -56,7 +56,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="..\x64\Release\xxnbsocketlib.dll">
+    <Content Include="..\x64\Debug\xxnbsocketlib.dll">
       <Link>xxnbsocketlib.dll</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

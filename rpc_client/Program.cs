@@ -27,14 +27,8 @@ public static class Program
 
             while (true)
             {
-                Thread.Sleep(frameMS);          // 模拟帧延迟
-                nbs.Update();
-
                 switch (nbs.state)
                 {
-                    case NBSocketStates.Disconnected:
-                        goto LabEnd;            // 连不上就出循环
-
                     case NBSocketStates.Connecting:
                         if (nbs.ticks > secFrames * 1)     // 1 秒连不上就算超时吧
                         {
@@ -74,9 +68,15 @@ public static class Program
                     case NBSocketStates.Disconnecting:
                         break;
 
+                    case NBSocketStates.Disconnected:
+                        goto LabEnd;            // 连不上就出循环
+
                     default:
                         break;
                 }
+
+                Thread.Sleep(frameMS);          // 模拟帧延迟
+                nbs.Update();
                 dump();
             }
             LabEnd:

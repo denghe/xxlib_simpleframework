@@ -34,7 +34,7 @@ public class Peer : UvTcpPeer
         this.TimeoutReset();
 
         // 匿名连接处理: 收到认证信息后 绑相应上下文
-        this.OnReceiveRequest = (serial, bb) =>
+        this.OnReceivePackage = (bb) =>
         {
             // 试解包, 如果失败直接断开
             var ibb = bb.TryReadPackage<IBBuffer>();
@@ -56,6 +56,8 @@ public class Peer : UvTcpPeer
                             {
                                 // 刷新超时时间 防 T
                                 this.TimeoutReset();
+
+                                Console.WriteLine("login connected...");
                                 return;
                             }
                         }
@@ -82,11 +84,12 @@ public class LoginContext : UvContextBase
 
     public override void HandlePackage(IBBuffer ibb)
     {
-        //throw new NotImplementedException();
+        Console.WriteLine("recv package: " + ibb.ToString());
     }
 
     public override void HandleRequest(uint serial, IBBuffer ibb)
     {
+        Console.WriteLine("recv request: " + ibb.ToString());
         switch (ibb)
         {
             case RPC.Login_DB.Auth o:

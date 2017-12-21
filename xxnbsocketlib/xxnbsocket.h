@@ -163,7 +163,8 @@ struct XxNBSocket
 						// 读出长度信息( 首字节 pkg type id 用不到, 直接跳过 )
 						auto dataLen = buf[offset + 1] + (buf[offset + 2] << 8);
 						if (!dataLen) return Close(-3);				// 异常: 读不到长度, 关闭连接
-						if (offset + 3 + dataLen > readLen) break;	// 确保数据长
+						dataLen += 3;								// 将包头的长度纳入
+						if (offset + dataLen > readLen) break;		// 确保数据长
 
 						// 将数据弄到 recvBufs( 含包头, 以便上层代码继续解析 )
 						recvBufs.emplace_back((char*)buf + offset, dataLen);

@@ -144,10 +144,10 @@ namespace xx
                             if (OnReceivePackage != null) OnReceivePackage(ibb);
                             break;
                         case 1:
-                            if (OnReceiveRequest != null) OnReceiveRequest(serial, bbRecv);
+                            if (OnReceiveRequest != null) OnReceiveRequest(serial, ibb);
                             break;
                         case 2:
-                            Callback(serial, bbRecv);
+                            Callback(serial, ibb);
                             break;
                         default:
                             Disconnect();
@@ -302,13 +302,13 @@ namespace xx
         }
 
         // 根据 流水号 定位到 回调函数并调用( 由 UvTcpXxxx 来 call )
-        void Callback(uint serial, IBBuffer bb)
+        void Callback(uint serial, IBBuffer ibb)
         {
             int idx = mapping.Find(serial);
             if (idx == -1) return;              // 已超时移除
             var a = mapping.ValueAt(idx);
             mapping.RemoveAt(idx);
-            if (a != null) a(serial, bb);
+            if (a != null) a(serial, ibb);
         }
 
 

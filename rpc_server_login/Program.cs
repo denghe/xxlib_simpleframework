@@ -35,17 +35,17 @@ public class Peer : UvTcpPeer
         this.TimeoutReset();
 
         // 绑定请求处理函数
-        this.OnReceiveRequest = (serial, bb_) =>
+        this.OnReceiveRequest = (serial__, bb__) =>
         {
             // 试解包, 如果失败直接断开
-            var ibb_ = bb_.TryReadPackage<IBBuffer>();
-            if (ibb_ == null)
+            var ibb__ = bb__.TryReadPackage<IBBuffer>();
+            if (ibb__ == null)
             {
                 this.Dispose();
                 return;
             }
 
-            switch (ibb_)
+            switch (ibb__)
             {
                 case RPC.Client_Login.Login login:
                     // 重置超时计算
@@ -59,10 +59,8 @@ public class Peer : UvTcpPeer
                             username = login.username,
                             password = login.password
                         }
-                        , (serial_, bb) =>
+                        , (serial, bb) =>
                         {
-                            Debug.Assert(serial_ == serial);
-
                             // 发生超时回调, 即未在规定时间内收到来自 db 的回应
                             if (bb == null)
                             {
@@ -79,7 +77,7 @@ public class Peer : UvTcpPeer
                             // 将回应包解出来, 进一步处理
                             else
                             {
-                                var ibb = bb_.TryReadPackage<IBBuffer>();
+                                var ibb = bb.TryReadPackage<IBBuffer>();
 
                                 // 如果 ibb 为空, 则为内部 / 内网通信错误, 或协议错误 )
                                 Debug.Assert(ibb != null);
@@ -111,7 +109,7 @@ public class Peer : UvTcpPeer
                     // 否则就直接返回相应的错误
                     else
                     {
-                        this.SendResponse(serial, new RPC.Generic.Error
+                        this.SendResponse(serial__, new RPC.Generic.Error
                         {
                             errNo = 3,
                             errMsg = "can't connect to db service"
@@ -122,13 +120,12 @@ public class Peer : UvTcpPeer
                 case RPC.Generic.Ping o:
                     this.TimeoutReset();
                     // ticks 原样返回, 用于计算延迟
-                    this.SendResponse(serial, new RPC.Generic.Pong
+                    this.SendResponse(serial__, new RPC.Generic.Pong
                     {
                         ticks = o.ticks
                     });
                     break;
             }
-            Dispose();
         };
     }
 }
@@ -146,18 +143,37 @@ public class DbClient : UvTcpClient
     {
         this.SetAddress(ip, port);
 
+        this.OnDisconnect = () =>
+        {
+            Console.WriteLine("disconnected from db...");
+        };
+
+        this.OnConnect = (status) =>
+        {
+            if (this.alive)
+            {
+                Console.WriteLine("connected to db. send ServiceInfo...");
+                this.Send(new RPC.Generic.ServiceInfo
+                {
+                    type = RPC.Generic.ServiceTypes.Login
+                });
+            }
+        };
+
         // 起一个 timer, 每 1 秒检查一下连接状态, 发一个心跳包
-        timer = new UvTimer(loop, 1000, 1000, () =>
+        timer = new UvTimer(loop, 0, 1000, () =>
         {
             Debug.Assert(!this.disposed);
 
             // 如果已断线 或 未连接, 就发起连接
             if (this.state == UvTcpStates.Disconnected)
             {
+                Console.WriteLine("connect to db...");
                 this.Connect();
             }
             else if (this.state == UvTcpStates.Connected)
             {
+                Console.WriteLine("ping to db...");
                 SendRequest(new RPC.Generic.Ping
                 {
                     ticks = DateTime.Now.Ticks
@@ -165,6 +181,7 @@ public class DbClient : UvTcpClient
                 (serial, bb) =>
                 {
                     if (bb == null) return;
+                    Console.WriteLine("recv db's pong...");
                     var pong = bb.TryReadPackage<RPC.Generic.Pong>();
                     Debug.Assert(pong != null);
 
