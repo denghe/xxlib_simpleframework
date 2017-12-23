@@ -5,14 +5,27 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using xx;
+using static LuaInterface.LuaDLL;
 
-// todo: 拿 tolua 的 dll 来 import 后简单测试 lua 部分
+// todo: 需要用 lua 来实现 NBSocket 的 rpc 部分
 
 // 模拟 unity 场景代码
 public class UnityScene
 {
+    IntPtr L;
     public UnityScene()
     {
+        L = luaL_newstate();
+        tolua_openlibs(L);
+        xxlua_openxx(L);
+        var b = luaL_dostring(L, @"
+
+local bb = BBuffer.Create()
+bb:WriteByte( 1,2,3,4,5 )
+print( bb )
+
+");
+        Console.WriteLine(b);
     }
     public bool Update()
     {
@@ -35,15 +48,15 @@ public static class Program
         // todo
 
         var us = new UnityScene();
-        us.Enter();
-        while (true)
-        {
-            if (!us.Update())
-            {
-                us.Leave();
-                break;
-            }
-            Thread.Sleep(33);   // 模拟 30 fps 帧刷新
-        }
+        //us.Enter();
+        //while (true)
+        //{
+        //    if (!us.Update())
+        //    {
+        //        us.Leave();
+        //        break;
+        //    }
+        //    Thread.Sleep(33);   // 模拟 30 fps 帧刷新
+        //}
     }
 }
