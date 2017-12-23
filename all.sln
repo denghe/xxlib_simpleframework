@@ -78,11 +78,14 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "rpc_server_db", "rpc_server
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "rpc_server_login", "rpc_server_login\rpc_server_login.csproj", "{85F10995-1A5B-4640-BD60-89F3E1D0C483}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "rpc_client_lua", "rpc_client_lua\rpc_client_lua.csproj", "{5F3A0385-E8A2-4422-981F-B65F87FEDD27}"
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		pkg\pkg.projitems*{160a3ee0-261c-4ed1-9194-4c6e75dbc7cf}*SharedItemsImports = 13
 		pkg\pkg.projitems*{2a4c90eb-e2bb-4d95-834c-cf5e4ddf901a}*SharedItemsImports = 4
 		pkg\pkg.projitems*{4cbffef7-af1b-452f-8059-eaacc95b446b}*SharedItemsImports = 4
+		pkg\pkg.projitems*{5f3a0385-e8a2-4422-981f-b65f87fedd27}*SharedItemsImports = 4
 		pkg\pkg.projitems*{6b685ba4-fad4-4227-becf-d341f09a8256}*SharedItemsImports = 4
 		pkg\pkg.projitems*{85f10995-1a5b-4640-bd60-89f3e1d0c483}*SharedItemsImports = 4
 	EndGlobalSection
@@ -223,6 +226,10 @@ Global
 		{85F10995-1A5B-4640-BD60-89F3E1D0C483}.Debug|x64.Build.0 = Debug|x64
 		{85F10995-1A5B-4640-BD60-89F3E1D0C483}.Release|x64.ActiveCfg = Release|x64
 		{85F10995-1A5B-4640-BD60-89F3E1D0C483}.Release|x64.Build.0 = Release|x64
+		{5F3A0385-E8A2-4422-981F-B65F87FEDD27}.Debug|x64.ActiveCfg = Debug|x64
+		{5F3A0385-E8A2-4422-981F-B65F87FEDD27}.Debug|x64.Build.0 = Debug|x64
+		{5F3A0385-E8A2-4422-981F-B65F87FEDD27}.Release|x64.ActiveCfg = Release|x64
+		{5F3A0385-E8A2-4422-981F-B65F87FEDD27}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

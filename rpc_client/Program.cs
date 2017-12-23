@@ -6,7 +6,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using xx;
 
-// todo: 拿 tolua 的 dll 来 import 后简单测试 lua 部分
 
 // 模拟 unity 场景代码
 public class UnityScene
