@@ -49,11 +49,13 @@ namespace xx
 
         /// <summary>
         /// 开始连接. 可传入阻塞时长( 通常都是不传的 )
-        /// 返回负数 表示出错. 0 表示没发生错误 但也没连上. 1 表示连接成功
+        /// 返回负数 表示出错. 0 表示没发生错误 但也没连上. 1 表示连接成功.
         /// </summary>
         public int Connect(int sec = 0, int usec = 0)
         {
             if (disposed) throw new ObjectDisposedException("XxUvTcpClient");
+            if (state != NBSocketStates.Disconnected) throw new InvalidOperationException();
+            lastState = NBSocketStates.Connecting;
             return NBSocketInterop.xxnbs_connect(ptr, sec, usec);
         }
 
@@ -77,6 +79,8 @@ namespace xx
                 return (NBSocketStates)NBSocketInterop.xxnbs_get_state(ptr);
             }
         }
+        NBSocketStates lastState;
+
 
         /// <summary>
         /// 判断组件是否未析构且已连接
@@ -119,6 +123,23 @@ namespace xx
         public int Update(int sec = 0, int usec = 0)
         {
             var r = NBSocketInterop.xxnbs_update(ptr, sec, usec);
+
+            // 连接/断开 事件模拟
+            var state = this.state;
+            if (state != lastState)
+            {
+                if (lastState == NBSocketStates.Connecting && OnConnect != null)
+                {
+                    OnConnect(state == NBSocketStates.Connected);
+                }
+                else if (lastState == NBSocketStates.Connected && OnDisconnect != null)
+                {
+                    OnDisconnect();
+                }
+                lastState = state;
+            }
+
+            // 数据接收事件模拟
             if (r == 0)
             {
                 while (true)
@@ -155,7 +176,8 @@ namespace xx
                     }
                 }
             }
-            Process();
+
+            Process();          // rpc 驱动
             return r;
         }
 
