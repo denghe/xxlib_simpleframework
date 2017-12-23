@@ -5,20 +5,6 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using xx;
 
-// 模拟 unity 场景代码
-public class UnityScene
-{
-    IEnumerator iter;
-    public UnityScene()
-    {
-        iter = Update().GetEnumerator();
-    }
-    public IEnumerable Update()
-    {
-        yield break;
-    }
-}
-
 public static class Program
 {
     const int frameMS = 100;

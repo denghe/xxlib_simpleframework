@@ -1073,6 +1073,13 @@ namespace xx
             return serial;
         }
 
+        // 根据流水号 反注册回调事件( 通常出现于提前断线或退出之后不想收到相关回调 )
+        // 这种情况不产生回调
+        public void Unregister(uint serial)
+        {
+            mapping.Remove(serial);
+        }
+
         // 根据 流水号 定位到 回调函数并调用( 由 UvTcpXxxx 来 call )
         public void Callback(uint serial, BBuffer bb)
         {

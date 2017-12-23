@@ -17,6 +17,8 @@ namespace xx
         public int offsetRoot;          // offset值写入修正
         public int readLengthLimit;     // 主用于传递给容器类进行长度合法校验
 
+        public static BBuffer instance = new BBuffer();     // 作为接收变量默认值比较方便
+
         #region write & read funcs
 
         #region byte
