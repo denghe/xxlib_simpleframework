@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Diagnostics;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -18,13 +19,8 @@ public class UnityScene
         L = luaL_newstate();
         tolua_openlibs(L);
         xxlua_openxx(L);
-        var b = luaL_dostring(L, @"
-
-local bb = BBuffer.Create()
-bb:WriteByte( 1,2,3,4,5 )
-print( bb )
-
-");
+        var src = File.ReadAllText("src.lua");
+        var b = luaL_dostring(L, src);
         Console.WriteLine(b);
     }
     public bool Update()

@@ -69,7 +69,7 @@ public class UnityScene
         yield return null;
 
         Console.WriteLine("request login");
-        object recv = BBuffer.instance;       // 用于请求回调中修改以便在 while 中扫描
+        IBBuffer recv = BBuffer.instance;       // 用于请求回调中修改以便在 while 中扫描
         var serial = nbs.SendRequest(           // 发登录请求
             new RPC.Client_Login.Login          // 构造一个登录包( 也可以用个静态的临时改值 )
             {
