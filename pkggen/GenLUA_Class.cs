@@ -59,11 +59,6 @@ public static class GenLUA_Class
             {
                 sb.Append(@"
 ");
-                if (fs.Exists(f => f.FieldType._IsRef()))
-                {
-                    sb.Append(@"
-        local null = _G.null");
-                }
             }
             foreach (var f in fs)
             {
@@ -114,7 +109,7 @@ public static class GenLUA_Class
                 if (kvp.Value > 1)
                 {
                     sb.Append(@"
-        local Read" + kvp.Key + @" = bb:Read" + kvp.Key);
+        local Read" + kvp.Key + @" = bb.Read" + kvp.Key);
                 }
             }
             foreach (var f in fs)
@@ -164,7 +159,7 @@ public static class GenLUA_Class
                 if (kvp.Value > 1)
                 {
                     sb.Append(@"
-        local Write" + kvp.Key + @" = bb:Write" + kvp.Key);
+        local Write" + kvp.Key + @" = bb.Write" + kvp.Key);
                 }
             }
             foreach (var f in fs)

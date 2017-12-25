@@ -19,7 +19,7 @@ public class UnityScene
         L = luaL_newstate();
         tolua_openlibs(L);
         xxlua_openxx(L);
-        var src = File.ReadAllText("src.lua");
+        var src = File.ReadAllText("src2.lua");
         var b = luaL_dostring(L, src);
         Console.WriteLine(b);
     }

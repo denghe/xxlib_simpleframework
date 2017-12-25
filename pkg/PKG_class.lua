@@ -91,7 +91,6 @@ PKG_Fail = {
         o.__index = o
         o.__newindex = o
 
-        local null = _G.null
         o.reason = null -- String
         setmetatable( o, PKG_Response.Create() )
         return o
@@ -117,7 +116,6 @@ PKG_Property = {
         o.__index = o
         o.__newindex = o
 
-        local null = _G.null
         o.name = null -- String
         return o
     end,
@@ -188,7 +186,6 @@ PKG_Property_string = {
         o.__index = o
         o.__newindex = o
 
-        local null = _G.null
         o.value = null -- String
         setmetatable( o, PKG_Property.Create() )
         return o
@@ -214,7 +211,6 @@ PKG_Properties = {
         o.__index = o
         o.__newindex = o
 
-        local null = _G.null
         o.value = null -- List_PKG_Property_
         setmetatable( o, PKG_Property.Create() )
         return o
@@ -267,7 +263,6 @@ PKG_UserInfo = {
         o.__index = o
         o.__newindex = o
 
-        local null = _G.null
         o.id = 0 -- Int64
         o.props = null -- List_PKG_Property_
         return o
@@ -294,7 +289,6 @@ PKG_Client_Server_Join = {
         o.__index = o
         o.__newindex = o
 
-        local null = _G.null
         o.username = null -- String
         o.password = null -- String
         setmetatable( o, PKG_Request.Create() )
@@ -303,14 +297,14 @@ PKG_Client_Server_Join = {
     FromBBuffer = function( bb, o )
         local p = getmetatable( o )
         p.__proto.FromBBuffer( bb, p )
-        local ReadObject = bb:ReadObject
+        local ReadObject = bb.ReadObject
         o.username = ReadObject( bb )
         o.password = ReadObject( bb )
     end,
     ToBBuffer = function( bb, o )
         local p = getmetatable( o )
         p.__proto.ToBBuffer( bb, p )
-        local WriteObject = bb:WriteObject
+        local WriteObject = bb.WriteObject
         WriteObject( bb, o.username )
         WriteObject( bb, o.password )
     end
@@ -328,7 +322,6 @@ PKG_Client_Server_Message = {
         o.__index = o
         o.__newindex = o
 
-        local null = _G.null
         o.text = null -- String
         return o
     end,
@@ -372,7 +365,6 @@ PKG_Server_Client_JoinSuccess = {
         o.__index = o
         o.__newindex = o
 
-        local null = _G.null
         o.self = null -- PKG_UserInfo
         o.users = null -- List_PKG_UserInfo_
         setmetatable( o, PKG_Response.Create() )
@@ -381,14 +373,14 @@ PKG_Server_Client_JoinSuccess = {
     FromBBuffer = function( bb, o )
         local p = getmetatable( o )
         p.__proto.FromBBuffer( bb, p )
-        local ReadObject = bb:ReadObject
+        local ReadObject = bb.ReadObject
         o.self = ReadObject( bb )
         o.users = ReadObject( bb )
     end,
     ToBBuffer = function( bb, o )
         local p = getmetatable( o )
         p.__proto.ToBBuffer( bb, p )
-        local WriteObject = bb:WriteObject
+        local WriteObject = bb.WriteObject
         WriteObject( bb, o.self )
         WriteObject( bb, o.users )
     end
@@ -433,7 +425,6 @@ PKG_Server_Client_JoinFail = {
         o.__index = o
         o.__newindex = o
 
-        local null = _G.null
         o.reason = null -- String
         setmetatable( o, PKG_Response.Create() )
         return o
@@ -485,7 +476,6 @@ PKG_Server_Client_PushMessage = {
         o.__index = o
         o.__newindex = o
 
-        local null = _G.null
         o.id = 0 -- Int64
         o.text = null -- String
         return o
@@ -512,7 +502,6 @@ PKG_Server_Client_PushLogout = {
         o.__index = o
         o.__newindex = o
 
-        local null = _G.null
         o.id = 0 -- Int64
         --[[
         退出原因( 主动? 掉线?
@@ -542,7 +531,6 @@ PKG_Manage_DB_Login = {
         o.__index = o
         o.__newindex = o
 
-        local null = _G.null
         o.username = null -- String
         o.password = null -- String
         setmetatable( o, PKG_Request.Create() )
@@ -551,14 +539,14 @@ PKG_Manage_DB_Login = {
     FromBBuffer = function( bb, o )
         local p = getmetatable( o )
         p.__proto.FromBBuffer( bb, p )
-        local ReadObject = bb:ReadObject
+        local ReadObject = bb.ReadObject
         o.username = ReadObject( bb )
         o.password = ReadObject( bb )
     end,
     ToBBuffer = function( bb, o )
         local p = getmetatable( o )
         p.__proto.ToBBuffer( bb, p )
-        local WriteObject = bb:WriteObject
+        local WriteObject = bb.WriteObject
         WriteObject( bb, o.username )
         WriteObject( bb, o.password )
     end
@@ -638,7 +626,6 @@ PKG_Manage_DB_SelectManageAccounts = {
         o.__index = o
         o.__newindex = o
 
-        local null = _G.null
         --[[
         要拉的 id 列表
         ]]
@@ -697,7 +684,6 @@ PKG_Manage_Account = {
         o.__index = o
         o.__newindex = o
 
-        local null = _G.null
         o.id = 0 -- Int64
         o.username = null -- String
         return o
@@ -724,20 +710,19 @@ PKG_Manage_Role = {
         o.__index = o
         o.__newindex = o
 
-        local null = _G.null
         o.id = 0 -- Int32
         o.name = null -- String
         o.desc = null -- String
         return o
     end,
     FromBBuffer = function( bb, o )
-        local ReadObject = bb:ReadObject
+        local ReadObject = bb.ReadObject
         o.id = bb:ReadInt32()
         o.name = ReadObject( bb )
         o.desc = ReadObject( bb )
     end,
     ToBBuffer = function( bb, o )
-        local WriteObject = bb:WriteObject
+        local WriteObject = bb.WriteObject
         bb:WriteInt32( o.id )
         WriteObject( bb, o.name )
         WriteObject( bb, o.desc )
@@ -756,7 +741,6 @@ PKG_Manage_Permission = {
         o.__index = o
         o.__newindex = o
 
-        local null = _G.null
         o.id = 0 -- Int32
         o.group = null -- String
         o.name = null -- String
@@ -764,14 +748,14 @@ PKG_Manage_Permission = {
         return o
     end,
     FromBBuffer = function( bb, o )
-        local ReadObject = bb:ReadObject
+        local ReadObject = bb.ReadObject
         o.id = bb:ReadInt32()
         o.group = ReadObject( bb )
         o.name = ReadObject( bb )
         o.desc = ReadObject( bb )
     end,
     ToBBuffer = function( bb, o )
-        local WriteObject = bb:WriteObject
+        local WriteObject = bb.WriteObject
         bb:WriteInt32( o.id )
         WriteObject( bb, o.group )
         WriteObject( bb, o.name )
@@ -796,12 +780,12 @@ PKG_Manage_BindAccountRole = {
         return o
     end,
     FromBBuffer = function( bb, o )
-        local ReadInt32 = bb:ReadInt32
+        local ReadInt32 = bb.ReadInt32
         o.account_id = ReadInt32( bb )
         o.role_id = ReadInt32( bb )
     end,
     ToBBuffer = function( bb, o )
-        local WriteInt32 = bb:WriteInt32
+        local WriteInt32 = bb.WriteInt32
         WriteInt32( bb, o.account_id )
         WriteInt32( bb, o.role_id )
     end
@@ -824,12 +808,12 @@ PKG_Manage_BindRolePermission = {
         return o
     end,
     FromBBuffer = function( bb, o )
-        local ReadInt32 = bb:ReadInt32
+        local ReadInt32 = bb.ReadInt32
         o.role_id = ReadInt32( bb )
         o.permission_id = ReadInt32( bb )
     end,
     ToBBuffer = function( bb, o )
-        local WriteInt32 = bb:WriteInt32
+        local WriteInt32 = bb.WriteInt32
         WriteInt32( bb, o.role_id )
         WriteInt32( bb, o.permission_id )
     end
@@ -847,7 +831,6 @@ PKG_DB_Manage_LoginSuccess = {
         o.__index = o
         o.__newindex = o
 
-        local null = _G.null
         o.id = 0 -- Int64
         o.token = null -- String
         setmetatable( o, PKG_Success.Create() )
@@ -954,7 +937,6 @@ PKG_DB_Manage_SelectManageAccountIdsSuccess = {
         o.__index = o
         o.__newindex = o
 
-        local null = _G.null
         o.ids = null -- List_Int64_
         setmetatable( o, PKG_Success.Create() )
         return o
@@ -1008,7 +990,6 @@ PKG_DB_Manage_SelectManageAccountsSuccess = {
         o.__index = o
         o.__newindex = o
 
-        local null = _G.null
         o.rows = null -- List_PKG_Manage_Account_
         setmetatable( o, PKG_Success.Create() )
         return o

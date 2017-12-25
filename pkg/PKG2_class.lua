@@ -11,7 +11,6 @@ PKG2_基类 = {
         o.__index = o
         o.__newindex = o
 
-        local null = _G.null
         o.不淋 = false -- Boolean
         o.白特 = 0 -- Byte
         o.撕白特 = 0 -- SByte
@@ -28,7 +27,7 @@ PKG2_基类 = {
         return o
     end,
     FromBBuffer = function( bb, o )
-        local ReadObject = bb:ReadObject
+        local ReadObject = bb.ReadObject
         o.不淋 = bb:ReadBoolean()
         o.白特 = bb:ReadByte()
         o.撕白特 = bb:ReadSByte()
@@ -44,7 +43,7 @@ PKG2_基类 = {
         o.屄拔扶儿 = ReadObject( bb )
     end,
     ToBBuffer = function( bb, o )
-        local WriteObject = bb:WriteObject
+        local WriteObject = bb.WriteObject
         bb:WriteBoolean( o.不淋 )
         bb:WriteByte( o.白特 )
         bb:WriteSByte( o.撕白特 )
@@ -70,7 +69,6 @@ PKG2_派生类 = {
         o.__index = o
         o.__newindex = o
 
-        local null = _G.null
         o.立丝特白特 = null -- List_Byte_
         o.立丝特撕白特 = null -- List_SByte_
         o.立丝特吸哦特 = null -- List_Int16_
@@ -93,7 +91,7 @@ PKG2_派生类 = {
     FromBBuffer = function( bb, o )
         local p = getmetatable( o )
         p.__proto.FromBBuffer( bb, p )
-        local ReadObject = bb:ReadObject
+        local ReadObject = bb.ReadObject
         o.立丝特白特 = ReadObject( bb )
         o.立丝特撕白特 = ReadObject( bb )
         o.立丝特吸哦特 = ReadObject( bb )
@@ -111,7 +109,7 @@ PKG2_派生类 = {
     ToBBuffer = function( bb, o )
         local p = getmetatable( o )
         p.__proto.ToBBuffer( bb, p )
-        local WriteObject = bb:WriteObject
+        local WriteObject = bb.WriteObject
         WriteObject( bb, o.立丝特白特 )
         WriteObject( bb, o.立丝特撕白特 )
         WriteObject( bb, o.立丝特吸哦特 )
@@ -493,12 +491,12 @@ PKG2_Base = {
         return o
     end,
     FromBBuffer = function( bb, o )
-        local ReadInt32 = bb:ReadInt32
+        local ReadInt32 = bb.ReadInt32
         o.i1 = ReadInt32( bb )
         o.i2 = ReadInt32( bb )
     end,
     ToBBuffer = function( bb, o )
-        local WriteInt32 = bb:WriteInt32
+        local WriteInt32 = bb.WriteInt32
         WriteInt32( bb, o.i1 )
         WriteInt32( bb, o.i2 )
     end
@@ -522,7 +520,7 @@ PKG2_Derive1 = {
     FromBBuffer = function( bb, o )
         local p = getmetatable( o )
         p.__proto.FromBBuffer( bb, p )
-        local ReadDouble = bb:ReadDouble
+        local ReadDouble = bb.ReadDouble
         o.d1 = ReadDouble( bb )
         o.d2 = ReadDouble( bb )
         o.d3 = ReadDouble( bb )
@@ -530,7 +528,7 @@ PKG2_Derive1 = {
     ToBBuffer = function( bb, o )
         local p = getmetatable( o )
         p.__proto.ToBBuffer( bb, p )
-        local WriteDouble = bb:WriteDouble
+        local WriteDouble = bb.WriteDouble
         WriteDouble( bb, o.d1 )
         WriteDouble( bb, o.d2 )
         WriteDouble( bb, o.d3 )
@@ -555,7 +553,7 @@ PKG2_Derive2 = {
     FromBBuffer = function( bb, o )
         local p = getmetatable( o )
         p.__proto.FromBBuffer( bb, p )
-        local ReadSingle = bb:ReadSingle
+        local ReadSingle = bb.ReadSingle
         o.f1 = ReadSingle( bb )
         o.f2 = ReadSingle( bb )
         o.f3 = ReadSingle( bb )
@@ -563,7 +561,7 @@ PKG2_Derive2 = {
     ToBBuffer = function( bb, o )
         local p = getmetatable( o )
         p.__proto.ToBBuffer( bb, p )
-        local WriteSingle = bb:WriteSingle
+        local WriteSingle = bb.WriteSingle
         WriteSingle( bb, o.f1 )
         WriteSingle( bb, o.f2 )
         WriteSingle( bb, o.f3 )
