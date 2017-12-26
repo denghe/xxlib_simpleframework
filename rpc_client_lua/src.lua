@@ -99,12 +99,10 @@ end
 
 dofile("RPC_class.lua")
 
-local nbs = NBSocket_Create()
-nbs.SetAddress( "127.0.0.1", 12345 )
-
 local yield = coroutine.yield
 local resume = coroutine.resume
 
+local nbs = NBSocket_Create()
 local nbsco = coroutine.create(function()
 	nbs.SetAddress("127.0.0.1", 12345)
 	print("init")
@@ -112,16 +110,17 @@ local nbsco = coroutine.create(function()
 	::LabConnect::
 	yield()
 
-	nbs.Connect()
+	local r = nbs.Connect()
 	print("connecting...")
     while true do 
 		yield()
-
+		print(nbs.state)
 		if nbs.state ~= NBSocketStates.Connecting then break end
         if nbs.ticks > 30 * 2 then break end
 	end
 
 	print("event occur");
+	print(nbs.state)
 	if nbs.state == NBSocketStates.Disconnected then
 		local ticks = nbs.ticks + 30;
 		while nbs.ticks < ticks do 
@@ -130,7 +129,7 @@ local nbsco = coroutine.create(function()
         print("can't connect to server");
 		goto LabConnect
 
-	elseif nbs.GetState() == NBSocketStates.Connecting then
+	elseif nbs.state == NBSocketStates.Connecting then
 		nbs.Disconnect()
         print("timeout")
         goto LabConnect
