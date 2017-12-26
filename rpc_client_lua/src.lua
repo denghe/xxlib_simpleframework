@@ -118,7 +118,7 @@ local nbsco = coroutine.create(function()
 	::LabConnect::
 	yield()
 
-	local r = nbs.Connect()
+	nbs.Connect()
 	print("connecting...")
     while true do 
 		yield()
@@ -151,7 +151,6 @@ local nbsco = coroutine.create(function()
 	login.username = "a"
 	login.password = "11111"
     local serial = nbs.SendRequest(login, function(s, ibb)
-		print("login cb")
 		recv = ibb
 	end)
 	print("wait login response");

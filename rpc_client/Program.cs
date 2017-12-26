@@ -61,9 +61,7 @@ public class UnityScene
                 Console.WriteLine("timeout");
                 goto LabConnect;                // 跳到开始连接处, 继续上述流程 
         }
-        Console.WriteLine("connect success");
-        //case NBSocketStates.Connected:        // 已连上, 不必处理, 继续执行下面的逻辑代码
-        //case NBSocketStates.Disconnecting:    // 不可能出现这种情况
+        Console.WriteLine("connect success");   // 已连上, 继续执行下面的逻辑代码
 
         LabLogin:
         yield return null;
