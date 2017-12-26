@@ -21,7 +21,8 @@ public class UnityScene
         xxlua_openxx(L);
         var src = File.ReadAllText("src.lua");
         var b = luaL_dostring(L, src);
-        Console.WriteLine(b);
+        Console.WriteLine("\nok...");
+        Console.ReadLine();
     }
     public bool Update()
     {

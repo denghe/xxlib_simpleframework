@@ -491,6 +491,10 @@ namespace xx
                 v = default(T);
                 return;
             }
+            if (typeId == 1)
+            {
+                throw new Exception("Read<T> does not support string type");
+            }
             if (idxStore != null)
             {
                 uint ptr_offset = 0, bb_offset_bak = (uint)this.offset - (uint)offsetRoot;

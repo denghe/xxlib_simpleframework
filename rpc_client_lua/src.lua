@@ -2,8 +2,8 @@
 	local nbs_ = NBSocket.Create()
 	local nbs = 
 	{
-		OnReceivePackage = nil,		-- need set
-		OnReceiveRequest = nil,
+		OnReceivePackage = function(ibb) end,			-- need set by user
+		OnReceiveRequest = function(serial, ibb) end,	-- need set by user
 		rpcDefaultInterval = 30 * 5,
 		socket = nbs_,
 		serial = 0,
@@ -46,10 +46,10 @@
 				if pkgTypeId == 1 or pkgTypeId == 2 then
 					serial = bb:ReadUInt32()
 				end
-				local success, ibb = pcall(bb:ReadRoot())
+				local success, ibb = pcall(function() return bb:ReadRoot() end)
 				if not success then
 					nbs_:Disconnect()
-					return -1
+					break
 				end
 				if pkgTypeId == 0 then
 					nbs.OnReceivePackage(ibb)
@@ -59,7 +59,7 @@
 					nbs.Callback(serial, ibb)
 				else
 					nbs_:Disconnect()
-					return -1
+					break;
 				end
 			end
 		end
@@ -82,17 +82,25 @@
 		end
 		return r
 	end
-	nbs.SendRequest = function(pkg, cb)
+	nbs.SendRequest = function(pkg, cb, interval)
+		if interval == nil then interval = nbs.rpcDefaultInterval end
 		local serial = nbs.serial + 1
 		nbs.serial = serial
-		nbs_:PushSerial_(nbs_:GetTicks(), serial)
+		nbs[serial] = cb
+		nbs_:PushSerial(nbs_:GetTicks() + interval, serial)
 		local bb = BBuffer:Create()
 		bb:WritePackage(pkg, 1, serial)
-		nbs_:Send( bb )
+		local r = nbs_:Send( bb )
 		return serial
 	end
 	nbs.Unregister = function(serial)
 		nbs[serial] = nil
+	end
+	nbs.Callback = function(serial, ibb)
+		local a = nbs[serial]
+		if a == nil then return end
+		nbs[serial] = nil
+		a(serial, ibb)
 	end
 	return nbs
 end
@@ -114,13 +122,11 @@ local nbsco = coroutine.create(function()
 	print("connecting...")
     while true do 
 		yield()
-		print(nbs.state)
 		if nbs.state ~= NBSocketStates.Connecting then break end
         if nbs.ticks > 30 * 2 then break end
 	end
 
 	print("event occur");
-	print(nbs.state)
 	if nbs.state == NBSocketStates.Disconnected then
 		local ticks = nbs.ticks + 30;
 		while nbs.ticks < ticks do 
@@ -144,13 +150,19 @@ local nbsco = coroutine.create(function()
 	local login = RPC_Client_Login_Login.Create()
 	login.username = "a"
 	login.password = "11111"
-    local serial = nbs.SendRequest(login, function(s, ibb) recv = ibb end)
+    local serial = nbs.SendRequest(login, function(s, ibb)
+		print("login cb")
+		recv = ibb
+	end)
 	print("wait login response");
     while recv == 0 do
 		yield()
         if not nbs.alive then
-            print("disconnect")
+            print("disconnected")
             nbs.Unregister(serial)
+
+			local ticks = nbs.ticks + 30
+            while nbs.ticks < ticks do yield() end
             goto LabConnect
         end
 	end
@@ -193,7 +205,9 @@ local nbsco = coroutine.create(function()
                 if ibb == nil then
                     print("ping timeout")
                 else
-                    print("ping " ..  (os.clock() * 1000 - ibb.ticks) .. " ms");
+					local i64 = int64.new(os.clock() * 1000)
+					i64 = i64 - ibb.ticks
+                    print(i64)
                 end
             end)
         end
