@@ -1,5 +1,5 @@
 ﻿#include "main.h"
-#include "xx_list.h"
+#include "xx.h"
 
 class Foo : public xx::Object
 {
@@ -24,6 +24,16 @@ int main()
 	auto list3 = mp.CreatePtr<xx::List<int>>();
 	list3->Emplace();
 	list3->Emplace();
+
+	auto queue = mp.CreatePtr<xx::Queue<Foo>>();
+	queue->Emplace();
+	queue->Emplace();
+
+	auto dict = mp.CreatePtr<xx::Dict<int, Foo>>();
+	dict->Emplace(false, 1);
+	dict->Emplace(false, 2);
+
+	auto str = mp.CreatePtr<xx::String>();
 
 	return 0;
 }

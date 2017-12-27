@@ -89,9 +89,21 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="main.h" />
+    <ClInclude Include="xx.h" />
+    <ClInclude Include="xx_charsutils.h" />
+    <ClInclude Include="xx_charsutils.hpp" />
+    <ClInclude Include="xx_dict.h" />
+    <ClInclude Include="xx_dict.hpp" />
+    <ClInclude Include="xx_hashutils.h" />
+    <ClInclude Include="xx_hashutils.hpp" />
     <ClInclude Include="xx_list.h" />
+    <ClInclude Include="xx_list.hpp" />
     <ClInclude Include="xx_mempool.h" />
+    <ClInclude Include="xx_mempool.hpp" />
     <ClInclude Include="xx_queue.h" />
+    <ClInclude Include="xx_queue.hpp" />
+    <ClInclude Include="xx_string.h" />
+    <ClInclude Include="xx_string.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
