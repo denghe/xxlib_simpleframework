@@ -100,7 +100,7 @@ public static class GenLUA_Class
             foreach (var f in fs)
             {
                 var ft = f.FieldType;
-                var ftn = ft._IsNumeric() ? ft.Name : "Object";
+                var ftn = ft.IsEnum ? ft.GetEnumUnderlyingType().Name : ft._IsNumeric() ? ft.Name : "Object";
                 if (ftns.ContainsKey(ftn)) ftns[ftn]++;
                 else ftns.Add(ftn, 1);
             }
@@ -115,7 +115,7 @@ public static class GenLUA_Class
             foreach (var f in fs)
             {
                 var ft = f.FieldType;
-                var ftn = ft._IsNumeric() ? ft.Name : "Object";
+                var ftn = ft.IsEnum ? ft.GetEnumUnderlyingType().Name : ft._IsNumeric() ? ft.Name : "Object";
                 if (ftns[ftn] > 1)
                 {
                     sb.Append(@"
@@ -165,7 +165,7 @@ public static class GenLUA_Class
             foreach (var f in fs)
             {
                 var ft = f.FieldType;
-                var ftn = ft._IsNumeric() ? ft.Name : "Object";
+                var ftn = ft.IsEnum ? ft.GetEnumUnderlyingType().Name : ft._IsNumeric() ? ft.Name : "Object";
                 if (ftns[ftn] > 1)
                 {
                     sb.Append(@"
