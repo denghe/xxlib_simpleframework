@@ -13,15 +13,15 @@ int main()
 {
 	xx::MemPool mp;
 
-	auto list = xx::List<Foo>::CreatePtr(&mp);
+	auto list = mp.CreatePtr<xx::List<Foo>>();
 	list->Emplace();
 	list->Emplace();
 
-	auto list2 = xx::List<Foo_p>::CreatePtr(&mp);
+	auto list2 = mp.CreatePtr<xx::List<Foo_p>>();
 	list2->Emplace();
 	list2->Emplace();
 
-	auto list3 = xx::List<int>::CreatePtr(&mp);
+	auto list3 = mp.CreatePtr<xx::List<int>>();
 	list3->Emplace();
 	list3->Emplace();
 

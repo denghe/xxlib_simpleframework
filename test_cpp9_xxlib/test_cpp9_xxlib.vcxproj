@@ -91,7 +91,6 @@
     <ClInclude Include="main.h" />
     <ClInclude Include="xx_list.h" />
     <ClInclude Include="xx_mempool.h" />
-    <ClInclude Include="xx_object.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />

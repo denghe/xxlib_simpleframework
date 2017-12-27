@@ -5,6 +5,7 @@
 #include <cstring>
 #include <array>
 #include <algorithm>
+#include <type_traits>
 #ifdef _WIN32
 #include <intrin.h>     // _BitScanReverse  64
 #endif
@@ -28,6 +29,9 @@ namespace xx
 		uint8_t& mpIndex() { return bytes[7]; }
 	};
 
+
+	template<typename T>
+	class Ptr;
 
 
 	// 粗暴快速的非线程安全内存池
@@ -165,19 +169,12 @@ namespace xx
 		}
 
 		template<typename T, typename ...Args>
-		T* Create(Args &&... args)
-		{
-			auto p = (void**)Alloc(sizeof(T));
-			try
-			{
-				return new (p) T(this, std::forward<Args>(args)...);
-			}
-			catch (...)
-			{
-				Free(p);
-				throw -1;
-			}
-		}
+		T* Create(Args &&... args);
+
+
+		template<typename T, typename ...Args>
+		Ptr<T> CreatePtr(Args &&... args);
+
 
 		template<typename T>
 		void Release(T* p) noexcept
@@ -195,6 +192,148 @@ namespace xx
 	};
 
 
-	// todo: more
+	class Object
+	{
+	public:
+		MemPool * mempool;
+		Object(MemPool* mempool) : mempool(mempool) {}
+		virtual ~Object() {}
 
+		inline MemHeader& memHeader() { return *((MemHeader*)this - 1); }
+		inline MemHeader& memHeader() const { return *((MemHeader*)this - 1); }
+
+		inline uint64_t const& versionNumber() const { return memHeader().versionNumber; }
+		inline uint64_t pureVersionNumber() const { return versionNumber() & 0x00FFFFFFFFFFFFFFu; }
+
+		// todo: more interfaces
+	};
+
+
+	// std::unique_ptr like
+	template<typename T>
+	class Ptr
+	{
+	public:
+		static_assert(std::is_base_of_v<Object, T>);
+		T* pointer;
+
+		Ptr() noexcept : pointer(nullptr) {}
+		Ptr(T* const& pointer) noexcept : pointer(pointer) {}
+
+		template<typename O>
+		Ptr(Ptr<O>&& o) noexcept : pointer(o.pointer)
+		{
+			static_assert(std::is_base_of_v<T, O>);
+			o.pointer = nullptr;
+		}
+
+		Ptr(Ptr&& o) noexcept : pointer(o.pointer)
+		{
+			o.pointer = nullptr;
+		}
+
+		Ptr(Ptr const&) = delete;
+
+		~Ptr()
+		{
+			if (pointer)
+			{
+				pointer->mempool->Release(pointer);
+				pointer = nullptr;
+			}
+		}
+
+		template<typename O>
+		Ptr& operator=(Ptr<O>&& o) noexcept
+		{
+			static_assert(std::is_base_of_v<T, O>);
+			if (pointer) pointer->mempool->Release(pointer);
+			pointer = o.pointer;
+			o.pointer = nullptr;
+			return *this;
+		}
+
+		Ptr& operator=(Ptr const&) = delete;
+
+		Ptr& operator=(T* const& o) noexcept
+		{
+			if (pointer)
+			{
+				pointer->mempool->Release(pointer);
+			}
+			pointer = o;
+			return *this;
+		}
+
+		T const* operator->() const noexcept
+		{
+			return pointer;
+		}
+
+		T* & operator->() noexcept
+		{
+			return pointer;
+		}
+
+		T& operator*() noexcept
+		{
+			return *pointer;
+		}
+
+		T const& operator*() const noexcept
+		{
+			return *pointer;
+		}
+
+		operator bool() const noexcept
+		{
+			return pointer != nullptr;
+		}
+	};
+
+	template<typename T>
+	struct IsPtr
+	{
+		static const bool value = false;
+	};
+
+	template<typename T>
+	struct IsPtr<Ptr<T>>
+	{
+		static const bool value = true;
+	};
+
+	template<typename T>
+	constexpr bool IsPtr_v = IsPtr<T>::value;
+
+
+
+	template<typename T, typename ...Args>
+	T* MemPool::Create(Args &&... args)
+	{
+		auto p = (void**)Alloc(sizeof(T));
+		try
+		{
+			if constexpr(std::is_base_of_v<Object, T>)
+			{
+				return new (p) T(this, std::forward<Args>(args)...);
+			}
+			else
+			{
+				return new (p) T(std::forward<Args>(args)...);
+			}
+		}
+		catch (...)
+		{
+			Free(p);
+			throw - 1;
+		}
+	}
+
+
+	template<typename T, typename ...Args>
+	Ptr<T> MemPool::CreatePtr(Args &&... args)
+	{
+		return Create<T, Args...>(std::forward<Args>(args)...);
+	}
 }

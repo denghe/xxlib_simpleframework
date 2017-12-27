@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include "xx_object.h"
+#include "xx_mempool.h"
 #include <cstring>
 #include <functional>
 
@@ -333,15 +333,6 @@ namespace xx
 		}
 
 
-		// handler 返回 false 则 foreach 终止
-		void ForEach(std::function<bool(T&)> handler)
-		{
-			for (size_t i = 0; i < dataLen; ++i)
-			{
-				if (handler(buf[i])) return;
-			}
-		}
-
 		// 倒着扫. 便于 SwapRemoveAt.
 		void ForEachRevert(std::function<bool(T&)> handler)
 		{
@@ -349,14 +340,6 @@ namespace xx
 			{
 				if (handler(buf[i])) return;
 			}
-		}
-
-
-		// for easy use
-		template<typename...Args>
-		static Ptr<List<T>> CreatePtr(MemPool* mempool, Args&&...args)
-		{
-			return mempool->Create<List<T>>(std::forward<Args>(args)...);
 		}
 
 
