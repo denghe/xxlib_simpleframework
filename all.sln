@@ -80,6 +80,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "rpc_server_login", "rpc_ser
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "rpc_client_lua", "rpc_client_lua\rpc_client_lua.csproj", "{5F3A0385-E8A2-4422-981F-B65F87FEDD27}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test_cpp9_xxlib", "test_cpp9_xxlib\test_cpp9_xxlib.vcxproj", "{FB4473DE-D72B-4732-AC36-785D83BE5AFE}"
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		pkg\pkg.projitems*{160a3ee0-261c-4ed1-9194-4c6e75dbc7cf}*SharedItemsImports = 13
@@ -230,6 +232,10 @@ Global
 		{5F3A0385-E8A2-4422-981F-B65F87FEDD27}.Debug|x64.Build.0 = Debug|x64
 		{5F3A0385-E8A2-4422-981F-B65F87FEDD27}.Release|x64.ActiveCfg = Release|x64
 		{5F3A0385-E8A2-4422-981F-B65F87FEDD27}.Release|x64.Build.0 = Release|x64
+		{FB4473DE-D72B-4732-AC36-785D83BE5AFE}.Debug|x64.ActiveCfg = Debug|x64
+		{FB4473DE-D72B-4732-AC36-785D83BE5AFE}.Debug|x64.Build.0 = Debug|x64
+		{FB4473DE-D72B-4732-AC36-785D83BE5AFE}.Release|x64.ActiveCfg = Release|x64
+		{FB4473DE-D72B-4732-AC36-785D83BE5AFE}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
