@@ -395,5 +395,29 @@ namespace xx
 		}
 	};
 
+
+	// 适配 Ref<T>
+	template<typename T>
+	struct BytesFunc<T, std::enable_if_t<IsRef_v<T>>>
+	{
+		typedef typename T::ChildType CT;
+		static inline size_t Calc(T const &in)
+		{
+			return 12;	// typeId + null flag + offset
+		}
+		static inline void WriteTo(BBuffer& bb, T const &in)
+		{
+			bb.WritePtr(v.Ensure());
+		}
+		static inline int ReadFrom(BBuffer& bb, T &out)
+		{
+			CT* t = nullptr;
+			auto rtv = bb.ReadPtr(t);
+			out = t;
+			return rtv;
+		}
+	};
+
+
 	// todo: more
 }

@@ -35,4 +35,4 @@
 #include "xx_charsutils.hpp"
 #include "xx_string.hpp"
 #include "xx_bytesutils.hpp"
-//#include "xx_bbuffer.hpp"
+#include "xx_bbuffer.hpp"

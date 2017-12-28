@@ -91,6 +91,7 @@
     <ClInclude Include="main.h" />
     <ClInclude Include="xx.h" />
     <ClInclude Include="xx_bbuffer.h" />
+    <ClInclude Include="xx_bbuffer.hpp" />
     <ClInclude Include="xx_bytesutils.h" />
     <ClInclude Include="xx_bytesutils.hpp" />
     <ClInclude Include="xx_charsutils.h" />
