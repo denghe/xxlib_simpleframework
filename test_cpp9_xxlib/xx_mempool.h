@@ -152,6 +152,76 @@ namespace xx
 	};
 
 
+
+
+
+
+
+
+
+
+
+	// weak_ptr like
+	template<typename T>
+	struct Ref
+	{
+		typedef T ChildType;
+		T* pointer;
+		uint32_t versionNumber;
+
+		Ref() noexcept;
+		Ref(Ref const &o) = default;
+		Ref& operator=(Ref const& o) = default;
+		Ref(T* p) noexcept;
+		Ref& operator=(T* p) noexcept;
+
+		template<typename U>
+		Ref(Ref<U> const &p) noexcept;
+
+		template<typename U>
+		Ref& operator=(Ref<U> const& p) noexcept;
+		bool operator==(Ref const &o) const noexcept;
+
+		T* Ensure() const noexcept;
+		operator bool() const noexcept;
+
+		operator T const* () const noexcept;
+		operator T* () noexcept;
+
+		// 这样直接用是不安全的
+		T* operator->() const noexcept;
+		T& operator*() noexcept;
+		T const& operator*() const noexcept;
+	};
+
+	template<typename T>
+	struct IsRef
+	{
+		static const bool value = false;
+	};
+
+	template<typename T>
+	struct IsRef<Ref<T>>
+	{
+		static const bool value = true;
+	};
+
+	template<typename T>
+	constexpr bool IsRef_v = IsRef<T>::value;
+
+	typedef Ref<Object> Object_r;
+
+
+
+
+
+
+
+
+
+
+
+
 	// std::unique_ptr like
 	template<typename T>
 	class Ptr
@@ -181,6 +251,7 @@ namespace xx
 		T& operator*() noexcept;
 		T const& operator*() const noexcept;
 
+		Ref<T> Ref() noexcept;
 		operator bool() const noexcept;
 	};
 

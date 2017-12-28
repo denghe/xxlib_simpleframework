@@ -285,6 +285,102 @@ namespace xx
 
 
 
+
+
+
+
+
+	template<typename T>
+	Ref<T>::Ref() noexcept
+		: pointer(nullptr)
+		, versionNumber(0)
+	{}
+
+	template<typename T>
+	Ref<T>::Ref(T* p) noexcept
+		: pointer(p)
+		, versionNumber(p ? ((MemHeader*)p - 1)->versionNumber : 0)
+	{}
+
+	template<typename T>
+	Ref<T>& Ref<T>::operator=(T* p) noexcept
+	{
+		pointer = p;
+		versionNumber = p ? ((MemHeader*)p - 1)->versionNumber : 0;
+		return *this;
+	}
+
+	template<typename T>
+	template<typename U>
+	Ref<T>::Ref(Ref<U> const &p) noexcept
+	{
+		operator=(static_cast<T*>(p.Ensure()));
+	}
+
+	template<typename T>
+	template<typename U>
+	Ref<T>& Ref<T>::operator=(Ref<U> const& p) noexcept
+	{
+		operator=(static_cast<T*>(p.Ensure()));
+	}
+
+	template<typename T>
+	bool Ref<T>::operator==(Ref const &o) const noexcept
+	{
+		return Ensure() == o.Ensure();
+	}
+
+	template<typename T>
+	T* Ref<T>::Ensure() const noexcept
+	{
+		if (pointer && ((MemHeader*)pointer - 1)->versionNumber == versionNumber) return pointer;
+		return nullptr;
+	}
+
+	template<typename T>
+	Ref<T>::operator bool() const noexcept
+	{
+		return Ensure() != nullptr;
+	}
+
+	template<typename T>
+	Ref<T>::operator T const* () const noexcept
+	{
+		return Ensure();
+	}
+
+	template<typename T>
+	Ref<T>::operator T* () noexcept
+	{
+		return Ensure();
+	}
+
+	template<typename T>
+	T* Ref<T>::operator->() const noexcept
+	{
+		return (T*)pointer;
+	}
+
+	template<typename T>
+	T& Ref<T>::operator*() noexcept
+	{
+		return *(T*)pointer;
+	}
+
+	template<typename T>
+	T const& Ref<T>::operator*() const noexcept
+	{
+		return *(T*)pointer;
+	}
+
+
+
+
+
+
+
+
+
 	template<typename T>
 	Ptr<T>::Ptr() noexcept
 		: pointer(nullptr)
@@ -349,18 +445,40 @@ namespace xx
 	}
 
 	template<typename T>
-	T const* Ptr<T>::operator->() const noexcept { return pointer; }
+	T const* Ptr<T>::operator->() const noexcept
+	{
+		return pointer;
+	}
 
 	template<typename T>
-	T* & Ptr<T>::operator->() noexcept { return pointer; }
+	T* & Ptr<T>::operator->() noexcept 
+	{ 
+		return pointer;
+	}
 
 	template<typename T>
-	T& Ptr<T>::operator*() noexcept { return *pointer; }
+	T& Ptr<T>::operator*() noexcept 
+	{ 
+		return *pointer;
+	}
 
 	template<typename T>
-	T const& Ptr<T>::operator*() const noexcept { return *pointer; }
+	T const& Ptr<T>::operator*() const noexcept
+	{ 
+		return *pointer;
+	}
 
 	template<typename T>
-	Ptr<T>::operator bool() const noexcept { return pointer != nullptr; }
+	Ptr<T>::operator bool() const noexcept
+	{ 
+		return pointer != nullptr;
+	}
+
+
+	template<typename T>
+	Ref<T> Ptr<T>::Ref() noexcept
+	{
+		return Ref<T>(pointer);
+	}
 
 }

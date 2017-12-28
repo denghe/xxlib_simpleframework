@@ -97,6 +97,8 @@ namespace xx
 
 	using String_p = Ptr<String>;
 
+	using String_r = Ref<String>;
+
 
 	// 各种适配函数的实现
 

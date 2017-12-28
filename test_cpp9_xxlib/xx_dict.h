@@ -116,4 +116,7 @@ namespace xx
 	template <typename TK, typename TV>
 	using Dict_p = Ptr<Dict<TK, TV>>;
 
+	template <typename TK, typename TV>
+	using Dict_r = Ref<Dict<TK, TV>>;
+
 }

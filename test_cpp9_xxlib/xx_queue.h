@@ -62,4 +62,6 @@ namespace xx
 	template<typename T>
 	using Queue_p = Ptr<Queue<T>>;
 
+	template<typename T>
+	using Queue_r = Ref<Queue<T>>;
 }

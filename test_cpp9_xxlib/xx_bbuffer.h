@@ -333,4 +333,6 @@ namespace xx
 
 	using BBuffer_p = Ptr<BBuffer>;
 
+	using BBuffer_r = Ref<BBuffer>;
+
 }

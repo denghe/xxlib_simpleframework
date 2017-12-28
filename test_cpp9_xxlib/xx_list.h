@@ -73,4 +73,7 @@ namespace xx
 
 	template<typename T>
 	using List_p = Ptr<List<T>>;
+
+	template<typename T>
+	using List_r = Ref<List<T>>;
 }
