@@ -8,6 +8,7 @@
 #include <functional>
 #include <array>
 #include <algorithm>
+#include <limits>
 #include <type_traits>
 #include <string>
 #include <iostream>
@@ -22,6 +23,9 @@
 #include "xx_dict.h"
 #include "xx_charsutils.h"
 #include "xx_string.h"
+#include "xx_bytesutils.h"
+#include "xx_bbuffer.h"
+
 
 #include "xx_mempool.hpp"
 #include "xx_list.hpp"
@@ -30,3 +34,5 @@
 #include "xx_dict.hpp"
 #include "xx_charsutils.hpp"
 #include "xx_string.hpp"
+#include "xx_bytesutils.hpp"
+//#include "xx_bbuffer.hpp"

@@ -34,6 +34,10 @@ int main()
 	dict->Emplace(false, 2);
 
 	auto str = mp.CreatePtr<xx::String>();
+	str->Assign(123);
+	str->Append(123, "asdf", str);
+	//str->AppendFormat("  {0}  {0}", str);
+	std::cout << str->c_str() << std::endl;
 
 	return 0;
 }

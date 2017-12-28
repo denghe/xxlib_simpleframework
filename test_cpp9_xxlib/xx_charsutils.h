@@ -62,12 +62,12 @@ namespace xx
 	template<typename T, typename ENABLE = void>
 	struct StrFunc
 	{
-		static uint32_t Calc(T const &in)
+		static size_t Calc(T const &in)
 		{
 			assert(false);
 			return 0;
 		}
-		static uint32_t WriteTo(char *dstBuf, T const &in)
+		static size_t WriteTo(char *dstBuf, T const &in)
 		{
 			assert(false);
 			return 0;
@@ -78,11 +78,11 @@ namespace xx
 	template<typename T>
 	struct StrFunc<T, std::enable_if_t<std::is_integral<T>::value && std::is_unsigned<T>::value && sizeof(T) <= 4>>
 	{
-		static inline uint32_t Calc(T const &in)
+		static inline size_t Calc(T const &in)
 		{
 			return sizeof(T) * 4;
 		}
-		static inline uint32_t WriteTo(char *dstBuf, T const &in)
+		static inline size_t WriteTo(char *dstBuf, T const &in)
 		{
 			return u32toa_branchlut(in, dstBuf);
 		}
@@ -92,11 +92,11 @@ namespace xx
 	template<typename T>
 	struct StrFunc<T, std::enable_if_t<std::is_integral<T>::value && !std::is_unsigned<T>::value && sizeof(T) <= 4>>
 	{
-		static inline uint32_t Calc(T const &in)
+		static inline size_t Calc(T const &in)
 		{
 			return sizeof(T) * 4;
 		}
-		static inline uint32_t WriteTo(char *dstBuf, T const &in)
+		static inline size_t WriteTo(char *dstBuf, T const &in)
 		{
 			return i32toa_branchlut(in, dstBuf);
 		}
@@ -106,11 +106,11 @@ namespace xx
 	template<typename T>
 	struct StrFunc<T, std::enable_if_t<std::is_integral<T>::value && std::is_unsigned<T>::value && sizeof(T) == 8>>
 	{
-		static inline uint32_t Calc(T const &in)
+		static inline size_t Calc(T const &in)
 		{
 			return sizeof(T) * 4;
 		}
-		static inline uint32_t WriteTo(char *dstBuf, T const &in)
+		static inline size_t WriteTo(char *dstBuf, T const &in)
 		{
 			return u64toa_branchlut(in, dstBuf);
 		}
@@ -120,11 +120,11 @@ namespace xx
 	template<typename T>
 	struct StrFunc<T, std::enable_if_t<std::is_integral<T>::value && !std::is_unsigned<T>::value && sizeof(T) == 8>>
 	{
-		static inline uint32_t Calc(T const &in)
+		static inline size_t Calc(T const &in)
 		{
 			return sizeof(T) * 4;
 		}
-		static inline uint32_t WriteTo(char *dstBuf, T const &in)
+		static inline size_t WriteTo(char *dstBuf, T const &in)
 		{
 			return i64toa_branchlut(in, dstBuf);
 		}
@@ -134,11 +134,11 @@ namespace xx
 	template<typename T>
 	struct StrFunc<T, std::enable_if_t<std::is_enum<T>::value>>
 	{
-		static inline uint32_t Calc(T const &in)
+		static inline size_t Calc(T const &in)
 		{
 			return StrFunc<std::underlying_type_t<T>>::Calc((std::underlying_type_t<T> const&)in);
 		}
-		static inline uint32_t WriteTo(char *dstBuf, T const &in)
+		static inline size_t WriteTo(char *dstBuf, T const &in)
 		{
 			return StrFunc<std::underlying_type_t<T>>::WriteTo(dstBuf, (std::underlying_type_t<T> const&)in);
 		}
@@ -148,11 +148,11 @@ namespace xx
 	template<typename T>
 	struct StrFunc<T, std::enable_if_t<std::is_floating_point<T>::value>>
 	{
-		static inline uint32_t Calc(T const &in)
+		static inline size_t Calc(T const &in)
 		{
 			return sizeof(T) * 3;
 		}
-		static inline uint32_t WriteTo(char *dstBuf, T const &in)
+		static inline size_t WriteTo(char *dstBuf, T const &in)
 		{
 			return sprintf(dstBuf, "%g", in);
 		}
@@ -161,11 +161,11 @@ namespace xx
 	template<>
 	struct StrFunc<bool, void>
 	{
-		static inline uint32_t Calc(bool const &in)
+		static inline size_t Calc(bool const &in)
 		{
 			return 5;
 		}
-		static inline uint32_t WriteTo(char *dstBuf, bool const &in)
+		static inline size_t WriteTo(char *dstBuf, bool const &in)
 		{
 			if (in) { memcpy(dstBuf, "true", 4); return 4; }
 			else { memcpy(dstBuf, "false", 5); return 5; }
@@ -175,11 +175,11 @@ namespace xx
 	template<>
 	struct StrFunc<char, void>
 	{
-		static inline uint32_t Calc(char const &in)
+		static inline size_t Calc(char const &in)
 		{
 			return 1;
 		}
-		static inline uint32_t WriteTo(char *dstBuf, char const &in)
+		static inline size_t WriteTo(char *dstBuf, char const &in)
 		{
 			*dstBuf = in;
 			return 1;
@@ -189,16 +189,16 @@ namespace xx
 	template<>
 	struct StrFunc<char const*, void>
 	{
-		static inline uint32_t Calc(char const* const &in)
+		static inline size_t Calc(char const* const &in)
 		{
-			if (!in) return 0; return (uint32_t)strlen(in);
+			if (!in) return 0; return strlen(in);
 		}
-		static inline uint32_t WriteTo(char *dstBuf, char const* const &in)
+		static inline size_t WriteTo(char *dstBuf, char const* const &in)
 		{
 			if (!in) return 0;
 			else
 			{
-				auto len = (uint32_t)strlen(in);
+				auto len = strlen(in);
 				memcpy(dstBuf, in, len);
 				return len;
 			};
@@ -206,14 +206,14 @@ namespace xx
 	};
 
 	// 定长数组支持
-	template<uint32_t len>
+	template<size_t len>
 	struct StrFunc<char [len], void>
 	{
-		static inline uint32_t Calc(char const(&in)[len])
+		static inline size_t Calc(char const(&in)[len])
 		{
 			return len - 1;
 		}
-		static inline uint32_t WriteTo(char *dstBuf, char const(&in)[len])
+		static inline size_t WriteTo(char *dstBuf, char const(&in)[len])
 		{
 			memcpy(dstBuf, in, len - 1);
 			return len - 1;
@@ -225,15 +225,15 @@ namespace xx
 	struct StrFunc<std::array<T, len>, void>
 	{
 		typedef std::array<T, len> AT;
-		static inline uint32_t Calc(AT const& in)
+		static inline size_t Calc(AT const& in)
 		{
-			uint32_t rtv = 0;
+			size_t rtv = 0;
 			for (auto& o : in) rtv += StrFunc<T>::Calc(o);
 			return rtv;
 		}
-		static inline uint32_t WriteTo(char *dstBuf, AT const& in)
+		static inline size_t WriteTo(char *dstBuf, AT const& in)
 		{
-			uint32_t offset = 0;
+			size_t offset = 0;
 			offset += StrFunc<T>::WriteTo(dstBuf + offset, "{ ");
 			for (auto& o : in) offset += StrFunc<T>::WriteTo(dstBuf + offset, o, ", ");
 			offset += StrFunc<T>::WriteTo(dstBuf + offset - 2, " }");
@@ -246,17 +246,17 @@ namespace xx
 	// todo: more
 
 	/**************************************************************************************************/
-	// 将 StrFunc 映射为全局函数以方便不借助 String 类来填充 buf
+	// StrFunc 映射到函数
 	/**************************************************************************************************/
 
 	template<typename T>
-	uint32_t StrCalc(T const &in)
+	size_t StrCalc(T const &in)
 	{
 		return StrFunc<T>::Calc(in);
 	}
 
 	template<typename T>
-	uint32_t StrWriteTo(char *dstBuf, T const &in)
+	size_t StrWriteTo(char *dstBuf, T const &in)
 	{
 		return StrFunc<T>::WriteTo(dstBuf, in);
 	}
@@ -266,17 +266,15 @@ namespace xx
 	/**************************************************************************************************/
 
 	template<typename T, typename...TS>
-	uint32_t StrCalc(T const &in, TS const& ... ins)
+	size_t StrCalc(T const &in, TS const& ... ins)
 	{
 		return StrCalc(in) + StrCalc(ins...);
 	}
 	template<typename T, typename...TS>
-	uint32_t StrWriteTo(char *dstBuf, T const &in, TS const& ... ins)
+	size_t StrWriteTo(char *dstBuf, T const &in, TS const& ... ins)
 	{
-		uint32_t offset = StrWriteTo(dstBuf, in);
+		auto offset = StrWriteTo(dstBuf, in);
 		return offset + StrWriteTo(dstBuf + offset, ins...);
 	}
-
-
 
 }

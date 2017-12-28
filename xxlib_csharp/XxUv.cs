@@ -283,7 +283,7 @@ namespace xx
                 bbRecv.offset = offset;
                 if (typeId == 0)
                 {
-                    OnReceivePackage(bbRecv);
+                    if (OnReceivePackage != null) OnReceivePackage(bbRecv);
                     if (disposed) return;
                 }
                 else
@@ -296,7 +296,7 @@ namespace xx
                     }
                     if (typeId == 1)
                     {
-                        OnReceiveRequest(serial, bbRecv);
+                        if (OnReceiveRequest != null) OnReceiveRequest(serial, bbRecv);
                         if (disposed) return;
                     }
                     else if (typeId == 2)
