@@ -141,12 +141,14 @@ namespace xx
 	public:
 		MemPool * mempool;
 		Object(MemPool* mempool) noexcept;
+		Object(BBuffer* bb) noexcept;
 		virtual ~Object() noexcept;
 
-		inline MemHeader& memHeader() noexcept;
-		inline MemHeader& memHeader() const noexcept;
+		MemHeader& memHeader() noexcept;
+		MemHeader& memHeader() const noexcept;
 
-		// todo: more interfaces
+		virtual void ToBBuffer(BBuffer &bb) const;
+		virtual int FromBBuffer(BBuffer &bb);
 	};
 
 
@@ -156,7 +158,7 @@ namespace xx
 	{
 	public:
 		static_assert(std::is_base_of_v<Object, T>);
-		typename T ChildType;
+		typedef T ChildType;
 		T* pointer;
 
 		Ptr() noexcept;

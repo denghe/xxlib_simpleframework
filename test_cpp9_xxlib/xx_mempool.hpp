@@ -216,7 +216,7 @@ namespace xx
 			bb->idxStore->ValueAt(addResult.index).first = t;	// 将字典中的 value 替换成真实指针
 			try
 			{
-				return new (t) T(mp, bb);
+				return new (t) T(bb);
 			}
 			catch (...)
 			{
@@ -267,10 +267,19 @@ namespace xx
 	Object::Object(MemPool* mempool) noexcept
 		: mempool(mempool)
 	{}
+
+	Object::Object(BBuffer* bb) noexcept
+		: mempool(bb->mempool)
+	{
+	}
+
 	Object::~Object() noexcept {}
 
 	inline MemHeader& Object::memHeader() noexcept { return *((MemHeader*)this - 1); }
 	inline MemHeader& Object::memHeader() const noexcept { return *((MemHeader*)this - 1); }
+
+	void Object::ToBBuffer(BBuffer &bb) const {}
+	int Object::FromBBuffer(BBuffer &bb) { return 0; }
 
 
 
