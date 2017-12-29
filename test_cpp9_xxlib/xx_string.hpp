@@ -1,4 +1,5 @@
-﻿#pragma once
+﻿#include "xx_string.h"
+#pragma once
 namespace xx
 {
 	inline String::String(MemPool* mempool, size_t capacity)
@@ -245,9 +246,15 @@ namespace xx
 		return false;
 	}
 
+	inline std::ostream & operator<<(std::ostream &os, String const &s)
+	{
+		os << ((String&)s).c_str();
+		return os;
+	}
 
 
-	// 各种适配函数的实现
+
+
 
 	inline size_t GetHashCode(String const &in) noexcept
 	{

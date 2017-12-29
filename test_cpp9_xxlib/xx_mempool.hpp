@@ -1,4 +1,5 @@
-﻿#pragma once
+﻿#include "xx_mempool.h"
+#pragma once
 namespace xx
 {
 
@@ -20,11 +21,12 @@ namespace xx
 		}
 	}
 
-	inline void* MemPool::Alloc(size_t siz) noexcept
+	template<typename MHType>
+	void* MemPool::Alloc(size_t siz) noexcept
 	{
-		// 根据长度(预留 MemHeader)拿到链表下标
+		// 根据长度(预留 MHType 的空间)拿到链表下标
 		assert(siz);
-		siz += sizeof(MemHeader);
+		siz += sizeof(MHType);
 		auto idx = Calc2n(siz);
 		if (siz > (size_t(1) << idx)) siz = size_t(1) << ++idx;
 
@@ -35,26 +37,25 @@ namespace xx
 		if (!p) return nullptr;
 
 		// 填充版本号以及链表下标
-		auto h = (MemHeader*)p;
-		h->data = 0;
+		auto h = (MHType*)p;
 		h->versionNumber = ++versionNumber;
-		h->mpIndex = (uint8_t)idx;
+		h->mpIndex() = (uint8_t)idx;
 		return h + 1;
 	}
 
-	inline void MemPool::Free(void* p) noexcept
+	template<typename MHType>
+	void MemPool::Free(void* p) noexcept
 	{
 		if (!p) return;
-		auto h = (MemHeader*)p - 1;
-		// 基于x64地址不会用到最高位的判断原则来检查重复释放
-		assert(h->mpIndex > 0 && h->mpIndex < headers.size());
-		auto idx = h->mpIndex;
-		if constexpr(sizeof(void*) < 8) h->data = 0;
+		auto h = (MHType*)p - 1;
+		assert(h->mpIndex() > 0 && h->mpIndex() < headers.size());
+		auto idx = h->mpIndex();
+		if constexpr(sizeof(void*) < 8) h->versionNumber = 0;
 		*(void**)h = headers[idx];
 		headers[idx] = h;
 	}
 
-	inline void* MemPool::Realloc(void *p, size_t newSize, size_t dataLen) noexcept
+	void* MemPool::Realloc(void *p, size_t newSize, size_t dataLen) noexcept
 	{
 		if (!newSize)
 		{
@@ -71,6 +72,48 @@ namespace xx
 		Free(p);
 		return np;
 	}
+
+
+	template<typename T, typename ...Args>
+	Ptr<T> MemPool::Create(Args &&... args)
+	{
+		auto p = Alloc<MemHeader_Object>(sizeof(T));
+		if (!p) return Ptr<T>();
+
+		// 继续填充 header
+		auto h = (MemHeader_Object*)p - 1;
+		h->objectData = 0;
+		h->typeId = TypeId_v<T>;
+
+		try
+		{
+			if constexpr(std::is_base_of_v<Object, T>)
+			{
+				return Ptr<T>(new (p) T(this, std::forward<Args>(args)...));
+			}
+			else
+			{
+				return Ptr<T>(new (p) T(std::forward<Args>(args)...));
+			}
+		}
+		catch (...)
+		{
+			Free<MemHeader_Object>(p);
+			throw - 1;
+		}
+	}
+
+	template<typename T, typename ...Args>
+	bool MemPool::CreateTo(Ptr<T>& outPtr, Args &&... args)
+	{
+		outPtr = Create<T>(std::forward<Args>(args)...);
+		return outPtr.pointer != nullptr;
+	}
+
+
+
+
+
 
 	inline size_t MemPool::Calc2n(size_t n) noexcept
 	{
@@ -99,84 +142,6 @@ namespace xx
 		else return rtv << 1;
 	}
 
-	template<typename T>
-	T* MemPool::Alloc() noexcept
-	{
-		static_assert(std::is_pod_v<T>);
-		return (T*)Alloc(sizeof(T));
-	}
-
-	inline void MemPool::SafeFree(void*& p) noexcept
-	{
-		Free(p);
-		p = nullptr;
-	}
-
-	template<typename T, typename ...Args>
-	T* MemPool::Create(Args &&... args)
-	{
-		auto p = (void**)Alloc(sizeof(T));
-		((MemHeader*)p - 1)->typeId = TypeId_v<T>;
-		try
-		{
-			if constexpr(std::is_base_of_v<Object, T>)
-			{
-				return new (p) T(this, std::forward<Args>(args)...);
-			}
-			else
-			{
-				return new (p) T(std::forward<Args>(args)...);
-			}
-		}
-		catch (...)
-		{
-			Free(p);
-			throw - 1;
-		}
-	}
-
-	template<typename T, typename ...Args>
-	Ptr<T> MemPool::CreatePtr(Args &&... args)
-	{
-		return Create<T, Args...>(std::forward<Args>(args)...);
-	}
-
-	template<typename T, typename ...Args>
-	bool MemPool::CreateTo(T*& outPtr, Args &&... args)
-	{
-		outPtr = Create<T>(std::forward<Args>(args)...);
-		return outPtr != nullptr;
-	}
-
-	//template<typename T, typename ...Args>
-	//bool MemPool::CreateTo(Ref<T>& outPtr, Args &&... args)
-	//{
-	//	outPtr = CreateRef<T>(std::forward<Args>(args)...);
-	//	return outPtr.pointer != nullptr;
-	//}
-
-	template<typename T, typename ...Args>
-	bool MemPool::CreateTo(Ptr<T>& outPtr, Args &&... args)
-	{
-		outPtr = Create<T>(std::forward<Args>(args)...);
-		return outPtr.pointer != nullptr;
-	}
-
-
-	template<typename T>
-	void MemPool::Release(T* p) noexcept
-	{
-		p->~T();
-		Free(p);
-	}
-
-	template<typename T>
-	void MemPool::SafeRelease(T*& p) noexcept
-	{
-		Release(p);
-		p = nullptr;
-	}
-
 
 
 
@@ -196,36 +161,27 @@ namespace xx
 			// 插入字典占位, 分配到实际指针后替换
 			auto addResult = bb->idxStore->Add(ptrOffset, std::make_pair(nullptr, TypeId_v<T>));
 
-			// copy from Alloc
-			auto siz = sizeof(T) + sizeof(MemHeader);
-			auto idx = Calc2n(siz);
-			if (siz > (size_t(1) << idx)) siz = size_t(1) << ++idx;
-
-			auto p = headers[idx];
-			if (p) headers[idx] = *(void**)p;
-			else p = malloc(siz);
+			// 拿内存
+			auto p = Alloc<MemHeader_Object>(sizeof(T));
 			if (!p) return nullptr;
 
-			auto h = (MemHeader*)p;
-			h->data = 0;
-			h->versionNumber = ++versionNumber;
-			h->mpIndex = (uint8_t)idx;
+			// 继续填充 header
+			auto h = (MemHeader_Object*)p - 1;
+			h->objectData = 0;
 			h->typeId = TypeId_v<T>;
 
-			auto t = (T*)(p + 1);
-			bb->idxStore->ValueAt(addResult.index).first = t;	// 将字典中的 value 替换成真实指针
+			// 将字典中的 value 替换成真实指针
+			bb->idxStore->ValueAt(addResult.index).first = p;	
 			try
 			{
-				return new (t) T(bb);
+				// 调构造函数
+				return new (p) T(bb);
 			}
 			catch (...)
 			{
-				bb->idxStore->RemoveAt(addResult.index);		// 从字典移除
-
-				// copy from Free
-				if constexpr(sizeof(void*) < 8) h->data = 0;
-				*(void**)h = mp->headers[idx];
-				mp->headers[idx] = h;
+				// 从字典移除
+				bb->idxStore->RemoveAt(addResult.index);		
+				Free<MemHeader_Object>(p);
 				return nullptr;
 			}
 		};
@@ -275,103 +231,14 @@ namespace xx
 
 	Object::~Object() noexcept {}
 
-	inline MemHeader& Object::memHeader() noexcept { return *((MemHeader*)this - 1); }
-	inline MemHeader& Object::memHeader() const noexcept { return *((MemHeader*)this - 1); }
+	inline MemHeader_Object& Object::memHeader() noexcept { return *((MemHeader_Object*)this - 1); }
+	inline MemHeader_Object& Object::memHeader() const noexcept { return *((MemHeader_Object*)this - 1); }
 
+	void Object::ToString(String &s) const {}
 	void Object::ToBBuffer(BBuffer &bb) const {}
 	int Object::FromBBuffer(BBuffer &bb) { return 0; }
 
 
-
-
-
-
-
-
-
-
-	template<typename T>
-	Ref<T>::Ref() noexcept
-		: pointer(nullptr)
-		, versionNumber(0)
-	{}
-
-	template<typename T>
-	Ref<T>::Ref(T* p) noexcept
-		: pointer(p)
-		, versionNumber(p ? ((MemHeader*)p - 1)->versionNumber : 0)
-	{}
-
-	template<typename T>
-	Ref<T>& Ref<T>::operator=(T* p) noexcept
-	{
-		pointer = p;
-		versionNumber = p ? ((MemHeader*)p - 1)->versionNumber : 0;
-		return *this;
-	}
-
-	template<typename T>
-	template<typename U>
-	Ref<T>::Ref(Ref<U> const &p) noexcept
-	{
-		operator=(static_cast<T*>(p.Ensure()));
-	}
-
-	template<typename T>
-	template<typename U>
-	Ref<T>& Ref<T>::operator=(Ref<U> const& p) noexcept
-	{
-		operator=(static_cast<T*>(p.Ensure()));
-	}
-
-	template<typename T>
-	bool Ref<T>::operator==(Ref const &o) const noexcept
-	{
-		return Ensure() == o.Ensure();
-	}
-
-	template<typename T>
-	T* Ref<T>::Ensure() const noexcept
-	{
-		if (pointer && ((MemHeader*)pointer - 1)->versionNumber == versionNumber) return pointer;
-		return nullptr;
-	}
-
-	template<typename T>
-	Ref<T>::operator bool() const noexcept
-	{
-		return Ensure() != nullptr;
-	}
-
-	template<typename T>
-	Ref<T>::operator T const* () const noexcept
-	{
-		return Ensure();
-	}
-
-	template<typename T>
-	Ref<T>::operator T* () noexcept
-	{
-		return Ensure();
-	}
-
-	template<typename T>
-	T* Ref<T>::operator->() const noexcept
-	{
-		return (T*)pointer;
-	}
-
-	template<typename T>
-	T& Ref<T>::operator*() noexcept
-	{
-		return *(T*)pointer;
-	}
-
-	template<typename T>
-	T const& Ref<T>::operator*() const noexcept
-	{
-		return *(T*)pointer;
-	}
 
 
 
@@ -386,10 +253,46 @@ namespace xx
 		: pointer(nullptr)
 	{}
 
+
 	template<typename T>
-	Ptr<T>::Ptr(T* const& pointer) noexcept
+	template<typename O>
+	Ptr<T>::Ptr(O* const& pointer) noexcept
 		: pointer(pointer)
-	{}
+	{
+		static_assert(std::is_base_of_v<T, O>);
+		if (pointer)
+		{
+			++pointer->memHeader().refs;
+		}
+	}
+	template<typename T>
+	template<typename O>
+	Ptr<T>& Ptr<T>::operator=(O* const& o) noexcept
+	{
+		static_assert(std::is_base_of_v<T, O>);
+		Release();
+		pointer = o;
+		if (pointer)
+		{
+			++pointer->memHeader().refs;
+		}
+		return *this;
+	}
+
+
+	template<typename T>
+	template<typename O>
+	Ptr<T>::Ptr(Ptr<O> const& o) noexcept
+		: Ptr<T>(o.pointer)
+	{
+	}
+	template<typename T>
+	template<typename O>
+	Ptr<T>& Ptr<T>::operator=(Ptr<O> const& o) noexcept
+	{
+		return operator=(o.pointer);
+	}
+
 
 	template<typename T>
 	template<typename O>
@@ -399,34 +302,12 @@ namespace xx
 		static_assert(std::is_base_of_v<T, O>);
 		o.pointer = nullptr;
 	}
-
-	template<typename T>
-	Ptr<T>::Ptr(Ptr<T>&& o) noexcept
-		: pointer(o.pointer)
-	{
-		o.pointer = nullptr;
-	}
-
-
-	template<typename T>
-	Ptr<T>::~Ptr()
-	{
-		if (pointer)
-		{
-			pointer->mempool->Release(pointer);
-			pointer = nullptr;
-		}
-	}
-
 	template<typename T>
 	template<typename O>
 	Ptr<T>& Ptr<T>::operator=(Ptr<O>&& o) noexcept
 	{
 		static_assert(std::is_base_of_v<T, O>);
-		if (pointer)
-		{
-			pointer->mempool->Release(pointer);
-		}
+		Release();
 		pointer = o.pointer;
 		o.pointer = nullptr;
 		return *this;
@@ -434,15 +315,36 @@ namespace xx
 
 
 	template<typename T>
-	Ptr<T>& Ptr<T>::operator=(T* const& o) noexcept
+	void Ptr<T>::Release()
 	{
 		if (pointer)
 		{
-			pointer->mempool->Release(pointer);
+			if (--pointer->memHeader().refs == 0)
+			{
+				auto mp = pointer->mempool;
+				pointer->~T();
+				mp->Free<MemHeader_Object>(pointer);
+			}
+			pointer = nullptr;
 		}
-		pointer = o;
-		return *this;
 	}
+
+	template<typename T>
+	Ptr<T>::~Ptr()
+	{
+		Release();
+	}
+
+
+	//template<typename T>
+	//template<typename O>
+	//bool Ptr<T>::operator==(Ptr<O> const& o) const noexcept
+	//{
+	//	return pointer == o.pointer;
+	//}
+
+
+
 
 	template<typename T>
 	T const* Ptr<T>::operator->() const noexcept
@@ -451,34 +353,65 @@ namespace xx
 	}
 
 	template<typename T>
-	T* & Ptr<T>::operator->() noexcept 
-	{ 
+	T* & Ptr<T>::operator->() noexcept
+	{
 		return pointer;
 	}
 
 	template<typename T>
-	T& Ptr<T>::operator*() noexcept 
-	{ 
+	T& Ptr<T>::operator*() noexcept
+	{
 		return *pointer;
 	}
 
 	template<typename T>
 	T const& Ptr<T>::operator*() const noexcept
-	{ 
+	{
 		return *pointer;
 	}
 
 	template<typename T>
 	Ptr<T>::operator bool() const noexcept
-	{ 
+	{
 		return pointer != nullptr;
 	}
 
 
-	template<typename T>
-	Ref<T> Ptr<T>::Ref() noexcept
+
+
+
+
+
+	/***********************************************************************************/
+	// std::cout 扩展
+	/***********************************************************************************/
+
+	std::ostream& operator<<(std::ostream& os, const Object& o)
 	{
-		return Ref<T>(pointer);
+		String s(o.mempool);
+		o.ToString(s);
+		os << s;
+		return os;
+	}
+
+	template<typename T>
+	std::ostream& operator<<(std::ostream& os, Ptr<T> const& o)
+	{
+		if (!o) return os;
+		String s(o->mempool);
+		o->ToString(s);
+		os << s;
+		return os;
+	}
+
+	template<typename T>
+	std::ostream& operator<<(std::ostream& os, Ref<T> const& o)
+	{
+		if (!o) return os;
+		String s(o->mempool);
+		o->ToString(s);
+		os << s;
+		return os;
 	}
 
 }

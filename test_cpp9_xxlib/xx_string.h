@@ -93,7 +93,11 @@ namespace xx
 		bool Equals(Ptr<String> const& o) const noexcept;
 
 		static bool Equals(Ptr<String> const& a, Ptr<String> const& b) noexcept;
+
+	private:
+		friend std::ostream& operator<<(std::ostream&, const String&);
 	};
+
 
 	using String_p = Ptr<String>;
 
