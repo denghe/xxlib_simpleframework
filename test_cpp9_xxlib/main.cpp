@@ -2,8 +2,6 @@
 #include "xx.h"
 using namespace xx;
 
-// todo: 确定三种指针形态: Ptr, Ref, Weak   分别对应 std 之 unique_ptr, shared_ptr, weak_ptr
-
 class Foo : public Object
 {
 public:
@@ -12,11 +10,17 @@ public:
 	Foo(MemPool* mempool)
 		: Object(mempool)
 		, index(fooCounter++)
-	{}
+	{
+		std::cout << "Foo() index = " << index << std::endl;
+	}
 	Foo(Foo const&) = delete;
 	Foo& operator=(Foo const&) = delete;
 	Foo(Foo &&) = default;
 	Foo& operator=(Foo &&) = default;
+	~Foo()
+	{
+		std::cout << "~Foo()" << std::endl;
+	}
 
 	virtual void ToString(String & s) const override
 	{
@@ -27,7 +31,22 @@ public:
 int main()
 {
 	MemPool mp;
-	std::cout << mp.Create<Foo>() << std::endl;
-
+	{
+		auto foo = mp.Create<Foo>();
+		Ref<Foo> f(foo);
+		std::cout << f << std::endl;
+	}
+	{
+		Ref<Foo> f(mp.Create<Foo>());
+		std::cout << f << std::endl;
+	}
+	{
+		auto foo = mp.Create<Foo>();
+		Ref<Foo> f(foo);
+		std::cout << f << std::endl;
+		decltype(auto) foo2 = f.Lock();
+		foo.Release();
+		std::cout << f << std::endl;
+	}
 	return 0;
 }

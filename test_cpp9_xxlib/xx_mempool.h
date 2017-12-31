@@ -254,67 +254,24 @@ namespace xx
 		T* pointer;
 		decltype(MemHeader::versionNumber) versionNumber;
 
-		Ref() noexcept
-			: pointer(nullptr)
-			, versionNumber(0)
-		{}
+		Ref() noexcept;
 
 		template<typename O>
-		Ref(Ptr<O> const& o) noexcept
-			: pointer(o.pointer)
-		{
-			static_assert(std::is_base_of_v<T, O>);
-			versionNumber = o ? o->memHeader().versionNumber : 0;
-		}
+		Ref(Ptr<O> const& o) noexcept;
 
 		template<typename O>
-		Ref& operator=(Ptr<O> const& o) noexcept
-		{
-			static_assert(std::is_base_of_v<T, O>);
-			pointer = o.pointer;
-			versionNumber = o ? o->memHeader().versionNumber : 0;
-			return *this;
-		}
+		Ref(Ref<O> const& o) noexcept;
+
+		template<typename O>
+		Ref& operator=(Ptr<O> const& o) noexcept;
+
+		template<typename O>
+		Ref& operator=(Ref<O> const& o) noexcept;
 
 		template<typename O = T>
-		Ptr<O> Ptr() const noexcept
-		{
-			static_assert(std::is_base_of_v<O, T>);
-			if (!pointer || pointer->memHeader().versionNumber == versionNumber)
-			{
-				return Ptr<O>();
-			}
-			return Ptr<O>(pointer);
-		}
+		Ptr<O> Lock() const noexcept;
 
-		operator bool() const noexcept
-		{
-			return !pointer || pointer->memHeader().versionNumber == versionNumber;
-		}
-
-		template<typename O>
-		Ref(Ref<O> const& o) noexcept
-		{
-			operator=(o.Ptr());
-		}
-
-		template<typename O>
-		Ref& operator=(Ref<O> const& o) noexcept
-		{
-			return operator=(o.Ptr());
-		}
-
-		//template<typename O>
-		//bool operator==(Ptr<O> const& o) const noexcept
-		//{
-		//	return Ptr() == o.Ptr();
-		//}
-
-		//template<typename O>
-		//bool operator==(Ref<O> const& o) const noexcept
-		//{
-		//	return pointer == o.pointer;
-		//}
+		operator bool() const noexcept;
 
 	};
 

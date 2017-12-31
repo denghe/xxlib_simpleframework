@@ -55,7 +55,7 @@ namespace xx
 		headers[idx] = h;
 	}
 
-	void* MemPool::Realloc(void *p, size_t newSize, size_t dataLen) noexcept
+	inline void* MemPool::Realloc(void *p, size_t newSize, size_t dataLen) noexcept
 	{
 		if (!newSize)
 		{
@@ -171,7 +171,7 @@ namespace xx
 			h->typeId = TypeId_v<T>;
 
 			// 将字典中的 value 替换成真实指针
-			bb->idxStore->ValueAt(addResult.index).first = p;	
+			bb->idxStore->ValueAt(addResult.index).first = p;
 			try
 			{
 				// 调构造函数
@@ -180,7 +180,7 @@ namespace xx
 			catch (...)
 			{
 				// 从字典移除
-				bb->idxStore->RemoveAt(addResult.index);		
+				bb->idxStore->RemoveAt(addResult.index);
 				Free<MemHeader_Object>(p);
 				return nullptr;
 			}
@@ -234,9 +234,9 @@ namespace xx
 	inline MemHeader_Object& Object::memHeader() noexcept { return *((MemHeader_Object*)this - 1); }
 	inline MemHeader_Object& Object::memHeader() const noexcept { return *((MemHeader_Object*)this - 1); }
 
-	void Object::ToString(String &s) const {}
-	void Object::ToBBuffer(BBuffer &bb) const {}
-	int Object::FromBBuffer(BBuffer &bb) { return 0; }
+	inline void Object::ToString(String &s) const {}
+	inline void Object::ToBBuffer(BBuffer &bb) const {}
+	inline int Object::FromBBuffer(BBuffer &bb) { return 0; }
 
 
 
@@ -336,16 +336,6 @@ namespace xx
 	}
 
 
-	//template<typename T>
-	//template<typename O>
-	//bool Ptr<T>::operator==(Ptr<O> const& o) const noexcept
-	//{
-	//	return pointer == o.pointer;
-	//}
-
-
-
-
 	template<typename T>
 	T const* Ptr<T>::operator->() const noexcept
 	{
@@ -382,6 +372,75 @@ namespace xx
 
 
 
+
+
+
+
+	template<typename T>
+	Ref<T>::Ref() noexcept
+		: pointer(nullptr)
+		, versionNumber(0)
+	{}
+
+	template<typename T>
+	template<typename O>
+	Ref<T>::Ref(Ptr<O> const& o) noexcept
+		: pointer(o.pointer)
+	{
+		static_assert(std::is_base_of_v<T, O>);
+		versionNumber = o ? o->memHeader().versionNumber : 0;
+	}
+
+	template<typename T>
+	template<typename O>
+	Ref<T>::Ref(Ref<O> const& o) noexcept
+	{
+		operator=(o.Lock());
+	}
+
+	template<typename T>
+	template<typename O>
+	Ref<T>& Ref<T>::operator=(Ptr<O> const& o) noexcept
+	{
+		static_assert(std::is_base_of_v<T, O>);
+		pointer = o.pointer;
+		versionNumber = o ? o->memHeader().versionNumber : 0;
+		return *this;
+	}
+
+	template<typename T>
+	template<typename O>
+	Ref<T>& Ref<T>::operator=(Ref<O> const& o) noexcept
+	{
+		return operator=(o.Lock());
+	}
+
+	template<typename T>
+	template<typename O>
+	Ptr<O> Ref<T>::Lock() const noexcept
+	{
+		static_assert(std::is_base_of_v<O, T>);
+		if (pointer && pointer->memHeader().versionNumber == versionNumber)
+		{
+			return Ptr<O>(pointer);
+		}
+		return Ptr<O>();
+	}
+
+	template<typename T>
+	Ref<T>::operator bool() const noexcept
+	{
+		return pointer && pointer->memHeader().versionNumber == versionNumber;
+	}
+
+
+
+
+
+
+
+
+
 	/***********************************************************************************/
 	// std::cout 扩展
 	/***********************************************************************************/
@@ -397,21 +456,14 @@ namespace xx
 	template<typename T>
 	std::ostream& operator<<(std::ostream& os, Ptr<T> const& o)
 	{
-		if (!o) return os;
-		String s(o->mempool);
-		o->ToString(s);
-		os << s;
-		return os;
+		if (!o) return os << "nullptr";
+		return os << "\"" << *o << "\"";
 	}
 
 	template<typename T>
 	std::ostream& operator<<(std::ostream& os, Ref<T> const& o)
 	{
-		if (!o) return os;
-		String s(o->mempool);
-		o->ToString(s);
-		os << s;
-		return os;
+		return os << o.Lock();
 	}
 
 }
