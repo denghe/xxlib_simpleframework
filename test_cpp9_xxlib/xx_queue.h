@@ -16,7 +16,7 @@ namespace xx
 		size_t		bufLen;
 		size_t		head = 0, tail = 0;					// FR..............................
 
-		explicit Queue(MemPool* mempool, size_t capacity = 8);
+		explicit Queue(MemPool* const& mempool, size_t capacity = 8);
 		~Queue();
 
 		Queue(Queue const& o) = delete;

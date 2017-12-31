@@ -2,7 +2,7 @@
 namespace xx
 {
 	template<typename T>
-	List<T>::List(MemPool* mempool, size_t const& capacity)
+	List<T>::List(MemPool* const& mempool, size_t const& capacity)
 		: Object(mempool)
 	{
 		if (capacity == 0)

@@ -2,7 +2,7 @@
 #pragma once
 namespace xx
 {
-	inline String::String(MemPool* mempool, size_t capacity)
+	inline String::String(MemPool* mempool, size_t const& capacity)
 		: BaseType(mempool, capacity)
 	{}
 
@@ -14,12 +14,12 @@ namespace xx
 		AddRange(s, len - 1);
 	}
 
-	inline String::String(MemPool* mempool, char const *s)
+	inline String::String(MemPool* mempool, char const* const& s)
 		: BaseType(mempool, 0)
 	{
 		if (s) AddRange(s, strlen(s));
 	}
-	inline String::String(MemPool* mempool, char const *s, size_t len)
+	inline String::String(MemPool* mempool, char const* const& s, size_t const& len)
 		: BaseType(mempool, len)
 	{
 		AddRange(s, len);

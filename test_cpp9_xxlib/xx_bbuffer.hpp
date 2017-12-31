@@ -1,11 +1,11 @@
 ﻿#pragma once
 namespace xx
 {
-	BBuffer::BBuffer(MemPool* mempool, size_t capacity)
+	BBuffer::BBuffer(MemPool* const& mempool, size_t const& capacity)
 		: BaseType(mempool, capacity)
 	{}
 
-	BBuffer::BBuffer(MemPool* mempool, std::pair<char const*, size_t> const& buff)
+	BBuffer::BBuffer(MemPool* const& mempool, std::pair<char const*, size_t> const& buff)
 		: BaseType(mempool, buff.second)
 	{
 		memcpy(buf, buff.first, buff.second);

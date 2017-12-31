@@ -15,9 +15,9 @@ namespace xx
 		BBuffer(BBuffer const&o) = delete;
 		BBuffer& operator=(BBuffer const&o) = delete;
 
-		explicit BBuffer(MemPool* mempool, size_t capacity = 0);
+		explicit BBuffer(MemPool* const& mempool, size_t const& capacity = 0);
 
-		BBuffer(MemPool* mempool, std::pair<char const*, size_t> const& buff);
+		BBuffer(MemPool* const& mempool, std::pair<char const*, size_t> const& buff);
 
 		template<typename T>
 		void Write(T const& v);

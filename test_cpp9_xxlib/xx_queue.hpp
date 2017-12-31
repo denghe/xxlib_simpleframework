@@ -3,7 +3,7 @@ namespace xx
 {
 
 	template <class T>
-	Queue<T>::Queue(MemPool* mempool, size_t capacity)
+	Queue<T>::Queue(MemPool* const& mempool, size_t capacity)
 		: Object(mempool)
 	{
 		if (capacity < 8)

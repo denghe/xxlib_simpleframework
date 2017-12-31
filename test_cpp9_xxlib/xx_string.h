@@ -7,12 +7,12 @@ namespace xx
 	public:
 		typedef List<char> BaseType;
 
-		explicit String(MemPool* mempool, size_t capacity = 0);
+		explicit String(MemPool* mempool, size_t const& capacity = 0);
 
 		template<size_t len>
 		String(MemPool* mempool, char const(&s)[len]);
-		String(MemPool* mempool, char const *s);
-		String(MemPool* mempool, char const *s, size_t len);
+		String(MemPool* mempool, char const* const& s);
+		String(MemPool* mempool, char const* const& s, size_t const& len);
 		String(MemPool* mempool, std::string const& s);
 		String(MemPool* mempool, std::pair<char const*, int> const& buff);
 

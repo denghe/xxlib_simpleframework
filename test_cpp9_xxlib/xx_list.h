@@ -11,7 +11,7 @@ namespace xx
 		size_t		bufLen;
 		size_t		dataLen;
 
-		explicit List(MemPool* mempool, size_t const& capacity = 0);
+		explicit List(MemPool* const& mempool, size_t const& capacity = 0);
 		List(List &&o);
 		~List();
 		List(List const&o) = delete;

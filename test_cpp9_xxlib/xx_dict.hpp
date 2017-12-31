@@ -2,7 +2,7 @@
 namespace xx
 {
 	template <typename TK, typename TV>
-	Dict<TK, TV>::Dict(MemPool* mempool, int capacity)
+	Dict<TK, TV>::Dict(MemPool* const& mempool, int const& capacity)
 		: Object(mempool)
 	{
 		freeList = -1;

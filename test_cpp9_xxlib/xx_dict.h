@@ -40,7 +40,7 @@ namespace xx
 		Data               *items;                  // 数据数组( 与节点数组同步下标 )
 	public:
 
-		explicit Dict(MemPool* mempool, int capacity = 16);
+		explicit Dict(MemPool* const& mempool, int const& capacity = 16);
 		~Dict();
 		Dict(Dict const &o) = delete;
 		Dict& operator=(Dict const &o) = delete;
