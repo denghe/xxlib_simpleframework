@@ -44,8 +44,9 @@ int main()
 		auto foo = mp.Create<Foo>();
 		Ref<Foo> f(foo);
 		std::cout << f << std::endl;
-		decltype(auto) foo2 = f.Lock();
-		foo.Release();
+		Ptr<Foo> foo2 = f.Lock();
+		foo2.Assign(std::move(foo));
+		foo2.Release();
 		std::cout << f << std::endl;
 	}
 	return 0;

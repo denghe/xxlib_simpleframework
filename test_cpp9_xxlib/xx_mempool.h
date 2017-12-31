@@ -189,6 +189,7 @@ namespace xx
 		template<typename O>
 		Ptr& operator=(O* const& o) noexcept;
 
+		Ptr(Ptr const& o) noexcept;
 
 		template<typename O>
 		Ptr(Ptr<O> const& o) noexcept;
@@ -197,20 +198,24 @@ namespace xx
 		Ptr& operator=(Ptr<O> const& o) noexcept;
 
 
+		Ptr(Ptr&& o) noexcept;
+
 		template<typename O>
 		Ptr(Ptr<O>&& o) noexcept;
 
+		// swap
 		template<typename O>
 		Ptr& operator=(Ptr<O>&& o) noexcept;
+
+		// replace
+		template<typename O>
+		void Assign(Ptr<O>&& o) noexcept;
 
 		void Release();
 		~Ptr();
 
 		template<typename O>
-		bool operator==(Ptr<O> const& o) const noexcept
-		{
-			return pointer == o.pointer;
-		}
+		bool operator==(Ptr<O> const& o) const noexcept;
 
 
 		operator bool() const noexcept;
@@ -259,11 +264,15 @@ namespace xx
 		template<typename O>
 		Ref(Ptr<O> const& o) noexcept;
 
+		Ref(Ref const& o) noexcept;
+
 		template<typename O>
 		Ref(Ref<O> const& o) noexcept;
 
 		template<typename O>
 		Ref& operator=(Ptr<O> const& o) noexcept;
+
+		Ref& operator=(Ref const& o) noexcept;
 
 		template<typename O>
 		Ref& operator=(Ref<O> const& o) noexcept;

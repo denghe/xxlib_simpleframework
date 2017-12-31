@@ -281,10 +281,23 @@ namespace xx
 
 
 	template<typename T>
+	Ptr<T>::Ptr(Ptr const& o) noexcept
+		: Ptr<T>(o.pointer)
+	{
+		if (pointer)
+		{
+			++pointer->memHeader().refs;
+		}
+	}
+	template<typename T>
 	template<typename O>
 	Ptr<T>::Ptr(Ptr<O> const& o) noexcept
 		: Ptr<T>(o.pointer)
 	{
+		if (pointer)
+		{
+			++pointer->memHeader().refs;
+		}
 	}
 	template<typename T>
 	template<typename O>
@@ -293,7 +306,12 @@ namespace xx
 		return operator=(o.pointer);
 	}
 
-
+	template<typename T>
+	Ptr<T>::Ptr(Ptr&& o) noexcept
+		: pointer(o.pointer)
+	{
+		o.pointer = nullptr;
+	}
 	template<typename T>
 	template<typename O>
 	Ptr<T>::Ptr(Ptr<O>&& o) noexcept
@@ -307,10 +325,17 @@ namespace xx
 	Ptr<T>& Ptr<T>::operator=(Ptr<O>&& o) noexcept
 	{
 		static_assert(std::is_base_of_v<T, O>);
+		std::swap(pointer, o.pointer);
+		return *this;
+	}
+	template<typename T>
+	template<typename O>
+	void Ptr<T>::Assign(Ptr<O>&& o) noexcept
+	{
+		static_assert(std::is_base_of_v<T, O>);
 		Release();
 		pointer = o.pointer;
 		o.pointer = nullptr;
-		return *this;
 	}
 
 
@@ -333,6 +358,14 @@ namespace xx
 	Ptr<T>::~Ptr()
 	{
 		Release();
+	}
+
+
+	template<typename T>
+	template<typename O>
+	bool Ptr<T>::operator==(Ptr<O> const& o) const noexcept
+	{
+		return pointer == o.pointer;
 	}
 
 
@@ -392,9 +425,15 @@ namespace xx
 	}
 
 	template<typename T>
+	Ref<T>::Ref(Ref const& o) noexcept
+	{
+		operator=(o.Lock());
+	}
+	template<typename T>
 	template<typename O>
 	Ref<T>::Ref(Ref<O> const& o) noexcept
 	{
+		static_assert(std::is_base_of_v<T, O>);
 		operator=(o.Lock());
 	}
 
@@ -408,6 +447,11 @@ namespace xx
 		return *this;
 	}
 
+	template<typename T>
+	Ref<T>& Ref<T>::operator=(Ref const& o) noexcept
+	{
+		return operator=(o.Lock());
+	}
 	template<typename T>
 	template<typename O>
 	Ref<T>& Ref<T>::operator=(Ref<O> const& o) noexcept
