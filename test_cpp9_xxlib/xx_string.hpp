@@ -14,7 +14,12 @@ namespace xx
 		AddRange(s, len - 1);
 	}
 
-	inline String::String(MemPool* mempool, char const *s, size_t len) 
+	inline String::String(MemPool* mempool, char const *s)
+		: BaseType(mempool, 0)
+	{
+		if (s) AddRange(s, strlen(s));
+	}
+	inline String::String(MemPool* mempool, char const *s, size_t len)
 		: BaseType(mempool, len)
 	{
 		AddRange(s, len);
@@ -33,7 +38,7 @@ namespace xx
 	}
 
 	inline String::String(String &&o)
-		: BaseType((BaseType&&)o) 
+		: BaseType((BaseType&&)o)
 	{}
 
 	template<size_t len>
@@ -256,11 +261,11 @@ namespace xx
 
 
 
-	inline size_t GetHashCode(String const &in) noexcept
+	inline uint32_t GetHashCode(String const &in) noexcept
 	{
 		return in.dataLen == 0 ? 0 : GetHashCode((uint8_t*)in.buf, in.dataLen);
 	}
-	inline size_t GetHashCode(String_p const &in) noexcept
+	inline uint32_t GetHashCode(String_p const &in) noexcept
 	{
 		if (!in) return 0;
 		return GetHashCode(*in);

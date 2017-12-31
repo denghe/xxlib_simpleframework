@@ -30,6 +30,7 @@ namespace xx
 			int             prev;
 		};
 
+	private:
 		int                 freeList;               // 自由空间链表头( next 指向下一个未使用单元 )
 		int                 freeCount;              // 自由空间链长
 		int                 count;                  // 已使用空间数
@@ -37,6 +38,7 @@ namespace xx
 		int                *buckets;                // 桶数组
 		Node               *nodes;                  // 节点数组
 		Data               *items;                  // 数据数组( 与节点数组同步下标 )
+	public:
 
 		explicit Dict(MemPool* mempool, int capacity = 16);
 		~Dict();
@@ -57,8 +59,10 @@ namespace xx
 		// 可传入一个资源回收函数来搞事
 		void Clear(std::function<void(Data&)> killer = nullptr) noexcept;
 
-		template<typename K, typename ...VPS>
-		DictAddResult Emplace(bool override, K &&key, VPS &&... vps);
+	private:
+		template<typename K, typename V>
+		DictAddResult AddCore(bool override, K &&key, V &&v);
+	public:
 
 		DictAddResult Add(TK const &k, TV const &v, bool override = false);
 		DictAddResult Add(TK const &k, TV &&v, bool override = false);

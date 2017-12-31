@@ -11,6 +11,7 @@ namespace xx
 
 		template<size_t len>
 		String(MemPool* mempool, char const(&s)[len]);
+		String(MemPool* mempool, char const *s);
 		String(MemPool* mempool, char const *s, size_t len);
 		String(MemPool* mempool, std::string const& s);
 		String(MemPool* mempool, std::pair<char const*, int> const& buff);
@@ -106,8 +107,8 @@ namespace xx
 
 	// 各种适配函数的实现
 
-	size_t GetHashCode(String const &in) noexcept;
-	size_t GetHashCode(String_p const &in) noexcept;
+	uint32_t GetHashCode(String const &in) noexcept;
+	uint32_t GetHashCode(String_p const &in) noexcept;
 
 	bool EqualsTo(String const& a, String const& b) noexcept;
 	bool EqualsTo(String_p const& a, String_p const& b) noexcept;

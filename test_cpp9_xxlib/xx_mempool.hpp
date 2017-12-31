@@ -73,6 +73,17 @@ namespace xx
 		return np;
 	}
 
+	template<typename T, typename ...Args>
+	T* MemPool::PlacementNew(std::enable_if_t<std::is_base_of_v<Object, T>>* p, Args &&... args)
+	{
+		return new (p) T(this, std::forward<Args>(args)...);
+	}
+	template<typename T, typename ...Args>
+	T* MemPool::PlacementNew(std::enable_if_t<!std::is_base_of_v<Object, T>>* p, Args &&... args)
+	{
+		return new (p) T(std::forward<Args>(args)...);
+	}
+
 
 	template<typename T, typename ...Args>
 	Ptr<T> MemPool::Create(Args &&... args)
@@ -87,14 +98,7 @@ namespace xx
 
 		try
 		{
-			if constexpr(std::is_base_of_v<Object, T>)
-			{
-				return Ptr<T>(new (p) T(this, std::forward<Args>(args)...));
-			}
-			else
-			{
-				return Ptr<T>(new (p) T(std::forward<Args>(args)...));
-			}
+			return Ptr<T>(PlacementNew<T>(p, std::forward<Args>(args)...));
 		}
 		catch (...)
 		{

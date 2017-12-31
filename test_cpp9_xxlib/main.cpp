@@ -49,5 +49,22 @@ int main()
 		foo2.Release();
 		std::cout << f << std::endl;
 	}
+	{
+		Dict<String, String> d(&mp);
+		std::cout << d.Count() << std::endl;
+		d.Add(String(&mp, "a"), String(&mp, "b"));
+		std::cout << d.Count() << std::endl;
+		d.Add(String(&mp, "a"), String(&mp, "b"));
+		std::cout << d.Count() << std::endl;
+	}
+	{
+		Dict<String_p, String_p> d(&mp);
+		std::cout << d.Count() << std::endl;
+		auto a = mp.Create<String>("a");
+		d.Add(mp.Create<String>("a"), mp.Create<String>("b"));
+		std::cout << d.Count() << std::endl;
+		d.Add(mp.Create<String>("a"), mp.Create<String>("b"));
+		std::cout << d.Count() << std::endl;
+	}
 	return 0;
 }

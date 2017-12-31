@@ -26,8 +26,8 @@ namespace xx
 
 
 	template <typename TK, typename TV>
-	template<typename K, typename ...VPS>
-	DictAddResult Dict<TK, TV>::Emplace(bool override, K &&key, VPS &&... vps)
+	template<typename K, typename V>
+	DictAddResult Dict<TK, TV>::AddCore(bool override, K &&key, V &&v)
 	{
 		assert(bucketsLen);
 
@@ -41,16 +41,7 @@ namespace xx
 				if (override)                       // 允许覆盖 value
 				{
 					items[i].value.~TV();
-
-					if constexpr(std::is_base_of_v<Object, TV>)
-					{
-						new (&items[i].value) TV(mempool, std::forward<VPS>(vps)...);
-					}
-					else
-					{
-						new (&items[i].value) TV(std::forward<VPS>(vps)...);
-					}
-
+					new (&items[i].value) TV(std::forward<V>(v));
 					return DictAddResult{ true, i };
 				}
 				return DictAddResult{ false, i };
@@ -88,14 +79,7 @@ namespace xx
 
 		// 移动复制构造写 key, value
 		new (&items[index].key) TK(std::forward<K>(key));
-		if constexpr(std::is_base_of_v<Object, TV>)
-		{
-			new (&items[index].value) TV(mempool, std::forward<VPS>(vps)...);
-		}
-		else
-		{
-			new (&items[index].value) TV(std::forward<VPS>(vps)...);
-		}
+		new (&items[index].value) TV(std::forward<V>(v));
 		items[index].prev = -1;
 
 		return DictAddResult{ true, index };
@@ -226,7 +210,7 @@ namespace xx
 		int idx = Find(key);
 		if (idx < 0)
 		{
-			idx = Emplace(true, std::forward<K>(key), TV()).index;
+			idx = AddCore(true, std::forward<K>(key), TV()).index;
 		}
 		return items[idx].value;
 	}
@@ -260,25 +244,25 @@ namespace xx
 	template <typename TK, typename TV>
 	DictAddResult Dict<TK, TV>::Add(TK const &k, TV const &v, bool override)
 	{
-		return Emplace(override, k, v);
+		return AddCore(override, k, v);
 	}
 
 	template <typename TK, typename TV>
 	DictAddResult Dict<TK, TV>::Add(TK const &k, TV &&v, bool override)
 	{
-		return Emplace(override, k, (TV&&)v);
+		return AddCore(override, k, (TV&&)v);
 	}
 
 	template <typename TK, typename TV>
 	DictAddResult Dict<TK, TV>::Add(TK &&k, TV const &v, bool override)
 	{
-		return Emplace(override, (TK&&)k, v);
+		return AddCore(override, (TK&&)k, v);
 	}
 
 	template <typename TK, typename TV>
 	DictAddResult Dict<TK, TV>::Add(TK &&k, TV &&v, bool override)
 	{
-		return Emplace(override, (TK&&)k, (TV&&)v);
+		return AddCore(override, (TK&&)k, (TV&&)v);
 	}
 
 	template <typename TK, typename TV>
