@@ -224,16 +224,16 @@ namespace xx
 
 
 
-	Object::Object(MemPool* mempool) noexcept
+	inline Object::Object(MemPool* mempool) noexcept
 		: mempool(mempool)
 	{}
 
-	Object::Object(BBuffer* bb) noexcept
+	inline Object::Object(BBuffer* bb) noexcept
 		: mempool(bb->mempool)
 	{
 	}
 
-	Object::~Object() noexcept {}
+	inline Object::~Object() noexcept {}
 
 	inline MemHeader_Object& Object::memHeader() noexcept { return *((MemHeader_Object*)this - 1); }
 	inline MemHeader_Object& Object::memHeader() const noexcept { return *((MemHeader_Object*)this - 1); }
@@ -493,7 +493,7 @@ namespace xx
 	// std::cout 扩展
 	/***********************************************************************************/
 
-	std::ostream& operator<<(std::ostream& os, const Object& o)
+	inline std::ostream& operator<<(std::ostream& os, const Object& o)
 	{
 		String s(o.mempool);
 		o.ToString(s);

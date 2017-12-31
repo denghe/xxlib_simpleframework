@@ -338,11 +338,11 @@ namespace xx
 
 
 	template<typename T>
-	void List<T>::ForEachRevert(std::function<bool(T&)> handler)
+	void List<T>::ForEachRevert(std::function<void(T&)> handler)
 	{
 		for (size_t i = dataLen - 1; i != (size_t)-1; --i)
 		{
-			if (handler(buf[i])) return;
+			handler(buf[i]);
 		}
 	}
 

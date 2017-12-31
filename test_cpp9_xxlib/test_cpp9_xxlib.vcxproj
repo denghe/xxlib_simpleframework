@@ -108,9 +108,11 @@
     <ClInclude Include="xx_queue.hpp" />
     <ClInclude Include="xx_string.h" />
     <ClInclude Include="xx_string.hpp" />
+    <ClInclude Include="xx_uv.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="xx_uv.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

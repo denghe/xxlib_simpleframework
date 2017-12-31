@@ -83,7 +83,7 @@ namespace xx
 		assert(dataLen <= bufLen);
 	}
 
-	String& String::operator=(char const * const& buf)
+	inline String& String::operator=(char const * const& buf)
 	{
 		Assign(buf);
 		return *this;

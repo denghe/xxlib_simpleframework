@@ -54,7 +54,7 @@ namespace xx
 		bool Exists(std::function<bool(T&)> cond);
 		bool TryFill(T& out, std::function<bool(T&)> cond);
 
-		void ForEachRevert(std::function<bool(T&)> handler);	// 倒着扫. 便于 SwapRemoveAt.
+		void ForEachRevert(std::function<void(T&)> handler);	// 倒着扫. 便于 SwapRemoveAt.
 
 		// 支持 for( auto c : list ) 语法
 		struct Iter

@@ -1,11 +1,11 @@
 ﻿#pragma once
 namespace xx
 {
-	BBuffer::BBuffer(MemPool* const& mempool, size_t const& capacity)
+	inline BBuffer::BBuffer(MemPool* const& mempool, size_t const& capacity)
 		: BaseType(mempool, capacity)
 	{}
 
-	BBuffer::BBuffer(MemPool* const& mempool, std::pair<char const*, size_t> const& buff)
+	inline BBuffer::BBuffer(MemPool* const& mempool, std::pair<char const*, size_t> const& buff)
 		: BaseType(mempool, buff.second)
 	{
 		memcpy(buf, buff.first, buff.second);
@@ -32,27 +32,27 @@ namespace xx
 	/*************************************************************************/
 
 
-	void BBuffer::BeginWrite()
+	inline void BBuffer::BeginWrite()
 	{
 		if (!ptrStore) this->mempool->CreateTo(ptrStore, 16);
 		else ptrStore->Clear();
 		offsetRoot = dataLen;
 	}
 
-	void BBuffer::EndWrite()
+	inline void BBuffer::EndWrite()
 	{
 		assert(ptrStore);
 		ptrStore->Clear();
 	}
 
-	void BBuffer::BeginRead()
+	inline void BBuffer::BeginRead()
 	{
 		if (!idxStore) this->mempool->CreateTo(idxStore, 16);
 		else idxStore->Clear();
 		offsetRoot = offset;
 	}
 
-	void BBuffer::EndRead()
+	inline void BBuffer::EndRead()
 	{
 		assert(idxStore);
 		idxStore->Clear();
@@ -148,7 +148,7 @@ namespace xx
 	//  其他工具函数
 	/*************************************************************************/
 
-	void BBuffer::Clear()
+	inline void BBuffer::Clear()
 	{
 		BaseType::Clear();
 		offset = 0;
@@ -185,23 +185,23 @@ namespace xx
 	}
 
 	// 直接追加写入一段 buf ( 并不记录长度 )
-	void BBuffer::WriteBuf(char const* buf, size_t const& len)
+	inline void BBuffer::WriteBuf(char const* buf, size_t const& len)
 	{
 		this->Reserve(this->dataLen + len);
 		std::memcpy(this->buf + this->dataLen, buf, len);
 		this->dataLen += len;
 	}
-	void BBuffer::WriteBuf(BBuffer const& bb)
+	inline void BBuffer::WriteBuf(BBuffer const& bb)
 	{
 		WriteBuf(bb.buf, bb.dataLen);
 	}
-	void BBuffer::WriteBuf(BBuffer const* const& bb)
+	inline void BBuffer::WriteBuf(BBuffer const* const& bb)
 	{
 		WriteBuf(bb->buf, bb->dataLen);
 	}
 
 	// 追加一个指定长度的空间, 返回当前 dataLen
-	size_t BBuffer::WriteSpace(size_t const& len)
+	inline size_t BBuffer::WriteSpace(size_t const& len)
 	{
 		auto rtv = this->dataLen;
 		this->Reserve(this->dataLen + len);
@@ -210,7 +210,7 @@ namespace xx
 	}
 
 	// 在 pos 位置写入一段 buf ( 并不记录长度 ). dataLen 可能撑大.
-	void BBuffer::WriteBufAt(size_t const& pos, char const* buf, size_t const& len)
+	inline void BBuffer::WriteBufAt(size_t const& pos, char const* buf, size_t const& len)
 	{
 		assert(pos < this->dataLen);
 		auto bak = this->dataLen;		// 备份原始数据长度, 开始追加. 追加完之后, 对比原始数据长度. 如果没超出, 还要还原.
@@ -238,7 +238,7 @@ namespace xx
 	// todo: 3字节包头支持
 
 	// 开始写一个包
-	void BBuffer::BeginWritePackage(uint8_t const& pkgTypeId, uint32_t const& serial)
+	inline void BBuffer::BeginWritePackage(uint8_t const& pkgTypeId, uint32_t const& serial)
 	{
 		dataLenBak = dataLen;
 		Reserve(dataLen + 3);
@@ -248,7 +248,7 @@ namespace xx
 	}
 
 	// 结束写一个包, 返回长度是否在包头表达范围内( 如果 true 则会填充包头, false 则回滚长度 )
-	bool BBuffer::EndWritePackage()
+	inline bool BBuffer::EndWritePackage()
 	{
 		auto pkgLen = dataLen - dataLenBak - 3;
 		if (pkgLen > std::numeric_limits<uint16_t>::max())
@@ -270,7 +270,7 @@ namespace xx
 	}
 
 	// 在已知数据长度的情况下, 直接以包头格式写入长度. 成功返回 true( 只针对 pkgTypeId == 0 的情况 )
-	bool BBuffer::WritePackageLength(uint16_t const& len)
+	inline bool BBuffer::WritePackageLength(uint16_t const& len)
 	{
 		if (len > std::numeric_limits<uint16_t>::max()) return false;
 		Reserve(dataLen + 8 + len);
@@ -283,7 +283,7 @@ namespace xx
 	// 尝试一次性反序列化一到多个包, 将结果填充到 outPkgs, 返回 0 或 错误码
 	// 注意: 注意其元素的 引用计数, 通通为 1( 即便是递归互引 )
 	// 注意: 即便返回错误码, outPkgs 中也可能存在残留数据
-	int BBuffer::ReadPackages(List<Object_p>& outPkgs)
+	inline int BBuffer::ReadPackages(List<Object_p>& outPkgs)
 	{
 		outPkgs.Clear();
 		while (offset < dataLen)
@@ -297,7 +297,7 @@ namespace xx
 	}
 
 	// 队列版并不清除原有数据, 乃是追加. 如果出错, 也不会回滚.
-	int BBuffer::ReadPackages(Queue<Object_p>& outPkgs)
+	inline int BBuffer::ReadPackages(Queue<Object_p>& outPkgs)
 	{
 		while (offset < dataLen)
 		{
