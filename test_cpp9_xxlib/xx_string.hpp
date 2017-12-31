@@ -262,6 +262,7 @@ namespace xx
 	}
 	inline size_t GetHashCode(String_p const &in) noexcept
 	{
+		if (!in) return 0;
 		return GetHashCode(*in);
 	}
 
@@ -271,8 +272,7 @@ namespace xx
 	}
 	inline bool EqualsTo(String_p const& a, String_p const& b) noexcept
 	{
-		return EqualsTo(*a, *b);
+		return a.pointer == b.pointer ? true : EqualsTo(*a, *b);
 	}
-
 
 }
