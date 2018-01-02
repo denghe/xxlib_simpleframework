@@ -235,8 +235,6 @@ namespace xx
 	//  包相关
 	/*************************************************************************/
 
-	// todo: 3字节包头支持
-
 	// 开始写一个包
 	inline void BBuffer::BeginWritePackage(uint8_t const& pkgTypeId, uint32_t const& serial)
 	{

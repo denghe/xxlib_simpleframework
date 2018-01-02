@@ -93,14 +93,12 @@ namespace xx
 		// 可用于创建 lua state
 		void* Realloc(void *p, size_t newSize, size_t dataLen = -1) noexcept;
 
-	private:
 		// 写成这样是因为用 if constexpr 路由 vs 编译器会死
 		template<typename T, typename ...Args>
 		T* PlacementNew(std::enable_if_t<std::is_base_of_v<Object, T>>* p, Args &&... args);
 
 		template<typename T, typename ...Args>
 		T* PlacementNew(std::enable_if_t<!std::is_base_of_v<Object, T>>* p, Args &&... args);
-	public:
 
 		template<typename T, typename ...Args>
 		Ptr<T> Create(Args &&... args);

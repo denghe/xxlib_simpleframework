@@ -219,16 +219,7 @@ namespace xx
 	T& List<T>::Emplace(Args &&... args)
 	{
 		Reserve(dataLen + 1);
-		auto& p = buf[dataLen++];
-		if constexpr(std::is_base_of_v<Object, T>)
-		{
-			new (&p) T(mempool, std::forward<Args>(args)...);
-		}
-		else
-		{
-			new (&p) T(std::forward<Args>(args)...);
-		}
-		return p;
+		return *mempool->PlacementNew<T>(&buf[dataLen++], std::forward<Args>(args)...);
 	}
 
 	template<typename T>
