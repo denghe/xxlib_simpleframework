@@ -101,11 +101,18 @@ namespace xx
 		T* PlacementNew(std::enable_if_t<!std::is_base_of_v<Object, T>>* p, Args &&... args);
 
 		template<typename T, typename ...Args>
+		T* CreateNativePointer(Args &&... args);
+
+		template<typename T, typename ...Args>
 		Ptr<T> Create(Args &&... args);
+
+		template<typename T, typename ...Args>
+		bool CreateTo(T*& outPtr, Args &&... args);
 
 		template<typename T, typename ...Args>
 		bool CreateTo(Ptr<T>& outPtr, Args &&... args);
 
+		void Release(Object* o);
 
 		/***********************************************************************************/
 		// 工具函数

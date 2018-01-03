@@ -24,10 +24,14 @@
 		return nbs_:Connect()
 	end
 	nbs.Disconnect = function(delayTicks)
+		if delayTicks == nil then delayTicks = 0 end
 		return nbs_:Disconnect(delayTicks)
 	end
+	local bbSend = BBuffer.Create()
 	nbs.Send = function(pkg)
-		return nbs_:Send(pkg)
+		bbSend:Clear()
+		bbSend:WritePackage(pkg)
+		return nbs_:Send(bbSend)
 	end
 	nbs.PopRecv = function()
 		return nbs_:PopRecv()
@@ -88,9 +92,9 @@
 		nbs.serial = serial
 		nbs[serial] = cb
 		nbs_:PushSerial(nbs_:GetTicks() + interval, serial)
-		local bb = BBuffer:Create()
-		bb:WritePackage(pkg, 1, serial)
-		local r = nbs_:Send( bb )
+		bbSend:Clear()
+		bbSend:WritePackage(pkg, 1, serial)
+		local r = nbs_:Send( bbSend )
 		return serial
 	end
 	nbs.Unregister = function(serial)

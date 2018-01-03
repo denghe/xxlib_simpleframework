@@ -280,7 +280,9 @@ XXUVLIB_API int xxuv_tcp_connect(uv_connect_t* req, uv_tcp_t* handle, const sock
 XXUVLIB_API int xxuv_tcp_connect_(uv_tcp_t* handle, const struct sockaddr* addr, uv_connect_cb cb) noexcept
 {
 	auto req = (uv_connect_t*)Alloc(sizeof(uv_connect_t));
-	return uv_tcp_connect(req, handle, addr, cb);
+	auto r = uv_tcp_connect(req, handle, addr, cb);
+	if (r) Free(req);
+	return r;
 }
 
 

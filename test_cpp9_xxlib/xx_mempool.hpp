@@ -86,10 +86,10 @@ namespace xx
 
 
 	template<typename T, typename ...Args>
-	Ptr<T> MemPool::Create(Args &&... args)
+	T* MemPool::CreateNativePointer(Args &&... args)
 	{
 		auto p = Alloc<MemHeader_Object>(sizeof(T));
-		if (!p) return Ptr<T>();
+		if (!p) return nullptr;
 
 		// 继续填充 header
 		auto h = (MemHeader_Object*)p - 1;
@@ -98,7 +98,7 @@ namespace xx
 
 		try
 		{
-			return Ptr<T>(PlacementNew<T>(p, std::forward<Args>(args)...));
+			return PlacementNew<T>(p, std::forward<Args>(args)...);
 		}
 		catch (...)
 		{
@@ -108,14 +108,36 @@ namespace xx
 	}
 
 	template<typename T, typename ...Args>
-	bool MemPool::CreateTo(Ptr<T>& outPtr, Args &&... args)
+	Ptr<T> MemPool::Create(Args &&... args)
 	{
-		outPtr = Create<T>(std::forward<Args>(args)...);
-		return outPtr.pointer != nullptr;
+		return Ptr<T>(CreateNativePointer<T>(std::forward<Args>(args)...));
 	}
 
 
+	template<typename T, typename ...Args>
+	bool MemPool::CreateTo(T*& outPtr, Args &&... args)
+	{
+		outPtr = CreateNativePointer<T>(std::forward<Args>(args)...);
+		return outPtr;
+	}
 
+	template<typename T, typename ...Args>
+	bool MemPool::CreateTo(Ptr<T>& outPtr, Args &&... args)
+	{
+		outPtr = Create<T>(std::forward<Args>(args)...);
+		return outPtr.pointer;
+	}
+
+
+	inline void MemPool::Release(Object* o)
+	{
+		if (!o) return;
+		if (--o->memHeader().refs == 0)
+		{
+			o->~Object();
+			Free<MemHeader_Object>(o);
+		}
+	}
 
 
 
@@ -348,12 +370,7 @@ namespace xx
 	{
 		if (pointer)
 		{
-			if (--pointer->memHeader().refs == 0)
-			{
-				auto mp = pointer->mempool;
-				pointer->~T();
-				mp->Free<MemHeader_Object>(pointer);
-			}
+			pointer->mempool->Release(pointer);
 			pointer = nullptr;
 		}
 	}
