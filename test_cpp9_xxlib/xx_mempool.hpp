@@ -132,11 +132,8 @@ namespace xx
 	inline void MemPool::Release(Object* o)
 	{
 		if (!o) return;
-		if (--o->memHeader().refs == 0)
-		{
-			o->~Object();
-			Free<MemHeader_Object>(o);
-		}
+		o->~Object();
+		Free<MemHeader_Object>(o);
 	}
 
 
@@ -370,7 +367,12 @@ namespace xx
 	{
 		if (pointer)
 		{
-			pointer->mempool->Release(pointer);
+			if (--pointer->memHeader().refs == 0)
+			{
+				auto mp = pointer->mempool;
+				pointer->~T();
+				mp->Free<MemHeader_Object>(pointer);
+			}
 			pointer = nullptr;
 		}
 	}
@@ -531,4 +533,4 @@ namespace xx
 		return os << o.Lock();
 	}
 
-}
+	}

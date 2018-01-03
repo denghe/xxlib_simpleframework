@@ -29,24 +29,24 @@ size_t _countof(T const (&arr)[N])
 #endif
 
 
-inline static void* Alloc(xx::MemPool* mp, size_t size, void* ud)
+static void* Alloc(xx::MemPool* mp, size_t size, void* ud)
 {
 	auto p = (void**)mp->Alloc(size + sizeof(void*));
 	p[0] = ud;
 	return &p[1];
 }
 
-inline static void* Alloc(xx::MemPool* mp, size_t size)
+static void* Alloc(xx::MemPool* mp, size_t size)
 {
 	return (void**)mp->Alloc(size + sizeof(void*)) + 1;
 }
 
-inline static void Free(xx::MemPool* mp, void* p) noexcept
+static void Free(xx::MemPool* mp, void* p) noexcept
 {
 	mp->Free((void**)p - 1);
 }
 
-inline static void Close(uv_handle_t* p) noexcept
+static void Close(uv_handle_t* p) noexcept
 {
 	if (uv_is_closing(p)) return;
 	uv_close(p, [](uv_handle_t* h)
@@ -55,7 +55,7 @@ inline static void Close(uv_handle_t* p) noexcept
 	});
 }
 
-inline static int uv_write_(void* stream, char* inBuf, uint32_t len) noexcept
+static int uv_write_(void* stream, char* inBuf, uint32_t len) noexcept
 {
 	struct write_req_t
 	{
@@ -96,12 +96,11 @@ int uv_fill_client_ip(uv_tcp_t* stream, char* buf, int buf_len, int* data_len) n
 
 
 
-inline xx::UvLoop::UvLoop(uint64_t rpcIntervalMS, int rpcDefaultInterval)
+xx::UvLoop::UvLoop(uint64_t rpcIntervalMS, int rpcDefaultInterval)
 	: listeners(&mp)
 	, clients(&mp)
 	, timers(&mp)
 	, asyncs(&mp)
-	, rpcMgr(&mp, *this, rpcIntervalMS, rpcDefaultInterval)
 {
 	ptr = Alloc(&mp, sizeof(uv_loop_t));
 	if (!ptr) throw - 1;
@@ -112,11 +111,15 @@ inline xx::UvLoop::UvLoop(uint64_t rpcIntervalMS, int rpcDefaultInterval)
 		throw r;
 	}
 	((uv_loop_t*)ptr)->data = &mp;
+
+	mp.CreateTo(rpcMgr, *this, rpcIntervalMS, rpcDefaultInterval);
 }
 
-inline xx::UvLoop::~UvLoop()
+xx::UvLoop::~UvLoop()
 {
 	assert(ptr);
+	mp.Release(rpcMgr);
+	rpcMgr = nullptr;
 	listeners.ForEachRevert([&mp = mp](auto& o) { mp.Release(o); });
 	clients.ForEachRevert([&mp = mp](auto& o) { mp.Release(o); });
 	timers.ForEachRevert([&mp = mp](auto& o) { mp.Release(o); });
@@ -131,21 +134,20 @@ inline xx::UvLoop::~UvLoop()
 	ptr = nullptr;
 }
 
-inline void xx::UvLoop::Run(int mode)
+void xx::UvLoop::Run(int mode)
 {
 	if (int r = uv_run((uv_loop_t*)ptr, (uv_run_mode)mode)) throw r;
 }
 
-inline void xx::UvLoop::Stop()
+void xx::UvLoop::Stop()
 {
 	uv_stop((uv_loop_t*)ptr);
 }
 
-inline bool xx::UvLoop::alive() const
+bool xx::UvLoop::alive() const
 {
 	return uv_loop_alive((uv_loop_t*)ptr) != 0;
 }
-
 
 xx::UvTcpListener* xx::UvLoop::CreateTcpListener()
 {
@@ -169,17 +171,35 @@ xx::UvAsync* xx::UvLoop::CreateAsync()
 
 
 
-inline xx::UvTcpListener::UvTcpListener(MemPool* mp, UvLoop& loop)
+
+
+xx::UvTcpListener::UvTcpListener(MemPool* mp, UvLoop& loop)
 	: Object(mp)
 	, loop(loop)
 	, peers(&loop.mp)
 {
-	if (int r = uv_tcp_init((uv_loop_t*)loop.ptr, (uv_tcp_t*)ptr)) throw r;
+	ptr = Alloc(mp, sizeof(uv_loop_t));
+	if (!ptr) throw - 1;
+
+	if (int r = uv_tcp_init((uv_loop_t*)loop.ptr, (uv_tcp_t*)ptr))
+	{
+		Free(mp, ptr);
+		ptr = nullptr;
+	}
+
+	addrPtr = Alloc(mp, sizeof(sockaddr_in));
+	if (!addrPtr)
+	{
+		Close((uv_handle_t*)ptr);
+		ptr = nullptr;
+		throw - 1;
+	}
+
 	index_at_container = loop.listeners.dataLen;
 	loop.listeners.Add(this);
 }
 
-inline xx::UvTcpListener::~UvTcpListener()
+xx::UvTcpListener::~UvTcpListener()
 {
 	peers.ForEachRevert([&mp = loop.mp](auto& o) { mp.Release(o); });
 	Close((uv_handle_t*)ptr);
@@ -188,7 +208,7 @@ inline xx::UvTcpListener::~UvTcpListener()
 	addrPtr = nullptr;
 }
 
-inline void xx::UvTcpListener::OnAcceptCB(void* server, int status)
+void xx::UvTcpListener::OnAcceptCB(void* server, int status)
 {
 	if (status != 0) return;
 	auto listener = *((UvTcpListener**)server - 1);
@@ -205,12 +225,12 @@ inline void xx::UvTcpListener::OnAcceptCB(void* server, int status)
 	if (peer && listener->OnAccept) listener->OnAccept(peer);
 }
 
-inline void xx::UvTcpListener::Listen(int backlog)
+void xx::UvTcpListener::Listen(int backlog)
 {
 	if (int r = uv_listen((uv_stream_t*)ptr, backlog, (uv_connection_cb)OnAcceptCB)) throw r;
 }
 
-inline void xx::UvTcpListener::Bind(char const * const & ipv4, int port)
+void xx::UvTcpListener::Bind(char const * const & ipv4, int port)
 {
 	if (int r = uv_ip4_addr(ipv4, port, (sockaddr_in*)addrPtr)) throw r;
 	if (int r = uv_tcp_bind((uv_tcp_t*)ptr, (sockaddr*)addrPtr, 0)) throw r;
@@ -222,44 +242,46 @@ inline void xx::UvTcpListener::Bind(char const * const & ipv4, int port)
 
 
 
-inline xx::UvTimerBase::UvTimerBase(MemPool* mp)
+
+
+xx::UvTimerBase::UvTimerBase(MemPool* mp)
 	: Object(mp)
 {
 
 }
 
-inline void xx::UvTimerBase::TimerClear()
+void xx::UvTimerBase::TimerClear()
 {
 	timerPrev = nullptr;
 	timerNext = nullptr;
 	timerIndex = -1;
 }
 
-inline void xx::UvTimerBase::TimeoutReset(int interval)
+void xx::UvTimerBase::TimeoutReset(int interval)
 {
 	if (!timerManager) throw - 1;
 	timerManager->AddOrUpdate(this, interval);
 }
 
-inline void xx::UvTimerBase::TimerStop()
+void xx::UvTimerBase::TimerStop()
 {
 	if (!timerManager) throw - 1;
 	if (timering()) timerManager->Remove(this);
 }
 
-inline void xx::UvTimerBase::BindTo(UvTimeouter* tm)
+void xx::UvTimerBase::BindTo(UvTimeouter* tm)
 {
 	if (timerManager) throw - 1;
 	timerManager = tm;
 }
 
-inline void xx::UvTimerBase::UnbindTimerManager()
+void xx::UvTimerBase::UnbindTimerManager()
 {
 	if (timering()) timerManager->Remove(this);
 	timerManager = nullptr;
 }
 
-inline bool xx::UvTimerBase::timering()
+bool xx::UvTimerBase::timering()
 {
 	return timerManager && (timerIndex != -1 || timerPrev);
 }
@@ -275,7 +297,7 @@ inline bool xx::UvTimerBase::timering()
 
 
 
-inline xx::UvTimer::UvTimer(MemPool* mp, UvLoop & loop, uint64_t timeoutMS, uint64_t repeatIntervalMS, std::function<void()>&& OnFire)
+xx::UvTimer::UvTimer(MemPool* mp, UvLoop & loop, uint64_t timeoutMS, uint64_t repeatIntervalMS, std::function<void()>&& OnFire)
 	: Object(mp)
 	, OnFire(std::move(OnFire))
 	, loop(loop)
@@ -300,32 +322,32 @@ inline xx::UvTimer::UvTimer(MemPool* mp, UvLoop & loop, uint64_t timeoutMS, uint
 	loop.timers.Add(this);
 }
 
-inline xx::UvTimer::~UvTimer()
+xx::UvTimer::~UvTimer()
 {
 	Close((uv_handle_t*)ptr);
 	ptr = nullptr;
 	loop.timers.SwapRemoveAt(index_at_container);
 }
 
-inline void xx::UvTimer::OnTimerCBImpl(void * handle)
+void xx::UvTimer::OnTimerCBImpl(void * handle)
 {
 	auto timer = *((UvTimer**)handle - 1);
 	timer->OnFire();
 }
 
-inline void xx::UvTimer::SetRepeat(uint64_t repeatIntervalMS)
+void xx::UvTimer::SetRepeat(uint64_t repeatIntervalMS)
 {
 	if (!ptr) throw - 1;
 	uv_timer_set_repeat((uv_timer_t*)ptr, repeatIntervalMS);
 }
 
-inline void xx::UvTimer::Again()
+void xx::UvTimer::Again()
 {
 	if (!ptr) throw - 1;
 	if (int r = uv_timer_again((uv_timer_t*)ptr)) throw r;
 }
 
-inline void xx::UvTimer::Stop()
+void xx::UvTimer::Stop()
 {
 	if (!ptr) throw - 1;
 	if (int r = uv_timer_stop((uv_timer_t*)ptr)) throw r;
@@ -339,7 +361,7 @@ inline void xx::UvTimer::Stop()
 
 
 
-inline xx::UvTimeouter::UvTimeouter(MemPool* mp, UvLoop& loop, uint64_t intervalMS, int wheelLen, int defaultInterval)
+xx::UvTimeouter::UvTimeouter(MemPool* mp, UvLoop& loop, uint64_t intervalMS, int wheelLen, int defaultInterval)
 	: Object(mp)
 	, timer(mp, loop, 0, intervalMS, [this] { Process(); })
 	, timerss(&loop.mp)
@@ -348,7 +370,7 @@ inline xx::UvTimeouter::UvTimeouter(MemPool* mp, UvLoop& loop, uint64_t interval
 	this->defaultInterval = defaultInterval;
 }
 
-inline void xx::UvTimeouter::Process()
+void xx::UvTimeouter::Process()
 {
 	auto t = timerss[cursor];
 	while (t)
@@ -363,7 +385,7 @@ inline void xx::UvTimeouter::Process()
 	if (cursor == timerss.dataLen) cursor = 0;
 }
 
-inline void xx::UvTimeouter::Clear()
+void xx::UvTimeouter::Clear()
 {
 	for (int i = 0; i < timerss.dataLen; ++i)
 	{
@@ -379,7 +401,7 @@ inline void xx::UvTimeouter::Clear()
 	cursor = 0;
 }
 
-inline void xx::UvTimeouter::Add(UvTimerBase * t, int interval)
+void xx::UvTimeouter::Add(UvTimerBase * t, int interval)
 {
 	if (t->timering()) throw - 1;
 	auto timerssLen = (int)timerss.dataLen;
@@ -399,7 +421,7 @@ inline void xx::UvTimeouter::Add(UvTimerBase * t, int interval)
 	timerss[interval] = t;
 }
 
-inline void xx::UvTimeouter::Remove(UvTimerBase * t)
+void xx::UvTimeouter::Remove(UvTimerBase * t)
 {
 	if (!t->timering()) throw - 1;
 	if (t->timerNext) t->timerNext->timerPrev = t->timerPrev;
@@ -408,7 +430,7 @@ inline void xx::UvTimeouter::Remove(UvTimerBase * t)
 	t->TimerClear();
 }
 
-inline void xx::UvTimeouter::AddOrUpdate(UvTimerBase * t, int interval)
+void xx::UvTimeouter::AddOrUpdate(UvTimerBase * t, int interval)
 {
 	if (t->timering()) Remove(t);
 	Add(t, interval);
@@ -423,7 +445,7 @@ inline void xx::UvTimeouter::AddOrUpdate(UvTimerBase * t, int interval)
 
 
 
-inline xx::UvTcpBase::UvTcpBase(MemPool* mp, UvLoop& loop)
+xx::UvTcpBase::UvTcpBase(MemPool* mp, UvLoop& loop)
 	: UvTimerBase(mp)
 	, loop(loop)
 	, bbRecv(mp)
@@ -431,7 +453,7 @@ inline xx::UvTcpBase::UvTcpBase(MemPool* mp, UvLoop& loop)
 {
 }
 
-inline void xx::UvTcpBase::OnReadCBImpl(void * stream, ptrdiff_t nread, const void * buf_t)
+void xx::UvTcpBase::OnReadCBImpl(void * stream, ptrdiff_t nread, const void * buf_t)
 {
 	auto tcp = *((UvTcpBase**)stream - 1);
 	auto mp = &tcp->loop.mp;
@@ -448,7 +470,7 @@ inline void xx::UvTcpBase::OnReadCBImpl(void * stream, ptrdiff_t nread, const vo
 	}
 }
 
-inline void xx::UvTcpBase::OnReceiveImpl(char const * bufPtr, int len)
+void xx::UvTcpBase::OnReceiveImpl(char const * bufPtr, int len)
 {
 	bbRecv.WriteBuf(bufPtr, len);
 
@@ -488,7 +510,7 @@ inline void xx::UvTcpBase::OnReceiveImpl(char const * bufPtr, int len)
 			}
 			else if (typeId == 2)
 			{
-				loop.rpcMgr.Callback(serial, &bbRecv);
+				loop.rpcMgr->Callback(serial, &bbRecv);
 				if (!ptr) return;
 			}
 		}
@@ -501,13 +523,13 @@ inline void xx::UvTcpBase::OnReceiveImpl(char const * bufPtr, int len)
 	bbRecv.dataLen -= offset;
 }
 
-inline void xx::UvTcpBase::SendBytes(char * inBuf, int len)
+void xx::UvTcpBase::SendBytes(char * inBuf, int len)
 {
 	if (!ptr || !inBuf || !len) throw - 1;
 	if (int r = uv_write_(ptr, inBuf, len)) throw r;
 }
 
-inline void xx::UvTcpBase::SendBytes(BBuffer const & bb)
+void xx::UvTcpBase::SendBytes(BBuffer const & bb)
 {
 	if (!ptr || !bb.dataLen) throw - 1;
 	if (int r = uv_write_(ptr, bb.buf, (int)bb.dataLen)) throw r;
@@ -523,12 +545,12 @@ inline void xx::UvTcpBase::SendBytes(BBuffer const & bb)
 
 
 
-inline bool xx::UvTcpPeer::alive() const
+bool xx::UvTcpPeer::alive() const
 {
 	return ptr;
 }
 
-inline xx::UvTcpPeer::UvTcpPeer(MemPool* mp, UvTcpListener & listener)
+xx::UvTcpPeer::UvTcpPeer(MemPool* mp, UvTcpListener & listener)
 	: UvTcpBase(mp, listener.loop)
 	, listener(listener)
 {
@@ -574,17 +596,17 @@ inline xx::UvTcpPeer::UvTcpPeer(MemPool* mp, UvTcpListener & listener)
 	listener.peers.Add(this);
 }
 
-inline xx::UvTcpPeer::~UvTcpPeer()
+xx::UvTcpPeer::~UvTcpPeer()
 {
 	Dispose();
 }
 
-inline void xx::UvTcpPeer::DisconnectImpl()
+void xx::UvTcpPeer::DisconnectImpl()
 {
 	Dispose();
 }
 
-inline void xx::UvTcpPeer::Dispose()
+void xx::UvTcpPeer::Dispose()
 {
 	if (!ptr) return;
 	Close((uv_handle_t*)ptr);
@@ -595,7 +617,7 @@ inline void xx::UvTcpPeer::Dispose()
 	listener.peers.SwapRemoveAt(index_at_container);
 }
 
-inline char* xx::UvTcpPeer::ip()
+char* xx::UvTcpPeer::ip()
 {
 	if (!ptr) throw - 1;
 	if (ipBuf[0]) return ipBuf.data();
@@ -615,12 +637,12 @@ inline char* xx::UvTcpPeer::ip()
 
 
 
-inline bool xx::UvTcpClient::alive() const
+bool xx::UvTcpClient::alive() const
 {
 	return ptr && state == UvTcpStates::Connected;
 }
 
-inline xx::UvTcpClient::UvTcpClient(MemPool* mp, UvLoop& loop)
+xx::UvTcpClient::UvTcpClient(MemPool* mp, UvLoop& loop)
 	: UvTcpBase(mp, loop)
 {
 	addrPtr = Alloc(&loop.mp, sizeof(sockaddr_in));
@@ -630,13 +652,13 @@ inline xx::UvTcpClient::UvTcpClient(MemPool* mp, UvLoop& loop)
 	loop.clients.Add(this);
 }
 
-inline void xx::UvTcpClient::SetAddress(char const* const& ipv4, int port)
+void xx::UvTcpClient::SetAddress(char const* const& ipv4, int port)
 {
 	if (!ptr) throw - 1;
 	if (int r = uv_ip4_addr(ipv4, port, (sockaddr_in*)addrPtr))throw r;
 }
 
-inline void xx::UvTcpClient::OnConnectCBImpl(void* req, int status)
+void xx::UvTcpClient::OnConnectCBImpl(void* req, int status)
 {
 	auto client = *((UvTcpClient**)req - 1);
 	Free(&client->loop.mp, req);
@@ -657,7 +679,7 @@ inline void xx::UvTcpClient::OnConnectCBImpl(void* req, int status)
 	if (client->OnConnect) client->OnConnect(status);
 }
 
-inline void xx::UvTcpClient::Connect()
+void xx::UvTcpClient::Connect()
 {
 	if (!ptr) throw - 1;
 	if (state != UvTcpStates::Disconnected) throw - 2;
@@ -684,7 +706,7 @@ inline void xx::UvTcpClient::Connect()
 	state = UvTcpStates::Connecting;
 }
 
-inline void xx::UvTcpClient::Disconnect()
+void xx::UvTcpClient::Disconnect()
 {
 	if (!ptr) throw - 1;
 	if (state == UvTcpStates::Disconnected) return;
@@ -693,13 +715,13 @@ inline void xx::UvTcpClient::Disconnect()
 	state = UvTcpStates::Disconnected;
 }
 
-inline void xx::UvTcpClient::DisconnectImpl()
+void xx::UvTcpClient::DisconnectImpl()
 {
 	Disconnect();
 	if (OnDisconnect) OnDisconnect();
 }
 
-inline void xx::UvTcpClient::Dispose()
+void xx::UvTcpClient::Dispose()
 {
 	if (!ptr) return;
 	state = UvTcpStates::Disconnected;
@@ -725,7 +747,7 @@ inline void xx::UvTcpClient::Dispose()
 
 
 
-inline xx::UvAsync::UvAsync(MemPool* mp, UvLoop & loop)
+xx::UvAsync::UvAsync(MemPool* mp, UvLoop & loop)
 	: Object(mp)
 	, loop(loop)
 	, actions(mp)
@@ -744,13 +766,13 @@ inline xx::UvAsync::UvAsync(MemPool* mp, UvLoop & loop)
 	loop.asyncs.Add(this);
 }
 
-inline void xx::UvAsync::OnAsyncCBImpl(void * handle)
+void xx::UvAsync::OnAsyncCBImpl(void * handle)
 {
 	auto self = *((UvAsync**)handle - 1);
 	self->OnFire();
 }
 
-inline void xx::UvAsync::Dispatch(std::function<void()>&& a)
+void xx::UvAsync::Dispatch(std::function<void()>&& a)
 {
 	if (!ptr) throw - 1;
 	{
@@ -760,7 +782,7 @@ inline void xx::UvAsync::Dispatch(std::function<void()>&& a)
 	if (int r = uv_async_send((uv_async_t*)ptr)) throw r;
 }
 
-inline void xx::UvAsync::OnFireImpl()
+void xx::UvAsync::OnFireImpl()
 {
 	std::function<void()> a;
 	while (true)
@@ -773,7 +795,7 @@ inline void xx::UvAsync::OnFireImpl()
 	}
 }
 
-inline void xx::UvAsync::Dispose()
+void xx::UvAsync::Dispose()
 {
 	if (!ptr) return;
 	if (OnDispose) OnDispose();
@@ -784,7 +806,7 @@ inline void xx::UvAsync::Dispose()
 	loop.asyncs.SwapRemoveAt(index_at_container);
 }
 
-inline xx::UvAsync::~UvAsync()
+xx::UvAsync::~UvAsync()
 {
 	Dispose();
 }
@@ -798,12 +820,12 @@ inline xx::UvAsync::~UvAsync()
 
 
 
-inline size_t xx::UvRpcManager::Count()
+size_t xx::UvRpcManager::Count()
 {
 	return serials.Count();
 }
 
-inline xx::UvRpcManager::UvRpcManager(MemPool* mp, UvLoop& loop, uint64_t intervalMS, int defaultInterval)
+xx::UvRpcManager::UvRpcManager(MemPool* mp, UvLoop& loop, uint64_t intervalMS, int defaultInterval)
 	: Object(mp)
 	, timer(mp, loop, 0, intervalMS, [this] { Process(); })
 	, mapping(mp)
@@ -815,7 +837,7 @@ inline xx::UvRpcManager::UvRpcManager(MemPool* mp, UvLoop& loop, uint64_t interv
 	if (defaultInterval <= 0) throw - 1;
 }
 
-inline void xx::UvRpcManager::Process()
+void xx::UvRpcManager::Process()
 {
 	++ticks;
 	if (serials.Empty()) return;
@@ -832,7 +854,7 @@ inline void xx::UvRpcManager::Process()
 	}
 }
 
-inline uint32_t xx::UvRpcManager::Register(std::function<void(uint32_t, BBuffer*)>&& cb, int interval)
+uint32_t xx::UvRpcManager::Register(std::function<void(uint32_t, BBuffer*)>&& cb, int interval)
 {
 	if (interval == 0) interval = defaultInterval;
 	++serial;
@@ -841,12 +863,12 @@ inline uint32_t xx::UvRpcManager::Register(std::function<void(uint32_t, BBuffer*
 	return serial;
 }
 
-inline void xx::UvRpcManager::Unregister(uint32_t serial)
+void xx::UvRpcManager::Unregister(uint32_t serial)
 {
 	mapping.Remove(serial);
 }
 
-inline void xx::UvRpcManager::Callback(uint32_t serial, BBuffer* bb)
+void xx::UvRpcManager::Callback(uint32_t serial, BBuffer* bb)
 {
 	int idx = mapping.Find(serial);
 	if (idx == -1) return;

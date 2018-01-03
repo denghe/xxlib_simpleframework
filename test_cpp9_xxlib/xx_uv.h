@@ -63,10 +63,10 @@ namespace xx
 		List<UvTcpClient*> clients;
 		List<UvTimer*> timers;
 		List<UvAsync*> asyncs;
-		UvRpcManager rpcMgr;
+		UvRpcManager* rpcMgr;
 
 		void* ptr;
-		UvLoop(uint64_t rpcIntervalMS = 1000, int rpcDefaultInterval = 5);
+		explicit UvLoop(uint64_t rpcIntervalMS = 1000, int rpcDefaultInterval = 5);
 		~UvLoop();
 		void Run(int mode);
 		void Stop();
