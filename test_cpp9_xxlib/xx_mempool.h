@@ -169,6 +169,7 @@ namespace xx
 		Object(MemPool* mempool) noexcept;
 		Object(BBuffer* bb) noexcept;
 		virtual ~Object() noexcept;
+		void Release();
 
 		MemHeader_Object& memHeader() noexcept;
 		MemHeader_Object& memHeader() const noexcept;
@@ -224,7 +225,7 @@ namespace xx
 		template<typename O>
 		void Assign(Ptr<O>&& o) noexcept;
 
-		void Release();
+		void Clear();
 		~Ptr();
 
 		template<typename O>
@@ -273,6 +274,9 @@ namespace xx
 		decltype(MemHeader::versionNumber) versionNumber;
 
 		Ref() noexcept;
+
+		template<typename O>
+		Ref(O* const& o) noexcept;
 
 		template<typename O>
 		Ref(Ptr<O> const& o) noexcept;

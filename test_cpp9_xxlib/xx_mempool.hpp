@@ -254,6 +254,11 @@ namespace xx
 
 	inline Object::~Object() noexcept {}
 
+	inline void Object::Release()
+	{
+		mempool->Release(this);
+	}
+
 	inline MemHeader_Object& Object::memHeader() noexcept { return *((MemHeader_Object*)this - 1); }
 	inline MemHeader_Object& Object::memHeader() const noexcept { return *((MemHeader_Object*)this - 1); }
 
@@ -293,7 +298,7 @@ namespace xx
 	Ptr<T>& Ptr<T>::operator=(O* const& o) noexcept
 	{
 		static_assert(std::is_base_of_v<T, O>);
-		Release();
+		Clear();
 		pointer = o;
 		if (pointer)
 		{
@@ -356,14 +361,14 @@ namespace xx
 	void Ptr<T>::Assign(Ptr<O>&& o) noexcept
 	{
 		static_assert(std::is_base_of_v<T, O>);
-		Release();
+		Clear();
 		pointer = o.pointer;
 		o.pointer = nullptr;
 	}
 
 
 	template<typename T>
-	void Ptr<T>::Release()
+	void Ptr<T>::Clear()
 	{
 		if (pointer)
 		{
@@ -380,7 +385,7 @@ namespace xx
 	template<typename T>
 	Ptr<T>::~Ptr()
 	{
-		Release();
+		Clear();
 	}
 
 
@@ -437,6 +442,15 @@ namespace xx
 		: pointer(nullptr)
 		, versionNumber(0)
 	{}
+
+	template<typename T>
+	template<typename O>
+	Ref<T>::Ref(O* const& o) noexcept
+		: pointer(o)
+	{
+		static_assert(std::is_base_of_v<T, O>);
+		versionNumber = o ? o->memHeader().versionNumber : 0;
+	}
 
 	template<typename T>
 	template<typename O>

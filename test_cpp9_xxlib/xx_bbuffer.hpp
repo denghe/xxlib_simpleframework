@@ -308,4 +308,9 @@ namespace xx
 	}
 
 
+	inline int BBuffer::ReadPackage(Object_p& outPkg)
+	{
+		return ReadRoot(outPkg);
+	}
+
 }

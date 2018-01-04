@@ -21,6 +21,13 @@ namespace xx
 		Disconnecting,
 	};
 
+	enum class UvRunMode
+	{
+		Default,
+		Once,
+		NoWait
+	};
+
 	class UvTimer : public Object
 	{
 	public:
@@ -68,7 +75,7 @@ namespace xx
 		void* ptr;
 		explicit UvLoop(uint64_t rpcIntervalMS = 1000, int rpcDefaultInterval = 5);
 		~UvLoop();
-		void Run(int mode);
+		void Run(UvRunMode mode = UvRunMode::Default);
 		void Stop();
 		bool alive() const;
 
@@ -76,6 +83,7 @@ namespace xx
 		UvTcpClient* CreateClient();
 		UvTimer* CreateTimer(uint64_t timeoutMS, uint64_t repeatIntervalMS, std::function<void()>&& OnFire = nullptr);
 		UvAsync* CreateAsync();
+		UvTimeouter* CreateTimeouter(uint64_t intervalMS = 1000, int wheelLen = 6, int defaultInterval = 5);
 	};
 
 	class UvTcpListener : public Object
@@ -102,7 +110,7 @@ namespace xx
 	{
 	public:
 		UvTimerBase(MemPool* mp);
-		UvTimeouter* timerManager;
+		UvTimeouter* timerManager = nullptr;
 		UvTimerBase* timerPrev = nullptr;
 		UvTimerBase* timerNext = nullptr;
 		int timerIndex = -1;
@@ -145,6 +153,7 @@ namespace xx
 
 		void* ptr;
 		void* addrPtr;
+		Ref<UvTcpBase> self;	// for release check
 		UvTcpBase(MemPool* mp, UvLoop& loop);
 
 		virtual void DisconnectImpl() = 0;
@@ -183,7 +192,7 @@ namespace xx
 		std::function<void(int)> OnConnect;
 		std::function<void()> OnDisconnect;
 
-		UvTcpStates state;
+		UvTcpStates state = UvTcpStates::Disconnected;
 		bool alive() const;
 		UvTcpClient(MemPool* mp, UvLoop& loop);
 		void SetAddress(char const* const& ipv4, int port);
@@ -220,7 +229,7 @@ namespace xx
 		bbSend.Clear();
 		bbSend.BeginWritePackage();
 		bbSend.WriteRoot(pkg);
-		bbSend.EndWritePackageEx();
+		bbSend.EndWritePackage();
 		SendBytes(bbSend);
 	}
 

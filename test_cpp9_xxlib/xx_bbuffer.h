@@ -113,6 +113,9 @@ namespace xx
 		// 队列版并不清除原有数据, 乃是追加. 如果出错, 也不会回滚.
 		int ReadPackages(Queue<Object_p>& outPkgs);
 
+		// 试读出单个包( 等同于 ReadRoot )
+		int ReadPackage(Object_p& outPkg);
+
 	};
 
 

@@ -284,7 +284,11 @@ namespace xx
                 if (typeId == 0)
                 {
                     if (OnReceivePackage != null) OnReceivePackage(bbRecv);
-                    if (disposed) return;
+                    if (ptr == IntPtr.Zero)
+                    {
+                        bbRecv.Clear();
+                        return;
+                    }
                 }
                 else
                 {
@@ -297,12 +301,20 @@ namespace xx
                     if (typeId == 1)
                     {
                         if (OnReceiveRequest != null) OnReceiveRequest(serial, bbRecv);
-                        if (disposed) return;
+                        if (ptr == IntPtr.Zero)
+                        {
+                            bbRecv.Clear();
+                            return;
+                        }
                     }
                     else if (typeId == 2)
                     {
                         loop.rpcMgr.Callback(serial, bbRecv);
-                        if (disposed) return;
+                        if (ptr == IntPtr.Zero)
+                        {
+                            bbRecv.Clear();
+                            return;
+                        }
                     }
                 }
                 offset += dataLen;                          // 继续处理剩余数据

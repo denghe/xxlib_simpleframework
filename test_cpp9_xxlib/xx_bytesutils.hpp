@@ -384,7 +384,7 @@ namespace xx
 		}
 		static inline void WriteTo(BBuffer& bb, T const &in)
 		{
-			bb.WritePtr(v.pointer);
+			bb.WritePtr(in.pointer);
 		}
 		static inline int ReadFrom(BBuffer& bb, T &out)
 		{
