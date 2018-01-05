@@ -1,0 +1,103 @@
+﻿#include <uv.h>
+#include <iostream>
+#include <thread>
+#include "ikcp.h"	// todo
+#include "xx.h"
+
+//xx::MemPool mp;
+uint64_t recvCounter = 0;
+uint64_t sendCounter = 0;
+void f1()
+{
+	uv_loop_t loop;
+	if (int r = uv_loop_init(&loop)) throw r;
+	uv_udp_t udp;
+	if (int r = uv_udp_init(&loop, &udp)) throw r;
+	sockaddr_in addr;
+	if (int r = uv_ip4_addr("0.0.0.0", 12345, &addr)) throw r;
+	if (int r = uv_udp_bind(&udp, (sockaddr*)&addr, UV_UDP_REUSEADDR)) throw r;
+	if (int r = uv_udp_recv_start(&udp, [](uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf)
+	{
+		//buf->base = (char*)mp.Alloc(suggested_size);
+		buf->base = (char*)malloc(suggested_size);
+		buf->len = (decltype(buf->len))suggested_size;
+
+	}, [](uv_udp_t *req, ssize_t nread, const uv_buf_t *buf, const sockaddr *addr, unsigned flags)
+	{
+		if (nread < 0) {
+			fprintf(stderr, "Read error %s\n", uv_err_name((int)nread));
+			uv_close((uv_handle_t*)req, NULL);
+			//mp.Free(buf->base);
+			free(buf->base);
+			return;
+		}
+
+		//char sender[17] = { 0 };
+		//uv_ip4_name((sockaddr_in*)addr, sender, 16);
+		//fprintf(stderr, "Recv from %s:%d\n", sender, (int)((sockaddr_in*)addr)->sin_port);
+
+		// todo: echo?
+
+		//std::cout << "nread = " << nread << std::endl;
+		//mp.Free(buf->base);
+		free(buf->base);
+		//uv_udp_recv_stop(req);
+
+		++recvCounter;
+
+	})) throw r;
+
+	uv_timer_t timer;
+	if (int r = uv_timer_init(&loop, &timer)) throw r;
+	uv_timer_start(&timer, [](uv_timer_t* handle)
+	{
+		std::cout << "recvCounter = " << recvCounter << std::endl;
+	}, 1000, 1000);
+
+	uv_run(&loop, UV_RUN_DEFAULT);
+}
+
+
+sockaddr_in addr;
+uv_udp_t udp;
+uv_buf_t buf;
+void SendCB(uv_udp_send_t *req, int status)
+{
+	if (status)
+	{
+		fprintf(stderr, "Send error %s\n", uv_strerror(status));
+		return;
+	}
+	if (int r = uv_udp_send(req, &udp, &buf, 1, (sockaddr*)&addr, SendCB)) throw r;
+	++sendCounter;
+}
+void f2()
+{
+	std::this_thread::sleep_for(std::chrono::milliseconds(100));
+	uv_loop_t loop;
+	if (int r = uv_loop_init(&loop)) throw r;
+	if (int r = uv_udp_init(&loop, &udp)) throw r;
+	if (int r = uv_ip4_addr("127.0.0.1", 12345, &addr)) throw r;
+	buf.len = 1;
+	buf.base = (char*)malloc(buf.len);
+	uv_udp_send_t req;
+	SendCB(&req, 0);
+
+	uv_timer_t timer;
+	if (int r = uv_timer_init(&loop, &timer)) throw r;
+	uv_timer_start(&timer, [](uv_timer_t* handle)
+	{
+		std::cout << "sendCounter = " << sendCounter << std::endl;
+	}, 1000, 1000);
+
+	uv_run(&loop, UV_RUN_DEFAULT);
+}
+
+#include <thread>
+int main()
+{
+	std::thread t(f2);
+	t.detach();
+	f1();
+	return 0;
+}

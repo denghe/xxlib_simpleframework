@@ -1,13 +1,11 @@
-﻿#include "xx_uv.h"
-#include <uv.h>
-
+﻿#include <uv.h>
 #ifdef min
 #undef min
 #endif
 #ifdef max
 #undef max
 #endif
-
+#include "xx_uv.h"
 
 #ifndef _countof
 template<typename T, size_t N>

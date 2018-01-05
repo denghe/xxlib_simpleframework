@@ -88,6 +88,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="ikcp.h" />
     <ClInclude Include="main.h" />
     <ClInclude Include="xx.h" />
     <ClInclude Include="xx_bbuffer.h" />
@@ -111,11 +112,14 @@
     <ClInclude Include="xx_uv.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ikcp.c" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="xx_uv.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="main.cpp.bak1" />
+    <None Include="main.cpp.bak2" />
+    <None Include="main.cpp.bak3" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
