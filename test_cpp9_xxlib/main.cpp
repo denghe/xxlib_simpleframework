@@ -139,10 +139,9 @@
 //}
 
 
-
-
-// todo: kcp.conv 如果用一个 int 循环自增, 似乎够用. 短时间内也不会出问题
-// 一开始的时候如何同步这个值?
+// todo: 现约定每个 udp 包前 16 字节为 Guid 用于上下文路由. 
+// 客户端自己生成 Guid, 直接与 server 做 kcp 通信
+// server 以 Guid 为 key 建字典, value 存放连接模拟上下文, 注册 timeouter 以便超时清理
 
 class Kcp
 {
@@ -153,17 +152,17 @@ public:
 	std::function<void(char const* buf, int len)> OnRecv;
 	char buf[65100];
 
-	explicit Kcp(int conv, IUINT32 interval = 10, xx::MemPool* mp = nullptr)
+	explicit Kcp(xx::Guid const& conv, IUINT32 interval = 10, xx::MemPool* mp = nullptr)
 		: interval(interval)
 	{
 		kcp = ikcp_create(conv, this, mp);
 		if (!kcp) throw - 1;
 		if (mp)
 		{
-			ikcp_allocator([](auto a, auto s) 
+			ikcp_allocator([](auto a, auto s)
 			{
 				return ((xx::MemPool*)a)->Alloc(s);
-			}, [](auto a, auto p) 
+			}, [](auto a, auto p)
 			{
 				((xx::MemPool*)a)->Free(p);
 			});
@@ -212,8 +211,9 @@ public:
 };
 
 xx::MemPool mp;
-Kcp kcp1(1);
-Kcp kcp2(1);
+xx::Guid guid;
+Kcp kcp1(guid);
+Kcp kcp2(guid);
 int main()
 {
 	kcp1.OnSend = [&](auto buf, auto len)

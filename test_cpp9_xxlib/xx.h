@@ -1,10 +1,4 @@
 ﻿#pragma once
-#ifdef min
-#undef min
-#endif
-#ifdef max
-#undef max
-#endif
 #include <cassert>
 #include <cstdio>
 #include <cstdint>
@@ -20,6 +14,21 @@
 #include <iostream>
 #ifdef _WIN32
 #include <intrin.h>     // _BitScanReverse  64
+#include <objbase.h>
+#else
+#include <uuid/uuid.h>
+typedef struct _GUID {
+	unsigned int   Data1;
+	unsigned short Data2;
+	unsigned short Data3;
+	unsigned char  Data4[8];
+} GUID;
+#endif
+#ifdef min
+#undef min
+#endif
+#ifdef max
+#undef max
 #endif
 
 #include "xx_mempool.h"
@@ -31,7 +40,8 @@
 #include "xx_string.h"
 #include "xx_bytesutils.h"
 #include "xx_bbuffer.h"
-
+#include "xx_guid.h"
+#include "xx_guid.h"
 
 #include "xx_mempool.hpp"
 #include "xx_list.hpp"
@@ -42,3 +52,5 @@
 #include "xx_string.hpp"
 #include "xx_bytesutils.hpp"
 #include "xx_bbuffer.hpp"
+
+

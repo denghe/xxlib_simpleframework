@@ -37,7 +37,7 @@ const IUINT32 IKCP_WND_RCV = 32;
 const IUINT32 IKCP_MTU_DEF = 1400;
 const IUINT32 IKCP_ACK_FAST	= 3;
 const IUINT32 IKCP_INTERVAL	= 100;
-const IUINT32 IKCP_OVERHEAD = 24;
+const IUINT32 IKCP_OVERHEAD = 36;//24;
 const IUINT32 IKCP_DEADLINK = 20;
 const IUINT32 IKCP_THRESH_INIT = 2;
 const IUINT32 IKCP_THRESH_MIN = 2;
@@ -118,6 +118,23 @@ static inline const char *ikcp_decode32u(const char *p, IUINT32 *l)
 	p += 4;
 	return p;
 }
+
+/* encode 128 bits Guid */
+static inline char *ikcp_encodeGuid(char *p, xx::Guid const& l)
+{
+	*(xx::Guid*)p = l;
+	p += 16;
+	return p;
+}
+
+/* decode 128 bits Guid */
+static inline const char *ikcp_decodeGuid(const char *p, xx::Guid *l)
+{
+	*l = *(const xx::Guid*)p;
+	p += 16;
+	return p;
+}
+
 
 static inline IUINT32 _imin_(IUINT32 a, IUINT32 b) {
 	return a <= b ? a : b;
@@ -230,7 +247,7 @@ void ikcp_qprint(const char *name, const struct IQUEUEHEAD *head)
 //---------------------------------------------------------------------
 // create a new kcpcb
 //---------------------------------------------------------------------
-ikcpcb* ikcp_create(IUINT32 conv, void *user, void* user2)
+ikcpcb* ikcp_create(xx::Guid const& conv, void *user, void* user2)
 {
 	ikcpcb *kcp = (ikcpcb*)ikcp_malloc(user2, sizeof(struct IKCPCB));
 	if (kcp == NULL) return NULL;
@@ -753,14 +770,15 @@ int ikcp_input(ikcpcb *kcp, const char *data, IINT32 size)
 	if (data == NULL || size < (IINT32)IKCP_OVERHEAD) return -1;
 
 	while (1) {
-		IUINT32 ts, sn, len, una, conv;
+		IUINT32 ts, sn, len, una;
+		xx::Guid conv(false);
 		IUINT16 wnd;
 		IUINT8 cmd, frg;
 		IKCPSEG *seg;
 
 		if (size < (IINT32)IKCP_OVERHEAD) break;
 
-		data = ikcp_decode32u(data, &conv);
+		data = ikcp_decodeGuid(data, &conv);
 		if (conv != kcp->conv) return -1;
 
 		data = ikcp_decode8u(data, &cmd);
@@ -886,7 +904,7 @@ int ikcp_input(ikcpcb *kcp, const char *data, IINT32 size)
 //---------------------------------------------------------------------
 static char *ikcp_encode_seg(char *ptr, const IKCPSEG *seg)
 {
-	ptr = ikcp_encode32u(ptr, seg->conv);
+	ptr = ikcp_encodeGuid(ptr, seg->conv);
 	ptr = ikcp_encode8u(ptr, (IUINT8)seg->cmd);
 	ptr = ikcp_encode8u(ptr, (IUINT8)seg->frg);
 	ptr = ikcp_encode16u(ptr, (IUINT16)seg->wnd);

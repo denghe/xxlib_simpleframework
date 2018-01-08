@@ -15,6 +15,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <assert.h>
+#include "xx.h"		// for Guid support, replace  conv
 
 
 //=====================================================================
@@ -256,7 +257,7 @@ typedef struct IQUEUEHEAD iqueue_head;
 struct IKCPSEG
 {
 	struct IQUEUEHEAD node;
-	IUINT32 conv;
+	xx::Guid conv;
 	IUINT32 cmd;
 	IUINT32 frg;
 	IUINT32 wnd;
@@ -277,7 +278,8 @@ struct IKCPSEG
 //---------------------------------------------------------------------
 struct IKCPCB
 {
-	IUINT32 conv, mtu, mss, state;
+	xx::Guid conv;
+	IUINT32 mtu, mss, state;
 	IUINT32 snd_una, snd_nxt, rcv_nxt;
 	IUINT32 ts_recent, ts_lastack, ssthresh;
 	IINT32 rx_rttval, rx_srtt, rx_rto, rx_minrto;
@@ -321,9 +323,6 @@ typedef struct IKCPCB ikcpcb;
 #define IKCP_LOG_OUT_PROBE		1024
 #define IKCP_LOG_OUT_WINS		2048
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 //---------------------------------------------------------------------
 // interface
@@ -332,7 +331,7 @@ extern "C" {
 // create a new kcp control object, 'conv' must equal in two endpoint
 // from the same connection. 'user' will be passed to the output callback
 // output callback can be setup like this: 'kcp->output = my_udp_output'
-ikcpcb* ikcp_create(IUINT32 conv, void *user, void* user2);
+ikcpcb* ikcp_create(xx::Guid const& conv, void *user, void* user2);
 
 // release kcp control object
 void ikcp_release(ikcpcb *kcp);
@@ -395,10 +394,6 @@ void ikcp_allocator(void* (*new_malloc)(void*, size_t), void (*new_free)(void*, 
 // read conv
 IUINT32 ikcp_getconv(const void *ptr);
 
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif
 

@@ -99,6 +99,7 @@
     <ClInclude Include="xx_charsutils.hpp" />
     <ClInclude Include="xx_dict.h" />
     <ClInclude Include="xx_dict.hpp" />
+    <ClInclude Include="xx_guid.h" />
     <ClInclude Include="xx_hashutils.h" />
     <ClInclude Include="xx_hashutils.hpp" />
     <ClInclude Include="xx_list.h" />
@@ -112,7 +113,7 @@
     <ClInclude Include="xx_uv.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ikcp.c" />
+    <ClCompile Include="ikcp.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="xx_uv.cpp" />
   </ItemGroup>
