@@ -4,152 +4,249 @@
 #include "ikcp.h"	// todo
 #include "xx.h"
 
-namespace thread1
+
+//void SendCB(uv_udp_send_t *req, int status)
+//{
+//	if (status)
+//	{
+//		fprintf(stderr, "Send error %s\n", uv_strerror(status));
+//		return;
+//	}
+//}
+//
+//namespace thread1
+//{
+//	uv_loop_t loop;
+//	uv_udp_t udp;
+//	sockaddr_in addr;
+//	sockaddr_in clientAddr;
+//	uv_timer_t timer;
+//	uv_udp_send_t req;
+//	ikcpcb *kcp;// = ikcp_create(conv, user);
+//	xx::MemPool mp;
+//	xx::BBuffer_p bb;
+//
+//	void f1()
+//	{
+//		kcp = ikcp_create(1, &clientAddr);
+//		ikcp_setoutput(kcp, [](const char *buf, int len, struct IKCPCB *kcp, void *user)
+//		{
+//			uv_buf_t uvbuf;
+//			uvbuf.base = (char*)buf;
+//			uvbuf.len = len;
+//			if (int r = uv_udp_send(&req, &udp, &uvbuf, 1, (sockaddr*)&user, SendCB)) throw r;
+//			return 0;
+//		});
+//
+//		ikcp_wndsize(kcp, 128, 128);
+//		ikcp_nodelay(kcp, 1, 10, 2, 1);
+//
+//		// todo: BBuffer 处应该进一步限制包长度在 65000 内, 留点白以作为包头进一步发挥的空间, 以及兼容 udp 65507 字节限制
+//		mp.CreateTo(bb, 65536 - sizeof(xx::MemHeader));
+//
+//		if (int r = uv_loop_init(&loop)) throw r;
+//		if (int r = uv_udp_init(&loop, &udp)) throw r;
+//		if (int r = uv_ip4_addr("0.0.0.0", 12345, &addr)) throw r;
+//		if (int r = uv_udp_bind(&udp, (sockaddr*)&addr, UV_UDP_REUSEADDR)) throw r;
+//		if (int r = uv_udp_recv_start(&udp, [](uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf)
+//		{
+//			buf->base = (char*)malloc(suggested_size);
+//			buf->len = (decltype(buf->len))suggested_size;
+//
+//		}, [](uv_udp_t *req, ssize_t nread, const uv_buf_t *buf, const sockaddr *addr, unsigned flags)
+//		{
+//			if (nread < 0) {
+//				fprintf(stderr, "Read error %s\n", uv_err_name((int)nread));
+//				uv_close((uv_handle_t*)req, NULL);
+//				free(buf->base);
+//				return;
+//			}
+//
+//			//memcpy(&clientAddr, addr, sizeof(clientAddr));
+//
+//			// kcp 输入
+//			ikcp_input(kcp, buf->base, nread);
+//			while (int len = ikcp_recv(kcp, bb->buf, bb->bufLen))
+//			{
+//				std::cout << len << std::endl;
+//			}
+//
+//
+//			//std::cout << "nread = " << nread << std::endl;
+//			free(buf->base);
+//			//uv_udp_recv_stop(req);
+//
+//		})) throw r;
+//
+//		if (int r = uv_timer_init(&loop, &timer)) throw r;
+//		uv_timer_start(&timer, [](uv_timer_t* handle)
+//		{
+//			ikcp_update(kcp, 1);
+//		}, 1, 1);
+//
+//		uv_run(&loop, UV_RUN_DEFAULT);
+//	}
+//}
+//
+//namespace thread2
+//{
+//	uv_loop_t loop;
+//	sockaddr_in addr;
+//	uv_udp_t udp;
+//	uv_buf_t buf;
+//	uv_udp_send_t req;
+//	uv_timer_t timer;
+//	ikcpcb *kcp;// = ikcp_create(conv, user);
+//
+//	void f2()
+//	{
+//		kcp = ikcp_create(1, nullptr);
+//		ikcp_setoutput(kcp, [](const char *buf, int len, struct IKCPCB *kcp, void *user)
+//		{
+//			uv_buf_t uvbuf;
+//			uvbuf.base = (char*)buf;
+//			uvbuf.len = len;
+//			if (int r = uv_udp_send(&req, &udp, &uvbuf, 1, (sockaddr*)&addr, SendCB)) throw r;
+//			return 0;
+//		});
+//
+//		ikcp_wndsize(kcp, 128, 128);
+//		ikcp_nodelay(kcp, 1, 10, 2, 1);
+//
+//		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+//		if (int r = uv_loop_init(&loop)) throw r;
+//		if (int r = uv_udp_init(&loop, &udp)) throw r;
+//		if (int r = uv_ip4_addr("127.0.0.1", 12345, &addr)) throw r;
+//		if (int r = uv_timer_init(&loop, &timer)) throw r;
+//		uv_timer_start(&timer, [](uv_timer_t* handle)
+//		{
+//			ikcp_send(kcp, "a", 1);
+//			ikcp_flush(kcp);
+//			
+//		}, 1000, 1000);
+//
+//		uv_run(&loop, UV_RUN_DEFAULT);
+//	}
+//}
+//
+//#include <thread>
+//int main()
+//{
+//	std::thread t(thread2::f2);
+//	t.detach();
+//	thread1::f1();
+//	return 0;
+//}
+
+
+
+
+// todo: kcp.conv 如果用一个 int 循环自增, 似乎够用. 短时间内也不会出问题
+// 一开始的时候如何同步这个值?
+
+class Kcp
 {
-	uv_loop_t loop;
-	uv_udp_t udp;
-	sockaddr_in addr;
-	sockaddr_in clientAddr;
-	uv_timer_t timer;
-	uint64_t recvCounter = 0;
-	uv_udp_send_t req;
-	ikcpcb *kcp;// = ikcp_create(conv, user);
-	void f1()
+public:
+	ikcpcb * kcp;
+	IUINT32 ticks = 0, next = 0, interval;
+	std::function<void(char const* buf, int len)> OnSend;
+	std::function<void(char const* buf, int len)> OnRecv;
+	char buf[65100];
+
+	explicit Kcp(int conv, IUINT32 interval = 10, xx::MemPool* mp = nullptr)
+		: interval(interval)
 	{
-		kcp = ikcp_create(1, &clientAddr);
-		ikcp_setoutput(kcp, [](const char *buf, int len, struct IKCPCB *kcp, void *user)
+		kcp = ikcp_create(conv, this, mp);
+		if (!kcp) throw - 1;
+		if (mp)
 		{
-			++recvCounter;
-			//uv_buf_t uvbuf;
-			//uvbuf.base = (char*)buf;
-			//uvbuf.len = len;
-			//if (int r = uv_udp_send(&req, &udp, &uvbuf, 1, (sockaddr*)&user, [](uv_udp_send_t *req, int status)
-			//{
-			//	if (status)
-			//	{
-			//		fprintf(stderr, "Send error %s\n", uv_strerror(status));
-			//		return;
-			//	}
-			//})) throw r;
-			return 0;	// unused
-		});
-
-		IUINT32 current = clock();
-		IUINT32 slap = current + 20;
-		IUINT32 index = 0;
-		IUINT32 next = 0;
-		IINT64 sumrtt = 0;
-		int count = 0;
-		int maxrtt = 0;
-
-		// 配置窗口大小：平均延迟200ms，每20ms发送一个包，
-		// 而考虑到丢包重发，设置最大收发窗口为128
-		ikcp_wndsize(kcp, 128, 128);
-
-		if (int r = uv_loop_init(&loop)) throw r;
-		if (int r = uv_udp_init(&loop, &udp)) throw r;
-		if (int r = uv_ip4_addr("0.0.0.0", 12345, &addr)) throw r;
-		if (int r = uv_udp_bind(&udp, (sockaddr*)&addr, UV_UDP_REUSEADDR)) throw r;
-		if (int r = uv_udp_recv_start(&udp, [](uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf)
-		{
-			buf->base = (char*)malloc(suggested_size);
-			buf->len = (decltype(buf->len))suggested_size;
-
-		}, [](uv_udp_t *req, ssize_t nread, const uv_buf_t *buf, const sockaddr *addr, unsigned flags)
-		{
-			if (nread < 0) {
-				fprintf(stderr, "Read error %s\n", uv_err_name((int)nread));
-				uv_close((uv_handle_t*)req, NULL);
-				free(buf->base);
-				return;
-			}
-
-			//memcpy(&clientAddr, addr, sizeof(clientAddr));
-
-			// kcp 输入
-			ikcp_input(kcp, buf->base, nread);
-
-			//std::cout << "nread = " << nread << std::endl;
-			free(buf->base);
-			//uv_udp_recv_stop(req);
-			++recvCounter;
-
-		})) throw r;
-
-		if (int r = uv_timer_init(&loop, &timer)) throw r;
-		uv_timer_start(&timer, [](uv_timer_t* handle)
-		{
-			ikcp_update(kcp, 1);
-		}, 1, 1);
-
-		uv_run(&loop, UV_RUN_DEFAULT);
-	}
-}
-
-namespace thread2
-{
-	uv_loop_t loop;
-	sockaddr_in addr;
-	uv_udp_t udp;
-	uv_buf_t buf;
-	uv_udp_send_t req;
-	uv_timer_t timer;
-	ikcpcb *kcp;// = ikcp_create(conv, user);
-	void SendCB(uv_udp_send_t *req, int status)
-	{
-		if (status)
-		{
-			fprintf(stderr, "Send error %s\n", uv_strerror(status));
-			return;
+			ikcp_allocator([](auto a, auto s) 
+			{
+				return ((xx::MemPool*)a)->Alloc(s);
+			}, [](auto a, auto p) 
+			{
+				((xx::MemPool*)a)->Free(p);
+			});
 		}
-	}
-	void f2()
-	{
-		kcp = ikcp_create(1, nullptr);
+
+		ikcp_wndsize(kcp, 128, 128);
+		ikcp_nodelay(kcp, 1, interval, 2, 1);
 		ikcp_setoutput(kcp, [](const char *buf, int len, struct IKCPCB *kcp, void *user)
 		{
-			uv_buf_t uvbuf;
-			uvbuf.base = (char*)buf;
-			uvbuf.len = len;
-			if (int r = uv_udp_send(&req, &udp, &uvbuf, 1, (sockaddr*)&addr, SendCB)) throw r;
+			auto self = (Kcp*)user;
+			self->OnSend(buf, len);
 			return 0;
 		});
-
-		IUINT32 current = clock();
-		IUINT32 slap = current + 20;
-		IUINT32 index = 0;
-		IUINT32 next = 0;
-		IINT64 sumrtt = 0;
-		int count = 0;
-		int maxrtt = 0;
-
-		// 配置窗口大小：平均延迟200ms，每20ms发送一个包，
-		// 而考虑到丢包重发，设置最大收发窗口为128
-		ikcp_wndsize(kcp, 128, 128);
-
-		std::this_thread::sleep_for(std::chrono::milliseconds(100));
-		if (int r = uv_loop_init(&loop)) throw r;
-		if (int r = uv_udp_init(&loop, &udp)) throw r;
-		if (int r = uv_ip4_addr("127.0.0.1", 12345, &addr)) throw r;
-		buf.len = 1000;
-		buf.base = (char*)malloc(buf.len);
-		SendCB(&req, 0);
-
-		if (int r = uv_timer_init(&loop, &timer)) throw r;
-		uv_timer_start(&timer, [](uv_timer_t* handle)
-		{
-			std::cout << "sendCounter = " << sendCounter << std::endl;
-		}, 1000, 1000);
-
-		uv_run(&loop, UV_RUN_DEFAULT);
 	}
-}
+	~Kcp()
+	{
+		assert(kcp);
+		ikcp_release(kcp);
+		kcp = nullptr;
+	}
+	void Input(const char *data, int size)
+	{
+		next = ticks;
+		if (int r = ikcp_input(kcp, data, size)) throw r;
+	}
+	void Send(const char *data, int size)
+	{
+		next = ticks;
+		if (int r = ikcp_send(kcp, data, size)) throw r;
+	}
+	void Update()
+	{
+		if (next <= ticks)
+		{
+			ikcp_update(kcp, ticks);
+			next = ikcp_check(kcp, ticks);
 
-#include <thread>
+			int len = ikcp_recv(kcp, buf, _countof(buf));
+			if (len > 0)
+			{
+				OnRecv(buf, len);
+			}
+		}
+		ticks += interval;
+	}
+};
+
+xx::MemPool mp;
+Kcp kcp1(1);
+Kcp kcp2(1);
 int main()
 {
-	std::thread t(thread2::f2);
-	t.detach();
-	thread1::f1();
+	kcp1.OnSend = [&](auto buf, auto len)
+	{
+		kcp2.Input(buf, len);
+	};
+	kcp2.OnSend = [&](auto buf, auto len)
+	{
+		kcp1.Input(buf, len);
+	};
+	kcp2.OnRecv = [](auto buf, auto len)
+	{
+		std::cout << len << " " << buf << std::endl;
+	};
+
+	uv_loop_t loop;
+	uv_timer_t timer1, timer2;
+	if (int r = uv_loop_init(&loop)) throw r;
+	if (int r = uv_timer_init(&loop, &timer1)) throw r;
+	if (int r = uv_timer_init(&loop, &timer2)) throw r;
+
+	uv_timer_start(&timer1, [](uv_timer_t* handle)
+	{
+		kcp1.Send("a", 2);
+		//ikcp_flush(kcp);
+	}, 10, 10);
+
+	uv_timer_start(&timer2, [](uv_timer_t* handle)
+	{
+		kcp1.Update();
+		kcp2.Update();
+	}, 0, 10);
+
+	uv_run(&loop, UV_RUN_DEFAULT);
 	return 0;
 }

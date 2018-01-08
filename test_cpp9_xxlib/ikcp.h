@@ -1,4 +1,4 @@
-//=====================================================================
+﻿//=====================================================================
 //
 // KCP - A Better ARQ Protocol Implementation
 // skywind3000 (at) gmail.com, 2010-2011
@@ -294,7 +294,7 @@ struct IKCPCB
 	struct IQUEUEHEAD rcv_buf;
 	IUINT32 *acklist;
 	IUINT32 ackcount;
-	IUINT32 ackblock;
+	size_t ackblock;
 	void *user;
 	char *buffer;
 	int fastresend;
@@ -302,6 +302,7 @@ struct IKCPCB
 	int logmask;
 	int (*output)(const char *buf, int len, struct IKCPCB *kcp, void *user);
 	void (*writelog)(const char *log, struct IKCPCB *kcp, void *user);
+	void* user2;	// for allocator
 };
 
 
@@ -331,7 +332,7 @@ extern "C" {
 // create a new kcp control object, 'conv' must equal in two endpoint
 // from the same connection. 'user' will be passed to the output callback
 // output callback can be setup like this: 'kcp->output = my_udp_output'
-ikcpcb* ikcp_create(IUINT32 conv, void *user);
+ikcpcb* ikcp_create(IUINT32 conv, void *user, void* user2);
 
 // release kcp control object
 void ikcp_release(ikcpcb *kcp);
@@ -361,7 +362,7 @@ void ikcp_update(ikcpcb *kcp, IUINT32 current);
 IUINT32 ikcp_check(const ikcpcb *kcp, IUINT32 current);
 
 // when you received a low level packet (eg. UDP packet), call it
-int ikcp_input(ikcpcb *kcp, const char *data, long size);
+int ikcp_input(ikcpcb *kcp, const char *data, IINT32 size);
 
 // flush pending data
 void ikcp_flush(ikcpcb *kcp);
@@ -389,7 +390,7 @@ int ikcp_nodelay(ikcpcb *kcp, int nodelay, int interval, int resend, int nc);
 void ikcp_log(ikcpcb *kcp, int mask, const char *fmt, ...);
 
 // setup allocator
-void ikcp_allocator(void* (*new_malloc)(size_t), void (*new_free)(void*));
+void ikcp_allocator(void* (*new_malloc)(void*, size_t), void (*new_free)(void*, void*));
 
 // read conv
 IUINT32 ikcp_getconv(const void *ptr);
