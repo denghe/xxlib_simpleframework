@@ -421,7 +421,7 @@ XXUVLIB_API void xxuv_walk(uv_loop_t* loop, uv_walk_cb cb, void* arg) noexcept
 
 
 
-XXUVLIB_API ikcpcb* xxuv_ikcp_create(Guid const* conv, void *user, uv_loop_t* loop) noexcept
+XXUVLIB_API ikcpcb* xx_ikcp_create(Guid const* conv, void *user, uv_loop_t* loop) noexcept
 {
 	if (loop)
 	{
@@ -437,17 +437,17 @@ XXUVLIB_API ikcpcb* xxuv_ikcp_create(Guid const* conv, void *user, uv_loop_t* lo
 	return ikcp_create(conv, user, nullptr);
 }
 
-XXUVLIB_API void xxuv_ikcp_release(ikcpcb *kcp) noexcept
+XXUVLIB_API void xx_ikcp_release(ikcpcb *kcp) noexcept
 {
 	ikcp_release(kcp);
 }
 
-XXUVLIB_API void xxuv_ikcp_setoutput(ikcpcb *kcp, int(*output)(const char *buf, int len, ikcpcb *kcp)) noexcept
+XXUVLIB_API void xx_ikcp_setoutput(ikcpcb *kcp, int(*output)(const char *buf, int len, ikcpcb *kcp)) noexcept
 {
 	ikcp_setoutput(kcp, output);
 }
 
-XXUVLIB_API void* xxuv_ikcp_get_ud(ikcpcb* kcp) noexcept
+XXUVLIB_API void* xx_ikcp_get_ud(ikcpcb* kcp) noexcept
 {
 	return kcp->user;
 }
@@ -462,22 +462,22 @@ XXUVLIB_API int xxuv_ikcp_nodelay(ikcpcb* kcp, int nodelay, int interval, int re
 	return ikcp_nodelay(kcp, nodelay, interval, resend, nc);
 }
 
-XXUVLIB_API int xxuv_ikcp_input(ikcpcb* kcp, const char *data, int size) noexcept
+XXUVLIB_API int xx_ikcp_input(ikcpcb* kcp, const char *data, int size) noexcept
 {
 	return ikcp_input(kcp, data, size);
 }
 
-XXUVLIB_API int xxuv_ikcp_send(ikcpcb* kcp, const char *buffer, int len) noexcept
+XXUVLIB_API int xx_ikcp_send(ikcpcb* kcp, const char *buffer, int len) noexcept
 {
 	return ikcp_send(kcp, buffer, len);
 }
 
-XXUVLIB_API void xxuv_ikcp_update(ikcpcb* kcp, uint32_t current) noexcept
+XXUVLIB_API void xx_ikcp_update(ikcpcb* kcp, uint32_t current) noexcept
 {
 	ikcp_update(kcp, current);
 }
 
-XXUVLIB_API uint32_t xxuv_ikcp_check(ikcpcb* kcp, uint32_t current) noexcept
+XXUVLIB_API uint32_t xx_ikcp_check(ikcpcb* kcp, uint32_t current) noexcept
 {
 	return ikcp_check(kcp, current);
 }

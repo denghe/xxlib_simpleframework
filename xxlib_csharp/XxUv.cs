@@ -1175,6 +1175,10 @@ namespace xx
         public abstract void HandleDisconnect();
     }
 
+
+    // todo: UvUdpListener, UvUdpPeer, UvUdpClient ( include kcp support )
+
+
     public struct Pair<First, Second>
     {
         public First first;
@@ -1337,6 +1341,42 @@ namespace xx
 
 
 
+
+        [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int xxuv_udp_init(IntPtr loop, IntPtr udp);
+
+        //[DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
+        //public static extern int xxuv_udp_bind(IntPtr udp, IntPtr addr, uint flags);
+
+        [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int xxuv_udp_bind_(IntPtr udp, IntPtr addr);
+
+        //[DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
+        //public static extern int xxuv_udp_recv_start(IntPtr udp, uv_alloc_cb alloc_cb, uv_udp_recv_cb recv_cb);
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate void uv_udp_recv_cb(IntPtr handle, IntPtr nread, IntPtr buf, IntPtr addr, uint flags);
+
+        [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int xxuv_udp_recv_start_(IntPtr udp, uv_udp_recv_cb recv_cb);
+
+        [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int xxuv_udp_recv_stop(IntPtr udp);
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate void uv_udp_send_cb(IntPtr req, int status);
+
+        //[DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
+        //public static extern int xxuv_udp_send(IntPtr req, IntPtr handle, uv_buf_t bufs[], uint nbufs, IntPtr addr, uv_udp_send_cb send_cb);
+
+        [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int xxuv_udp_send_(IntPtr handle, IntPtr buf, uint offset, uint len, IntPtr addr);
+
+
+
+
+
+
         [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
         public static extern int xxuv_timer_init(IntPtr loop, IntPtr timer_req);
 
@@ -1366,6 +1406,41 @@ namespace xx
 
         [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
         public static extern int xxuv_async_send(IntPtr async_req);
+
+
+
+
+
+
+        [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
+        public static extern IntPtr xx_ikcp_create(IntPtr conv, IntPtr ud, IntPtr loop);
+
+        [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
+        public static extern void xx_ikcp_release(IntPtr kcp);
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate void ikcp_output_cb(IntPtr buf, int len, IntPtr kcp);
+
+        [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
+        public static extern void xx_ikcp_setoutput(IntPtr kcp, ikcp_output_cb cb);
+
+        [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
+        public static extern IntPtr xx_ikcp_get_ud(IntPtr kcp);
+
+        [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int xx_ikcp_input(IntPtr kcp, IntPtr data, int size);
+
+        [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int xx_ikcp_send(IntPtr kcp, IntPtr buffer, int len);
+
+        [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
+        public static extern void xx_ikcp_update(IntPtr kcp, uint current);
+
+        [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
+        public static extern uint xx_ikcp_check(IntPtr kcp, uint current);
+
+
+
 
 
 

@@ -46,29 +46,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Program - Copy.cs" />
-    <Compile Include="XxMemPoolWrapper.cs" />
-    <Compile Include="XxNBSocketWrapper.cs" />
     <Content Include="..\x64\Release\xxuvlib.dll">
       <Link>xxuvlib.dll</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="..\x64\Release\xxnbsocketlib.dll">
-      <Link>xxnbsocketlib.dll</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Program - Copy.cs.txt" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\x64\Release\xxloglib.dll">
-      <Link>xxloglib.dll</Link>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\xxlib_csharp\xxlib_csharp.csproj">
