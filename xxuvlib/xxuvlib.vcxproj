@@ -90,10 +90,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="ikcp.h" />
     <ClInclude Include="xxmempool.h" />
     <ClInclude Include="xxuvlib.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ikcp.cpp" />
     <ClCompile Include="xxuvlib.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

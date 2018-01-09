@@ -16,7 +16,48 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <assert.h>
-#include "xx.h"		// for Guid support, replace  conv
+
+// conv 扩展为存放 Guid 值( 16 字节 )
+class Guid
+{
+public:
+	uint64_t part1;
+	uint64_t part2;
+
+	inline Guid() noexcept
+		: part1(0)
+		, part2(0)
+	{
+	}
+
+	inline Guid(Guid const& o) noexcept
+	{
+		part1 = o.part1;
+		part2 = o.part2;
+	}
+
+	inline Guid& operator=(Guid const& o) noexcept
+	{
+		part1 = o.part1;
+		part2 = o.part2;
+		return *this;
+	}
+
+	inline bool operator==(Guid const& o) const noexcept
+	{
+		return part1 == o.part1 && part2 == o.part2;
+	}
+
+	inline bool operator!=(Guid const& o) const noexcept
+	{
+		return part1 != o.part1 || part2 != o.part2;
+	}
+
+	inline bool IsZero() noexcept
+	{
+		return part1 == 0 && part2 == 0;
+	}
+};
 
 
 //=====================================================================
@@ -140,7 +181,7 @@ typedef struct IQUEUEHEAD iqueue_head;
 struct IKCPSEG
 {
 	struct IQUEUEHEAD node;
-	xx::Guid conv;
+	Guid conv;
 	uint32_t cmd;
 	uint32_t frg;
 	uint32_t wnd;
@@ -161,7 +202,7 @@ struct IKCPSEG
 //---------------------------------------------------------------------
 struct IKCPCB
 {
-	xx::Guid conv;
+	Guid conv;
 	uint32_t mtu, mss, state;
 	uint32_t snd_una, snd_nxt, rcv_nxt;
 	uint32_t ts_recent, ts_lastack, ssthresh;
@@ -214,7 +255,7 @@ typedef struct IKCPCB ikcpcb;
 // create a new kcp control object, 'conv' must equal in two endpoint
 // from the same connection. 'user' will be passed to the output callback
 // output callback can be setup like this: 'kcp->output = my_udp_output'
-ikcpcb* ikcp_create(xx::Guid const& conv, void *user, void* user2);
+ikcpcb* ikcp_create(Guid const* conv, void *user, void* user2);
 
 // release kcp control object
 void ikcp_release(ikcpcb *kcp);
@@ -273,9 +314,6 @@ void ikcp_log(ikcpcb *kcp, int mask, const char *fmt, ...);
 
 // setup allocator
 void ikcp_allocator(void* (*new_malloc)(void*, size_t), void (*new_free)(void*, void*));
-
-// read conv
-uint32_t ikcp_getconv(const void *ptr);
 
 
 #endif

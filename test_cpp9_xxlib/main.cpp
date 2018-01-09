@@ -147,16 +147,14 @@ class Kcp
 {
 public:
 	ikcpcb * kcp;
-	IUINT32 ticks = 0, next = 0, interval;
+	uint32_t ticks = 0, next = 0, interval;
 	std::function<void(char const* buf, int len)> OnSend;
 	std::function<void(char const* buf, int len)> OnRecv;
 	char buf[65100];
 
-	explicit Kcp(xx::Guid const& conv, IUINT32 interval = 10, xx::MemPool* mp = nullptr)
+	explicit Kcp(xx::Guid const& conv, uint32_t interval = 10, xx::MemPool* mp = nullptr)
 		: interval(interval)
 	{
-		kcp = ikcp_create(conv, this, mp);
-		if (!kcp) throw - 1;
 		if (mp)
 		{
 			ikcp_allocator([](auto a, auto s)
@@ -167,12 +165,14 @@ public:
 				((xx::MemPool*)a)->Free(p);
 			});
 		}
+		kcp = ikcp_create(conv, this, mp);
+		if (!kcp) throw - 1;
 
 		ikcp_wndsize(kcp, 128, 128);
 		ikcp_nodelay(kcp, 1, interval, 2, 1);
-		ikcp_setoutput(kcp, [](const char *buf, int len, struct IKCPCB *kcp, void *user)
+		ikcp_setoutput(kcp, [](const char *buf, int len, IKCPCB *kcp)
 		{
-			auto self = (Kcp*)user;
+			auto self = (Kcp*)kcp->user;
 			self->OnSend(buf, len);
 			return 0;
 		});
@@ -212,8 +212,8 @@ public:
 
 xx::MemPool mp;
 xx::Guid guid;
-Kcp kcp1(guid);
-Kcp kcp2(guid);
+Kcp kcp1(guid, 10, &mp);
+Kcp kcp2(guid, 10, &mp);
 int main()
 {
 	kcp1.OnSend = [&](auto buf, auto len)

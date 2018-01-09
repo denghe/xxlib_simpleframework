@@ -46,6 +46,14 @@ static void Free(void* p) noexcept
 	free((void**)p - 1);
 }
 
+static void AllocCB(uv_handle_t* h, size_t suggested_size, uv_buf_t* buf)
+{
+	buf->base = (char*)((XxMemPool*)h->loop->data)->Alloc(suggested_size);
+	buf->len = decltype(buf->len)(suggested_size);
+}
+
+
+
 
 XXUVLIB_API uv_loop_t* xxuv_alloc_uv_loop_t(void* ud) noexcept
 {
@@ -56,6 +64,12 @@ XXUVLIB_API uv_tcp_t* xxuv_alloc_uv_tcp_t(void* ud) noexcept
 {
 	return (uv_tcp_t*)Alloc(sizeof(uv_tcp_t), ud);
 }
+
+XXUVLIB_API uv_udp_t* xxuv_alloc_uv_udp_t(void* ud) noexcept
+{
+	return (uv_udp_t*)Alloc(sizeof(uv_udp_t), ud);
+}
+
 
 XXUVLIB_API sockaddr_in* xxuv_alloc_sockaddr_in(void* ud) noexcept
 {
@@ -222,12 +236,7 @@ XXUVLIB_API int xxuv_read_start(uv_stream_t* stream, uv_alloc_cb alloc_cb, uv_re
 }
 XXUVLIB_API int xxuv_read_start_(uv_stream_t* stream, uv_read_cb read_cb) noexcept
 {
-	return uv_read_start(stream, [](uv_handle_t* h, size_t suggested_size, uv_buf_t* buf)
-	{
-		buf->base = (char*)((XxMemPool*)h->loop->data)->Alloc(suggested_size);
-		buf->len = decltype(buf->len)(suggested_size);
-	}
-	, read_cb);
+	return uv_read_start(stream, AllocCB, read_cb);
 }
 
 XXUVLIB_API int xxuv_write(uv_write_t* req, uv_stream_t* stream, const uv_buf_t bufs[], unsigned int nbufs, uv_write_cb cb) noexcept
@@ -235,16 +244,16 @@ XXUVLIB_API int xxuv_write(uv_write_t* req, uv_stream_t* stream, const uv_buf_t 
 	return uv_write(req, stream, bufs, nbufs, cb);
 }
 
-XXUVLIB_API int xxuv_write_(uv_stream_t* stream, char* inBuf, unsigned int offset, unsigned int len) noexcept
+XXUVLIB_API int xxuv_write_(uv_stream_t* stream, char const* inBuf, unsigned int offset, unsigned int len) noexcept
 {
-	struct write_req_t
+	struct uv_write_t_ex
 	{
 		XxMemPool* mp;
 		uv_write_t req;
 		uv_buf_t buf;
 	};
 	auto mp = (XxMemPool*)stream->loop->data;
-	auto req = mp->Alloc<write_req_t>();
+	auto req = mp->Alloc<uv_write_t_ex>();
 	req->mp = mp;
 	auto buf = (char*)mp->Alloc(len);
 	memcpy(buf, inBuf + offset, len);
@@ -252,7 +261,7 @@ XXUVLIB_API int xxuv_write_(uv_stream_t* stream, char* inBuf, unsigned int offse
 	return uv_write((uv_write_t*)req, stream, &req->buf, 1, [](uv_write_t *req, int status)
 	{
 		//if (status) fprintf(stderr, "Write error: %s\n", uv_strerror(status));
-		auto *wr = (write_req_t*)req;
+		auto *wr = (uv_write_t_ex*)req;
 		wr->mp->Free(wr->buf.base);
 		wr->mp->Free(wr);
 	});
@@ -289,6 +298,70 @@ XXUVLIB_API int xxuv_tcp_connect_(uv_tcp_t* handle, const struct sockaddr* addr,
 
 
 
+XXUVLIB_API int xxuv_udp_init(uv_loop_t* loop, uv_udp_t* udp) noexcept
+{
+	return uv_udp_init(loop, udp);
+}
+
+XXUVLIB_API int xxuv_udp_bind(uv_udp_t* udp, const struct sockaddr* addr, unsigned int flags) noexcept
+{
+	return uv_udp_bind(udp, (sockaddr*)&addr, flags);
+}
+
+XXUVLIB_API int xxuv_udp_bind_(uv_udp_t* udp, const struct sockaddr* addr) noexcept
+{
+	return uv_udp_bind(udp, (sockaddr*)&addr, UV_UDP_REUSEADDR);
+}
+
+XXUVLIB_API int xxuv_udp_recv_start(uv_udp_t* handle, uv_alloc_cb alloc_cb, uv_udp_recv_cb recv_cb) noexcept
+{
+	return uv_udp_recv_start(handle, alloc_cb, recv_cb);
+}
+
+XXUVLIB_API int xxuv_udp_recv_start_(uv_udp_t* handle, uv_udp_recv_cb recv_cb) noexcept
+{
+	return uv_udp_recv_start(handle, AllocCB, recv_cb);
+}
+
+XXUVLIB_API int xxuv_udp_recv_stop(uv_udp_t* handle) noexcept
+{
+	return uv_udp_recv_stop(handle);
+}
+
+XXUVLIB_API int xxuv_udp_send(uv_udp_send_t* req, uv_udp_t* handle, const uv_buf_t bufs[], unsigned int nbufs, const struct sockaddr* addr, uv_udp_send_cb send_cb) noexcept
+{
+	return uv_udp_send(req, handle, bufs, nbufs, addr, send_cb);
+}
+
+XXUVLIB_API int xxuv_udp_send_(uv_udp_t* handle, char const* inBuf, unsigned int offset, unsigned int len, const struct sockaddr* addr) noexcept
+{
+	struct uv_udp_send_t_ex
+	{
+		XxMemPool* mp;
+		uv_udp_send_t req;
+		uv_buf_t buf;
+	};
+	auto mp = (XxMemPool*)handle->loop->data;
+	auto req = mp->Alloc<uv_udp_send_t_ex>();
+	req->mp = mp;
+	auto buf = (char*)mp->Alloc(len);
+	memcpy(buf, inBuf + offset, len);
+	req->buf = uv_buf_init(buf, (uint32_t)len);
+	return uv_udp_send((uv_udp_send_t*)req, handle, &req->buf, 1, addr, [](uv_udp_send_t* req, int status)
+	{
+		//if (status) fprintf(stderr, "Write error: %s\n", uv_strerror(status));
+		auto *wr = (uv_udp_send_t_ex*)req;
+		wr->mp->Free(wr->buf.base);
+		wr->mp->Free(wr);
+	});
+}
+
+
+
+
+
+
+
 XXUVLIB_API int xxuv_timer_init(uv_loop_t* loop, uv_timer_t* timer_req) noexcept
 {
 	return uv_timer_init(loop, timer_req);
@@ -313,6 +386,7 @@ XXUVLIB_API int xxuv_timer_stop(uv_timer_t* timer_req) noexcept
 
 
 
+
 XXUVLIB_API int xxuv_async_init(uv_loop_t* loop, uv_async_t* async_req, uv_async_cb cb) noexcept
 {
 	return uv_async_init(loop, async_req, cb);
@@ -321,6 +395,7 @@ XXUVLIB_API int xxuv_async_send(uv_async_t* async_req) noexcept
 {
 	return uv_async_send(async_req);
 }
+
 
 
 
@@ -336,4 +411,73 @@ XXUVLIB_API int xxuv_signal_start(uv_signal_t* signal, uv_signal_cb cb) noexcept
 XXUVLIB_API void xxuv_walk(uv_loop_t* loop, uv_walk_cb cb, void* arg) noexcept
 {
 	uv_walk(loop, cb, arg);
+}
+
+
+
+
+
+
+
+
+
+XXUVLIB_API ikcpcb* xxuv_ikcp_create(Guid const* conv, void *user, uv_loop_t* loop) noexcept
+{
+	if (loop)
+	{
+		ikcp_allocator([](auto a, auto s)
+		{
+			return ((XxMemPool*)a)->Alloc(s);
+		}, [](auto a, auto p)
+		{
+			((XxMemPool*)a)->Free(p);
+		});
+		return ikcp_create(conv, user, loop->data);
+	}
+	return ikcp_create(conv, user, nullptr);
+}
+
+XXUVLIB_API void xxuv_ikcp_release(ikcpcb *kcp) noexcept
+{
+	ikcp_release(kcp);
+}
+
+XXUVLIB_API void xxuv_ikcp_setoutput(ikcpcb *kcp, int(*output)(const char *buf, int len, ikcpcb *kcp)) noexcept
+{
+	ikcp_setoutput(kcp, output);
+}
+
+XXUVLIB_API void* xxuv_ikcp_get_ud(ikcpcb* kcp) noexcept
+{
+	return kcp->user;
+}
+
+XXUVLIB_API int xxuv_ikcp_wndsize(ikcpcb* kcp, int sendwnd, int recvwnd)
+{
+	return ikcp_wndsize(kcp, sendwnd, recvwnd);
+}
+
+XXUVLIB_API int xxuv_ikcp_nodelay(ikcpcb* kcp, int nodelay, int interval, int resend, int nc)
+{
+	return ikcp_nodelay(kcp, nodelay, interval, resend, nc);
+}
+
+XXUVLIB_API int xxuv_ikcp_input(ikcpcb* kcp, const char *data, int size) noexcept
+{
+	return ikcp_input(kcp, data, size);
+}
+
+XXUVLIB_API int xxuv_ikcp_send(ikcpcb* kcp, const char *buffer, int len) noexcept
+{
+	return ikcp_send(kcp, buffer, len);
+}
+
+XXUVLIB_API void xxuv_ikcp_update(ikcpcb* kcp, uint32_t current) noexcept
+{
+	ikcp_update(kcp, current);
+}
+
+XXUVLIB_API uint32_t xxuv_ikcp_check(ikcpcb* kcp, uint32_t current) noexcept
+{
+	return ikcp_check(kcp, current);
 }

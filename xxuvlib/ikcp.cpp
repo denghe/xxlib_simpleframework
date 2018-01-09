@@ -120,17 +120,17 @@ static inline const char *ikcp_decode32u(const char *p, uint32_t *l)
 }
 
 /* encode 128 bits Guid */
-static inline char *ikcp_encodeGuid(char *p, xx::Guid const& l)
+static inline char *ikcp_encodeGuid(char *p, Guid const& l)
 {
-	*(xx::Guid*)p = l;
+	*(Guid*)p = l;
 	p += 16;
 	return p;
 }
 
 /* decode 128 bits Guid */
-static inline const char *ikcp_decodeGuid(const char *p, xx::Guid *l)
+static inline const char *ikcp_decodeGuid(const char *p, Guid *l)
 {
-	*l = *(const xx::Guid*)p;
+	*l = *(const Guid*)p;
 	p += 16;
 	return p;
 }
@@ -247,11 +247,11 @@ void ikcp_qprint(const char *name, const struct IQUEUEHEAD *head)
 //---------------------------------------------------------------------
 // create a new kcpcb
 //---------------------------------------------------------------------
-ikcpcb* ikcp_create(xx::Guid const& conv, void *user, void* user2)
+ikcpcb* ikcp_create(Guid const* conv, void *user, void* user2)
 {
 	ikcpcb *kcp = (ikcpcb*)ikcp_malloc(user2, sizeof(struct IKCPCB));
 	if (kcp == NULL) return NULL;
-	kcp->conv = conv;
+	kcp->conv = *conv;
 	kcp->user = user;
 	kcp->snd_una = 0;
 	kcp->snd_nxt = 0;
@@ -771,7 +771,7 @@ int ikcp_input(ikcpcb *kcp, const char *data, int size)
 
 	while (1) {
 		uint32_t ts, sn, len, una;
-		xx::Guid conv(false);
+		Guid conv;
 		uint16_t wnd;
 		uint8_t cmd, frg;
 		IKCPSEG *seg;
@@ -1280,14 +1280,3 @@ int ikcp_waitsnd(const ikcpcb *kcp)
 {
 	return kcp->nsnd_buf + kcp->nsnd_que;
 }
-
-
-// read conv
-uint32_t ikcp_getconv(const void *ptr)
-{
-	uint32_t conv;
-	ikcp_decode32u((const char*)ptr, &conv);
-	return conv;
-}
-
-
