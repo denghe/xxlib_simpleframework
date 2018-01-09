@@ -36,7 +36,6 @@ struct XxNBSocket
 		Disconnecting,								// 执行 Disconnect( 延迟断开时长 ) 之后
 	};
 
-	XxMemPool*					mempool;
 	Socket_t					sock = -1;
 	States						state = States::Disconnected;
 	int							ticks = 0;			// 当前状态持续 ticks 计数 ( Disconnecting 时例外, 该值为负, 当变到 0 时, 执行 Close )
@@ -48,8 +47,7 @@ struct XxNBSocket
 	int							readLen = 0;		// 接收缓冲区已存在的数据长度
 	std::array<char, 131075>	readBuf;			// 接收缓冲区( 至少能含 1 个 64k 完整包 + 1 段上次处理剩下的数据 即 64k * 2 + 1.5 个包头 3 字节 )
 
-	XxNBSocket(XxMemPool* mempool)
-		: mempool(mempool)
+	XxNBSocket()
 	{
 		addr.sin_port = 0;							// 用这个来做是否有设置过 addr 的标记
 	}
@@ -114,6 +112,7 @@ struct XxNBSocket
 		}
 	}
 
+	// 帧更新函数
 	// 返回负数表示出错. 0 表示没发生错误
 	inline int Update(int const& sec = 0, int const& usec = 0)
 	{
@@ -156,27 +155,19 @@ struct XxNBSocket
 				{
 					readLen += r;
 
-					auto buf = (uint8_t*)readBuf.data();		// 无符号方便位操作读出头
-					int offset = 0;								// 游标
+					auto buf = (uint8_t*)readBuf.data();			// 无符号方便位操作读出头
+					int offset = 0;									// 游标
 
-					while (readLen - offset >= 2)				// 确保 2字节 包头长度
+					while (readLen - offset >= 3)					// 确保 3字节 包头长度
 					{
-						// 读出头
-						auto dataLen = buf[offset] + (buf[offset + 1] << 8);
-						offset += 2;
+						// 读出长度信息( 首字节 pkg type id 用不到, 直接跳过 )
+						auto dataLen = buf[offset + 1] + (buf[offset + 2] << 8);
+						if (!dataLen) return Close(-3);				// 异常: 读不到长度, 关闭连接
+						dataLen += 3;								// 将包头的长度纳入
+						if (offset + dataLen > readLen) break;		// 确保数据长
 
-						// todo: 特殊判断: 如果 dataLen 为 0 ?? 后续跟控制包? 当前直接认为是出错
-						if (!dataLen) return Close(-3);
-
-						// 确保数据长
-						if (readLen - offset < dataLen)
-						{
-							offset -= 2;						// 回滚偏移量, 保护 包头
-							break;
-						}
-
-						// 将数据弄到 recvBufs
-						recvBufs.emplace_back(mempool, (char*)buf + offset, dataLen);
+						// 将数据弄到 recvBufs( 含包头, 以便上层代码继续解析 )
+						recvBufs.emplace_back((char*)buf + offset, dataLen);
 						offset += dataLen;
 					}
 
@@ -196,7 +187,7 @@ struct XxNBSocket
 				auto len = front.dataLen - front.offset;
 				auto r = SockSend(sock, front.buf + front.offset, len);
 				if (r.first) return Close(-2);
-				if (r.second < len)
+				if (r.second < (int)len)
 				{
 					front.offset += r.second;
 				}
@@ -227,7 +218,7 @@ struct XxNBSocket
 		// 判断当前是否存在待发数据. 如果有就追加到后面 并返回 0
 		if (!sendBufs.empty())
 		{
-			sendBufs.emplace_back(mempool, buf, dataLen);
+			sendBufs.emplace_back(buf, dataLen);
 			return 0;
 		}
 
@@ -238,7 +229,7 @@ struct XxNBSocket
 		// 将没发完的数据追加到待发
 		if (dataLen > r.second)
 		{
-			sendBufs.emplace_back(mempool, buf + r.second, dataLen - r.second);
+			sendBufs.emplace_back(buf + r.second, dataLen - r.second);
 		}
 		return r.second;
 	}

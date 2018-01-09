@@ -1,45 +1,53 @@
 ﻿#pragma execution_character_set("utf-8")
 #pragma once
-#include "xxmempool.h"
+#include <assert.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <string.h>
+#ifdef _WIN32
+#include <intrin.h>     // _BitScanReverse  64
+#endif
+#include <type_traits>
 #include <cmath>
-
+#include <limits>
 
 // 含有最基础的数据序列化功能, 针对 c#, c++, lua 需要各自扩展相应的 引用 继承 部分
 struct XxBuf
 {
-	XxMemPool*				mempool;
 	char*					buf = nullptr;
+	uint32_t				bufLen = 0;
 	uint32_t				dataLen = 0;
 	uint32_t				offset = 0;			// 已 读 | 发送 长度
 
-	XxBuf(XxMemPool* mempool, char const* const& s, int const& len)
-		: mempool(mempool)
-		, dataLen(len)
-		, offset(0)
+	XxBuf(char const* const& s, uint32_t const& len)
+		: dataLen(len)
 	{
 		if (!len)
 		{
 			buf = nullptr;
+			bufLen = 0;
 			return;
 		}
-		buf = (char*)mempool->Alloc(len);
+		bufLen = (uint32_t)Round2n(len);
+		buf = (char*)::malloc(bufLen);
 		if (!buf) throw 1;
 		memcpy(buf, s, len);
 	}
 	~XxBuf()
 	{
-		mempool->Free(buf);
+		::free(buf);
+		buf = nullptr;
 	}
 	XxBuf(XxBuf const&) = delete;
 	XxBuf& operator=(XxBuf const&) = delete;
 
-
-	// 内容扩容
-	// 为简化设计, 内存不足时并不抛异常, 而是置空. 故下列所有 Write 操作均不会异常
+	// 内容扩容( 暂不处理内存不足的情况 )
 	inline void Reserve(uint32_t const& capacity) noexcept
 	{
-		buf = (char*)mempool->Realloc(buf, capacity, dataLen);
-		if (!buf) dataLen = 0;					
+		if (capacity <= bufLen) return;
+		bufLen = (uint32_t)Round2n(capacity);
+		buf = (char*)::realloc(buf, bufLen);
+		//if (!buf) throw 1;
 	}
 
 	// 变长写入数值类型
@@ -451,5 +459,34 @@ struct XxBuf
 		}
 	}
 
+	/**************************************************************************************************/
+	// utils
+	/**************************************************************************************************/
 
+	inline static size_t Calc2n(size_t n) noexcept
+	{
+		assert(n);
+#ifdef _MSC_VER
+		unsigned long r = 0;
+#if defined(_WIN64) || defined(_M_X64)
+		_BitScanReverse64(&r, n);
+# else
+		_BitScanReverse(&r, n);
+# endif
+		return (size_t)r;
+#else
+#if defined(__LP64__) || __WORDSIZE == 64
+		return int(63 - __builtin_clzl(n));
+# else
+		return int(31 - __builtin_clz(n));
+# endif
+#endif
+	}
+
+	inline static size_t Round2n(size_t n) noexcept
+	{
+		auto rtv = size_t(1) << Calc2n(n);
+		if (rtv == n) return n;
+		else return rtv << 1;
+	}
 };

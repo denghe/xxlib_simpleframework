@@ -24,7 +24,6 @@
 
 /* Begin PBXFileReference section */
 		E341EB9C1FCFE852008E695D /* libxxnbsocketlib.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libxxnbsocketlib.a; sourceTree = BUILT_PRODUCTS_DIR; };
-		E341EBA81FCFE8B6008E695D /* xxmempool.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = xxmempool.h; path = ../../Sources/xxmempool.h; sourceTree = "<group>"; };
 		E341EBA91FCFE8B6008E695D /* xxnbsocket.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = xxnbsocket.h; path = ../../Sources/xxnbsocket.h; sourceTree = "<group>"; };
 		E341EBAA1FCFE8B6008E695D /* xxbuf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = xxbuf.h; path = ../../Sources/xxbuf.h; sourceTree = "<group>"; };
 		E341EBAB1FCFE8B6008E695D /* xxnbsocketlib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = xxnbsocketlib.h; path = ../../Sources/xxnbsocketlib.h; sourceTree = "<group>"; };
@@ -46,7 +45,6 @@
 			isa = PBXGroup;
 			children = (
 				E341EBAA1FCFE8B6008E695D /* xxbuf.h */,
-				E341EBA81FCFE8B6008E695D /* xxmempool.h */,
 				E341EBA91FCFE8B6008E695D /* xxnbsocket.h */,
 				E341EBAC1FCFE8B6008E695D /* xxnbsocketlib.cpp */,
 				E341EBAB1FCFE8B6008E695D /* xxnbsocketlib.h */,

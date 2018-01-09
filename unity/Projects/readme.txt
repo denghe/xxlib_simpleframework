@@ -9,4 +9,4 @@ macos 下进 iOS 用 xcode 打开项目文件. 先 WIN + B 生成, 再选 Archiv
 在与 .........Products 同级的 Intermediates.noindex/ArchiveIntermediates/***********lib/Interm........FilesPath/UninstalledProducts/iphones/ 下面可找到  lib***********.a
 复制出来即可
 
-Windows 生成办法: 用 vs2017 15.4+ 打开并选择 Release 编译. 后于 x64/Release 下找到 ***********.dll  
+Windows 生成办法: 用 vs2017 15.5+ 打开并选择 Release 编译. 后于 x64/Release 下找到 ***********.dll  

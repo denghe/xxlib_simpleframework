@@ -1,5 +1,4 @@
-﻿#include "xxnbsocket.h"
-#include "xxnbsocketlib.h"
+﻿#include "xxnbsocketlib.h"
 
 #ifdef _WIN32
 
@@ -23,107 +22,83 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 
 extern "C" {
 
-XXNBSOCKETLIB_API void Init_Sock() noexcept
-{
-	XxNBSocket::SockInit();
-}
-
-
-
-XXNBSOCKETLIB_API void* XxMemPool_New() noexcept
-{
-	try
+	XXNBSOCKETLIB_API void xxnbs_init() noexcept
 	{
-		return new XxMemPool();
+		XxNBSocket::SockInit();
 	}
-	catch (...)
+
+	XXNBSOCKETLIB_API XxNBSocket* xxnbs_new() noexcept
 	{
-		return nullptr;
-	}
-}
+		// 在头部留出 userdata 的空间
+		auto p = malloc(sizeof(XxNBSocket) + sizeof(void*));
 
-XXNBSOCKETLIB_API void* XxNBSocket_New(void* mp) noexcept
-{
-	if (!mp) return nullptr;
-	try
+		// 不考虑内存不足
+		return new ((void**)p + 1) XxNBSocket();
+	}
+
+	XXNBSOCKETLIB_API void xxnbs_delete(XxNBSocket* nbs) noexcept
 	{
-		return ((XxMemPool*)mp)->Create<XxNBSocket>();
+		if (!nbs) return;
+		nbs->~XxNBSocket();
+		free((void**)nbs - 1);
 	}
-	catch (...)
+
+	XXNBSOCKETLIB_API void xxnbs_set_userdata(XxNBSocket* nbs, void* userdata) noexcept
 	{
-		return nullptr;
+		*((void**)nbs - 1) = userdata;
 	}
-}
 
-XXNBSOCKETLIB_API void XxNBSocket_Delete(void* nbs) noexcept
-{
-	if (!nbs) return;
-	auto self = (XxNBSocket*)nbs;
-	self->mempool->Release(self);
-}
+	XXNBSOCKETLIB_API void* xxnbs_get_userdata(XxNBSocket* nbs) noexcept
+	{
+		return *((void**)nbs - 1);
+	}
 
-XXNBSOCKETLIB_API void XxMemPool_Delete(void* mp) noexcept
-{
-	if (!mp) return;
-	delete (XxMemPool*)mp;
-}
+	XXNBSOCKETLIB_API void xxnbs_set_address(XxNBSocket* nbs, char const* ip, int port) noexcept
+	{
+		return nbs->SetAddress(ip, port);
+	}
 
-XXNBSOCKETLIB_API void XxNBSocket_SetAddress(void* nbs, char* ip, uint16_t port) noexcept
-{
-	auto self = (XxNBSocket*)nbs;
-	return self->SetAddress(ip, port);
-}
+	XXNBSOCKETLIB_API int xxnbs_connect(XxNBSocket* nbs, int sec, int usec) noexcept
+	{
+		return nbs->Connect(sec, usec);
+	}
 
-XXNBSOCKETLIB_API int XxNBSocket_Connect(void* nbs, int sec, int usec) noexcept
-{
-	auto self = (XxNBSocket*)nbs;
-	return self->Connect(sec, usec);
-}
+	XXNBSOCKETLIB_API void xxnbs_disconnect(XxNBSocket* nbs, int delayTicks) noexcept
+	{
+		nbs->Disconnect(delayTicks);
+	}
 
-XXNBSOCKETLIB_API void XxNBSocket_Disconnect(void* nbs, int delayTicks) noexcept
-{
-	auto self = (XxNBSocket*)nbs;
-	self->Disconnect(delayTicks);
-}
+	XXNBSOCKETLIB_API int xxnbs_update(XxNBSocket* nbs, int sec, int usec) noexcept
+	{
+		return nbs->Update(sec, usec);
+	}
 
-XXNBSOCKETLIB_API int XxNBSocket_Update(void* nbs, int sec, int usec) noexcept
-{
-	auto self = (XxNBSocket*)nbs;
-	return self->Update(sec, usec);
-}
+	XXNBSOCKETLIB_API int xxnbs_get_state(XxNBSocket* nbs) noexcept
+	{
+		return (int)nbs->state;
+	}
 
-XXNBSOCKETLIB_API int XxNBSocket_GetState(void* nbs) noexcept
-{
-	auto self = (XxNBSocket*)nbs;
-	return (int)self->state;
-}
+	XXNBSOCKETLIB_API int xxnbs_get_ticks(XxNBSocket* nbs) noexcept
+	{
+		return (int)nbs->ticks;
+	}
 
-XXNBSOCKETLIB_API int XxNBSocket_GetTicks(void* nbs) noexcept
-{
-	auto self = (XxNBSocket*)nbs;
-	return (int)self->ticks;
-}
+	XXNBSOCKETLIB_API int xxnbs_send(XxNBSocket* nbs, char const* buf, int offset, int dataLen) noexcept
+	{
+		return nbs->Send(buf + offset, dataLen);
+	}
 
-XXNBSOCKETLIB_API int XxNBSocket_Send(void* nbs, char* buf, int dataLen) noexcept
-{
-	auto self = (XxNBSocket*)nbs;
-	return self->Send(buf, dataLen);
-}
+	XXNBSOCKETLIB_API char const* xxnbs_peek(XxNBSocket* nbs, int* dataLen) noexcept
+	{
+		if (nbs->recvBufs.empty()) return nullptr;
+		auto& pkg = nbs->recvBufs.front();
+		*dataLen = pkg.dataLen;
+		return pkg.buf;
+	}
 
-XXNBSOCKETLIB_API char* XxNBSocket_PeekRecv(void* nbs, int* dataLen) noexcept
-{
-	auto self = (XxNBSocket*)nbs;
-	if (self->recvBufs.empty()) return nullptr;
-	auto& pkg = self->recvBufs.front();
-	*dataLen = pkg.dataLen;
-	return pkg.buf;
-}
-
-XXNBSOCKETLIB_API void XxNBSocket_PopRecv(void* nbs) noexcept
-{
-	auto self = (XxNBSocket*)nbs;
-	self->recvBufs.pop_front();
-}
+	XXNBSOCKETLIB_API void xxnbs_pop(XxNBSocket* nbs) noexcept
+	{
+		nbs->recvBufs.pop_front();
+	}
 
 }
-

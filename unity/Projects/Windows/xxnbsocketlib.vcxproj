@@ -12,7 +12,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Sources\xxbuf.h" />
-    <ClInclude Include="..\Sources\xxmempool.h" />
     <ClInclude Include="..\Sources\xxnbsocket.h" />
     <ClInclude Include="..\Sources\xxnbsocketlib.h" />
   </ItemGroup>
