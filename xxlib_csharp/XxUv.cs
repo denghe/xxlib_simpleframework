@@ -5,6 +5,27 @@ using System.Text;
 
 namespace xx
 {
+    public struct Pair<First, Second>
+    {
+        public First first;
+        public Second second;
+    }
+
+    public enum UvRunMode
+    {
+        Default = 0,
+        Once,
+        NoWait
+    }
+
+    public enum UvTcpStates
+    {
+        Disconnected,
+        Connecting,
+        Connected,
+        Disconnecting,
+    };
+
     public class UvLoop : IDisposable
     {
         public bool disposed;
@@ -247,7 +268,7 @@ namespace xx
 
 
         // 基础收数据处理, 投递到事件函数
-        public void OnReceiveImpl(IntPtr bufPtr, int len)
+        public void ReceiveImpl(IntPtr bufPtr, int len)
         {
             bbRecv.WriteBuf(bufPtr, len);                   // 追加收到的数据到接收缓冲区
 
@@ -429,7 +450,7 @@ namespace xx
             int len = (int)nread;
             if (len > 0)
             {
-                tcp.OnReceiveImpl(bufPtr, len);
+                tcp.ReceiveImpl(bufPtr, len);
             }
             UvInterop.xxuv_pool_free(loopPtr, bufPtr);
             if (len < 0)
@@ -1216,54 +1237,6 @@ namespace xx
         public abstract void HandleDisconnect();
     }
 
-    public class UvUdpPeer : UvTcpUdpBase
-    {
-        public UvUdpPeer(UvUdpListener listener)
-        {
-            throw new NotImplementedException();
-        }
-
-        protected override void DisconnectImpl()
-        {
-            throw new NotImplementedException();
-        }
-
-        public override int GetSendQueueSize()
-        {
-            throw new NotImplementedException();
-        }
-
-        protected override bool Disconnected()
-        {
-            throw new NotImplementedException();
-        }
-
-        public override void SendBytes(byte[] data, int offset = 0, int len = 0)
-        {
-            throw new NotImplementedException();
-        }
-
-        protected override void ReceivePackageImpl(BBuffer bb)
-        {
-            throw new NotImplementedException();
-        }
-
-        protected override void ReceiveRequestImpl(uint serial, BBuffer bb)
-        {
-            throw new NotImplementedException();
-        }
-
-        protected override void ReceiveResponseImpl(uint serial, BBuffer bb)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Dispose()
-        {
-            throw new NotImplementedException();
-        }
-    }
-
     public class UvUdpListener : IDisposable
     {
         /******************************************************************************/
@@ -1273,7 +1246,7 @@ namespace xx
         public Action OnDispose;
         /******************************************************************************/
 
-        public List<UvUdpPeer> peers = new List<UvUdpPeer>();
+        public Dict<Guid, UvUdpPeer> peers = new Dict<Guid, UvUdpPeer>();
 
         public bool disposed;
         public UvLoop loop;
@@ -1338,9 +1311,28 @@ namespace xx
             // 前 16 字节转为 Guid 在字节中建连接
             Marshal.Copy(bufPtr, guid, 0, 16);
             var g = new Guid(guid);
-            
-            // todo: 去字典中定位 Peer 上下文
+
+            // 去字典中找. 没有就新建.
+            int idx = peers.Find(g);
+            UvUdpPeer p = null;
+            if (idx < 0)
+            {
+                try
+                {
+                    p = new UvUdpPeer(this);    // todo: Guid 传入至 kcp
+                }
+                catch
+                {
+                    return;
+                }
+                peers.Add(g, p);
+            }
+            else
+            {
+                p = peers.ValueAt(idx);
+            }
             // call peer 的函数
+            p.ReceiveImpl(bufPtr, len);
         }
 
         public void RecvStart()
@@ -1377,7 +1369,8 @@ namespace xx
             if (!disposed)
             {
                 // if (disposing) // Free other state (managed objects).
-                peers.ForEachReverse(o => o.Dispose());
+                peers.ForEach(kv => kv.value.Dispose());
+                peers.Clear();
 
                 UvInterop.xxuv_close_(ptr);
                 ptr = IntPtr.Zero;
@@ -1399,27 +1392,55 @@ namespace xx
         #endregion
     }
 
-
-    public struct Pair<First, Second>
+    public class UvUdpPeer : UvTcpUdpBase
     {
-        public First first;
-        public Second second;
+        // todo: kcp 相关
+
+        public UvUdpPeer(UvUdpListener listener)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override void DisconnectImpl()
+        {
+            throw new NotImplementedException();
+        }
+
+        public override int GetSendQueueSize()
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override bool Disconnected()
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void SendBytes(byte[] data, int offset = 0, int len = 0)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override void ReceivePackageImpl(BBuffer bb)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override void ReceiveRequestImpl(uint serial, BBuffer bb)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override void ReceiveResponseImpl(uint serial, BBuffer bb)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Dispose()
+        {
+            throw new NotImplementedException();
+        }
     }
-
-    public enum UvRunMode
-    {
-        Default = 0,
-        Once,
-        NoWait
-    }
-
-    public enum UvTcpStates
-    {
-        Disconnected,
-        Connecting,
-        Connected,
-        Disconnecting,
-    };
 
     public static class UvInterop
     {
@@ -1730,7 +1751,6 @@ namespace xx
 
     }
 
-
     // u3d 下 模拟 ConcurrentQueue 的用法, 用 lock + queue 浅封 for unity
 #if NET_2_0 || NET_2_0_SUBSET
     public class ConcurrentQueue<T>
@@ -1748,5 +1768,4 @@ namespace xx
         }
     }
 #endif
-
 }
