@@ -555,8 +555,11 @@ void xx::UvTcpBase::SendBytes(BBuffer const & bb)
 	if (int r = uv_write_(ptr, bb.buf, (int)bb.dataLen)) throw r;
 }
 
-
-
+size_t xx::UvTcpBase::GetSendQueueSize()
+{
+	if (!addrPtr) throw - 1;
+	return uv_stream_get_write_queue_size((uv_stream_t*)ptr);
+}
 
 
 

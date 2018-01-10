@@ -8,8 +8,9 @@ namespace xx
     public class UvLoop : IDisposable
     {
         public bool disposed;
-        public List<UvTcpListener> listeners = new List<UvTcpListener>();
-        public List<UvTcpClient> clients = new List<UvTcpClient>();
+        public List<UvUdpListener> udpListeners = new List<UvUdpListener>();
+        public List<UvTcpListener> tcpListeners = new List<UvTcpListener>();
+        public List<UvTcpClient> tcpClients = new List<UvTcpClient>();
         public List<UvTimer> timers = new List<UvTimer>();
         public List<UvAsync> asyncs = new List<UvAsync>();
         public UvRpcManager rpcMgr;
@@ -77,8 +78,8 @@ namespace xx
 
                 asyncs.ForEachReverse(o => o.Dispose());
                 timers.ForEachReverse(o => o.Dispose());
-                clients.ForEachReverse(o => o.Dispose());
-                listeners.ForEachReverse(o => o.Dispose());
+                tcpClients.ForEachReverse(o => o.Dispose());
+                tcpListeners.ForEachReverse(o => o.Dispose());
 
                 if (UvInterop.xxuv_loop_close(ptr) != 0)                    // busy
                 {
@@ -147,8 +148,8 @@ namespace xx
                 throw new OutOfMemoryException();
             }
 
-            index_at_container = loop.listeners.dataLen;
-            loop.listeners.Add(this);
+            index_at_container = loop.tcpListeners.dataLen;
+            loop.tcpListeners.Add(this);
         }
 
 
@@ -206,7 +207,7 @@ namespace xx
                 this.Free(ref addrPtr);
                 this.Unhandle(ref handle);
 
-                loop.listeners.SwapRemoveAt(index_at_container);
+                loop.tcpListeners.SwapRemoveAt(index_at_container);
                 loop = null;
                 disposed = true;
             }
@@ -224,12 +225,10 @@ namespace xx
     // 包头设计: mask( 1 byte ) + len( 2 bytes ) + [serial( varlen uinteger )] + data( byte[len - sizeof(serial)] )
     // 首字节为类型路由: 0: 一般数据包   1: RPC请求包   2: RPC回应包   3+: 其他( custom )
     // RPC包将会在 data 的起始区域夹带一个变长无符号整数 作为 流水号
-    public abstract class UvTcpBase : UvTimerBase
+    public abstract class UvTcpUdpBase : UvTimerBase
     {
         /******************************************************************************/
         // 用户事件绑定
-        public Action<BBuffer> OnReceivePackage;
-        public Action<uint, BBuffer> OnReceiveRequest;
         public Action OnDispose;
         /******************************************************************************/
 
@@ -237,31 +236,17 @@ namespace xx
         public UvLoop loop;
         public int index_at_container;
 
-        public IntPtr ptr;
-        public IntPtr handle;
-        public IntPtr addrPtr;
+        protected BBuffer bbRecv = new BBuffer();               // 复用的接收缓冲区
+        protected BBuffer bbSend;                               // 复用
 
         protected abstract void DisconnectImpl();
+        protected abstract void ReceivePackageImpl(BBuffer bb);
+        protected abstract void ReceiveRequestImpl(uint serial, BBuffer bb);
+        protected abstract void ReceiveResponseImpl(uint serial, BBuffer bb);
+        protected abstract bool Disconnected();
 
-        protected static UvInterop.uv_read_cb OnReadCB = OnReadCBImpl;
-        static void OnReadCBImpl(IntPtr stream, IntPtr nread, IntPtr buf_t)
-        {
-            var tcp = stream.To<UvTcpBase>();
-            var loopPtr = tcp.loop.ptr;        // 防事件 Dispose 先取出来
-            var bufPtr = UvInterop.xxuv_get_buf(buf_t);
-            int len = (int)nread;
-            if (len > 0)
-            {
-                tcp.OnReceiveImpl(bufPtr, len);
-            }
-            UvInterop.xxuv_pool_free(loopPtr, bufPtr);
-            if (len < 0)
-            {
-                tcp.DisconnectImpl();
-            }
-        }
 
-        protected BBuffer bbRecv = new BBuffer();           // 复用的接收缓冲区
+        // 基础收数据处理, 投递到事件函数
         public void OnReceiveImpl(IntPtr bufPtr, int len)
         {
             bbRecv.WriteBuf(bufPtr, len);                   // 追加收到的数据到接收缓冲区
@@ -283,8 +268,8 @@ namespace xx
                 bbRecv.offset = offset;
                 if (typeId == 0)
                 {
-                    if (OnReceivePackage != null) OnReceivePackage(bbRecv);
-                    if (ptr == IntPtr.Zero)
+                    ReceivePackageImpl(bbRecv);
+                    if (Disconnected())
                     {
                         bbRecv.Clear();
                         return;
@@ -300,8 +285,8 @@ namespace xx
                     }
                     if (typeId == 1)
                     {
-                        if (OnReceiveRequest != null) OnReceiveRequest(serial, bbRecv);
-                        if (ptr == IntPtr.Zero)
+                        ReceiveRequestImpl(serial, bbRecv);
+                        if (Disconnected())
                         {
                             bbRecv.Clear();
                             return;
@@ -309,8 +294,8 @@ namespace xx
                     }
                     else if (typeId == 2)
                     {
-                        loop.rpcMgr.Callback(serial, bbRecv);
-                        if (ptr == IntPtr.Zero)
+                        ReceiveResponseImpl(serial, bbRecv);
+                        if (Disconnected())
                         {
                             bbRecv.Clear();
                             return;
@@ -326,29 +311,17 @@ namespace xx
             bbRecv.dataLen -= offset;
         }
 
-        public void SendBytes(byte[] data, int offset = 0, int len = 0)
-        {
-            if (disposed) throw new ObjectDisposedException("XxUvTcpBase");
-            if (data == null || data.Length == 0) throw new NullReferenceException();
-            if (offset + len > data.Length) throw new IndexOutOfRangeException();
-            if (data.Length == offset) throw new NullReferenceException();
-            if (len == 0) len = data.Length - offset;
-            var h = GCHandle.Alloc(data, GCHandleType.Pinned);
-            UvInterop.xxuv_write_(ptr, h.AddrOfPinnedObject(), (uint)offset, (uint)len);
-            h.Free();
-        }
+        // 取没发出去的数据队列长度( 便于逻辑上及时 Dispose, 避免目标无接收能力而堆积数据吃内存 )
+        public abstract int GetSendQueueSize();
 
+        // 原始数据发送
+        public abstract void SendBytes(byte[] data, int offset = 0, int len = 0);
+
+        // 原始数据发送之 BBuffer 版( 发送 BBuffer 中的数据 )
         public void SendBytes(BBuffer bb)
         {
-            if (disposed) throw new ObjectDisposedException("XxUvTcpBase");
-            if (bb.dataLen == 0) throw new NullReferenceException();
-            var h = GCHandle.Alloc(bb.buf, GCHandleType.Pinned);
-            UvInterop.xxuv_write_(ptr, h.AddrOfPinnedObject(), 0, (uint)bb.dataLen);
-            h.Free();
+            SendBytes(bb.buf, 0, bb.dataLen);
         }
-
-        // 复用
-        protected BBuffer bbSend;
 
         // 每个类一个包, 返回总字节数
         public int Send(params xx.IBBuffer[] pkgs)
@@ -415,6 +388,74 @@ namespace xx
             bbSend.EndWritePackageEx(2);
             SendBytes(bbSend.buf, 0, bbSend.dataLen);
             return bbSend.dataLen;
+        }
+    }
+
+    public abstract class UvTcpBase : UvTcpUdpBase
+    {
+        /******************************************************************************/
+        // 用户事件绑定
+        public Action<BBuffer> OnReceivePackage;
+        public Action<uint, BBuffer> OnReceiveRequest;
+        /******************************************************************************/
+
+        public IntPtr ptr;
+        public IntPtr handle;
+        public IntPtr addrPtr;
+
+        protected override void ReceivePackageImpl(BBuffer bb)
+        {
+            if (OnReceivePackage != null) OnReceivePackage(bb);
+        }
+        protected override void ReceiveRequestImpl(uint serial, BBuffer bb)
+        {
+            if (OnReceiveRequest != null) OnReceiveRequest(serial, bb);
+        }
+        protected override void ReceiveResponseImpl(uint serial, BBuffer bb)
+        {
+            loop.rpcMgr.Callback(serial, bb);
+        }
+        protected override bool Disconnected()
+        {
+            return ptr == IntPtr.Zero;
+        }
+
+        protected static UvInterop.uv_read_cb OnReadCB = OnReadCBImpl;
+        static void OnReadCBImpl(IntPtr stream, IntPtr nread, IntPtr buf_t)
+        {
+            var tcp = stream.To<UvTcpBase>();
+            var loopPtr = tcp.loop.ptr;        // 防事件 Dispose 先取出来
+            var bufPtr = UvInterop.xxuv_get_buf(buf_t);
+            int len = (int)nread;
+            if (len > 0)
+            {
+                tcp.OnReceiveImpl(bufPtr, len);
+            }
+            UvInterop.xxuv_pool_free(loopPtr, bufPtr);
+            if (len < 0)
+            {
+                tcp.DisconnectImpl();
+            }
+        }
+
+        public override void SendBytes(byte[] data, int offset = 0, int len = 0)
+        {
+            if (disposed) throw new ObjectDisposedException("XxUvTcpBase");
+            if (data == null || data.Length == 0) throw new NullReferenceException();
+            if (offset + len > data.Length) throw new IndexOutOfRangeException();
+            if (data.Length == offset) throw new NullReferenceException();
+            if (len == 0) len = data.Length - offset;
+            var h = GCHandle.Alloc(data, GCHandleType.Pinned);
+            UvInterop.xxuv_write_(ptr, h.AddrOfPinnedObject(), (uint)offset, (uint)len);
+            h.Free();
+        }
+
+        // 取待发送队列长度
+        // 如果遇到发送量较大的场景, 应该抽空做这个检查, 及时 Dispose, 避免目标无接收能力而堆积数据吃内存.
+        public override int GetSendQueueSize()
+        {
+            if (disposed) throw new ObjectDisposedException("XxUvTcpBase");
+            return (int)UvInterop.xxuv_stream_get_write_queue_size(ptr);
         }
     }
 
@@ -568,8 +609,8 @@ namespace xx
                 throw new OutOfMemoryException();
             }
 
-            index_at_container = loop.clients.dataLen;
-            loop.clients.Add(this);
+            index_at_container = loop.tcpClients.dataLen;
+            loop.tcpClients.Add(this);
         }
 
         public void SetAddress(string ipv4, int port)
@@ -666,7 +707,7 @@ namespace xx
 
                 bbSend = null;
                 bbRecv = null;
-                loop.clients.SwapRemoveAt(index_at_container);
+                loop.tcpClients.SwapRemoveAt(index_at_container);
                 loop = null;
                 disposed = true;
             }
@@ -1175,8 +1216,188 @@ namespace xx
         public abstract void HandleDisconnect();
     }
 
+    public class UvUdpPeer : UvTcpUdpBase
+    {
+        public UvUdpPeer(UvUdpListener listener)
+        {
+            throw new NotImplementedException();
+        }
 
-    // todo: UvUdpListener, UvUdpPeer, UvUdpClient ( include kcp support )
+        protected override void DisconnectImpl()
+        {
+            throw new NotImplementedException();
+        }
+
+        public override int GetSendQueueSize()
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override bool Disconnected()
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void SendBytes(byte[] data, int offset = 0, int len = 0)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override void ReceivePackageImpl(BBuffer bb)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override void ReceiveRequestImpl(uint serial, BBuffer bb)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override void ReceiveResponseImpl(uint serial, BBuffer bb)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Dispose()
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public class UvUdpListener : IDisposable
+    {
+        /******************************************************************************/
+        // 用户事件绑定区
+        public Func<UvUdpPeer> OnCreatePeer;
+        public Action<UvUdpPeer> OnAccept;
+        public Action OnDispose;
+        /******************************************************************************/
+
+        public List<UvUdpPeer> peers = new List<UvUdpPeer>();
+
+        public bool disposed;
+        public UvLoop loop;
+        public int index_at_container;
+
+        public IntPtr ptr;
+        public IntPtr handle;
+        public IntPtr addrPtr;
+
+        public byte[] guid = new byte[16];
+
+        public UvUdpListener(UvLoop loop)
+        {
+            this.Handle(ref handle);
+            this.loop = loop;
+
+            ptr = UvInterop.xxuv_alloc_uv_udp_t(handle);
+            if (ptr == IntPtr.Zero)
+            {
+                this.Unhandle(ref handle);
+                throw new OutOfMemoryException();
+            }
+
+            int r = UvInterop.xxuv_udp_init(loop.ptr, ptr);
+            if (r != 0)
+            {
+                this.Free(ref ptr);
+                this.Unhandle(ref handle);
+                r.Throw();
+            }
+
+            addrPtr = UvInterop.xxuv_alloc_sockaddr_in(IntPtr.Zero);
+            if (addrPtr == IntPtr.Zero)
+            {
+                UvInterop.xxuv_close_(ptr);
+                ptr = IntPtr.Zero;
+                this.Unhandle(ref handle);
+                throw new OutOfMemoryException();
+            }
+
+            index_at_container = loop.udpListeners.dataLen;
+            loop.udpListeners.Add(this);
+        }
+
+        static UvInterop.uv_udp_recv_cb OnRecvCB = OnRecvCBImpl;
+        static void OnRecvCBImpl(IntPtr udp, IntPtr nread, IntPtr buf_t, IntPtr addr, uint flags)
+        {
+            var listener = udp.To<UvUdpListener>();
+            var loopPtr = listener.loop.ptr;        // 防事件 Dispose 先取出来
+            var bufPtr = UvInterop.xxuv_get_buf(buf_t);
+            var len = (int)nread;
+            if (len == 0) throw new Exception();
+            listener.OnReceiveImpl(bufPtr, len);
+            UvInterop.xxuv_pool_free(loopPtr, bufPtr);
+        }
+
+        public void OnReceiveImpl(IntPtr bufPtr, int len)
+        {
+            // 所有消息长度至少都有 36 字节长( Guid conv 的 kcp 头 )
+            if (len < 36) return;
+
+            // 前 16 字节转为 Guid 在字节中建连接
+            Marshal.Copy(bufPtr, guid, 0, 16);
+            var g = new Guid(guid);
+            
+            // todo: 去字典中定位 Peer 上下文
+            // call peer 的函数
+        }
+
+        public void RecvStart()
+        {
+            if (disposed) throw new ObjectDisposedException("XxUvUdpListener");
+            UvInterop.xxuv_udp_recv_start_(ptr, OnRecvCB).TryThrow();
+        }
+
+        public void RecvStop()
+        {
+            if (disposed) throw new ObjectDisposedException("XxUvUdpListener");
+            UvInterop.xxuv_udp_recv_stop(ptr).TryThrow();
+        }
+
+        public void Bind(string ipv4, int port)
+        {
+            if (disposed) throw new ObjectDisposedException("XxUvUdpListener");
+            UvInterop.xxuv_ip4_addr(ipv4, port, addrPtr).TryThrow();
+            UvInterop.xxuv_udp_bind_(ptr, addrPtr).TryThrow();
+        }
+
+        #region Dispose
+
+        public void Dispose()
+        {
+            if (disposed) return;
+            if (OnDispose != null) OnDispose();
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposed)
+            {
+                // if (disposing) // Free other state (managed objects).
+                peers.ForEachReverse(o => o.Dispose());
+
+                UvInterop.xxuv_close_(ptr);
+                ptr = IntPtr.Zero;
+                this.Free(ref addrPtr);
+                this.Unhandle(ref handle);
+
+                loop.udpListeners.SwapRemoveAt(index_at_container);
+                loop = null;
+                disposed = true;
+            }
+            //base.Dispose(disposing);
+        }
+
+        ~UvUdpListener()
+        {
+            Dispose(false);
+        }
+
+        #endregion
+    }
 
 
     public struct Pair<First, Second>
@@ -1213,6 +1434,9 @@ namespace xx
 
         [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr xxuv_alloc_uv_tcp_t(IntPtr ud);
+
+        [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
+        public static extern IntPtr xxuv_alloc_uv_udp_t(IntPtr ud);
 
         [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr xxuv_alloc_sockaddr_in(IntPtr ud);
@@ -1355,7 +1579,7 @@ namespace xx
         //public static extern int xxuv_udp_recv_start(IntPtr udp, uv_alloc_cb alloc_cb, uv_udp_recv_cb recv_cb);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate void uv_udp_recv_cb(IntPtr handle, IntPtr nread, IntPtr buf, IntPtr addr, uint flags);
+        public delegate void uv_udp_recv_cb(IntPtr udp, IntPtr nread, IntPtr buf_t, IntPtr addr, uint flags);
 
         [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
         public static extern int xxuv_udp_recv_start_(IntPtr udp, uv_udp_recv_cb recv_cb);
@@ -1367,11 +1591,13 @@ namespace xx
         public delegate void uv_udp_send_cb(IntPtr req, int status);
 
         //[DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
-        //public static extern int xxuv_udp_send(IntPtr req, IntPtr handle, uv_buf_t bufs[], uint nbufs, IntPtr addr, uv_udp_send_cb send_cb);
+        //public static extern int xxuv_udp_send(IntPtr req, IntPtr udp, uv_buf_t bufs[], uint nbufs, IntPtr addr, uv_udp_send_cb send_cb);
 
         [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
-        public static extern int xxuv_udp_send_(IntPtr handle, IntPtr buf, uint offset, uint len, IntPtr addr);
+        public static extern int xxuv_udp_send_(IntPtr udp, IntPtr buf, uint offset, uint len, IntPtr addr);
 
+        [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
+        public static extern IntPtr xxuv_udp_get_send_queue_size(IntPtr udp);
 
 
 
@@ -1407,6 +1633,21 @@ namespace xx
         [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
         public static extern int xxuv_async_send(IntPtr async_req);
 
+
+
+
+
+        [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int xxuv_is_readable(IntPtr stream);
+
+        [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int xxuv_is_writable(IntPtr stream);
+
+        [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
+        public static extern IntPtr xxuv_stream_get_write_queue_size(IntPtr stream);
+
+        [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int xxuv_try_write_(IntPtr stream, IntPtr buf, uint len);
 
 
 

@@ -335,6 +335,8 @@ XXUVLIB_API int xxuv_udp_send(uv_udp_send_t* req, uv_udp_t* handle, const uv_buf
 
 XXUVLIB_API int xxuv_udp_send_(uv_udp_t* handle, char const* inBuf, unsigned int offset, unsigned int len, const struct sockaddr* addr) noexcept
 {
+	//uv_udp_get_send_queue_size
+		
 	struct uv_udp_send_t_ex
 	{
 		XxMemPool* mp;
@@ -355,7 +357,10 @@ XXUVLIB_API int xxuv_udp_send_(uv_udp_t* handle, char const* inBuf, unsigned int
 		wr->mp->Free(wr);
 	});
 }
-
+XXUVLIB_API size_t xxuv_udp_get_send_queue_size(const uv_udp_t* udp) noexcept
+{
+	return uv_udp_get_send_queue_size(udp);
+}
 
 
 
@@ -412,6 +417,35 @@ XXUVLIB_API void xxuv_walk(uv_loop_t* loop, uv_walk_cb cb, void* arg) noexcept
 {
 	uv_walk(loop, cb, arg);
 }
+
+
+
+
+
+
+
+XXUVLIB_API int xxuv_is_readable(const uv_stream_t* stream) noexcept
+{
+	return uv_is_readable(stream);
+}
+XXUVLIB_API int xxuv_is_writable(const uv_stream_t* stream) noexcept
+{
+	return uv_is_writable(stream);
+}
+XXUVLIB_API size_t xxuv_stream_get_write_queue_size(const uv_stream_t* stream) noexcept
+{
+	return uv_stream_get_write_queue_size(stream);
+}
+XXUVLIB_API int xxuv_try_write(uv_stream_t* stream, const uv_buf_t bufs[], unsigned int nbufs) noexcept
+{
+	return uv_try_write(stream, bufs, nbufs);
+}
+XXUVLIB_API int xxuv_try_write_(uv_stream_t* stream, char* buf, unsigned int len) noexcept
+{
+	auto bufs = uv_buf_init(buf, len);
+	return uv_try_write(stream, &bufs, 1);
+}
+
 
 
 

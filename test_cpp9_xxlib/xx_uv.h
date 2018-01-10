@@ -170,6 +170,8 @@ namespace xx
 
 		template<typename T>
 		void SendResponse(uint32_t serial, T const& pkg);
+
+		size_t GetSendQueueSize();
 	};
 
 	class UvTcpPeer : public UvTcpBase

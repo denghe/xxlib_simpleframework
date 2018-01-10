@@ -62,6 +62,11 @@ extern "C" {
 	XXUVLIB_API int xxuv_fill_client_ip(uv_tcp_t* stream, char* buf, int buf_len, int* data_len) noexcept;
 	XXUVLIB_API int xxuv_tcp_connect(uv_connect_t* req, uv_tcp_t* stream, const struct sockaddr* addr, uv_connect_cb cb) noexcept;
 	XXUVLIB_API int xxuv_tcp_connect_(uv_tcp_t* stream, const struct sockaddr* addr, uv_connect_cb cb) noexcept;
+	XXUVLIB_API int xxuv_is_readable(const uv_stream_t* stream) noexcept;
+	XXUVLIB_API int xxuv_is_writable(const uv_stream_t* stream) noexcept;
+	XXUVLIB_API size_t xxuv_stream_get_write_queue_size(const uv_stream_t* stream) noexcept;
+	XXUVLIB_API int xxuv_try_write(uv_stream_t* stream, const uv_buf_t bufs[], unsigned int nbufs) noexcept;
+	XXUVLIB_API int xxuv_try_write_(uv_stream_t* stream, char* buf, unsigned int len) noexcept;
 
 
 	XXUVLIB_API int xxuv_udp_init(uv_loop_t* loop, uv_udp_t* udp) noexcept;
@@ -72,7 +77,7 @@ extern "C" {
 	XXUVLIB_API int xxuv_udp_recv_stop(uv_udp_t* udp) noexcept;
 	XXUVLIB_API int xxuv_udp_send(uv_udp_send_t* req, uv_udp_t* handle, const uv_buf_t bufs[], unsigned int nbufs, const struct sockaddr* addr, uv_udp_send_cb send_cb) noexcept;
 	XXUVLIB_API int xxuv_udp_send_(uv_udp_t* handle, char const* buf, unsigned int offset, unsigned int len, const struct sockaddr* addr) noexcept;
-
+	XXUVLIB_API size_t xxuv_udp_get_send_queue_size(const uv_udp_t* udp) noexcept;
 
 
 	XXUVLIB_API int xxuv_timer_init(uv_loop_t* loop, uv_timer_t* timer_req) noexcept;
@@ -91,12 +96,6 @@ extern "C" {
 	XXUVLIB_API void xxuv_walk(uv_loop_t* loop, uv_walk_cb cb, void* arg) noexcept;
 
 
-	// todo
-	//XXUVLIB_API int xxuv_is_readable(const uv_stream_t* stream) noexcept;
-	//XXUVLIB_API int xxuv_is_writable(const uv_stream_t* stream) noexcept;
-	//XXUVLIB_API size_t xxuv_stream_get_write_queue_size(const uv_stream_t* stream) noexcept;
-	//XXUVLIB_API int xxuv_try_write(uv_stream_t* stream, const uv_buf_t bufs[], unsigned int nbufs) noexcept;
-	//XXUVLIB_API int xxuv_try_write_(uv_stream_t* stream, char* buf, unsigned int len) noexcept;
 
 
 	// kcp 相关
