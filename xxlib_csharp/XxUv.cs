@@ -257,6 +257,10 @@ namespace xx
         public UvLoop loop;
         public int index_at_container;
 
+        public IntPtr ptr;
+        public IntPtr handle;
+        public IntPtr addrPtr;
+
         protected BBuffer bbRecv = new BBuffer();               // 复用的接收缓冲区
         protected BBuffer bbSend;                               // 复用
 
@@ -419,10 +423,6 @@ namespace xx
         public Action<BBuffer> OnReceivePackage;
         public Action<uint, BBuffer> OnReceiveRequest;
         /******************************************************************************/
-
-        public IntPtr ptr;
-        public IntPtr handle;
-        public IntPtr addrPtr;
 
         protected override void ReceivePackageImpl(BBuffer bb)
         {
@@ -1247,6 +1247,7 @@ namespace xx
         /******************************************************************************/
 
         public Dict<Guid, UvUdpPeer> peers = new Dict<Guid, UvUdpPeer>();
+        // todo: timer for call peers updates every 10 ms
 
         public bool disposed;
         public UvLoop loop;
@@ -1299,11 +1300,11 @@ namespace xx
             var bufPtr = UvInterop.xxuv_get_buf(buf_t);
             var len = (int)nread;
             if (len == 0) throw new Exception();
-            listener.OnReceiveImpl(bufPtr, len);
+            listener.OnReceiveImpl(bufPtr, len, addr);
             UvInterop.xxuv_pool_free(loopPtr, bufPtr);
         }
 
-        public void OnReceiveImpl(IntPtr bufPtr, int len)
+        public void OnReceiveImpl(IntPtr bufPtr, int len, IntPtr addr)
         {
             // 所有消息长度至少都有 36 字节长( Guid conv 的 kcp 头 )
             if (len < 36) return;
@@ -1319,7 +1320,7 @@ namespace xx
             {
                 try
                 {
-                    p = new UvUdpPeer(this);    // todo: Guid 传入至 kcp
+                    p = new UvUdpPeer(this, g, bufPtr, addr);
                 }
                 catch
                 {
@@ -1331,6 +1332,9 @@ namespace xx
             {
                 p = peers.ValueAt(idx);
             }
+            // 无脑更新 peer 的目标 ip 地址
+            UvInterop.xxuv_addr_copy(addr, p.addrPtr);
+
             // call peer 的函数
             p.ReceiveImpl(bufPtr, len);
         }
@@ -1392,28 +1396,64 @@ namespace xx
         #endregion
     }
 
-    public class UvUdpPeer : UvTcpUdpBase
+    public class UvUdpPeer : UvTcpUdpBase, IDisposable
     {
-        // todo: kcp 相关
-
-        public UvUdpPeer(UvUdpListener listener)
+        UvUdpListener listener;
+        Guid guid;
+        public UvUdpPeer(UvUdpListener listener, Guid guid, IntPtr rawData, IntPtr addr)
         {
-            throw new NotImplementedException();
+            this.listener = listener;
+            this.guid = guid;
+            this.loop = listener.loop;
+            this.Handle(ref handle);
+
+            ptr = UvInterop.xx_ikcp_create(rawData, handle, loop.ptr);
+            if (ptr == IntPtr.Zero)
+            {
+                this.Unhandle(ref handle);
+                throw new OutOfMemoryException();
+            }
+            UvInterop.xx_ikcp_setoutput(ptr, OutputCB);
+
+            addrPtr = UvInterop.xxuv_alloc_sockaddr_in(IntPtr.Zero);
+            if (addrPtr == IntPtr.Zero)
+            {
+                UvInterop.xx_ikcp_release(ptr);
+                ptr = IntPtr.Zero;
+                this.Unhandle(ref handle);
+                throw new OutOfMemoryException();
+            }
+
+            index_at_container = listener.peers.Add(guid, this).index;
+        }
+
+        static UvInterop.ikcp_output_cb OutputCB = OutputImpl;
+        static int OutputImpl(IntPtr buf, int len, IntPtr kcp)
+        {
+            var peer = (UvUdpPeer)((GCHandle)UvInterop.xx_ikcp_get_ud(kcp)).Target;
+            UvInterop.xxuv_udp_send_(peer.listener.ptr, buf, 0, (uint)len, peer.addrPtr);
+            return 0;
+        }
+
+        public void Update(uint current)
+        {
+            if (disposed) throw new ObjectDisposedException("UvUdpPeer");
+            UvInterop.xx_ikcp_update(ptr, current);
         }
 
         protected override void DisconnectImpl()
         {
-            throw new NotImplementedException();
+            Dispose();
         }
 
         public override int GetSendQueueSize()
         {
-            throw new NotImplementedException();
+            return (int)UvInterop.xxuv_udp_get_send_queue_size(listener.ptr);   // todo
         }
 
         protected override bool Disconnected()
         {
-            throw new NotImplementedException();
+            return disposed;
         }
 
         public override void SendBytes(byte[] data, int offset = 0, int len = 0)
@@ -1436,10 +1476,47 @@ namespace xx
             throw new NotImplementedException();
         }
 
+        #region Dispose
+
         public void Dispose()
         {
-            throw new NotImplementedException();
+            if (disposed) return;
+            if (OnDispose != null) OnDispose();
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposed)
+            {
+                // if (disposing) // Free other state (managed objects).
+                UvInterop.xx_ikcp_release(ptr);
+                ptr = IntPtr.Zero;
+                this.Free(ref addrPtr);
+                this.Unhandle(ref handle);
+
+
+                UnbindTimerManager();
+                OnTimeout = null;
+
+                bbSend = null;
+                bbRecv = null;
+                listener.peers.RemoveAt(index_at_container);
+                index_at_container = -1;
+                listener = null;
+                loop = null;
+                disposed = true;
+            }
+            //base.Dispose(disposing);
+        }
+
+        ~UvUdpPeer()
+        {
+            Dispose(false);
+        }
+
+        #endregion
     }
 
     public static class UvInterop
@@ -1681,7 +1758,7 @@ namespace xx
         public static extern void xx_ikcp_release(IntPtr kcp);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate void ikcp_output_cb(IntPtr buf, int len, IntPtr kcp);
+        public delegate int ikcp_output_cb(IntPtr buf, int len, IntPtr kcp);
 
         [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
         public static extern void xx_ikcp_setoutput(IntPtr kcp, ikcp_output_cb cb);
@@ -1701,6 +1778,11 @@ namespace xx
         [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
         public static extern uint xx_ikcp_check(IntPtr kcp, uint current);
 
+        [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
+        public static extern void xxuv_addr_copy(IntPtr from, IntPtr to);
+
+        [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int xxuv_fill_ip(IntPtr addr, IntPtr buf, int buf_len, ref int data_len);
 
 
 
