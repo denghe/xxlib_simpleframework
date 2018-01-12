@@ -32,6 +32,7 @@ namespace xx
         public List<UvUdpListener> udpListeners = new List<UvUdpListener>();
         public List<UvTcpListener> tcpListeners = new List<UvTcpListener>();
         public List<UvTcpClient> tcpClients = new List<UvTcpClient>();
+        public List<UvUdpClient> udpClients = new List<UvUdpClient>();
         public List<UvTimer> timers = new List<UvTimer>();
         public List<UvAsync> asyncs = new List<UvAsync>();
         public UvRpcManager rpcMgr;
@@ -101,6 +102,8 @@ namespace xx
                 timers.ForEachReverse(o => o.Dispose());
                 tcpClients.ForEachReverse(o => o.Dispose());
                 tcpListeners.ForEachReverse(o => o.Dispose());
+                udpClients.ForEachReverse(o => o.Dispose());
+                udpListeners.ForEachReverse(o => o.Dispose());
 
                 if (UvInterop.xxuv_loop_close(ptr) != 0)                    // busy
                 {
@@ -1528,7 +1531,105 @@ namespace xx
         #endregion
     }
 
-    // todo: UvUdpClient
+    public class UvUdpClient : UvTcpUdpBase, IDisposable
+    {
+        // todo: more ptr, addrPtr store kcp, target ( combine udp listener code to here )
+
+        public UvUdpClient()
+        {
+            // todo: 
+        }
+
+        public void SetAddress(string ipv4, int port)
+        {
+            if (disposed) throw new ObjectDisposedException("XxUvTcpClient");
+            UvInterop.xxuv_ip4_addr(ipv4, port, addrPtr).TryThrow();
+        }
+
+        protected override void DisconnectImpl()
+        {
+            // todo: 清 kcp?
+            throw new NotImplementedException();
+        }
+
+        protected override void ReceivePackageImpl(BBuffer bb)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override void ReceiveRequestImpl(uint serial, BBuffer bb)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override void ReceiveResponseImpl(uint serial, BBuffer bb)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override bool Disconnected()
+        {
+            throw new NotImplementedException();
+        }
+
+        public override int GetSendQueueSize()
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void SendBytes(byte[] data, int offset = 0, int len = 0)
+        {
+            if (disposed) throw new ObjectDisposedException("UvUdpClient");
+            if (data == null || data.Length == 0) throw new NullReferenceException();
+            if (offset + len > data.Length) throw new IndexOutOfRangeException();
+            if (data.Length == offset) throw new NullReferenceException();
+            if (len == 0) len = data.Length - offset;
+            var h = GCHandle.Alloc(data, GCHandleType.Pinned);
+            UvInterop.xx_ikcp_send(ptr, h.AddrOfPinnedObject(), offset, len);
+            h.Free();
+        }
+
+        #region Dispose
+
+        public void Dispose()
+        {
+            if (disposed) return;
+            if (OnDispose != null) OnDispose();
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposed)
+            {
+                // if (disposing) // Free other state (managed objects).
+                UvInterop.xx_ikcp_release(ptr);
+                ptr = IntPtr.Zero;
+                this.Free(ref addrPtr);
+                this.Unhandle(ref handle);
+
+
+                UnbindTimerManager();
+                OnTimeout = null;
+
+                bbSend = null;
+                bbRecv = null;
+                loop.udpClients.RemoveAt(index_at_container);
+                index_at_container = -1;
+                loop = null;
+                disposed = true;
+            }
+            //base.Dispose(disposing);
+        }
+
+        ~UvUdpClient()
+        {
+            Dispose(false);
+        }
+
+        #endregion
+    }
 
     public static class UvInterop
     {
@@ -1844,8 +1945,8 @@ namespace xx
 
     }
 
-    // u3d 下 模拟 ConcurrentQueue 的用法, 用 lock + queue 浅封 for unity
 #if NET_2_0 || NET_2_0_SUBSET
+    // u3d 下 模拟 ConcurrentQueue
     public class ConcurrentQueue<T>
     {
         protected xx.Queue<T> queue;
