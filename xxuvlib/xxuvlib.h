@@ -104,7 +104,7 @@ extern "C" {
 	XXUVLIB_API void xx_ikcp_setoutput(ikcpcb *kcp, int(*output)(const char *buf, int len, ikcpcb *kcp)) noexcept;
 	XXUVLIB_API void* xx_ikcp_get_ud(ikcpcb* kcp) noexcept;
 	XXUVLIB_API int xx_ikcp_input(ikcpcb* kcp, const char *data, int size) noexcept;
-	XXUVLIB_API int xx_ikcp_send(ikcpcb* kcp, const char *buffer, int len) noexcept;
+	XXUVLIB_API int xx_ikcp_send(ikcpcb* kcp, const char *buffer, int offset, int len) noexcept;
 	XXUVLIB_API void xx_ikcp_update(ikcpcb* kcp, uint32_t current) noexcept;
 	XXUVLIB_API uint32_t xx_ikcp_check(ikcpcb* kcp, uint32_t current) noexcept;
 	XXUVLIB_API void xxuv_addr_copy(sockaddr_in* from, sockaddr_in* to) noexcept;

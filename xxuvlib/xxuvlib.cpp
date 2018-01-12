@@ -501,9 +501,9 @@ XXUVLIB_API int xx_ikcp_input(ikcpcb* kcp, const char *data, int size) noexcept
 	return ikcp_input(kcp, data, size);
 }
 
-XXUVLIB_API int xx_ikcp_send(ikcpcb* kcp, const char *buffer, int len) noexcept
+XXUVLIB_API int xx_ikcp_send(ikcpcb* kcp, const char *buffer, int offset, int len) noexcept
 {
-	return ikcp_send(kcp, buffer, len);
+	return ikcp_send(kcp, buffer + offset, len);
 }
 
 XXUVLIB_API void xx_ikcp_update(ikcpcb* kcp, uint32_t current) noexcept

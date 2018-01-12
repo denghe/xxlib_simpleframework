@@ -250,6 +250,8 @@ namespace xx
     {
         /******************************************************************************/
         // 用户事件绑定
+        public Action<BBuffer> OnReceivePackage;
+        public Action<uint, BBuffer> OnReceiveRequest;
         public Action OnDispose;
         /******************************************************************************/
 
@@ -1400,6 +1402,7 @@ namespace xx
     {
         UvUdpListener listener;
         Guid guid;
+
         public UvUdpPeer(UvUdpListener listener, Guid guid, IntPtr rawData, IntPtr addr)
         {
             this.listener = listener;
@@ -1414,6 +1417,7 @@ namespace xx
                 throw new OutOfMemoryException();
             }
             UvInterop.xx_ikcp_setoutput(ptr, OutputCB);
+            // todo: 继续初始化 kcp 参数
 
             addrPtr = UvInterop.xxuv_alloc_sockaddr_in(IntPtr.Zero);
             if (addrPtr == IntPtr.Zero)
@@ -1458,22 +1462,27 @@ namespace xx
 
         public override void SendBytes(byte[] data, int offset = 0, int len = 0)
         {
-            throw new NotImplementedException();
+            if (disposed) throw new ObjectDisposedException("UvUdpPeer");
+            if (data == null || data.Length == 0) throw new NullReferenceException();
+            if (offset + len > data.Length) throw new IndexOutOfRangeException();
+            if (data.Length == offset) throw new NullReferenceException();
+            if (len == 0) len = data.Length - offset;
+            var h = GCHandle.Alloc(data, GCHandleType.Pinned);
+            UvInterop.xx_ikcp_send(ptr, h.AddrOfPinnedObject(), offset, len);
+            h.Free();
         }
 
         protected override void ReceivePackageImpl(BBuffer bb)
         {
-            throw new NotImplementedException();
+            if (OnReceivePackage != null) OnReceivePackage(bb);
         }
-
         protected override void ReceiveRequestImpl(uint serial, BBuffer bb)
         {
-            throw new NotImplementedException();
+            if (OnReceiveRequest != null) OnReceiveRequest(serial, bb);
         }
-
         protected override void ReceiveResponseImpl(uint serial, BBuffer bb)
         {
-            throw new NotImplementedException();
+            loop.rpcMgr.Callback(serial, bb);
         }
 
         #region Dispose
@@ -1518,6 +1527,8 @@ namespace xx
 
         #endregion
     }
+
+    // todo: UvUdpClient
 
     public static class UvInterop
     {
@@ -1770,7 +1781,7 @@ namespace xx
         public static extern int xx_ikcp_input(IntPtr kcp, IntPtr data, int size);
 
         [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
-        public static extern int xx_ikcp_send(IntPtr kcp, IntPtr buffer, int len);
+        public static extern int xx_ikcp_send(IntPtr kcp, IntPtr buffer, int offset, int len);
 
         [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
         public static extern void xx_ikcp_update(IntPtr kcp, uint current);
