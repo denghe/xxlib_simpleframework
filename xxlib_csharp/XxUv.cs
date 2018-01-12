@@ -5,12 +5,6 @@ using System.Text;
 
 namespace xx
 {
-    public struct Pair<First, Second>
-    {
-        public First first;
-        public Second second;
-    }
-
     public enum UvRunMode
     {
         Default = 0,
