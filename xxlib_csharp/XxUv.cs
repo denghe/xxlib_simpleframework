@@ -1397,10 +1397,12 @@ namespace xx
 
     public class UvUdpPeer : UvTcpUdpBase, IDisposable
     {
+        public Guid guid;
         UvUdpListener listener;
-        Guid guid;
 
-        public UvUdpPeer(UvUdpListener listener, Guid guid, IntPtr rawData, IntPtr addr)
+        public UvUdpPeer(UvUdpListener listener, Guid guid, IntPtr rawData, IntPtr addr
+            , int sndwnd = 128, int rcvwnd = 128
+            , int nodelay = 1, int interval = 10, int resend = 2, int nc = 1)
         {
             this.listener = listener;
             this.guid = guid;
@@ -1413,8 +1415,17 @@ namespace xx
                 this.Unhandle(ref handle);
                 throw new OutOfMemoryException();
             }
+
+            int r = UvInterop.xx_ikcp_wndsize(ptr, sndwnd, rcvwnd);
+            if (r == 0) r = UvInterop.xx_ikcp_nodelay(ptr, nodelay, interval, resend, nc);
+            if (r != 0)
+            {
+                UvInterop.xx_ikcp_release(ptr);
+                ptr = IntPtr.Zero;
+                this.Unhandle(ref handle);
+                throw new Exception("kcp wndsize / nodelay throw " + r);
+            }
             UvInterop.xx_ikcp_setoutput(ptr, OutputCB);
-            // todo: 继续初始化 kcp 参数
 
             addrPtr = UvInterop.xxuv_alloc_sockaddr_in(IntPtr.Zero);
             if (addrPtr == IntPtr.Zero)
@@ -1436,10 +1447,13 @@ namespace xx
             return 0;
         }
 
+        uint next;
         public void Update(uint current)
         {
             if (disposed) throw new ObjectDisposedException("UvUdpPeer");
+            if (next > current) return;
             UvInterop.xx_ikcp_update(ptr, current);
+            next = UvInterop.xx_ikcp_check(ptr, current);
         }
 
         protected override void DisconnectImpl()
@@ -1527,23 +1541,119 @@ namespace xx
 
     public class UvUdpClient : UvTcpUdpBase, IDisposable
     {
-        // todo: more ptr, addrPtr store kcp, target ( combine udp listener code to here )
-
-        public UvUdpClient()
+        public UvUdpClient(UvLoop loop)
         {
-            // todo: 
+            this.loop = loop;
+            this.Handle(ref handle);
+
+            ptr = UvInterop.xxuv_alloc_uv_udp_t(handle);
+            if (ptr == IntPtr.Zero)
+            {
+                this.Unhandle(ref handle);
+                throw new OutOfMemoryException();
+            }
+
+            int r = UvInterop.xxuv_udp_init(loop.ptr, ptr);
+            if (r != 0)
+            {
+                this.Free(ref ptr);
+                this.Unhandle(ref handle);
+                r.Throw();
+            }
+
+            var rb1 = new Action(() =>
+            {
+                UvInterop.xxuv_close_(ptr);
+                ptr = IntPtr.Zero;
+                this.Unhandle(ref handle);
+            });
+
+            addrPtr = UvInterop.xxuv_alloc_sockaddr_in(IntPtr.Zero);
+            if (addrPtr == IntPtr.Zero)
+            {
+                rb1();
+                throw new OutOfMemoryException();
+            }
+
+            index_at_container = loop.udpClients.dataLen;
+            loop.udpClients.Add(this);
+        }
+
+
+        public Guid guid = Guid.Empty;
+        IntPtr kcpPtr;
+
+        public void InitConnect(Guid guid
+            , int sndwnd = 128, int rcvwnd = 128
+            , int nodelay = 1, int interval = 10, int resend = 2, int nc = 1)
+        {
+            if (kcpPtr != IntPtr.Zero)
+            {
+                throw new InvalidOperationException();
+            }
+
+            this.guid = guid;
+            var guidbytes = guid.ToByteArray();
+            var h = GCHandle.Alloc(guidbytes, GCHandleType.Pinned);
+            kcpPtr = UvInterop.xx_ikcp_create(h.AddrOfPinnedObject(), handle, loop.ptr);
+            h.Free();
+            if (kcpPtr == IntPtr.Zero)
+            {
+                throw new OutOfMemoryException();
+            }
+
+            var rb1 = new Action(() =>
+            {
+                UvInterop.xx_ikcp_release(kcpPtr);
+                kcpPtr = IntPtr.Zero;
+            });
+
+            int r = UvInterop.xx_ikcp_wndsize(kcpPtr, sndwnd, rcvwnd);
+            if (r == 0) r = UvInterop.xx_ikcp_nodelay(kcpPtr, nodelay, interval, resend, nc);
+            if (r != 0)
+            {
+                rb1();
+                throw new Exception("kcp wndsize / nodelay throw " + r);
+            }
+            UvInterop.xx_ikcp_setoutput(kcpPtr, OutputCB);
+
+            // todo: 注册 timer?
+        }
+
+
+        static UvInterop.ikcp_output_cb OutputCB = OutputImpl;
+        static int OutputImpl(IntPtr buf, int len, IntPtr kcp)
+        {
+            var client = (UvUdpClient)((GCHandle)UvInterop.xx_ikcp_get_ud(kcp)).Target;
+            UvInterop.xxuv_udp_send_(client.kcpPtr, buf, 0, (uint)len, client.addrPtr);
+            return 0;
+        }
+
+        public void Disconnect()
+        {
+            if (kcpPtr == IntPtr.Zero)
+            {
+                throw new InvalidOperationException();
+            }
+            UvInterop.xx_ikcp_release(kcpPtr);
+            kcpPtr = IntPtr.Zero;
+
+            // todo: 反注册 timer?
         }
 
         public void SetAddress(string ipv4, int port)
         {
-            if (disposed) throw new ObjectDisposedException("XxUvTcpClient");
+            if (disposed) throw new ObjectDisposedException("UvUdpClient");
             UvInterop.xxuv_ip4_addr(ipv4, port, addrPtr).TryThrow();
         }
 
         protected override void DisconnectImpl()
         {
-            // todo: 清 kcp?
-            throw new NotImplementedException();
+            // 清 kcp? 重置 guid?
+            UvInterop.xx_ikcp_release(kcpPtr);
+            kcpPtr = IntPtr.Zero;
+            guid = Guid.NewGuid();
+            // todo: 清收发队列?
         }
 
         protected override void ReceivePackageImpl(BBuffer bb)
@@ -1563,7 +1673,7 @@ namespace xx
 
         protected override bool Disconnected()
         {
-            throw new NotImplementedException();
+            return kcpPtr != IntPtr.Zero;
         }
 
         public override int GetSendQueueSize()
@@ -1579,7 +1689,7 @@ namespace xx
             if (data.Length == offset) throw new NullReferenceException();
             if (len == 0) len = data.Length - offset;
             var h = GCHandle.Alloc(data, GCHandleType.Pinned);
-            UvInterop.xx_ikcp_send(ptr, h.AddrOfPinnedObject(), offset, len);
+            UvInterop.xx_ikcp_send(kcpPtr, h.AddrOfPinnedObject(), offset, len);
             h.Free();
         }
 
@@ -1598,8 +1708,11 @@ namespace xx
             if (!disposed)
             {
                 // if (disposing) // Free other state (managed objects).
-                UvInterop.xx_ikcp_release(ptr);
-                ptr = IntPtr.Zero;
+
+                // todo: 析构 uv 相关
+
+                UvInterop.xx_ikcp_release(kcpPtr);
+                kcpPtr = IntPtr.Zero;
                 this.Free(ref addrPtr);
                 this.Unhandle(ref handle);
 
@@ -1868,6 +1981,12 @@ namespace xx
 
         [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
         public static extern void xx_ikcp_setoutput(IntPtr kcp, ikcp_output_cb cb);
+
+        [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int xx_ikcp_wndsize(IntPtr kcp, int sndwnd, int rcvwnd);
+
+        [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int xx_ikcp_nodelay(IntPtr kcp, int nodelay, int interval, int resend, int nc);
 
         [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr xx_ikcp_get_ud(IntPtr kcp);

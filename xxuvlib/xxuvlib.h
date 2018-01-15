@@ -102,6 +102,8 @@ extern "C" {
 	XXUVLIB_API ikcpcb* xx_ikcp_create(Guid const* conv, void *ud, uv_loop_t* loop) noexcept;
 	XXUVLIB_API void xx_ikcp_release(ikcpcb *kcp) noexcept;
 	XXUVLIB_API void xx_ikcp_setoutput(ikcpcb *kcp, int(*output)(const char *buf, int len, ikcpcb *kcp)) noexcept;
+	XXUVLIB_API int xx_ikcp_wndsize(ikcpcb *kcp, int sndwnd, int rcvwnd) noexcept;
+	XXUVLIB_API int xx_ikcp_nodelay(ikcpcb *kcp, int nodelay, int interval, int resend, int nc) noexcept;
 	XXUVLIB_API void* xx_ikcp_get_ud(ikcpcb* kcp) noexcept;
 	XXUVLIB_API int xx_ikcp_input(ikcpcb* kcp, const char *data, int size) noexcept;
 	XXUVLIB_API int xx_ikcp_send(ikcpcb* kcp, const char *buffer, int offset, int len) noexcept;

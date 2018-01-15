@@ -481,6 +481,16 @@ XXUVLIB_API void xx_ikcp_setoutput(ikcpcb *kcp, int(*output)(const char *buf, in
 	ikcp_setoutput(kcp, output);
 }
 
+XXUVLIB_API int xx_ikcp_wndsize(ikcpcb *kcp, int sndwnd, int rcvwnd) noexcept
+{
+	return ikcp_wndsize(kcp, sndwnd, rcvwnd);
+}
+
+XXUVLIB_API int xx_ikcp_nodelay(ikcpcb *kcp, int nodelay, int interval, int resend, int nc) noexcept
+{
+	return ikcp_nodelay(kcp, nodelay, interval, resend, nc);
+}
+
 XXUVLIB_API void* xx_ikcp_get_ud(ikcpcb* kcp) noexcept
 {
 	return kcp->user;
