@@ -30,6 +30,8 @@ namespace xx
         public List<UvTimer> timers = new List<UvTimer>();
         public List<UvAsync> asyncs = new List<UvAsync>();
         public UvRpcManager rpcMgr;
+        public UvTimer udpTimer;
+        public ulong udpTicks;
 
         public IntPtr ptr;
         public IntPtr handle;
@@ -75,6 +77,27 @@ namespace xx
                 if (disposed) throw new ObjectDisposedException("XxUvLoop");
                 return UvInterop.xxuv_loop_alive(ptr) != 0;
             }
+        }
+
+        public void InitUdpTimer(ulong interval = 10)
+        {
+            if (udpTimer != null) throw new InvalidOperationException();
+            udpTimer = new UvTimer(this, 0, interval, () =>
+            {
+                udpTicks += interval;
+                var current = (uint)udpTicks;
+                udpListeners.ForEach(L =>
+                {
+                    L.peers.ForEach(kv =>
+                    {
+                        kv.value.Update(current);
+                    });
+                });
+                udpClients.ForEachReverse(c =>
+                {
+                    c.Update(current);
+                });
+            });
         }
 
         #region Dispose
@@ -1319,7 +1342,7 @@ namespace xx
             {
                 try
                 {
-                    p = new UvUdpPeer(this, g, bufPtr, addr);
+                    p = new UvUdpPeer(this, g, bufPtr);
                 }
                 catch
                 {
@@ -1395,12 +1418,51 @@ namespace xx
         #endregion
     }
 
-    public class UvUdpPeer : UvTcpUdpBase, IDisposable
+
+    public abstract class UvUdpBase : UvTcpUdpBase
     {
         public Guid guid;
+
+        protected uint next;
+        public void Update(uint current)
+        {
+            if (disposed) throw new ObjectDisposedException("UvUdpBase");
+            if (next > current) return;
+            UvInterop.xx_ikcp_update(ptr, current);
+            next = UvInterop.xx_ikcp_check(ptr, current);
+        }
+
+        public override void SendBytes(byte[] data, int offset = 0, int len = 0)
+        {
+            if (disposed) throw new ObjectDisposedException("UvUdpBase");
+            if (data == null || data.Length == 0) throw new NullReferenceException();
+            if (offset + len > data.Length) throw new IndexOutOfRangeException();
+            if (data.Length == offset) throw new NullReferenceException();
+            if (len == 0) len = data.Length - offset;
+            var h = GCHandle.Alloc(data, GCHandleType.Pinned);
+            UvInterop.xx_ikcp_send(ptr, h.AddrOfPinnedObject(), offset, len);
+            h.Free();
+        }
+
+        protected override void ReceivePackageImpl(BBuffer bb)
+        {
+            if (OnReceivePackage != null) OnReceivePackage(bb);
+        }
+        protected override void ReceiveRequestImpl(uint serial, BBuffer bb)
+        {
+            if (OnReceiveRequest != null) OnReceiveRequest(serial, bb);
+        }
+        protected override void ReceiveResponseImpl(uint serial, BBuffer bb)
+        {
+            loop.rpcMgr.Callback(serial, bb);
+        }
+    }
+
+    public class UvUdpPeer : UvUdpBase, IDisposable
+    {
         UvUdpListener listener;
 
-        public UvUdpPeer(UvUdpListener listener, Guid guid, IntPtr rawData, IntPtr addr
+        public UvUdpPeer(UvUdpListener listener, Guid guid, IntPtr rawData
             , int sndwnd = 128, int rcvwnd = 128
             , int nodelay = 1, int interval = 10, int resend = 2, int nc = 1)
         {
@@ -1447,15 +1509,6 @@ namespace xx
             return 0;
         }
 
-        uint next;
-        public void Update(uint current)
-        {
-            if (disposed) throw new ObjectDisposedException("UvUdpPeer");
-            if (next > current) return;
-            UvInterop.xx_ikcp_update(ptr, current);
-            next = UvInterop.xx_ikcp_check(ptr, current);
-        }
-
         protected override void DisconnectImpl()
         {
             Dispose();
@@ -1463,37 +1516,12 @@ namespace xx
 
         public override int GetSendQueueSize()
         {
-            return (int)UvInterop.xxuv_udp_get_send_queue_size(listener.ptr);   // todo
+            return (int)UvInterop.xxuv_udp_get_send_queue_size(listener.ptr);
         }
 
         protected override bool Disconnected()
         {
             return disposed;
-        }
-
-        public override void SendBytes(byte[] data, int offset = 0, int len = 0)
-        {
-            if (disposed) throw new ObjectDisposedException("UvUdpPeer");
-            if (data == null || data.Length == 0) throw new NullReferenceException();
-            if (offset + len > data.Length) throw new IndexOutOfRangeException();
-            if (data.Length == offset) throw new NullReferenceException();
-            if (len == 0) len = data.Length - offset;
-            var h = GCHandle.Alloc(data, GCHandleType.Pinned);
-            UvInterop.xx_ikcp_send(ptr, h.AddrOfPinnedObject(), offset, len);
-            h.Free();
-        }
-
-        protected override void ReceivePackageImpl(BBuffer bb)
-        {
-            if (OnReceivePackage != null) OnReceivePackage(bb);
-        }
-        protected override void ReceiveRequestImpl(uint serial, BBuffer bb)
-        {
-            if (OnReceiveRequest != null) OnReceiveRequest(serial, bb);
-        }
-        protected override void ReceiveResponseImpl(uint serial, BBuffer bb)
-        {
-            loop.rpcMgr.Callback(serial, bb);
         }
 
         #region Dispose
@@ -1539,39 +1567,16 @@ namespace xx
         #endregion
     }
 
-    public class UvUdpClient : UvTcpUdpBase, IDisposable
+    public class UvUdpClient : UvUdpBase, IDisposable
     {
         public UvUdpClient(UvLoop loop)
         {
             this.loop = loop;
             this.Handle(ref handle);
 
-            ptr = UvInterop.xxuv_alloc_uv_udp_t(handle);
-            if (ptr == IntPtr.Zero)
-            {
-                this.Unhandle(ref handle);
-                throw new OutOfMemoryException();
-            }
-
-            int r = UvInterop.xxuv_udp_init(loop.ptr, ptr);
-            if (r != 0)
-            {
-                this.Free(ref ptr);
-                this.Unhandle(ref handle);
-                r.Throw();
-            }
-
-            var rb1 = new Action(() =>
-            {
-                UvInterop.xxuv_close_(ptr);
-                ptr = IntPtr.Zero;
-                this.Unhandle(ref handle);
-            });
-
             addrPtr = UvInterop.xxuv_alloc_sockaddr_in(IntPtr.Zero);
             if (addrPtr == IntPtr.Zero)
             {
-                rb1();
                 throw new OutOfMemoryException();
             }
 
@@ -1579,18 +1584,36 @@ namespace xx
             loop.udpClients.Add(this);
         }
 
-
-        public Guid guid = Guid.Empty;
         IntPtr kcpPtr;
 
-        public void InitConnect(Guid guid
+        public void Prepare(Guid guid
             , int sndwnd = 128, int rcvwnd = 128
             , int nodelay = 1, int interval = 10, int resend = 2, int nc = 1)
         {
-            if (kcpPtr != IntPtr.Zero)
+            if (disposed) throw new ObjectDisposedException("UvUdpClient");
+            if (ptr != IntPtr.Zero)
             {
                 throw new InvalidOperationException();
             }
+
+            ptr = UvInterop.xxuv_alloc_uv_udp_t(handle);
+            if (ptr == IntPtr.Zero)
+            {
+                throw new OutOfMemoryException();
+            }
+
+            int r = UvInterop.xxuv_udp_init(loop.ptr, ptr);
+            if (r != 0)
+            {
+                this.Free(ref ptr);
+                r.Throw();
+            }
+
+            var rb1 = new Action(() =>
+            {
+                UvInterop.xxuv_close_(ptr);
+                ptr = IntPtr.Zero;
+            });
 
             this.guid = guid;
             var guidbytes = guid.ToByteArray();
@@ -1599,25 +1622,25 @@ namespace xx
             h.Free();
             if (kcpPtr == IntPtr.Zero)
             {
+                rb1();
                 throw new OutOfMemoryException();
             }
 
-            var rb1 = new Action(() =>
+            var rb2 = new Action(() =>
             {
                 UvInterop.xx_ikcp_release(kcpPtr);
                 kcpPtr = IntPtr.Zero;
+                rb1();
             });
 
-            int r = UvInterop.xx_ikcp_wndsize(kcpPtr, sndwnd, rcvwnd);
+            r = UvInterop.xx_ikcp_wndsize(kcpPtr, sndwnd, rcvwnd);
             if (r == 0) r = UvInterop.xx_ikcp_nodelay(kcpPtr, nodelay, interval, resend, nc);
             if (r != 0)
             {
-                rb1();
+                rb2();
                 throw new Exception("kcp wndsize / nodelay throw " + r);
             }
             UvInterop.xx_ikcp_setoutput(kcpPtr, OutputCB);
-
-            // todo: 注册 timer?
         }
 
 
@@ -1631,14 +1654,13 @@ namespace xx
 
         public void Disconnect()
         {
-            if (kcpPtr == IntPtr.Zero)
-            {
-                throw new InvalidOperationException();
-            }
+            if (ptr == IntPtr.Zero) return;
+
+            UvInterop.xxuv_close_(ptr);
+            ptr = IntPtr.Zero;
+
             UvInterop.xx_ikcp_release(kcpPtr);
             kcpPtr = IntPtr.Zero;
-
-            // todo: 反注册 timer?
         }
 
         public void SetAddress(string ipv4, int port)
@@ -1649,48 +1671,18 @@ namespace xx
 
         protected override void DisconnectImpl()
         {
-            // 清 kcp? 重置 guid?
-            UvInterop.xx_ikcp_release(kcpPtr);
-            kcpPtr = IntPtr.Zero;
-            guid = Guid.NewGuid();
-            // todo: 清收发队列?
-        }
-
-        protected override void ReceivePackageImpl(BBuffer bb)
-        {
-            throw new NotImplementedException();
-        }
-
-        protected override void ReceiveRequestImpl(uint serial, BBuffer bb)
-        {
-            throw new NotImplementedException();
-        }
-
-        protected override void ReceiveResponseImpl(uint serial, BBuffer bb)
-        {
-            throw new NotImplementedException();
+            Disconnect();
         }
 
         protected override bool Disconnected()
         {
-            return kcpPtr != IntPtr.Zero;
+            return ptr != IntPtr.Zero;
         }
 
         public override int GetSendQueueSize()
         {
-            throw new NotImplementedException();
-        }
-
-        public override void SendBytes(byte[] data, int offset = 0, int len = 0)
-        {
             if (disposed) throw new ObjectDisposedException("UvUdpClient");
-            if (data == null || data.Length == 0) throw new NullReferenceException();
-            if (offset + len > data.Length) throw new IndexOutOfRangeException();
-            if (data.Length == offset) throw new NullReferenceException();
-            if (len == 0) len = data.Length - offset;
-            var h = GCHandle.Alloc(data, GCHandleType.Pinned);
-            UvInterop.xx_ikcp_send(kcpPtr, h.AddrOfPinnedObject(), offset, len);
-            h.Free();
+            return (int)UvInterop.xxuv_udp_get_send_queue_size(ptr);
         }
 
         #region Dispose
@@ -1708,14 +1700,9 @@ namespace xx
             if (!disposed)
             {
                 // if (disposing) // Free other state (managed objects).
-
-                // todo: 析构 uv 相关
-
-                UvInterop.xx_ikcp_release(kcpPtr);
-                kcpPtr = IntPtr.Zero;
+                Disconnect();
                 this.Free(ref addrPtr);
                 this.Unhandle(ref handle);
-
 
                 UnbindTimerManager();
                 OnTimeout = null;
