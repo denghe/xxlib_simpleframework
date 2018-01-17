@@ -28,7 +28,7 @@ public class Peer : UvTcpPeer
         this.service = service;
 
         // 绑到超时管理器. 几秒内没有收到合法的包或请求就 T
-        this.BindTo(service.timeouter);
+        this.BindTimeouter(service.timeouter);
         this.OnTimeout = Dispose;
 
         // 开始超时计算

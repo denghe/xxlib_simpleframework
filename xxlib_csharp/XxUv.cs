@@ -440,12 +440,6 @@ namespace xx
 
     public abstract class UvTcpBase : UvTcpUdpBase
     {
-        /******************************************************************************/
-        // 用户事件绑定
-        public Action<BBuffer> OnReceivePackage;
-        public Action<uint, BBuffer> OnReceiveRequest;
-        /******************************************************************************/
-
         protected override void ReceivePackageImpl(BBuffer bb)
         {
             if (OnReceivePackage != null) OnReceivePackage(bb);
@@ -906,7 +900,7 @@ namespace xx
             if (timering) timerManager.Remove(this);
         }
 
-        public void BindTo(UvTimeouter tm)
+        public void BindTimeouter(UvTimeouter tm)
         {
             if (timerManager != null) throw new InvalidOperationException();
             timerManager = tm;
@@ -1424,25 +1418,6 @@ namespace xx
         public Guid guid;
 
         protected uint next;
-        public void Update(uint current)
-        {
-            if (disposed) throw new ObjectDisposedException("UvUdpBase");
-            if (next > current) return;
-            UvInterop.xx_ikcp_update(ptr, current);
-            next = UvInterop.xx_ikcp_check(ptr, current);
-        }
-
-        public override void SendBytes(byte[] data, int offset = 0, int len = 0)
-        {
-            if (disposed) throw new ObjectDisposedException("UvUdpBase");
-            if (data == null || data.Length == 0) throw new NullReferenceException();
-            if (offset + len > data.Length) throw new IndexOutOfRangeException();
-            if (data.Length == offset) throw new NullReferenceException();
-            if (len == 0) len = data.Length - offset;
-            var h = GCHandle.Alloc(data, GCHandleType.Pinned);
-            UvInterop.xx_ikcp_send(ptr, h.AddrOfPinnedObject(), offset, len);
-            h.Free();
-        }
 
         protected override void ReceivePackageImpl(BBuffer bb)
         {
@@ -1509,6 +1484,26 @@ namespace xx
             return 0;
         }
 
+        public void Update(uint current)
+        {
+            if (disposed) throw new ObjectDisposedException("XxUvUdpPeer");
+            if (next > current) return;
+            UvInterop.xx_ikcp_update(ptr, current);
+            next = UvInterop.xx_ikcp_check(ptr, current);
+        }
+
+        public override void SendBytes(byte[] data, int offset = 0, int len = 0)
+        {
+            if (disposed) throw new ObjectDisposedException("XxUvUdpPeer");
+            if (data == null || data.Length == 0) throw new NullReferenceException();
+            if (offset + len > data.Length) throw new IndexOutOfRangeException();
+            if (data.Length == offset) throw new NullReferenceException();
+            if (len == 0) len = data.Length - offset;
+            var h = GCHandle.Alloc(data, GCHandleType.Pinned);
+            UvInterop.xx_ikcp_send(listener.ptr, h.AddrOfPinnedObject(), offset, len);
+            h.Free();
+        }
+
         protected override void DisconnectImpl()
         {
             Dispose();
@@ -1522,6 +1517,29 @@ namespace xx
         protected override bool Disconnected()
         {
             return disposed;
+        }
+
+        byte[] ipBuf = new byte[64];
+        string ip_ = null;
+        public string ip
+        {
+            get
+            {
+                if (disposed) throw new ObjectDisposedException("XxUvUdpPeer");
+                if (ip_ != null) return ip_;
+                int len = 0;
+                var h = GCHandle.Alloc(ipBuf, GCHandleType.Pinned);
+                try
+                {
+                    UvInterop.xxuv_fill_ip(addrPtr, h.AddrOfPinnedObject(), ipBuf.Length, ref len).TryThrow();
+                    ip_ = Encoding.ASCII.GetString(ipBuf, 0, len);
+                    return ip_;
+                }
+                finally
+                {
+                    h.Free();
+                }
+            }
         }
 
         #region Dispose
@@ -1648,8 +1666,16 @@ namespace xx
         static int OutputImpl(IntPtr buf, int len, IntPtr kcp)
         {
             var client = (UvUdpClient)((GCHandle)UvInterop.xx_ikcp_get_ud(kcp)).Target;
-            UvInterop.xxuv_udp_send_(client.kcpPtr, buf, 0, (uint)len, client.addrPtr);
+            UvInterop.xxuv_udp_send_(client.ptr, buf, 0, (uint)len, client.addrPtr);
             return 0;
+        }
+
+        public void Update(uint current)
+        {
+            if (disposed) throw new ObjectDisposedException("XxUvUdpClient");
+            if (next > current) return;
+            UvInterop.xx_ikcp_update(kcpPtr, current);
+            next = UvInterop.xx_ikcp_check(kcpPtr, current);
         }
 
         public void Disconnect()
@@ -1665,8 +1691,20 @@ namespace xx
 
         public void SetAddress(string ipv4, int port)
         {
-            if (disposed) throw new ObjectDisposedException("UvUdpClient");
+            if (disposed) throw new ObjectDisposedException("XxUvUdpClient");
             UvInterop.xxuv_ip4_addr(ipv4, port, addrPtr).TryThrow();
+        }
+
+        public override void SendBytes(byte[] data, int offset = 0, int len = 0)
+        {
+            if (disposed) throw new ObjectDisposedException("XxUvUdpClient");
+            if (data == null || data.Length == 0) throw new NullReferenceException();
+            if (offset + len > data.Length) throw new IndexOutOfRangeException();
+            if (data.Length == offset) throw new NullReferenceException();
+            if (len == 0) len = data.Length - offset;
+            var h = GCHandle.Alloc(data, GCHandleType.Pinned);
+            UvInterop.xx_ikcp_send(kcpPtr, h.AddrOfPinnedObject(), offset, len);
+            h.Free();
         }
 
         protected override void DisconnectImpl()
@@ -1681,7 +1719,7 @@ namespace xx
 
         public override int GetSendQueueSize()
         {
-            if (disposed) throw new ObjectDisposedException("UvUdpClient");
+            if (disposed) throw new ObjectDisposedException("XxUvUdpClient");
             return (int)UvInterop.xxuv_udp_get_send_queue_size(ptr);
         }
 
@@ -1903,6 +1941,9 @@ namespace xx
         [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr xxuv_udp_get_send_queue_size(IntPtr udp);
 
+        [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int xxuv_fill_ip(IntPtr addr, IntPtr buf, int buf_len, ref int data_len);
+
 
 
 
@@ -1993,8 +2034,6 @@ namespace xx
         [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
         public static extern void xxuv_addr_copy(IntPtr from, IntPtr to);
 
-        [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
-        public static extern int xxuv_fill_ip(IntPtr addr, IntPtr buf, int buf_len, ref int data_len);
 
 
 

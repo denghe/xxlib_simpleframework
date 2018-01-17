@@ -305,12 +305,12 @@ XXUVLIB_API int xxuv_udp_init(uv_loop_t* loop, uv_udp_t* udp) noexcept
 
 XXUVLIB_API int xxuv_udp_bind(uv_udp_t* udp, const struct sockaddr* addr, unsigned int flags) noexcept
 {
-	return uv_udp_bind(udp, (sockaddr*)&addr, flags);
+	return uv_udp_bind(udp, addr, flags);
 }
 
 XXUVLIB_API int xxuv_udp_bind_(uv_udp_t* udp, const struct sockaddr* addr) noexcept
 {
-	return uv_udp_bind(udp, (sockaddr*)&addr, UV_UDP_REUSEADDR);
+	return uv_udp_bind(udp, addr, UV_UDP_REUSEADDR);
 }
 
 XXUVLIB_API int xxuv_udp_recv_start(uv_udp_t* handle, uv_alloc_cb alloc_cb, uv_udp_recv_cb recv_cb) noexcept

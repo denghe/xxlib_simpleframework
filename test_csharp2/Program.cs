@@ -20,7 +20,7 @@ public static class Program
                 //Console.WriteLine(peer.ip + " accepted");
 
                 // 接入 timer 管理器, 如果 5 秒没收到数据就断开
-                peer.BindTo(tm);
+                peer.BindTimeouter(tm);
                 peer.OnTimeout = () => peer.Dispose();
                 peer.TimeoutReset();
 
