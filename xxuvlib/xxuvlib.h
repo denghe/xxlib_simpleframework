@@ -78,6 +78,8 @@ extern "C" {
 	XXUVLIB_API int xxuv_udp_send(uv_udp_send_t* req, uv_udp_t* handle, const uv_buf_t bufs[], unsigned int nbufs, const struct sockaddr* addr, uv_udp_send_cb send_cb) noexcept;
 	XXUVLIB_API int xxuv_udp_send_(uv_udp_t* handle, char const* buf, unsigned int offset, unsigned int len, const struct sockaddr* addr) noexcept;
 	XXUVLIB_API size_t xxuv_udp_get_send_queue_size(const uv_udp_t* udp) noexcept;
+	XXUVLIB_API void xxuv_addr_copy(sockaddr_in* from, sockaddr_in* to) noexcept;
+	XXUVLIB_API int xxuv_fill_ip(sockaddr_in* addr, char* buf, int buf_len, int* data_len) noexcept;
 
 
 	XXUVLIB_API int xxuv_timer_init(uv_loop_t* loop, uv_timer_t* timer_req) noexcept;
@@ -109,8 +111,7 @@ extern "C" {
 	XXUVLIB_API int xx_ikcp_send(ikcpcb* kcp, const char *buffer, int offset, int len) noexcept;
 	XXUVLIB_API void xx_ikcp_update(ikcpcb* kcp, uint32_t current) noexcept;
 	XXUVLIB_API uint32_t xx_ikcp_check(ikcpcb* kcp, uint32_t current) noexcept;
-	XXUVLIB_API void xxuv_addr_copy(sockaddr_in* from, sockaddr_in* to) noexcept;
-	XXUVLIB_API int xxuv_fill_ip(sockaddr_in* addr, char* buf, int buf_len, int* data_len) noexcept;
+	XXUVLIB_API int xx_ikcp_recv(ikcpcb* kcp, char* outBuf, int bufLen) noexcept;
 
 
 #ifdef __cplusplus

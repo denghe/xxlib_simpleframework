@@ -362,6 +362,19 @@ XXUVLIB_API size_t xxuv_udp_get_send_queue_size(const uv_udp_t* udp) noexcept
 	return uv_udp_get_send_queue_size(udp);
 }
 
+XXUVLIB_API void xxuv_addr_copy(sockaddr_in* from, sockaddr_in* to) noexcept
+{
+	memcpy(to, from, sizeof(sockaddr_in));
+}
+
+XXUVLIB_API int xxuv_fill_ip(sockaddr_in* addr, char* buf, int buf_len, int* data_len) noexcept
+{
+	if (int r = uv_inet_ntop(AF_INET, &addr->sin_addr, buf, buf_len)) return r;
+	*data_len = (int)strlen(buf);
+	*data_len += sprintf_s(buf + *data_len, buf_len - *data_len, ":%d", ntohs(addr->sin_port));
+	return 0;
+}
+
 
 
 
@@ -526,15 +539,8 @@ XXUVLIB_API uint32_t xx_ikcp_check(ikcpcb* kcp, uint32_t current) noexcept
 	return ikcp_check(kcp, current);
 }
 
-
-XXUVLIB_API void xxuv_addr_copy(sockaddr_in* from, sockaddr_in* to) noexcept
+XXUVLIB_API int xx_ikcp_recv(ikcpcb* kcp, char* outBuf, int bufLen) noexcept
 {
-	memcpy(to, from, sizeof(sockaddr_in));
+	return ikcp_recv(kcp, outBuf, bufLen);
 }
 
-XXUVLIB_API int xxuv_fill_ip(sockaddr_in* addr, char* buf, int buf_len, int* data_len) noexcept
-{
-	if (int r = uv_inet_ntop(AF_INET, &addr->sin_addr, buf, buf_len)) return r;
-	*data_len = (int)strlen(buf);
-	*data_len += sprintf_s(buf + *data_len, buf_len - *data_len, ":%d", ntohs(addr->sin_port));
-}

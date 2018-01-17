@@ -32,6 +32,8 @@ namespace xx
         public UvRpcManager rpcMgr;
         public UvTimer udpTimer;
         public ulong udpTicks;
+        public byte[] udpRecvBuf = new byte[65536];
+        public IntPtr udpRecvBufPtr;
 
         public IntPtr ptr;
         public IntPtr handle;
@@ -55,6 +57,8 @@ namespace xx
             }
 
             rpcMgr = new UvRpcManager(this, rpcIntervalMS, rpcDefaultInterval);
+
+            udpRecvBufPtr = (IntPtr)GCHandle.Alloc(udpRecvBuf, GCHandleType.Pinned);
         }
 
         public void Run(UvRunMode mode = UvRunMode.Default)
@@ -79,7 +83,7 @@ namespace xx
             }
         }
 
-        public void InitUdpTimer(ulong interval = 10)
+        public void InitKcpFlushInterval(ulong interval = 10)
         {
             if (udpTimer != null) throw new InvalidOperationException();
             udpTimer = new UvTimer(this, 0, interval, () =>
@@ -263,11 +267,12 @@ namespace xx
         #endregion
     }
 
-    // 包头设计: mask( 1 byte ) + len( 2 bytes ) + [serial( varlen uinteger )] + data( byte[len - sizeof(serial)] )
-    // 首字节为类型路由: 0: 一般数据包   1: RPC请求包   2: RPC回应包   3+: 其他( custom )
-    // RPC包将会在 data 的起始区域夹带一个变长无符号整数 作为 流水号
     public abstract class UvTcpUdpBase : UvTimerBase
     {
+        // 包头设计: mask( 1 byte ) + len( 2 bytes ) + [serial( varlen uinteger )] + data( byte[len - sizeof(serial)] )
+        // 首字节为类型路由: 0: 一般数据包   1: RPC请求包   2: RPC回应包   3+: 其他( custom )
+        // RPC包将会在 data 的起始区域夹带一个变长无符号整数 作为 流水号
+
         /******************************************************************************/
         // 用户事件绑定
         public Action<BBuffer> OnReceivePackage;
@@ -1336,7 +1341,8 @@ namespace xx
             {
                 try
                 {
-                    p = new UvUdpPeer(this, g, bufPtr);
+                    if (OnCreatePeer != null) p = OnCreatePeer();
+                    else p = new UvUdpPeer(this, g, bufPtr);
                 }
                 catch
                 {
@@ -1348,11 +1354,14 @@ namespace xx
             {
                 p = peers.ValueAt(idx);
             }
+
             // 无脑更新 peer 的目标 ip 地址
             UvInterop.xxuv_addr_copy(addr, p.addrPtr);
 
-            // call peer 的函数
-            p.ReceiveImpl(bufPtr, len);
+            if (idx < 0) OnAccept(p);
+
+            // 转发到 peer 的 kcp
+            p.Input(bufPtr, len);
         }
 
         public void RecvStart()
@@ -1490,6 +1499,18 @@ namespace xx
             if (next > current) return;
             UvInterop.xx_ikcp_update(ptr, current);
             next = UvInterop.xx_ikcp_check(ptr, current);
+
+            int len = UvInterop.xx_ikcp_recv(ptr, loop.udpRecvBufPtr, loop.udpRecvBuf.Length);
+            if (len > 0)
+            {
+                ReceiveImpl(loop.udpRecvBufPtr, len);
+            }
+        }
+
+        public void Input(IntPtr data, int len)
+        {
+            var r = UvInterop.xx_ikcp_input(ptr, data, len);
+            if (r != 0) throw new Exception("UvUdpPeer input error: r = " + r);
         }
 
         public override void SendBytes(byte[] data, int offset = 0, int len = 0)
@@ -1500,7 +1521,7 @@ namespace xx
             if (data.Length == offset) throw new NullReferenceException();
             if (len == 0) len = data.Length - offset;
             var h = GCHandle.Alloc(data, GCHandleType.Pinned);
-            UvInterop.xx_ikcp_send(listener.ptr, h.AddrOfPinnedObject(), offset, len);
+            UvInterop.xx_ikcp_send(ptr, h.AddrOfPinnedObject(), offset, len);
             h.Free();
         }
 
@@ -1604,7 +1625,7 @@ namespace xx
 
         IntPtr kcpPtr;
 
-        public void Prepare(Guid guid
+        public void Connect(Guid guid
             , int sndwnd = 128, int rcvwnd = 128
             , int nodelay = 1, int interval = 10, int resend = 2, int nc = 1)
         {
@@ -1626,6 +1647,8 @@ namespace xx
                 this.Free(ref ptr);
                 r.Throw();
             }
+
+            UvInterop.xxuv_udp_recv_start_(ptr, OnRecvCB).TryThrow();
 
             var rb1 = new Action(() =>
             {
@@ -1662,6 +1685,30 @@ namespace xx
         }
 
 
+        static UvInterop.uv_udp_recv_cb OnRecvCB = OnRecvCBImpl;
+        static void OnRecvCBImpl(IntPtr udp, IntPtr nread, IntPtr buf_t, IntPtr addr, uint flags)
+        {
+            var client = udp.To<UvUdpClient>();
+            var loopPtr = client.loop.ptr;        // 防事件 Dispose 先取出来
+            var bufPtr = UvInterop.xxuv_get_buf(buf_t);
+            var len = (int)nread;
+            if (len == 0) throw new Exception();
+            client.OnReceiveImpl(bufPtr, len, addr);
+            UvInterop.xxuv_pool_free(loopPtr, bufPtr);
+        }
+
+        public void OnReceiveImpl(IntPtr bufPtr, int len, IntPtr addr)
+        {
+            // 所有消息长度至少都有 36 字节长( Guid conv 的 kcp 头 )
+            if (len < 36) return;
+
+            // todo: 校验 guid, addr ?
+
+            // 转发到 kcp
+            var r = UvInterop.xx_ikcp_input(kcpPtr, bufPtr, len);
+            if (r != 0) throw new Exception("UvUdpClient input error: r = " + r);
+        }
+
         static UvInterop.ikcp_output_cb OutputCB = OutputImpl;
         static int OutputImpl(IntPtr buf, int len, IntPtr kcp)
         {
@@ -1676,6 +1723,12 @@ namespace xx
             if (next > current) return;
             UvInterop.xx_ikcp_update(kcpPtr, current);
             next = UvInterop.xx_ikcp_check(kcpPtr, current);
+
+            int len = UvInterop.xx_ikcp_recv(kcpPtr, loop.udpRecvBufPtr, loop.udpRecvBuf.Length);
+            if (len > 0)
+            {
+                ReceiveImpl(loop.udpRecvBufPtr, len);
+            }
         }
 
         public void Disconnect()
@@ -2034,6 +2087,8 @@ namespace xx
         [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
         public static extern void xxuv_addr_copy(IntPtr from, IntPtr to);
 
+        [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int xx_ikcp_recv(IntPtr kcp, IntPtr outBuf, int bufLen);
 
 
 
