@@ -226,7 +226,7 @@ int main()
 	};
 	kcp2.OnRecv = [](auto buf, auto len)
 	{
-		std::cout << len << " " << buf << std::endl;
+		//std::cout << len << " " << buf << std::endl;
 	};
 
 	uv_loop_t loop;
@@ -243,8 +243,11 @@ int main()
 
 	uv_timer_start(&timer2, [](uv_timer_t* handle)
 	{
-		kcp1.Update();
-		kcp2.Update();
+		for (int i = 0; i < 1000; ++i)
+		{
+			kcp1.Update();
+			kcp2.Update();
+		}
 	}, 0, 10);
 
 	uv_run(&loop, UV_RUN_DEFAULT);

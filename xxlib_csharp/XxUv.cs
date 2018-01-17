@@ -83,25 +83,33 @@ namespace xx
             }
         }
 
+        ulong kcpInterval = 0;
         public void InitKcpFlushInterval(ulong interval = 10)
         {
             if (udpTimer != null) throw new InvalidOperationException();
-            udpTimer = new UvTimer(this, 0, interval, () =>
+            kcpInterval = interval;
+            udpTimer = new UvTimer(this, 0, interval, KcpUpdater);
+        }
+        public void KcpUpdater()
+        {
+            for (int n = 0; n < 100; ++n)      // 模拟千倍时间流失
             {
-                udpTicks += interval;
+                udpTicks += kcpInterval;
+                Console.WriteLine(udpTicks);
                 var current = (uint)udpTicks;
-                udpListeners.ForEach(L =>
+                for (int i = 0; i < udpListeners.dataLen; ++i)
                 {
-                    L.peers.ForEach(kv =>
+                    var peers = udpListeners[i].peers;
+                    peers.ForEach(kv =>
                     {
                         kv.value.Update(current);
                     });
-                });
-                udpClients.ForEachReverse(c =>
+                }
+                for (int i = udpClients.dataLen - 1; i >= 0; --i)
                 {
-                    c.Update(current);
-                });
-            });
+                    udpClients[i].Update(current);
+                }
+            }
         }
 
         #region Dispose
@@ -488,7 +496,7 @@ namespace xx
             if (data.Length == offset) throw new NullReferenceException();
             if (len == 0) len = data.Length - offset;
             var h = GCHandle.Alloc(data, GCHandleType.Pinned);
-            UvInterop.xxuv_write_(ptr, h.AddrOfPinnedObject(), (uint)offset, (uint)len);
+            UvInterop.xxuv_write_(ptr, h.AddrOfPinnedObject(), (uint)offset, (uint)len).TryThrow();
             h.Free();
         }
 
@@ -1320,7 +1328,7 @@ namespace xx
             var loopPtr = listener.loop.ptr;        // 防事件 Dispose 先取出来
             var bufPtr = UvInterop.xxuv_get_buf(buf_t);
             var len = (int)nread;
-            if (len == 0) throw new Exception();
+            if (len == 0) return;
             listener.OnReceiveImpl(bufPtr, len, addr);
             UvInterop.xxuv_pool_free(loopPtr, bufPtr);
         }
@@ -1426,7 +1434,7 @@ namespace xx
     {
         public Guid guid;
 
-        protected uint next;
+        protected uint nextUpdateTicks;
 
         protected override void ReceivePackageImpl(BBuffer bb)
         {
@@ -1455,22 +1463,22 @@ namespace xx
             this.loop = listener.loop;
             this.Handle(ref handle);
 
-            ptr = UvInterop.xx_ikcp_create(rawData, handle, loop.ptr);
+            ptr = UvInterop.xx_ikcp_create(rawData, handle, IntPtr.Zero);//loop.ptr);
             if (ptr == IntPtr.Zero)
             {
                 this.Unhandle(ref handle);
                 throw new OutOfMemoryException();
             }
 
-            int r = UvInterop.xx_ikcp_wndsize(ptr, sndwnd, rcvwnd);
-            if (r == 0) r = UvInterop.xx_ikcp_nodelay(ptr, nodelay, interval, resend, nc);
-            if (r != 0)
-            {
-                UvInterop.xx_ikcp_release(ptr);
-                ptr = IntPtr.Zero;
-                this.Unhandle(ref handle);
-                throw new Exception("kcp wndsize / nodelay throw " + r);
-            }
+            //int r = UvInterop.xx_ikcp_wndsize(ptr, sndwnd, rcvwnd);
+            //if (r == 0) r = UvInterop.xx_ikcp_nodelay(ptr, nodelay, interval, resend, nc);
+            //if (r != 0)
+            //{
+            //    UvInterop.xx_ikcp_release(ptr);
+            //    ptr = IntPtr.Zero;
+            //    this.Unhandle(ref handle);
+            //    throw new Exception("kcp wndsize / nodelay throw " + r);
+            //}
             UvInterop.xx_ikcp_setoutput(ptr, OutputCB);
 
             addrPtr = UvInterop.xxuv_alloc_sockaddr_in(IntPtr.Zero);
@@ -1496,13 +1504,14 @@ namespace xx
         public void Update(uint current)
         {
             if (disposed) throw new ObjectDisposedException("XxUvUdpPeer");
-            if (next > current) return;
+            //if (nextUpdateTicks > current) return;
             UvInterop.xx_ikcp_update(ptr, current);
-            next = UvInterop.xx_ikcp_check(ptr, current);
+            //nextUpdateTicks = UvInterop.xx_ikcp_check(ptr, current);
 
-            int len = UvInterop.xx_ikcp_recv(ptr, loop.udpRecvBufPtr, loop.udpRecvBuf.Length);
-            if (len > 0)
+            while (true)
             {
+                int len = UvInterop.xx_ikcp_recv(ptr, loop.udpRecvBufPtr, loop.udpRecvBuf.Length);
+                if (len <= 0) break;
                 ReceiveImpl(loop.udpRecvBufPtr, len);
             }
         }
@@ -1659,7 +1668,7 @@ namespace xx
             this.guid = guid;
             var guidbytes = guid.ToByteArray();
             var h = GCHandle.Alloc(guidbytes, GCHandleType.Pinned);
-            kcpPtr = UvInterop.xx_ikcp_create(h.AddrOfPinnedObject(), handle, loop.ptr);
+            kcpPtr = UvInterop.xx_ikcp_create(h.AddrOfPinnedObject(), handle, IntPtr.Zero);//loop.ptr);
             h.Free();
             if (kcpPtr == IntPtr.Zero)
             {
@@ -1674,13 +1683,13 @@ namespace xx
                 rb1();
             });
 
-            r = UvInterop.xx_ikcp_wndsize(kcpPtr, sndwnd, rcvwnd);
-            if (r == 0) r = UvInterop.xx_ikcp_nodelay(kcpPtr, nodelay, interval, resend, nc);
-            if (r != 0)
-            {
-                rb2();
-                throw new Exception("kcp wndsize / nodelay throw " + r);
-            }
+            //r = UvInterop.xx_ikcp_wndsize(kcpPtr, sndwnd, rcvwnd);
+            //if (r == 0) r = UvInterop.xx_ikcp_nodelay(kcpPtr, nodelay, interval, resend, nc);
+            //if (r != 0)
+            //{
+            //    rb2();
+            //    throw new Exception("kcp wndsize / nodelay throw " + r);
+            //}
             UvInterop.xx_ikcp_setoutput(kcpPtr, OutputCB);
         }
 
@@ -1692,7 +1701,7 @@ namespace xx
             var loopPtr = client.loop.ptr;        // 防事件 Dispose 先取出来
             var bufPtr = UvInterop.xxuv_get_buf(buf_t);
             var len = (int)nread;
-            if (len == 0) throw new Exception();
+            if (len == 0) return;   // 连不上
             client.OnReceiveImpl(bufPtr, len, addr);
             UvInterop.xxuv_pool_free(loopPtr, bufPtr);
         }
@@ -1720,13 +1729,14 @@ namespace xx
         public void Update(uint current)
         {
             if (disposed) throw new ObjectDisposedException("XxUvUdpClient");
-            if (next > current) return;
+            //if (nextUpdateTicks > current) return;
             UvInterop.xx_ikcp_update(kcpPtr, current);
-            next = UvInterop.xx_ikcp_check(kcpPtr, current);
+            //nextUpdateTicks = UvInterop.xx_ikcp_check(kcpPtr, current);
 
-            int len = UvInterop.xx_ikcp_recv(kcpPtr, loop.udpRecvBufPtr, loop.udpRecvBuf.Length);
-            if (len > 0)
+            while (true)
             {
+                int len = UvInterop.xx_ikcp_recv(kcpPtr, loop.udpRecvBufPtr, loop.udpRecvBuf.Length);
+                if (len <= 0) break;
                 ReceiveImpl(loop.udpRecvBufPtr, len);
             }
         }

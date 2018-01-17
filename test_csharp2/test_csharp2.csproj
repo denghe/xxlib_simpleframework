@@ -54,6 +54,7 @@
     <None Include="Program - Copy2.bak" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <None Include="Program - Copy3.bak" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config">
@@ -67,7 +68,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="..\x64\Release\xxuvlib.dll">
+    <Content Include="..\x64\Debug\xxuvlib.dll">
       <Link>xxuvlib.dll</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

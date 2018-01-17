@@ -1,56 +1,69 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Threading;
-using System.Threading.Tasks;
 using xx;
+using static ConsoleHelpeer;
+public static class ConsoleHelpeer
+{
+    public static void CW(object o)
+    {
+#if DEBUG
+        Console.WriteLine(o);
+#endif
+    }
+}
 
 public static class Program
 {
     static void Main(string[] args)
     {
-        BBuffer.Register<BBuffer>(2);   // 要用到 BBuffer 的收发
+        BBuffer.Register<BBuffer>(2);           // 要用到 BBuffer 的收发
 
-        using (var loop = new UvLoop())
+        // 初始化 loop 的同时初始化 rpc 管理器. 计时精度 1 秒. 默认 2 秒超时
+        using (var loop = new UvLoop(1000, 2))
         {
-            // timer 管理器: 1 秒一跳, 池长 6 跳, 默认 TimerStart 参数为 5
-            var tm = new UvTimeouter(loop, 1000, 6, 5);
-            var listener = new UvTcpListener(loop);
-            listener.OnAccept = peer =>
+            // kcp 轮询间隔 ms
+            loop.InitKcpFlushInterval(1);
+
+            // server
+            var udpListener = new UvUdpListener(loop);
+            udpListener.OnAccept = p =>
             {
-                //Console.WriteLine(peer.ip + " accepted");
-
-                // 接入 timer 管理器, 如果 5 秒没收到数据就断开
-                peer.BindTimeouter(tm);
-                peer.OnTimeout = () => peer.Dispose();
-                peer.TimeoutReset();
-
-                // RPC 请求事件
-                peer.OnReceiveRequest = (serial, bb) =>
+                CW(p.ip);
+                p.OnReceivePackage = pkg =>
                 {
-                    peer.TimeoutReset();                  // 更新 timer
-                    var b = bb.ReadPackage<BBuffer>();  // 读出 BB包
-                    uint n = 0;
-                    b.Read(ref n);                      // 读出 BB包 中的 counter
-                    b.Clear();
-                    b.Write(n + 1);                     // 将就 BB包 填充 counter + 1 用作应答
-                    peer.SendResponse(serial, b);       // 应答
-                };
+                    CW("listener recv " + p.ip + "'s pkg: " + pkg);
 
-                peer.OnDispose = () =>
-                {
-                    Console.WriteLine(peer.ip + " disposed");
+                    // echo
+                    //p.SendBytes(pkg);
                 };
             };
-            listener.Bind("0.0.0.0", 12345);
-            listener.Listen();
-
-            // 每秒输出一行当前的连接数
-            new UvTimer(loop, 100, 1000).OnFire = () =>
+            udpListener.OnDispose = () =>
             {
-                Console.WriteLine("peers count = " + listener.peers.dataLen);
+                CW("listener disposed.");
             };
+            udpListener.Bind("0.0.0.0", 12345);
+            udpListener.RecvStart();
 
-            Console.WriteLine("listing");
+            //// client
+            //var udpClient = new UvUdpClient(loop);
+            //udpClient.OnReceivePackage = pkg =>
+            //{
+            //    CW("client recv server pkg: " + pkg);
+            //    udpClient.SendBytes(pkg);
+            //};
+            //udpClient.SetAddress("127.0.0.1", 12345);
+            //udpClient.Connect(Guid.NewGuid());
+
+            //// make some data for send
+            //var bb = new BBuffer();
+            //bb.Write((byte)1); bb.Write((byte)2);
+
+            //// send
+            //udpClient.Send(bb);
+
+            // begin run
             loop.Run();
         }
     }

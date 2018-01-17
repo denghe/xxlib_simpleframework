@@ -26,21 +26,25 @@ public static class Program
             // kcp 轮询间隔 ms
             loop.InitKcpFlushInterval(1);
 
-            // server
-            var udpListener = new UvUdpListener(loop);
-            udpListener.OnAccept = p =>
-            {
-                CW(p.ip);
-                p.OnReceivePackage = pkg =>
-                {
-                    CW("listener recv " + p.ip + "'s pkg: " + pkg);
+            //// server
+            //var udpListener = new UvUdpListener(loop);
+            //udpListener.OnAccept = p =>
+            //{
+            //    CW(p.ip);
+            //    p.OnReceivePackage = pkg =>
+            //    {
+            //        CW("listener recv " + p.ip + "'s pkg: " + pkg);
 
-                    // echo
-                    p.SendBytes(pkg);
-                };
-            };
-            udpListener.Bind("0.0.0.0", 12345);
-            udpListener.RecvStart();
+            //        // echo
+            //        p.SendBytes(pkg);
+            //    };
+            //};
+            //udpListener.OnDispose = () => 
+            //{
+            //    CW("listener disposed.");
+            //};
+            //udpListener.Bind("0.0.0.0", 12345);
+            //udpListener.RecvStart();
 
             // client
             var udpClient = new UvUdpClient(loop);
