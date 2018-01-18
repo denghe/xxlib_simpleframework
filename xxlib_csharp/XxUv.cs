@@ -31,7 +31,7 @@ namespace xx
         public List<UvAsync> asyncs = new List<UvAsync>();
         public UvRpcManager rpcMgr;
         public UvTimer udpTimer;
-        public ulong udpTicks;
+        public uint udpTicks;
         public byte[] udpRecvBuf = new byte[65536];
         public IntPtr udpRecvBufPtr;
 
@@ -83,8 +83,8 @@ namespace xx
             }
         }
 
-        ulong kcpInterval = 0;
-        public void InitKcpFlushInterval(ulong interval = 10)
+        uint kcpInterval = 0;
+        public void InitKcpFlushInterval(uint interval = 10)
         {
             if (udpTimer != null) throw new InvalidOperationException();
             kcpInterval = interval;
@@ -96,18 +96,17 @@ namespace xx
             {
                 udpTicks += kcpInterval;
                 Console.WriteLine(udpTicks);
-                var current = (uint)udpTicks;
                 for (int i = 0; i < udpListeners.dataLen; ++i)
                 {
                     var peers = udpListeners[i].peers;
                     peers.ForEach(kv =>
                     {
-                        kv.value.Update(current);
+                        kv.value.Update(udpTicks);
                     });
                 }
                 for (int i = udpClients.dataLen - 1; i >= 0; --i)
                 {
-                    udpClients[i].Update(current);
+                    udpClients[i].Update(udpTicks);
                 }
             }
         }
@@ -275,7 +274,7 @@ namespace xx
         #endregion
     }
 
-    public abstract class UvTcpUdpBase : UvTimerBase
+    public abstract class UvTcpUdpBase : UvTimerBase, IDisposable
     {
         // 包头设计: mask( 1 byte ) + len( 2 bytes ) + [serial( varlen uinteger )] + data( byte[len - sizeof(serial)] )
         // 首字节为类型路由: 0: 一般数据包   1: RPC请求包   2: RPC回应包   3+: 其他( custom )
@@ -303,7 +302,7 @@ namespace xx
         protected abstract void ReceivePackageImpl(BBuffer bb);
         protected abstract void ReceiveRequestImpl(uint serial, BBuffer bb);
         protected abstract void ReceiveResponseImpl(uint serial, BBuffer bb);
-        protected abstract bool Disconnected();
+        public abstract bool Disconnected();
 
 
         // 基础收数据处理, 投递到事件函数
@@ -449,6 +448,8 @@ namespace xx
             SendBytes(bbSend.buf, 0, bbSend.dataLen);
             return bbSend.dataLen;
         }
+
+        public abstract void Dispose();
     }
 
     public abstract class UvTcpBase : UvTcpUdpBase
@@ -465,7 +466,7 @@ namespace xx
         {
             loop.rpcMgr.Callback(serial, bb);
         }
-        protected override bool Disconnected()
+        public override bool Disconnected()
         {
             return ptr == IntPtr.Zero;
         }
@@ -596,7 +597,7 @@ namespace xx
 
         #region Dispose
 
-        public void Dispose()
+        public override void Dispose()
         {
             if (disposed) return;
             if (OnDispose != null) OnDispose();
@@ -729,7 +730,7 @@ namespace xx
 
         #region Dispose
 
-        public void Dispose()
+        public override void Dispose()
         {
             if (disposed) return;
             if (OnDispose != null) OnDispose();
@@ -1196,11 +1197,11 @@ namespace xx
 
     public abstract class UvContextBase
     {
-        public UvTcpPeer peer;
-        public bool peerAlive { get { return peer != null && peer.alive; } }
+        public UvTcpUdpBase peer;
+        public bool peerAlive { get { return peer != null && peer.Disconnected(); } }
 
         // 绑连接. 成功返回 true
-        public bool BindPeer(UvTcpPeer p)
+        public bool BindPeer(UvTcpUdpBase p)
         {
             if (this.peer != null) return false;
             p.OnReceiveRequest = OnPeerReceiveRequest;
@@ -1276,7 +1277,6 @@ namespace xx
         /******************************************************************************/
 
         public Dict<Guid, UvUdpPeer> peers = new Dict<Guid, UvUdpPeer>();
-        // todo: timer for call peers updates every 10 ms
 
         public bool disposed;
         public UvLoop loop;
@@ -1429,7 +1429,6 @@ namespace xx
         #endregion
     }
 
-
     public abstract class UvUdpBase : UvTcpUdpBase
     {
         public Guid guid;
@@ -1544,7 +1543,7 @@ namespace xx
             return (int)UvInterop.xxuv_udp_get_send_queue_size(listener.ptr);
         }
 
-        protected override bool Disconnected()
+        public override bool Disconnected()
         {
             return disposed;
         }
@@ -1574,7 +1573,7 @@ namespace xx
 
         #region Dispose
 
-        public void Dispose()
+        public override void Dispose()
         {
             if (disposed) return;
             if (OnDispose != null) OnDispose();
@@ -1775,7 +1774,7 @@ namespace xx
             Disconnect();
         }
 
-        protected override bool Disconnected()
+        public override bool Disconnected()
         {
             return ptr != IntPtr.Zero;
         }
@@ -1788,7 +1787,7 @@ namespace xx
 
         #region Dispose
 
-        public void Dispose()
+        public override void Dispose()
         {
             if (disposed) return;
             if (OnDispose != null) OnDispose();
