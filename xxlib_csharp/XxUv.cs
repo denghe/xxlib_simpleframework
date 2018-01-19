@@ -286,6 +286,48 @@ namespace xx
         #endregion
     }
 
+    public class UvTimerBase
+    {
+        // TimerManager 于 Add 时填充下列成员
+        public UvTimeouter timerManager;         // 指向时间管理( 初始为空 )
+        public UvTimerBase timerPrev;               // 指向同一 ticks 下的上一 timer
+        public UvTimerBase timerNext;               // 指向同一 ticks 下的下一 timer
+        public int timerIndex = -1;                 // 位于管理器 timerss 数组的下标
+        public Action OnTimeout;                  // 时间到达后要执行的函数
+
+        public void TimerClear()
+        {
+            timerPrev = null;
+            timerNext = null;
+            timerIndex = -1;
+        }
+
+        public void TimeoutReset(int interval = 0)
+        {
+            if (timerManager == null) throw new InvalidOperationException();
+            timerManager.AddOrUpdate(this, interval);
+        }
+        public void TimerStop()
+        {
+            if (timerManager == null) throw new InvalidOperationException();
+            if (timering) timerManager.Remove(this);
+        }
+
+        public void BindTimeouter(UvTimeouter tm)
+        {
+            if (timerManager != null) throw new InvalidOperationException();
+            timerManager = tm;
+        }
+
+        public void UnbindTimerManager()
+        {
+            if (timering) timerManager.Remove(this);
+            timerManager = null;
+        }
+
+        public bool timering { get { return timerManager != null && (timerIndex != -1 || timerPrev != null); } }
+    }
+
     public abstract class UvTcpUdpBase : UvTimerBase, IDisposable
     {
         // 包头设计: mask( 1 byte ) + len( 2 bytes ) + [serial( varlen uinteger )] + data( byte[len - sizeof(serial)] )
@@ -899,48 +941,6 @@ namespace xx
         #endregion
     }
 
-    public class UvTimerBase
-    {
-        // TimerManager 于 Add 时填充下列成员
-        public UvTimeouter timerManager;         // 指向时间管理( 初始为空 )
-        public UvTimerBase timerPrev;               // 指向同一 ticks 下的上一 timer
-        public UvTimerBase timerNext;               // 指向同一 ticks 下的下一 timer
-        public int timerIndex = -1;                 // 位于管理器 timerss 数组的下标
-        public Action OnTimeout;                  // 时间到达后要执行的函数
-
-        public void TimerClear()
-        {
-            timerPrev = null;
-            timerNext = null;
-            timerIndex = -1;
-        }
-
-        public void TimeoutReset(int interval = 0)
-        {
-            if (timerManager == null) throw new InvalidOperationException();
-            timerManager.AddOrUpdate(this, interval);
-        }
-        public void TimerStop()
-        {
-            if (timerManager == null) throw new InvalidOperationException();
-            if (timering) timerManager.Remove(this);
-        }
-
-        public void BindTimeouter(UvTimeouter tm)
-        {
-            if (timerManager != null) throw new InvalidOperationException();
-            timerManager = tm;
-        }
-
-        public void UnbindTimerManager()
-        {
-            if (timering) timerManager.Remove(this);
-            timerManager = null;
-        }
-
-        public bool timering { get { return timerManager != null && (timerIndex != -1 || timerPrev != null); } }
-    }
-
     public class UvTimeouter
     {
         UvTimer timer;
@@ -1215,11 +1215,11 @@ namespace xx
         // 绑连接. 成功返回 true
         public bool BindPeer(UvTcpUdpBase p)
         {
-            if (this.peer != null) return false;
+            if (peer != null) return false;
             p.OnReceiveRequest = OnPeerReceiveRequest;
             p.OnReceivePackage = OnPeerReceivePackage;
             p.OnDispose = OnPeerDisconnect;
-            this.peer = p;
+            peer = p;
             return true;
         }
 
@@ -1262,7 +1262,6 @@ namespace xx
                 KickPeer();
                 return;
             }
-            peer.TimeoutReset();
             HandlePackage(ibb);
         }
 

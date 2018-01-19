@@ -44,8 +44,8 @@ namespace xx
 		MemPool mp;
 		List<UvTcpListener*> tcpListeners;
 		List<UvTcpClient*> tcpClients;
-		List<UvUdpListener*> udpListeners;
-		List<UvUdpClient*> udpClients;
+		//List<UvUdpListener*> udpListeners;
+		//List<UvUdpClient*> udpClients;
 		List<UvTimer*> timers;
 		List<UvAsync*> asyncs;
 		UvTimeouter* timeouter = nullptr;
@@ -68,8 +68,8 @@ namespace xx
 
 		UvTcpListener* CreateTcpListener();
 		UvTcpClient* CreateTcpClient();
-		UvUdpListener* CreateUdpListener();
-		UvUdpClient* CreateUdpClient();
+		//UvUdpListener* CreateUdpListener();
+		//UvUdpClient* CreateUdpClient();
 		UvTimer* CreateTimer(uint64_t timeoutMS, uint64_t repeatIntervalMS, std::function<void()>&& OnFire = nullptr);
 		UvAsync* CreateAsync();
 	};
@@ -83,12 +83,14 @@ namespace xx
 
 		UvLoop& loop;
 		List<UvTcpPeer*> peers;
-		size_t index_at_container;
+		size_t index_at_container = -1;
 
-		void* ptr;
-		void* addrPtr;
+		void* ptr = nullptr;
+		void* addrPtr = nullptr;
+
 		UvTcpListener(MemPool* mp, UvLoop& loop);
 		~UvTcpListener();
+
 		static void OnAcceptCB(void* server, int status);
 		void Listen(int backlog = 128);
 		void Bind(char const* const& ipv4, int port);
@@ -107,7 +109,7 @@ namespace xx
 		void TimerClear();
 		void TimeoutReset(int interval = 0);
 		void TimerStop();
-		void BindTo(UvTimeouter* tm);
+		void BindTimeouter(UvTimeouter* tm);
 		void UnbindTimerManager();
 		bool timering();
 	};
@@ -120,10 +122,10 @@ namespace xx
 		std::function<void()> OnDispose;
 
 		UvLoop& loop;
-		size_t index_at_container;
+		size_t index_at_container = -1;
 
-		void* ptr;
-		void* addrPtr;
+		void* ptr = nullptr;
+		void* addrPtr = nullptr;
 
 		BBuffer bbRecv;
 		BBuffer bbSend;
@@ -131,16 +133,16 @@ namespace xx
 		UvTcpUdpBase(MemPool* mp, UvLoop& loop);
 
 		virtual void DisconnectImpl() = 0;
-		virtual void ReceivePackageImpl(BBuffer const& bb) = 0;
-		virtual void ReceiveRequestImpl(uint32_t serial, BBuffer const& bb) = 0;
-		virtual void ReceiveResponseImpl(uint32_t serial, BBuffer const& bb) = 0;
+		virtual void ReceivePackageImpl(BBuffer& bb) = 0;
+		virtual void ReceiveRequestImpl(uint32_t serial, BBuffer& bb) = 0;
+		virtual void ReceiveResponseImpl(uint32_t serial, BBuffer& bb) = 0;
 		virtual bool Disconnected() = 0;
 		virtual size_t GetSendQueueSize() = 0;
 		virtual void SendBytes(char const* inBuf, int len = 0) = 0;
 
 		void ReceiveImpl(char const* bufPtr, int len);
 
-		void SendBytes(BBuffer const& bb);
+		void SendBytes(BBuffer& bb);
 
 		template<typename T>
 		void Send(T const& pkg);
@@ -157,10 +159,9 @@ namespace xx
 	public:
 		UvTcpBase(MemPool* mp, UvLoop& loop);
 
-		void DisconnectImpl() override;
-		void ReceivePackageImpl(BBuffer const& bb) override;
-		void ReceiveRequestImpl(uint32_t serial, BBuffer const& bb) override;
-		void ReceiveResponseImpl(uint32_t serial, BBuffer const& bb) override;
+		void ReceivePackageImpl(BBuffer& bb) override;
+		void ReceiveRequestImpl(uint32_t serial, BBuffer& bb) override;
+		void ReceiveResponseImpl(uint32_t serial, BBuffer& bb) override;
 		size_t GetSendQueueSize() override;
 		void SendBytes(char const* inBuf, int len = 0) override;
 
@@ -220,7 +221,7 @@ namespace xx
 	class UvTimeouter : public Object
 	{
 	public:
-		UvTimer * timer;
+		UvTimer* timer;
 		List<UvTimerBase*> timerss;
 		int cursor = 0;
 		int defaultInterval;
@@ -256,25 +257,27 @@ namespace xx
 	public:
 		UvTimer * timer;
 		uint32_t serial;
-		Dict<uint32_t, std::function<void(uint32_t, BBuffer*)>> mapping;
+		Dict<uint32_t, std::function<void(uint32_t, BBuffer const*)>> mapping;
 		Queue<std::pair<int, uint32_t>> serials;
 		int defaultInterval;
 		int ticks;
-		size_t count();
+		size_t Count();
 		UvRpcManager(MemPool* mp, UvLoop& loop, uint64_t intervalMS, int defaultInterval);
 		~UvRpcManager();
 		void Process();
-		uint32_t Register(std::function<void(uint32_t, BBuffer*)>&& cb, int interval = 0);
+		uint32_t Register(std::function<void(uint32_t, BBuffer const*)>&& cb, int interval = 0);
 		void Unregister(uint32_t serial);
-		void Callback(uint32_t serial, BBuffer* bb);
+		void Callback(uint32_t serial, BBuffer const* bb);
 	};
 
 	class UvContextBase : public Object
 	{
 	public:
-		UvContextBase(MemPool* mp);
 		UvTcpUdpBase* peer;
-		bool peerAlive();
+
+		UvContextBase(MemPool* mp);
+		~UvContextBase();
+		bool PeerAlive();
 		bool BindPeer(UvTcpUdpBase* p);
 		void KickPeer(bool immediately = true);
 		void OnPeerReceiveRequest(uint32_t serial, BBuffer& bb);
@@ -285,89 +288,93 @@ namespace xx
 		virtual void HandleDisconnect() = 0;
 	};
 
-	class UvUdpListener : public Object
-	{
-	public:
-		std::function<UvUdpPeer*()> OnCreatePeer;
-		std::function<void(UvUdpPeer*)> OnAccept;
-		std::function<void()> OnDispose;
+	//class UvUdpListener : public Object
+	//{
+	//public:
+	//	std::function<UvUdpPeer*()> OnCreatePeer;
+	//	std::function<void(UvUdpPeer*)> OnAccept;
+	//	std::function<void()> OnDispose;
 
-		Dict<Guid, UvUdpPeer*> peers;
-		UvLoop& loop;
-		int index_at_container;
+	//	Dict<Guid, UvUdpPeer*> peers;
+	//	UvLoop& loop;
+	//	int index_at_container;
 
-		void* ptr;
-		void* addrPtr;
+	//	void* ptr;
+	//	void* addrPtr;
 
-		UvUdpListener(MemPool* mp, UvLoop& loop);
-		static void OnRecvCBImpl(void* udp, size_t nread, void* buf_t, void* addr, uint32_t flags);
-		void OnReceiveImpl(char const* bufPtr, int len, void* addr);
+	//	UvUdpListener(MemPool* mp, UvLoop& loop);
+	//	~UvUdpListener();
+	//	static void OnRecvCBImpl(void* udp, size_t nread, void* buf_t, void* addr, uint32_t flags);
+	//	void OnReceiveImpl(char const* bufPtr, int len, void* addr);
 
-		void RecvStart();
-		void RecvStop();
-		void Bind(char const* ipv4, int port);
-	};
+	//	void RecvStart();
+	//	void RecvStop();
+	//	void Bind(char const* ipv4, int port);
+	//};
 
-	class UvUdpBase : public UvTcpUdpBase
-	{
-	public:
-		Guid guid;
+	//class UvUdpBase : public UvTcpUdpBase
+	//{
+	//public:
+	//	Guid guid;
 
-		uint32_t nextUpdateTicks;
+	//	uint32_t nextUpdateTicks;
 
-		void ReceivePackageImpl(BBuffer const& bb) override;
-		void ReceiveRequestImpl(uint32_t serial, BBuffer const& bb) override;
-		void ReceiveResponseImpl(uint32_t serial, BBuffer const& bb) override;
-	};
+	//	void ReceivePackageImpl(BBuffer& bb) override;
+	//	void ReceiveRequestImpl(uint32_t serial, BBuffer& bb) override;
+	//	void ReceiveResponseImpl(uint32_t serial, BBuffer& bb) override;
+	//};
 
-	class UvUdpPeer : public UvUdpBase
-	{
-	public:
-		UvUdpListener& listener;
+	//class UvUdpPeer : public UvUdpBase
+	//{
+	//public:
+	//	UvUdpListener& listener;
 
-		UvUdpPeer(MemPool* mp, UvUdpListener& listener
-			, Guid guid, char const* rawData
-			, int sndwnd = 128, int rcvwnd = 128
-			, int nodelay = 1, int interval = 10, int resend = 2, int nc = 1);
+	//	UvUdpPeer(MemPool* mp, UvUdpListener& listener
+	//		, Guid guid, char const* rawData
+	//		, int sndwnd = 128, int rcvwnd = 128
+	//		, int nodelay = 1, int interval = 10, int resend = 2, int nc = 1);
+	//	~UvUdpPeer();
 
-		static int OutputImpl(char const* buf, int len, void* kcp);
-		void Update(uint32_t current);
-		void Input(char const* data, int len);
-		void SendBytes(char const* data, int len = 0) override;
-		void DisconnectImpl() override;
-		size_t GetSendQueueSize() override;
-		bool Disconnected() override;
+	//	static int OutputImpl(char const* buf, int len, void* kcp);
+	//	void Update(uint32_t current);
+	//	void Input(char const* data, int len);
+	//	void SendBytes(char const* data, int len = 0) override;
+	//	void DisconnectImpl() override;
+	//	size_t GetSendQueueSize() override;
+	//	bool Disconnected() override;
 
-		std::array<char, 64> ipBuf;
-		char* ip();
-	};
+	//	std::array<char, 64> ipBuf;
+	//	char* ip();
+	//};
 
-	class UvUdpClient : public UvUdpBase
-	{
-	public:
-		void* kcpPtr;
-		UvUdpClient(MemPool* mp, UvLoop& loop);
-		void Connect(Guid guid
-			, int sndwnd = 128, int rcvwnd = 128
-			, int nodelay = 1, int interval = 10, int resend = 2, int nc = 1);
+	//class UvUdpClient : public UvUdpBase
+	//{
+	//public:
+	//	void* kcpPtr;
+	//	UvUdpClient(MemPool* mp, UvLoop& loop);
+	//	~UvUdpClient();
 
-		static void OnRecvCBImpl(void* udp, void* nread, void* buf_t, void* addr, uint32_t flags);
-		void OnReceiveImpl(char const* bufPtr, int len, void* addr);
-		static int OutputImpl(char const* buf, int len, void* kcp);
-		void Update(uint32_t current);
-		void Disconnect();
-		void SetAddress(char const* ipv4, int port);
-		void SendBytes(char const* data, int len = 0) override;
-		void DisconnectImpl() override;
-		bool Disconnected() override;
-		size_t GetSendQueueSize() override;
-	};
+	//	void Connect(Guid guid
+	//		, int sndwnd = 128, int rcvwnd = 128
+	//		, int nodelay = 1, int interval = 10, int resend = 2, int nc = 1);
+
+	//	static void OnRecvCBImpl(void* udp, void* nread, void* buf_t, void* addr, uint32_t flags);
+	//	void OnReceiveImpl(char const* bufPtr, int len, void* addr);
+	//	static int OutputImpl(char const* buf, int len, void* kcp);
+	//	void Update(uint32_t current);
+	//	void Disconnect();
+	//	void SetAddress(char const* ipv4, int port);
+	//	void SendBytes(char const* data, int len = 0) override;
+	//	void DisconnectImpl() override;
+	//	bool Disconnected() override;
+	//	size_t GetSendQueueSize() override;
+	//};
 
 
 
 
 	template<typename T>
-	inline void UvTcpBase::Send(T const & pkg)
+	inline void UvTcpUdpBase::Send(T const & pkg)
 	{
 		if (!ptr) throw - 1;
 		bbSend.Clear();
@@ -378,7 +385,7 @@ namespace xx
 	}
 
 	template<typename T>
-	inline uint32_t UvTcpBase::SendRequest(T const & pkg, std::function<void(uint32_t, BBuffer)> cb, int interval)
+	inline uint32_t UvTcpUdpBase::SendRequest(T const & pkg, std::function<void(uint32_t, BBuffer)> cb, int interval)
 	{
 		if (!ptr) throw - 1;
 		auto serial = loop.rpcMgr.Register(cb, interval);
@@ -391,7 +398,7 @@ namespace xx
 	}
 
 	template<typename T>
-	inline void UvTcpBase::SendResponse(uint32_t serial, T const & pkg)
+	inline void UvTcpUdpBase::SendResponse(uint32_t serial, T const & pkg)
 	{
 		template<typename T>
 		bbSend.Clear();
