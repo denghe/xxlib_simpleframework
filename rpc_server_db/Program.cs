@@ -163,14 +163,15 @@ public class LoginContext : UvContextBase
 
 public class Service : UvLoop
 {
-    public UvTimeouter timeouter;
     public UvTcpListener listener;
     public UvAsync dispatcher;
     public LoginContext loginCtx;                                   // 登录服务上下文
 
     public Service()
     {
-        timeouter = new UvTimeouter(this, 1000, 6, 5);              // 精度:秒, 最长计时 6 秒, 默认 5 秒超时
+        InitRpcManager(1000, 5);
+        InitTimeouter(1000, 6, 5);                                  // 精度:秒, 最长计时 6 秒, 默认 5 秒超时
+
         listener = new Listener(this, "0.0.0.0", 12346);
         dispatcher = new UvAsync(this);
         loginCtx = new LoginContext(this);

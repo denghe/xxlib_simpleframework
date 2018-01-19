@@ -16,7 +16,7 @@ namespace xx
 	class UvAsync;
 	class UvRpcManager;
 	class UvTimeouter;
-	class UvContextBase;	// todo
+	class UvContextBase;
 	class UvUdpListener;
 	class UvUdpBase;
 	class UvUdpPeer;
@@ -51,7 +51,7 @@ namespace xx
 		UvTimeouter* timeouter = nullptr;
 		UvRpcManager* rpcMgr = nullptr;
 		UvTimer* udpTimer = nullptr;
-		uint64_t udpTicks = 0;
+		uint32_t udpTicks = 0;
 		char udpRecvBuf[65536];
 		uint32_t kcpInterval = 0;
 
@@ -92,6 +92,24 @@ namespace xx
 		static void OnAcceptCB(void* server, int status);
 		void Listen(int backlog = 128);
 		void Bind(char const* const& ipv4, int port);
+	};
+
+	class UvTimerBase : public Object
+	{
+	public:
+		UvTimerBase(MemPool* mp);
+		UvTimeouter* timerManager = nullptr;
+		UvTimerBase* timerPrev = nullptr;
+		UvTimerBase* timerNext = nullptr;
+		int timerIndex = -1;
+		std::function<void()> OnTimeout;
+
+		void TimerClear();
+		void TimeoutReset(int interval = 0);
+		void TimerStop();
+		void BindTo(UvTimeouter* tm);
+		void UnbindTimerManager();
+		bool timering();
 	};
 
 	class UvTcpUdpBase : public UvTimerBase
@@ -139,10 +157,10 @@ namespace xx
 	public:
 		UvTcpBase(MemPool* mp, UvLoop& loop);
 
+		void DisconnectImpl() override;
 		void ReceivePackageImpl(BBuffer const& bb) override;
 		void ReceiveRequestImpl(uint32_t serial, BBuffer const& bb) override;
 		void ReceiveResponseImpl(uint32_t serial, BBuffer const& bb) override;
-		void DisconnectImpl() override;
 		size_t GetSendQueueSize() override;
 		void SendBytes(char const* inBuf, int len = 0) override;
 
@@ -158,6 +176,7 @@ namespace xx
 		UvTcpPeer(MemPool* mp, UvTcpListener& listener);
 		~UvTcpPeer();	// Release 取代 Dispose
 		void DisconnectImpl() override;
+		bool Disconnected() override;
 		std::array<char, 64> ipBuf;
 		char* ip();
 	};
@@ -177,6 +196,7 @@ namespace xx
 		void Connect();
 		void Disconnect();
 		void DisconnectImpl() override;
+		bool Disconnected() override;
 	};
 
 	class UvTimer : public Object
@@ -196,23 +216,6 @@ namespace xx
 		void Stop();
 	};
 
-	class UvTimerBase : public Object
-	{
-	public:
-		UvTimerBase(MemPool* mp);
-		UvTimeouter* timerManager = nullptr;
-		UvTimerBase* timerPrev = nullptr;
-		UvTimerBase* timerNext = nullptr;
-		int timerIndex = -1;
-		std::function<void()> OnTimeout;
-
-		void TimerClear();
-		void TimeoutReset(int interval = 0);
-		void TimerStop();
-		void BindTo(UvTimeouter* tm);
-		void UnbindTimerManager();
-		bool timering();
-	};
 
 	class UvTimeouter : public Object
 	{
@@ -307,6 +310,7 @@ namespace xx
 
 	class UvUdpBase : public UvTcpUdpBase
 	{
+	public:
 		Guid guid;
 
 		uint32_t nextUpdateTicks;
@@ -318,9 +322,11 @@ namespace xx
 
 	class UvUdpPeer : public UvUdpBase
 	{
-		UvUdpListener listener;
+	public:
+		UvUdpListener& listener;
 
-		UvUdpPeer(UvUdpListener listener, Guid guid, char const* rawData
+		UvUdpPeer(MemPool* mp, UvUdpListener& listener
+			, Guid guid, char const* rawData
 			, int sndwnd = 128, int rcvwnd = 128
 			, int nodelay = 1, int interval = 10, int resend = 2, int nc = 1);
 
@@ -338,8 +344,9 @@ namespace xx
 
 	class UvUdpClient : public UvUdpBase
 	{
+	public:
 		void* kcpPtr;
-		UvUdpClient(UvLoop loop);
+		UvUdpClient(MemPool* mp, UvLoop& loop);
 		void Connect(Guid guid
 			, int sndwnd = 128, int rcvwnd = 128
 			, int nodelay = 1, int interval = 10, int resend = 2, int nc = 1);

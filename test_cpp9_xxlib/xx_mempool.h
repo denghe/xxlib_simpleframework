@@ -114,6 +114,9 @@ namespace xx
 
 		void Release(Object* o);
 
+		template<typename T, typename U = std::enable_if_t<std::is_base_of_v<Object, T>>>
+		inline void SafeRelease(T*& o);
+
 		/***********************************************************************************/
 		// 工具函数
 

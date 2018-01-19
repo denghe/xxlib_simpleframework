@@ -12,6 +12,7 @@
 #include <type_traits>
 #include <string>
 #include <iostream>
+
 #ifdef _WIN32
 #include <intrin.h>     // _BitScanReverse  64
 #include <objbase.h>
@@ -24,12 +25,33 @@ typedef struct _GUID {
 	unsigned char  Data4[8];
 } GUID;
 #endif
+
 #ifdef min
 #undef min
 #endif
+
 #ifdef max
 #undef max
 #endif
+
+#ifndef _countof
+template<typename T, size_t N>
+size_t _countof(T const (&arr)[N])
+{
+	return N;
+}
+#endif
+
+#ifndef _offsetof
+#define _offsetof(s,m) ((size_t)&reinterpret_cast<char const volatile&>((((s*)0)->m)))
+#endif
+
+#ifndef container_of
+#define container_of(ptr, type, member) \
+  ((type *) ((char *) (ptr) - _offsetof(type, member)))
+#endif
+
+
 
 #include "xx_mempool.h"
 #include "xx_list.h"
@@ -52,5 +74,3 @@ typedef struct _GUID {
 #include "xx_string.hpp"
 #include "xx_bytesutils.hpp"
 #include "xx_bbuffer.hpp"
-
-

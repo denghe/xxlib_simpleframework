@@ -218,13 +218,13 @@ public class DbClient : UvTcpClient
 
 public class Service : UvLoop
 {
-    public UvTimeouter timeouter;
     public UvTcpListener listener;
     public DbClient dbClient;
 
     public Service()
     {
-        timeouter = new UvTimeouter(this, 1000, 6, 5);              // 精度:秒, 最长计时 6 秒, 默认 5 秒超时
+        InitRpcManager(1000, 5);
+        InitTimeouter(1000, 6, 5);                                  // 精度:秒, 最长计时 6 秒, 默认 5 秒超时
         listener = new Listener(this, "0.0.0.0", 12345);
         dbClient = new DbClient(this, "127.0.0.1", 12346);
     }

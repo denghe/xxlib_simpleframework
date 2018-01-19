@@ -1169,7 +1169,7 @@ namespace xx
         #region type id creator mappings
 
         public delegate IBBuffer TypeIdCreatorFunc();
-        public static TypeIdCreatorFunc[] typeIdCreatorMappings = new TypeIdCreatorFunc[ushort.MaxValue];
+        public static TypeIdCreatorFunc[] typeIdCreatorMappings = new TypeIdCreatorFunc[ushort.MaxValue + 1];
         public static Dict<Type, ushort> typeTypeIdMappings = new Dict<Type, ushort>();
 
         public static void Register<T>(ushort typeId) where T : IBBuffer, new()

@@ -1,172 +1,185 @@
-﻿//#include <uv.h>
-//#ifdef min
-//#undef min
-//#endif
-//#ifdef max
-//#undef max
-//#endif
-//#include "xx_uv.h"
-//
-//#ifndef _countof
-//template<typename T, size_t N>
-//size_t _countof(T const (&arr)[N])
-//{
-//	return N;
-//}
-//#endif
-//
-//
-//#ifndef _offsetof
-//#define _offsetof(s,m) ((size_t)&reinterpret_cast<char const volatile&>((((s*)0)->m)))
-//#endif
-//
-//
-//#ifndef container_of
-//#define container_of(ptr, type, member) \
-//  ((type *) ((char *) (ptr) - _offsetof(type, member)))
-//#endif
-//
-//
-//static void* Alloc(xx::MemPool* mp, size_t size, void* ud)
-//{
-//	auto p = (void**)mp->Alloc(size + sizeof(void*));
-//	p[0] = ud;
-//	return &p[1];
-//}
-//
-//static void* Alloc(xx::MemPool* mp, size_t size)
-//{
-//	return (void**)mp->Alloc(size + sizeof(void*)) + 1;
-//}
-//
-//static void Free(xx::MemPool* mp, void* p) noexcept
-//{
-//	mp->Free((void**)p - 1);
-//}
-//
-//static void Close(uv_handle_t* p) noexcept
-//{
-//	if (uv_is_closing(p)) return;
-//	uv_close(p, [](uv_handle_t* h)
-//	{
-//		Free((xx::MemPool*)h->loop->data, h);
-//	});
-//}
-//
-//static int uv_write_(void* stream, char* inBuf, uint32_t len) noexcept
-//{
-//	struct write_req_t
-//	{
-//		xx::MemPool* mp;
-//		uv_write_t req;
-//		uv_buf_t buf;
-//	};
-//	auto mp = (xx::MemPool*)((uv_stream_t*)stream)->loop->data;
-//	auto req = (write_req_t*)mp->Alloc(sizeof(write_req_t));
-//	req->mp = mp;
-//	auto buf = (char*)mp->Alloc(len);
-//	memcpy(buf, inBuf, len);
-//	req->buf = uv_buf_init(buf, (uint32_t)len);
-//	return uv_write((uv_write_t*)req, (uv_stream_t*)stream, &req->buf, 1, [](uv_write_t *req, int status)
-//	{
-//		//if (status) fprintf(stderr, "Write error: %s\n", uv_strerror(status));
-//		auto *wr = (write_req_t*)req;
-//		wr->mp->Free(wr->buf.base);
-//		wr->mp->Free(wr);
-//	});
-//}
-//
-//int uv_fill_client_ip(uv_tcp_t* stream, char* buf, int buf_len, int* data_len) noexcept
-//{
-//	sockaddr_in saddr;
-//	int len = sizeof(saddr);
-//	int r = 0;
-//	if (r = uv_tcp_getpeername(stream, (sockaddr*)&saddr, &len)) return r;
-//	if (r = uv_inet_ntop(AF_INET, &saddr.sin_addr, buf, buf_len)) return r;
-//	*data_len = (int)strlen(buf);
-//	*data_len += sprintf_s(buf + *data_len, buf_len - *data_len, ":%d", ntohs(saddr.sin_port));
-//	return r;
-//}
-//
-//
-//
-//
-//
-//
-//
-//xx::UvLoop::UvLoop(uint64_t rpcIntervalMS, int rpcDefaultInterval)
-//	: tcpListeners(&mp)
-//	, tcpClients(&mp)
-//	, timers(&mp)
-//	, asyncs(&mp)
-//{
-//	ptr = Alloc(&mp, sizeof(uv_loop_t), this);
-//	if (!ptr) throw - 1;
-//	if (int r = uv_loop_init((uv_loop_t*)ptr))
-//	{
-//		Free(&mp, ptr);
-//		ptr = nullptr;
-//		throw r;
-//	}
-//	((uv_loop_t*)ptr)->data = &mp;
-//
-//	mp.CreateTo(rpcMgr, *this, rpcIntervalMS, rpcDefaultInterval);
-//}
-//
-//xx::UvLoop::~UvLoop()
-//{
-//	assert(ptr);
-//	mp.Release(rpcMgr);
-//	rpcMgr = nullptr;
-//	tcpListeners.ForEachRevert([&mp = mp](auto& o) { mp.Release(o); });
-//	tcpClients.ForEachRevert([&mp = mp](auto& o) { mp.Release(o); });
-//	timers.ForEachRevert([&mp = mp](auto& o) { mp.Release(o); });
-//	asyncs.ForEachRevert([&mp = mp](auto& o) { mp.Release(o); });
-//
-//	if (uv_loop_close((uv_loop_t*)ptr))
-//	{
-//		uv_run((uv_loop_t*)ptr, UV_RUN_DEFAULT);
-//		uv_loop_close((uv_loop_t*)ptr);
-//	}
-//	Free(&mp, ptr);
-//	ptr = nullptr;
-//}
-//
-//void xx::UvLoop::Run(UvRunMode mode)
-//{
-//	if (int r = uv_run((uv_loop_t*)ptr, (uv_run_mode)mode)) throw r;
-//}
-//
-//void xx::UvLoop::Stop()
-//{
-//	uv_stop((uv_loop_t*)ptr);
-//}
-//
-//bool xx::UvLoop::alive() const
-//{
-//	return uv_loop_alive((uv_loop_t*)ptr) != 0;
-//}
-//
-//xx::UvTcpListener* xx::UvLoop::CreateTcpListener()
-//{
-//	return mp.CreateNativePointer<UvTcpListener>(*this);
-//}
-//xx::UvTcpClient* xx::UvLoop::CreateClient()
-//{
-//	return mp.CreateNativePointer<UvTcpClient>(*this);
-//}
-//xx::UvTimer* xx::UvLoop::CreateTimer(uint64_t timeoutMS, uint64_t repeatIntervalMS, std::function<void()>&& OnFire)
-//{
-//	return mp.CreateNativePointer<UvTimer>(*this, timeoutMS, repeatIntervalMS, std::move(OnFire));
-//}
-//xx::UvAsync* xx::UvLoop::CreateAsync()
-//{
-//	return mp.CreateNativePointer<UvAsync>(*this);
-//}
-//xx::UvTimeouter* xx::UvLoop::CreateTimeouter(uint64_t intervalMS, int wheelLen, int defaultInterval)
-//{
-//	return mp.CreateNativePointer<UvTimeouter>(*this, intervalMS, wheelLen, defaultInterval);
-//}
+﻿#include <uv.h>
+#include "xx_uv.h"
+
+static void* Alloc(xx::MemPool* mp, size_t size, void* ud)
+{
+	auto p = (void**)mp->Alloc(size + sizeof(void*));
+	p[0] = ud;
+	return &p[1];
+}
+
+static void* Alloc(xx::MemPool* mp, size_t size)
+{
+	return (void**)mp->Alloc(size + sizeof(void*)) + 1;
+}
+
+static void Free(xx::MemPool* mp, void* p) noexcept
+{
+	mp->Free((void**)p - 1);
+}
+
+static void Close(uv_handle_t* p) noexcept
+{
+	if (uv_is_closing(p)) return;
+	uv_close(p, [](uv_handle_t* h)
+	{
+		Free((xx::MemPool*)h->loop->data, h);
+	});
+}
+
+static int uv_write_(void* stream, char* inBuf, uint32_t len) noexcept
+{
+	struct write_req_t
+	{
+		xx::MemPool* mp;
+		uv_write_t req;
+		uv_buf_t buf;
+	};
+	auto mp = (xx::MemPool*)((uv_stream_t*)stream)->loop->data;
+	auto req = (write_req_t*)mp->Alloc(sizeof(write_req_t));
+	req->mp = mp;
+	auto buf = (char*)mp->Alloc(len);
+	memcpy(buf, inBuf, len);
+	req->buf = uv_buf_init(buf, (uint32_t)len);
+	return uv_write((uv_write_t*)req, (uv_stream_t*)stream, &req->buf, 1, [](uv_write_t *req, int status)
+	{
+		//if (status) fprintf(stderr, "Write error: %s\n", uv_strerror(status));
+		auto *wr = (write_req_t*)req;
+		wr->mp->Free(wr->buf.base);
+		wr->mp->Free(wr);
+	});
+}
+
+static int uv_fill_client_ip(uv_tcp_t* stream, char* buf, int buf_len, int* data_len) noexcept
+{
+	sockaddr_in saddr;
+	int len = sizeof(saddr);
+	int r = 0;
+	if (r = uv_tcp_getpeername(stream, (sockaddr*)&saddr, &len)) return r;
+	if (r = uv_inet_ntop(AF_INET, &saddr.sin_addr, buf, buf_len)) return r;
+	*data_len = (int)strlen(buf);
+	*data_len += sprintf_s(buf + *data_len, buf_len - *data_len, ":%d", ntohs(saddr.sin_port));
+	return r;
+}
+
+
+xx::UvLoop::UvLoop()
+	: tcpListeners(&mp)
+	, tcpClients(&mp)
+	, udpListeners(&mp)
+	, udpClients(&mp)
+	, timers(&mp)
+	, asyncs(&mp)
+{
+	ptr = Alloc(&mp, sizeof(uv_loop_t), this);
+	if (!ptr) throw - 1;
+
+	if (int r = uv_loop_init((uv_loop_t*)ptr))
+	{
+		Free(&mp, ptr);
+		ptr = nullptr;
+		throw r;
+	}
+	((uv_loop_t*)ptr)->data = &mp;
+
+}
+
+xx::UvLoop::~UvLoop()
+{
+	assert(ptr);
+
+	mp.SafeRelease(udpTimer);
+	mp.SafeRelease(rpcMgr);
+	mp.SafeRelease(timeouter);
+	udpListeners.ForEachRevert([&mp = mp](auto& o) { mp.Release(o); });
+	udpClients.ForEachRevert([&mp = mp](auto& o) { mp.Release(o); });
+	tcpListeners.ForEachRevert([&mp = mp](auto& o) { mp.Release(o); });
+	tcpClients.ForEachRevert([&mp = mp](auto& o) { mp.Release(o); });
+	timers.ForEachRevert([&mp = mp](auto& o) { mp.Release(o); });
+	asyncs.ForEachRevert([&mp = mp](auto& o) { mp.Release(o); });
+
+	if (uv_loop_close((uv_loop_t*)ptr))
+	{
+		uv_run((uv_loop_t*)ptr, UV_RUN_DEFAULT);
+		uv_loop_close((uv_loop_t*)ptr);
+	}
+	Free(&mp, ptr);
+	ptr = nullptr;
+}
+
+void xx::UvLoop::InitTimeouter(uint64_t intervalMS, int wheelLen, int defaultInterval)
+{
+	if (timeouter) throw - 1;
+	mp.CreateTo(timeouter, *this, intervalMS, wheelLen, defaultInterval);
+}
+void xx::UvLoop::InitRpcManager(uint64_t rpcIntervalMS, int rpcDefaultInterval)
+{
+	if (rpcMgr) throw - 1;
+	mp.CreateTo(rpcMgr, *this, rpcIntervalMS, rpcDefaultInterval);
+}
+void xx::UvLoop::InitKcpFlushInterval(uint32_t interval)
+{
+	if (udpTimer) throw - 1;
+	kcpInterval = interval;
+	mp.CreateTo(udpTimer, *this, 0, interval, [this]
+	{
+		udpTicks += kcpInterval;
+		for(auto& L : udpListeners)
+		{
+			for(auto& kv : L->peers)
+			{
+				kv.value->Update(udpTicks);
+			}
+		}
+		for (int i = (int)udpClients.dataLen - 1; i >= 0; --i)
+		{
+			udpClients[i]->Update(udpTicks);
+		}
+	});
+}
+
+void xx::UvLoop::Run(UvRunMode mode)
+{
+	if (int r = uv_run((uv_loop_t*)ptr, (uv_run_mode)mode)) throw r;
+}
+
+void xx::UvLoop::Stop()
+{
+	uv_stop((uv_loop_t*)ptr);
+}
+
+bool xx::UvLoop::alive() const
+{
+	return uv_loop_alive((uv_loop_t*)ptr) != 0;
+}
+
+xx::UvTcpListener* xx::UvLoop::CreateTcpListener()
+{
+	return mp.CreateNativePointer<UvTcpListener>(*this);
+}
+xx::UvTcpClient* xx::UvLoop::CreateTcpClient()
+{
+	return mp.CreateNativePointer<UvTcpClient>(*this);
+}
+
+xx::UvUdpListener* xx::UvLoop::CreateUdpListener()
+{
+	return mp.CreateNativePointer<UvUdpListener>(*this);
+}
+xx::UvUdpClient* xx::UvLoop::CreateUdpClient()
+{
+	return mp.CreateNativePointer<UvUdpClient>(*this);
+}
+
+xx::UvTimer* xx::UvLoop::CreateTimer(uint64_t timeoutMS, uint64_t repeatIntervalMS, std::function<void()>&& OnFire)
+{
+	return mp.CreateNativePointer<UvTimer>(*this, timeoutMS, repeatIntervalMS, std::move(OnFire));
+}
+xx::UvAsync* xx::UvLoop::CreateAsync()
+{
+	return mp.CreateNativePointer<UvAsync>(*this);
+}
+
 //
 //
 //

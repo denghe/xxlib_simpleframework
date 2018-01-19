@@ -136,6 +136,15 @@ namespace xx
 		Free<MemHeader_Object>(o);
 	}
 
+	template<typename T, typename U>
+	inline void MemPool::SafeRelease(T*& o)
+	{
+		if (!o) return;
+		o->~T();
+		Free<MemHeader_Object>(o);
+		o = nullptr;
+	}
+
 
 
 	inline size_t MemPool::Calc2n(size_t n) noexcept

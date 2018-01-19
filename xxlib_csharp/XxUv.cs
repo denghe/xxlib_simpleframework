@@ -29,11 +29,13 @@ namespace xx
         public List<UvUdpClient> udpClients = new List<UvUdpClient>();
         public List<UvTimer> timers = new List<UvTimer>();
         public List<UvAsync> asyncs = new List<UvAsync>();
+        public UvTimeouter timeouter;
         public UvRpcManager rpcMgr;
         public UvTimer udpTimer;
         public uint udpTicks;
         public byte[] udpRecvBuf = new byte[65536];
         public IntPtr udpRecvBufPtr;
+        uint kcpInterval = 0;
 
         public IntPtr ptr;
         public IntPtr handle;
@@ -83,32 +85,42 @@ namespace xx
             }
         }
 
-        uint kcpInterval = 0;
+        public void InitTimeouter(ulong intervalMS = 1000, int wheelLen = 6, int defaultInterval = 5)
+        {
+            if (timeouter != null) throw new InvalidOperationException();
+            timeouter = new UvTimeouter(this, intervalMS, wheelLen, defaultInterval);
+        }
+
+        public void InitRpcManager(ulong intervalMS = 1000, int defaultInterval = 5)
+        {
+            if (rpcMgr != null) throw new InvalidOperationException();
+            rpcMgr = new UvRpcManager(this, intervalMS, defaultInterval);
+        }
+
         public void InitKcpFlushInterval(uint interval = 10)
         {
             if (udpTimer != null) throw new InvalidOperationException();
             kcpInterval = interval;
-            udpTimer = new UvTimer(this, 0, interval, KcpUpdater);
-        }
-        public void KcpUpdater()
-        {
-            for (int n = 0; n < 100; ++n)      // 模拟千倍时间流失
+            udpTimer = new UvTimer(this, 0, interval, () =>
             {
-                udpTicks += kcpInterval;
-                Console.WriteLine(udpTicks);
-                for (int i = 0; i < udpListeners.dataLen; ++i)
+                for (int n = 0; n < 100; ++n)      // 模拟千倍时间流失
                 {
-                    var peers = udpListeners[i].peers;
-                    peers.ForEach(kv =>
+                    udpTicks += kcpInterval;
+                    Console.WriteLine(udpTicks);
+                    for (int i = 0; i < udpListeners.dataLen; ++i)
                     {
-                        kv.value.Update(udpTicks);
-                    });
+                        var peers = udpListeners[i].peers;
+                        peers.ForEach(kv =>
+                        {
+                            kv.value.Update(udpTicks);
+                        });
+                    }
+                    for (int i = udpClients.dataLen - 1; i >= 0; --i)
+                    {
+                        udpClients[i].Update(udpTicks);
+                    }
                 }
-                for (int i = udpClients.dataLen - 1; i >= 0; --i)
-                {
-                    udpClients[i].Update(udpTicks);
-                }
-            }
+            });
         }
 
         #region Dispose
@@ -126,12 +138,12 @@ namespace xx
             {
                 // if (disposing) // Free other state (managed objects).
 
-                asyncs.ForEachReverse(o => o.Dispose());
-                timers.ForEachReverse(o => o.Dispose());
-                tcpClients.ForEachReverse(o => o.Dispose());
-                tcpListeners.ForEachReverse(o => o.Dispose());
                 udpClients.ForEachReverse(o => o.Dispose());
                 udpListeners.ForEachReverse(o => o.Dispose());
+                tcpClients.ForEachReverse(o => o.Dispose());
+                tcpListeners.ForEachReverse(o => o.Dispose());
+                timers.ForEachReverse(o => o.Dispose());
+                asyncs.ForEachReverse(o => o.Dispose());
 
                 if (UvInterop.xxuv_loop_close(ptr) != 0)                    // busy
                 {
