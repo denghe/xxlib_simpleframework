@@ -184,7 +184,7 @@ namespace xx
 		}
 		static inline void WriteTo(BBuffer& bb, T const &in)
 		{
-			memcpy(bb.buf, &in, sizeof(T));
+			memcpy(bb.buf + bb.dataLen, &in, sizeof(T));
 			bb.dataLen += sizeof(T);
 		}
 		static inline int ReadFrom(BBuffer& bb, T &out)
@@ -291,7 +291,7 @@ namespace xx
 				else
 				{
 					bb[bb.dataLen] = 5;
-					memcpy(bb.buf + 1, &in, sizeof(double));
+					memcpy(bb.buf + bb.dataLen + 1, &in, sizeof(double));
 					bb.dataLen += sizeof(double) + 1;
 				}
 			}
@@ -354,6 +354,11 @@ namespace xx
 	};
 
 	// 适配 Object
+	// 当前还没有对 Object 值类型和指针类型混合出现的情况做出合理的规划, 
+	// 特别是指针引用到值同时被初始化, 先初始化到指针的情况. 
+	// 就是说, 需要判断这个指针是否指向一个值类型, 如果是, 则序列化内容将在后面出现
+	// 值类型要判断自己的地址是否被引用过, 以配合上面的这种设计
+	// 还要考虑到不支持值类型的 lua c# 也要兼容解析
 	template<typename T>
 	struct BytesFunc<T, std::enable_if_t<std::is_base_of_v<Object, T>>>
 	{
@@ -363,12 +368,11 @@ namespace xx
 		}
 		static inline void WriteTo(BBuffer& bb, T const &in)
 		{
-			//in.BBWrite
+			in.ToBBuffer(bb);
 		}
 		static inline int ReadFrom(BBuffer& bb, T &out)
 		{
-			//return out.BBRead(bb);
-			return 0;
+			return out.FromBBuffer(bb);
 		}
 	};
 
