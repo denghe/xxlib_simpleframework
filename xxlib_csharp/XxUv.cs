@@ -352,12 +352,8 @@ namespace xx
         protected BBuffer bbRecv = new BBuffer();               // 复用的接收缓冲区
         protected BBuffer bbSend;                               // 复用
 
-        protected abstract void DisconnectImpl();
-        protected abstract void ReceivePackageImpl(BBuffer bb);
-        protected abstract void ReceiveRequestImpl(uint serial, BBuffer bb);
-        protected abstract void ReceiveResponseImpl(uint serial, BBuffer bb);
         public abstract bool Disconnected();
-
+        protected abstract void DisconnectImpl();
 
         // 基础收数据处理, 投递到事件函数
         public void ReceiveImpl(IntPtr bufPtr, int len)
@@ -381,7 +377,7 @@ namespace xx
                 bbRecv.offset = offset;
                 if (typeId == 0)
                 {
-                    ReceivePackageImpl(bbRecv);
+                    if (OnReceivePackage != null) OnReceivePackage(bbRecv);
                     if (Disconnected())
                     {
                         bbRecv.Clear();
@@ -398,7 +394,7 @@ namespace xx
                     }
                     if (typeId == 1)
                     {
-                        ReceiveRequestImpl(serial, bbRecv);
+                        if (OnReceiveRequest != null) OnReceiveRequest(serial, bbRecv);
                         if (Disconnected())
                         {
                             bbRecv.Clear();
@@ -407,7 +403,7 @@ namespace xx
                     }
                     else if (typeId == 2)
                     {
-                        ReceiveResponseImpl(serial, bbRecv);
+                        loop.rpcMgr.Callback(serial, bbRecv);
                         if (Disconnected())
                         {
                             bbRecv.Clear();
@@ -508,18 +504,6 @@ namespace xx
 
     public abstract class UvTcpBase : UvTcpUdpBase
     {
-        protected override void ReceivePackageImpl(BBuffer bb)
-        {
-            if (OnReceivePackage != null) OnReceivePackage(bb);
-        }
-        protected override void ReceiveRequestImpl(uint serial, BBuffer bb)
-        {
-            if (OnReceiveRequest != null) OnReceiveRequest(serial, bb);
-        }
-        protected override void ReceiveResponseImpl(uint serial, BBuffer bb)
-        {
-            loop.rpcMgr.Callback(serial, bb);
-        }
         public override bool Disconnected()
         {
             return ptr == IntPtr.Zero;
@@ -1443,21 +1427,7 @@ namespace xx
     public abstract class UvUdpBase : UvTcpUdpBase
     {
         public Guid guid;
-
         protected uint nextUpdateTicks;
-
-        protected override void ReceivePackageImpl(BBuffer bb)
-        {
-            if (OnReceivePackage != null) OnReceivePackage(bb);
-        }
-        protected override void ReceiveRequestImpl(uint serial, BBuffer bb)
-        {
-            if (OnReceiveRequest != null) OnReceiveRequest(serial, bb);
-        }
-        protected override void ReceiveResponseImpl(uint serial, BBuffer bb)
-        {
-            loop.rpcMgr.Callback(serial, bb);
-        }
     }
 
     public class UvUdpPeer : UvUdpBase, IDisposable

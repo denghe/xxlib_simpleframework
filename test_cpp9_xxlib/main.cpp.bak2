@@ -5,14 +5,14 @@ void f1()
 	// echo server
 	xx::UvLoop loop;
 	auto listener = loop.CreateTcpListener();
-	auto timeouter = loop.CreateTimeouter();
+	loop.InitTimeouter();
 	uint64_t counter = 0;
-	listener->OnAccept = [&loop, &timeouter, &counter](xx::UvTcpPeer* peer)
+	listener->OnAccept = [&loop, &counter](xx::UvTcpPeer* peer)
 	{
 		std::cout << "peer: ip = " << peer->ip() << " Accepted." << std::endl;
-		peer->BindTo(timeouter);
+		peer->BindTimeouter(loop.timeouter);
 		peer->TimeoutReset();
-		peer->OnTimeout = [peer]() 
+		peer->OnTimeout = [peer]()
 		{
 			std::cout << "peer: ip = " << peer->ip() << " Timeouted." << std::endl;
 			peer->Release();
@@ -48,43 +48,43 @@ void f1()
 	std::cout << "listener: loop.Run();" << std::endl;
 	loop.Run();
 }
-//void f2()
-//{
-//	// test client
-//	std::this_thread::sleep_for(std::chrono::milliseconds(100));
-//	xx::UvLoop loop;
-//	xx::BBuffer_p pkg;
-//	uint64_t counter = 0;
-//	auto client = loop.CreateClient();
-//	client->OnConnect = [&](int status)
-//	{
-//		std::cout << "client: OnConnect status = " << status << std::endl;
-//		if (client->alive())
-//		{
-//			client->Send(pkg);
-//		}
-//	};
-//	client->OnReceivePackage = [&](xx::BBuffer& bb)
-//	{
-//		//std::cout << "client: recv pkg" << std::endl;
-//		++counter;
-//		client->Send(pkg);
-//	};
-//	client->SetAddress("127.0.0.1", 12345);
-//	client->Connect();
-//
-//	auto timer = loop.CreateTimer(1000, 1000, [&]() 
-//	{
-//		std::cout << counter << std::endl;
-//	});
-//
-//	std::cout << "client: loop.Run();" << std::endl;
-//	loop.Run();
-//}
+void f2()
+{
+	// test client
+	std::this_thread::sleep_for(std::chrono::milliseconds(100));
+	xx::UvLoop loop;
+	xx::BBuffer_p pkg;
+	uint64_t counter = 0;
+	auto client = loop.CreateTcpClient();
+	client->OnConnect = [&](int status)
+	{
+		std::cout << "client: OnConnect status = " << status << std::endl;
+		if (client->alive())
+		{
+			client->Send(pkg);
+		}
+	};
+	client->OnReceivePackage = [&](xx::BBuffer& bb)
+	{
+		//std::cout << "client: recv pkg" << std::endl;
+		++counter;
+		client->Send(pkg);
+	};
+	client->SetAddress("127.0.0.1", 12345);
+	client->Connect();
+
+	auto timer = loop.CreateTimer(1000, 1000, [&]() 
+	{
+		std::cout << counter << std::endl;
+	});
+
+	std::cout << "client: loop.Run();" << std::endl;
+	loop.Run();
+}
 int main()
 {
-	//std::thread t(f2);
-	//t.detach();
+	std::thread t(f2);
+	t.detach();
 	f1();
 	return 0;
 }
