@@ -4,10 +4,13 @@ void f1()
 {
 	// echo server
 	xx::UvLoop loop;
-	auto listener = loop.CreateTcpListener();
 	loop.InitTimeouter();
+	loop.InitKcpFlushInterval(1);
+	auto listener = loop.CreateUdpListener();
+	listener->Bind("0.0.0.0", 12345);
+	listener->Listen();
 	uint64_t counter = 0;
-	listener->OnAccept = [&loop, &counter](xx::UvTcpPeer* peer)
+	listener->OnAccept = [&loop, &counter](xx::UvUdpPeer* peer)
 	{
 		std::cout << "peer: ip = " << peer->ip() << " Accepted." << std::endl;
 		peer->BindTimeouter(loop.timeouter);
@@ -37,8 +40,6 @@ void f1()
 			}
 		};
 	};
-	listener->Bind("0.0.0.0", 12345);
-	listener->Listen();
 
 	auto timer = loop.CreateTimer(1000, 1000, [&counter]()
 	{
@@ -53,17 +54,10 @@ void f2()
 	// test client
 	std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	xx::UvLoop loop;
+	loop.InitKcpFlushInterval(1);
 	xx::BBuffer_p pkg;
 	uint64_t counter = 0;
-	auto client = loop.CreateTcpClient();
-	client->OnConnect = [&](int status)
-	{
-		std::cout << "client: OnConnect status = " << status << std::endl;
-		if (client->alive())
-		{
-			client->Send(pkg);
-		}
-	};
+	auto client = loop.CreateUdpClient();
 	client->OnReceivePackage = [&](xx::BBuffer& bb)
 	{
 		//std::cout << "client: recv pkg" << std::endl;
@@ -71,7 +65,8 @@ void f2()
 		client->Send(pkg);
 	};
 	client->SetAddress("127.0.0.1", 12345);
-	client->Connect();
+	client->Connect(xx::Guid());
+	client->Send(pkg);
 
 	auto timer = loop.CreateTimer(1000, 1000, [&]() 
 	{

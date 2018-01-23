@@ -87,8 +87,6 @@ namespace xx
 		void* addrPtr = nullptr;
 
 		UvListenerBase(MemPool* mp, UvLoop& loop);
-
-		void Bind(char const* ipv4, int port);
 	};
 
 	class UvTcpListener : public UvListenerBase
@@ -102,6 +100,7 @@ namespace xx
 		~UvTcpListener();
 
 		static void OnAcceptCB(void* server, int status);
+		void Bind(char const* ipv4, int port);
 		void Listen(int backlog = 128);
 	};
 
@@ -224,7 +223,6 @@ namespace xx
 		void Stop();
 	};
 
-
 	class UvTimeouter : public Object
 	{
 	public:
@@ -304,11 +302,12 @@ namespace xx
 
 		UvUdpListener(MemPool* mp, UvLoop& loop);
 		~UvUdpListener();
-		static void OnRecvCBImpl(void* udp, ssize_t nread, void* buf_t, void* addr, uint32_t flags);
+		static void OnRecvCBImpl(void* udp, ptrdiff_t nread, void* buf_t, void* addr, uint32_t flags);
 		void OnReceiveImpl(char const* bufPtr, int len, void* addr);
 
-		void RecvStart();
-		void RecvStop();
+		void Bind(char const* ipv4, int port);
+		void Listen();
+		void StopListen();
 	};
 
 	class UvUdpBase : public UvTcpUdpBase
@@ -327,7 +326,7 @@ namespace xx
 		UvUdpPeer(MemPool* mp, UvUdpListener& listener
 			, Guid const& g
 			, int sndwnd = 128, int rcvwnd = 128
-			, int nodelay = 1, int interval = 10, int resend = 2, int nc = 1);
+			, int nodelay = 1/*, int interval = 10*/, int resend = 2, int nc = 1);
 		~UvUdpPeer();
 
 		static int OutputImpl(char const* buf, int len, void* kcp);
@@ -351,9 +350,9 @@ namespace xx
 
 		void Connect(Guid const& guid
 			, int sndwnd = 128, int rcvwnd = 128
-			, int nodelay = 1, int interval = 10, int resend = 2, int nc = 1);
+			, int nodelay = 1/*, int interval = 10*/, int resend = 2, int nc = 1);
 
-		static void OnRecvCBImpl(void* udp, ssize_t nread, void* buf_t, void* addr, uint32_t flags);
+		static void OnRecvCBImpl(void* udp, ptrdiff_t nread, void* buf_t, void* addr, uint32_t flags);
 		void OnReceiveImpl(char const* bufPtr, int len, void* addr);
 		static int OutputImpl(char const* buf, int len, void* kcp);
 		void Update(uint32_t current);

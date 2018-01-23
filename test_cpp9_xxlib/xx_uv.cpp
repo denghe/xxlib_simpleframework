@@ -34,7 +34,7 @@ static void AllocCB(uv_handle_t* h, size_t suggested_size, uv_buf_t* buf)
 	buf->len = decltype(buf->len)(suggested_size);
 }
 
-static int uv_write_(void* stream, char* inBuf, uint32_t len) noexcept
+static int TcpWrite(void* stream, char* inBuf, uint32_t len) noexcept
 {
 	struct write_req_t
 	{
@@ -57,15 +57,24 @@ static int uv_write_(void* stream, char* inBuf, uint32_t len) noexcept
 	});
 }
 
-static int uv_fill_client_ip(uv_tcp_t* stream, char* buf, int buf_len, int* data_len) noexcept
+static int FillIP(uv_tcp_t* stream, char* buf, size_t bufLen)
 {
 	sockaddr_in saddr;
 	int len = sizeof(saddr);
 	int r = 0;
 	if (r = uv_tcp_getpeername(stream, (sockaddr*)&saddr, &len)) return r;
-	if (r = uv_inet_ntop(AF_INET, &saddr.sin_addr, buf, buf_len)) return r;
-	*data_len = (int)strlen(buf);
-	*data_len += sprintf_s(buf + *data_len, buf_len - *data_len, ":%d", ntohs(saddr.sin_port));
+	if (r = uv_ip4_name(&saddr, buf, (int)bufLen)) throw r;
+	auto dataLen = strlen(buf);
+	sprintf_s(buf + dataLen, bufLen - dataLen, ":%d", ntohs(saddr.sin_port));
+	return r;
+}
+
+static int FillIP(sockaddr_in* addr, char* buf, size_t bufLen)
+{
+	int r = 0;
+	if (r = uv_ip4_name(addr, buf, (int)bufLen)) throw r;
+	auto dataLen = strlen(buf);
+	sprintf_s(buf + dataLen, bufLen - dataLen, ":%d", ntohs(addr->sin_port));
 	return r;
 }
 
@@ -195,12 +204,6 @@ xx::UvAsync* xx::UvLoop::CreateAsync()
 
 
 
-void xx::UvListenerBase::Bind(char const* ipv4, int port)
-{
-	if (int r = uv_ip4_addr(ipv4, port, (sockaddr_in*)addrPtr)) throw r;
-	if (int r = uv_tcp_bind((uv_tcp_t*)ptr, (sockaddr*)addrPtr, 0)) throw r;
-}
-
 xx::UvListenerBase::UvListenerBase(MemPool* mp, UvLoop& loop)
 	: Object(mp)
 	, loop(loop)
@@ -264,6 +267,12 @@ void xx::UvTcpListener::OnAcceptCB(void* server, int status)
 		return;
 	}
 	if (peer && listener->OnAccept) listener->OnAccept(peer);
+}
+
+void xx::UvTcpListener::Bind(char const* ipv4, int port)
+{
+	if (int r = uv_ip4_addr(ipv4, port, (sockaddr_in*)addrPtr)) throw r;
+	if (int r = uv_tcp_bind((uv_tcp_t*)ptr, (sockaddr*)addrPtr, 0)) throw r;
 }
 
 void xx::UvTcpListener::Listen(int backlog)
@@ -462,7 +471,7 @@ void xx::UvTcpBase::OnReadCBImpl(void * stream, ptrdiff_t nread, const void * bu
 void xx::UvTcpBase::SendBytes(char const* inBuf, int len)
 {
 	if (!addrPtr || !inBuf || !len) throw - 1;
-	if (int r = uv_write_(ptr, (char*)inBuf, len)) throw r;
+	if (int r = TcpWrite(ptr, (char*)inBuf, len)) throw r;
 }
 
 size_t xx::UvTcpBase::GetSendQueueSize()
@@ -546,9 +555,7 @@ char* xx::UvTcpPeer::ip()
 {
 	if (!ptr) throw - 1;
 	if (ipBuf[0]) return ipBuf.data();
-	int len = 0;
-	if (int r = uv_fill_client_ip((uv_tcp_t*)ptr, ipBuf.data(), (int)ipBuf.size(), &len)) throw r;
-	ipBuf[len] = 0;
+	if (int r = FillIP((uv_tcp_t*)ptr, ipBuf.data(), (int)ipBuf.size())) throw r;
 	return ipBuf.data();
 }
 
@@ -1074,22 +1081,22 @@ xx::UvUdpListener::~UvUdpListener()
 	peers.Clear();
 	Close((uv_handle_t*)ptr);
 	ptr = nullptr;
-	Free(&loop.mp, addrPtr);
+	Free(mempool, addrPtr);
 	addrPtr = nullptr;
 }
 
-void xx::UvUdpListener::OnRecvCBImpl(void* uvudp, ssize_t nread, void* buf_t, void* addr, uint32_t flags)
+void xx::UvUdpListener::OnRecvCBImpl(void* uvudp, ptrdiff_t nread, void* buf_t, void* addr, uint32_t flags)
 {
 	auto listener = *((UvUdpListener**)uvudp - 1);
-	auto mp = &listener->loop.mp;
+	auto mp = listener->mempool;
 	auto bufPtr = ((uv_buf_t*)buf_t)->base;
 	int len = (int)nread;
-	if (len == 0) return;
-	Free(mp, bufPtr);
 	if (len > 0)
 	{
 		listener->OnReceiveImpl(bufPtr, len, addr);
 	}
+	mp->Free(bufPtr);
+	//if (len < 0) return;
 }
 
 void xx::UvUdpListener::OnReceiveImpl(char const* bufPtr, int len, void* addr)
@@ -1135,13 +1142,19 @@ void xx::UvUdpListener::OnReceiveImpl(char const* bufPtr, int len, void* addr)
 	p->Input(bufPtr, len);
 }
 
-void xx::UvUdpListener::RecvStart()
+void xx::UvUdpListener::Bind(char const* ipv4, int port)
+{
+	if (int r = uv_ip4_addr(ipv4, port, (sockaddr_in*)addrPtr)) throw r;
+	if (int r = uv_udp_bind((uv_udp_t*)ptr, (sockaddr*)addrPtr, UV_UDP_REUSEADDR)) throw r;
+}
+
+void xx::UvUdpListener::Listen()
 {
 	int r = uv_udp_recv_start((uv_udp_t*)ptr, AllocCB, (uv_udp_recv_cb)OnRecvCBImpl);
 	if (r) throw r;
 }
 
-void xx::UvUdpListener::RecvStop()
+void xx::UvUdpListener::StopListen()
 {
 	if (int r = uv_udp_recv_stop((uv_udp_t*)ptr)) throw r;
 }
@@ -1159,6 +1172,7 @@ xx::UvUdpBase::UvUdpBase(MemPool* mp, UvLoop& loop)
 {
 }
 
+typedef int(*KcpOutputCB)(const char *buf, int len, ikcpcb *kcp);
 
 
 
@@ -1169,28 +1183,33 @@ xx::UvUdpBase::UvUdpBase(MemPool* mp, UvLoop& loop)
 xx::UvUdpPeer::UvUdpPeer(MemPool* mp, UvUdpListener& listener
 	, Guid const& g
 	, int sndwnd, int rcvwnd
-	, int nodelay, int interval, int resend, int nc)
+	, int nodelay/*, int interval*/, int resend, int nc)
 	: UvUdpBase(mp, listener.loop)
 	, listener(listener)
 {
+	if (!loop.kcpInterval) throw - 1;
+
+	ipBuf.fill(0);
+
 	ptr = ikcp_create(g, this, mp);
-	if (!ptr) throw - 1;
+	if (!ptr) throw - 2;
 
 	int r = 0;
 	if ((r = ikcp_wndsize((ikcpcb*)ptr, sndwnd, rcvwnd))
-		|| (r = ikcp_nodelay((ikcpcb*)ptr, nodelay, interval, resend, nc)))
+		|| (r = ikcp_nodelay((ikcpcb*)ptr, nodelay, loop.kcpInterval, resend, nc)))
 	{
 		ikcp_release((ikcpcb*)ptr);
 		ptr = nullptr;
 		throw r;
 	}
+	ikcp_setoutput((ikcpcb*)ptr, (KcpOutputCB)OutputImpl);
 
 	addrPtr = Alloc(mp, sizeof(sockaddr_in));
 	if (!addrPtr)
 	{
 		Close((uv_handle_t*)ptr);
 		ptr = nullptr;
-		throw - 1;
+		throw - 3;
 	}
 
 	index_at_container = listener.peers.Add(g, this).index;
@@ -1202,9 +1221,9 @@ xx::UvUdpPeer::~UvUdpPeer()
 	ptr = nullptr;
 }
 
-int xx::UvUdpPeer::OutputImpl(char const* inBuf, int len, void* kcpptr)
+int xx::UvUdpPeer::OutputImpl(char const* inBuf, int len, void* kcpPtr)
 {
-	auto peer = (UvUdpPeer*)((ikcpcb*)kcpptr)->user;
+	auto peer = (UvUdpPeer*)((ikcpcb*)kcpPtr)->user;
 
 	struct uv_udp_send_t_ex
 	{
@@ -1212,7 +1231,7 @@ int xx::UvUdpPeer::OutputImpl(char const* inBuf, int len, void* kcpptr)
 		uv_udp_send_t req;
 		uv_buf_t buf;
 	};
-	auto mp = &peer->loop.mp;
+	auto mp = peer->mempool;
 	auto req = (uv_udp_send_t_ex*)mp->Alloc(sizeof(uv_udp_send_t_ex));
 	req->mp = mp;
 	auto buf = (char*)mp->Alloc(len);
@@ -1273,9 +1292,7 @@ char* xx::UvUdpPeer::ip()
 {
 	if (!ptr) throw - 1;
 	if (ipBuf[0]) return ipBuf.data();
-	int len = 0;
-	if (int r = uv_fill_client_ip((uv_tcp_t*)ptr, ipBuf.data(), (int)ipBuf.size(), &len)) throw r;
-	ipBuf[len] = 0;
+	if (int r = FillIP((sockaddr_in*)addrPtr, ipBuf.data(), ipBuf.size())) throw r;
 	return ipBuf.data();
 }
 
@@ -1312,16 +1329,16 @@ xx::UvUdpClient::~UvUdpClient()
 	index_at_container = -1;
 }
 
-typedef int(*KcpOutputCB)(const char *buf, int len, ikcpcb *kcp);
-
 void xx::UvUdpClient::Connect(xx::Guid const& guid
 	, int sndwnd, int rcvwnd
-	, int nodelay, int interval, int resend, int nc)
+	, int nodelay/*, int interval*/, int resend, int nc)
 {
-	if (ptr) throw - 1;
+	if (!loop.kcpInterval) throw - 1;
+
+	if (ptr) throw - 2;
 
 	ptr = Alloc(mempool, sizeof(uv_udp_t), this);
-	if (!ptr) throw - 2;
+	if (!ptr) throw - 3;
 
 	int r = 0;
 	if (r = uv_udp_init((uv_loop_t*)loop.ptr, (uv_udp_t*)ptr))
@@ -1344,42 +1361,41 @@ void xx::UvUdpClient::Connect(xx::Guid const& guid
 	{
 		Close((uv_handle_t*)ptr);
 		ptr = nullptr;
-		throw - 3;
+		throw - 4;
 	}
 
-	r = ikcp_wndsize((ikcpcb*)kcpPtr, sndwnd, rcvwnd);
-	if (r == 0) r = ikcp_nodelay((ikcpcb*)kcpPtr, nodelay, interval, resend, nc);
-	if (r != 0)
+	if ((r = ikcp_wndsize((ikcpcb*)kcpPtr, sndwnd, rcvwnd))
+		|| (r = ikcp_nodelay((ikcpcb*)kcpPtr, nodelay, loop.kcpInterval, resend, nc)))
 	{
 		ikcp_release((ikcpcb*)kcpPtr);
 		kcpPtr = nullptr;
 		Close((uv_handle_t*)ptr);
 		ptr = nullptr;
-		throw - 4;
+		throw - 5;
 	}
 	ikcp_setoutput((ikcpcb*)kcpPtr, (KcpOutputCB)OutputImpl);
 }
-void xx::UvUdpClient::OnRecvCBImpl(void* uvudp, ssize_t nread, void* buf_t, void* addr, uint32_t flags)
+void xx::UvUdpClient::OnRecvCBImpl(void* uvudp, ptrdiff_t nread, void* buf_t, void* addr, uint32_t flags)
 {
 	auto client = *((UvUdpClient**)uvudp - 1);
-	auto mp = &client->loop.mp;
+	auto mp = client->mempool;
 	auto bufPtr = ((uv_buf_t*)buf_t)->base;
 	int len = (int)nread;
-	if (len == 0) return;
-	Free(mp, bufPtr);
 	if (len > 0)
 	{
 		client->OnReceiveImpl(bufPtr, len, addr);
 	}
+	mp->Free(bufPtr);
+	//if (len < 0) return;
 }
 void xx::UvUdpClient::OnReceiveImpl(char const* bufPtr, int len, void* addr)
 {
 	if (len < 36) return;
 	if (int r = ikcp_input((ikcpcb*)kcpPtr, bufPtr, len)) throw r;
 }
-int xx::UvUdpClient::OutputImpl(char const* inBuf, int len, void* kcpptr)
+int xx::UvUdpClient::OutputImpl(char const* inBuf, int len, void* kcpPtr)
 {
-	auto client = (UvUdpClient*)((ikcpcb*)kcpptr)->user;
+	auto client = (UvUdpClient*)((ikcpcb*)kcpPtr)->user;
 
 	struct uv_udp_send_t_ex
 	{
