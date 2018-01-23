@@ -1637,13 +1637,18 @@ namespace xx
                 r.Throw();
             }
 
-            UvInterop.xxuv_udp_recv_start_(ptr, OnRecvCB).TryThrow();
-
             var rb1 = new Action(() =>
             {
                 UvInterop.xxuv_close_(ptr);
                 ptr = IntPtr.Zero;
             });
+
+            r = UvInterop.xxuv_udp_recv_start_(ptr, OnRecvCB);
+            if (r != 0)
+            {
+                rb1();
+                r.Throw();
+            }
 
             this.guid = guid;
             var guidbytes = guid.ToByteArray();

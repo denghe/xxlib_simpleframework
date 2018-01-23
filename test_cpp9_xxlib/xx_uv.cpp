@@ -28,6 +28,12 @@ static void Close(uv_handle_t* p) noexcept
 	});
 }
 
+static void AllocCB(uv_handle_t* h, size_t suggested_size, uv_buf_t* buf)
+{
+	buf->base = (char*)((xx::MemPool*)h->loop->data)->Alloc(suggested_size);
+	buf->len = decltype(buf->len)(suggested_size);
+}
+
 static int uv_write_(void* stream, char* inBuf, uint32_t len) noexcept
 {
 	struct write_req_t
@@ -68,7 +74,7 @@ xx::UvLoop::UvLoop()
 	: tcpListeners(&mp)
 	, tcpClients(&mp)
 	, udpListeners(&mp)
-	//, udpClients(&mp)
+	, udpClients(&mp)
 	, timers(&mp)
 	, asyncs(&mp)
 {
@@ -93,7 +99,7 @@ xx::UvLoop::~UvLoop()
 	mp.SafeRelease(rpcMgr);
 	mp.SafeRelease(timeouter);
 	udpListeners.ForEachRevert([&mp = mp](auto& o) { mp.Release(o); });
-	//udpClients.ForEachRevert([&mp = mp](auto& o) { mp.Release(o); });
+	udpClients.ForEachRevert([&mp = mp](auto& o) { mp.Release(o); });
 	tcpListeners.ForEachRevert([&mp = mp](auto& o) { mp.Release(o); });
 	tcpClients.ForEachRevert([&mp = mp](auto& o) { mp.Release(o); });
 	timers.ForEachRevert([&mp = mp](auto& o) { mp.Release(o); });
@@ -132,10 +138,10 @@ void xx::UvLoop::InitKcpFlushInterval(uint32_t interval)
 				kv.value->Update(udpTicks);
 			}
 		}
-		//for (int i = (int)udpClients.dataLen - 1; i >= 0; --i)
-		//{
-		//	udpClients[i]->Update(udpTicks);
-		//}
+		for (int i = (int)udpClients.dataLen - 1; i >= 0; --i)
+		{
+			udpClients[i]->Update(udpTicks);
+		}
 	});
 }
 
@@ -167,10 +173,10 @@ xx::UvUdpListener* xx::UvLoop::CreateUdpListener()
 {
 	return mp.CreateNativePointer<UvUdpListener>(*this);
 }
-//xx::UvUdpClient* xx::UvLoop::CreateUdpClient()
-//{
-//	return mp.CreateNativePointer<UvUdpClient>(*this);
-//}
+xx::UvUdpClient* xx::UvLoop::CreateUdpClient()
+{
+	return mp.CreateNativePointer<UvUdpClient>(*this);
+}
 
 xx::UvTimer* xx::UvLoop::CreateTimer(uint64_t timeoutMS, uint64_t repeatIntervalMS, std::function<void()>&& OnFire)
 {
@@ -277,6 +283,11 @@ void xx::UvTcpListener::Listen(int backlog)
 xx::UvTimerBase::UvTimerBase(MemPool* mp)
 	: Object(mp)
 {
+}
+xx::UvTimerBase::~UvTimerBase()
+{
+	UnbindTimerManager();
+	OnTimeout = nullptr;
 }
 
 void xx::UvTimerBase::TimerClear()
@@ -491,11 +502,7 @@ xx::UvTcpPeer::UvTcpPeer(MemPool* mp, UvTcpListener & listener)
 		throw r;
 	}
 
-	if (int r = uv_read_start((uv_stream_t*)ptr, [](uv_handle_t* h, size_t suggested_size, uv_buf_t* buf)
-	{
-		buf->base = (char*)((MemPool*)h->loop->data)->Alloc(suggested_size);
-		buf->len = decltype(buf->len)(suggested_size);
-	}, (uv_read_cb)OnReadCBImpl))
+	if (int r = uv_read_start((uv_stream_t*)ptr, AllocCB, (uv_read_cb)OnReadCBImpl))
 	{
 		Close((uv_handle_t*)ptr);
 		ptr = nullptr;
@@ -522,7 +529,6 @@ xx::UvTcpPeer::~UvTcpPeer()
 	ptr = nullptr;
 	Free(&loop.mp, addrPtr);
 	addrPtr = nullptr;
-	UnbindTimerManager();
 	listener.peers.SwapRemoveAt(index_at_container);
 }
 
@@ -570,7 +576,6 @@ xx::UvTcpClient::~UvTcpClient()
 	if (OnDispose) OnDispose();
 	Free(&loop.mp, addrPtr);
 	addrPtr = nullptr;
-	UnbindTimerManager();
 	loop.tcpClients.SwapRemoveAt(index_at_container);
 }
 
@@ -596,12 +601,7 @@ void xx::UvTcpClient::OnConnectCBImpl(void* req, int status)
 	else
 	{
 		client->state = UvTcpStates::Connected;
-		uv_read_start((uv_stream_t*)client->ptr, [](uv_handle_t* h, size_t suggested_size, uv_buf_t* buf)
-		{
-			buf->base = (char*)((MemPool*)h->loop->data)->Alloc(suggested_size);
-			buf->len = decltype(buf->len)(suggested_size);
-		}
-		, (uv_read_cb)OnReadCBImpl);
+		uv_read_start((uv_stream_t*)client->ptr, AllocCB, (uv_read_cb)OnReadCBImpl);
 	}
 	if (client->OnConnect) client->OnConnect(status);
 }
@@ -1049,6 +1049,7 @@ xx::UvUdpListener::UvUdpListener(MemPool* mp, UvLoop& loop)
 	{
 		Free(mp, ptr);
 		ptr = nullptr;
+		throw - 2;
 	}
 
 	addrPtr = Alloc(mp, sizeof(sockaddr_in));
@@ -1056,7 +1057,7 @@ xx::UvUdpListener::UvUdpListener(MemPool* mp, UvLoop& loop)
 	{
 		Close((uv_handle_t*)ptr);
 		ptr = nullptr;
-		throw - 1;
+		throw - 3;
 	}
 
 	index_at_container = loop.udpListeners.dataLen;
@@ -1077,7 +1078,7 @@ xx::UvUdpListener::~UvUdpListener()
 	addrPtr = nullptr;
 }
 
-void xx::UvUdpListener::OnRecvCBImpl(void* uvudp, size_t nread, void* buf_t, void* addr, uint32_t flags)
+void xx::UvUdpListener::OnRecvCBImpl(void* uvudp, ssize_t nread, void* buf_t, void* addr, uint32_t flags)
 {
 	auto listener = *((UvUdpListener**)uvudp - 1);
 	auto mp = &listener->loop.mp;
@@ -1136,11 +1137,7 @@ void xx::UvUdpListener::OnReceiveImpl(char const* bufPtr, int len, void* addr)
 
 void xx::UvUdpListener::RecvStart()
 {
-	int r = uv_udp_recv_start((uv_udp_t*)ptr, [](uv_handle_t* h, size_t suggested_size, uv_buf_t* buf)
-	{
-		buf->base = (char*)((MemPool*)h->loop->data)->Alloc(suggested_size);
-		buf->len = decltype(buf->len)(suggested_size);
-	}, (uv_udp_recv_cb)OnRecvCBImpl);
+	int r = uv_udp_recv_start((uv_udp_t*)ptr, AllocCB, (uv_udp_recv_cb)OnRecvCBImpl);
 	if (r) throw r;
 }
 
@@ -1199,6 +1196,12 @@ xx::UvUdpPeer::UvUdpPeer(MemPool* mp, UvUdpListener& listener
 	index_at_container = listener.peers.Add(g, this).index;
 }
 
+xx::UvUdpPeer::~UvUdpPeer()
+{
+	ikcp_release((ikcpcb*)ptr);
+	ptr = nullptr;
+}
+
 int xx::UvUdpPeer::OutputImpl(char const* inBuf, int len, void* kcpptr)
 {
 	auto peer = (UvUdpPeer*)((ikcpcb*)kcpptr)->user;
@@ -1251,4 +1254,194 @@ void xx::UvUdpPeer::SendBytes(char const* inBuf, int len)
 	if (int r = ikcp_send((ikcpcb*)ptr, inBuf, len)) throw r;
 }
 
-// todo
+void xx::UvUdpPeer::DisconnectImpl()
+{
+	Release();
+}
+
+size_t xx::UvUdpPeer::GetSendQueueSize()
+{
+	return uv_udp_get_send_queue_size((uv_udp_t*)listener.ptr);
+}
+
+bool xx::UvUdpPeer::Disconnected()
+{
+	return false;
+}
+
+char* xx::UvUdpPeer::ip()
+{
+	if (!ptr) throw - 1;
+	if (ipBuf[0]) return ipBuf.data();
+	int len = 0;
+	if (int r = uv_fill_client_ip((uv_tcp_t*)ptr, ipBuf.data(), (int)ipBuf.size(), &len)) throw r;
+	ipBuf[len] = 0;
+	return ipBuf.data();
+}
+
+
+
+
+
+
+
+
+
+xx::UvUdpClient::UvUdpClient(MemPool* mp, UvLoop& loop)
+	: UvUdpBase(mp, loop)
+{
+	addrPtr = Alloc(mp, sizeof(sockaddr_in));
+	if (!addrPtr)
+	{
+		Close((uv_handle_t*)ptr);
+		ptr = nullptr;
+		throw - 1;
+	}
+
+	index_at_container = loop.udpClients.dataLen;
+	loop.udpClients.Add(this);
+
+}
+xx::UvUdpClient::~UvUdpClient()
+{
+	Disconnect();
+	Close((uv_handle_t*)ptr);
+	ptr = nullptr;
+
+	loop.udpClients.RemoveAt(index_at_container);
+	index_at_container = -1;
+}
+
+typedef int(*KcpOutputCB)(const char *buf, int len, ikcpcb *kcp);
+
+void xx::UvUdpClient::Connect(xx::Guid const& guid
+	, int sndwnd, int rcvwnd
+	, int nodelay, int interval, int resend, int nc)
+{
+	if (ptr) throw - 1;
+
+	ptr = Alloc(mempool, sizeof(uv_udp_t), this);
+	if (!ptr) throw - 2;
+
+	int r = 0;
+	if (r = uv_udp_init((uv_loop_t*)loop.ptr, (uv_udp_t*)ptr))
+	{
+		Free(mempool, ptr);
+		ptr = nullptr;
+		throw r;
+	}
+
+	if (r = uv_udp_recv_start((uv_udp_t*)ptr, AllocCB, (uv_udp_recv_cb)OnRecvCBImpl))
+	{
+		Close((uv_handle_t*)ptr);
+		ptr = nullptr;
+		throw r;
+	}
+
+	this->guid = guid;
+	kcpPtr = ikcp_create(guid, this, nullptr);//loop.ptr);
+	if (!kcpPtr)
+	{
+		Close((uv_handle_t*)ptr);
+		ptr = nullptr;
+		throw - 3;
+	}
+
+	r = ikcp_wndsize((ikcpcb*)kcpPtr, sndwnd, rcvwnd);
+	if (r == 0) r = ikcp_nodelay((ikcpcb*)kcpPtr, nodelay, interval, resend, nc);
+	if (r != 0)
+	{
+		ikcp_release((ikcpcb*)kcpPtr);
+		kcpPtr = nullptr;
+		Close((uv_handle_t*)ptr);
+		ptr = nullptr;
+		throw - 4;
+	}
+	ikcp_setoutput((ikcpcb*)kcpPtr, (KcpOutputCB)OutputImpl);
+}
+void xx::UvUdpClient::OnRecvCBImpl(void* uvudp, ssize_t nread, void* buf_t, void* addr, uint32_t flags)
+{
+	auto client = *((UvUdpClient**)uvudp - 1);
+	auto mp = &client->loop.mp;
+	auto bufPtr = ((uv_buf_t*)buf_t)->base;
+	int len = (int)nread;
+	if (len == 0) return;
+	Free(mp, bufPtr);
+	if (len > 0)
+	{
+		client->OnReceiveImpl(bufPtr, len, addr);
+	}
+}
+void xx::UvUdpClient::OnReceiveImpl(char const* bufPtr, int len, void* addr)
+{
+	if (len < 36) return;
+	if (int r = ikcp_input((ikcpcb*)kcpPtr, bufPtr, len)) throw r;
+}
+int xx::UvUdpClient::OutputImpl(char const* inBuf, int len, void* kcpptr)
+{
+	auto client = (UvUdpClient*)((ikcpcb*)kcpptr)->user;
+
+	struct uv_udp_send_t_ex
+	{
+		MemPool* mp;
+		uv_udp_send_t req;
+		uv_buf_t buf;
+	};
+	auto mp = client->mempool;
+	auto req = (uv_udp_send_t_ex*)mp->Alloc(sizeof(uv_udp_send_t_ex));
+	req->mp = mp;
+	auto buf = (char*)mp->Alloc(len);
+	memcpy(buf, inBuf, len);
+	req->buf = uv_buf_init(buf, (uint32_t)len);
+	return uv_udp_send((uv_udp_send_t*)req, (uv_udp_t*)client->ptr, &req->buf, 1, (sockaddr*)client->addrPtr, [](uv_udp_send_t* req, int status)
+	{
+		//if (status) fprintf(stderr, "Write error: %s\n", uv_strerror(status));
+		auto *wr = (uv_udp_send_t_ex*)req;
+		wr->mp->Free(wr->buf.base);
+		wr->mp->Free(wr);
+	});
+}
+void xx::UvUdpClient::Update(uint32_t current)
+{
+	if (nextUpdateTicks > current) return;
+	ikcp_update((ikcpcb*)kcpPtr, current);
+	nextUpdateTicks = ikcp_check((ikcpcb*)kcpPtr, current);
+
+	while (true)
+	{
+		int len = ikcp_recv((ikcpcb*)kcpPtr, (char*)&loop.udpRecvBuf, (int)loop.udpRecvBuf.size());
+		if (len <= 0) break;
+		ReceiveImpl((char*)&loop.udpRecvBuf, len);
+	}
+}
+void xx::UvUdpClient::Disconnect()
+{
+	if (!ptr) return;
+
+	Close((uv_handle_t*)ptr);
+	ptr = nullptr;
+
+	ikcp_release((ikcpcb*)kcpPtr);
+	kcpPtr = nullptr;
+}
+void xx::UvUdpClient::SetAddress(char const* ipv4, int port)
+{
+	if (int r = uv_ip4_addr(ipv4, port, (sockaddr_in*)addrPtr)) throw r;
+}
+void xx::UvUdpClient::SendBytes(char const* inBuf, int len)
+{
+	if (!addrPtr || !inBuf || !len) throw - 1;
+	if (int r = ikcp_send((ikcpcb*)kcpPtr, inBuf, len)) throw r;
+}
+void xx::UvUdpClient::DisconnectImpl()
+{
+	Disconnect();
+}
+bool xx::UvUdpClient::Disconnected()
+{
+	return kcpPtr != nullptr;
+}
+size_t xx::UvUdpClient::GetSendQueueSize()
+{
+	return uv_udp_get_send_queue_size((uv_udp_t*)ptr);
+}

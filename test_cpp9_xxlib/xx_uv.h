@@ -46,7 +46,7 @@ namespace xx
 		List<UvTcpListener*> tcpListeners;
 		List<UvTcpClient*> tcpClients;
 		List<UvUdpListener*> udpListeners;
-		//List<UvUdpClient*> udpClients;
+		List<UvUdpClient*> udpClients;
 		List<UvTimer*> timers;
 		List<UvAsync*> asyncs;
 		UvTimeouter* timeouter = nullptr;
@@ -70,7 +70,7 @@ namespace xx
 		UvTcpListener* CreateTcpListener();
 		UvTcpClient* CreateTcpClient();
 		UvUdpListener* CreateUdpListener();
-		//UvUdpClient* CreateUdpClient();
+		UvUdpClient* CreateUdpClient();
 		UvTimer* CreateTimer(uint64_t timeoutMS, uint64_t repeatIntervalMS, std::function<void()>&& OnFire = nullptr);
 		UvAsync* CreateAsync();
 	};
@@ -109,6 +109,7 @@ namespace xx
 	{
 	public:
 		UvTimerBase(MemPool* mp);
+		~UvTimerBase();
 		UvTimeouter* timerManager = nullptr;
 		UvTimerBase* timerPrev = nullptr;
 		UvTimerBase* timerNext = nullptr;
@@ -303,7 +304,7 @@ namespace xx
 
 		UvUdpListener(MemPool* mp, UvLoop& loop);
 		~UvUdpListener();
-		static void OnRecvCBImpl(void* udp, size_t nread, void* buf_t, void* addr, uint32_t flags);
+		static void OnRecvCBImpl(void* udp, ssize_t nread, void* buf_t, void* addr, uint32_t flags);
 		void OnReceiveImpl(char const* bufPtr, int len, void* addr);
 
 		void RecvStart();
@@ -341,28 +342,28 @@ namespace xx
 		char* ip();
 	};
 
-	//class UvUdpClient : public UvUdpBase
-	//{
-	//public:
-	//	void* kcpPtr;
-	//	UvUdpClient(MemPool* mp, UvLoop& loop);
-	//	~UvUdpClient();
+	class UvUdpClient : public UvUdpBase
+	{
+	public:
+		void* kcpPtr = nullptr;
+		UvUdpClient(MemPool* mp, UvLoop& loop);
+		~UvUdpClient();
 
-	//	void Connect(Guid guid
-	//		, int sndwnd = 128, int rcvwnd = 128
-	//		, int nodelay = 1, int interval = 10, int resend = 2, int nc = 1);
+		void Connect(Guid const& guid
+			, int sndwnd = 128, int rcvwnd = 128
+			, int nodelay = 1, int interval = 10, int resend = 2, int nc = 1);
 
-	//	static void OnRecvCBImpl(void* udp, void* nread, void* buf_t, void* addr, uint32_t flags);
-	//	void OnReceiveImpl(char const* bufPtr, int len, void* addr);
-	//	static int OutputImpl(char const* buf, int len, void* kcp);
-	//	void Update(uint32_t current);
-	//	void Disconnect();
-	//	void SetAddress(char const* ipv4, int port);
-	//	void SendBytes(char const* data, int len = 0) override;
-	//	void DisconnectImpl() override;
-	//	bool Disconnected() override;
-	//	size_t GetSendQueueSize() override;
-	//};
+		static void OnRecvCBImpl(void* udp, ssize_t nread, void* buf_t, void* addr, uint32_t flags);
+		void OnReceiveImpl(char const* bufPtr, int len, void* addr);
+		static int OutputImpl(char const* buf, int len, void* kcp);
+		void Update(uint32_t current);
+		void Disconnect();
+		void SetAddress(char const* ipv4, int port);
+		void SendBytes(char const* data, int len = 0) override;
+		void DisconnectImpl() override;
+		bool Disconnected() override;
+		size_t GetSendQueueSize() override;
+	};
 
 
 
