@@ -35,8 +35,8 @@ const uint32_t IKCP_ASK_TELL = 2;		// need to send IKCP_CMD_WINS
 const uint32_t IKCP_WND_SND = 32;
 const uint32_t IKCP_WND_RCV = 32;
 const uint32_t IKCP_MTU_DEF = 1400;
-const uint32_t IKCP_ACK_FAST	= 3;
-const uint32_t IKCP_INTERVAL	= 100;
+const uint32_t IKCP_ACK_FAST = 3;
+const uint32_t IKCP_INTERVAL = 10;//100;
 const uint32_t IKCP_OVERHEAD = 36;//24;
 const uint32_t IKCP_DEADLINK = 20;
 const uint32_t IKCP_THRESH_INIT = 2;
@@ -247,11 +247,11 @@ void ikcp_qprint(const char *name, const struct IQUEUEHEAD *head)
 //---------------------------------------------------------------------
 // create a new kcpcb
 //---------------------------------------------------------------------
-ikcpcb* ikcp_create(xx::Guid const& conv, void *user, void* user2)
+ikcpcb* ikcp_create(xx::Guid const* conv, void *user, void* user2)
 {
 	ikcpcb *kcp = (ikcpcb*)ikcp_malloc(user2, sizeof(struct IKCPCB));
 	if (kcp == NULL) return NULL;
-	kcp->conv = conv;
+	kcp->conv = *conv;
 	kcp->user = user;
 	kcp->snd_una = 0;
 	kcp->snd_nxt = 0;
@@ -1280,14 +1280,3 @@ int ikcp_waitsnd(const ikcpcb *kcp)
 {
 	return kcp->nsnd_buf + kcp->nsnd_que;
 }
-
-
-// read conv
-uint32_t ikcp_getconv(const void *ptr)
-{
-	uint32_t conv;
-	ikcp_decode32u((const char*)ptr, &conv);
-	return conv;
-}
-
-

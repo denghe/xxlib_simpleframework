@@ -214,7 +214,7 @@ typedef struct IKCPCB ikcpcb;
 // create a new kcp control object, 'conv' must equal in two endpoint
 // from the same connection. 'user' will be passed to the output callback
 // output callback can be setup like this: 'kcp->output = my_udp_output'
-ikcpcb* ikcp_create(xx::Guid const& conv, void *user, void* user2);
+ikcpcb* ikcp_create(xx::Guid const* conv, void *user, void* user2);
 
 // release kcp control object
 void ikcp_release(ikcpcb *kcp);
@@ -273,9 +273,6 @@ void ikcp_log(ikcpcb *kcp, int mask, const char *fmt, ...);
 
 // setup allocator
 void ikcp_allocator(void* (*new_malloc)(void*, size_t), void (*new_free)(void*, void*));
-
-// read conv
-uint32_t ikcp_getconv(const void *ptr);
 
 
 #endif

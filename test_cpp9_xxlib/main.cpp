@@ -5,7 +5,7 @@ void f1()
 	// echo server
 	xx::UvLoop loop;
 	loop.InitTimeouter();
-	loop.InitKcpFlushInterval(1);
+	loop.InitKcpFlushInterval(10);
 	auto listener = loop.CreateUdpListener();
 	listener->Bind("0.0.0.0", 12345);
 	listener->Listen();
@@ -54,7 +54,7 @@ void f2()
 	// test client
 	std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	xx::UvLoop loop;
-	loop.InitKcpFlushInterval(1);
+	loop.InitKcpFlushInterval(10);
 	xx::BBuffer_p pkg;
 	uint64_t counter = 0;
 	auto client = loop.CreateUdpClient();

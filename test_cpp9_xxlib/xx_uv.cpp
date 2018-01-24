@@ -350,22 +350,6 @@ xx::UvTcpUdpBase::UvTcpUdpBase(MemPool* mp, UvLoop& loop)
 {
 }
 
-void xx::UvTcpUdpBase::ReceivePackageImpl(BBuffer& bb)
-{
-	if (OnReceivePackage) OnReceivePackage(bb);
-}
-
-void xx::UvTcpUdpBase::ReceiveRequestImpl(uint32_t serial, BBuffer& bb)
-{
-	if (OnReceiveRequest) OnReceiveRequest(serial, bb);
-}
-
-void xx::UvTcpUdpBase::ReceiveResponseImpl(uint32_t serial, BBuffer& bb)
-{
-	assert(loop.rpcMgr);
-	loop.rpcMgr->Callback(serial, &bb);
-}
-
 void xx::UvTcpUdpBase::ReceiveImpl(char const* bufPtr, int len)
 {
 	auto versionNumber = memHeader().versionNumber;
@@ -389,7 +373,7 @@ void xx::UvTcpUdpBase::ReceiveImpl(char const* bufPtr, int len)
 		bbRecv.offset = offset;
 		if (typeId == 0)
 		{
-			ReceivePackageImpl(bbRecv);
+			if (OnReceivePackage) OnReceivePackage(bbRecv);
 			if (versionNumber != memHeader().versionNumber) return;
 			if (Disconnected())
 			{
@@ -407,7 +391,7 @@ void xx::UvTcpUdpBase::ReceiveImpl(char const* bufPtr, int len)
 			}
 			if (typeId == 1)
 			{
-				ReceiveRequestImpl(serial, bbRecv);
+				if (OnReceiveRequest) OnReceiveRequest(serial, bbRecv);
 				if (versionNumber != memHeader().versionNumber) return;
 				if (Disconnected())
 				{
@@ -417,7 +401,7 @@ void xx::UvTcpUdpBase::ReceiveImpl(char const* bufPtr, int len)
 			}
 			else if (typeId == 2)
 			{
-				ReceiveResponseImpl(serial, bbRecv);
+				loop.rpcMgr->Callback(serial, &bbRecv);
 				if (versionNumber != memHeader().versionNumber) return;
 				if (Disconnected())
 				{
@@ -1074,6 +1058,7 @@ xx::UvUdpListener::UvUdpListener(MemPool* mp, UvLoop& loop)
 xx::UvUdpListener::~UvUdpListener()
 {
 	assert(ptr);
+	if (OnDispose) OnDispose();
 	for (auto& kv : peers)
 	{
 		kv.value->Release();
@@ -1083,6 +1068,9 @@ xx::UvUdpListener::~UvUdpListener()
 	ptr = nullptr;
 	Free(mempool, addrPtr);
 	addrPtr = nullptr;
+
+	loop.udpListeners.SwapRemoveAt(index_at_container);
+	index_at_container = -1;
 }
 
 void xx::UvUdpListener::OnRecvCBImpl(void* uvudp, ptrdiff_t nread, void* buf_t, void* addr, uint32_t flags)
@@ -1150,8 +1138,7 @@ void xx::UvUdpListener::Bind(char const* ipv4, int port)
 
 void xx::UvUdpListener::Listen()
 {
-	int r = uv_udp_recv_start((uv_udp_t*)ptr, AllocCB, (uv_udp_recv_cb)OnRecvCBImpl);
-	if (r) throw r;
+	if (int r = uv_udp_recv_start((uv_udp_t*)ptr, AllocCB, (uv_udp_recv_cb)OnRecvCBImpl)) throw r;
 }
 
 void xx::UvUdpListener::StopListen()
@@ -1191,7 +1178,7 @@ xx::UvUdpPeer::UvUdpPeer(MemPool* mp, UvUdpListener& listener
 
 	ipBuf.fill(0);
 
-	ptr = ikcp_create(g, this, mp);
+	ptr = ikcp_create(&g, this, nullptr);	// todo
 	if (!ptr) throw - 2;
 
 	int r = 0;
@@ -1217,8 +1204,11 @@ xx::UvUdpPeer::UvUdpPeer(MemPool* mp, UvUdpListener& listener
 
 xx::UvUdpPeer::~UvUdpPeer()
 {
+	Free(mempool, addrPtr);
 	ikcp_release((ikcpcb*)ptr);
 	ptr = nullptr;
+	listener.peers.RemoveAt((int)index_at_container);
+	index_at_container = -1;
 }
 
 int xx::UvUdpPeer::OutputImpl(char const* inBuf, int len, void* kcpPtr)
@@ -1329,7 +1319,7 @@ xx::UvUdpClient::~UvUdpClient()
 	index_at_container = -1;
 }
 
-void xx::UvUdpClient::Connect(xx::Guid const& guid
+void xx::UvUdpClient::Connect(xx::Guid const& g
 	, int sndwnd, int rcvwnd
 	, int nodelay/*, int interval*/, int resend, int nc)
 {
@@ -1355,8 +1345,8 @@ void xx::UvUdpClient::Connect(xx::Guid const& guid
 		throw r;
 	}
 
-	this->guid = guid;
-	kcpPtr = ikcp_create(guid, this, nullptr);//loop.ptr);
+	this->guid = g;
+	kcpPtr = ikcp_create(&g, this, nullptr);	// todo
 	if (!kcpPtr)
 	{
 		Close((uv_handle_t*)ptr);

@@ -142,9 +142,6 @@ namespace xx
 		UvTcpUdpBase(MemPool* mp, UvLoop& loop);
 
 		virtual void DisconnectImpl() = 0;
-		virtual void ReceivePackageImpl(BBuffer& bb);
-		virtual void ReceiveRequestImpl(uint32_t serial, BBuffer& bb);
-		virtual void ReceiveResponseImpl(uint32_t serial, BBuffer& bb);
 		virtual bool Disconnected() = 0;
 		virtual size_t GetSendQueueSize() = 0;
 		virtual void SendBytes(char const* inBuf, int len = 0) = 0;
