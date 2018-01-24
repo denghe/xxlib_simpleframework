@@ -78,8 +78,10 @@ void f2()
 }
 int main()
 {
-	std::thread t(f2);
-	t.detach();
+	xx::MemPool::Register<xx::BBuffer, xx::Object>();
+
+	//std::thread t(f2);
+	//t.detach();
 	f1();
 	return 0;
 }

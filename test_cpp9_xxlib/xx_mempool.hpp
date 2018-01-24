@@ -2,6 +2,18 @@
 #pragma once
 namespace xx
 {
+	template<>
+	struct TypeId<String>
+	{
+		static const uint16_t value = 1;
+	};
+
+	template<>
+	struct TypeId<BBuffer>
+	{
+		static const uint16_t value = 2;
+	};
+
 
 	inline MemPool::MemPool() noexcept
 	{
@@ -188,13 +200,13 @@ namespace xx
 		pids[TypeId_v<T>] = TypeId_v<PT>;
 
 		// 在执行构造函数之前拿到指针 塞入 bb. 构造函数执行失败时从 bb 移除
-		creators[TypeId_v<T>] = [](MemPool* mp, BBuffer* bb, uint32_t ptrOffset) ->void*
+		creators[TypeId_v<T>] = [](MemPool* mp, BBuffer* bb, size_t ptrOffset) ->void*
 		{
 			// 插入字典占位, 分配到实际指针后替换
 			auto addResult = bb->idxStore->Add(ptrOffset, std::make_pair(nullptr, TypeId_v<T>));
 
 			// 拿内存
-			auto p = Alloc<MemHeader_Object>(sizeof(T));
+			auto p = mp->Alloc<MemHeader_Object>(sizeof(T));
 			if (!p) return nullptr;
 
 			// 继续填充 header
@@ -213,7 +225,7 @@ namespace xx
 			{
 				// 从字典移除
 				bb->idxStore->RemoveAt(addResult.index);
-				Free<MemHeader_Object>(p);
+				mp->Free<MemHeader_Object>(p);
 				return nullptr;
 			}
 		};

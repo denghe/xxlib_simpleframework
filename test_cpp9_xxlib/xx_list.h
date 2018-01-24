@@ -13,6 +13,7 @@ namespace xx
 
 		explicit List(MemPool* const& mempool, size_t const& capacity = 0);
 		List(List &&o);
+		List(BBuffer* bb);
 		~List();
 		List(List const&o) = delete;
 		List& operator=(List const&o) = delete;

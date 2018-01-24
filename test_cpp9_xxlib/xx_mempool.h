@@ -132,10 +132,10 @@ namespace xx
 		// 放置 type 对应的 parent 的 type id. 1 : Object
 		inline static std::array<uint16_t, std::numeric_limits<uint16_t>::max()> pids;
 
-		typedef void*(*creator)(MemPool*, BBuffer*, size_t);
+		typedef void*(*Creator)(MemPool*, BBuffer*, size_t);
 
 		// 存 typeId 到序列化构造函数的映射
-		inline static std::array<creator, 1 << (sizeof(uint16_t) * 8)> creators;
+		inline static std::array<Creator, 1 << (sizeof(uint16_t) * 8)> creators;
 
 		// 注册类型的父子关系. 顺便生成创建函数. Object 不需要注册. T 需要提供相应构造函数 for 反序列化
 		template<typename T, typename PT>

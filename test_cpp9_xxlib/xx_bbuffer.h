@@ -19,6 +19,8 @@ namespace xx
 
 		BBuffer(MemPool* const& mempool, std::pair<char const*, size_t> const& buff);
 
+		BBuffer(BBuffer* bb) : BaseType(bb) {}
+
 		template<typename T>
 		void Write(T const& v);
 

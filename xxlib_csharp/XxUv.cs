@@ -34,33 +34,44 @@ namespace xx
         public UvTimer udpTimer;
         public uint udpTicks;
         public byte[] udpRecvBuf = new byte[65536];
-        public IntPtr udpRecvBufPtr;
+        public GCHandle udpRecvBufHandle;
+        public IntPtr udpRecvBufHandlePtr;
         public uint kcpInterval = 0;
 
         public IntPtr ptr;
-        public IntPtr handle;
+        public GCHandle handle;
+        public IntPtr handlePtr;
 
         public UvLoop(ulong rpcIntervalMS = 1000, int rpcDefaultInterval = 5)
         {
-            this.Handle(ref handle);
-            ptr = UvInterop.xxuv_alloc_uv_loop_t(handle);
-            if (ptr == IntPtr.Zero)
+            try
             {
-                this.Unhandle(ref handle);
-                throw new NullReferenceException();
-            }
+                this.Handle(ref handle, ref handlePtr);
+                ptr = UvInterop.xxuv_alloc_uv_loop_t(handlePtr);
+                if (ptr == IntPtr.Zero)
+                {
+                    this.Unhandle(ref handle, ref handlePtr);
+                    throw new NullReferenceException();
+                }
 
-            int r = UvInterop.xxuv_loop_init(ptr);
-            if (r != 0)
+                int r = UvInterop.xxuv_loop_init(ptr);
+                if (r != 0)
+                {
+                    this.Free(ref ptr);
+                    this.Unhandle(ref handle, ref handlePtr);
+                    r.Throw();
+                }
+
+                rpcMgr = new UvRpcManager(this, rpcIntervalMS, rpcDefaultInterval);
+
+                udpRecvBufHandle = GCHandle.Alloc(udpRecvBuf, GCHandleType.Pinned);
+                udpRecvBufHandlePtr = udpRecvBufHandle.AddrOfPinnedObject();
+            }
+            catch (Exception ex)
             {
-                this.Free(ref ptr);
-                this.Unhandle(ref handle);
-                r.Throw();
+                disposed = true;
+                throw ex;
             }
-
-            rpcMgr = new UvRpcManager(this, rpcIntervalMS, rpcDefaultInterval);
-
-            udpRecvBufPtr = GCHandle.Alloc(udpRecvBuf, GCHandleType.Pinned).AddrOfPinnedObject();
         }
 
         public void Run(UvRunMode mode = UvRunMode.Default)
@@ -103,22 +114,18 @@ namespace xx
             kcpInterval = interval;
             udpTimer = new UvTimer(this, 0, interval, () =>
             {
-                for (int n = 0; n < 100; ++n)      // 模拟千倍时间流失
+                udpTicks += kcpInterval;
+                for (int i = 0; i < udpListeners.dataLen; ++i)
                 {
-                    udpTicks += kcpInterval;
-                    Console.WriteLine(udpTicks);
-                    for (int i = 0; i < udpListeners.dataLen; ++i)
+                    var peers = udpListeners[i].peers;
+                    peers.ForEach(kv =>
                     {
-                        var peers = udpListeners[i].peers;
-                        peers.ForEach(kv =>
-                        {
-                            kv.value.Update(udpTicks);
-                        });
-                    }
-                    for (int i = udpClients.dataLen - 1; i >= 0; --i)
-                    {
-                        udpClients[i].Update(udpTicks);
-                    }
+                        kv.value.Update(udpTicks);
+                    });
+                }
+                for (int i = udpClients.dataLen - 1; i >= 0; --i)
+                {
+                    udpClients[i].Update(udpTicks);
                 }
             });
         }
@@ -151,8 +158,9 @@ namespace xx
                     UvInterop.xxuv_loop_close(ptr).TryThrow();              // success
                 }
                 this.Free(ref ptr);
-                this.Unhandle(ref handle);
-                GCHandle.FromIntPtr(udpRecvBufPtr).Free();
+                this.Unhandle(ref handle, ref handlePtr);
+                udpRecvBufHandle.Free();
+                udpRecvBufHandlePtr = IntPtr.Zero;
                 disposed = true;
             }
             //base.Dispose(disposing);
@@ -181,40 +189,49 @@ namespace xx
         public int index_at_container;
 
         public IntPtr ptr;
-        public IntPtr handle;
+        public GCHandle handle;
+        public IntPtr handlePtr;
         public IntPtr addrPtr;
 
         public UvTcpListener(UvLoop loop)
         {
-            this.Handle(ref handle);
-            this.loop = loop;
-
-            ptr = UvInterop.xxuv_alloc_uv_tcp_t(handle);
-            if (ptr == IntPtr.Zero)
+            try
             {
-                this.Unhandle(ref handle);
-                throw new OutOfMemoryException();
-            }
+                this.Handle(ref handle, ref handlePtr);
+                this.loop = loop;
 
-            int r = UvInterop.xxuv_tcp_init(loop.ptr, ptr);
-            if (r != 0)
+                ptr = UvInterop.xxuv_alloc_uv_tcp_t(handlePtr);
+                if (ptr == IntPtr.Zero)
+                {
+                    this.Unhandle(ref handle, ref handlePtr);
+                    throw new OutOfMemoryException();
+                }
+
+                int r = UvInterop.xxuv_tcp_init(loop.ptr, ptr);
+                if (r != 0)
+                {
+                    this.Free(ref ptr);
+                    this.Unhandle(ref handle, ref handlePtr);
+                    r.Throw();
+                }
+
+                addrPtr = UvInterop.xxuv_alloc_sockaddr_in(IntPtr.Zero);
+                if (addrPtr == IntPtr.Zero)
+                {
+                    UvInterop.xxuv_close_(ptr);
+                    ptr = IntPtr.Zero;
+                    this.Unhandle(ref handle, ref handlePtr);
+                    throw new OutOfMemoryException();
+                }
+
+                index_at_container = loop.tcpListeners.dataLen;
+                loop.tcpListeners.Add(this);
+            }
+            catch (Exception ex)
             {
-                this.Free(ref ptr);
-                this.Unhandle(ref handle);
-                r.Throw();
+                disposed = true;
+                throw ex;
             }
-
-            addrPtr = UvInterop.xxuv_alloc_sockaddr_in(IntPtr.Zero);
-            if (addrPtr == IntPtr.Zero)
-            {
-                UvInterop.xxuv_close_(ptr);
-                ptr = IntPtr.Zero;
-                this.Unhandle(ref handle);
-                throw new OutOfMemoryException();
-            }
-
-            index_at_container = loop.tcpListeners.dataLen;
-            loop.tcpListeners.Add(this);
         }
 
 
@@ -270,7 +287,7 @@ namespace xx
                 UvInterop.xxuv_close_(ptr);
                 ptr = IntPtr.Zero;
                 this.Free(ref addrPtr);
-                this.Unhandle(ref handle);
+                this.Unhandle(ref handle, ref handlePtr);
 
                 loop.tcpListeners.SwapRemoveAt(index_at_container);
                 loop = null;
@@ -347,7 +364,8 @@ namespace xx
         public int index_at_container;
 
         public IntPtr ptr;
-        public IntPtr handle;
+        public GCHandle handle;
+        public IntPtr handlePtr;
         public IntPtr addrPtr;
 
         protected BBuffer bbRecv = new BBuffer();               // 复用的接收缓冲区
@@ -552,54 +570,62 @@ namespace xx
         public UvTcpListener listener;
         public UvTcpPeer(UvTcpListener listener)
         {
-            this.Handle(ref handle);
-            this.listener = listener;
-            this.loop = listener.loop;
-
-            ptr = UvInterop.xxuv_alloc_uv_tcp_t(handle);
-            if (ptr == IntPtr.Zero)
+            try
             {
-                this.Unhandle(ref handle);
-                throw new OutOfMemoryException();
-            }
+                this.Handle(ref handle, ref handlePtr);
+                this.listener = listener;
+                this.loop = listener.loop;
 
-            int r = UvInterop.xxuv_tcp_init(loop.ptr, ptr);
-            if (r != 0)
+                ptr = UvInterop.xxuv_alloc_uv_tcp_t(handlePtr);
+                if (ptr == IntPtr.Zero)
+                {
+                    this.Unhandle(ref handle, ref handlePtr);
+                    throw new OutOfMemoryException();
+                }
+
+                int r = UvInterop.xxuv_tcp_init(loop.ptr, ptr);
+                if (r != 0)
+                {
+                    this.Free(ref ptr);
+                    this.Unhandle(ref handle, ref handlePtr);
+                    r.Throw();
+                }
+
+                r = UvInterop.xxuv_accept(listener.ptr, ptr);
+                if (r != 0)
+                {
+                    UvInterop.xxuv_close_(ptr);
+                    ptr = IntPtr.Zero;
+                    this.Unhandle(ref handle, ref handlePtr);
+                    r.Throw();
+                }
+
+                r = UvInterop.xxuv_read_start_(ptr, OnReadCB);
+                if (r != 0)
+                {
+                    UvInterop.xxuv_close_(ptr);
+                    ptr = IntPtr.Zero;
+                    this.Unhandle(ref handle, ref handlePtr);
+                    r.Throw();
+                }
+
+                addrPtr = UvInterop.xxuv_alloc_sockaddr_in(IntPtr.Zero);
+                if (addrPtr == IntPtr.Zero)
+                {
+                    UvInterop.xxuv_close_(ptr);
+                    ptr = IntPtr.Zero;
+                    this.Unhandle(ref handle, ref handlePtr);
+                    throw new OutOfMemoryException();
+                }
+
+                index_at_container = listener.peers.dataLen;
+                listener.peers.Add(this);
+            }
+            catch (Exception ex)
             {
-                this.Free(ref ptr);
-                this.Unhandle(ref handle);
-                r.Throw();
+                disposed = true;
+                throw ex;
             }
-
-            r = UvInterop.xxuv_accept(listener.ptr, ptr);
-            if (r != 0)
-            {
-                UvInterop.xxuv_close_(ptr);
-                ptr = IntPtr.Zero;
-                this.Unhandle(ref handle);
-                r.Throw();
-            }
-
-            r = UvInterop.xxuv_read_start_(ptr, OnReadCB);
-            if (r != 0)
-            {
-                UvInterop.xxuv_close_(ptr);
-                ptr = IntPtr.Zero;
-                this.Unhandle(ref handle);
-                r.Throw();
-            }
-
-            addrPtr = UvInterop.xxuv_alloc_sockaddr_in(IntPtr.Zero);
-            if (addrPtr == IntPtr.Zero)
-            {
-                UvInterop.xxuv_close_(ptr);
-                ptr = IntPtr.Zero;
-                this.Unhandle(ref handle);
-                throw new OutOfMemoryException();
-            }
-
-            index_at_container = listener.peers.dataLen;
-            listener.peers.Add(this);
         }
 
         protected override void DisconnectImpl()
@@ -649,7 +675,7 @@ namespace xx
                 UvInterop.xxuv_close_(ptr);
                 ptr = IntPtr.Zero;
                 this.Free(ref addrPtr);
-                this.Unhandle(ref handle);
+                this.Unhandle(ref handle, ref handlePtr);
 
                 UnbindTimerManager();
                 OnTimeout = null;
@@ -685,18 +711,26 @@ namespace xx
 
         public UvTcpClient(UvLoop loop)
         {
-            this.Handle(ref handle);
-            this.loop = loop;
-
-            addrPtr = UvInterop.xxuv_alloc_sockaddr_in(IntPtr.Zero);
-            if (addrPtr == IntPtr.Zero)
+            try
             {
-                this.Unhandle(ref handle);
-                throw new OutOfMemoryException();
-            }
+                this.Handle(ref handle, ref handlePtr);
+                this.loop = loop;
 
-            index_at_container = loop.tcpClients.dataLen;
-            loop.tcpClients.Add(this);
+                addrPtr = UvInterop.xxuv_alloc_sockaddr_in(IntPtr.Zero);
+                if (addrPtr == IntPtr.Zero)
+                {
+                    this.Unhandle(ref handle, ref handlePtr);
+                    throw new OutOfMemoryException();
+                }
+
+                index_at_container = loop.tcpClients.dataLen;
+                loop.tcpClients.Add(this);
+            }
+            catch (Exception ex)
+            {
+                disposed = true;
+                throw ex;
+            }
         }
 
         public void SetAddress(string ipv4, int port)
@@ -727,7 +761,7 @@ namespace xx
             if (disposed) throw new ObjectDisposedException("XxUvTcpClient");
             if (state != UvTcpStates.Disconnected) throw new InvalidOperationException();
 
-            ptr = UvInterop.xxuv_alloc_uv_tcp_t(handle);
+            ptr = UvInterop.xxuv_alloc_uv_tcp_t(handlePtr);
             if (ptr == IntPtr.Zero) throw new OutOfMemoryException();
 
             int r = UvInterop.xxuv_tcp_init(loop.ptr, ptr);
@@ -786,7 +820,7 @@ namespace xx
                     ptr = IntPtr.Zero;
                 }
                 this.Free(ref addrPtr);
-                this.Unhandle(ref handle);
+                this.Unhandle(ref handle, ref handlePtr);
 
                 UnbindTimerManager();
                 OnTimeout = null;
@@ -821,45 +855,49 @@ namespace xx
         public int index_at_container;
 
         public IntPtr ptr;
-        public IntPtr handle;
+        public GCHandle handle;
+        public IntPtr handlePtr;
 
-        public UvTimer(UvLoop loop, ulong timeoutMS, ulong repeatIntervalMS, Action OnFire)
-            : this(loop, timeoutMS, repeatIntervalMS)
+        public UvTimer(UvLoop loop, ulong timeoutMS, ulong repeatIntervalMS, Action OnFire = null)
         {
-            this.OnFire = OnFire;
-        }
-
-        public UvTimer(UvLoop loop, ulong timeoutMS, ulong repeatIntervalMS)
-        {
-            this.Handle(ref handle);
-            this.loop = loop;
-
-            ptr = UvInterop.xxuv_alloc_uv_timer_t(handle);
-            if (ptr == IntPtr.Zero)
+            try
             {
-                this.Unhandle(ref handle);
-                throw new OutOfMemoryException();
-            }
+                this.OnFire = OnFire;
+                this.Handle(ref handle, ref handlePtr);
+                this.loop = loop;
 
-            int r = UvInterop.xxuv_timer_init(loop.ptr, ptr);
-            if (r != 0)
+                ptr = UvInterop.xxuv_alloc_uv_timer_t(handlePtr);
+                if (ptr == IntPtr.Zero)
+                {
+                    this.Unhandle(ref handle, ref handlePtr);
+                    throw new OutOfMemoryException();
+                }
+
+                int r = UvInterop.xxuv_timer_init(loop.ptr, ptr);
+                if (r != 0)
+                {
+                    this.Free(ref ptr);
+                    this.Unhandle(ref handle, ref handlePtr);
+                    r.Throw();
+                }
+
+                r = UvInterop.xxuv_timer_start(ptr, OnTimerCB, timeoutMS, repeatIntervalMS);
+                if (r != 0)
+                {
+                    UvInterop.xxuv_close_(ptr);
+                    ptr = IntPtr.Zero;
+                    this.Unhandle(ref handle, ref handlePtr);
+                    r.Throw();
+                }
+
+                index_at_container = loop.timers.dataLen;
+                loop.timers.Add(this);
+            }
+            catch (Exception ex)
             {
-                this.Free(ref ptr);
-                this.Unhandle(ref handle);
-                r.Throw();
+                disposed = true;
+                throw ex;
             }
-
-            r = UvInterop.xxuv_timer_start(ptr, OnTimerCB, timeoutMS, repeatIntervalMS);
-            if (r != 0)
-            {
-                UvInterop.xxuv_close_(ptr);
-                ptr = IntPtr.Zero;
-                this.Unhandle(ref handle);
-                r.Throw();
-            }
-
-            index_at_container = loop.timers.dataLen;
-            loop.timers.Add(this);
         }
 
         static UvInterop.uv_timer_cb OnTimerCB = OnTimerCBImpl;
@@ -905,7 +943,7 @@ namespace xx
 
                 UvInterop.xxuv_close_(ptr);
                 ptr = IntPtr.Zero;
-                this.Unhandle(ref handle);
+                this.Unhandle(ref handle, ref handlePtr);
 
                 loop.timers.SwapRemoveAt(index_at_container);
                 loop = null;
@@ -1025,30 +1063,39 @@ namespace xx
         public ConcurrentQueue<Action> actions = new ConcurrentQueue<Action>();
 
         public IntPtr ptr;
-        public IntPtr handle;
+        public GCHandle handle;
+        public IntPtr handlePtr;
         public UvAsync(UvLoop loop)
         {
-            this.Handle(ref handle);
-            this.loop = loop;
-            this.OnFire = this.OnFireImpl;
-
-            ptr = UvInterop.xxuv_alloc_uv_async_t(handle);
-            if (ptr == IntPtr.Zero)
+            try
             {
-                this.Unhandle(ref handle);
-                throw new OutOfMemoryException();
-            }
+                this.Handle(ref handle, ref handlePtr);
+                this.loop = loop;
+                this.OnFire = this.OnFireImpl;
 
-            int r = UvInterop.xxuv_async_init(loop.ptr, ptr, AsyncCB);
-            if (r != 0)
+                ptr = UvInterop.xxuv_alloc_uv_async_t(handlePtr);
+                if (ptr == IntPtr.Zero)
+                {
+                    this.Unhandle(ref handle, ref handlePtr);
+                    throw new OutOfMemoryException();
+                }
+
+                int r = UvInterop.xxuv_async_init(loop.ptr, ptr, AsyncCB);
+                if (r != 0)
+                {
+                    this.Free(ref ptr);
+                    this.Unhandle(ref handle, ref handlePtr);
+                    r.Throw();
+                }
+
+                index_at_container = loop.asyncs.dataLen;
+                loop.asyncs.Add(this);
+            }
+            catch (Exception ex)
             {
-                this.Free(ref ptr);
-                this.Unhandle(ref handle);
-                r.Throw();
+                disposed = true;
+                throw ex;
             }
-
-            index_at_container = loop.asyncs.dataLen;
-            loop.asyncs.Add(this);
         }
 
         static UvInterop.uv_async_cb AsyncCB = OnAsyncCBImpl;
@@ -1090,7 +1137,7 @@ namespace xx
 
                 UvInterop.xxuv_close_(ptr);
                 ptr = IntPtr.Zero;
-                this.Unhandle(ref handle);
+                this.Unhandle(ref handle, ref handlePtr);
 
                 loop.asyncs.SwapRemoveAt(index_at_container);
                 loop = null;
@@ -1275,42 +1322,51 @@ namespace xx
         public int index_at_container;
 
         public IntPtr ptr;
-        public IntPtr handle;
+        public GCHandle handle;
+        public IntPtr handlePtr;
         public IntPtr addrPtr;
 
         public byte[] guid = new byte[16];
 
         public UvUdpListener(UvLoop loop)
         {
-            this.Handle(ref handle);
-            this.loop = loop;
-
-            ptr = UvInterop.xxuv_alloc_uv_udp_t(handle);
-            if (ptr == IntPtr.Zero)
+            try
             {
-                this.Unhandle(ref handle);
-                throw new OutOfMemoryException();
-            }
+                this.Handle(ref handle, ref handlePtr);
+                this.loop = loop;
 
-            int r = UvInterop.xxuv_udp_init(loop.ptr, ptr);
-            if (r != 0)
+                ptr = UvInterop.xxuv_alloc_uv_udp_t(handlePtr);
+                if (ptr == IntPtr.Zero)
+                {
+                    this.Unhandle(ref handle, ref handlePtr);
+                    throw new OutOfMemoryException();
+                }
+
+                int r = UvInterop.xxuv_udp_init(loop.ptr, ptr);
+                if (r != 0)
+                {
+                    this.Free(ref ptr);
+                    this.Unhandle(ref handle, ref handlePtr);
+                    r.Throw();
+                }
+
+                addrPtr = UvInterop.xxuv_alloc_sockaddr_in(IntPtr.Zero);
+                if (addrPtr == IntPtr.Zero)
+                {
+                    UvInterop.xxuv_close_(ptr);
+                    ptr = IntPtr.Zero;
+                    this.Unhandle(ref handle, ref handlePtr);
+                    throw new OutOfMemoryException();
+                }
+
+                index_at_container = loop.udpListeners.dataLen;
+                loop.udpListeners.Add(this);
+            }
+            catch (Exception ex)
             {
-                this.Free(ref ptr);
-                this.Unhandle(ref handle);
-                r.Throw();
+                disposed = true;
+                throw ex;
             }
-
-            addrPtr = UvInterop.xxuv_alloc_sockaddr_in(IntPtr.Zero);
-            if (addrPtr == IntPtr.Zero)
-            {
-                UvInterop.xxuv_close_(ptr);
-                ptr = IntPtr.Zero;
-                this.Unhandle(ref handle);
-                throw new OutOfMemoryException();
-            }
-
-            index_at_container = loop.udpListeners.dataLen;
-            loop.udpListeners.Add(this);
         }
 
         static UvInterop.uv_udp_recv_cb OnRecvCB = OnRecvCBImpl;
@@ -1413,7 +1469,7 @@ namespace xx
                 UvInterop.xxuv_close_(ptr);
                 ptr = IntPtr.Zero;
                 this.Free(ref addrPtr);
-                this.Unhandle(ref handle);
+                this.Unhandle(ref handle, ref handlePtr);
 
                 loop.udpListeners.SwapRemoveAt(index_at_container);
                 loop = null;
@@ -1444,41 +1500,49 @@ namespace xx
             , int sndwnd = 128, int rcvwnd = 128
             , int nodelay = 1/*, int interval = 10*/, int resend = 2, int nc = 1)
         {
-            if (loop.kcpInterval == 0) throw new Exception("forget InitKcpFlushInterval ?");
-
-            this.listener = listener;
-            this.guid = g;
-            this.loop = listener.loop;
-            this.Handle(ref handle);
-
-            ptr = UvInterop.xx_ikcp_create(rawData, handle, IntPtr.Zero);//loop.ptr);
-            if (ptr == IntPtr.Zero)
+            try
             {
-                this.Unhandle(ref handle);
-                throw new OutOfMemoryException();
-            }
+                if (loop.kcpInterval == 0) throw new Exception("forget InitKcpFlushInterval ?");
 
-            int r = UvInterop.xx_ikcp_wndsize(ptr, sndwnd, rcvwnd);
-            if (r == 0) r = UvInterop.xx_ikcp_nodelay(ptr, nodelay, (int)loop.kcpInterval, resend, nc);
-            if (r != 0)
+                this.listener = listener;
+                this.guid = g;
+                this.loop = listener.loop;
+                this.Handle(ref handle, ref handlePtr);
+
+                ptr = UvInterop.xx_ikcp_create(rawData, handlePtr, IntPtr.Zero);//loop.ptr);
+                if (ptr == IntPtr.Zero)
+                {
+                    this.Unhandle(ref handle, ref handlePtr);
+                    throw new OutOfMemoryException();
+                }
+
+                int r = UvInterop.xx_ikcp_wndsize(ptr, sndwnd, rcvwnd);
+                if (r == 0) r = UvInterop.xx_ikcp_nodelay(ptr, nodelay, (int)loop.kcpInterval, resend, nc);
+                if (r != 0)
+                {
+                    UvInterop.xx_ikcp_release(ptr);
+                    ptr = IntPtr.Zero;
+                    this.Unhandle(ref handle, ref handlePtr);
+                    throw new Exception("kcp wndsize / nodelay throw " + r);
+                }
+                UvInterop.xx_ikcp_setoutput(ptr, OutputCB);
+
+                addrPtr = UvInterop.xxuv_alloc_sockaddr_in(IntPtr.Zero);
+                if (addrPtr == IntPtr.Zero)
+                {
+                    UvInterop.xx_ikcp_release(ptr);
+                    ptr = IntPtr.Zero;
+                    this.Unhandle(ref handle, ref handlePtr);
+                    throw new OutOfMemoryException();
+                }
+
+                index_at_container = listener.peers.Add(g, this).index;
+            }
+            catch (Exception ex)
             {
-                UvInterop.xx_ikcp_release(ptr);
-                ptr = IntPtr.Zero;
-                this.Unhandle(ref handle);
-                throw new Exception("kcp wndsize / nodelay throw " + r);
+                disposed = true;
+                throw ex;
             }
-            UvInterop.xx_ikcp_setoutput(ptr, OutputCB);
-
-            addrPtr = UvInterop.xxuv_alloc_sockaddr_in(IntPtr.Zero);
-            if (addrPtr == IntPtr.Zero)
-            {
-                UvInterop.xx_ikcp_release(ptr);
-                ptr = IntPtr.Zero;
-                this.Unhandle(ref handle);
-                throw new OutOfMemoryException();
-            }
-
-            index_at_container = listener.peers.Add(g, this).index;
         }
 
         static UvInterop.ikcp_output_cb OutputCB = OutputImpl;
@@ -1498,9 +1562,9 @@ namespace xx
 
             while (true)
             {
-                int len = UvInterop.xx_ikcp_recv(ptr, loop.udpRecvBufPtr, loop.udpRecvBuf.Length);
+                int len = UvInterop.xx_ikcp_recv(ptr, loop.udpRecvBufHandlePtr, loop.udpRecvBuf.Length);
                 if (len <= 0) break;
-                ReceiveImpl(loop.udpRecvBufPtr, len);
+                ReceiveImpl(loop.udpRecvBufHandlePtr, len);
             }
         }
 
@@ -1575,10 +1639,11 @@ namespace xx
             if (!disposed)
             {
                 // if (disposing) // Free other state (managed objects).
+
                 UvInterop.xx_ikcp_release(ptr);
                 ptr = IntPtr.Zero;
                 this.Free(ref addrPtr);
-                this.Unhandle(ref handle);
+                this.Unhandle(ref handle, ref handlePtr);
 
 
                 UnbindTimerManager();
@@ -1607,17 +1672,25 @@ namespace xx
     {
         public UvUdpClient(UvLoop loop)
         {
-            this.loop = loop;
-            this.Handle(ref handle);
-
-            addrPtr = UvInterop.xxuv_alloc_sockaddr_in(IntPtr.Zero);
-            if (addrPtr == IntPtr.Zero)
+            try
             {
-                throw new OutOfMemoryException();
-            }
+                this.loop = loop;
+                this.Handle(ref handle, ref handlePtr);
 
-            index_at_container = loop.udpClients.dataLen;
-            loop.udpClients.Add(this);
+                addrPtr = UvInterop.xxuv_alloc_sockaddr_in(IntPtr.Zero);
+                if (addrPtr == IntPtr.Zero)
+                {
+                    throw new OutOfMemoryException();
+                }
+
+                index_at_container = loop.udpClients.dataLen;
+                loop.udpClients.Add(this);
+            }
+            catch (Exception ex)
+            {
+                disposed = true;
+                throw ex;
+            }
         }
 
         IntPtr kcpPtr;
@@ -1634,7 +1707,7 @@ namespace xx
                 throw new InvalidOperationException();
             }
 
-            ptr = UvInterop.xxuv_alloc_uv_udp_t(handle);
+            ptr = UvInterop.xxuv_alloc_uv_udp_t(handlePtr);
             if (ptr == IntPtr.Zero)
             {
                 throw new OutOfMemoryException();
@@ -1663,7 +1736,7 @@ namespace xx
             this.guid = guid;
             var guidbytes = guid.ToByteArray();
             var h = GCHandle.Alloc(guidbytes, GCHandleType.Pinned);
-            kcpPtr = UvInterop.xx_ikcp_create(h.AddrOfPinnedObject(), handle, IntPtr.Zero);//loop.ptr);
+            kcpPtr = UvInterop.xx_ikcp_create(h.AddrOfPinnedObject(), handlePtr, IntPtr.Zero);//loop.ptr);
             h.Free();
             if (kcpPtr == IntPtr.Zero)
             {
@@ -1733,9 +1806,9 @@ namespace xx
 
             while (true)
             {
-                int len = UvInterop.xx_ikcp_recv(kcpPtr, loop.udpRecvBufPtr, loop.udpRecvBuf.Length);
+                int len = UvInterop.xx_ikcp_recv(kcpPtr, loop.udpRecvBufHandlePtr, loop.udpRecvBuf.Length);
                 if (len <= 0) break;
-                ReceiveImpl(loop.udpRecvBufPtr, len);
+                ReceiveImpl(loop.udpRecvBufHandlePtr, len);
             }
         }
 
@@ -1801,7 +1874,7 @@ namespace xx
                 // if (disposing) // Free other state (managed objects).
                 Disconnect();
                 this.Free(ref addrPtr);
-                this.Unhandle(ref handle);
+                this.Unhandle(ref handle, ref handlePtr);
 
                 UnbindTimerManager();
                 OnTimeout = null;
@@ -2118,18 +2191,19 @@ namespace xx
             return (T)((GCHandle)xxuv_get_ud(p)).Target;
         }
 
-        public static void Handle(this IDisposable self, ref IntPtr handle)
+        public static void Handle(this IDisposable self, ref GCHandle handle, ref IntPtr handlePtr)
         {
-            handle = (IntPtr)GCHandle.Alloc(self);
+            handle = GCHandle.Alloc(self);
+            handlePtr = (IntPtr)handle;
         }
 
         // self 用不到. 只是为便于写扩展, 说明语义
-        public static void Unhandle(this IDisposable self, ref IntPtr handle)
+        public static void Unhandle(this IDisposable self, ref GCHandle handle, ref IntPtr handlePtr)
         {
-            if (handle != IntPtr.Zero)
+            if (handlePtr != IntPtr.Zero)
             {
-                ((GCHandle)handle).Free();
-                handle = IntPtr.Zero;
+                handle.Free();
+                handlePtr = IntPtr.Zero;
             }
         }
 

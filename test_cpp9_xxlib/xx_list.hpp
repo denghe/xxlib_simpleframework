@@ -39,6 +39,22 @@ namespace xx
 		o.dataLen = 0;
 	}
 
+	template<typename T>
+	List<T>::List(BBuffer* bb)
+		: Object(bb->mempool)
+	{
+		// todo: more type support here
+		//size_t len = 0;
+		//if (auto rtv = bb->Read(len)) throw rtv;
+		//if (bb.readLengthLimit != 0 && len > bb.readLengthLimit) throw - 1;
+		//if (bb.offset + len * sizeof(T) > bb.dataLen) throw - 2;
+		//if (len == 0) return;
+		//list->Reserve(len);
+		//memcpy(list->buf, bb.buf + bb.offset, len * sizeof(T));
+		//bb.offset += len * sizeof(T);
+		//list->dataLen = len;
+	}
+
 
 	template<typename T>
 	void List<T>::Reserve(size_t const& capacity)

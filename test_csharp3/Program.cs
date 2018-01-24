@@ -24,7 +24,7 @@ public static class Program
         using (var loop = new UvLoop(1000, 2))
         {
             // kcp 轮询间隔 ms
-            loop.InitKcpFlushInterval(1);
+            loop.InitKcpFlushInterval(10);
 
             //// server
             //var udpListener = new UvUdpListener(loop);
@@ -58,12 +58,14 @@ public static class Program
 
             // make some data for send
             var bb = new BBuffer();
-            bb.Write((byte)1); bb.Write((byte)2);
+            bb.Write((byte)1);
+            bb.Write((byte)2);
 
             // send
             udpClient.Send(bb);
 
             // begin run
+            CW("client: loop.Run();");
             loop.Run();
         }
     }
