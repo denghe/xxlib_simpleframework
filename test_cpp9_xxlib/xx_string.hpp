@@ -261,6 +261,16 @@ namespace xx
 
 
 
+
+
+	inline String::String(BBuffer* bb) : BaseType(bb) {}
+
+
+
+
+
+
+
 	inline uint32_t GetHashCode(String const &in) noexcept
 	{
 		return in.dataLen == 0 ? 0 : GetHashCode((uint8_t*)in.buf, in.dataLen);

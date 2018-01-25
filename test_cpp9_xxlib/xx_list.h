@@ -13,7 +13,6 @@ namespace xx
 
 		explicit List(MemPool* const& mempool, size_t const& capacity = 0);
 		List(List &&o);
-		List(BBuffer* bb);
 		~List();
 		List(List const&o) = delete;
 		List& operator=(List const&o) = delete;
@@ -69,6 +68,12 @@ namespace xx
 		Iter end() { return Iter{ buf + dataLen }; }
 		Iter begin() const { return Iter{ buf }; }
 		Iter end() const { return Iter{ buf + dataLen }; }
+
+
+		// 序列化支持
+		List(BBuffer* bb);
+		void ToBBuffer(BBuffer &bb) const override;
+		int FromBBuffer(BBuffer &bb) override;
 	};
 
 

@@ -39,24 +39,6 @@ namespace xx
 		o.dataLen = 0;
 	}
 
-	template<typename T>
-	List<T>::List(BBuffer* bb)
-		: List(bb->mempool, 0)
-	{
-		size_t len = 0;
-		if (auto rtv = bb->Read(len)) throw rtv;
-		if (bb->readLengthLimit != 0 && len > bb->readLengthLimit) throw - 1;
-		if (bb->offset + len * sizeof(T) > bb->dataLen) throw - 2;
-		if (len == 0) return;
-		Reserve(len);
-
-		// todo: more type support here
-
-		memcpy(buf, bb->buf + bb->offset, len * sizeof(T));
-		bb->offset += len * sizeof(T);
-		dataLen = len;
-	}
-
 
 	template<typename T>
 	void List<T>::Reserve(size_t const& capacity)
@@ -355,4 +337,63 @@ namespace xx
 		}
 	}
 
+
+
+
+
+	template<typename T>
+	List<T>::List(BBuffer* bb)
+		: List(bb->mempool, 0)
+	{
+		if (int r = FromBBuffer(*bb)) throw r;
+	}
+
+	template<typename T>
+	void List<T>::ToBBuffer(BBuffer &bb) const
+	{
+		bb.Reserve(bb.dataLen + 5 + dataLen * sizeof(T));
+		bb.Write(dataLen);
+		if (!dataLen) return;
+		if constexpr(sizeof(T) == 1 || std::is_same_v<float, std::decay_t<T>>)
+		{
+			memcpy(bb.buf + bb.dataLen, buf, dataLen * sizeof(T));
+			bb.dataLen += dataLen * sizeof(T);
+		}
+		else
+		{
+			for (size_t i = 0; i < dataLen; ++i)
+			{
+				bb.Write(At(i));
+			}
+		}
+	}
+
+	template<typename T>
+	int List<T>::FromBBuffer(BBuffer &bb)
+	{
+		size_t len = 0;
+		if (auto rtv = bb.Read(len)) return rtv;
+		if (bb.readLengthLimit != 0 && len > bb.readLengthLimit) return -1;
+		if (bb.offset + len > bb.dataLen) return -2;
+		Resize(len);
+		if (len == 0) return 0;
+		if constexpr(sizeof(T) == 1 || std::is_same_v<float, std::decay_t<T>>)
+		{
+			memcpy(buf, bb.buf + bb.offset, len * sizeof(T));
+			bb.offset += len * sizeof(T);
+			dataLen = len;
+		}
+		else
+		{
+			for (size_t i = 0; i < len; ++i)
+			{
+				if (auto rtv = bb.Read(At(i)))
+				{
+					Clear(true);
+					return rtv;
+				}
+			}
+		}
+		return 0;
+	}
 }

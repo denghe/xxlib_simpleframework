@@ -603,11 +603,11 @@ namespace xx
 	{
 		static void ToBBuffer(List<T, reservedHeaderLen> const* list, BBuffer &bb)
 		{
-			bb.Reserve(bb.dataLen + 5 + list->dataLen);
+			bb.Reserve(bb.dataLen + 5 + list->dataLen * sizeof(T));
 			bb.Write(list->dataLen);
 			if (!list->dataLen) return;
-			memcpy(bb.buf + bb.dataLen, list->buf, list->dataLen);
-			bb.dataLen += list->dataLen;
+			memcpy(bb.buf + bb.dataLen, list->buf, list->dataLen * sizeof(T));
+			bb.dataLen += list->dataLen * sizeof(T);
 		}
 		static int FromBBuffer(List<T, reservedHeaderLen>* list, BBuffer &bb)
 		{

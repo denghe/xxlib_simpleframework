@@ -16,10 +16,8 @@ namespace xx
 		BBuffer& operator=(BBuffer const&o) = delete;
 
 		explicit BBuffer(MemPool* const& mempool, size_t const& capacity = 0);
-
 		BBuffer(MemPool* const& mempool, std::pair<char const*, size_t> const& buff);
 
-		BBuffer(BBuffer* bb) : BaseType(bb) {}
 
 		template<typename T>
 		void Write(T const& v);
@@ -118,6 +116,10 @@ namespace xx
 		// 试读出单个包( 等同于 ReadRoot )
 		int ReadPackage(Object_p& outPkg);
 
+
+		// 序列化相关
+
+		BBuffer(BBuffer* bb);
 	};
 
 

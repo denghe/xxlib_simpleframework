@@ -313,4 +313,11 @@ namespace xx
 		return ReadRoot(outPkg);
 	}
 
+
+
+
+
+
+
+	inline BBuffer::BBuffer(BBuffer* bb) : BaseType(bb) {}
 }

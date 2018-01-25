@@ -97,6 +97,12 @@ namespace xx
 
 	private:
 		friend std::ostream& operator<<(std::ostream&, const String&);
+
+
+	public:
+		// 序列化相关
+
+		String(BBuffer* bb);
 	};
 
 

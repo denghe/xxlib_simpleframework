@@ -54,6 +54,10 @@ namespace xx
 	inline void FromString(double   &out, char const *in) { out = strtod(in, nullptr); }
 	inline void FromString(float    &out, char const *in) { out = (float)strtod(in, nullptr); }
 
+
+
+	// todo: 重构下面的代码, 放弃对 char* 直接填充的支持, 改成类似 BBuffer 适配的长相. 适配函数移到 .hpp
+
 	/**************************************************************************************************/
 	// 类型--操作适配模板区
 	/**************************************************************************************************/
