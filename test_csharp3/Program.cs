@@ -48,9 +48,11 @@ public static class Program
 
             // client
             var udpClient = new UvUdpClient(loop);
+            int counter = 0;
             udpClient.OnReceivePackage = pkg =>
             {
-                CW("client recv server pkg: " + pkg);
+                ++counter;
+                //CW("client recv server pkg: " + pkg);
                 udpClient.SendBytes(pkg);
             };
             udpClient.SetAddress("127.0.0.1", 12345);
@@ -63,6 +65,11 @@ public static class Program
 
             // send
             udpClient.Send(bb);
+
+            new UvTimer(loop, 1000, 1000, () => 
+            {
+                Console.WriteLine(counter);
+            });
 
             // begin run
             CW("client: loop.Run();");

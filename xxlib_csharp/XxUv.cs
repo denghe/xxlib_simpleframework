@@ -1502,7 +1502,7 @@ namespace xx
         {
             try
             {
-                if (loop.kcpInterval == 0) throw new Exception("forget InitKcpFlushInterval ?");
+                if (listener.loop.kcpInterval == 0) throw new Exception("forget InitKcpFlushInterval ?");
 
                 this.listener = listener;
                 this.guid = g;

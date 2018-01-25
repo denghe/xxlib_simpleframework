@@ -33,7 +33,7 @@ public static class Program
                 CW(p.ip);
                 p.OnReceivePackage = pkg =>
                 {
-                    CW("listener recv " + p.ip + "'s pkg: " + pkg);
+                    //CW("listener recv " + p.ip + "'s pkg: " + pkg);
 
                     // echo
                     p.SendBytes(pkg);

@@ -56,6 +56,9 @@ void f2()
 	xx::UvLoop loop;
 	loop.InitKcpFlushInterval(10);
 	xx::BBuffer_p pkg;
+	loop.mp.CreateTo(pkg);
+	pkg->Write((uint8_t)1);
+	pkg->Write((uint8_t)2);
 	uint64_t counter = 0;
 	auto client = loop.CreateUdpClient();
 	client->OnReceivePackage = [&](xx::BBuffer& bb)
@@ -80,8 +83,10 @@ int main()
 {
 	xx::MemPool::Register<xx::BBuffer, xx::Object>();
 
-	//std::thread t(f2);
-	//t.detach();
-	f1();
+	////std::thread t(f2);
+	////t.detach();
+	//f1();
+
+	f2();
 	return 0;
 }
