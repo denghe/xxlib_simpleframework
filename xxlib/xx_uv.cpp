@@ -79,24 +79,25 @@ static int FillIP(sockaddr_in* addr, char* buf, size_t bufLen)
 }
 
 
-xx::UvLoop::UvLoop()
-	: tcpListeners(&mp)
-	, tcpClients(&mp)
-	, udpListeners(&mp)
-	, udpClients(&mp)
-	, timers(&mp)
-	, asyncs(&mp)
+xx::UvLoop::UvLoop(MemPool* mp)
+	: Object(mp)
+	, tcpListeners(mp)
+	, tcpClients(mp)
+	, udpListeners(mp)
+	, udpClients(mp)
+	, timers(mp)
+	, asyncs(mp)
 {
-	ptr = Alloc(&mp, sizeof(uv_loop_t), this);
+	ptr = Alloc(mp, sizeof(uv_loop_t), this);
 	if (!ptr) throw - 1;
 
 	if (int r = uv_loop_init((uv_loop_t*)ptr))
 	{
-		Free(&mp, ptr);
+		Free(mp, ptr);
 		ptr = nullptr;
 		throw r;
 	}
-	((uv_loop_t*)ptr)->data = &mp;
+	((uv_loop_t*)ptr)->data = mp;
 
 }
 
@@ -104,40 +105,40 @@ xx::UvLoop::~UvLoop()
 {
 	assert(ptr);
 
-	udpListeners.ForEachRevert([&mp = mp](auto& o) { mp.Release(o); });
-	udpClients.ForEachRevert([&mp = mp](auto& o) { mp.Release(o); });
-	tcpListeners.ForEachRevert([&mp = mp](auto& o) { mp.Release(o); });
-	tcpClients.ForEachRevert([&mp = mp](auto& o) { mp.Release(o); });
-	mp.SafeRelease(udpTimer);
-	mp.SafeRelease(timeouter);
-	mp.SafeRelease(rpcMgr);
-	timers.ForEachRevert([&mp = mp](auto& o) { mp.Release(o); });
-	asyncs.ForEachRevert([&mp = mp](auto& o) { mp.Release(o); });
+	udpListeners.ForEachRevert([mp = this->mempool](auto& o) { mp->Release(o); });
+	udpClients.ForEachRevert([&mp = this->mempool](auto& o) { mp->Release(o); });
+	tcpListeners.ForEachRevert([&mp = this->mempool](auto& o) { mp->Release(o); });
+	tcpClients.ForEachRevert([&mp = this->mempool](auto& o) { mp->Release(o); });
+	mempool->SafeRelease(udpTimer);
+	mempool->SafeRelease(timeouter);
+	mempool->SafeRelease(rpcMgr);
+	timers.ForEachRevert([&mp = this->mempool](auto& o) { mp->Release(o); });
+	asyncs.ForEachRevert([&mp = this->mempool](auto& o) { mp->Release(o); });
 
 	if (uv_loop_close((uv_loop_t*)ptr))
 	{
 		uv_run((uv_loop_t*)ptr, UV_RUN_DEFAULT);
 		uv_loop_close((uv_loop_t*)ptr);
 	}
-	Free(&mp, ptr);
+	Free(mempool, ptr);
 	ptr = nullptr;
 }
 
 void xx::UvLoop::InitTimeouter(uint64_t intervalMS, int wheelLen, int defaultInterval)
 {
 	if (timeouter) throw - 1;
-	mp.CreateTo(timeouter, *this, intervalMS, wheelLen, defaultInterval);
+	mempool->CreateTo(timeouter, *this, intervalMS, wheelLen, defaultInterval);
 }
 void xx::UvLoop::InitRpcManager(uint64_t rpcIntervalMS, int rpcDefaultInterval)
 {
 	if (rpcMgr) throw - 1;
-	mp.CreateTo(rpcMgr, *this, rpcIntervalMS, rpcDefaultInterval);
+	mempool->CreateTo(rpcMgr, *this, rpcIntervalMS, rpcDefaultInterval);
 }
 void xx::UvLoop::InitKcpFlushInterval(uint32_t interval)
 {
 	if (udpTimer) throw - 1;
 	kcpInterval = interval;
-	mp.CreateTo(udpTimer, *this, 0, interval, [this]
+	mempool->CreateTo(udpTimer, *this, 0, interval, [this]
 	{
 		udpTicks += kcpInterval;
 		for (auto& L : udpListeners)
@@ -175,29 +176,29 @@ bool xx::UvLoop::alive() const
 
 xx::UvTcpListener* xx::UvLoop::CreateTcpListener()
 {
-	return mp.CreateNativePointer<UvTcpListener>(*this);
+	return mempool->CreateNativePointer<UvTcpListener>(*this);
 }
 xx::UvTcpClient* xx::UvLoop::CreateTcpClient()
 {
-	return mp.CreateNativePointer<UvTcpClient>(*this);
+	return mempool->CreateNativePointer<UvTcpClient>(*this);
 }
 
 xx::UvUdpListener* xx::UvLoop::CreateUdpListener()
 {
-	return mp.CreateNativePointer<UvUdpListener>(*this);
+	return mempool->CreateNativePointer<UvUdpListener>(*this);
 }
 xx::UvUdpClient* xx::UvLoop::CreateUdpClient()
 {
-	return mp.CreateNativePointer<UvUdpClient>(*this);
+	return mempool->CreateNativePointer<UvUdpClient>(*this);
 }
 
 xx::UvTimer* xx::UvLoop::CreateTimer(uint64_t timeoutMS, uint64_t repeatIntervalMS, std::function<void()>&& OnFire)
 {
-	return mp.CreateNativePointer<UvTimer>(*this, timeoutMS, repeatIntervalMS, std::move(OnFire));
+	return mempool->CreateNativePointer<UvTimer>(*this, timeoutMS, repeatIntervalMS, std::move(OnFire));
 }
 xx::UvAsync* xx::UvLoop::CreateAsync()
 {
-	return mp.CreateNativePointer<UvAsync>(*this);
+	return mempool->CreateNativePointer<UvAsync>(*this);
 }
 
 
@@ -249,10 +250,11 @@ xx::UvTcpListener::UvTcpListener(MemPool* mp, UvLoop& loop)
 xx::UvTcpListener::~UvTcpListener()
 {
 	assert(ptr);
-	peers.ForEachRevert([&mp = loop.mp](auto& o) { mp.Release(o); });
+	auto mp = loop.mempool;
+	peers.ForEachRevert([mp](auto& o) { mp->Release(o); });
 	Close((uv_handle_t*)ptr);
 	ptr = nullptr;
-	Free(&loop.mp, addrPtr);
+	Free(mp, addrPtr);
 	addrPtr = nullptr;
 }
 
@@ -264,7 +266,7 @@ void xx::UvTcpListener::OnAcceptCB(void* server, int status)
 	try
 	{
 		if (listener->OnCreatePeer) peer = listener->OnCreatePeer();
-		else listener->loop.mp.CreateTo(peer, *listener);
+		else listener->loop.mempool->CreateTo(peer, *listener);
 	}
 	catch (...)
 	{
@@ -442,7 +444,7 @@ xx::UvTcpBase::UvTcpBase(MemPool* mp, UvLoop& loop)
 void xx::UvTcpBase::OnReadCBImpl(void * stream, ptrdiff_t nread, const void * buf_t)
 {
 	auto tcp = *((UvTcpBase**)stream - 1);
-	auto mp = &tcp->loop.mp;
+	auto mp = tcp->loop.mempool;
 	auto bufPtr = ((uv_buf_t*)buf_t)->base;
 	int len = (int)nread;
 	if (len > 0)
@@ -482,12 +484,12 @@ xx::UvTcpPeer::UvTcpPeer(MemPool* mp, UvTcpListener & listener)
 {
 	ipBuf.fill(0);
 
-	ptr = Alloc(&loop.mp, sizeof(uv_tcp_t), this);
+	ptr = Alloc(loop.mempool, sizeof(uv_tcp_t), this);
 	if (!ptr) throw - 1;
 
 	if (int r = uv_tcp_init((uv_loop_t*)loop.ptr, (uv_tcp_t*)ptr))
 	{
-		Free(&loop.mp, ptr);
+		Free(loop.mempool, ptr);
 		ptr = nullptr;
 		throw r;
 	}
@@ -506,7 +508,7 @@ xx::UvTcpPeer::UvTcpPeer(MemPool* mp, UvTcpListener & listener)
 		throw r;
 	}
 
-	addrPtr = Alloc(&loop.mp, sizeof(sockaddr_in));
+	addrPtr = Alloc(loop.mempool, sizeof(sockaddr_in));
 	if (!addrPtr)
 	{
 		Close((uv_handle_t*)ptr);
@@ -524,7 +526,7 @@ xx::UvTcpPeer::~UvTcpPeer()
 	if (OnDispose) OnDispose();
 	Close((uv_handle_t*)ptr);
 	ptr = nullptr;
-	Free(&loop.mp, addrPtr);
+	Free(loop.mempool, addrPtr);
 	addrPtr = nullptr;
 	listener.peers.SwapRemoveAt(index_at_container);
 }
@@ -558,7 +560,7 @@ char* xx::UvTcpPeer::ip()
 xx::UvTcpClient::UvTcpClient(MemPool* mp, UvLoop& loop)
 	: UvTcpBase(mp, loop)
 {
-	addrPtr = Alloc(&loop.mp, sizeof(sockaddr_in));
+	addrPtr = Alloc(loop.mempool, sizeof(sockaddr_in));
 	if (!addrPtr) throw - 1;
 
 	index_at_container = loop.tcpClients.dataLen;
@@ -569,7 +571,7 @@ xx::UvTcpClient::~UvTcpClient()
 {
 	Disconnect();
 	if (OnDispose) OnDispose();
-	Free(&loop.mp, addrPtr);
+	Free(loop.mempool, addrPtr);
 	addrPtr = nullptr;
 	loop.tcpClients.SwapRemoveAt(index_at_container);
 }
@@ -588,7 +590,7 @@ void xx::UvTcpClient::SetAddress(char const* const& ipv4, int port)
 void xx::UvTcpClient::OnConnectCBImpl(void* req, int status)
 {
 	auto client = *((UvTcpClient**)req - 1);
-	Free(&client->loop.mp, req);
+	Free(client->loop.mempool, req);
 	if (status < 0)
 	{
 		client->Disconnect();
@@ -606,20 +608,20 @@ void xx::UvTcpClient::Connect()
 	if (!addrPtr || ptr) throw - 1;
 	if (state != UvTcpStates::Disconnected) throw - 2;
 
-	ptr = Alloc(&loop.mp, sizeof(uv_tcp_t), this);
+	ptr = Alloc(loop.mempool, sizeof(uv_tcp_t), this);
 	if (!ptr) throw - 3;
 
 	if (int r = uv_tcp_init((uv_loop_t*)loop.ptr, (uv_tcp_t*)ptr))
 	{
-		Free(&loop.mp, ptr);
+		Free(loop.mempool, ptr);
 		ptr = nullptr;
 		throw r;
 	}
 
-	auto req = (uv_connect_t*)Alloc(&loop.mp, sizeof(uv_connect_t), this);
+	auto req = (uv_connect_t*)Alloc(loop.mempool, sizeof(uv_connect_t), this);
 	if (int r = uv_tcp_connect((uv_connect_t*)req, (uv_tcp_t*)ptr, (sockaddr*)addrPtr, (uv_connect_cb)OnConnectCBImpl))
 	{
-		Free(&loop.mp, req);
+		Free(loop.mempool, req);
 		Close((uv_handle_t*)ptr);
 		ptr = nullptr;
 		throw r;
@@ -661,12 +663,12 @@ xx::UvTimer::UvTimer(MemPool* mp, UvLoop & loop, uint64_t timeoutMS, uint64_t re
 	, OnFire(std::move(OnFire))
 	, loop(loop)
 {
-	ptr = Alloc(&loop.mp, sizeof(uv_timer_t), this);
+	ptr = Alloc(loop.mempool, sizeof(uv_timer_t), this);
 	if (!ptr) throw - 1;
 
 	if (int r = uv_timer_init((uv_loop_t*)loop.ptr, (uv_timer_t*)ptr))
 	{
-		Free(&loop.mp, ptr);
+		Free(loop.mempool, ptr);
 		throw r;
 	}
 
@@ -723,7 +725,7 @@ void xx::UvTimer::Stop()
 
 xx::UvTimeouter::UvTimeouter(MemPool* mp, UvLoop& loop, uint64_t intervalMS, int wheelLen, int defaultInterval)
 	: Object(mp)
-	, timerss(&loop.mp)
+	, timerss(loop.mempool)
 {
 	mp->CreateTo(timer, loop, 0, intervalMS, [this] { Process(); });
 	timerss.Resize(wheelLen);
@@ -816,12 +818,12 @@ xx::UvAsync::UvAsync(MemPool* mp, UvLoop & loop)
 	, loop(loop)
 	, actions(mp)
 {
-	ptr = Alloc(&loop.mp, sizeof(uv_async_t), this);
+	ptr = Alloc(loop.mempool, sizeof(uv_async_t), this);
 	if (!ptr) throw - 1;
 
 	if (int r = uv_async_init((uv_loop_t*)loop.ptr, (uv_async_t*)ptr, (uv_async_cb)OnAsyncCBImpl))
 	{
-		Free(&loop.mp, ptr);
+		Free(loop.mempool, ptr);
 		ptr = nullptr;
 		throw r;
 	}

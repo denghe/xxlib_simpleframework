@@ -10,7 +10,35 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="main.h" />
+    <None Include="main.bak" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="xxlib">
+      <UniqueIdentifier>{65c5a69c-e368-4cf9-bdfa-8ce101cb2844}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\xxlib\xx_charsutils.hpp">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\xxlib\xx_dict.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\xxlib\xx_dict.hpp">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\xxlib\xx_guid.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\xxlib\xx_hashutils.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\xxlib\xx_hashutils.hpp">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\xxlib\xx_list.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
     <ClInclude Include="..\xxlib\xx_list.hpp">
       <Filter>xxlib</Filter>
     </ClInclude>
@@ -56,38 +84,5 @@
     <ClInclude Include="..\xxlib\xx_charsutils.h">
       <Filter>xxlib</Filter>
     </ClInclude>
-    <ClInclude Include="..\xxlib\xx_charsutils.hpp">
-      <Filter>xxlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\xxlib\xx_dict.h">
-      <Filter>xxlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\xxlib\xx_dict.hpp">
-      <Filter>xxlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\xxlib\xx_guid.h">
-      <Filter>xxlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\xxlib\xx_hashutils.h">
-      <Filter>xxlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\xxlib\xx_hashutils.hpp">
-      <Filter>xxlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\xxlib\xx_list.h">
-      <Filter>xxlib</Filter>
-    </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="main.cpp.bak1" />
-    <None Include="main.cpp.bak2" />
-    <None Include="main.cpp.bak3" />
-    <None Include="main.cpp.bak4" />
-    <None Include="main.cpp.bak5" />
-  </ItemGroup>
-  <ItemGroup>
-    <Filter Include="xxlib">
-      <UniqueIdentifier>{b0aadf6a-d1d1-44bc-9588-f398e8f075a3}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
 </Project>

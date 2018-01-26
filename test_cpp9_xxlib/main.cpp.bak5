@@ -5,8 +5,7 @@ bool running = true;
 void f1()
 {
 	// echo server
-	xx::MemPool mp;
-	xx::UvLoop loop(&mp);
+	xx::UvLoop loop;
 	loop.InitTimeouter();
 	loop.InitKcpFlushInterval(10);
 	auto listener = loop.CreateUdpListener();
@@ -57,11 +56,10 @@ void f2()
 {
 	// test client
 	std::this_thread::sleep_for(std::chrono::milliseconds(100));
-	xx::MemPool mp;
-	xx::UvLoop loop(&mp);
+	xx::UvLoop loop;
 	loop.InitKcpFlushInterval(10);
 	xx::BBuffer_p pkg;
-	mp.CreateTo(pkg);
+	loop.mp.CreateTo(pkg);
 	pkg->Write((uint8_t)1);
 	pkg->Write((uint8_t)2);
 	uint64_t counter = 0;

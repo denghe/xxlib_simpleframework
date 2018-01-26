@@ -38,11 +38,10 @@ namespace xx
 		NoWait
 	};
 
-	class UvLoop
+	class UvLoop : public Object
 	{
 	public:
 		void* ptr = nullptr;
-		MemPool mp;
 		List<UvTcpListener*> tcpListeners;
 		List<UvTcpClient*> tcpClients;
 		List<UvUdpListener*> udpListeners;
@@ -56,7 +55,7 @@ namespace xx
 		std::array<char,65536> udpRecvBuf;
 		uint32_t kcpInterval = 0;
 
-		explicit UvLoop();
+		explicit UvLoop(MemPool* mp);
 		~UvLoop();
 
 		void InitTimeouter(uint64_t intervalMS = 1000, int wheelLen = 6, int defaultInterval = 5);
