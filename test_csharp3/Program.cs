@@ -55,7 +55,8 @@ public static class Program
                 //CW("client recv server pkg: " + pkg);
                 udpClient.SendBytes(pkg);
             };
-            udpClient.SetAddress("127.0.0.1", 12345);
+            //udpClient.SetAddress("127.0.0.1", 12345);
+            udpClient.SetAddress("192.168.1.250", 12345);
             udpClient.Connect(Guid.NewGuid());
 
             // make some data for send

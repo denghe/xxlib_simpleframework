@@ -164,6 +164,16 @@ XXUVLIB_API int xxuv_loop_init(uv_loop_t* p) noexcept
 	if (!r)
 	{
 		p->data = new XxMemPool();
+
+		// windows 控制台下 似乎拦截不能
+		//// 处理 ctrl + c 的情况( 已知问题: 如果正常退出, sig 的内存无法回收 )
+		//auto sig = (uv_signal_t*)Alloc(sizeof(uv_signal_t));
+		//uv_signal_init(p, sig);
+		//uv_signal_start(sig, [](uv_signal_t* handle, int signum)
+		//{
+		//	xxuv_close_((uv_handle_t*)handle);
+		//	uv_stop(handle->loop);
+		//}, SIGINT);
 	}
 	return r;
 }

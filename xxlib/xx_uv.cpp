@@ -104,13 +104,13 @@ xx::UvLoop::~UvLoop()
 {
 	assert(ptr);
 
-	mp.SafeRelease(udpTimer);
-	mp.SafeRelease(rpcMgr);
-	mp.SafeRelease(timeouter);
 	udpListeners.ForEachRevert([&mp = mp](auto& o) { mp.Release(o); });
 	udpClients.ForEachRevert([&mp = mp](auto& o) { mp.Release(o); });
 	tcpListeners.ForEachRevert([&mp = mp](auto& o) { mp.Release(o); });
 	tcpClients.ForEachRevert([&mp = mp](auto& o) { mp.Release(o); });
+	mp.SafeRelease(udpTimer);
+	mp.SafeRelease(timeouter);
+	mp.SafeRelease(rpcMgr);
 	timers.ForEachRevert([&mp = mp](auto& o) { mp.Release(o); });
 	asyncs.ForEachRevert([&mp = mp](auto& o) { mp.Release(o); });
 
@@ -156,7 +156,11 @@ void xx::UvLoop::InitKcpFlushInterval(uint32_t interval)
 
 void xx::UvLoop::Run(UvRunMode mode)
 {
-	if (int r = uv_run((uv_loop_t*)ptr, (uv_run_mode)mode)) throw r;
+	if (int r = uv_run((uv_loop_t*)ptr, (uv_run_mode)mode))
+	{
+		if (r != 1)
+			throw r;	// ctrl break
+	}
 }
 
 void xx::UvLoop::Stop()
@@ -1312,8 +1316,6 @@ xx::UvUdpClient::UvUdpClient(MemPool* mp, UvLoop& loop)
 xx::UvUdpClient::~UvUdpClient()
 {
 	Disconnect();
-	Close((uv_handle_t*)ptr);
-	ptr = nullptr;
 
 	loop.udpClients.RemoveAt(index_at_container);
 	index_at_container = -1;

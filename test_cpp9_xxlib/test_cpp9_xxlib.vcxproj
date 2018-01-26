@@ -45,12 +45,12 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(SolutionDir);$(SolutionDir)xxlib_cpp;$(SolutionDir)libuv\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir);$(SolutionDir)xxlib;$(SolutionDir)libuv\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)libuv\lib\release;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(SolutionDir);$(SolutionDir)xxlib_cpp;$(SolutionDir)libuv\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir);$(SolutionDir)xxlib;$(SolutionDir)libuv\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)libuv\lib\release;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -88,34 +88,34 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="ikcp.h" />
+    <ClInclude Include="..\xxlib\ikcp.h" />
+    <ClInclude Include="..\xxlib\xx.h" />
+    <ClInclude Include="..\xxlib\xx_bbuffer.h" />
+    <ClInclude Include="..\xxlib\xx_bbuffer.hpp" />
+    <ClInclude Include="..\xxlib\xx_bytesutils.h" />
+    <ClInclude Include="..\xxlib\xx_bytesutils.hpp" />
+    <ClInclude Include="..\xxlib\xx_charsutils.h" />
+    <ClInclude Include="..\xxlib\xx_charsutils.hpp" />
+    <ClInclude Include="..\xxlib\xx_dict.h" />
+    <ClInclude Include="..\xxlib\xx_dict.hpp" />
+    <ClInclude Include="..\xxlib\xx_guid.h" />
+    <ClInclude Include="..\xxlib\xx_hashutils.h" />
+    <ClInclude Include="..\xxlib\xx_hashutils.hpp" />
+    <ClInclude Include="..\xxlib\xx_list.h" />
+    <ClInclude Include="..\xxlib\xx_list.hpp" />
+    <ClInclude Include="..\xxlib\xx_mempool.h" />
+    <ClInclude Include="..\xxlib\xx_mempool.hpp" />
+    <ClInclude Include="..\xxlib\xx_queue.h" />
+    <ClInclude Include="..\xxlib\xx_queue.hpp" />
+    <ClInclude Include="..\xxlib\xx_string.h" />
+    <ClInclude Include="..\xxlib\xx_string.hpp" />
+    <ClInclude Include="..\xxlib\xx_uv.h" />
     <ClInclude Include="main.h" />
-    <ClInclude Include="xx.h" />
-    <ClInclude Include="xx_bbuffer.h" />
-    <ClInclude Include="xx_bbuffer.hpp" />
-    <ClInclude Include="xx_bytesutils.h" />
-    <ClInclude Include="xx_bytesutils.hpp" />
-    <ClInclude Include="xx_charsutils.h" />
-    <ClInclude Include="xx_charsutils.hpp" />
-    <ClInclude Include="xx_dict.h" />
-    <ClInclude Include="xx_dict.hpp" />
-    <ClInclude Include="xx_guid.h" />
-    <ClInclude Include="xx_hashutils.h" />
-    <ClInclude Include="xx_hashutils.hpp" />
-    <ClInclude Include="xx_list.h" />
-    <ClInclude Include="xx_list.hpp" />
-    <ClInclude Include="xx_mempool.h" />
-    <ClInclude Include="xx_mempool.hpp" />
-    <ClInclude Include="xx_queue.h" />
-    <ClInclude Include="xx_queue.hpp" />
-    <ClInclude Include="xx_string.h" />
-    <ClInclude Include="xx_string.hpp" />
-    <ClInclude Include="xx_uv.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ikcp.cpp" />
+    <ClCompile Include="..\xxlib\ikcp.cpp" />
+    <ClCompile Include="..\xxlib\xx_uv.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="xx_uv.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="main.cpp.bak1" />

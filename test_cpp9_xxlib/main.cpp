@@ -1,5 +1,7 @@
 ﻿#include "xx_uv.h"
 
+bool running = true;
+
 void f1()
 {
 	// echo server
@@ -41,9 +43,10 @@ void f1()
 		};
 	};
 
-	auto timer = loop.CreateTimer(1000, 1000, [&counter]()
+	auto timer = loop.CreateTimer(1000, 1000, [&loop, &counter]()
 	{
 		std::cout << counter << std::endl;
+		if (!running) loop.Stop();
 	});
 
 	std::cout << "listener: loop.Run();" << std::endl;
@@ -71,9 +74,10 @@ void f2()
 	client->Connect(xx::Guid());
 	client->Send(pkg);
 
-	auto timer = loop.CreateTimer(1000, 1000, [&]() 
+	auto timer = loop.CreateTimer(1000, 1000, [&]()
 	{
 		std::cout << counter << std::endl;
+		if (!running) loop.Stop();
 	});
 
 	std::cout << "client: loop.Run();" << std::endl;
@@ -83,10 +87,15 @@ int main()
 {
 	xx::MemPool::Register<xx::BBuffer, xx::Object>();
 
-	////std::thread t(f2);
-	////t.detach();
-	//f1();
+	// ctrl + break 事件处理. ctrl + c, 直接 x 拦截不能
+	SetConsoleCtrlHandler([](DWORD CtrlType)->BOOL
+	{
+		running = false;
+		return TRUE;
+	}, 1);
 
-	f2();
+	std::thread t(f2);
+	t.detach();
+	f1();
 	return 0;
 }
