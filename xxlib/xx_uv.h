@@ -292,7 +292,7 @@ namespace xx
 	class UvUdpListener : public UvListenerBase
 	{
 	public:
-		std::function<UvUdpPeer*(char const* buf)> OnCreatePeer;
+		std::function<UvUdpPeer*(Guid const&)> OnCreatePeer;
 		std::function<void(UvUdpPeer*)> OnAccept;
 		Dict<Guid, UvUdpPeer*> peers;
 
@@ -304,6 +304,10 @@ namespace xx
 		void Bind(char const* ipv4, int port);
 		void Listen();
 		void StopListen();
+
+		UvUdpPeer* CreatePeer(Guid const& g
+			, int sndwnd = 128, int rcvwnd = 128
+			, int nodelay = 1/*, int interval = 10*/, int resend = 2, int nc = 1, int minrto = 100);
 	};
 
 	class UvUdpBase : public UvTcpUdpBase
@@ -322,7 +326,7 @@ namespace xx
 		UvUdpPeer(MemPool* mp, UvUdpListener& listener
 			, Guid const& g
 			, int sndwnd = 128, int rcvwnd = 128
-			, int nodelay = 1/*, int interval = 10*/, int resend = 2, int nc = 1);
+			, int nodelay = 1/*, int interval = 10*/, int resend = 2, int nc = 1, int minrto = 100);
 		~UvUdpPeer();
 
 		static int OutputImpl(char const* buf, int len, void* kcp);
@@ -346,7 +350,7 @@ namespace xx
 
 		void Connect(Guid const& guid
 			, int sndwnd = 128, int rcvwnd = 128
-			, int nodelay = 1/*, int interval = 10*/, int resend = 2, int nc = 1);
+			, int nodelay = 1/*, int interval = 10*/, int resend = 2, int nc = 1, int minrto = 100);
 
 		static void OnRecvCBImpl(void* udp, ptrdiff_t nread, void* buf_t, void* addr, uint32_t flags);
 		void OnReceiveImpl(char const* bufPtr, int len, void* addr);

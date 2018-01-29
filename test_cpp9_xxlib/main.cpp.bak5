@@ -5,13 +5,18 @@ bool running = true;
 void f1()
 {
 	// echo server
-	xx::UvLoop loop;
+	xx::MemPool mp;
+	xx::UvLoop loop(&mp);
 	loop.InitTimeouter();
 	loop.InitKcpFlushInterval(10);
 	auto listener = loop.CreateUdpListener();
 	listener->Bind("0.0.0.0", 12345);
 	listener->Listen();
 	uint64_t counter = 0;
+	listener->OnCreatePeer = [listener](auto& g) 
+	{
+		return listener->CreatePeer(g, 128, 128, 1, 2, 1, 10);
+	};
 	listener->OnAccept = [&loop, &counter](xx::UvUdpPeer* peer)
 	{
 		std::cout << "peer: ip = " << peer->ip() << " Accepted." << std::endl;
@@ -56,10 +61,11 @@ void f2()
 {
 	// test client
 	std::this_thread::sleep_for(std::chrono::milliseconds(100));
-	xx::UvLoop loop;
+	xx::MemPool mp;
+	xx::UvLoop loop(&mp);
 	loop.InitKcpFlushInterval(10);
 	xx::BBuffer_p pkg;
-	loop.mp.CreateTo(pkg);
+	mp.CreateTo(pkg);
 	pkg->Write((uint8_t)1);
 	pkg->Write((uint8_t)2);
 	uint64_t counter = 0;
@@ -71,7 +77,7 @@ void f2()
 		client->Send(pkg);
 	};
 	client->SetAddress("127.0.0.1", 12345);
-	client->Connect(xx::Guid());
+	client->Connect(xx::Guid(), 128, 128, 1, 2, 1, 10);
 	client->Send(pkg);
 
 	auto timer = loop.CreateTimer(1000, 1000, [&]()

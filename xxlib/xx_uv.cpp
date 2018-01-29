@@ -99,6 +99,15 @@ xx::UvLoop::UvLoop(MemPool* mp)
 	}
 	((uv_loop_t*)ptr)->data = mp;
 
+	// 感觉启用内存池之后似乎没啥作用, cpu 占用反而更高了
+	// kcp 这个设计不科学. 直接就是全局改了. 这里反复改也不会出事
+	//ikcp_allocator([](auto a, auto s)
+	//{
+	//	return ((xx::MemPool*)a)->Alloc(s);
+	//}, [](auto a, auto p)
+	//{
+	//	((xx::MemPool*)a)->Free(p);
+	//});
 }
 
 xx::UvLoop::~UvLoop()
@@ -1112,7 +1121,7 @@ void xx::UvUdpListener::OnReceiveImpl(char const* bufPtr, int len, void* addr)
 			if (!OnCreatePeer) mempool->CreateTo(p, *this, g);
 			else
 			{
-				p = OnCreatePeer(bufPtr);
+				p = OnCreatePeer(g);
 				if (!p) return;
 			}
 		}
@@ -1152,6 +1161,12 @@ void xx::UvUdpListener::StopListen()
 	if (int r = uv_udp_recv_stop((uv_udp_t*)ptr)) throw r;
 }
 
+xx::UvUdpPeer* xx::UvUdpListener::CreatePeer(Guid const& g
+	, int sndwnd, int rcvwnd
+	, int nodelay/*, int interval*/, int resend, int nc, int minrto)
+{
+	return mempool->CreateNativePointer<xx::UvUdpPeer>(*this, g, sndwnd, rcvwnd, nodelay/*, interval*/, resend, nc, minrto);
+}
 
 
 
@@ -1176,7 +1191,7 @@ typedef int(*KcpOutputCB)(const char *buf, int len, ikcpcb *kcp);
 xx::UvUdpPeer::UvUdpPeer(MemPool* mp, UvUdpListener& listener
 	, Guid const& g
 	, int sndwnd, int rcvwnd
-	, int nodelay/*, int interval*/, int resend, int nc)
+	, int nodelay/*, int interval*/, int resend, int nc, int minrto)
 	: UvUdpBase(mp, listener.loop)
 	, listener(listener)
 {
@@ -1184,7 +1199,7 @@ xx::UvUdpPeer::UvUdpPeer(MemPool* mp, UvUdpListener& listener
 
 	ipBuf.fill(0);
 
-	ptr = ikcp_create(&g, this, nullptr);	// todo
+	ptr = ikcp_create(&g, this, mp);
 	if (!ptr) throw - 2;
 
 	int r = 0;
@@ -1195,6 +1210,7 @@ xx::UvUdpPeer::UvUdpPeer(MemPool* mp, UvUdpListener& listener
 		ptr = nullptr;
 		throw r;
 	}
+	((ikcpcb*)ptr)->rx_minrto = minrto;
 	ikcp_setoutput((ikcpcb*)ptr, (KcpOutputCB)OutputImpl);
 
 	addrPtr = Alloc(mp, sizeof(sockaddr_in));
@@ -1249,7 +1265,8 @@ void xx::UvUdpPeer::Update(uint32_t current)
 	ikcp_update((ikcpcb*)ptr, current);
 	nextUpdateTicks = ikcp_check((ikcpcb*)ptr, current);
 
-	while (true)
+	auto versionNumber = memHeader().versionNumber;
+	while (versionNumber == memHeader().versionNumber)
 	{
 		int len = ikcp_recv((ikcpcb*)ptr, (char*)&loop.udpRecvBuf, (int)loop.udpRecvBuf.size());
 		if (len <= 0) break;
@@ -1276,7 +1293,8 @@ void xx::UvUdpPeer::DisconnectImpl()
 
 size_t xx::UvUdpPeer::GetSendQueueSize()
 {
-	return uv_udp_get_send_queue_size((uv_udp_t*)listener.ptr);
+	//return uv_udp_get_send_queue_size((uv_udp_t*)listener.ptr);
+	return ikcp_waitsnd((ikcpcb*)ptr);
 }
 
 bool xx::UvUdpPeer::Disconnected()
@@ -1325,7 +1343,7 @@ xx::UvUdpClient::~UvUdpClient()
 
 void xx::UvUdpClient::Connect(xx::Guid const& g
 	, int sndwnd, int rcvwnd
-	, int nodelay/*, int interval*/, int resend, int nc)
+	, int nodelay/*, int interval*/, int resend, int nc, int minrto)
 {
 	if (!loop.kcpInterval) throw - 1;
 
@@ -1350,7 +1368,7 @@ void xx::UvUdpClient::Connect(xx::Guid const& g
 	}
 
 	this->guid = g;
-	kcpPtr = ikcp_create(&g, this, nullptr);	// todo
+	kcpPtr = ikcp_create(&g, this, mempool);
 	if (!kcpPtr)
 	{
 		Close((uv_handle_t*)ptr);
@@ -1367,6 +1385,7 @@ void xx::UvUdpClient::Connect(xx::Guid const& g
 		ptr = nullptr;
 		throw - 5;
 	}
+	((ikcpcb*)ptr)->rx_minrto = minrto;
 	ikcp_setoutput((ikcpcb*)kcpPtr, (KcpOutputCB)OutputImpl);
 }
 void xx::UvUdpClient::OnRecvCBImpl(void* uvudp, ptrdiff_t nread, void* buf_t, void* addr, uint32_t flags)
@@ -1417,7 +1436,8 @@ void xx::UvUdpClient::Update(uint32_t current)
 	ikcp_update((ikcpcb*)kcpPtr, current);
 	nextUpdateTicks = ikcp_check((ikcpcb*)kcpPtr, current);
 
-	while (true)
+	auto versionNumber = memHeader().versionNumber;
+	while (versionNumber == memHeader().versionNumber)
 	{
 		int len = ikcp_recv((ikcpcb*)kcpPtr, (char*)&loop.udpRecvBuf, (int)loop.udpRecvBuf.size());
 		if (len <= 0) break;
@@ -1453,5 +1473,7 @@ bool xx::UvUdpClient::Disconnected()
 }
 size_t xx::UvUdpClient::GetSendQueueSize()
 {
-	return uv_udp_get_send_queue_size((uv_udp_t*)ptr);
+	//return uv_udp_get_send_queue_size((uv_udp_t*)ptr);
+	if (!kcpPtr) return 0;
+	return ikcp_waitsnd((ikcpcb*)kcpPtr);
 }

@@ -114,7 +114,8 @@ namespace xx
 		int ReadPackages(Queue<Object_p>& outPkgs);
 
 		// 试读出单个包( 等同于 ReadRoot )
-		int ReadPackage(Object_p& outPkg);
+		template<typename T>
+		int ReadPackage(T& outPkg);
 
 
 		// 序列化相关

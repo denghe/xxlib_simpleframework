@@ -11,6 +11,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="main.bak" />
+    <None Include="main.bak2" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="xxlib">

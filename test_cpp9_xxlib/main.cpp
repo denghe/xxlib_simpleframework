@@ -13,6 +13,10 @@ void f1()
 	listener->Bind("0.0.0.0", 12345);
 	listener->Listen();
 	uint64_t counter = 0;
+	listener->OnCreatePeer = [listener](auto& g)
+	{
+		return listener->CreatePeer(g, 1024, 1024);
+	};
 	listener->OnAccept = [&loop, &counter](xx::UvUdpPeer* peer)
 	{
 		std::cout << "peer: ip = " << peer->ip() << " Accepted." << std::endl;
@@ -36,6 +40,14 @@ void f1()
 			}
 			else
 			{
+				// todo: 队列深度检测. 如果超深, T 掉
+				if (peer->GetSendQueueSize() > 100)
+				{
+					std::cout << "listener: peer->GetSendQueueSize() > 100" << std::endl;
+					peer->Release();
+					return;
+				}
+
 				++counter;
 				peer->TimeoutReset();
 				//std::cout << "listener: recv pkg" << std::endl;
@@ -62,24 +74,56 @@ void f2()
 	loop.InitKcpFlushInterval(10);
 	xx::BBuffer_p pkg;
 	mp.CreateTo(pkg);
-	pkg->Write((uint8_t)1);
-	pkg->Write((uint8_t)2);
+	uint64_t pkgid = 0;
+	uint64_t recvpkgid = 0;
 	uint64_t counter = 0;
 	auto client = loop.CreateUdpClient();
 	client->OnReceivePackage = [&](xx::BBuffer& bb)
 	{
 		//std::cout << "client: recv pkg" << std::endl;
+		xx::BBuffer_p recvpkg;
+		if (int r = bb.ReadPackage(recvpkg))
+		{
+			std::cout << "client: bb.ReadPackage(o) fail. r = " << r << std::endl;
+		}
+		else
+		{
+			uint64_t id;
+			if (r = recvpkg->Read(id))
+			{
+				std::cout << "client: recvpkg.Read(id) fail. r = " << r << std::endl;
+			}
+			else
+			{
+				if (id != recvpkgid)
+				{
+					std::cout << "client: OnReceivePackage lost package. id = " << id << ", recvpkgid = " << recvpkgid << std::endl;
+				}
+				else
+				{
+					recvpkgid++;
+				}
+			}
+		}
 		++counter;
-		client->Send(pkg);
 	};
 	client->SetAddress("127.0.0.1", 12345);
-	client->Connect(xx::Guid());
-	client->Send(pkg);
+	client->Connect(xx::Guid(), 1024, 1024);
 
 	auto timer = loop.CreateTimer(1000, 1000, [&]()
 	{
 		std::cout << counter << std::endl;
 		if (!running) loop.Stop();
+	});
+
+	auto timer2 = loop.CreateTimer(1, 1, [&]()
+	{
+		//while (client->GetSendQueueSize() < 512)
+		//{
+			pkg->Clear();
+			pkg->Write(pkgid++);
+			client->Send(pkg);
+		//}
 	});
 
 	std::cout << "client: loop.Run();" << std::endl;

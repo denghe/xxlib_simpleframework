@@ -308,9 +308,10 @@ namespace xx
 	}
 
 
-	inline int BBuffer::ReadPackage(Object_p& outPkg)
+	template<typename T>
+	int BBuffer::ReadPackage(T& outPkg)
 	{
-		return ReadRoot(outPkg);
+		return ReadRoot<T>(outPkg);
 	}
 
 

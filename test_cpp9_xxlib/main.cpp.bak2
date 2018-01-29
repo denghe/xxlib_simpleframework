@@ -3,7 +3,8 @@
 void f1()
 {
 	// echo server
-	xx::UvLoop loop;
+	xx::MemPool mp;
+	xx::UvLoop loop(&mp);
 	auto listener = loop.CreateTcpListener();
 	loop.InitTimeouter();
 	uint64_t counter = 0;
@@ -52,7 +53,8 @@ void f2()
 {
 	// test client
 	std::this_thread::sleep_for(std::chrono::milliseconds(100));
-	xx::UvLoop loop;
+	xx::MemPool mp;
+	xx::UvLoop loop(&mp);
 	xx::BBuffer_p pkg;
 	uint64_t counter = 0;
 	auto client = loop.CreateTcpClient();
@@ -73,7 +75,7 @@ void f2()
 	client->SetAddress("127.0.0.1", 12345);
 	client->Connect();
 
-	auto timer = loop.CreateTimer(1000, 1000, [&]() 
+	auto timer = loop.CreateTimer(1000, 1000, [&]()
 	{
 		std::cout << counter << std::endl;
 	});
