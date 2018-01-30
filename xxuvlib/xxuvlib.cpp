@@ -379,7 +379,7 @@ XXUVLIB_API void xxuv_addr_copy(sockaddr_in* from, sockaddr_in* to) noexcept
 
 XXUVLIB_API int xxuv_fill_ip(sockaddr_in* addr, char* buf, int buf_len, int* data_len) noexcept
 {
-	if (int r = uv_ip4_name(addr, buf, buf_len)) throw r;
+	if (int r = uv_ip4_name(addr, buf, buf_len)) return -1;
 	*data_len = (int)strlen(buf);
 	*data_len += sprintf_s(buf + *data_len, buf_len - *data_len, ":%d", ntohs(addr->sin_port));
 	return 0;
