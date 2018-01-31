@@ -26,51 +26,50 @@ public static class Program
             // kcp 轮询间隔 ms
             loop.InitKcpFlushInterval(10);
 
-            //// server
-            //var udpListener = new UvUdpListener(loop);
-            //udpListener.OnAccept = p =>
-            //{
-            //    CW(p.ip);
-            //    p.OnReceivePackage = pkg =>
-            //    {
-            //        CW("listener recv " + p.ip + "'s pkg: " + pkg);
-
-            //        // echo
-            //        p.SendBytes(pkg);
-            //    };
-            //};
-            //udpListener.OnDispose = () => 
-            //{
-            //    CW("listener disposed.");
-            //};
-            //udpListener.Bind("0.0.0.0", 12345);
-            //udpListener.RecvStart();
-
-            // client
-            var udpClient = new UvUdpClient(loop);
-            int counter = 0;
-            udpClient.OnReceivePackage = pkg =>
+            // server
+            var udpListener = new UvUdpListener(loop);
+            udpListener.OnAccept = p =>
             {
-                ++counter;
-                //CW("client recv server pkg: " + pkg);
-                udpClient.SendBytes(pkg);
+                CW(p.ip);
+                p.OnReceivePackage = pkg =>
+                {
+                    CW("listener recv " + p.ip + "'s pkg: " + pkg);
+
+                    // echo
+                    p.SendBytes(pkg);
+                };
             };
-            //udpClient.SetAddress("127.0.0.1", 12345);
-            udpClient.SetAddress("192.168.1.250", 12345);
-            udpClient.Connect(Guid.NewGuid());
-
-            // make some data for send
-            var bb = new BBuffer();
-            bb.Write((byte)1);
-            bb.Write((byte)2);
-
-            // send
-            udpClient.Send(bb);
-
-            new UvTimer(loop, 1000, 1000, () => 
+            udpListener.OnDispose = () =>
             {
-                Console.WriteLine(counter);
-            });
+                CW("listener disposed.");
+            };
+            udpListener.Bind("0.0.0.0", 12345);
+            udpListener.Listen();
+
+            //// client
+            //var udpClient = new UvUdpClient(loop);
+            //int counter = 0;
+            //udpClient.OnReceivePackage = pkg =>
+            //{
+            //    ++counter;
+            //    //CW("client recv server pkg: " + pkg);
+            //    udpClient.SendBytes(pkg);
+            //};
+            //udpClient.SetAddress("127.0.0.1", 12345);
+            //udpClient.Connect(Guid.NewGuid());
+
+            //// make some data for send
+            //var bb = new BBuffer();
+            //bb.Write((byte)1);
+            //bb.Write((byte)2);
+
+            //// send
+            //udpClient.Send(bb);
+
+            //new UvTimer(loop, 1000, 1000, () => 
+            //{
+            //    Console.WriteLine(counter);
+            //});
 
             // begin run
             CW("client: loop.Run();");

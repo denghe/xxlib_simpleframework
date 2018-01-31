@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+#if NET_2_0 || NET_2_0_SUBSET
+#else
 using System.Collections.Concurrent;
+#endif
 using System.Text;
 
 namespace xx
