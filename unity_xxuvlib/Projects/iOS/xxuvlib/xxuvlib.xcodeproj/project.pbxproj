@@ -8,14 +8,16 @@
 
 /* Begin PBXBuildFile section */
 		E341EBAD1FCFE8B6008E695D /* xxuvlib.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E341EBAC1FCFE8B6008E695D /* xxuvlib.cpp */; };
+		E3E8BD6E2021AE0300C478CC /* ikcp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E3E8BD6C2021AE0300C478CC /* ikcp.cpp */; };
+		E3E8BD702021AE5E00C478CC /* libuv.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E3E8BD6F2021AE5E00C478CC /* libuv.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
 		E341EB9A1FCFE852008E695D /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
-			dstPath = "include/$(PRODUCT_NAME)";
-			dstSubfolderSpec = 16;
+			dstPath = "$(BUILD_DIR)";
+			dstSubfolderSpec = 0;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -24,10 +26,12 @@
 
 /* Begin PBXFileReference section */
 		E341EB9C1FCFE852008E695D /* libxxuvlib.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libxxuvlib.a; sourceTree = BUILT_PRODUCTS_DIR; };
-		E341EBA91FCFE8B6008E695D /* xxuv.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = xxuv.h; path = ../../Sources/xxuv.h; sourceTree = "<group>"; };
-		E341EBAA1FCFE8B6008E695D /* xxbuf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = xxbuf.h; path = ../../Sources/xxbuf.h; sourceTree = "<group>"; };
 		E341EBAB1FCFE8B6008E695D /* xxuvlib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = xxuvlib.h; path = ../../Sources/xxuvlib.h; sourceTree = "<group>"; };
 		E341EBAC1FCFE8B6008E695D /* xxuvlib.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = xxuvlib.cpp; path = ../../Sources/xxuvlib.cpp; sourceTree = "<group>"; };
+		E3E8BD6B2021AE0300C478CC /* xxmempool.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = xxmempool.h; path = ../../Sources/xxmempool.h; sourceTree = "<group>"; };
+		E3E8BD6C2021AE0300C478CC /* ikcp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ikcp.cpp; path = ../../Sources/ikcp.cpp; sourceTree = "<group>"; };
+		E3E8BD6D2021AE0300C478CC /* ikcp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ikcp.h; path = ../../Sources/ikcp.h; sourceTree = "<group>"; };
+		E3E8BD6F2021AE5E00C478CC /* libuv.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libuv.a; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -35,6 +39,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E3E8BD702021AE5E00C478CC /* libuv.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -44,8 +49,10 @@
 		E341EB931FCFE852008E695D = {
 			isa = PBXGroup;
 			children = (
-				E341EBAA1FCFE8B6008E695D /* xxbuf.h */,
-				E341EBA91FCFE8B6008E695D /* xxuv.h */,
+				E3E8BD6F2021AE5E00C478CC /* libuv.a */,
+				E3E8BD6C2021AE0300C478CC /* ikcp.cpp */,
+				E3E8BD6D2021AE0300C478CC /* ikcp.h */,
+				E3E8BD6B2021AE0300C478CC /* xxmempool.h */,
 				E341EBAC1FCFE8B6008E695D /* xxuvlib.cpp */,
 				E341EBAB1FCFE8B6008E695D /* xxuvlib.h */,
 				E341EB9D1FCFE852008E695D /* Products */,
@@ -117,6 +124,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E3E8BD6E2021AE0300C478CC /* ikcp.cpp in Sources */,
 				E341EBAD1FCFE8B6008E695D /* xxuvlib.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -235,6 +243,15 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = MPFH9F7JJN;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/../../Sources",
+					"$(PROJECT_DIR)/../../Sources/libuv_include",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
+				);
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -247,6 +264,15 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = MPFH9F7JJN;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/../../Sources",
+					"$(PROJECT_DIR)/../../Sources/libuv_include",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
+				);
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
