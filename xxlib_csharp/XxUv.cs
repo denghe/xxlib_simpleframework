@@ -239,6 +239,9 @@ namespace xx
 
 
         static UvInterop.uv_connection_cb OnAcceptCB = OnAcceptCBImpl;
+#if NET_2_0 || NET_2_0_SUBSET
+        [AOT.MonoPInvokeCallback(typeof(UvInterop.uv_connection_cb))]
+#endif
         static void OnAcceptCBImpl(IntPtr stream, int status)
         {
             if (status != 0) return;
@@ -528,6 +531,9 @@ namespace xx
         }
 
         protected static UvInterop.uv_read_cb OnReadCB = OnReadCBImpl;
+#if NET_2_0 || NET_2_0_SUBSET
+        [AOT.MonoPInvokeCallback(typeof(UvInterop.uv_connection_cb))]
+#endif
         static void OnReadCBImpl(IntPtr stream, IntPtr nread, IntPtr buf_t)
         {
             var tcp = stream.To<UvTcpBase>();
@@ -743,6 +749,9 @@ namespace xx
         }
 
         static UvInterop.uv_connect_cb OnConnectCB = OnConnectCBImpl;
+#if NET_2_0 || NET_2_0_SUBSET
+        [AOT.MonoPInvokeCallback(typeof(UvInterop.uv_connection_cb))]
+#endif
         static void OnConnectCBImpl(IntPtr req, int status)
         {
             var client = (UvTcpClient)((GCHandle)UvInterop.xxuv_get_ud_from_uv_connect_t(req)).Target;
@@ -904,6 +913,9 @@ namespace xx
         }
 
         static UvInterop.uv_timer_cb OnTimerCB = OnTimerCBImpl;
+#if NET_2_0 || NET_2_0_SUBSET
+        [AOT.MonoPInvokeCallback(typeof(UvInterop.uv_connection_cb))]
+#endif
         static void OnTimerCBImpl(IntPtr handle)
         {
             var timer = handle.To<UvTimer>();
@@ -1102,6 +1114,9 @@ namespace xx
         }
 
         static UvInterop.uv_async_cb AsyncCB = OnAsyncCBImpl;
+#if NET_2_0 || NET_2_0_SUBSET
+        [AOT.MonoPInvokeCallback(typeof(UvInterop.uv_connection_cb))]
+#endif
         static void OnAsyncCBImpl(IntPtr handle)
         {
             var self = handle.To<UvAsync>();
@@ -1373,6 +1388,9 @@ namespace xx
         }
 
         static UvInterop.uv_udp_recv_cb OnRecvCB = OnRecvCBImpl;
+#if NET_2_0 || NET_2_0_SUBSET
+        [AOT.MonoPInvokeCallback(typeof(UvInterop.uv_connection_cb))]
+#endif
         static void OnRecvCBImpl(IntPtr udp, IntPtr nread, IntPtr buf_t, IntPtr addr, uint flags)
         {
             var listener = udp.To<UvUdpListener>();
@@ -1549,6 +1567,9 @@ namespace xx
         }
 
         static UvInterop.ikcp_output_cb OutputCB = OutputImpl;
+#if NET_2_0 || NET_2_0_SUBSET
+        [AOT.MonoPInvokeCallback(typeof(UvInterop.uv_connection_cb))]
+#endif
         static int OutputImpl(IntPtr buf, int len, IntPtr kcp)
         {
             var peer = (UvUdpPeer)((GCHandle)UvInterop.xx_ikcp_get_ud(kcp)).Target;
@@ -1766,6 +1787,9 @@ namespace xx
 
 
         static UvInterop.uv_udp_recv_cb OnRecvCB = OnRecvCBImpl;
+#if NET_2_0 || NET_2_0_SUBSET
+        [AOT.MonoPInvokeCallback(typeof(UvInterop.uv_connection_cb))]
+#endif
         static void OnRecvCBImpl(IntPtr udp, IntPtr nread, IntPtr buf_t, IntPtr addr, uint flags)
         {
             var client = udp.To<UvUdpClient>();
@@ -1793,6 +1817,9 @@ namespace xx
         }
 
         static UvInterop.ikcp_output_cb OutputCB = OutputImpl;
+#if NET_2_0 || NET_2_0_SUBSET
+        [AOT.MonoPInvokeCallback(typeof(UvInterop.uv_connection_cb))]
+#endif
         static int OutputImpl(IntPtr buf, int len, IntPtr kcp)
         {
             var client = (UvUdpClient)((GCHandle)UvInterop.xx_ikcp_get_ud(kcp)).Target;
