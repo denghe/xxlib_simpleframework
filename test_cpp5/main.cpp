@@ -24,7 +24,7 @@
 	如果 tarAddr 无效, 则断开 client? ( 暂行方案 )
 	
 	服务器首次收到后, 应该根据 sender 创建虚拟连接, 需要保存下列结构:
-	class VirtualConnection
+	class VC
 	{
 		Peer proxy;
 		Guid sender;
@@ -50,6 +50,10 @@
 	}
 
 	客户端在收到数据之后, 产生的收包回调中, 也需要将 serviceId 体现出来, 或是进一步的定位到相应的服务虚拟连接, 做进一步的转发
+
+	如果不纠结收发数据量, 设 serviceId 为 Guid, 则能极大减少 代理 服务的 memcpy 行为, 对于收到的包, 直接将 serviceId 的内容改为 sender 就能转发给 service.
+	并且, 所有收发相关结构, 都是相同数据结构. 经简化后, 初始可以是固定的 16 字节, 后面跟包内容, 这样似乎简单明快.
+	也就是说, 不再需要上面的类结构, BBuffer 在构造数据时, 前 16 字节就用来放地址信息.
 */
 
 
