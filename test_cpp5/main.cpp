@@ -1,92 +1,109 @@
 ﻿#include "xx_uv.h"
 
-//void f1()
-//{
-//	// echo server
-//	xx::MemPool mp;
-//	xx::UvLoop loop(&mp);
-//	auto listener = loop.CreateTcpListener();
-//	loop.InitTimeouter();
-//	uint64_t counter = 0;
-//	listener->OnAccept = [&loop, &counter](xx::UvTcpPeer* peer)
-//	{
-//		std::cout << "peer: ip = " << peer->ip() << " Accepted." << std::endl;
-//		peer->BindTimeouter(loop.timeouter);
-//		peer->TimeoutReset();
-//		peer->OnTimeout = [peer]()
-//		{
-//			std::cout << "peer: ip = " << peer->ip() << " Timeouted." << std::endl;
-//			peer->Release();
-//		};
-//		peer->OnDispose = [peer]()
-//		{
-//			std::cout << "peer: ip = " << peer->ip() << " Disposed." << std::endl;
-//		};
-//		peer->OnReceivePackage = [peer, &counter](xx::BBuffer& bb)
-//		{
-//			xx::Object_p o;
-//			if (int r = bb.ReadPackage(o))
-//			{
-//				std::cout << "listener: bb.ReadPackage(o) fail. r = " << r << std::endl;
-//			}
-//			else
-//			{
-//				++counter;
-//				peer->TimeoutReset();
-//				//std::cout << "listener: recv pkg" << std::endl;
-//				peer->Send(o);
-//			}
-//		};
-//	};
-//	listener->Bind("0.0.0.0", 12345);
-//	listener->Listen();
-//
-//	auto timer = loop.CreateTimer(1000, 1000, [&counter]()
-//	{
-//		std::cout << counter << std::endl;
-//	});
-//
-//	std::cout << "listener: loop.Run();" << std::endl;
-//	loop.Run();
-//}
-void f2()
+/*
+	todo: 网关服务
+
+
+	协议设计: 网关应该具备自己的通信协议结构以及转发上下文
+	网关根据所读到的配置文件, 去连接其他服务( 也就是说每个服务都要开个 Listener 供多个网关连接 )
+	在配置文件中, 需要为每个服务统一分配 id 号( 或理解为地址 )
+
+	发向网关的包结构如下:
+	class C2P
+	{
+		uint serviceId;
+		BBuffer data;
+	}
+
+	网关根据 tarAddr, 从映射表中定位到相应 tcp 长连接, 发送下列结构的包:
+	class P2S
+	{
+		Guid sender;
+		BBuffer data;
+	}
+	如果 tarAddr 无效, 则断开 client? ( 暂行方案 )
+	
+	服务器首次收到后, 应该根据 sender 创建虚拟连接, 需要保存下列结构:
+	class VirtualConnection
+	{
+		Peer proxy;
+		Guid sender;
+	}
+	如果发现该结构已存在( 应该存在一个 Dict<Guid, VC> 映射 ), 则定位之
+	应该从设计上避免出现一个 client 连接多个 proxy 的情况. ( 二期工程, 考虑 proxy 总控用于处理 guid 单点 )
+
+	当数据需要延迟回发时, 通过 Guid 到 VC 的映射来定位连接信息, 进而将数据发向相应的 proxy.
+	发向 代理 的数据如下:
+
+	class S2P
+	{
+		Guid sender;
+		BBuffer data;
+	}
+
+	代理 根据 Guid 来定位具体的 client udp 连接, 进而执行回发 data 的操作. 
+	发向 client 的数据如下:
+	class P2C
+	{
+		uint serviceId;		// 从收包连接上下文中取
+		BBuffer data;
+	}
+
+	客户端在收到数据之后, 产生的收包回调中, 也需要将 serviceId 体现出来, 或是进一步的定位到相应的服务虚拟连接, 做进一步的转发
+*/
+
+
+void f1()
 {
-	// test client
-	std::this_thread::sleep_for(std::chrono::milliseconds(100));
+	// proxy server
 	xx::MemPool mp;
 	xx::UvLoop loop(&mp);
-	xx::BBuffer_p pkg;
+	auto listener = loop.CreateTcpListener();
+	loop.InitTimeouter();
 	uint64_t counter = 0;
-	auto client = loop.CreateTcpClient();
-	client->OnConnect = [&](int status)
+	listener->OnAccept = [&loop, &counter](xx::UvTcpPeer* peer)
 	{
-		std::cout << "client: OnConnect status = " << status << std::endl;
-		if (client->alive())
+		std::cout << "peer: ip = " << peer->ip() << " Accepted." << std::endl;
+		peer->BindTimeouter(loop.timeouter);
+		peer->TimeoutReset();
+		peer->OnTimeout = [peer]()
 		{
-			client->Send(pkg);
-		}
+			std::cout << "peer: ip = " << peer->ip() << " Timeouted." << std::endl;
+			peer->Release();
+		};
+		peer->OnDispose = [peer]()
+		{
+			std::cout << "peer: ip = " << peer->ip() << " Disposed." << std::endl;
+		};
+		peer->OnReceivePackage = [peer, &counter](xx::BBuffer& bb)
+		{
+			xx::Object_p o;
+			if (int r = bb.ReadPackage(o))
+			{
+				std::cout << "listener: bb.ReadPackage(o) fail. r = " << r << std::endl;
+			}
+			else
+			{
+				++counter;
+				peer->TimeoutReset();
+				//std::cout << "listener: recv pkg" << std::endl;
+				peer->Send(o);
+			}
+		};
 	};
-	client->OnReceivePackage = [&](xx::BBuffer& bb)
-	{
-		//std::cout << "client: recv pkg" << std::endl;
-		++counter;
-		client->Send(pkg);
-	};
-	client->SetAddress("192.168.1.250", 12345);
-	client->Connect();
+	listener->Bind("0.0.0.0", 12345);
+	listener->Listen();
 
-	auto timer = loop.CreateTimer(1000, 1000, [&]()
+	auto timer = loop.CreateTimer(1000, 1000, [&counter]()
 	{
 		std::cout << counter << std::endl;
 	});
 
-	std::cout << "client: loop.Run();" << std::endl;
+	std::cout << "listener: loop.Run();" << std::endl;
 	loop.Run();
 }
 int main()
 {
-	//std::thread t(f2);
-	//t.detach();
-	f2();
+	f1();
 	return 0;
 }
