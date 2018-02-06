@@ -5,6 +5,7 @@
 #define WIN32_LEAN_AND_MEAN
 #endif
 #include <WinSock2.h>								// 含 windows.h
+#include <ws2tcpip.h>
 #pragma comment(lib, "WS2_32") 
 #undef min											// 免得干扰 std::min
 #undef max											// 免得干扰 std::max
@@ -12,6 +13,7 @@ static_assert(SOCKET_ERROR == -1 && INVALID_SOCKET == -1);
 typedef SOCKET      Socket_t;
 typedef int         SockLen_t;
 #else
+#include <sys/socket.h>
 #include <unistd.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -39,7 +41,10 @@ struct XxNBSocket
 	Socket_t					sock = -1;
 	States						state = States::Disconnected;
 	int							ticks = 0;			// 当前状态持续 ticks 计数 ( Disconnecting 时例外, 该值为负, 当变到 0 时, 执行 Close )
+
+	bool						useipv6 = false;
 	sockaddr_in					addr;
+	sockaddr_in6				addr6;
 
 	std::deque<XxBuf>			sendBufs;			// 未及时发走的数据将堆积在此
 	std::deque<XxBuf>			recvBufs;			// 收到的"包"数据将堆积在此
@@ -60,7 +65,13 @@ struct XxNBSocket
 	// 设置目标地址
 	inline void SetAddress(char const* const& ip, uint16_t const& port)
 	{
+		useipv6 = false;
 		SockSetAddress(addr, ip, port);
+	}
+	inline int SetAddress6(char const* const& ip, uint16_t const& port)
+	{
+		useipv6 = true;
+		return SockSetAddress6(addr6, ip, port);
 	}
 
 	// 连接目标地址服务器. 可设阻塞时长. 
@@ -77,7 +88,14 @@ struct XxNBSocket
 		int r = SockSetNonBlock(sock);
 		if (r) return Close(-6);					 // set non block fail
 
-		r = SockConnect(sock, addr);
+		if (useipv6)
+		{
+			r = SockConnect(sock, addr6);
+		}
+		else
+		{
+			r = SockConnect(sock, addr);
+		}
 		if (r == -1)
 		{
 			r = SockGetErrNo();
@@ -343,7 +361,16 @@ public:
 		addr.sin_port = htons(port);
 	}
 
-	inline static int SockConnect(Socket_t const& s, sockaddr_in const& addr)
+	inline static int SockSetAddress6(sockaddr_in6& addr, char const* const& ip, uint16_t const& port)
+	{
+		memset(&addr, 0, sizeof(addr));
+		addr.sin6_family = AF_INET6;
+		addr.sin6_port = htons(port);
+		return inet_pton(AF_INET6, ip, &addr.sin6_addr);
+	}
+
+	template<typename AddrType>
+	inline static int SockConnect(Socket_t const& s, AddrType const& addr)
 	{
 	LabRetry:
 		int r = ::connect(s, (sockaddr *)&addr, sizeof(addr));

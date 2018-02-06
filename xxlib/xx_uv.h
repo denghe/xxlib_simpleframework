@@ -127,6 +127,11 @@ namespace xx
 	public:
 		std::function<void(BBuffer&)> OnReceivePackage;
 		std::function<void(uint32_t, BBuffer&)> OnReceiveRequest;
+
+		// 路由包, 增加了几个参数: 包长, 包offset, 地址offset( 以便直接从 地址offset修改 地址 后从 包offset 发送包长字节 )
+		std::function<void(BBuffer&, size_t, size_t, size_t)> OnReceiveRouterPackage;
+		std::function<void(uint32_t, BBuffer&, size_t, size_t, size_t)> OnReceiveRouterRequest;
+
 		std::function<void()> OnDispose;
 
 		UvLoop& loop;

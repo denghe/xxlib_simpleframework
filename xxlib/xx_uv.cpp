@@ -396,6 +396,17 @@ void xx::UvTcpUdpBase::ReceiveImpl(char const* bufPtr, int len)
 				return;
 			}
 		}
+		// todo: 4,5,6 做成 带 16 字节转发地址的协议
+		//else if (typeId == 4)
+		//{
+		//	//if (OnReceiveRouterPackage) OnReceiveRouterPackage(bbRecv, pkgLen, offset - 16, );
+		//	if (versionNumber != memHeader().versionNumber) return;
+		//	if (Disconnected())
+		//	{
+		//		bbRecv.Clear();
+		//		return;
+		//	}
+		//}
 		else
 		{
 			uint32_t serial = 0;

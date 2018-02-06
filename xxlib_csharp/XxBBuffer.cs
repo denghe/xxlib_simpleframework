@@ -1179,6 +1179,10 @@ namespace xx
             TypeIdMaps<T>.typeId = typeId;
             typeIdCreatorMappings[typeId] = () => { return new T(); };
         }
+        public static void RegisterInternals()
+        {
+            Register<BBuffer>(2);
+        }
 
         public static IBBuffer CreateByTypeId(ushort typeId)
         {

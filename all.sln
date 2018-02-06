@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.27130.2010
+VisualStudioVersion = 15.0.27130.2026
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "test_csharp1", "test_csharp1\test_csharp1.csproj", "{40783734-2418-451C-8B7E-472A33C6D91B}"
 EndProject
@@ -81,6 +81,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "rpc_client_lua", "rpc_client_lua\rpc_client_lua.csproj", "{5F3A0385-E8A2-4422-981F-B65F87FEDD27}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test_cpp9_xxlib", "test_cpp9_xxlib\test_cpp9_xxlib.vcxproj", "{FB4473DE-D72B-4732-AC36-785D83BE5AFE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "test_csharp4", "test_csharp4\test_csharp4.csproj", "{787EC44F-A955-4E7C-AF59-166C676AFD5E}"
 EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
@@ -236,6 +238,10 @@ Global
 		{FB4473DE-D72B-4732-AC36-785D83BE5AFE}.Debug|x64.Build.0 = Debug|x64
 		{FB4473DE-D72B-4732-AC36-785D83BE5AFE}.Release|x64.ActiveCfg = Release|x64
 		{FB4473DE-D72B-4732-AC36-785D83BE5AFE}.Release|x64.Build.0 = Release|x64
+		{787EC44F-A955-4E7C-AF59-166C676AFD5E}.Debug|x64.ActiveCfg = Debug|x64
+		{787EC44F-A955-4E7C-AF59-166C676AFD5E}.Debug|x64.Build.0 = Debug|x64
+		{787EC44F-A955-4E7C-AF59-166C676AFD5E}.Release|x64.ActiveCfg = Release|x64
+		{787EC44F-A955-4E7C-AF59-166C676AFD5E}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

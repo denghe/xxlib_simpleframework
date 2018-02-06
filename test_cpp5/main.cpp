@@ -22,18 +22,18 @@
 		BBuffer data;
 	}
 	如果 tarAddr 无效, 则断开 client? ( 暂行方案 )
-	
+
 	服务器首次收到后, 应该根据 sender 创建虚拟连接, 需要保存下列结构:
 	class VC
 	{
-		Peer proxy;
+		Peer router;
 		Guid sender;
 	}
 	如果发现该结构已存在( 应该存在一个 Dict<Guid, VC> 映射 ), 则定位之
-	应该从设计上避免出现一个 client 连接多个 proxy 的情况. ( 二期工程, 考虑 proxy 总控用于处理 guid 单点 )
+	应该从设计上避免出现一个 client 连接多个 网关 的情况. ( 二期工程, 考虑 网关 总控用于处理 guid 单点 )
 
-	当数据需要延迟回发时, 通过 Guid 到 VC 的映射来定位连接信息, 进而将数据发向相应的 proxy.
-	发向 代理 的数据如下:
+	当数据需要延迟回发时, 通过 Guid 到 VC 的映射来定位连接信息, 进而将数据发向相应的 网关.
+	发向 网关 的数据如下:
 
 	class S2P
 	{
@@ -41,7 +41,7 @@
 		BBuffer data;
 	}
 
-	代理 根据 Guid 来定位具体的 client udp 连接, 进而执行回发 data 的操作. 
+	网关 根据 Guid 来定位具体的 client udp 连接, 进而执行回发 data 的操作.
 	发向 client 的数据如下:
 	class P2C
 	{
@@ -51,11 +51,34 @@
 
 	客户端在收到数据之后, 产生的收包回调中, 也需要将 serviceId 体现出来, 或是进一步的定位到相应的服务虚拟连接, 做进一步的转发
 
-	如果不纠结收发数据量, 设 serviceId 为 Guid, 则能极大减少 代理 服务的 memcpy 行为, 对于收到的包, 直接将 serviceId 的内容改为 sender 就能转发给 service.
+	如果不纠结收发数据量, 设 serviceId 为 Guid, 则能极大减少 网关 服务的 memcpy 行为, 对于收到的包, 直接将 serviceId 的内容改为 sender 就能转发给 service.
 	并且, 所有收发相关结构, 都是相同数据结构. 经简化后, 初始可以是固定的 16 字节, 后面跟包内容, 这样似乎简单明快.
 	也就是说, 不再需要上面的类结构, BBuffer 在构造数据时, 前 16 字节就用来放地址信息.
 */
 
+
+namespace xx
+{
+	class RouterUdpPeer : public UvUdpPeer
+	{
+		RouterUdpPeer(MemPool* mp, UvUdpListener& listener
+			, Guid const& g
+			, int sndwnd = 128, int rcvwnd = 128
+			, int nodelay = 1/*, int interval = 10*/, int resend = 2, int nc = 1, int minrto = 100)
+			: UvUdpPeer(mp, listener, g, sndwnd, rcvwnd, nodelay/*, interval*/, resend, nc, minrto)
+		{
+		}
+	};
+
+	class RouterUdpListener : public UvUdpListener
+	{
+		RouterUdpListener(MemPool* mp, UvLoop& loop)
+			: UvUdpListener(mp, loop)
+		{
+			//OnAccept = new RouterUdpPeer
+		}
+	};
+}
 
 void f1()
 {

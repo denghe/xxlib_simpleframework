@@ -48,6 +48,16 @@ namespace xx
         }
 
         /// <summary>
+        /// 设 ip & port
+        /// </summary>
+        public int SetAddress6(string ip, ushort port)
+        {
+            if (disposed) throw new ObjectDisposedException("XxUvTcpClient");
+            return NBSocketInterop.xxnbs_set_address6(ptr, ip, port);
+        }
+
+
+        /// <summary>
         /// 开始连接. 可传入阻塞时长( 通常都是不传的 )
         /// 返回负数 表示出错. 0 表示没发生错误 但也没连上. 1 表示连接成功.
         /// </summary>
@@ -423,6 +433,9 @@ namespace xx
 
         [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
         internal static extern void xxnbs_set_address(IntPtr nbs, string ip, ushort port);
+
+        [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int xxnbs_set_address6(IntPtr nbs, string ip, ushort port);
 
         [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
         internal static extern int xxnbs_connect(IntPtr nbs, int sec, int usec);

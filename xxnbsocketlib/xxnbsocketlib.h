@@ -33,6 +33,9 @@ extern "C" {
 	// 设 ip & port
 	XXNBSOCKETLIB_API void xxnbs_set_address(XxNBSocket* nbs, char const* ip, int port) noexcept;
 
+	// 设 ip & port( ipv6 版 )
+	XXNBSOCKETLIB_API int xxnbs_set_address6(XxNBSocket* nbs, char const* ip, int port) noexcept;
+
 	// 开始连接. 可传入阻塞时长
 	// 返回负数 表示出错. 0 表示没发生错误 但也没连上. 1 表示连接成功
 	XXNBSOCKETLIB_API int xxnbs_connect(XxNBSocket* nbs, int sec, int usec) noexcept;

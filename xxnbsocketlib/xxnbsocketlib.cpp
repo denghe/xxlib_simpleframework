@@ -55,7 +55,11 @@ extern "C" {
 
 	XXNBSOCKETLIB_API void xxnbs_set_address(XxNBSocket* nbs, char const* ip, int port) noexcept
 	{
-		return nbs->SetAddress(ip, port);
+		return nbs->SetAddress(ip, (uint16_t)port);
+	}
+	XXNBSOCKETLIB_API int xxnbs_set_address6(XxNBSocket* nbs, char const* ip, int port) noexcept
+	{
+		return nbs->SetAddress6(ip, (uint16_t)port);
 	}
 
 	XXNBSOCKETLIB_API int xxnbs_connect(XxNBSocket* nbs, int sec, int usec) noexcept
