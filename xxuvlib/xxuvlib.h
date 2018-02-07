@@ -48,7 +48,7 @@ extern "C" {
 	XXUVLIB_API int xxuv_loop_close(uv_loop_t* loop) noexcept;
 	XXUVLIB_API int xxuv_loop_alive(uv_loop_t* loop) noexcept;
 
-	XXUVLIB_API int xxuv_ip4_addr(const char* ipv4, int port, sockaddr_in* addr) noexcept;
+	XXUVLIB_API int xxuv_ip4_addr(const char* ipv4, int port, sockaddr* addr) noexcept;
 	XXUVLIB_API int xxuv_ip6_addr(const char* ipv6, int port, sockaddr_in6* addr) noexcept;
 
 	XXUVLIB_API int xxuv_tcp_init(uv_loop_t* loop, uv_tcp_t* tcp) noexcept;

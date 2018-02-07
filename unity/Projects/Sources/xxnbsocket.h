@@ -5,6 +5,7 @@
 #define WIN32_LEAN_AND_MEAN
 #endif
 #include <WinSock2.h>								// 含 windows.h
+#include <ws2tcpip.h>
 #pragma comment(lib, "WS2_32") 
 #undef min											// 免得干扰 std::min
 #undef max											// 免得干扰 std::max
@@ -12,9 +13,11 @@ static_assert(SOCKET_ERROR == -1 && INVALID_SOCKET == -1);
 typedef SOCKET      Socket_t;
 typedef int         SockLen_t;
 #else
-#include <unistd.h>
-#include <netinet/in.h>
+#include <sys/socket.h>
 #include <arpa/inet.h>
+#include <netdb.h> 
+#include <netinet/in.h>
+#include <unistd.h>
 #include <errno.h>
 #include <fcntl.h>
 typedef int         Socket_t;
@@ -39,7 +42,8 @@ struct XxNBSocket
 	Socket_t					sock = -1;
 	States						state = States::Disconnected;
 	int							ticks = 0;			// 当前状态持续 ticks 计数 ( Disconnecting 时例外, 该值为负, 当变到 0 时, 执行 Close )
-	sockaddr_in					addr;
+
+	sockaddr_in6				addr;				// ipv4/6 公用结构( ipv4 时硬转为 sockaddr_in )
 
 	std::deque<XxBuf>			sendBufs;			// 未及时发走的数据将堆积在此
 	std::deque<XxBuf>			recvBufs;			// 收到的"包"数据将堆积在此
@@ -49,7 +53,7 @@ struct XxNBSocket
 
 	XxNBSocket()
 	{
-		addr.sin_port = 0;							// 用这个来做是否有设置过 addr 的标记
+		addr.sin6_family = 0;						// 用这个来做是否有设置过 addr 的标记
 	}
 
 	~XxNBSocket()
@@ -57,44 +61,45 @@ struct XxNBSocket
 		if (sock != -1) Close(0);
 	}
 
-	// 设置目标地址
+	// 设置目标地址( v4 ip串, 不支持域名 )( 针对苹果机, 多一步使用 getaddrinfo 将 ip 转为 sockaddr_in/6 结构体的过程 )
 	inline void SetAddress(char const* const& ip, uint16_t const& port)
 	{
-		SockSetAddress(addr, ip, port);
+		SockSetAddress(&addr, ip, port);
 	}
 
 	// 连接目标地址服务器. 可设阻塞时长. 
 	// 返回负数 表示出错. 0 表示没发生错误 但也没连上. 1 表示连接成功
 	inline int Connect(int const& sec = 0, int const& usec = 0)
 	{
-		if (state != States::Disconnected) return -2;// wrong state
-		if (!addr.sin_port) return -3;				 // not set address ?
-		if (sock != -1) return -4;					 // socket is created
+		if (state != States::Disconnected) return -2;	// wrong state
+		if (!addr.sin6_family) return -3;				// not set address ?
+		if (sock != -1) return -4;						// socket is created
 
-		sock = SockCreate();
-		if (sock == -1) return -5;					 // socket create fail
+		sock = ::socket(addr.sin6_family, SOCK_STREAM, 0);
+		if (sock == -1) return -5;						// socket create fail
 
 		int r = SockSetNonBlock(sock);
-		if (r) return Close(-6);					 // set non block fail
+		if (r) return Close(-6);						// set non block fail
 
-		r = SockConnect(sock, addr);
+		r = SockConnect(sock, (sockaddr*)&addr);
 		if (r == -1)
 		{
 			r = SockGetErrNo();
-			if (r != EINPROGRESS && r != EWOULDBLOCK) return Close(-7);	// connect fail
+			if (r != EINPROGRESS && r != EWOULDBLOCK)
+				return Close(-7);						// connect fail
 
 			r = SockWaitReadOrWritable(sock, false, sec, usec);
-			if (r < 0) return Close(-8);			// wait writable fail
+			if (r < 0) return Close(-8);				// wait writable fail
 			else if (r == 0)
 			{
 				state = States::Connecting;
 				ticks = 0;
-				return 0;							// timeout( not error )
+				return 0;								// timeout( not error )
 			}
 		}
 		state = States::Connected;
 		ticks = 0;
-		return 1;									// success
+		return 1;										// success
 	}
 
 	// 断开连接
@@ -281,11 +286,6 @@ public:
 #endif
 	}
 
-	inline static Socket_t SockCreate()
-	{
-		return ::socket(AF_INET, SOCK_STREAM, 0);
-	}
-
 	inline static int SockClose(Socket_t const& s) noexcept
 	{
 #ifdef _WIN32
@@ -335,18 +335,42 @@ public:
 		return FD_ISSET(s, &rwset) ? r : -1;					// 因为只 select 1 个 socket. 不在 rwset 即在 eset 即出错
 	}
 
-	inline static void SockSetAddress(sockaddr_in& addr, char const* const& ip, uint16_t const& port)
+	inline static int SockSetAddress(sockaddr_in6* addr6, char const* ip, uint16_t port)
 	{
-		memset(addr.sin_zero, 0, sizeof(addr.sin_zero));
-		addr.sin_family = AF_INET;
-		addr.sin_addr.s_addr = inet_addr(ip);
-		addr.sin_port = htons(port);
+#ifdef __APPLE__
+		// 解决 ipv6 only 网络问题
+		addrinfo hints, *res, *res0;
+		memset(&hints, 0, sizeof(hints));
+		hints.ai_family = PF_UNSPEC;
+		hints.ai_socktype = SOCK_STREAM;
+		hints.ai_flags = AI_DEFAULT;
+		if (r = getaddrinfo(ipv4_str, nullptr, &hints, &res0)) return r;
+		for (res = res0; res; res = res->ai_next) 
+		{
+			auto s = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+			if (s < 0) continue;
+			close(s);
+			memcpy(addr6, &res->ai_addr, res->ai_addrlen);
+			addr6->sin6_port = htons(port);
+			freeaddrinfo(res0);
+			return 0;
+		}
+		freeaddrinfo(res0);
+		return -1;
+#else
+		auto addr = (sockaddr_in*)addr6;
+		memset(addr, 0, sizeof(*addr));
+		addr->sin_family = AF_INET;
+		addr->sin_port = htons(port);
+		addr->sin_addr.s_addr = inet_addr(ip);
+		return 0;
+#endif
 	}
 
-	inline static int SockConnect(Socket_t const& s, sockaddr_in const& addr)
+	inline static int SockConnect(Socket_t const& s, sockaddr* addr)
 	{
 	LabRetry:
-		int r = ::connect(s, (sockaddr *)&addr, sizeof(addr));
+		int r = ::connect(s, addr, sizeof(sockaddr_in6));
 		if (r == -1 && SockGetErrNo() == EINTR) goto LabRetry;
 		return r;
 	}

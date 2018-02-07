@@ -749,15 +749,17 @@ namespace xx
             }
         }
 
-        public void SetAddress(string ipv4, int port)
+        public void SetAddress(string ip, int port)
         {
             if (disposed) throw new ObjectDisposedException("XxUvTcpClient");
-            UvInterop.xxuv_ip4_addr(ipv4, port, addrPtr).TryThrow();
-        }
-        public void SetAddress6(string ipv6, int port)
-        {
-            if (disposed) throw new ObjectDisposedException("XxUvTcpClient");
-            UvInterop.xxuv_ip6_addr(ipv6, port, addrPtr).TryThrow();
+            if (ip.Contains(":"))
+            {
+                UvInterop.xxuv_ip6_addr(ip, port, addrPtr).TryThrow();
+            }
+            else
+            {
+                UvInterop.xxuv_ip4_addr(ip, port, addrPtr).TryThrow();
+            }
         }
 
         static UvInterop.uv_connect_cb OnConnectCB = OnConnectCBImpl;
@@ -1460,16 +1462,17 @@ namespace xx
             p.Input(bufPtr, len);
         }
 
-        public void Bind(string ipv4, int port)
+        public void Bind(string ip, int port)
         {
             if (disposed) throw new ObjectDisposedException("XxUvUdpListener");
-            UvInterop.xxuv_ip4_addr(ipv4, port, addrPtr).TryThrow();
-            UvInterop.xxuv_udp_bind_(ptr, addrPtr).TryThrow();
-        }
-        public void Bind6(string ipv6, int port)
-        {
-            if (disposed) throw new ObjectDisposedException("XxUvUdpListener");
-            UvInterop.xxuv_ip6_addr(ipv6, port, addrPtr).TryThrow();
+            if (ip.Contains(":"))
+            {
+                UvInterop.xxuv_ip6_addr(ip, port, addrPtr).TryThrow();
+            }
+            else
+            {
+                UvInterop.xxuv_ip4_addr(ip, port, addrPtr).TryThrow();
+            }
             UvInterop.xxuv_udp_bind_(ptr, addrPtr).TryThrow();
         }
 
@@ -1871,15 +1874,17 @@ namespace xx
             kcpPtr = IntPtr.Zero;
         }
 
-        public void SetAddress(string ipv4, int port)
+        public void SetAddress(string ip, int port)
         {
             if (disposed) throw new ObjectDisposedException("XxUvUdpClient");
-            UvInterop.xxuv_ip4_addr(ipv4, port, addrPtr).TryThrow();
-        }
-        public void SetAddress6(string ipv6, int port)
-        {
-            if (disposed) throw new ObjectDisposedException("XxUvUdpClient");
-            UvInterop.xxuv_ip6_addr(ipv6, port, addrPtr).TryThrow();
+            if (ip.Contains(":"))
+            {
+                UvInterop.xxuv_ip6_addr(ip, port, addrPtr).TryThrow();
+            }
+            else
+            {
+                UvInterop.xxuv_ip4_addr(ip, port, addrPtr).TryThrow();
+            }
         }
 
         public override void SendBytes(byte[] data, int offset = 0, int len = 0)

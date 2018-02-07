@@ -210,9 +210,31 @@ XXUVLIB_API int xxuv_loop_alive(uv_loop_t* p) noexcept
 
 
 
-XXUVLIB_API int xxuv_ip4_addr(const char* ipv4, int port, sockaddr_in* addr) noexcept
+XXUVLIB_API int xxuv_ip4_addr(const char* ipv4, int port, sockaddr* addr) noexcept
 {
-	return uv_ip4_addr(ipv4, port, addr);
+#ifdef __APPLE__
+	// 解决 client ipv6 only 网络问题
+	addrinfo hints, *res, *res0;
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = PF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags = AI_DEFAULT;
+	if (r = getaddrinfo(ipv4_str, nullptr, &hints, &res0)) return r;
+	for (res = res0; res; res = res->ai_next)
+	{
+		auto s = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+		if (s < 0) continue;
+		close(s);
+		memcpy(addr6, &res->ai_addr, res->ai_addrlen);
+		addr6->sin6_port = htons(port);
+		freeaddrinfo(res0);
+		return 0;
+	}
+	freeaddrinfo(res0);
+	return -1;
+#else
+	return uv_ip4_addr(ipv4, port, (sockaddr_in*)addr);
+#endif
 }
 XXUVLIB_API int xxuv_ip6_addr(const char* ipv6, int port, sockaddr_in6* addr) noexcept
 {
