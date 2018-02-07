@@ -26,14 +26,16 @@ public class UnityScene
     }
     IEnumerable UpdateCore()
     {
-        nbs.SetAddress("127.0.0.1", 12345);
-        Console.WriteLine("init");
+        int r = 0;
+        nbs.SetAddress("192.168.1.111", 12345);
+        //r = nbs.SetAddress6("2001:0:9d38:953c:4c1:cecb:82af:796e", 12345);
+        //Console.WriteLine("init addr. r = " + r);
 
         LabConnect:                             // 循环切入点
         yield return null;                      // 避免后续 if + goto 中间缺驱动环节
 
-        nbs.Connect();                          // 下达任务 并等结果
-        Console.WriteLine("connecting...");
+        r = nbs.Connect();                  // 下达任务 并等结果
+        Console.WriteLine("connecting... r = " + r);
         while (true)
         {
             yield return null;                  // while 内必配一句 yield 防独占 cpu
@@ -69,7 +71,7 @@ public class UnityScene
         xx.Queue<xx.IBBuffer> recvs = new xx.Queue<xx.IBBuffer>();
 
         // 设置收包事件
-        nbs.OnReceivePackage = (ibb) => 
+        nbs.OnReceivePackage = (ibb) =>
         {
             recvs.Push(ibb);
         };
@@ -89,7 +91,7 @@ public class UnityScene
 
             // 收到数据的处理
             xx.IBBuffer ibb;
-            while(recvs.TryDequeue(out ibb))
+            while (recvs.TryDequeue(out ibb))
             {
                 // count 取出来 +1 再发出去
                 var recv = ibb as xx.BBuffer;

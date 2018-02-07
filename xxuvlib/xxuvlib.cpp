@@ -71,9 +71,11 @@ XXUVLIB_API uv_udp_t* xxuv_alloc_uv_udp_t(void* ud) noexcept
 }
 
 
-XXUVLIB_API sockaddr_in* xxuv_alloc_sockaddr_in(void* ud) noexcept
+XXUVLIB_API sockaddr* xxuv_alloc_sockaddr_in(void* ud) noexcept
 {
-	return (sockaddr_in*)Alloc(sizeof(sockaddr_in), ud);
+	auto ptr = Alloc(sizeof(sockaddr_in6), ud);
+	memset(ptr, 0, sizeof(sockaddr_in6));
+	return (sockaddr*)ptr;
 }
 
 XXUVLIB_API uv_timer_t* xxuv_alloc_uv_timer_t(void* ud) noexcept
@@ -208,9 +210,13 @@ XXUVLIB_API int xxuv_loop_alive(uv_loop_t* p) noexcept
 
 
 
-XXUVLIB_API int xxuv_ip4_addr(const char* ip, int port, sockaddr_in* addr) noexcept
+XXUVLIB_API int xxuv_ip4_addr(const char* ipv4, int port, sockaddr_in* addr) noexcept
 {
-	return uv_ip4_addr(ip, port, addr);
+	return uv_ip4_addr(ipv4, port, addr);
+}
+XXUVLIB_API int xxuv_ip6_addr(const char* ipv6, int port, sockaddr_in6* addr) noexcept
+{
+	return uv_ip6_addr(ipv6, port, addr);
 }
 
 
@@ -280,13 +286,22 @@ XXUVLIB_API int xxuv_write_(uv_stream_t* stream, char const* inBuf, unsigned int
 
 XXUVLIB_API int xxuv_fill_client_ip(uv_tcp_t* stream, char* buf, int buf_len, int* data_len) noexcept
 {
-	sockaddr_in saddr;
+	sockaddr_in6 saddr;
 	int len = sizeof(saddr);
 	int r = 0;
 	if (r = uv_tcp_getpeername(stream, (sockaddr*)&saddr, &len)) return r;
-	if (r = uv_inet_ntop(AF_INET, &saddr.sin_addr, buf, buf_len)) return r;
-	*data_len = (int)strlen(buf);
-	*data_len += sprintf_s(buf + *data_len, buf_len - *data_len, ":%d", ntohs(saddr.sin_port));
+	if (((sockaddr*)&saddr)->sa_family == AF_INET6)
+	{
+		if (r = uv_inet_ntop(AF_INET6, &saddr.sin6_addr, buf, buf_len)) return r;
+		*data_len = (int)strlen(buf);
+		*data_len += sprintf_s(buf + *data_len, buf_len - *data_len, ":%d", ntohs(saddr.sin6_port));
+	}
+	else
+	{
+		if (r = uv_inet_ntop(AF_INET, &((sockaddr_in*)&saddr)->sin_addr, buf, buf_len)) return r;
+		*data_len = (int)strlen(buf);
+		*data_len += sprintf_s(buf + *data_len, buf_len - *data_len, ":%d", ntohs(((sockaddr_in*)&saddr)->sin_port));
+	}
 	return r;
 }
 
@@ -346,7 +361,7 @@ XXUVLIB_API int xxuv_udp_send(uv_udp_send_t* req, uv_udp_t* handle, const uv_buf
 XXUVLIB_API int xxuv_udp_send_(uv_udp_t* handle, char const* inBuf, unsigned int offset, unsigned int len, const struct sockaddr* addr) noexcept
 {
 	//uv_udp_get_send_queue_size
-		
+
 	struct uv_udp_send_t_ex
 	{
 		XxMemPool* mp;
@@ -372,16 +387,25 @@ XXUVLIB_API size_t xxuv_udp_get_send_queue_size(const uv_udp_t* udp) noexcept
 	return uv_udp_get_send_queue_size(udp);
 }
 
-XXUVLIB_API void xxuv_addr_copy(sockaddr_in* from, sockaddr_in* to) noexcept
+XXUVLIB_API void xxuv_addr_copy(sockaddr* from, sockaddr* to) noexcept
 {
-	memcpy(to, from, sizeof(sockaddr_in));
+	memcpy(to, from, sizeof(sockaddr_in6));
 }
 
-XXUVLIB_API int xxuv_fill_ip(sockaddr_in* addr, char* buf, int buf_len, int* data_len) noexcept
+XXUVLIB_API int xxuv_fill_ip(sockaddr* addr, char* buf, int buf_len, int* data_len) noexcept
 {
-	if (int r = uv_ip4_name(addr, buf, buf_len)) return -1;
-	*data_len = (int)strlen(buf);
-	*data_len += sprintf_s(buf + *data_len, buf_len - *data_len, ":%d", ntohs(addr->sin_port));
+	if (addr->sa_family == AF_INET6)
+	{
+		if (int r = uv_ip6_name((sockaddr_in6*)addr, buf, buf_len)) return -1;
+		*data_len = (int)strlen(buf);
+		*data_len += sprintf_s(buf + *data_len, buf_len - *data_len, ":%d", ntohs(((sockaddr_in6*)&addr)->sin6_port));
+	}
+	else
+	{
+		if (int r = uv_ip4_name((sockaddr_in*)addr, buf, buf_len)) return -1;
+		*data_len = (int)strlen(buf);
+		*data_len += sprintf_s(buf + *data_len, buf_len - *data_len, ":%d", ntohs(((sockaddr_in*)&addr)->sin_port));
+	}
 	return 0;
 }
 

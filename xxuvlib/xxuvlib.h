@@ -22,7 +22,7 @@ extern "C" {
 	XXUVLIB_API uv_loop_t* xxuv_alloc_uv_loop_t(void* ud) noexcept;
 	XXUVLIB_API uv_tcp_t* xxuv_alloc_uv_tcp_t(void* ud) noexcept;
 	XXUVLIB_API uv_udp_t* xxuv_alloc_uv_udp_t(void* ud) noexcept;
-	XXUVLIB_API sockaddr_in* xxuv_alloc_sockaddr_in(void* ud) noexcept;
+	XXUVLIB_API sockaddr* xxuv_alloc_sockaddr_in(void* ud) noexcept;
 	XXUVLIB_API uv_timer_t* xxuv_alloc_uv_timer_t(void* ud) noexcept;
 	XXUVLIB_API uv_async_t* xxuv_alloc_uv_async_t(void* ud) noexcept;
 	XXUVLIB_API uv_signal_t* xxuv_alloc_uv_signal_t(void* ud) noexcept;
@@ -48,7 +48,8 @@ extern "C" {
 	XXUVLIB_API int xxuv_loop_close(uv_loop_t* loop) noexcept;
 	XXUVLIB_API int xxuv_loop_alive(uv_loop_t* loop) noexcept;
 
-	XXUVLIB_API int xxuv_ip4_addr(const char* ip, int port, sockaddr_in* addr) noexcept;
+	XXUVLIB_API int xxuv_ip4_addr(const char* ipv4, int port, sockaddr_in* addr) noexcept;
+	XXUVLIB_API int xxuv_ip6_addr(const char* ipv6, int port, sockaddr_in6* addr) noexcept;
 
 	XXUVLIB_API int xxuv_tcp_init(uv_loop_t* loop, uv_tcp_t* tcp) noexcept;
 	XXUVLIB_API int xxuv_tcp_bind(uv_tcp_t* tcp, const struct sockaddr* addr, unsigned int flags) noexcept;
@@ -78,8 +79,8 @@ extern "C" {
 	XXUVLIB_API int xxuv_udp_send(uv_udp_send_t* req, uv_udp_t* handle, const uv_buf_t bufs[], unsigned int nbufs, const struct sockaddr* addr, uv_udp_send_cb send_cb) noexcept;
 	XXUVLIB_API int xxuv_udp_send_(uv_udp_t* handle, char const* buf, unsigned int offset, unsigned int len, const struct sockaddr* addr) noexcept;
 	XXUVLIB_API size_t xxuv_udp_get_send_queue_size(const uv_udp_t* udp) noexcept;
-	XXUVLIB_API void xxuv_addr_copy(sockaddr_in* from, sockaddr_in* to) noexcept;
-	XXUVLIB_API int xxuv_fill_ip(sockaddr_in* addr, char* buf, int buf_len, int* data_len) noexcept;
+	XXUVLIB_API void xxuv_addr_copy(sockaddr* from, sockaddr* to) noexcept;
+	XXUVLIB_API int xxuv_fill_ip(sockaddr* addr, char* buf, int buf_len, int* data_len) noexcept;
 
 
 	XXUVLIB_API int xxuv_timer_init(uv_loop_t* loop, uv_timer_t* timer_req) noexcept;

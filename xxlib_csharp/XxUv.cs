@@ -265,10 +265,17 @@ namespace xx
         }
 
 
-        public void Bind(string ipv4, int port)
+        public void Bind(string ip, int port)
         {
             if (disposed) throw new ObjectDisposedException("XxUvTcpListener");
-            UvInterop.xxuv_ip4_addr(ipv4, port, addrPtr).TryThrow();
+            if (ip.Contains(":"))
+            {
+                UvInterop.xxuv_ip6_addr(ip, port, addrPtr).TryThrow();
+            }
+            else
+            {
+                UvInterop.xxuv_ip4_addr(ip, port, addrPtr).TryThrow();
+            }
             UvInterop.xxuv_tcp_bind_(ptr, addrPtr).TryThrow();
         }
 
@@ -746,6 +753,11 @@ namespace xx
         {
             if (disposed) throw new ObjectDisposedException("XxUvTcpClient");
             UvInterop.xxuv_ip4_addr(ipv4, port, addrPtr).TryThrow();
+        }
+        public void SetAddress6(string ipv6, int port)
+        {
+            if (disposed) throw new ObjectDisposedException("XxUvTcpClient");
+            UvInterop.xxuv_ip6_addr(ipv6, port, addrPtr).TryThrow();
         }
 
         static UvInterop.uv_connect_cb OnConnectCB = OnConnectCBImpl;
@@ -1454,6 +1466,12 @@ namespace xx
             UvInterop.xxuv_ip4_addr(ipv4, port, addrPtr).TryThrow();
             UvInterop.xxuv_udp_bind_(ptr, addrPtr).TryThrow();
         }
+        public void Bind6(string ipv6, int port)
+        {
+            if (disposed) throw new ObjectDisposedException("XxUvUdpListener");
+            UvInterop.xxuv_ip6_addr(ipv6, port, addrPtr).TryThrow();
+            UvInterop.xxuv_udp_bind_(ptr, addrPtr).TryThrow();
+        }
 
         public void Listen()
         {
@@ -1858,6 +1876,11 @@ namespace xx
             if (disposed) throw new ObjectDisposedException("XxUvUdpClient");
             UvInterop.xxuv_ip4_addr(ipv4, port, addrPtr).TryThrow();
         }
+        public void SetAddress6(string ipv6, int port)
+        {
+            if (disposed) throw new ObjectDisposedException("XxUvUdpClient");
+            UvInterop.xxuv_ip6_addr(ipv6, port, addrPtr).TryThrow();
+        }
 
         public override void SendBytes(byte[] data, int offset = 0, int len = 0)
         {
@@ -2017,7 +2040,10 @@ namespace xx
 
 
         [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
-        public static extern int xxuv_ip4_addr(string ip, int port, IntPtr addr);
+        public static extern int xxuv_ip4_addr(string ipv4, int port, IntPtr addr);
+
+        [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int xxuv_ip6_addr(string ipv6, int port, IntPtr addr);
 
 
 
