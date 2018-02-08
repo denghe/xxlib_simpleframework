@@ -10,7 +10,7 @@ public static class Program
     {
         BBuffer.RegisterInternals();
 
-        using (var loop = new UvLoop(1000, 2))
+        using (var loop = new UvLoop())
         {
             var tcpListener = new UvTcpListener(loop);
             tcpListener.OnAccept = p =>
@@ -35,6 +35,29 @@ public static class Program
             tcpListener.Bind("::", 12345);
             //tcpListener.Bind("0.0.0.0", 12345);
             tcpListener.Listen();
+
+
+
+            //var tcpClient = new xx.UvTcpClient(loop);
+            //int counter = 0;
+            //tcpClient.OnReceivePackage = pkg =>
+            //{
+            //    ++counter;
+            //    tcpClient.SendBytes(pkg);
+            //};
+            //tcpClient.OnConnect = status => 
+            //{
+            //    Console.WriteLine("status = " + status);
+            //    if (!tcpClient.alive) return;
+            //    // make some data for send
+            //    var bb = new xx.BBuffer();
+            //    bb.Write((byte)1);
+            //    bb.Write((byte)2);
+
+            //    tcpClient.Send(bb);
+            //};
+            //tcpClient.SetAddress("192.168.1.111", 12345);
+            //tcpClient.Connect();
 
             Console.WriteLine("loo.Running...");
             loop.Run();

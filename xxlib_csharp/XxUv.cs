@@ -45,7 +45,7 @@ namespace xx
         public GCHandle handle;
         public IntPtr handlePtr;
 
-        public UvLoop(ulong rpcIntervalMS = 1000, int rpcDefaultInterval = 5)
+        public UvLoop()
         {
             try
             {
@@ -64,8 +64,6 @@ namespace xx
                     this.Unhandle(ref handle, ref handlePtr);
                     r.Throw();
                 }
-
-                rpcMgr = new UvRpcManager(this, rpcIntervalMS, rpcDefaultInterval);
 
                 udpRecvBufHandle = GCHandle.Alloc(udpRecvBuf, GCHandleType.Pinned);
                 udpRecvBufHandlePtr = udpRecvBufHandle.AddrOfPinnedObject();

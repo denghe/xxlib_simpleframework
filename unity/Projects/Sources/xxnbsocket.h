@@ -338,23 +338,26 @@ public:
 	inline static int SockSetAddress(sockaddr_in6* addr6, char const* ip, uint16_t port)
 	{
 #ifdef __APPLE__
-		// 解决 ipv6 only 网络问题
+		// 解决 client ipv6 only 网络问题
 		addrinfo hints, *res, *res0;
 		memset(&hints, 0, sizeof(hints));
 		hints.ai_family = PF_UNSPEC;
 		hints.ai_socktype = SOCK_STREAM;
 		hints.ai_flags = AI_DEFAULT;
-		if (r = getaddrinfo(ipv4_str, nullptr, &hints, &res0)) return r;
-		for (res = res0; res; res = res->ai_next) 
+
+		char portbuf[16];
+		sprintf(portbuf, "%d", port);
+
+		if (auto r = getaddrinfo(ip, portbuf, &hints, &res0)) return r;
+		for (res = res0; res; res = res->ai_next)
 		{
 			auto s = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
 			if (s < 0) continue;
 			close(s);
-			memcpy(addr6, &res->ai_addr, res->ai_addrlen);
-			addr6->sin6_port = htons(port);
+			memcpy(addr6, res->ai_addr, res->ai_addrlen);
 			freeaddrinfo(res0);
 			return 0;
-		}
+	}
 		freeaddrinfo(res0);
 		return -1;
 #else

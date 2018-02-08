@@ -208,7 +208,9 @@ XXUVLIB_API int xxuv_loop_alive(uv_loop_t* p) noexcept
 
 
 
-
+#ifdef __APPLE__
+#include <unistd.h>
+#endif
 
 XXUVLIB_API int xxuv_ip4_addr(const char* ipv4, int port, sockaddr* addr) noexcept
 {
@@ -219,14 +221,32 @@ XXUVLIB_API int xxuv_ip4_addr(const char* ipv4, int port, sockaddr* addr) noexce
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_flags = AI_DEFAULT;
-	if (r = getaddrinfo(ipv4_str, nullptr, &hints, &res0)) return r;
+    
+    char portbuf[16];
+    sprintf(portbuf, "%d", port);
+    
+    if (auto r = getaddrinfo(ipv4, portbuf, &hints, &res0)) return r;
 	for (res = res0; res; res = res->ai_next)
 	{
 		auto s = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
 		if (s < 0) continue;
 		close(s);
-		memcpy(addr6, &res->ai_addr, res->ai_addrlen);
-		addr6->sin6_port = htons(port);
+		memcpy(addr, res->ai_addr, res->ai_addrlen);
+//        if (addr->sa_family == AF_INET6)
+//        {
+//            char buf[64];
+//            printf("ipv6: %s\n", inet_ntop(AF_INET6, &((sockaddr_in6*)addr)->sin6_addr, buf, 64));
+//            //((sockaddr_in6*)addr)->sin6_port = htons(port);
+//            //sprintf(buf, "2001:0:0:faff::c0a8:16f");
+//            //printf("ipv6: %s\n", buf);
+//            //return xxuv_ip6_addr(buf, port, (sockaddr_in6*)addr);
+//        }
+//        else
+//        {
+//            char buf[64];
+//            printf("ipv4: %s\n", inet_ntop(AF_INET, &((sockaddr_in*)addr)->sin_addr, buf, 64));
+//            //((sockaddr_in*)addr)->sin_port = htons(port);
+//        }
 		freeaddrinfo(res0);
 		return 0;
 	}
