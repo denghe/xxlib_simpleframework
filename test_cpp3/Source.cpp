@@ -3,36 +3,41 @@
 
 int main(int argc, char* argv[])
 {
-	int r = 0;
-	uv_loop_t loop;
-	uv_timer_t timer;
+	auto loop = uv_default_loop();
 
-	r = uv_loop_init(&loop);
-	assert(!r);
+	uv_udp_t udp;
+	uv_udp_init(loop, &udp);
 
-	r = uv_timer_init(&loop, &timer);
-	assert(!r);
-	
-	r = uv_timer_start(&timer, [](uv_timer_t* handle)
+	sockaddr_in6 addr;
+	uv_ip6_addr("::", 12345, &addr);
+
+	uv_udp_bind(&udp, (sockaddr*)&addr, UV_UDP_REUSEADDR);
+
+	uv_udp_recv_start(&udp,
+		[](uv_handle_t* handle,
+			size_t suggested_size,
+			uv_buf_t* buf)
 	{
-		uv_stop(handle->loop);
-	}
-	, 1000, 1000);
-	assert(!r);
+		buf->base = (char*)malloc(suggested_size);
+		buf->len = decltype(buf->len)(suggested_size);
+	},
+		[](uv_udp_t* handle,
+			ssize_t nread,
+			const uv_buf_t* buf,
+			const struct sockaddr* addr,
+			unsigned flags)
+	{
+		if (nread > 0)
+		{
+			assert(addr->sa_family == AF_INET6);
+			auto ip = (sockaddr_in6*)addr;
+			char ipBuf[128];
+			uv_ip6_name(ip, ipBuf, _countof(ipBuf));
+			printf("recv [%s:%d]%s\n", ipBuf, ntohs(ip->sin6_port), buf->base);
+		}
+		free(buf->base);
+	});
 
-	r = uv_run(&loop, UV_RUN_DEFAULT);
-	assert(r == 1);
-
-	r = uv_loop_close(&loop);
-	assert(r == -4082);
-
-	uv_close((uv_handle_t*)&timer, nullptr);
-
-	r = uv_run(&loop, UV_RUN_DEFAULT);
-	assert(!r);
-
-	r = uv_loop_close(&loop);
-	assert(!r);
-
-	return r;
+	uv_run(loop, UV_RUN_DEFAULT);
+	return 0;
 }

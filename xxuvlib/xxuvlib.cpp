@@ -232,22 +232,15 @@ XXUVLIB_API int xxuv_ip4_addr(const char* ipv4, int port, sockaddr* addr) noexce
 		if (s < 0) continue;
 		close(s);
 		memcpy(addr, res->ai_addr, res->ai_addrlen);
-//        if (addr->sa_family == AF_INET6)
-//        {
-//            char buf[64];
-//            printf("ipv6: %s\n", inet_ntop(AF_INET6, &((sockaddr_in6*)addr)->sin6_addr, buf, 64));
-//            //((sockaddr_in6*)addr)->sin6_port = htons(port);
-//            //sprintf(buf, "2001:0:0:faff::c0a8:16f");
-//            //printf("ipv6: %s\n", buf);
-//            //return xxuv_ip6_addr(buf, port, (sockaddr_in6*)addr);
-//        }
-//        else
-//        {
-//            char buf[64];
-//            printf("ipv4: %s\n", inet_ntop(AF_INET, &((sockaddr_in*)addr)->sin_addr, buf, 64));
-//            //((sockaddr_in*)addr)->sin_port = htons(port);
-//        }
 		freeaddrinfo(res0);
+
+		char ipBuf[128];
+		if (addr->sin6_family == AF_INET6)
+			uv_ip6_name(addr, ipBuf, 128);
+		else
+			uv_ip4_name((sockaddr_in*)addr, ipBuf, 128);
+		printf("fill ip = %s\n", ipBuf);
+
 		return 0;
 	}
 	freeaddrinfo(res0);
@@ -319,6 +312,9 @@ XXUVLIB_API int xxuv_write_(uv_stream_t* stream, char const* inBuf, unsigned int
 	return uv_write((uv_write_t*)req, stream, &req->buf, 1, [](uv_write_t *req, int status)
 	{
 		//if (status) fprintf(stderr, "Write error: %s\n", uv_strerror(status));
+		// todo: 如果 status 非0, 有可能是网络发生变化, 比如 ios 下可能切换 wifi 4g 导致 ipv4/6 协议栈变化,
+		// 此时需要想办法通知上层代码这个事情, 以便重新 getaddrinfo 和重建上下文 ( close + init )
+
 		auto *wr = (uv_write_t_ex*)req;
 		wr->mp->Free(wr->buf.base);
 		wr->mp->Free(wr);
@@ -419,6 +415,9 @@ XXUVLIB_API int xxuv_udp_send_(uv_udp_t* handle, char const* inBuf, unsigned int
 	return uv_udp_send((uv_udp_send_t*)req, handle, &req->buf, 1, addr, [](uv_udp_send_t* req, int status)
 	{
 		//if (status) fprintf(stderr, "Write error: %s\n", uv_strerror(status));
+		// todo: 如果 status 非0, 有可能是网络发生变化, 比如 ios 下可能切换 wifi 4g 导致 ipv4/6 协议栈变化,
+		// 此时需要想办法通知上层代码这个事情, 以便重新 getaddrinfo 和重建上下文 ( close + init )
+
 		auto *wr = (uv_udp_send_t_ex*)req;
 		wr->mp->Free(wr->buf.base);
 		wr->mp->Free(wr);

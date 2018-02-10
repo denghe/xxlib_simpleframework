@@ -890,6 +890,26 @@ namespace xx
             buf[dataLenBak + 2] = (byte)(pkgLen >> 8);
         }
 
+        // for 4字节长度大包, 头长度5
+        public void BeginWritePackageEx2(bool isRpc = false, uint serial = 0)
+        {
+            dataLenBak = dataLen;
+            Reserve(dataLen + 10);
+            dataLen += 5;
+            if (isRpc) Write(serial);
+        }
+
+        // for 4字节长度大包
+        public void EndWritePackageEx2(byte pkgTypeId = 0)
+        {
+            var pkgLen = dataLen - dataLenBak - 5;
+            buf[dataLenBak] = (byte)(pkgTypeId | 0x4);  // 包类型编号 第3位置 1
+            buf[dataLenBak + 1] = (byte)(pkgLen);
+            buf[dataLenBak + 2] = (byte)(pkgLen >> 8);
+            buf[dataLenBak + 3] = (byte)(pkgLen >> 16);
+            buf[dataLenBak + 4] = (byte)(pkgLen >> 24);
+        }
+
         #endregion
 
         #region static utils

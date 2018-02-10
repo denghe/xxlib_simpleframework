@@ -399,14 +399,26 @@ namespace xx
             while (offset + 3 <= bbRecv.dataLen)            // 确保 3字节 包头长度
             {
                 var typeId = buf[offset];                   // 读出头
-                var dataLen = buf[offset + 1] + (buf[offset + 2] << 8);
+
+
+                var dataLen = buf[offset + 1] + (buf[offset + 2] << 8); // 读出包长
+                int headerLen = 3;
+                if ((typeId & 0x4) > 0)                     // 大包确保 5字节 包头长度
+                {
+                    if (offset + 5 <= bbRecv.dataLen) continue;
+                    typeId &= 0x3;
+                    headerLen = 5;
+                    dataLen += (buf[offset + 3] << 16) + (buf[offset + 4] << 24);   // 修正为大包包长
+                }
+
+
                 if (dataLen <= 0)                           // 数据异常
                 {
                     DisconnectImpl();
                     return;
                 }
-                if (offset + 3 + dataLen > bbRecv.dataLen) break;   // 确保数据长
-                offset += 3;
+                if (offset + headerLen + dataLen > bbRecv.dataLen) break;   // 确保数据长
+                offset += headerLen;
 
                 bbRecv.offset = offset;
                 if (typeId == 0)
@@ -465,7 +477,6 @@ namespace xx
         {
             if (disposed) throw new ObjectDisposedException("XxUvTcpBase");
             if (pkgs == null || pkgs.Length == 0) throw new NullReferenceException();
-            if (bbSend == null) bbSend = new BBuffer(65536);
             var sum = 0;
             var len = pkgs.Length;
             for (int i = 0; i < len; ++i)
@@ -498,7 +509,7 @@ namespace xx
             return bbSend.dataLen;
         }
 
-        // 只能单发一个类, 返回流水号
+        // 发送 RPC 的请求包, 返回流水号
         public uint SendRequest(xx.IBBuffer pkg, Action<uint, BBuffer> cb, int interval = 0)
         {
             if (disposed) throw new ObjectDisposedException("XxUvTcpBase");
@@ -516,11 +527,52 @@ namespace xx
         public int SendResponse(uint serial, xx.IBBuffer pkg)
         {
             if (disposed) throw new ObjectDisposedException("XxUvTcpBase");
-            if (bbSend == null) bbSend = new BBuffer(65536);
             bbSend.Clear();
             bbSend.BeginWritePackageEx(true, serial);
             bbSend.WriteRoot(pkg);
             bbSend.EndWritePackageEx(2);
+            SendBytes(bbSend.buf, 0, bbSend.dataLen);
+            return bbSend.dataLen;
+        }
+
+
+
+        // 下面是发大包系列
+
+        // 发一个可能大于 64k 的包, 返回总字节数
+        public int SendBig(xx.IBBuffer pkg)
+        {
+            if (disposed) throw new ObjectDisposedException("XxUvTcpBase");
+            bbSend.Clear();
+            bbSend.BeginWritePackageEx2();
+            bbSend.WriteRoot(pkg);
+            bbSend.EndWritePackageEx2();
+            SendBytes(bbSend.buf, 0, bbSend.dataLen);
+            return bbSend.dataLen;
+        }
+
+        // 发一个可能大于 64k 的 RPC 请求包, 返回流水号
+        public uint SendBigRequest(xx.IBBuffer pkg, Action<uint, BBuffer> cb, int interval = 0)
+        {
+            if (disposed) throw new ObjectDisposedException("XxUvTcpBase");
+            if (loop.rpcMgr == null) throw new NullReferenceException();
+            var serial = loop.rpcMgr.Register(cb, interval);
+            bbSend.Clear();
+            bbSend.BeginWritePackageEx2(true, serial);
+            bbSend.WriteRoot(pkg);
+            bbSend.EndWritePackageEx2(1);
+            SendBytes(bbSend.buf, 0, bbSend.dataLen);
+            return serial;
+        }
+
+        // 发一个可能大于 64k 的 RPC 的应答包, 返回字节数
+        public int SendBigResponse(uint serial, xx.IBBuffer pkg)
+        {
+            if (disposed) throw new ObjectDisposedException("XxUvTcpBase");
+            bbSend.Clear();
+            bbSend.BeginWritePackageEx2(true, serial);
+            bbSend.WriteRoot(pkg);
+            bbSend.EndWritePackageEx2(2);
             SendBytes(bbSend.buf, 0, bbSend.dataLen);
             return bbSend.dataLen;
         }
