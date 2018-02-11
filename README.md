@@ -1,6 +1,6 @@
-﻿基于 libuv C++ 轮子封装 再进行 CLI 封装的, 适合用 C# 开发服务器端的基础框架
+﻿基于 libuv, 适合用 C# 开发服务器端的基础框架
 
-运行需要 vs2017( 升级到最新 ) 并勾安 CLI/C++ 旧crt 支持和 win81 sdk, 打开 all.sln, 同时设置 test_cpp1, test_csharp1 为启动项目
+开发需要 vs2017( 升级到最新 ) 并勾安 CLI/C++ 旧crt 支持和 win81 sdk
 
 技术讨论群: 125081098
 
@@ -9,7 +9,7 @@
 1. 生成器
 2. 模板
 3. 依赖库
-
+4. 示例
 
 生成器通过对模板的读取解析, 产生具体项目代码, 向指定生成目录覆盖写入
 
@@ -36,18 +36,13 @@ pkggen
 pkggen_template_PKG
 通信包结构描述模板
 
+xxuvlib
+为 libuv 封装本体, 可跨平台编译为各种 dll so a 啥的, 支持.net core
 
 xxlib_csharp
-为 c# 项目服务的库, 命名空间为 xx
+libuv 的 C# 端, 含各种周边工具类, 命名空间为 xx
 
-xxuvlib_csharp
-为 c# 项目服务的库, 基于 xxqp\xxlib_cpp 的 uv 相关代码, 用 cli/c++ 封装而成
-
-xxuvlibex_csharp
-为 c# 项目服务的库, 引用 xxuvlib_csharp, 继承 Peer 相关类以提供 send pkg 等便利功能
+rpc_xxxxxxx
+最新服务端项目实用示例
 
 
-
-
-docs
-有一些小零碎
