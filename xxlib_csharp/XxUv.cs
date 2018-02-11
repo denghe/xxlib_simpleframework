@@ -424,6 +424,7 @@ namespace xx
                 if (typeId == 0)
                 {
                     if (OnReceivePackage != null) OnReceivePackage(bbRecv);
+                    if (disposed) return;
                     if (Disconnected())
                     {
                         bbRecv.Clear();
@@ -441,6 +442,7 @@ namespace xx
                     if (typeId == 1)
                     {
                         if (OnReceiveRequest != null) OnReceiveRequest(serial, bbRecv);
+                        if (disposed) return;
                         if (Disconnected())
                         {
                             bbRecv.Clear();
@@ -450,6 +452,7 @@ namespace xx
                     else if (typeId == 2)
                     {
                         loop.rpcMgr.Callback(serial, bbRecv);
+                        if (disposed) return;
                         if (Disconnected())
                         {
                             bbRecv.Clear();
