@@ -12,6 +12,9 @@ public static class GenLUA_Class
     {
         var sb = new StringBuilder();
 
+        sb.Append(@"
+" + templateName + @"_PkgGenMd5_Value = '" + md5 + @"'
+");
         var ts = asm._GetTypes();
         var es = ts._GetEnums();
         for (int i = 0; i < es.Count; ++i)
@@ -133,9 +136,16 @@ public static class GenLUA_Class
                 var ct = c.GenericTypeArguments[0];
                 if (!ct._IsUserClass())
                 {
-                    var ctn = ct.Name;
-                    if (ct._IsBBuffer() || ct._IsString()) ctn = "Object";
-                    fn = "Read" + ctn;
+                    if (ct.IsEnum)
+                    {
+                        var ctn = ct.GetEnumUnderlyingType().Name;
+                        fn = "Read" + ctn;
+                    }
+                    else
+                    {
+                        var ctn = ct.Name;
+                        fn = "Read" + ctn;
+                    }
                 }
                 sb.Append(@"
 		local len = bb:ReadUInt32()
@@ -183,9 +193,17 @@ public static class GenLUA_Class
                 var ct = c.GenericTypeArguments[0];
                 if (!ct._IsUserClass())
                 {
-                    var ctn = ct.Name;
-                    if (ct._IsBBuffer() || ct._IsString()) ctn = "Object";
-                    fn = "Write" + ctn;
+                    if (ct.IsEnum)
+                    {
+                        var ctn = ct.GetEnumUnderlyingType().Name;
+                        fn = "Write" + ctn;
+                    }
+                    else
+                    {
+                        var ctn = ct.Name;
+                        fn = "Write" + ctn;
+                    }
+
                 }
                 sb.Append(@"
         local len = #o
@@ -201,6 +219,8 @@ public static class GenLUA_Class
 BBuffer.Register( " + cn + @" )");
         }
 
+        // 临时方案
+        sb.Replace("`1", "");
         sb._WriteToFile(Path.Combine(outDir, templateName + "_class.lua"));
     }
 }
