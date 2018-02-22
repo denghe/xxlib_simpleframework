@@ -4,7 +4,7 @@ namespace RPC
 {
     public static class PkgGenMd5
     {
-        public const string value = "2d0f63bcd51e9ac01763a307bad318b7"; 
+        public const string value = "39f5374673cfd336020f62c835d3e078"; 
     }
 
 namespace Generic
@@ -22,6 +22,10 @@ namespace Generic
         /// 数据库
         /// </summary>
         DB = 1,
+        /// <summary>
+        /// 管理端
+        /// </summary>
+        Manage = 2,
     }
 }
 namespace Login_Client

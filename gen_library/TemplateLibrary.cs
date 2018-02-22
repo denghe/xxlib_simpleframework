@@ -102,6 +102,16 @@ namespace TemplateLibrary
     }
 
     /// <summary>
+    /// Lua 生成物之命名空间过滤( 白名单 ), 用到 ILuaFilter 接口上
+    /// </summary>
+    [System.AttributeUsage(System.AttributeTargets.Interface, AllowMultiple = true)]
+    public class LuaFilter : System.Attribute
+    {
+        public LuaFilter(string v) { value = v; }
+        public string value;
+    }
+
+    /// <summary>
     /// 备注。可用于类/枚举/函数 及其 成员
     /// </summary>
     public class Desc : System.Attribute

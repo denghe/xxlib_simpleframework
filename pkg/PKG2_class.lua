@@ -1,4 +1,6 @@
 ﻿
+PKG2_PkgGenMd5_Value = '5568df4c091c2d82184e4da952238a96'
+
 --[[
 测试一下各种数据类型
 ]]
@@ -408,7 +410,7 @@ List_String_ = {
     end,
     FromBBuffer = function( bb, o )
 		local len = bb:ReadUInt32()
-        local f = BBuffer.ReadObject
+        local f = BBuffer.ReadString
 		for i = 1, len do
 			o[ i ] = f( bb )
 		end
@@ -416,7 +418,7 @@ List_String_ = {
     ToBBuffer = function( bb, o )
         local len = #o
 		bb:WriteUInt32( len )
-        local f = BBuffer.WriteObject
+        local f = BBuffer.WriteString
         for i = 1, len do
 			f( bb, o[ i ] )
 		end
@@ -435,7 +437,7 @@ List_BBuffer_ = {
     end,
     FromBBuffer = function( bb, o )
 		local len = bb:ReadUInt32()
-        local f = BBuffer.ReadObject
+        local f = BBuffer.ReadBBuffer
 		for i = 1, len do
 			o[ i ] = f( bb )
 		end
@@ -443,7 +445,7 @@ List_BBuffer_ = {
     ToBBuffer = function( bb, o )
         local len = #o
 		bb:WriteUInt32( len )
-        local f = BBuffer.WriteObject
+        local f = BBuffer.WriteBBuffer
         for i = 1, len do
 			f( bb, o[ i ] )
 		end

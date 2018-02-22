@@ -9,7 +9,9 @@ namespace Generic
         [Desc("登录")]
         Login,
         [Desc("数据库")]
-        DB
+        DB,
+        [Desc("管理端")]
+        Manage,
     }
 
     [Desc("服务间创建连接, 刚连上时, 首包需要发这个来说明自己是谁")]

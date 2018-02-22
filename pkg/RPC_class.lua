@@ -1,4 +1,6 @@
 ﻿
+RPC_PkgGenMd5_Value = '39f5374673cfd336020f62c835d3e078'
+
 --[[
 服务类型列表
 ]]
@@ -10,7 +12,11 @@ RPC_Generic_ServiceTypes = {
     --[[
     数据库
     ]]
-    DB = 1
+    DB = 1,
+    --[[
+    管理端
+    ]]
+    Manage = 2
 }
 RPC_Login_Client_LoginSuccess = {
     typeName = "RPC_Login_Client_LoginSuccess",
@@ -121,10 +127,10 @@ RPC_Generic_ServiceInfo = {
         return o
     end,
     FromBBuffer = function( bb, o )
-        o.type = bb:ReadObject()
+        o.type = bb:ReadInt32()
     end,
     ToBBuffer = function( bb, o )
-        bb:WriteObject( o.type )
+        bb:WriteInt32( o.type )
     end
 }
 BBuffer.Register( RPC_Generic_ServiceInfo )

@@ -516,7 +516,7 @@ namespace xx
         public uint SendRequest(xx.IBBuffer pkg, Action<uint, BBuffer> cb, int interval = 0)
         {
             if (disposed) throw new ObjectDisposedException("XxUvTcpBase");
-            if (loop.rpcMgr == null) throw new NullReferenceException();
+            if (loop.rpcMgr == null) throw new NullReferenceException("forget InitRpcManager ?");
             var serial = loop.rpcMgr.Register(cb, interval);
             bbSend.Clear();
             bbSend.BeginWritePackageEx(true, serial);
@@ -558,7 +558,7 @@ namespace xx
         public uint SendBigRequest(xx.IBBuffer pkg, Action<uint, BBuffer> cb, int interval = 0)
         {
             if (disposed) throw new ObjectDisposedException("XxUvTcpBase");
-            if (loop.rpcMgr == null) throw new NullReferenceException();
+            if (loop.rpcMgr == null) throw new NullReferenceException("forget InitRpcManager ?");
             var serial = loop.rpcMgr.Register(cb, interval);
             bbSend.Clear();
             bbSend.BeginWritePackageEx2(true, serial);

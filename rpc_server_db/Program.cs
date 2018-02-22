@@ -5,15 +5,14 @@ using System.Threading.Tasks;
 using xx;
 
 
-
 // for service
-public class Listener : UvTcpListener
+public class ServiceListener : UvTcpListener
 {
     Service service;
-    public Listener(Service service, string ip, int port) : base(service)
+    public ServiceListener(Service service, string ip, int port) : base(service)
     {
         this.service = service;
-        this.OnCreatePeer = () => new Peer(service);
+        this.OnCreatePeer = () => new ServicePeer(service);
         this.Bind(ip, port);
         this.Listen();
     }
@@ -21,10 +20,10 @@ public class Listener : UvTcpListener
 
 
 // for service
-public class Peer : UvTcpPeer
+public class ServicePeer : UvTcpPeer
 {
     public Service service;
-    public Peer(Service service) : base(service.listener)
+    public ServicePeer(Service service) : base(service.svcListener)
     {
         this.service = service;
 
@@ -49,19 +48,39 @@ public class Peer : UvTcpPeer
             {
                 case RPC.Generic.ServiceInfo o:
                     {
-                        if (o.type == RPC.Generic.ServiceTypes.Login)
+                        switch (o.type)
                         {
-                            // 试着绑上下文( 如果上下文已经绑有 peer, 绑定将失败 )
-                            if (service.loginCtx.BindPeer(this))
-                            {
-                                // 刷新超时时间 防 T
-                                this.TimeoutReset();
+                            case RPC.Generic.ServiceTypes.Login:
+                                {
+                                    // 试着绑上下文( 如果上下文已经绑有 peer, 绑定将失败 )
+                                    if (service.ctxLogin.BindPeer(this))
+                                    {
+                                        // 刷新超时时间 防 T
+                                        this.TimeoutReset();
 
-                                Console.WriteLine("login connected...");
-                                return;
-                            }
+                                        Console.WriteLine("login connected...");
+                                        return;
+                                    }
+                                    break;
+                                }
+                            //case RPC.Generic.ServiceTypes.DB:
+                            //    break;
+                            case RPC.Generic.ServiceTypes.Manage:
+                                {
+                                    // 试着绑上下文( 如果上下文已经绑有 peer, 绑定将失败 )
+                                    if (service.ctxManage.BindPeer(this))
+                                    {
+                                        // 刷新超时时间 防 T
+                                        this.TimeoutReset();
+
+                                        Console.WriteLine("manage connected...");
+                                        return;
+                                    }
+                                    break;
+                                }
+                            default:
+                                break;
                         }
-                        // else ...
                         break;
                     }
             }
@@ -72,12 +91,11 @@ public class Peer : UvTcpPeer
 }
 
 
-
 // login 服务的上下文
-public class LoginContext : UvContextBase
+public class ServiceContext_Login : UvContextBase
 {
     public Service service;
-    public LoginContext(Service service)
+    public ServiceContext_Login(Service service)
     {
         this.service = service;
     }
@@ -160,21 +178,68 @@ public class LoginContext : UvContextBase
 }
 
 
+// manage 端的上下文
+public class ServiceContext_Manage : UvContextBase
+{
+    public Service service;
+    public ServiceContext_Manage(Service service)
+    {
+        this.service = service;
+    }
+
+    public override void HandlePackage(IBBuffer ibb)
+    {
+        Console.WriteLine("recv package: " + ibb.ToString());
+    }
+
+    public override void HandleRequest(uint serial, IBBuffer ibb)
+    {
+        Console.WriteLine("recv request: " + ibb.ToString());
+        switch (ibb)
+        {
+            case RPC.Generic.Ping o:
+                {
+                    // 主线程直接投递, 不需要检测 peerAlive
+                    peer.SendResponse(serial, new RPC.Generic.Pong
+                    {
+                        ticks = o.ticks
+                    });
+                    break;
+                }
+            // more case
+
+            default:
+                // 收到不适宜的包, 断开连接
+                KickPeer();
+                break;
+        }
+    }
+
+    public override void HandleDisconnect()
+    {
+        Console.WriteLine("login server disconnected.");
+    }
+}
+
+
+
 
 public class Service : UvLoop
 {
-    public UvTcpListener listener;
+    public ServiceListener svcListener;
     public UvAsync dispatcher;
-    public LoginContext loginCtx;                                   // 登录服务上下文
+    public ServiceContext_Login ctxLogin;                                   // 登录服务上下文
+    public ServiceContext_Manage ctxManage;                                 // 管理端上下文
 
     public Service()
     {
         InitRpcManager(1000, 5);
         InitTimeouter(1000, 6, 5);                                  // 精度:秒, 最长计时 6 秒, 默认 5 秒超时
 
-        listener = new Listener(this, "0.0.0.0", 12346);
+        svcListener = new ServiceListener(this, "0.0.0.0", 12346);
         dispatcher = new UvAsync(this);
-        loginCtx = new LoginContext(this);
+        ctxLogin = new ServiceContext_Login(this);
+        ctxManage = new ServiceContext_Manage(this);
     }
 
     // for easy use

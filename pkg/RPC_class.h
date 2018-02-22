@@ -63,6 +63,8 @@ namespace Generic
         Login = 0,
         // 数据库
         DB = 1,
+        // 管理端
+        Manage = 2,
     };
 }
 namespace Login_Client

@@ -1,4 +1,6 @@
 ﻿
+PKG_PkgGenMd5_Value = '0789b6167062a2d663f582282d42d19c'
+
 --[[
 账号获取时所用的排序规则
 ]]
@@ -603,14 +605,16 @@ PKG_Manage_DB_SelectManageAccountIds = {
     FromBBuffer = function( bb, o )
         local p = getmetatable( o )
         p.__proto.FromBBuffer( bb, p )
-        o.limit = bb:ReadInt32()
-        o.sort = bb:ReadObject()
+        local ReadInt32 = bb.ReadInt32
+        o.limit = ReadInt32( bb )
+        o.sort = ReadInt32( bb )
     end,
     ToBBuffer = function( bb, o )
         local p = getmetatable( o )
         p.__proto.ToBBuffer( bb, p )
-        bb:WriteInt32( o.limit )
-        bb:WriteObject( o.sort )
+        local WriteInt32 = bb.WriteInt32
+        WriteInt32( bb, o.limit )
+        WriteInt32( bb, o.sort )
     end
 }
 BBuffer.Register( PKG_Manage_DB_SelectManageAccountIds )

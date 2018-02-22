@@ -1,6 +1,6 @@
 ﻿基于 libuv, 适合用 C# 开发服务器端的基础框架
 
-开发需要 vs2017( 升级到最新 ) 并勾安 CLI/C++ 旧crt 支持和 win81 sdk
+开发需要 vs2017( 升级到最新 ) 并勾安 C++, CLI 相关, windows 通用 CRT SDK(旧版), windows 8.1 SDK, windows 通用  C 运行时
 
 技术讨论群: 125081098
 
