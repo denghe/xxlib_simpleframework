@@ -15,8 +15,8 @@ namespace rpc_manage
     /// </summary>
     public partial class App : Application
     {
-        public xx.UvLoop uvLoop;
-        public DbClient dbClient;
+        public static xx.UvLoop uvLoop;
+        public static DbClient dbClient;
 
         DispatcherTimer dt = new DispatcherTimer(DispatcherPriority.SystemIdle);
         public App()
@@ -41,14 +41,24 @@ namespace rpc_manage
         }
     }
 
+    public class RecvPkg
+    {
+        public xx.IBBuffer ibb;
+        public bool handled;
+    }
 
     // 用来连 DB 服务的客户端. 如果连接失败, 超时会不断重试以维持连接. 每秒会发 1 个心跳包.
     public class DbClient : xx.UvTcpClient
     {
+        // 起一个 timer, 每 1 秒检查一下连接状态, 发一个心跳包
         xx.UvTimer timer;
+
+        // 简单的 ping pong 计数
         long pingCount = 0;
         long pingTotal = 0;
-        public xx.Queue<xx.IBBuffer> recvs = new xx.Queue<xx.IBBuffer>();
+
+        // 包处理回调, 用于各窗口自己注册处理函数. Tuple 的第2个值如果为 true 表示已处理, 函数自己短路
+        public event Action<RecvPkg> recvHandlers;
 
         public DbClient(xx.UvLoop loop, string ip, int port) : base(loop)
         {
@@ -72,11 +82,14 @@ namespace rpc_manage
                 }
             };
 
-            // 收到的数据往队列里往
+            // 收到数据时调用收包处理函数
             OnReceivePackage = bb =>
             {
                 var ibb = bb.TryReadPackage<xx.IBBuffer>();
-                if (ibb != null) recvs.Enqueue(ibb);
+                if (ibb != null && recvHandlers != null)
+                {
+                    recvHandlers(new RecvPkg { ibb = ibb });
+                }
             };
 
             // 起一个 timer, 每 1 秒检查一下连接状态, 发一个心跳包

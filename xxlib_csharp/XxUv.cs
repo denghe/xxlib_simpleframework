@@ -1323,7 +1323,7 @@ namespace xx
     public abstract class UvContextBase
     {
         public UvTcpUdpBase peer;
-        public bool peerAlive { get { return peer != null && peer.Disconnected(); } }
+        public bool peerAlive { get { return peer != null && !peer.Disconnected(); } }
 
         // 绑连接. 成功返回 true
         public bool BindPeer(UvTcpUdpBase p)

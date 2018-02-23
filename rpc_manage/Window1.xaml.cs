@@ -1,17 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 
 namespace rpc_manage
 {
@@ -27,8 +16,42 @@ namespace rpc_manage
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            Debug.Print(System.Threading.Thread.CurrentThread.ManagedThreadId.ToString());
-            DialogResult = true;  // 关闭对话框并设置返回值
+            // 注册网络包处理函数
+            App.dbClient.recvHandlers += DbClient_recvHandlers;
+        }
+
+        private void Window_Unloaded(object sender, RoutedEventArgs e)
+        {
+            // 反注册网络包处理函数
+            App.dbClient.recvHandlers -= DbClient_recvHandlers;
+        }
+
+        private void DbClient_recvHandlers(RecvPkg rp)
+        {
+            if (rp.handled) return;
+            switch (rp.ibb)
+            {
+                case RPC.DB_Manage.MsgResult o:
+                    Debug.Print("Window1 recv RPC.DB_Manage.MsgResult, txt = " + o.txt);
+                    tb1.Text = o.txt;
+                    rp.handled = true;
+                    break;
+                // todo: more case here
+                default:
+                    throw new Exception("收到未经处理的包: " + rp.ibb.ToString());
+            }
+        }
+
+        private void Click_b1(object sender, RoutedEventArgs e)
+        {
+            // 关闭对话框并设置返回值
+            DialogResult = true;
+        }
+
+        private void Click_b2(object sender, RoutedEventArgs e)
+        {
+            // 关闭对话框并设置返回值
+            DialogResult = false;
         }
     }
 }
