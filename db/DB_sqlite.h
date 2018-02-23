@@ -11,7 +11,7 @@ namespace DB
 		xx::MemPool& mp;
 		xx::SQLiteString_v s;
 
-		SQLiteGameFuncs(xx::SQLite& sqlite)
+		inline SQLiteGameFuncs(xx::SQLite& sqlite)
             : sqlite(sqlite)
             , mp(sqlite.mempool())
             , s(mp)
@@ -20,7 +20,7 @@ namespace DB
 
 
         xx::SQLiteQuery_p query_CreateTable_game_account;
-        void CreateTable_game_account()
+        inline void CreateTable_game_account()
         {
 			auto& q = query_CreateTable_game_account;
 
@@ -39,7 +39,7 @@ CREATE TABLE [game_account](
 
         xx::SQLiteQuery_p query_SelectAccountByUsername;
         // 根据用户名查找并返回账号. 未找到将返回 null
-        DB::Game::Account_p SelectAccountByUsername
+        inline DB::Game::Account_p SelectAccountByUsername
         (
             xx::String_p const& username
         )
@@ -69,7 +69,7 @@ CREATE TABLE [game_account](
 
         // xx::SQLiteQuery_p query_SelectAccountByUsername;
         // 根据用户名查找并返回账号. 未找到将返回 null
-        DB::Game::Account_p SelectAccountByUsername
+        inline DB::Game::Account_p SelectAccountByUsername
         (
             char const* const& username
         )
@@ -103,7 +103,7 @@ CREATE TABLE [game_account](
 		xx::MemPool& mp;
 		xx::SQLiteString_v s;
 
-		SQLiteManageFuncs(xx::SQLite& sqlite)
+		inline SQLiteManageFuncs(xx::SQLite& sqlite)
             : sqlite(sqlite)
             , mp(sqlite.mempool())
             , s(mp)
@@ -112,7 +112,7 @@ CREATE TABLE [game_account](
 
 
         xx::SQLiteQuery_p query_CreateTable_manage_account;
-        void CreateTable_manage_account()
+        inline void CreateTable_manage_account()
         {
 			auto& q = query_CreateTable_manage_account;
 
@@ -130,7 +130,7 @@ CREATE TABLE [manage_account](
 
 
         xx::SQLiteQuery_p query_CreateTable_manage_permission;
-        void CreateTable_manage_permission()
+        inline void CreateTable_manage_permission()
         {
 			auto& q = query_CreateTable_manage_permission;
 
@@ -150,7 +150,7 @@ CREATE TABLE [manage_permission](
 
 
         xx::SQLiteQuery_p query_CreateTable_manage_role;
-        void CreateTable_manage_role()
+        inline void CreateTable_manage_role()
         {
 			auto& q = query_CreateTable_manage_role;
 
@@ -168,7 +168,7 @@ CREATE TABLE [manage_role](
 
 
         xx::SQLiteQuery_p query_CreateTable_manage_bind_role_permission;
-        void CreateTable_manage_bind_role_permission()
+        inline void CreateTable_manage_bind_role_permission()
         {
 			auto& q = query_CreateTable_manage_bind_role_permission;
 
@@ -186,7 +186,7 @@ CREATE TABLE [manage_bind_role_permission](
 
 
         xx::SQLiteQuery_p query_CreateTable_manage_bind_account_role;
-        void CreateTable_manage_bind_account_role()
+        inline void CreateTable_manage_bind_account_role()
         {
 			auto& q = query_CreateTable_manage_bind_account_role;
 
@@ -205,7 +205,7 @@ CREATE TABLE [manage_bind_account_role](
 
         xx::SQLiteQuery_p query_InsertAccount;
         // 插入一条 账号. 可能因为 username 已存在而失败
-        void InsertAccount
+        inline void InsertAccount
         (
             xx::String_p const& username,
             xx::String_p const& password
@@ -224,7 +224,7 @@ CREATE TABLE [manage_bind_account_role](
 
         // xx::SQLiteQuery_p query_InsertAccount;
         // 插入一条 账号. 可能因为 username 已存在而失败
-        void InsertAccount
+        inline void InsertAccount
         (
             char const* const& username,
             char const* const& password
@@ -243,7 +243,7 @@ CREATE TABLE [manage_bind_account_role](
 
         xx::SQLiteQuery_p query_InsertPermission;
         // 插入一条 权限. 可能因为 name 已存在而失败
-        void InsertPermission
+        inline void InsertPermission
         (
             int64_t const& id,
             xx::String_p const& name,
@@ -264,7 +264,7 @@ CREATE TABLE [manage_bind_account_role](
 
         // xx::SQLiteQuery_p query_InsertPermission;
         // 插入一条 权限. 可能因为 name 已存在而失败
-        void InsertPermission
+        inline void InsertPermission
         (
             int64_t const& id,
             char const* const& name,
@@ -285,7 +285,7 @@ CREATE TABLE [manage_bind_account_role](
 
         xx::SQLiteQuery_p query_InsertRole;
         // 插入一条 身份. 可能因为 id 已存在, name 已存在而失败
-        void InsertRole
+        inline void InsertRole
         (
             int64_t const& id,
             xx::String_p const& name,
@@ -305,7 +305,7 @@ CREATE TABLE [manage_bind_account_role](
 
         // xx::SQLiteQuery_p query_InsertRole;
         // 插入一条 身份. 可能因为 id 已存在, name 已存在而失败
-        void InsertRole
+        inline void InsertRole
         (
             int64_t const& id,
             char const* const& name,
@@ -325,7 +325,7 @@ CREATE TABLE [manage_bind_account_role](
 
         xx::SQLiteQuery_p query_InsertBindAccountRole;
         // 插入一条 账号.身份 绑定
-        void InsertBindAccountRole
+        inline void InsertBindAccountRole
         (
             int64_t const& accountId,
             int64_t const& roleId
@@ -344,7 +344,7 @@ CREATE TABLE [manage_bind_account_role](
 
         xx::SQLiteQuery_p query_InsertBindRolePermission;
         // 插入一条 身份.权限 绑定
-        void InsertBindRolePermission
+        inline void InsertBindRolePermission
         (
             int64_t const& roleId,
             int64_t const& permissionId
@@ -363,7 +363,7 @@ CREATE TABLE [manage_bind_account_role](
 
         xx::SQLiteQuery_p query_UpdateAccount_ChangePassword;
         // 改密码. 可能因 找不到 id 而失败
-        void UpdateAccount_ChangePassword
+        inline void UpdateAccount_ChangePassword
         (
             int64_t const& id,
             xx::String_p const& newPassword
@@ -382,7 +382,7 @@ CREATE TABLE [manage_bind_account_role](
 
         // xx::SQLiteQuery_p query_UpdateAccount_ChangePassword;
         // 改密码. 可能因 找不到 id 而失败
-        void UpdateAccount_ChangePassword
+        inline void UpdateAccount_ChangePassword
         (
             int64_t const& id,
             char const* const& newPassword
@@ -401,7 +401,7 @@ CREATE TABLE [manage_bind_account_role](
 
         xx::SQLiteQuery_p query_UpdateAccount_ChangeUsername;
         // 改用户名. 可能因 找不到 id 或 新 username 已存在而失败
-        void UpdateAccount_ChangeUsername
+        inline void UpdateAccount_ChangeUsername
         (
             int64_t const& id,
             xx::String_p const& newUsername
@@ -420,7 +420,7 @@ CREATE TABLE [manage_bind_account_role](
 
         // xx::SQLiteQuery_p query_UpdateAccount_ChangeUsername;
         // 改用户名. 可能因 找不到 id 或 新 username 已存在而失败
-        void UpdateAccount_ChangeUsername
+        inline void UpdateAccount_ChangeUsername
         (
             int64_t const& id,
             char const* const& newUsername
@@ -439,7 +439,7 @@ CREATE TABLE [manage_bind_account_role](
 
         xx::SQLiteQuery_p query_UpdateRole;
         // 更新 身份 数据. 可能因 找不到 id 或 新 name 已存在而失败
-        void UpdateRole
+        inline void UpdateRole
         (
             int64_t const& id,
             xx::String_p const& newName,
@@ -459,7 +459,7 @@ CREATE TABLE [manage_bind_account_role](
 
         // xx::SQLiteQuery_p query_UpdateRole;
         // 更新 身份 数据. 可能因 找不到 id 或 新 name 已存在而失败
-        void UpdateRole
+        inline void UpdateRole
         (
             int64_t const& id,
             char const* const& newName,
@@ -479,7 +479,7 @@ CREATE TABLE [manage_bind_account_role](
 
         xx::SQLiteQuery_p query_UpdatePermission;
         // 更新 权限 数据. 可能因 找不到 id 或 新 name 已存在而失败
-        void UpdatePermission
+        inline void UpdatePermission
         (
             int64_t const& id,
             xx::String_p const& newGroup,
@@ -500,7 +500,7 @@ CREATE TABLE [manage_bind_account_role](
 
         // xx::SQLiteQuery_p query_UpdatePermission;
         // 更新 权限 数据. 可能因 找不到 id 或 新 name 已存在而失败
-        void UpdatePermission
+        inline void UpdatePermission
         (
             int64_t const& id,
             char const* const& newGroup,
@@ -521,7 +521,7 @@ CREATE TABLE [manage_bind_account_role](
 
         xx::SQLiteQuery_p query_DeleteBindAccountRoleByAccountId;
         // 根据 accountId 删掉 账号.身份 绑定数据
-        void DeleteBindAccountRoleByAccountId
+        inline void DeleteBindAccountRoleByAccountId
         (
             int64_t const& accountId
         )
@@ -539,7 +539,7 @@ CREATE TABLE [manage_bind_account_role](
 
         xx::SQLiteQuery_p query_DeleteBindAccountRoleByRoleId;
         // 根据 roleId 删掉 账号.身份 绑定数据
-        void DeleteBindAccountRoleByRoleId
+        inline void DeleteBindAccountRoleByRoleId
         (
             int64_t const& roleId
         )
@@ -557,7 +557,7 @@ CREATE TABLE [manage_bind_account_role](
 
         xx::SQLiteQuery_p query_DeleteBindRolePermissionByRoleId;
         // 根据 roleId 删掉 身份.权限 绑定数据
-        void DeleteBindRolePermissionByRoleId
+        inline void DeleteBindRolePermissionByRoleId
         (
             int64_t const& roleId
         )
@@ -575,7 +575,7 @@ CREATE TABLE [manage_bind_account_role](
 
         xx::SQLiteQuery_p query_DeleteAccount;
         // 根据主键删一条 账号. 需要先删相关绑定, 否则可能失败. 也有可能 id 找不到而没删到数据. 要用 GetAffectedRows 的值来判断
-        void DeleteAccount
+        inline void DeleteAccount
         (
             int64_t const& id
         )
@@ -593,7 +593,7 @@ CREATE TABLE [manage_bind_account_role](
 
         xx::SQLiteQuery_p query_DeletePermission;
         // 根据主键删一条 权限. 需要先删掉相关绑定, 否则可能失败
-        void DeletePermission
+        inline void DeletePermission
         (
             int64_t const& id
         )
@@ -611,7 +611,7 @@ CREATE TABLE [manage_bind_account_role](
 
         xx::SQLiteQuery_p query_DeleteRole;
         // 根据主键删一条 角色. 需要先删掉相关绑定, 否则可能失败
-        void DeleteRole
+        inline void DeleteRole
         (
             int64_t const& id
         )
@@ -629,7 +629,7 @@ CREATE TABLE [manage_bind_account_role](
 
         xx::SQLiteQuery_p query_SelectAccounts;
         // 获取账号表所有数据
-        xx::List_p<DB::Manage::Account_p> SelectAccounts()
+        inline xx::List_p<DB::Manage::Account_p> SelectAccounts()
         {
 			auto& q = query_SelectAccounts;
 
@@ -652,7 +652,7 @@ CREATE TABLE [manage_bind_account_role](
 
         xx::SQLiteQuery_p query_SelectRoles;
         // 读所有 身份 数据
-        xx::List_p<DB::Manage::Role_p> SelectRoles()
+        inline xx::List_p<DB::Manage::Role_p> SelectRoles()
         {
 			auto& q = query_SelectRoles;
 
@@ -675,7 +675,7 @@ CREATE TABLE [manage_bind_account_role](
 
         xx::SQLiteQuery_p query_SelectPermissions;
         // 读所有权限数据
-        xx::List_p<DB::Manage::Permission_p> SelectPermissions()
+        inline xx::List_p<DB::Manage::Permission_p> SelectPermissions()
         {
 			auto& q = query_SelectPermissions;
 
@@ -699,7 +699,7 @@ CREATE TABLE [manage_bind_account_role](
 
         xx::SQLiteQuery_p query_SelectBindRolePermissions;
         // 读所有 身份 数据
-        xx::List_p<DB::Manage::BindRolePermission_p> SelectBindRolePermissions()
+        inline xx::List_p<DB::Manage::BindRolePermission_p> SelectBindRolePermissions()
         {
 			auto& q = query_SelectBindRolePermissions;
 
@@ -721,7 +721,7 @@ CREATE TABLE [manage_bind_account_role](
 
         xx::SQLiteQuery_p query_SelectBindAccountRoles;
         // 读所有权限数据
-        xx::List_p<DB::Manage::BindAccountRole_p> SelectBindAccountRoles()
+        inline xx::List_p<DB::Manage::BindAccountRole_p> SelectBindAccountRoles()
         {
 			auto& q = query_SelectBindAccountRoles;
 
@@ -743,7 +743,7 @@ CREATE TABLE [manage_bind_account_role](
 
         xx::SQLiteQuery_p query_SelectAccountIdsBySortLimit;
         // 根据排序规则返回 limit 行账号记录.
-        xx::List_p<int64_t> SelectAccountIdsBySortLimit
+        inline xx::List_p<int64_t> SelectAccountIdsBySortLimit
         (
             xx::String_p const& sort,
             int64_t const& limit
@@ -769,7 +769,7 @@ CREATE TABLE [manage_bind_account_role](
 
         // xx::SQLiteQuery_p query_SelectAccountIdsBySortLimit;
         // 根据排序规则返回 limit 行账号记录.
-        xx::List_p<int64_t> SelectAccountIdsBySortLimit
+        inline xx::List_p<int64_t> SelectAccountIdsBySortLimit
         (
             char const* const& sort,
             int64_t const& limit
@@ -795,7 +795,7 @@ CREATE TABLE [manage_bind_account_role](
 
         xx::SQLiteQuery_p query_SelectAccountsByIds;
         // 根据用户 ids 查找并返回一批账号记录.
-        xx::List_p<DB::Manage::Account_p> SelectAccountsByIds
+        inline xx::List_p<DB::Manage::Account_p> SelectAccountsByIds
         (
             xx::List_p<int64_t> const& ids
         )
@@ -821,7 +821,7 @@ CREATE TABLE [manage_bind_account_role](
 
         xx::SQLiteQuery_p query_SelectAccountByUsername;
         // 根据用户名查找并返回一条账号记录. 未找到将返回 null
-        DB::Manage::Account_p SelectAccountByUsername
+        inline DB::Manage::Account_p SelectAccountByUsername
         (
             xx::String_p const& username
         )
@@ -848,7 +848,7 @@ CREATE TABLE [manage_bind_account_role](
 
         // xx::SQLiteQuery_p query_SelectAccountByUsername;
         // 根据用户名查找并返回一条账号记录. 未找到将返回 null
-        DB::Manage::Account_p SelectAccountByUsername
+        inline DB::Manage::Account_p SelectAccountByUsername
         (
             char const* const& username
         )
@@ -875,7 +875,7 @@ CREATE TABLE [manage_bind_account_role](
 
         xx::SQLiteQuery_p query_SelectPermissionIdsByAccountId;
         // 根据 accountId 获取 身份id列表 以及 去重后的 权限id列表
-        xx::List_p<int64_t> SelectPermissionIdsByAccountId
+        inline xx::List_p<int64_t> SelectPermissionIdsByAccountId
         (
             int64_t const& accountId
         )
@@ -904,7 +904,7 @@ select distinct b.[permission_id]
 
         xx::SQLiteQuery_p query_SelectRoleIdsByAccountId;
         // 根据 accountId 获取 身份id列表
-        xx::List_p<int64_t> SelectRoleIdsByAccountId
+        inline xx::List_p<int64_t> SelectRoleIdsByAccountId
         (
             int64_t const& accountId
         )

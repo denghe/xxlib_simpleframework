@@ -104,6 +104,7 @@ public static class GenLUA_Class
             {
                 var ft = f.FieldType;
                 var ftn = ft.IsEnum ? ft.GetEnumUnderlyingType().Name : ft._IsNumeric() ? ft.Name : "Object";
+                if (ft._IsBBuffer() || ft._IsString()) ftn = "Object";
                 if (ftns.ContainsKey(ftn)) ftns[ftn]++;
                 else ftns.Add(ftn, 1);
             }
@@ -119,6 +120,7 @@ public static class GenLUA_Class
             {
                 var ft = f.FieldType;
                 var ftn = ft.IsEnum ? ft.GetEnumUnderlyingType().Name : ft._IsNumeric() ? ft.Name : "Object";
+                if (ft._IsBBuffer() || ft._IsString()) ftn = "Object";
                 if (ftns[ftn] > 1)
                 {
                     sb.Append(@"
@@ -134,7 +136,7 @@ public static class GenLUA_Class
             {
                 var fn = "ReadObject";
                 var ct = c.GenericTypeArguments[0];
-                if (!ct._IsUserClass())
+                if (!ct._IsUserClass() && !ct._IsBBuffer() && !ct._IsString())
                 {
                     if (ct.IsEnum)
                     {
@@ -176,6 +178,7 @@ public static class GenLUA_Class
             {
                 var ft = f.FieldType;
                 var ftn = ft.IsEnum ? ft.GetEnumUnderlyingType().Name : ft._IsNumeric() ? ft.Name : "Object";
+                if (ft._IsBBuffer() || ft._IsString()) ftn = "Object";
                 if (ftns[ftn] > 1)
                 {
                     sb.Append(@"
@@ -191,7 +194,7 @@ public static class GenLUA_Class
             {
                 var fn = "WriteObject";
                 var ct = c.GenericTypeArguments[0];
-                if (!ct._IsUserClass())
+                if (!ct._IsUserClass() && !ct._IsBBuffer() && !ct._IsString())
                 {
                     if (ct.IsEnum)
                     {

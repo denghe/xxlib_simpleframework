@@ -187,11 +187,46 @@ public class ServiceContext_Manage : UvContextBase
         this.service = service;
     }
 
+    // 处理一般推送
     public override void HandlePackage(IBBuffer ibb)
     {
         Console.WriteLine("recv package: " + ibb.ToString());
+        switch (ibb)
+        {
+            case RPC.Manage_DB.Msg o:
+                {
+                    // 发起多线程查询
+                    new Task(() =>
+                    {
+                        // 模拟一个耗时操作
+                        Thread.Sleep(1000);
+
+                        // 封送到 uv 主线程去执行
+                        service.Dispatch(() =>
+                        {
+                            // 检查连接的死活
+                            if (peerAlive)
+                            {
+                                // 发送处理结果
+                                peer.Send(new RPC.DB_Manage.MsgResult
+                                {
+                                    txt = o.txt
+                                });
+                            }
+                        });
+                    }).Start();
+                    break;
+                }
+            // more case
+
+            default:
+                // 收到不适宜的包, 断开连接
+                KickPeer();
+                break;
+        }
     }
 
+    // 处理回调请求
     public override void HandleRequest(uint serial, IBBuffer ibb)
     {
         Console.WriteLine("recv request: " + ibb.ToString());

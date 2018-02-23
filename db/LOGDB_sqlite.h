@@ -11,7 +11,7 @@ namespace LOGDB
 		xx::MemPool& mp;
 		xx::SQLiteString_v s;
 
-		SQLiteFuncs(xx::SQLite& sqlite)
+		inline SQLiteFuncs(xx::SQLite& sqlite)
             : sqlite(sqlite)
             , mp(sqlite.mempool())
             , s(mp)
@@ -21,7 +21,7 @@ namespace LOGDB
 
         xx::SQLiteQuery_p query_CreateTable_log;
         // 建 log 表
-        void CreateTable_log()
+        inline void CreateTable_log()
         {
 			auto& q = query_CreateTable_log;
 
@@ -46,7 +46,7 @@ CREATE TABLE [log](
 
         xx::SQLiteQuery_p query_InsertLog;
         // 插入一条 log. time 传入 DateTime.Now.Ticks
-        void InsertLog
+        inline void InsertLog
         (
             LOGDB::Level const& level,
             int64_t const& time,
@@ -73,7 +73,7 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
 
         // xx::SQLiteQuery_p query_InsertLog;
         // 插入一条 log. time 传入 DateTime.Now.Ticks
-        void InsertLog
+        inline void InsertLog
         (
             LOGDB::Level const& level,
             int64_t const& time,
@@ -100,7 +100,7 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
 
         xx::SQLiteQuery_p query_DeleteLog;
         // 根据 id 删掉一条 log 
-        void DeleteLog
+        inline void DeleteLog
         (
             int64_t const& id
         )
@@ -118,7 +118,7 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
 
         xx::SQLiteQuery_p query_DeleteLogByTimeRange;
         // 根据 time 范围( 大于等于, 小于等于 ) 删掉一批 log 
-        void DeleteLogByTimeRange
+        inline void DeleteLogByTimeRange
         (
             int64_t const& timeFrom,
             int64_t const& timeTo
@@ -137,7 +137,7 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
 
         xx::SQLiteQuery_p query_SelectLogs;
         // 获取所有数据
-        xx::List_p<LOGDB::Log_p> SelectLogs()
+        inline xx::List_p<LOGDB::Log_p> SelectLogs()
         {
 			auto& q = query_SelectLogs;
 
@@ -166,7 +166,7 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
 
         xx::SQLiteQuery_p query_SelectLog;
         // 根据 主键 获取一条 log
-        xx::List_p<int64_t> SelectLog
+        inline xx::List_p<int64_t> SelectLog
         (
             int64_t const& id
         )
@@ -193,7 +193,7 @@ select [id], [level], [time], [machine], [service], [instanceId], [title], [opco
 
         xx::SQLiteQuery_p query_SelectLogsByTimeRange;
         // 根据 time 范围( 大于等于, 小于等于 ) 删掉一批 log 
-        xx::List_p<LOGDB::Log_p> SelectLogsByTimeRange
+        inline xx::List_p<LOGDB::Log_p> SelectLogsByTimeRange
         (
             int64_t const& timeFrom,
             int64_t const& timeTo
