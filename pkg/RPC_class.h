@@ -3,6 +3,20 @@
 
 namespace RPC
 {
+namespace DB_Manage
+{
+    struct MsgResult;
+    using MsgResult_p = xx::Ptr<MsgResult>;
+    using MsgResult_v = xx::Dock<MsgResult>;
+
+}
+namespace Manage_DB
+{
+    struct Msg;
+    using Msg_p = xx::Ptr<Msg>;
+    using Msg_v = xx::Dock<Msg>;
+
+}
 namespace Login_Client
 {
     struct LoginSuccess;
@@ -65,6 +79,42 @@ namespace Generic
         DB = 1,
         // 管理端
         Manage = 2,
+    };
+}
+namespace DB_Manage
+{
+    struct MsgResult : xx::Object
+    {
+        xx::String_p txt;
+
+        typedef MsgResult ThisType;
+        typedef xx::Object BaseType;
+	    MsgResult();
+	    MsgResult(xx::BBuffer *bb);
+		MsgResult(MsgResult const&) = delete;
+		MsgResult& operator=(MsgResult const&) = delete;
+        virtual void ToString(xx::String &str) const override;
+        virtual void ToStringCore(xx::String &str) const override;
+        virtual void ToBBuffer(xx::BBuffer &bb) const override;
+        virtual int FromBBuffer(xx::BBuffer &bb) override;
+    };
+}
+namespace Manage_DB
+{
+    struct Msg : xx::Object
+    {
+        xx::String_p txt;
+
+        typedef Msg ThisType;
+        typedef xx::Object BaseType;
+	    Msg();
+	    Msg(xx::BBuffer *bb);
+		Msg(Msg const&) = delete;
+		Msg& operator=(Msg const&) = delete;
+        virtual void ToString(xx::String &str) const override;
+        virtual void ToStringCore(xx::String &str) const override;
+        virtual void ToBBuffer(xx::BBuffer &bb) const override;
+        virtual int FromBBuffer(xx::BBuffer &bb) override;
     };
 }
 namespace Login_Client
@@ -211,6 +261,98 @@ namespace Generic
         virtual void ToBBuffer(xx::BBuffer &bb) const override;
         virtual int FromBBuffer(xx::BBuffer &bb) override;
     };
+}
+namespace DB_Manage
+{
+	inline MsgResult::MsgResult()
+	{
+	}
+	inline MsgResult::MsgResult(xx::BBuffer *bb)
+	{
+	    int rtv = 0;
+        bb->readLengthLimit = 0;
+        if (rtv = bb->Read(txt)) throw rtv;
+	}
+    inline void MsgResult::ToBBuffer(xx::BBuffer &bb) const
+    {
+        bb.Write(this->txt);
+    }
+    inline int MsgResult::FromBBuffer(xx::BBuffer &bb)
+    {
+        int rtv = 0;
+        bb.readLengthLimit = 0;
+        if (rtv = bb.Read(this->txt)) return rtv;
+        return rtv;
+    }
+
+    inline void MsgResult::ToString(xx::String &str) const
+    {
+        if (tsFlags())
+        {
+        	str.Append("[ \"***** recursived *****\" ]");
+        	return;
+        }
+        else tsFlags() = 1;
+
+        str.Append("{ \"type\" : \"MsgResult\"");
+        ToStringCore(str);
+        str.Append(" }");
+        
+        tsFlags() = 0;
+    }
+    inline void MsgResult::ToStringCore(xx::String &str) const
+    {
+        this->BaseType::ToStringCore(str);
+        str.Append(", \"txt\" : ", this->txt);
+    }
+
+
+}
+namespace Manage_DB
+{
+	inline Msg::Msg()
+	{
+	}
+	inline Msg::Msg(xx::BBuffer *bb)
+	{
+	    int rtv = 0;
+        bb->readLengthLimit = 200;
+        if (rtv = bb->Read(txt)) throw rtv;
+	}
+    inline void Msg::ToBBuffer(xx::BBuffer &bb) const
+    {
+        bb.Write(this->txt);
+    }
+    inline int Msg::FromBBuffer(xx::BBuffer &bb)
+    {
+        int rtv = 0;
+        bb.readLengthLimit = 200;
+        if (rtv = bb.Read(this->txt)) return rtv;
+        return rtv;
+    }
+
+    inline void Msg::ToString(xx::String &str) const
+    {
+        if (tsFlags())
+        {
+        	str.Append("[ \"***** recursived *****\" ]");
+        	return;
+        }
+        else tsFlags() = 1;
+
+        str.Append("{ \"type\" : \"Msg\"");
+        ToStringCore(str);
+        str.Append(" }");
+        
+        tsFlags() = 0;
+    }
+    inline void Msg::ToStringCore(xx::String &str) const
+    {
+        this->BaseType::ToStringCore(str);
+        str.Append(", \"txt\" : ", this->txt);
+    }
+
+
 }
 namespace Login_Client
 {
@@ -582,6 +724,8 @@ namespace xx
 {
 	template<> struct TypeId<xx::String> { static const uint16_t value = 1; };
 	template<> struct TypeId<xx::BBuffer> { static const uint16_t value = 2; };
+	template<> struct TypeId<RPC::DB_Manage::MsgResult> { static const uint16_t value = 11; };
+	template<> struct TypeId<RPC::Manage_DB::Msg> { static const uint16_t value = 12; };
 	template<> struct TypeId<RPC::Login_Client::LoginSuccess> { static const uint16_t value = 4; };
 	template<> struct TypeId<RPC::Client_Login::Login> { static const uint16_t value = 5; };
 	template<> struct TypeId<RPC::DB_Login::AuthSuccess> { static const uint16_t value = 6; };
@@ -597,6 +741,8 @@ namespace RPC
 	{
 	    xx::MemPool::Register<xx::String, xx::Object>();
 	    xx::MemPool::Register<xx::BBuffer, xx::Object>();
+	    xx::MemPool::Register<RPC::DB_Manage::MsgResult, xx::Object>();
+	    xx::MemPool::Register<RPC::Manage_DB::Msg, xx::Object>();
 	    xx::MemPool::Register<RPC::Login_Client::LoginSuccess, xx::Object>();
 	    xx::MemPool::Register<RPC::Client_Login::Login, xx::Object>();
 	    xx::MemPool::Register<RPC::DB_Login::AuthSuccess, xx::Object>();

@@ -11,26 +11,24 @@ using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
 using System.Windows.Shapes;
 
 namespace rpc_manage
 {
     /// <summary>
-    /// Interaction logic for MainWindow.xaml
+    /// Interaction logic for Window1.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class Window1 : Window
     {
-        public MainWindow()
+        public Window1()
         {
             InitializeComponent();
         }
 
-        private void Button_Click(object sender, RoutedEventArgs e)
+        private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            var w1 = new Window1();
-            var r = w1.ShowDialog();
-            Debug.Print("r = " + r);
+            Debug.Print(System.Threading.Thread.CurrentThread.ManagedThreadId.ToString());
+            DialogResult = true;  // 关闭对话框并设置返回值
         }
     }
 }

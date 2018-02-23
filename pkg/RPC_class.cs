@@ -4,7 +4,7 @@ namespace RPC
 {
     public static class PkgGenMd5
     {
-        public const string value = "39f5374673cfd336020f62c835d3e078"; 
+        public const string value = "9fa1c04968a97e9c38c1f98b44bb8848"; 
     }
 
 namespace Generic
@@ -26,6 +26,54 @@ namespace Generic
         /// 管理端
         /// </summary>
         Manage = 2,
+    }
+}
+namespace DB_Manage
+{
+    public partial class MsgResult : IBBuffer
+    {
+        public string txt;
+
+        public virtual ushort GetPackageId()
+        {
+            return TypeIdMaps<MsgResult>.typeId;
+        }
+
+        public virtual void ToBBuffer(BBuffer bb)
+        {
+            bb.Write(this.txt);
+        }
+
+        public virtual void FromBBuffer(BBuffer bb)
+        {
+            bb.readLengthLimit = 0;
+            bb.Read(ref this.txt);
+        }
+
+    }
+}
+namespace Manage_DB
+{
+    public partial class Msg : IBBuffer
+    {
+        public string txt;
+
+        public virtual ushort GetPackageId()
+        {
+            return TypeIdMaps<Msg>.typeId;
+        }
+
+        public virtual void ToBBuffer(BBuffer bb)
+        {
+            bb.Write(this.txt);
+        }
+
+        public virtual void FromBBuffer(BBuffer bb)
+        {
+            bb.readLengthLimit = 200;
+            bb.Read(ref this.txt);
+        }
+
     }
 }
 namespace Login_Client
@@ -248,6 +296,8 @@ namespace Generic
         {
             // BBuffer.Register<string>(1);
             BBuffer.Register<BBuffer>(2);
+            BBuffer.Register<DB_Manage.MsgResult>(11);
+            BBuffer.Register<Manage_DB.Msg>(12);
             BBuffer.Register<Login_Client.LoginSuccess>(4);
             BBuffer.Register<Client_Login.Login>(5);
             BBuffer.Register<DB_Login.AuthSuccess>(6);

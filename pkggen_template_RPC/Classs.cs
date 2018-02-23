@@ -85,3 +85,22 @@ namespace Login_Client
         int id;
     }
 }
+
+// Manage 发往 DB
+namespace Manage_DB
+{
+    class Msg
+    {
+        [Limit(200)]
+        string txt;
+    }
+}
+
+// DB 发往 Manage
+namespace DB_Manage
+{
+    class MsgResult
+    {
+        string txt;
+    }
+}

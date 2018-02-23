@@ -1,5 +1,5 @@
 ﻿
-RPC_PkgGenMd5_Value = '39f5374673cfd336020f62c835d3e078'
+RPC_PkgGenMd5_Value = '9fa1c04968a97e9c38c1f98b44bb8848'
 
 --[[
 服务类型列表
@@ -18,6 +18,46 @@ RPC_Generic_ServiceTypes = {
     ]]
     Manage = 2
 }
+RPC_DB_Manage_MsgResult = {
+    typeName = "RPC_DB_Manage_MsgResult",
+    typeId = 11,
+    Create = function()
+        local o = {}
+        o.__proto = RPC_DB_Manage_MsgResult
+        o.__index = o
+        o.__newindex = o
+
+        o.txt = null -- String
+        return o
+    end,
+    FromBBuffer = function( bb, o )
+        o.txt = bb:ReadObject()
+    end,
+    ToBBuffer = function( bb, o )
+        bb:WriteObject( o.txt )
+    end
+}
+BBuffer.Register( RPC_DB_Manage_MsgResult )
+RPC_Manage_DB_Msg = {
+    typeName = "RPC_Manage_DB_Msg",
+    typeId = 12,
+    Create = function()
+        local o = {}
+        o.__proto = RPC_Manage_DB_Msg
+        o.__index = o
+        o.__newindex = o
+
+        o.txt = null -- String
+        return o
+    end,
+    FromBBuffer = function( bb, o )
+        o.txt = bb:ReadObject()
+    end,
+    ToBBuffer = function( bb, o )
+        bb:WriteObject( o.txt )
+    end
+}
+BBuffer.Register( RPC_Manage_DB_Msg )
 RPC_Login_Client_LoginSuccess = {
     typeName = "RPC_Login_Client_LoginSuccess",
     typeId = 4,

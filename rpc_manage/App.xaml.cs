@@ -30,7 +30,7 @@ namespace rpc_manage
 
             // 初始化 loop update驱动用 timer
             dt.Interval = new TimeSpan(0, 0, 0, 0, 1);
-            dt.Tick += (sender, e)=> 
+            dt.Tick += (sender, e) =>
             {
                 uvLoop.Run(xx.UvRunMode.NoWait);
             };
@@ -48,42 +48,51 @@ namespace rpc_manage
         xx.UvTimer timer;
         long pingCount = 0;
         long pingTotal = 0;
+        public xx.Queue<xx.IBBuffer> recvs = new xx.Queue<xx.IBBuffer>();
 
         public DbClient(xx.UvLoop loop, string ip, int port) : base(loop)
         {
-            this.SetAddress(ip, port);
+            SetAddress(ip, port);
 
-            this.OnDisconnect = () =>
+            OnDisconnect = () =>
             {
-                Console.WriteLine("disconnected from db...");
+                Debug.WriteLine("disconnected from db...");
             };
 
-            this.OnConnect = (status) =>
+            // 连接后逻辑握手, 自报家门
+            OnConnect = status =>
             {
-                if (this.alive)
+                if (alive)
                 {
-                    Console.WriteLine("connected to db. send ServiceInfo...");
-                    this.Send(new RPC.Generic.ServiceInfo
+                    Debug.WriteLine("connected to db. send ServiceInfo...");
+                    Send(new RPC.Generic.ServiceInfo
                     {
                         type = RPC.Generic.ServiceTypes.Manage
                     });
                 }
             };
 
+            // 收到的数据往队列里往
+            OnReceivePackage = bb =>
+            {
+                var ibb = bb.TryReadPackage<xx.IBBuffer>();
+                if (ibb != null) recvs.Enqueue(ibb);
+            };
+
             // 起一个 timer, 每 1 秒检查一下连接状态, 发一个心跳包
             timer = new xx.UvTimer(loop, 0, 1000, () =>
             {
-                Debug.Assert(!this.disposed);
+                Debug.Assert(!disposed);
 
                 // 如果已断线 或 未连接, 就发起连接
-                if (this.state == xx.UvTcpStates.Disconnected)
+                if (state == xx.UvTcpStates.Disconnected)
                 {
-                    Console.WriteLine("connect to db...");
-                    this.Connect();
+                    Debug.WriteLine("connect to db...");
+                    Connect();
                 }
-                else if (this.state == xx.UvTcpStates.Connected)
+                else if (state == xx.UvTcpStates.Connected)
                 {
-                    Console.WriteLine("ping to db...");
+                    Debug.WriteLine("ping to db...");
                     SendRequest(new RPC.Generic.Ping
                     {
                         ticks = DateTime.Now.Ticks
@@ -91,7 +100,7 @@ namespace rpc_manage
                     (serial, bb) =>
                     {
                         if (bb == null) return;
-                        Console.WriteLine("recv db's pong...");
+                        Debug.WriteLine("recv db's pong...");
                         var pong = bb.TryReadPackage<RPC.Generic.Pong>();
                         Debug.Assert(pong != null);
 
