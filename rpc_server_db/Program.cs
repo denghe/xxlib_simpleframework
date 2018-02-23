@@ -27,11 +27,6 @@ public class ServicePeer : UvTcpPeer
     {
         this.service = service;
 
-        // 绑到超时管理器. 几秒内没有收到合法的包或请求就 T
-        this.BindTimeouter(service.timeouter);
-        this.OnTimeout = Dispose;
-        this.TimeoutReset();
-
         // 匿名连接处理: 收到认证信息后 绑相应上下文
         this.OnReceivePackage = (bb) =>
         {
@@ -55,24 +50,15 @@ public class ServicePeer : UvTcpPeer
                                     // 试着绑上下文( 如果上下文已经绑有 peer, 绑定将失败 )
                                     if (service.ctxLogin.BindPeer(this))
                                     {
-                                        // 刷新超时时间 防 T
-                                        this.TimeoutReset();
-
                                         Console.WriteLine("login connected...");
                                         return;
                                     }
                                     break;
                                 }
-                            //case RPC.Generic.ServiceTypes.DB:
-                            //    break;
                             case RPC.Generic.ServiceTypes.Manage:
                                 {
-                                    // 试着绑上下文( 如果上下文已经绑有 peer, 绑定将失败 )
                                     if (service.ctxManage.BindPeer(this))
                                     {
-                                        // 刷新超时时间 防 T
-                                        this.TimeoutReset();
-
                                         Console.WriteLine("manage connected...");
                                         return;
                                     }
@@ -84,6 +70,7 @@ public class ServicePeer : UvTcpPeer
                         break;
                     }
             }
+            // 非法首包直接 T
             Dispose();
         };
     }
@@ -208,7 +195,7 @@ public class ServiceContext_Manage : UvContextBase
                             if (peerAlive)
                             {
                                 // 发送处理结果
-                                peer.Send(new RPC.DB_Manage.MsgResult
+                                peer.SendBig(new RPC.DB_Manage.MsgResult
                                 {
                                     txt = o.txt
                                 });
@@ -269,7 +256,7 @@ public class Service : UvLoop
     public Service()
     {
         InitRpcManager(1000, 5);
-        InitTimeouter(1000, 6, 5);                                  // 精度:秒, 最长计时 6 秒, 默认 5 秒超时
+        InitTimeouter(1000, 6, 5);                                          // 精度:秒, 最长计时 6 秒, 默认 5 秒超时
 
         svcListener = new ServiceListener(this, "0.0.0.0", 12346);
         dispatcher = new UvAsync(this);

@@ -405,7 +405,7 @@ namespace xx
                 int headerLen = 3;
                 if ((typeId & 0x4) > 0)                     // 大包确保 5字节 包头长度
                 {
-                    if (offset + 5 <= bbRecv.dataLen) continue;
+                    if (offset + 5 > bbRecv.dataLen) break;
                     typeId &= 0x3;
                     headerLen = 5;
                     dataLen += (buf[offset + 3] << 16) + (buf[offset + 4] << 24);   // 修正为大包包长

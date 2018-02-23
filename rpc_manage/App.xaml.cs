@@ -105,22 +105,22 @@ namespace rpc_manage
                 }
                 else if (state == xx.UvTcpStates.Connected)
                 {
-                    Debug.WriteLine("ping to db...");
-                    SendRequest(new RPC.Generic.Ping
-                    {
-                        ticks = DateTime.Now.Ticks
-                    },
-                    (serial, bb) =>
-                    {
-                        if (bb == null) return;
-                        Debug.WriteLine("recv db's pong...");
-                        var pong = bb.TryReadPackage<RPC.Generic.Pong>();
-                        Debug.Assert(pong != null);
+                    //Debug.WriteLine("ping to db...");
+                    //SendRequest(new RPC.Generic.Ping
+                    //{
+                    //    ticks = DateTime.Now.Ticks
+                    //},
+                    //(serial, bb) =>
+                    //{
+                    //    if (bb == null) return;
+                    //    Debug.WriteLine("recv db's pong...");
+                    //    var pong = bb.TryReadPackage<RPC.Generic.Pong>();
+                    //    Debug.Assert(pong != null);
 
-                        // ping 计数, 总 ping 值累加
-                        ++pingCount;
-                        pingTotal += DateTime.Now.Ticks - pong.ticks;
-                    });
+                    //    // ping 计数, 总 ping 值累加
+                    //    ++pingCount;
+                    //    pingTotal += DateTime.Now.Ticks - pong.ticks;
+                    //});
                 }
             });
         }
