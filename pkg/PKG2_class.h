@@ -3,6 +3,12 @@
 
 namespace PKG2
 {
+	struct PkgGenMd5
+	{
+		static constexpr char const* value = "23fe8c4ca861c399d5ad090c854c7529";
+
+    };
+
     // 测试一下各种数据类型
     struct 基类;
     using 基类_p = xx::Ptr<基类>;

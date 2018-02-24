@@ -3,6 +3,12 @@
 
 namespace PKG
 {
+	struct PkgGenMd5
+	{
+		static constexpr char const* value = "35314f910e4988da3f774de3d5d783e7";
+
+    };
+
     // 一个请求( 当前限定为 service 与 db 间 ), 通常携带一个流水号. 这是基类
     struct Request;
     using Request_p = xx::Ptr<Request>;
@@ -640,6 +646,7 @@ namespace Client_Server
     // 主动退出
     struct Logout : xx::Object
     {
+        PKG::UserInfo_p ui;
 
         typedef Logout ThisType;
         typedef xx::Object BaseType;
@@ -1346,13 +1353,17 @@ namespace Client_Server
 	}
 	inline Logout::Logout(xx::BBuffer *bb)
 	{
+	    int rtv = 0;
+        if (rtv = bb->Read(ui)) throw rtv;
 	}
     inline void Logout::ToBBuffer(xx::BBuffer &bb) const
     {
+        bb.Write(this->ui);
     }
     inline int Logout::FromBBuffer(xx::BBuffer &bb)
     {
         int rtv = 0;
+        if (rtv = bb.Read(this->ui)) return rtv;
         return rtv;
     }
 
@@ -1374,6 +1385,7 @@ namespace Client_Server
     inline void Logout::ToStringCore(xx::String &str) const
     {
         this->BaseType::ToStringCore(str);
+        str.Append(", \"ui\" : ", this->ui);
     }
 
 

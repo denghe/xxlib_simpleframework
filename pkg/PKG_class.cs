@@ -4,7 +4,7 @@ namespace PKG
 {
     public static class PkgGenMd5
     {
-        public const string value = "0789b6167062a2d663f582282d42d19c"; 
+        public const string value = "35314f910e4988da3f774de3d5d783e7"; 
     }
 
 namespace Manage
@@ -310,6 +310,7 @@ namespace Client_Server
     /// </summary>
     public partial class Logout : IBBuffer
     {
+        public UserInfo ui;
 
         public virtual ushort GetPackageId()
         {
@@ -318,10 +319,12 @@ namespace Client_Server
 
         public virtual void ToBBuffer(BBuffer bb)
         {
+            bb.Write(this.ui);
         }
 
         public virtual void FromBBuffer(BBuffer bb)
         {
+            bb.Read(ref this.ui);
         }
 
     }

@@ -45,6 +45,7 @@
     <Compile Include="Exts.cs" />
     <Compile Include="TemplateLibrary.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="LuaFilters.cs" />
     <Compile Include="TypeIdMappings.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

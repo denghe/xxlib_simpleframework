@@ -21,5 +21,8 @@ namespace Client_Server
     }
 
     [Desc("主动退出")]
-    class Logout { }
+    class Logout
+    {
+        UserInfo ui;    // 测试一下 lua 生成过滤依赖
+    }
 }

@@ -19,8 +19,13 @@ public static class GenCPP_Class
         // template namespace
         sb.Append(@"
 namespace " + templateName + @"
-{");
+{
+	struct PkgGenMd5
+	{
+		static constexpr char const* value = """ + md5 + @""";
 
+    };
+");
         var ts = asm._GetTypes();
 
         // predefines

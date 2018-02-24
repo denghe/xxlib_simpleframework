@@ -3,6 +3,12 @@
 
 namespace RPC
 {
+	struct PkgGenMd5
+	{
+		static constexpr char const* value = "ef692c7f0e1cc9f6550064bb8e6e1767";
+
+    };
+
 namespace DB_Manage
 {
     struct MsgResult;
