@@ -373,7 +373,7 @@ public:
 	inline static int SockConnect(Socket_t const& s, sockaddr* addr)
 	{
 	LabRetry:
-		int r = ::connect(s, addr, sizeof(sockaddr_in6));
+		int r = ::connect(s, addr, addr->sa_family == AF_INET ? sizeof(sockaddr_in) : sizeof(sockaddr_in6));
 		if (r == -1 && SockGetErrNo() == EINTR) goto LabRetry;
 		return r;
 	}
