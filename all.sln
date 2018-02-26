@@ -86,6 +86,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "test_csharp4", "test_csharp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "rpc_manage", "rpc_manage\rpc_manage.csproj", "{77C8BA45-84F7-4F37-8A3B-33ADA63EDEF7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "rpc_client_udp", "rpc_client_udp\rpc_client_udp.csproj", "{81F5A627-3698-43C3-84FF-DC65F2A73B47}"
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		pkg\pkg.projitems*{160a3ee0-261c-4ed1-9194-4c6e75dbc7cf}*SharedItemsImports = 13
@@ -94,6 +96,7 @@ Global
 		pkg\pkg.projitems*{5f3a0385-e8a2-4422-981f-b65f87fedd27}*SharedItemsImports = 4
 		pkg\pkg.projitems*{6b685ba4-fad4-4227-becf-d341f09a8256}*SharedItemsImports = 4
 		pkg\pkg.projitems*{77c8ba45-84f7-4f37-8a3b-33ada63edef7}*SharedItemsImports = 4
+		pkg\pkg.projitems*{81f5a627-3698-43c3-84ff-dc65f2a73b47}*SharedItemsImports = 4
 		pkg\pkg.projitems*{85f10995-1a5b-4640-bd60-89f3e1d0c483}*SharedItemsImports = 4
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -249,6 +252,10 @@ Global
 		{77C8BA45-84F7-4F37-8A3B-33ADA63EDEF7}.Debug|x64.Build.0 = Debug|x64
 		{77C8BA45-84F7-4F37-8A3B-33ADA63EDEF7}.Release|x64.ActiveCfg = Release|x64
 		{77C8BA45-84F7-4F37-8A3B-33ADA63EDEF7}.Release|x64.Build.0 = Release|x64
+		{81F5A627-3698-43C3-84FF-DC65F2A73B47}.Debug|x64.ActiveCfg = Debug|x64
+		{81F5A627-3698-43C3-84FF-DC65F2A73B47}.Debug|x64.Build.0 = Debug|x64
+		{81F5A627-3698-43C3-84FF-DC65F2A73B47}.Release|x64.ActiveCfg = Release|x64
+		{81F5A627-3698-43C3-84FF-DC65F2A73B47}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1395,7 +1395,7 @@ namespace xx
     {
         /******************************************************************************/
         // 用户事件绑定区
-        public Func<UvUdpPeer> OnCreatePeer;
+        public Func<UvUdpListener, Guid, IntPtr, UvUdpPeer> OnCreatePeer;
         public Action<UvUdpPeer> OnAccept;
         public Action OnDispose;
         /******************************************************************************/
@@ -1490,7 +1490,7 @@ namespace xx
                 {
                     if (OnCreatePeer != null)
                     {
-                        p = OnCreatePeer();
+                        p = OnCreatePeer(this, g, bufPtr);
                         if (p == null) return;
                     }
                     else p = new UvUdpPeer(this, g, bufPtr);
@@ -1698,6 +1698,8 @@ namespace xx
         {
             return disposed;
         }
+
+        public bool alive { get { return !disposed; } }
 
         byte[] ipBuf = new byte[64];
         string ip_ = null;

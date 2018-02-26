@@ -29,12 +29,13 @@ public class UnityScene
     }
     IEnumerable UpdateCore()
     {
-        nbs.SetAddress("127.0.0.1", 12345);
         Console.WriteLine("init");
 
         LabConnect:                             // 循环切入点
         yield return null;                      // 避免后续 if + goto 中间缺驱动环节
 
+        nbs.Disconnect();                       // 防御性编程
+        nbs.SetAddress("127.0.0.1", 12345);     // 每次连接前都设置地址有助于检测网络环境在 ipv4/6 间切换的问题
         nbs.Connect();                          // 下达任务 并等结果
         Console.WriteLine("connecting...");
         while (true)

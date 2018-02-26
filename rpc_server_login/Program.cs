@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using xx;
 
 
-// for client
+// for client ( tcp )
 public class Listener : UvTcpListener
 {
     Service service;
@@ -19,29 +19,63 @@ public class Listener : UvTcpListener
 }
 
 
-// for client
+// for client ( tcp )
 public class Peer : UvTcpPeer
 {
     public Service service;
     public Peer(Service service) : base(service.listener)
     {
         this.service = service;
+        TcpUdpPeerHandler.Bind(service, this);
+    }
+}
 
+// for client ( udp )
+public class UdpListener : UvUdpListener
+{
+    Service service;
+    public UdpListener(Service service, string ip, int port) : base(service)
+    {
+        this.service = service;
+        this.OnCreatePeer = (L, G, P) => new UdpPeer(service, L, G, P); // 更多的 kcp 参数需要和客户端一致
+        this.Bind(ip, port);
+        this.Listen();
+    }
+}
+
+// for client ( udp )
+public class UdpPeer : UvUdpPeer
+{
+    public Service service;
+    public UdpPeer(Service service, UvUdpListener L, Guid G, IntPtr P) // 更多的 kcp 参数需要和客户端一致
+        : base(L, G, P)
+    {
+        this.service = service;
+        TcpUdpPeerHandler.Bind(service, this);
+    }
+}
+
+
+// tcp udp peer 公共的处理函数
+public static class TcpUdpPeerHandler
+{
+    public static void Bind(Service service, UvTcpUdpBase peer)
+    {
         // 绑到超时管理器. 几秒内没有收到合法的包或请求就 T
-        this.BindTimeouter(service.timeouter);
-        this.OnTimeout = Dispose;
+        peer.BindTimeouter(service.timeouter);
+        peer.OnTimeout = peer.Dispose;
 
         // 开始超时计算
-        this.TimeoutReset();
+        peer.TimeoutReset();
 
         // 绑定请求处理函数
-        this.OnReceiveRequest = (serial_client, bb__) =>
+        peer.OnReceiveRequest = (serial_client, bb__) =>
         {
             // 试解包, 如果失败直接断开
             var ibb__ = bb__.TryReadPackage<IBBuffer>();
             if (ibb__ == null)
             {
-                this.Dispose();
+                peer.Dispose();
                 return;
             }
 
@@ -49,7 +83,7 @@ public class Peer : UvTcpPeer
             {
                 case RPC.Client_Login.Login login:
                     // 重置超时计算
-                    this.TimeoutReset();
+                    peer.TimeoutReset();
                     // 如果到 db 的连接活着就进一步发起请求
                     if (service.dbClient.alive)
                     {
@@ -65,9 +99,9 @@ public class Peer : UvTcpPeer
                             if (bb == null)
                             {
                                 // 当回调发生时, 有可能 peer 已 Disconnect / Disposed, 故需要检测
-                                if (this.alive)
+                                if (!peer.disposed)
                                 {
-                                    this.SendResponse(serial_client, new RPC.Generic.Error
+                                    peer.SendResponse(serial_client, new RPC.Generic.Error
                                     {
                                         errNo = 2,
                                         errMsg = "db service Auth timeout"
@@ -87,9 +121,9 @@ public class Peer : UvTcpPeer
                                 switch (ibb)
                                 {
                                     case RPC.DB_Login.AuthSuccess authSuccess:
-                                        if (this.alive)
+                                        if (!peer.disposed)
                                         {
-                                            this.SendResponse(serial_client, new RPC.Login_Client.LoginSuccess
+                                            peer.SendResponse(serial_client, new RPC.Login_Client.LoginSuccess
                                             {
                                                 id = authSuccess.id
                                             });
@@ -97,9 +131,9 @@ public class Peer : UvTcpPeer
                                         break;
 
                                     case RPC.Generic.Error err:
-                                        if (this.alive)
+                                        if (!peer.disposed)
                                         {
-                                            this.SendResponse(serial_client, err);
+                                            peer.SendResponse(serial_client, err);
                                         }
                                         break;
                                 }
@@ -109,7 +143,7 @@ public class Peer : UvTcpPeer
                     // 否则就直接返回相应的错误
                     else
                     {
-                        this.SendResponse(serial_client, new RPC.Generic.Error
+                        peer.SendResponse(serial_client, new RPC.Generic.Error
                         {
                             errNo = 3,
                             errMsg = "can't connect to db service"
@@ -118,9 +152,9 @@ public class Peer : UvTcpPeer
                     break;
 
                 case RPC.Generic.Ping o:
-                    this.TimeoutReset();
+                    peer.TimeoutReset();
                     // ticks 原样返回, 用于计算延迟
-                    this.SendResponse(serial_client, new RPC.Generic.Pong
+                    peer.SendResponse(serial_client, new RPC.Generic.Pong
                     {
                         ticks = o.ticks
                     });
@@ -129,7 +163,6 @@ public class Peer : UvTcpPeer
         };
     }
 }
-
 
 
 // 用来连 DB 服务的客户端. 如果连接失败, 超时会不断重试以维持连接. 每秒会发 1 个心跳包.
@@ -215,10 +248,10 @@ public class DbClient : UvTcpClient
 }
 
 
-
 public class Service : UvLoop
 {
     public UvTcpListener listener;
+    public UvUdpListener udpListener;
     public DbClient dbClient;
 
     public Service()
@@ -226,6 +259,7 @@ public class Service : UvLoop
         InitRpcManager(1000, 5);
         InitTimeouter(1000, 6, 5);                                  // 精度:秒, 最长计时 6 秒, 默认 5 秒超时
         listener = new Listener(this, "0.0.0.0", 12345);
+        udpListener = new UdpListener(this, "0.0.0.0", 12344);
         dbClient = new DbClient(this, "127.0.0.1", 12346);
     }
 }
