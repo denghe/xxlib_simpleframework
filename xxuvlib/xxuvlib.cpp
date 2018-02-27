@@ -594,6 +594,11 @@ XXUVLIB_API int xx_ikcp_send(ikcpcb* kcp, const char *buffer, int offset, int le
 	return ikcp_send(kcp, buffer + offset, len);
 }
 
+XXUVLIB_API void xx_ikcp_flush(ikcpcb* kcp) noexcept
+{
+	ikcp_flush(kcp);
+}
+
 XXUVLIB_API void xx_ikcp_update(ikcpcb* kcp, uint32_t current) noexcept
 {
 	ikcp_update(kcp, current);

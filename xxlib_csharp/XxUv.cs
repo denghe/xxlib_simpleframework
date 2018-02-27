@@ -1682,6 +1682,7 @@ namespace xx
             var h = GCHandle.Alloc(data, GCHandleType.Pinned);
             UvInterop.xx_ikcp_send(ptr, h.AddrOfPinnedObject(), offset, len);
             h.Free();
+            //UvInterop.xx_ikcp_flush(ptr);   // 立即发出减少延迟
         }
 
         protected override void DisconnectImpl()
@@ -2276,6 +2277,9 @@ namespace xx
 
         [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
         public static extern int xx_ikcp_send(IntPtr kcp, IntPtr buffer, int offset, int len);
+
+        [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
+        public static extern void xx_ikcp_flush(IntPtr kcp);
 
         [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
         public static extern void xx_ikcp_update(IntPtr kcp, uint current);
