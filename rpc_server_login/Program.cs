@@ -256,11 +256,14 @@ public class Service : UvLoop
 
     public Service()
     {
-        InitRpcManager(1000, 5);
-        InitTimeouter(1000, 6, 5);                                  // 精度:秒, 最长计时 6 秒, 默认 5 秒超时
+        InitRpcManager(1000, 5);                                    // 精度:1秒, 5 秒超时
+        InitTimeouter(1000, 6, 5);                                  // 精度:1秒, 最长计时 6 秒, 默认 5 秒超时
+
         listener = new Listener(this, "0.0.0.0", 12345);
-        udpListener = new UdpListener(this, "0.0.0.0", 12344);
         dbClient = new DbClient(this, "127.0.0.1", 12346);
+
+        InitKcpFlushInterval(10);                                   // kcp 更新精度: 10毫秒
+        udpListener = new UdpListener(this, "0.0.0.0", 12344);
     }
 }
 

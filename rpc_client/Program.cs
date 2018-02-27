@@ -73,7 +73,7 @@ public class UnityScene
             new RPC.Client_Login.Login          // 构造一个登录包( 也可以用个静态的临时改值 )
             {
                 username = "a",                 // 模拟读取用户输入
-                password = (nbs.ticks % 10 > 0) ? "asdf" : "11111"     // 一定机率输对密码
+                password = ((nbs.ticks % 10 > 1)) ? "asdf" : "11111"     // 一定机率输对密码
             }
             , (s, ibb) => { recv = ibb; });     // RPC 回调: 将结果存入上下文变量以便后续 while 中判断
 

@@ -25,7 +25,6 @@ public class UnityScene
 
     UvUdpClient uuc;
     Guid g;                                     // 当前 udp 连接码
-    Random rnd = new Random();
     long ticks = 0;                             // 帧号
     public void Enter()
     {
@@ -40,7 +39,7 @@ public class UnityScene
 
         Console.WriteLine("set addr");
         uuc.Disconnect();                       // 防御性编程, 执行下面步骤前要清场
-        uuc.SetAddress("127.0.0.1", 12345);     // 设置地址附带 ipv6 only 网络检查( 万一切换网络环境? ), 故每次重连时都应该设置
+        uuc.SetAddress("127.0.0.1", 12344);     // 设置地址附带 ipv6 only 网络检查( 万一切换网络环境? ), 故每次重连时都应该设置
         uuc.Connect(g);                         // udp 并不会产生实际的连接行为, 这个函数只是将就一下使用习惯.
 
         LabLogin:
@@ -55,7 +54,7 @@ public class UnityScene
                 new RPC.Client_Login.Login      // 构造一个登录包( 也可以用个静态的临时改值 )
                 {
                     username = "a",             // 模拟读取用户输入
-                    password = (rnd.Next(10) > 0) ? "asdf" : "11111"     // 一定机率输对密码
+                    password = ((ticks % 10)> 1) ? "asdf" : "11111"     // 一定机率输对密码
                 }
                 , (s, ibb) => { recv = ibb; }); // RPC 回调: 将结果存入上下文变量以便后续 while 中判断
         }
@@ -182,7 +181,7 @@ public static class Program
                 us.Leave();
                 break;
             }
-            Thread.Sleep(33);   // 模拟 30 fps 帧刷新
+            Thread.Sleep(1000 / 30);   // 模拟 30 fps 帧刷新
         }
     }
 }

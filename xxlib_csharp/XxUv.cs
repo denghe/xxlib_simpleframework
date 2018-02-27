@@ -1362,7 +1362,7 @@ namespace xx
                 KickPeer();
                 return;
             }
-            peer.TimeoutReset();
+            //peer.TimeoutReset();
             HandleRequest(serial, ibb);
         }
 
@@ -1509,7 +1509,7 @@ namespace xx
             // 无脑更新 peer 的目标 ip 地址
             UvInterop.xxuv_addr_copy(addr, p.addrPtr);
 
-            if (idx < 0) OnAccept(p);
+            if (idx < 0 && OnAccept != null) OnAccept(p);
 
             // 转发到 peer 的 kcp
             p.Input(bufPtr, len);
@@ -1907,6 +1907,7 @@ namespace xx
         {
             if (disposed) throw new ObjectDisposedException("XxUvUdpClient");
             if (nextUpdateTicks > current) return;
+            if (kcpPtr == IntPtr.Zero) return;
             UvInterop.xx_ikcp_update(kcpPtr, current);
             nextUpdateTicks = UvInterop.xx_ikcp_check(kcpPtr, current);
 
