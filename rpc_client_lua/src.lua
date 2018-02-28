@@ -95,7 +95,7 @@
 		bbSend:Clear()
 		bbSend:WritePackage(pkg, 1, serial)
 		local r = nbs_:Send( bbSend )
-		return serial
+		return serial, r
 	end
 	nbs.Unregister = function(serial)
 		nbs[serial] = nil
@@ -132,11 +132,11 @@ local nbsco = coroutine.create(function()
 
 	print("event occur");
 	if nbs.state == NBSocketStates.Disconnected then
+        print("can't connect to server");
 		local ticks = nbs.ticks + 30;
 		while nbs.ticks < ticks do 
 			yield()
 		end
-        print("can't connect to server");
 		goto LabConnect
 
 	elseif nbs.state == NBSocketStates.Connecting then
@@ -154,9 +154,17 @@ local nbsco = coroutine.create(function()
 	local login = RPC_Client_Login_Login.Create()
 	login.username = "a"
 	login.password = "11111"
-    local serial = nbs.SendRequest(login, function(s, ibb)
+    local serial, r = nbs.SendRequest(login, function(s, ibb)
 		recv = ibb
 	end)
+	if r < 0 then
+        print("send error");
+		local ticks = nbs.ticks + 30;
+		while nbs.ticks < ticks do 
+			yield()
+		end
+		goto LabConnect
+	end
 	print("wait login response");
     while recv == 0 do
 		yield()
@@ -204,7 +212,7 @@ local nbsco = coroutine.create(function()
         if nbs.ticks % 30 == 0 then
 			local ping = RPC_Generic_Ping.Create()
 			ping.ticks = os.clock() * 1000
-            nbs.SendRequest(ping, function(s, ibb)
+            local serial, r = nbs.SendRequest(ping, function(s, ibb)
                 if ibb == nil then
                     print("ping timeout")
                 else
@@ -213,10 +221,22 @@ local nbsco = coroutine.create(function()
                     print(i64)
                 end
             end)
+			if r < 0 then
+				print("send error");
+				local ticks = nbs.ticks + 30;
+				while nbs.ticks < ticks do 
+					yield()
+				end
+				goto LabConnect
+			end
         end
     end
     print("disconnected")
-    goto LabConnect
+	local ticks = nbs.ticks + 30;
+	while nbs.ticks < ticks do 
+		yield()
+	end
+	goto LabConnect
 
 end)
 
