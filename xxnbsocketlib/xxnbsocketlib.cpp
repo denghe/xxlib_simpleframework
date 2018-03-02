@@ -1,5 +1,6 @@
 ﻿#include "xxnbsocketlib.h"
 
+#ifndef xxuvlib_EXPORTS
 #ifdef _WIN32
 
 BOOL APIENTRY DllMain(HMODULE hModule,
@@ -18,6 +19,7 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 	return TRUE;
 }
 
+#endif
 #endif
 
 extern "C" {
