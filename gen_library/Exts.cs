@@ -327,14 +327,10 @@ public static class GenExtensions
                     return "(" + _GetTypeDecl_Csharp(t) + ")" + v._ToEnumInteger(t);
                 }
             }
-            else if (v.ToString() != "0")
-            {
-                return v.ToString().ToLower();  // to lower for bool
-            }
-            else
-            {
-                return "";
-            }
+            var s = v.ToString();
+            if (s == "0") return "";
+            if (s == "True" || s == "False") return s.ToLower();
+            return "";
         }
         else if (t._IsString())
         {
