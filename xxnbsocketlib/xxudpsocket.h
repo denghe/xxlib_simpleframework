@@ -122,7 +122,7 @@ struct XxUdpSocket
 		uuid_generate(reinterpret_cast<unsigned char *>(&guid));
 #endif
 		
-		// todo: alloc uv_udp_init, recv_start, kcp_create, ...
+		// todo: kcp_create, ...
 		udp = (uv_udp_t*)Alloc(sizeof(uv_udp_t), this);
 		if (udp == nullptr) return -5;
 
@@ -139,6 +139,8 @@ struct XxUdpSocket
 			udp = nullptr;
 			throw r;
 		}
+
+		// todo: kcp_create
 
 		state = States::Connected;
 		ticks = 0;
@@ -165,26 +167,20 @@ struct XxUdpSocket
 	inline int Update(int const& sec = 0, int const& usec = 0)
 	{
 		++ticks;
-		//switch (state)
-		//{
-		//case States::Disconnected:
-		//{
-		//	return 0;
-		//}
-		//case States::Connecting:
-		//{
-		//	int r = SockWaitReadOrWritable(sock, false, sec, usec);
-		//	if (r < 0) return Close(-8);			// wait writable fail
-		//	else if (r == 0) return 0;				// timeout( not error )
-		//	else
-		//	{
-		//		state = States::Connected;
-		//		ticks = 0;
-		//		return 0;
-		//	}
-		//}
-		//case States::Connected:
-		//{
+		switch (state)
+		{
+		case States::Disconnected:
+		{
+			return 0;
+		}
+		case States::Connecting:
+		{
+			return -1;								// invalid state
+		}
+		case States::Connected:
+		{
+			// todo: call uv run nowait
+
 		//	// 判断 socket 是否处于 待接收数据 状态
 		//	int r = SockWaitReadOrWritable(sock, true, sec, usec);
 		//	if (r < 0) return Close(r);
@@ -244,16 +240,16 @@ struct XxUdpSocket
 		//			sendBufs.pop_front();
 		//		}
 		//	}
-		//	return 0;
-		//}
-		//case States::Disconnecting:
-		//{
-		//	if (!ticks) Close(0);
-		//	return 0;
-		//}
-		//default:
-		//	return -1;								// unknown state
-		//}
+			return 0;
+		}
+		case States::Disconnecting:
+		{
+			if (!ticks) Close(0);
+			return 0;
+		}
+		default:
+			return -1;								// unknown state
+		}
 
 		return 0;
 	}
