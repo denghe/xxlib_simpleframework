@@ -93,6 +93,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="ikcp.h" />
+    <ClInclude Include="xxguid.h" />
     <ClInclude Include="xxmempool.h" />
     <ClInclude Include="xxuvlib.h" />
   </ItemGroup>

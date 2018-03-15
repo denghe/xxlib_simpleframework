@@ -12,8 +12,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\xxuvlib\ikcp.h" />
+    <ClInclude Include="..\xxuvlib\xxguid.h" />
     <ClInclude Include="..\xxuvlib\xxmempool.h" />
-    <ClInclude Include="..\xxuvlib\xxuvlib.h" />
     <ClInclude Include="xxbuf.h" />
     <ClInclude Include="xxnbsocket.h" />
     <ClInclude Include="xxnbsocketlib.h" />
@@ -21,7 +21,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\xxuvlib\ikcp.cpp" />
-    <ClCompile Include="..\xxuvlib\xxuvlib.cpp" />
     <ClCompile Include="xxnbsocketlib.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

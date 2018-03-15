@@ -25,6 +25,7 @@ typedef socklen_t   SockLen_t;
 #endif
 
 #include "xxbuf.h"
+#include <stdio.h>	// printf
 #include <deque>
 #include <array>
 
@@ -86,7 +87,10 @@ struct XxNBSocket
 		{
 			r = SockGetErrNo();
 			if (r != EINPROGRESS && r != EWOULDBLOCK)
+			{
+				printf("errno = %d", r);
 				return Close(-7);						// connect fail
+			}
 
 			r = SockWaitReadOrWritable(sock, false, sec, usec);
 			if (r < 0) return Close(-8);				// wait writable fail

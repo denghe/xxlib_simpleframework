@@ -1,11 +1,9 @@
 ﻿#pragma execution_character_set("utf-8")
 
 #include "xxbuf.h"
-#include "xxuvlib.h"
+#include <uv.h>
+#include "ikcp.h"
 #include <stdio.h>	// printf
-#ifndef _WIN32
-#include <uuid.h>
-#endif
 #include <deque>
 #include <array>
 
@@ -103,9 +101,42 @@ struct XxUdpSocket
 	}
 
 	// 设置目标地址( v4 ip串, 不支持域名 )( 针对苹果机, 多一步使用 getaddrinfo 将 ip 转为 sockaddr_in/6 结构体的过程 )
-	inline void SetAddress(char const* const& ip, uint16_t const& port)
+	inline int SetAddress(char const* const& ipv4, uint16_t const& port)
 	{
-		xxuv_ip4_addr(ip, port, (sockaddr*)&addr);
+#ifdef __APPLE__
+		// 解决 client ipv6 only 网络问题
+		addrinfo hints, *res, *res0;
+		memset(&hints, 0, sizeof(hints));
+		hints.ai_family = PF_UNSPEC;
+		hints.ai_socktype = SOCK_STREAM;
+		hints.ai_flags = AI_DEFAULT;
+
+		char portbuf[16];
+		sprintf(portbuf, "%d", port);
+
+		if (auto r = getaddrinfo(ipv4, portbuf, &hints, &res0)) return r;
+		for (res = res0; res; res = res->ai_next)
+		{
+			auto s = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+			if (s < 0) continue;
+			close(s);
+			memcpy(addr, res->ai_addr, res->ai_addrlen);
+			freeaddrinfo(res0);
+
+			char ipBuf[128];
+			if (addr->sin6_family == AF_INET6)
+				uv_ip6_name(addr, ipBuf, 128);
+			else
+				uv_ip4_name((sockaddr_in*)addr, ipBuf, 128);
+			printf("fill ip = %s\n", ipBuf);
+
+			return 0;
+		}
+		freeaddrinfo(res0);
+		return -1;
+#else
+		return uv_ip4_addr(ipv4, port, (sockaddr_in*)&addr);
+#endif
 	}
 
 	// 并非连接目标地址服务器. 只是初始化 socket kcp 和参数些. udp 不需要连接.
@@ -118,11 +149,7 @@ struct XxUdpSocket
 		if (udp) return -4;								// not Disconnect ?
 
 		// renew Guid
-#ifdef _WIN32
-		CoCreateGuid((GUID*)&guid);
-#else
-		uuid_generate(reinterpret_cast<unsigned char *>(&guid));
-#endif
+		guid.Fill();
 
 		udp = (uv_udp_t*)Alloc(sizeof(uv_udp_t), this);
 		if (!udp) return -5;

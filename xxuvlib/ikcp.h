@@ -17,47 +17,8 @@
 #include <stdlib.h>
 #include <assert.h>
 
+#include "xxguid.h"
 // conv 扩展为存放 Guid 值( 16 字节 )
-class Guid
-{
-public:
-	uint64_t part1;
-	uint64_t part2;
-
-	inline Guid() noexcept
-		: part1(0)
-		, part2(0)
-	{
-	}
-
-	inline Guid(Guid const& o) noexcept
-	{
-		part1 = o.part1;
-		part2 = o.part2;
-	}
-
-	inline Guid& operator=(Guid const& o) noexcept
-	{
-		part1 = o.part1;
-		part2 = o.part2;
-		return *this;
-	}
-
-	inline bool operator==(Guid const& o) const noexcept
-	{
-		return part1 == o.part1 && part2 == o.part2;
-	}
-
-	inline bool operator!=(Guid const& o) const noexcept
-	{
-		return part1 != o.part1 || part2 != o.part2;
-	}
-
-	inline bool IsZero() noexcept
-	{
-		return part1 == 0 && part2 == 0;
-	}
-};
 
 
 //=====================================================================
