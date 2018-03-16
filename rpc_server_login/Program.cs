@@ -263,7 +263,7 @@ public class Service : UvLoop
         dbClient = new DbClient(this, "127.0.0.1", 12346);
 
         InitKcpFlushInterval(10);                                   // kcp 更新精度: 10毫秒
-        udpListener = new UdpListener(this, "0.0.0.0", 12344);
+        udpListener = new UdpListener(this, "0.0.0.0", 12345);
     }
 }
 
