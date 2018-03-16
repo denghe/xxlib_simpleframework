@@ -50,6 +50,7 @@ public class UdpPeer : UvUdpPeer
     public UdpPeer(Service service, UvUdpListener L, Guid G, IntPtr P) // 更多的 kcp 参数需要和客户端一致
         : base(L, G, P)
     {
+        Console.WriteLine("guid = " + G);
         this.service = service;
         TcpUdpPeerHandler.Bind(service, this);
     }
