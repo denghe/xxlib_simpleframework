@@ -21,7 +21,7 @@ public class UnityScene
         xxlua_openxx(L);
         var b = luaL_dostring(L, "NBSocket.Create = UdpSocket.Create"); // 协议切换为 udp. 默认是 tcp
         Console.WriteLine(b);
-        var src = File.ReadAllText("src.lua");
+        var src = File.ReadAllText("src2.lua");
         b = luaL_dostring(L, src);
         Console.WriteLine(b);
         Console.WriteLine("\nok...");

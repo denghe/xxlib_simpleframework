@@ -71,6 +71,9 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
+    <None Include="netlib.lua">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="RPC_class.lua">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

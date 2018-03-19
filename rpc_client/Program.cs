@@ -125,9 +125,10 @@ public class UnityScene
         yield return null;
 
         Console.WriteLine("request ping");
-        while (nbs.alive)
+        while (true)
         {
             yield return null;
+            if (!nbs.alive) goto LabConnect;    // 确保下面的 send 一定成功( 就不需要 try 了 )
             if (nbs.ticks % 30 == 0)            // 每秒 ping 一次
             {
                 nbs.SendRequest(
@@ -148,10 +149,6 @@ public class UnityScene
                     });
             }
         }
-
-        // 断线重连
-        Console.WriteLine("disconnected");
-        goto LabConnect;
 
         //yield break;  // 退出
     }
