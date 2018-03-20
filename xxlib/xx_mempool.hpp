@@ -85,6 +85,9 @@ namespace xx
 		return np;
 	}
 
+
+
+
 	template<typename T, typename ...Args>
 	T* MemPool::Create(Args &&... args)
 	{
@@ -127,6 +130,41 @@ namespace xx
 		outPtr = CreatePtr<T>(std::forward<Args>(args)...);
 		return outPtr.pointer;
 	}
+
+
+
+
+
+
+
+	template<typename T, typename ...Args>
+	T* MemPool::MPCreate(Args &&... args)
+	{
+		return Create<T>(this, std::forward<Args>(args)...);
+	}
+
+	template<typename T, typename ...Args>
+	Ptr<T> MemPool::MPCreatePtr(Args &&... args)
+	{
+		return CreatePtr<T>(this, std::forward<Args>(args)...);
+	}
+
+
+	template<typename T, typename ...Args>
+	bool MemPool::MPCreateTo(T*& outPtr, Args &&... args)
+	{
+		return CreateTo(outPtr, this, std::forward<Args>(args)...);
+	}
+
+	template<typename T, typename ...Args>
+	bool MemPool::MPCreateTo(Ptr<T>& outPtr, Args &&... args)
+	{
+		return CreateTo(outPtr, this, std::forward<Args>(args)...);
+	}
+
+
+
+
 
 
 	inline void MemPool::Release(Object* o)

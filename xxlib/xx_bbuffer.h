@@ -19,11 +19,16 @@ namespace xx
 		BBuffer(MemPool* const& mempool, std::pair<char const*, size_t> const& buff);
 
 
-		template<typename T>
-		void Write(T const& v);
+		template<typename ...TS>
+		void Write(TS const & ...vs);
 
+		template<typename ...TS>
+		int Read(TS &...vs);
+
+		template<typename T, typename ...TS>
+		int ReadCore(T& v, TS &...vs);
 		template<typename T>
-		int Read(T &v);
+		int ReadCore(T& v);
 
 
 		/*************************************************************************/

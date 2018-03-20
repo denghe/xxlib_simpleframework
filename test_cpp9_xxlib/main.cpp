@@ -73,7 +73,7 @@ void f2()
 	xx::UvLoop loop(&mp);
 	loop.InitKcpFlushInterval(10);
 	xx::BBuffer_p pkg;
-	mp.CreateTo(pkg, &mp);
+	mp.MPCreateTo(pkg);
 	uint64_t pkgid = 0;
 	uint64_t recvpkgid = 0;
 	uint64_t counter = 0;

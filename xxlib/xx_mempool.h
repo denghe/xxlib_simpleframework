@@ -93,6 +93,8 @@ namespace xx
 		// 可用于创建 lua state
 		void* Realloc(void *p, size_t newSize, size_t dataLen = -1) noexcept;
 
+		// 正常 create 系列
+
 		template<typename T, typename ...Args>
 		T* Create(Args &&... args);
 
@@ -104,6 +106,23 @@ namespace xx
 
 		template<typename T, typename ...Args>
 		bool CreateTo(Ptr<T>& outPtr, Args &&... args);
+
+
+		// 首参为 MemPool* 传 this 系列, 省一个参数
+
+		template<typename T, typename ...Args>
+		T* MPCreate(Args &&... args);
+
+		template<typename T, typename ...Args>
+		Ptr<T> MPCreatePtr(Args &&... args);
+
+		template<typename T, typename ...Args>
+		bool MPCreateTo(T*& outPtr, Args &&... args);
+
+		template<typename T, typename ...Args>
+		bool MPCreateTo(Ptr<T>& outPtr, Args &&... args);
+
+
 
 		void Release(Object* o);
 

@@ -12,18 +12,30 @@ namespace xx
 		dataLen = buff.second;
 	}
 
-	template<typename T>
-	void BBuffer::Write(T const& v)
+	template<typename ...TS>
+	void BBuffer::Write(TS const & ...vs)
 	{
-		Reserve(this->dataLen + BBCalc(v));
-		BBWriteTo(*this, v);
+		std::initializer_list<int>{ (BytesFunc<TS>::WriteTo(*this, vs), 0)... };
 		assert(this->dataLen <= this->bufLen);
 	}
 
-	template<typename T>
-	int BBuffer::Read(T &v)
+	template<typename T, typename ...TS>
+	int BBuffer::ReadCore(T& v, TS &...vs)
 	{
-		return BBReadFrom(*this, v);
+		if (auto r = BytesFunc<T>::ReadFrom(*this, v)) return r;
+		return ReadCore(vs...);
+	}
+
+	template<typename T>
+	int BBuffer::ReadCore(T& v)
+	{
+		return BytesFunc<T>::ReadFrom(*this, v);
+	}
+
+	template<typename ...TS>
+	int BBuffer::Read(TS &...vs)
+	{
+		return ReadCore(vs...);
 	}
 
 

@@ -1,6 +1,19 @@
 ﻿#pragma once
 namespace xx
 {
+	constexpr char gDigitsLut[200] = {
+		'0', '0', '0', '1', '0', '2', '0', '3', '0', '4', '0', '5', '0', '6', '0', '7', '0', '8', '0', '9',
+		'1', '0', '1', '1', '1', '2', '1', '3', '1', '4', '1', '5', '1', '6', '1', '7', '1', '8', '1', '9',
+		'2', '0', '2', '1', '2', '2', '2', '3', '2', '4', '2', '5', '2', '6', '2', '7', '2', '8', '2', '9',
+		'3', '0', '3', '1', '3', '2', '3', '3', '3', '4', '3', '5', '3', '6', '3', '7', '3', '8', '3', '9',
+		'4', '0', '4', '1', '4', '2', '4', '3', '4', '4', '4', '5', '4', '6', '4', '7', '4', '8', '4', '9',
+		'5', '0', '5', '1', '5', '2', '5', '3', '5', '4', '5', '5', '5', '6', '5', '7', '5', '8', '5', '9',
+		'6', '0', '6', '1', '6', '2', '6', '3', '6', '4', '6', '5', '6', '6', '6', '7', '6', '8', '6', '9',
+		'7', '0', '7', '1', '7', '2', '7', '3', '7', '4', '7', '5', '7', '6', '7', '7', '7', '8', '7', '9',
+		'8', '0', '8', '1', '8', '2', '8', '3', '8', '4', '8', '5', '8', '6', '8', '7', '8', '8', '8', '9',
+		'9', '0', '9', '1', '9', '2', '9', '3', '9', '4', '9', '5', '9', '6', '9', '7', '9', '8', '9', '9'
+	};
+
 	inline size_t u32toa_branchlut(uint32_t value, char* buffer) noexcept
 	{
 		auto bak = buffer;											// 为计算长度而加
@@ -305,40 +318,155 @@ namespace xx
 
 
 
-
-
-
 	/**************************************************************************************************/
-	// String 适配
+	// 类型--操作适配模板区
 	/**************************************************************************************************/
 
 
-	template<>
-	struct StrFunc<String, void>
+	// 适配 无符号整数 8 ~ 32bit
+	template<typename T>
+	struct StrFunc<T, std::enable_if_t<std::is_integral<T>::value && std::is_unsigned<T>::value && sizeof(T) <= 4>>
 	{
-		static inline size_t Calc(String const &in)
+		static inline void WriteTo(String& s, T const &in)
 		{
-			in.dataLen;
-		}
-		static inline size_t WriteTo(char *dstBuf, String const &in)
-		{
-			memcpy(dstBuf, in.buf, in.dataLen);
-			return in.dataLen;
+			s.Reserve(s.dataLen + sizeof(T) * 4);
+			s.dataLen += u32toa_branchlut(in, s.buf + s.dataLen);
 		}
 	};
 
-	template<>
-	struct StrFunc<Ptr<String>, void>
+	// 适配 有符号整数 8 ~ 32bit
+	template<typename T>
+	struct StrFunc<T, std::enable_if_t<std::is_integral<T>::value && !std::is_unsigned<T>::value && sizeof(T) <= 4>>
 	{
-		static inline size_t Calc(Ptr<String> const &in)
+		static inline void WriteTo(String& s, T const &in)
 		{
-			return 5;
+			s.Reserve(s.dataLen + sizeof(T) * 4);
+			s.dataLen += i32toa_branchlut(in, s.buf + s.dataLen);
 		}
-		static inline size_t WriteTo(char *dstBuf, Ptr<String> const &in)
+	};
+
+	// 适配 无符号整数 64bit
+	template<typename T>
+	struct StrFunc<T, std::enable_if_t<std::is_integral<T>::value && std::is_unsigned<T>::value && sizeof(T) == 8>>
+	{
+		static inline void WriteTo(String& s, T const &in)
 		{
-			if (!in) return 0;
-			memcpy(dstBuf, in->buf, in->dataLen);
-			return in->dataLen;
+			s.Reserve(s.dataLen + sizeof(T) * 4);
+			s.dataLen += u64toa_branchlut(in, s.buf + s.dataLen);
+		}
+	};
+
+	// 适配 有符号整数 64bit
+	template<typename T>
+	struct StrFunc<T, std::enable_if_t<std::is_integral<T>::value && !std::is_unsigned<T>::value && sizeof(T) == 8>>
+	{
+		static inline void WriteTo(String& s, T const &in)
+		{
+			s.Reserve(s.dataLen + sizeof(T) * 4);
+			s.dataLen += i64toa_branchlut(in, s.buf + s.dataLen);
+		}
+	};
+
+	// 适配 枚举( 转为整数处理 )
+	template<typename T>
+	struct StrFunc<T, std::enable_if_t<std::is_enum<T>::value>>
+	{
+		static inline void WriteTo(String& s, T const &in)
+		{
+			StrFunc<std::underlying_type_t<T>>::WriteTo(s, (std::underlying_type_t<T> const&)in);
+		}
+	};
+
+	// 适配 浮点 float / double
+	template<typename T>
+	struct StrFunc<T, std::enable_if_t<std::is_floating_point<T>::value>>
+	{
+		static inline void WriteTo(String& s, T const &in)
+		{
+			s.Reserve(s.dataLen + sizeof(T) * 3);
+			return sprintf(s.buf + s.dataLen, "%g", in);
+		}
+	};
+
+	// 适配 bool
+	template<>
+	struct StrFunc<bool, void>
+	{
+		static inline void WriteTo(String& s, bool const &in)
+		{
+			s.Reserve(s.dataLen + 5);
+			if (in)
+			{ 
+				memcpy(s.buf + s.dataLen, "true", 4);
+				s.dataLen += 4;
+			}
+			else 
+			{
+				memcpy(s.buf + s.dataLen, "false", 5);
+				s.dataLen += 5;
+			}
+		}
+	};
+
+	// 适配 单字符
+	template<>
+	struct StrFunc<char, void>
+	{
+		static inline void WriteTo(String& s, char const &in)
+		{
+			s.Reserve(s.dataLen + 1);
+			s.buf[s.dataLen++] = in;
+		}
+	};
+
+	// 适配 char* \0 结尾 字串( 不是很高效 )
+	template<>
+	struct StrFunc<char const*, void>
+	{
+		static inline void WriteTo(String& s, char const* const &in)
+		{
+			if (in)
+			{
+				auto len = strlen(in);
+				s.Reserve(s.dataLen + len);
+				memcpy(s.buf + s.dataLen, in, len);
+				s.dataLen += len;
+			};
+		}
+	};
+
+	// 适配 literal string
+	template<size_t len>
+	struct StrFunc<char[len], void>
+	{
+		static inline void WriteTo(String& s, char const(&in)[len])
+		{
+			s.Reserve(s.dataLen + len - 1);
+			memcpy(s.buf + s.dataLen, in, len - 1);
+			s.dataLen += len - 1;
+		}
+	};
+
+	// 适配 Object
+	template<typename T>
+	struct StrFunc<T, std::enable_if_t<std::is_base_of_v<Object, T>>>
+	{
+		static inline void WriteTo(String& s, T const &in)
+		{
+			in.ToString(s);
+		}
+	};
+
+	// 适配 Ptr<T>
+	template<typename T>
+	struct StrFunc<T, std::enable_if_t<IsPtr_v<T>>>
+	{
+		static inline void WriteTo(String& s, T const &in)
+		{
+			if (in)
+			{
+				in->ToString(s);
+			}
 		}
 	};
 

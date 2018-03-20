@@ -78,8 +78,7 @@ namespace xx
 	void String::Assign(T const& in)
 	{
 		Clear();
-		Reserve(dataLen + StrCalc(in));
-		dataLen += StrWriteTo(buf + dataLen, in);
+		StrFunc<T>::WriteTo(*this, in);
 		assert(dataLen <= bufLen);
 	}
 
@@ -104,11 +103,9 @@ namespace xx
 	template<typename ...TS>
 	void String::Append(TS const & ...vs)
 	{
-		Reserve(dataLen + StrCalc(vs...));
-		dataLen += StrWriteTo(buf + dataLen, vs...);
+		std::initializer_list<int>{ (StrFunc<TS>::WriteTo(*this, vs), 0)... };
 		assert(dataLen <= bufLen);
 	}
-
 
 	template<typename T>
 	void String::AppendFormatCore(String &s, size_t &n, T const &v)
@@ -265,6 +262,12 @@ namespace xx
 
 	inline String::String(BBuffer* bb) : BaseType(bb) {}
 
+	inline void String::ToString(String& s) const
+	{
+		s.Reserve(s.dataLen + dataLen);
+		memcpy(s.buf + s.dataLen, buf, dataLen);
+		s.dataLen += dataLen;
+	}
 
 
 

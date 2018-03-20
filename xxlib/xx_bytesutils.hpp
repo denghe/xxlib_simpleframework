@@ -178,12 +178,9 @@ namespace xx
 	template<typename T>
 	struct BytesFunc<T, std::enable_if_t< (std::is_arithmetic_v<T> && sizeof(T) == 1) || (std::is_floating_point_v<T> && sizeof(T) == 4) >>
 	{
-		static inline size_t Calc(T const &in)
-		{
-			return sizeof(T);
-		}
 		static inline void WriteTo(BBuffer& bb, T const &in)
 		{
+			bb.Reserve(bb.dataLen + sizeof(T));
 			memcpy(bb.buf + bb.dataLen, &in, sizeof(T));
 			bb.dataLen += sizeof(T);
 		}
@@ -200,12 +197,9 @@ namespace xx
 	template<typename T>
 	struct BytesFunc<T, std::enable_if_t<std::is_integral_v<T> && sizeof(T) >= 2 && std::is_unsigned_v<T>>>
 	{
-		static inline size_t Calc(T const &in)
-		{
-			return sizeof(T) + 1;
-		}
 		static inline void WriteTo(BBuffer& bb, T const &in)
 		{
+			bb.Reserve(bb.dataLen + sizeof(T) + 1);
 			bb.dataLen += VarWrite7(bb.buf + bb.dataLen, in);
 		}
 		static inline int ReadFrom(BBuffer& bb, T &out)
@@ -218,12 +212,9 @@ namespace xx
 	template<typename T>
 	struct BytesFunc<T, std::enable_if_t<std::is_integral_v<T> && sizeof(T) >= 2 && !std::is_unsigned_v<T>>>
 	{
-		static inline size_t Calc(T const &in)
-		{
-			return sizeof(T) + 1;
-		}
 		static inline void WriteTo(BBuffer& bb, T const &in)
 		{
+			bb.Reserve(bb.dataLen + sizeof(T) + 1);
 			bb.dataLen += VarWrite7(bb.buf + bb.dataLen, ZigZagEncode(in));
 		}
 		static inline int ReadFrom(BBuffer& bb, T &out)
@@ -240,10 +231,6 @@ namespace xx
 	struct BytesFunc<T, std::enable_if_t<std::is_enum_v<T>>>
 	{
 		typedef std::underlying_type_t<T> UT;
-		static inline size_t Calc(T const &in)
-		{
-			return BytesFunc<UT>::Calc((UT const&)in);
-		}
 		static inline void WriteTo(BBuffer& bb, T const &in)
 		{
 			BytesFunc<UT>::WriteTo(bb, (UT const&)in);
@@ -258,12 +245,9 @@ namespace xx
 	template<>
 	struct BytesFunc<double, void>
 	{
-		static inline size_t Calc(double const &in)
-		{
-			return sizeof(double) + 1;
-		}
 		static inline void WriteTo(BBuffer& bb, double const &in)
 		{
+			bb.Reserve(bb.dataLen + sizeof(double) + 1);
 			if (in == 0)
 			{
 				bb[bb.dataLen++] = 0;
@@ -333,7 +317,7 @@ namespace xx
 		}
 	};
 
-	// 适配 literal string ( 只是为方便测试. 转为 String 写入 )
+	// 适配 literal string ( 只是为方便测试. 转为 String 写入 长度 + 内容 )
 	template<size_t len>
 	struct BytesFunc<char[len], void>
 	{
@@ -344,6 +328,7 @@ namespace xx
 		}
 		static inline void WriteTo(BBuffer& bb, T const &in)
 		{
+			bb.Reserve(bb.dataLen + len - 1 + 9);
 			bb.Write(String(bb.mempool, in));
 		}
 		static inline int ReadFrom(BBuffer& bb, T &out)
@@ -362,10 +347,6 @@ namespace xx
 	template<typename T>
 	struct BytesFunc<T, std::enable_if_t<std::is_base_of_v<Object, T>>>
 	{
-		static inline size_t Calc(T const &in)
-		{
-			return 12;	// typeId + null flag + offset
-		}
 		static inline void WriteTo(BBuffer& bb, T const &in)
 		{
 			in.ToBBuffer(bb);
@@ -377,14 +358,11 @@ namespace xx
 	};
 
 	// 适配 Ptr<T>
+	// 当前仅对 Ptr<T> 有良好支持. 裸指针, Ref 还需要进一步设计( C#, Lua 那边需要模拟, 且序列化和反序列化失败回滚策略很难设计 )
 	template<typename T>
 	struct BytesFunc<T, std::enable_if_t<IsPtr_v<T>>>
 	{
 		typedef typename T::ChildType CT;
-		static inline size_t Calc(T const &in)
-		{
-			return 12;	// typeId + null flag + offset
-		}
 		static inline void WriteTo(BBuffer& bb, T const &in)
 		{
 			bb.WritePtr(in.pointer);
@@ -398,29 +376,4 @@ namespace xx
 		}
 	};
 
-	// 当前仅对 Ptr<T> 有良好支持. 裸指针, Ref 还需要进一步设计( C#, Lua 那边需要模拟, 且序列化和反序列化失败回滚策略很难设计 )
-	//// 适配 Ref<T>
-	//template<typename T>
-	//struct BytesFunc<T, std::enable_if_t<IsRef_v<T>>>
-	//{
-	//	typedef typename T::ChildType CT;
-	//	static inline size_t Calc(T const &in)
-	//	{
-	//		return 12;	// typeId + null flag + offset
-	//	}
-	//	static inline void WriteTo(BBuffer& bb, T const &in)
-	//	{
-	//		bb.WritePtr(v.Ensure());
-	//	}
-	//	static inline int ReadFrom(BBuffer& bb, T &out)
-	//	{
-	//		CT* t = nullptr;
-	//		auto rtv = bb.ReadPtr(t);
-	//		out = t;
-	//		return rtv;
-	//	}
-	//};
-
-
-	// todo: more
 }

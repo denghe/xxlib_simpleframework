@@ -100,9 +100,11 @@ namespace xx
 
 
 	public:
-		// 序列化相关
+		// 实现一些 Object 的接口
 
 		String(BBuffer* bb);
+
+		void ToString(String& s) const override;
 	};
 
 
