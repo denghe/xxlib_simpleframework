@@ -396,4 +396,27 @@ namespace xx
 		}
 		return 0;
 	}
+
+
+
+	template<typename T>
+	void List<T>::ToString(String &s) const
+	{
+		if (memHeader().flags)
+		{
+			s.Append("{ ... }");
+			return;
+		}
+		else memHeader().flags = 1;
+
+		s.Append("{ \"type\" : \"List\", \"items\" : [ ");
+		for (size_t i = 0; i < dataLen; i++)
+		{
+			s.Append(buf[i], ", ");
+		}
+		if (dataLen) s.dataLen -= 2;
+		s.Append(" ] }");
+
+		memHeader().flags = 0;
+	}
 }

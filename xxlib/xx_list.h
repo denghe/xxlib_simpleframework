@@ -70,10 +70,12 @@ namespace xx
 		Iter end() const { return Iter{ buf + dataLen }; }
 
 
-		// 序列化支持
+		// Object 接口支持
 		List(BBuffer* bb);
 		void ToBBuffer(BBuffer &bb) const override;
 		int FromBBuffer(BBuffer &bb) override;
+
+		void ToString(String &s) const override;
 	};
 
 

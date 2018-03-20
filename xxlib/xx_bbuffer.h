@@ -97,6 +97,8 @@ namespace xx
 		//  包相关
 		/*************************************************************************/
 
+		// todo: 大包支持
+
 		// 开始写一个包
 		void BeginWritePackage(uint8_t const& pkgTypeId = 0, uint32_t const& serial = 0);
 
@@ -123,9 +125,13 @@ namespace xx
 		int ReadPackage(T& outPkg);
 
 
-		// 序列化相关
+		// Object 接口实现
 
 		BBuffer(BBuffer* bb);
+		void ToBBuffer(BBuffer &bb) const override;
+		int FromBBuffer(BBuffer &bb) override;
+
+		void ToString(String &s) const override;
 	};
 
 

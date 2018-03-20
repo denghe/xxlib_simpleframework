@@ -260,7 +260,9 @@ namespace xx
 
 
 
-	inline String::String(BBuffer* bb) : BaseType(bb) {}
+	inline String::String(BBuffer* bb) 
+		: BaseType(bb) 
+	{}
 
 	inline void String::ToString(String& s) const
 	{

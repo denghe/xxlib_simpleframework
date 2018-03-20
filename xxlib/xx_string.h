@@ -104,7 +104,7 @@ namespace xx
 
 		String(BBuffer* bb);
 
-		void ToString(String& s) const override;
+		void ToString(String &s) const override;
 	};
 
 

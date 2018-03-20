@@ -332,5 +332,37 @@ namespace xx
 
 
 
-	inline BBuffer::BBuffer(BBuffer* bb) : BaseType(bb) {}
+	inline BBuffer::BBuffer(BBuffer* bb) 
+		: BaseType(bb)
+	{}
+
+	inline void BBuffer::ToBBuffer(BBuffer &bb) const
+	{
+		bb.Write(dataLen);
+		bb.WriteBuf(*this);
+	}
+
+	inline int BBuffer::FromBBuffer(BBuffer &bb) 
+	{
+		uint32_t len = 0;
+		if (auto rtv = bb.Read(len)) return rtv;
+		if (bb.readLengthLimit != 0 && len > bb.readLengthLimit) return -1;
+		if (bb.offset + len > bb.dataLen) return -2;
+		this->Resize(len);
+		if (len == 0) return 0;
+		memcpy(this->buf, bb.buf + bb.offset, len);
+		bb.offset += len;
+		return 0;
+	}
+
+	inline void BBuffer::ToString(String &s) const
+	{
+		s.Append("{ \"len\" : ", dataLen, ", \"offset\" : ", offset, ", \"data\" : [ ");
+		for (size_t i = 0; i < dataLen; i++)
+		{
+			s.Append((int)(uint8_t)buf[i], ", ");
+		}
+		if (dataLen) s.dataLen -= 2;
+		s.Append(" ] }");
+	}
 }
