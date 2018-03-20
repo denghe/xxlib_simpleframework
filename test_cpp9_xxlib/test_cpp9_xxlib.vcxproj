@@ -44,7 +44,6 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LinkIncremental>true</LinkIncremental>
     <IncludePath>$(SolutionDir);$(SolutionDir)xxlib;$(SolutionDir)libuv\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)libuv\lib\release;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
@@ -123,6 +122,7 @@
     <None Include="main.cpp.bak3" />
     <None Include="main.cpp.bak4" />
     <None Include="main.cpp.bak5" />
+    <None Include="main.cpp.bak6" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

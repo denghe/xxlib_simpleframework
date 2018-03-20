@@ -84,6 +84,7 @@
     <None Include="main.cpp.bak3" />
     <None Include="main.cpp.bak4" />
     <None Include="main.cpp.bak5" />
+    <None Include="main.cpp.bak6" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="xxlib">

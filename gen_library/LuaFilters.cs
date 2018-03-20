@@ -11,7 +11,7 @@ namespace TemplateLibrary
     public class LuaFilters
     {
         HashSet<Type> depends = new HashSet<Type>();
-        System.Collections.Generic.List<Type> ts;
+        System.Collections.Generic.List<Type> ts = new System.Collections.Generic.List<Type>();
 
         public LuaFilters(Assembly asm)
         {
