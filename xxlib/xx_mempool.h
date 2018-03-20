@@ -94,10 +94,10 @@ namespace xx
 		void* Realloc(void *p, size_t newSize, size_t dataLen = -1) noexcept;
 
 		template<typename T, typename ...Args>
-		T* CreateNativePointer(Args &&... args);
+		T* Create(Args &&... args);
 
 		template<typename T, typename ...Args>
-		Ptr<T> Create(Args &&... args);
+		Ptr<T> CreatePtr(Args &&... args);
 
 		template<typename T, typename ...Args>
 		bool CreateTo(T*& outPtr, Args &&... args);
@@ -258,7 +258,7 @@ namespace xx
 
 
 	/***********************************************************************************/
-	// shared_ptr like
+	// weak_ptr like
 	/***********************************************************************************/
 
 	template<typename T>

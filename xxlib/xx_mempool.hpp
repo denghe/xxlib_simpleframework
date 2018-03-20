@@ -86,7 +86,7 @@ namespace xx
 	}
 
 	template<typename T, typename ...Args>
-	T* MemPool::CreateNativePointer(Args &&... args)
+	T* MemPool::Create(Args &&... args)
 	{
 		auto p = Alloc<MemHeader_Object>(sizeof(T));
 		if (!p) return nullptr;
@@ -108,23 +108,23 @@ namespace xx
 	}
 
 	template<typename T, typename ...Args>
-	Ptr<T> MemPool::Create(Args &&... args)
+	Ptr<T> MemPool::CreatePtr(Args &&... args)
 	{
-		return Ptr<T>(CreateNativePointer<T>(std::forward<Args>(args)...));
+		return Ptr<T>(Create<T>(std::forward<Args>(args)...));
 	}
 
 
 	template<typename T, typename ...Args>
 	bool MemPool::CreateTo(T*& outPtr, Args &&... args)
 	{
-		outPtr = CreateNativePointer<T>(std::forward<Args>(args)...);
+		outPtr = Create<T>(std::forward<Args>(args)...);
 		return outPtr;
 	}
 
 	template<typename T, typename ...Args>
 	bool MemPool::CreateTo(Ptr<T>& outPtr, Args &&... args)
 	{
-		outPtr = Create<T>(std::forward<Args>(args)...);
+		outPtr = CreatePtr<T>(std::forward<Args>(args)...);
 		return outPtr.pointer;
 	}
 

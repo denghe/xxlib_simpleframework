@@ -185,29 +185,29 @@ bool xx::UvLoop::alive() const
 
 xx::UvTcpListener* xx::UvLoop::CreateTcpListener()
 {
-	return mempool->CreateNativePointer<UvTcpListener>(*this);
+	return mempool->Create<UvTcpListener>(*this);
 }
 xx::UvTcpClient* xx::UvLoop::CreateTcpClient()
 {
-	return mempool->CreateNativePointer<UvTcpClient>(*this);
+	return mempool->Create<UvTcpClient>(*this);
 }
 
 xx::UvUdpListener* xx::UvLoop::CreateUdpListener()
 {
-	return mempool->CreateNativePointer<UvUdpListener>(*this);
+	return mempool->Create<UvUdpListener>(*this);
 }
 xx::UvUdpClient* xx::UvLoop::CreateUdpClient()
 {
-	return mempool->CreateNativePointer<UvUdpClient>(*this);
+	return mempool->Create<UvUdpClient>(*this);
 }
 
 xx::UvTimer* xx::UvLoop::CreateTimer(uint64_t timeoutMS, uint64_t repeatIntervalMS, std::function<void()>&& OnFire)
 {
-	return mempool->CreateNativePointer<UvTimer>(*this, timeoutMS, repeatIntervalMS, std::move(OnFire));
+	return mempool->Create<UvTimer>(*this, timeoutMS, repeatIntervalMS, std::move(OnFire));
 }
 xx::UvAsync* xx::UvLoop::CreateAsync()
 {
-	return mempool->CreateNativePointer<UvAsync>(*this);
+	return mempool->Create<UvAsync>(*this);
 }
 
 
@@ -1175,7 +1175,7 @@ xx::UvUdpPeer* xx::UvUdpListener::CreatePeer(Guid const& g
 	, int sndwnd, int rcvwnd
 	, int nodelay/*, int interval*/, int resend, int nc, int minrto)
 {
-	return mempool->CreateNativePointer<xx::UvUdpPeer>(*this, g, sndwnd, rcvwnd, nodelay/*, interval*/, resend, nc, minrto);
+	return mempool->Create<xx::UvUdpPeer>(*this, g, sndwnd, rcvwnd, nodelay/*, interval*/, resend, nc, minrto);
 }
 
 
