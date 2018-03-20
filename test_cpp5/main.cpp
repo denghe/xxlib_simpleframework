@@ -61,19 +61,19 @@ namespace xx
 {
 	class RouterUdpPeer : public UvUdpPeer
 	{
-		RouterUdpPeer(MemPool* mp, UvUdpListener& listener
+		RouterUdpPeer(UvUdpListener& listener
 			, Guid const& g
 			, int sndwnd = 128, int rcvwnd = 128
 			, int nodelay = 1/*, int interval = 10*/, int resend = 2, int nc = 1, int minrto = 100)
-			: UvUdpPeer(mp, listener, g, sndwnd, rcvwnd, nodelay/*, interval*/, resend, nc, minrto)
+			: UvUdpPeer(listener, g, sndwnd, rcvwnd, nodelay/*, interval*/, resend, nc, minrto)
 		{
 		}
 	};
 
 	class RouterUdpListener : public UvUdpListener
 	{
-		RouterUdpListener(MemPool* mp, UvLoop& loop)
-			: UvUdpListener(mp, loop)
+		RouterUdpListener(UvLoop& loop)
+			: UvUdpListener(loop)
 		{
 			//OnAccept = new RouterUdpPeer
 		}

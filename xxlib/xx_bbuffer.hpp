@@ -34,7 +34,7 @@ namespace xx
 
 	inline void BBuffer::BeginWrite()
 	{
-		if (!ptrStore) this->mempool->CreateTo(ptrStore, 16);
+		if (!ptrStore) mempool->CreateTo(ptrStore, mempool, 16);
 		else ptrStore->Clear();
 		offsetRoot = dataLen;
 	}
@@ -47,7 +47,7 @@ namespace xx
 
 	inline void BBuffer::BeginRead()
 	{
-		if (!idxStore) this->mempool->CreateTo(idxStore, 16);
+		if (!idxStore) mempool->CreateTo(idxStore, mempool, 16);
 		else idxStore->Clear();
 		offsetRoot = offset;
 	}

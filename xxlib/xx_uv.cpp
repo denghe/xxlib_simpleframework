@@ -218,8 +218,8 @@ xx::UvAsync* xx::UvLoop::CreateAsync()
 
 
 
-xx::UvListenerBase::UvListenerBase(MemPool* mp, UvLoop& loop)
-	: Object(mp)
+xx::UvListenerBase::UvListenerBase(UvLoop& loop)
+	: Object(loop.mempool)
 	, loop(loop)
 {
 }
@@ -231,20 +231,20 @@ xx::UvListenerBase::UvListenerBase(MemPool* mp, UvLoop& loop)
 
 
 
-xx::UvTcpListener::UvTcpListener(MemPool* mp, UvLoop& loop)
-	: UvListenerBase(mp, loop)
-	, peers(mp)
+xx::UvTcpListener::UvTcpListener(UvLoop& loop)
+	: UvListenerBase(loop)
+	, peers(loop.mempool)
 {
-	ptr = Alloc(mp, sizeof(uv_tcp_t), this);
+	ptr = Alloc(mempool, sizeof(uv_tcp_t), this);
 	if (!ptr) throw - 1;
 
 	if (int r = uv_tcp_init((uv_loop_t*)loop.ptr, (uv_tcp_t*)ptr))
 	{
-		Free(mp, ptr);
+		Free(mempool, ptr);
 		ptr = nullptr;
 	}
 
-	addrPtr = Alloc(mp, sizeof(sockaddr_in));
+	addrPtr = Alloc(mempool, sizeof(sockaddr_in));
 	if (!addrPtr)
 	{
 		Close((uv_handle_t*)ptr);
@@ -259,11 +259,10 @@ xx::UvTcpListener::UvTcpListener(MemPool* mp, UvLoop& loop)
 xx::UvTcpListener::~UvTcpListener()
 {
 	assert(ptr);
-	auto mp = loop.mempool;
-	peers.ForEachRevert([mp](auto& o) { mp->Release(o); });
+	peers.ForEachRevert([mp = mempool](auto& o) { mp->Release(o); });
 	Close((uv_handle_t*)ptr);
 	ptr = nullptr;
-	Free(mp, addrPtr);
+	Free(mempool, addrPtr);
 	addrPtr = nullptr;
 }
 
@@ -357,11 +356,11 @@ bool xx::UvTimerBase::timering()
 
 
 
-xx::UvTcpUdpBase::UvTcpUdpBase(MemPool* mp, UvLoop& loop)
-	: UvTimerBase(mp)
+xx::UvTcpUdpBase::UvTcpUdpBase(UvLoop& loop)
+	: UvTimerBase(loop.mempool)
 	, loop(loop)
-	, bbRecv(mp)
-	, bbSend(mp)
+	, bbRecv(loop.mempool)
+	, bbSend(loop.mempool)
 {
 }
 
@@ -456,8 +455,8 @@ void xx::UvTcpUdpBase::SendBytes(BBuffer& bb)
 
 
 
-xx::UvTcpBase::UvTcpBase(MemPool* mp, UvLoop& loop)
-	: UvTcpUdpBase(mp, loop)
+xx::UvTcpBase::UvTcpBase(UvLoop& loop)
+	: UvTcpUdpBase(loop)
 {
 }
 
@@ -498,8 +497,8 @@ size_t xx::UvTcpBase::GetSendQueueSize()
 
 
 
-xx::UvTcpPeer::UvTcpPeer(MemPool* mp, UvTcpListener & listener)
-	: UvTcpBase(mp, listener.loop)
+xx::UvTcpPeer::UvTcpPeer(UvTcpListener & listener)
+	: UvTcpBase(listener.loop)
 	, listener(listener)
 {
 	ipBuf.fill(0);
@@ -577,8 +576,8 @@ char* xx::UvTcpPeer::ip()
 
 
 
-xx::UvTcpClient::UvTcpClient(MemPool* mp, UvLoop& loop)
-	: UvTcpBase(mp, loop)
+xx::UvTcpClient::UvTcpClient(UvLoop& loop)
+	: UvTcpBase(loop)
 {
 	addrPtr = Alloc(loop.mempool, sizeof(sockaddr_in));
 	if (!addrPtr) throw - 1;
@@ -678,8 +677,8 @@ bool xx::UvTcpClient::Disconnected()
 
 
 
-xx::UvTimer::UvTimer(MemPool* mp, UvLoop & loop, uint64_t timeoutMS, uint64_t repeatIntervalMS, std::function<void()>&& OnFire)
-	: Object(mp)
+xx::UvTimer::UvTimer(UvLoop & loop, uint64_t timeoutMS, uint64_t repeatIntervalMS, std::function<void()>&& OnFire)
+	: Object(loop.mempool)
 	, OnFire(std::move(OnFire))
 	, loop(loop)
 {
@@ -743,11 +742,11 @@ void xx::UvTimer::Stop()
 
 
 
-xx::UvTimeouter::UvTimeouter(MemPool* mp, UvLoop& loop, uint64_t intervalMS, int wheelLen, int defaultInterval)
-	: Object(mp)
+xx::UvTimeouter::UvTimeouter(UvLoop & loop, uint64_t intervalMS, int wheelLen, int defaultInterval)
+	: Object(loop.mempool)
 	, timerss(loop.mempool)
 {
-	mp->CreateTo(timer, loop, 0, intervalMS, [this] { Process(); });
+	mempool->CreateTo(timer, loop, 0, intervalMS, [this] { Process(); });
 	timerss.Resize(wheelLen);
 	this->defaultInterval = defaultInterval;
 }
@@ -833,10 +832,10 @@ void xx::UvTimeouter::AddOrUpdate(UvTimerBase * t, int interval)
 
 
 
-xx::UvAsync::UvAsync(MemPool* mp, UvLoop & loop)
-	: Object(mp)
+xx::UvAsync::UvAsync(UvLoop & loop)
+	: Object(loop.mempool)
 	, loop(loop)
-	, actions(mp)
+	, actions(loop.mempool)
 {
 	ptr = Alloc(loop.mempool, sizeof(uv_async_t), this);
 	if (!ptr) throw - 1;
@@ -902,11 +901,11 @@ void xx::UvAsync::OnFireImpl()
 
 
 
-xx::UvRpcManager::UvRpcManager(MemPool* mp, UvLoop& loop, uint64_t intervalMS, int defaultInterval)
-	: Object(mp)
+xx::UvRpcManager::UvRpcManager(UvLoop & loop, uint64_t intervalMS, int defaultInterval)
+	: Object(loop.mempool)
 	, timer(nullptr)
-	, mapping(mp)
-	, serials(mp)
+	, mapping(loop.mempool)
+	, serials(loop.mempool)
 	, defaultInterval(defaultInterval)
 	, serial(0)
 	, ticks(0)
@@ -1055,21 +1054,21 @@ void xx::UvContextBase::OnPeerDisconnect()
 
 
 
-xx::UvUdpListener::UvUdpListener(MemPool* mp, UvLoop& loop)
-	: UvListenerBase(mp, loop)
-	, peers(mp)
+xx::UvUdpListener::UvUdpListener(UvLoop& loop)
+	: UvListenerBase(loop)
+	, peers(loop.mempool)
 {
-	ptr = Alloc(mp, sizeof(uv_udp_t), this);
+	ptr = Alloc(mempool, sizeof(uv_udp_t), this);
 	if (!ptr) throw - 1;
 
 	if (int r = uv_udp_init((uv_loop_t*)loop.ptr, (uv_udp_t*)ptr))
 	{
-		Free(mp, ptr);
+		Free(mempool, ptr);
 		ptr = nullptr;
 		throw - 2;
 	}
 
-	addrPtr = Alloc(mp, sizeof(sockaddr_in));
+	addrPtr = Alloc(mempool, sizeof(sockaddr_in));
 	if (!addrPtr)
 	{
 		Close((uv_handle_t*)ptr);
@@ -1186,8 +1185,8 @@ xx::UvUdpPeer* xx::UvUdpListener::CreatePeer(Guid const& g
 
 
 
-xx::UvUdpBase::UvUdpBase(MemPool* mp, UvLoop& loop)
-	: UvTcpUdpBase(mp, loop)
+xx::UvUdpBase::UvUdpBase(UvLoop& loop)
+	: UvTcpUdpBase(loop)
 {
 }
 
@@ -1199,18 +1198,18 @@ typedef int(*KcpOutputCB)(const char *buf, int len, ikcpcb *kcp);
 
 
 
-xx::UvUdpPeer::UvUdpPeer(MemPool* mp, UvUdpListener& listener
+xx::UvUdpPeer::UvUdpPeer(UvUdpListener& listener
 	, Guid const& g
 	, int sndwnd, int rcvwnd
 	, int nodelay/*, int interval*/, int resend, int nc, int minrto)
-	: UvUdpBase(mp, listener.loop)
+	: UvUdpBase(listener.loop)
 	, listener(listener)
 {
 	if (!loop.kcpInterval) throw - 1;
 
 	ipBuf.fill(0);
 
-	ptr = ikcp_create(&g, this, mp);
+	ptr = ikcp_create(&g, this, mempool);
 	if (!ptr) throw - 2;
 
 	int r = 0;
@@ -1224,7 +1223,7 @@ xx::UvUdpPeer::UvUdpPeer(MemPool* mp, UvUdpListener& listener
 	((ikcpcb*)ptr)->rx_minrto = minrto;
 	ikcp_setoutput((ikcpcb*)ptr, (KcpOutputCB)OutputImpl);
 
-	addrPtr = Alloc(mp, sizeof(sockaddr_in));
+	addrPtr = Alloc(mempool, sizeof(sockaddr_in));
 	if (!addrPtr)
 	{
 		Close((uv_handle_t*)ptr);
@@ -1329,10 +1328,10 @@ char* xx::UvUdpPeer::ip()
 
 
 
-xx::UvUdpClient::UvUdpClient(MemPool* mp, UvLoop& loop)
-	: UvUdpBase(mp, loop)
+xx::UvUdpClient::UvUdpClient(UvLoop& loop)
+	: UvUdpBase(loop)
 {
-	addrPtr = Alloc(mp, sizeof(sockaddr_in));
+	addrPtr = Alloc(mempool, sizeof(sockaddr_in));
 	if (!addrPtr)
 	{
 		Close((uv_handle_t*)ptr);

@@ -86,18 +86,6 @@ namespace xx
 	}
 
 	template<typename T, typename ...Args>
-	T* MemPool::PlacementNew(std::enable_if_t<std::is_base_of_v<Object, T>>* p, Args &&... args)
-	{
-		return new (p) T(this, std::forward<Args>(args)...);
-	}
-	template<typename T, typename ...Args>
-	T* MemPool::PlacementNew(std::enable_if_t<!std::is_base_of_v<Object, T>>* p, Args &&... args)
-	{
-		return new (p) T(std::forward<Args>(args)...);
-	}
-
-
-	template<typename T, typename ...Args>
 	T* MemPool::CreateNativePointer(Args &&... args)
 	{
 		auto p = Alloc<MemHeader_Object>(sizeof(T));
@@ -110,7 +98,7 @@ namespace xx
 
 		try
 		{
-			return PlacementNew<T>(p, std::forward<Args>(args)...);
+			return new (p) T(std::forward<Args>(args)...);
 		}
 		catch (...)
 		{

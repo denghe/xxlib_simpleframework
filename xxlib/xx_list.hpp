@@ -219,7 +219,7 @@ namespace xx
 	T& List<T>::Emplace(Args &&... args)
 	{
 		Reserve(dataLen + 1);
-		return *mempool->PlacementNew<T>(&buf[dataLen++], std::forward<Args>(args)...);
+		return *new (&buf[dataLen++]) T(std::forward<Args>(args)...);
 	}
 
 	template<typename T>

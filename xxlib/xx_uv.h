@@ -85,7 +85,7 @@ namespace xx
 		void* ptr = nullptr;
 		void* addrPtr = nullptr;
 
-		UvListenerBase(MemPool* mp, UvLoop& loop);
+		UvListenerBase(UvLoop& loop);
 	};
 
 	class UvTcpListener : public UvListenerBase
@@ -95,7 +95,7 @@ namespace xx
 		std::function<void(UvTcpPeer*)> OnAccept;
 		List<UvTcpPeer*> peers;
 
-		UvTcpListener(MemPool* mp, UvLoop& loop);
+		UvTcpListener(UvLoop& loop);
 		~UvTcpListener();
 
 		static void OnAcceptCB(void* server, int status);
@@ -143,7 +143,7 @@ namespace xx
 		BBuffer bbRecv;
 		BBuffer bbSend;
 
-		UvTcpUdpBase(MemPool* mp, UvLoop& loop);
+		UvTcpUdpBase(UvLoop& loop);
 
 		virtual void DisconnectImpl() = 0;
 		virtual bool Disconnected() = 0;
@@ -167,7 +167,7 @@ namespace xx
 	class UvTcpBase : public UvTcpUdpBase
 	{
 	public:
-		UvTcpBase(MemPool* mp, UvLoop& loop);
+		UvTcpBase(UvLoop& loop);
 
 		size_t GetSendQueueSize() override;
 		void SendBytes(char const* inBuf, int len = 0) override;
@@ -181,7 +181,7 @@ namespace xx
 		// bool alive 只能外部检测野指针
 
 		UvTcpListener & listener;
-		UvTcpPeer(MemPool* mp, UvTcpListener& listener);
+		UvTcpPeer(UvTcpListener& listener);
 		~UvTcpPeer();	// Release 取代 Dispose
 		void DisconnectImpl() override;
 		bool Disconnected() override;
@@ -197,7 +197,7 @@ namespace xx
 
 		UvTcpStates state = UvTcpStates::Disconnected;
 		bool alive() const;	// state == UvTcpStates::Connected, 并不能取代外部野指针检测
-		UvTcpClient(MemPool* mp, UvLoop& loop);
+		UvTcpClient(UvLoop& loop);
 		~UvTcpClient();	// Release 取代 Dispose
 		void SetAddress(char const* const& ipv4, int port);
 		static void OnConnectCBImpl(void* req, int status);
@@ -216,7 +216,7 @@ namespace xx
 		UvLoop& loop;
 		size_t index_at_container = -1;
 		void* ptr = nullptr;
-		UvTimer(MemPool* mp, UvLoop& loop, uint64_t timeoutMS, uint64_t repeatIntervalMS, std::function<void()>&& OnFire = nullptr);
+		UvTimer(UvLoop& loop, uint64_t timeoutMS, uint64_t repeatIntervalMS, std::function<void()>&& OnFire = nullptr);
 		~UvTimer();
 		static void OnTimerCBImpl(void* handle);
 		void SetRepeat(uint64_t repeatIntervalMS);
@@ -231,7 +231,7 @@ namespace xx
 		List<UvTimerBase*> timerss;
 		int cursor = 0;
 		int defaultInterval;
-		UvTimeouter(MemPool* mp, UvLoop& loop, uint64_t intervalMS, int wheelLen, int defaultInterval);
+		UvTimeouter(UvLoop& loop, uint64_t intervalMS, int wheelLen, int defaultInterval);
 		~UvTimeouter();
 		void Process();
 		void Clear();
@@ -251,7 +251,7 @@ namespace xx
 		std::mutex mtx;
 		Queue<std::function<void()>> actions;
 		void* ptr = nullptr;
-		UvAsync(MemPool* mp, UvLoop& loop);
+		UvAsync(UvLoop& loop);
 		~UvAsync();
 		static void OnAsyncCBImpl(void* handle);
 		void Dispatch(std::function<void()>&& a);
@@ -268,7 +268,7 @@ namespace xx
 		int defaultInterval = 0;
 		int ticks = 0;
 		size_t Count();
-		UvRpcManager(MemPool* mp, UvLoop& loop, uint64_t intervalMS, int defaultInterval);
+		UvRpcManager(UvLoop& loop, uint64_t intervalMS, int defaultInterval);
 		~UvRpcManager();
 		void Process();
 		uint32_t Register(std::function<void(uint32_t, BBuffer const*)>&& cb, int interval = 0);
@@ -301,7 +301,7 @@ namespace xx
 		std::function<void(UvUdpPeer*)> OnAccept;
 		Dict<Guid, UvUdpPeer*> peers;
 
-		UvUdpListener(MemPool* mp, UvLoop& loop);
+		UvUdpListener(UvLoop& loop);
 		~UvUdpListener();
 		static void OnRecvCBImpl(void* udp, ptrdiff_t nread, void* buf_t, void* addr, uint32_t flags);
 		void OnReceiveImpl(char const* bufPtr, int len, void* addr);
@@ -320,7 +320,7 @@ namespace xx
 	public:
 		Guid guid;
 		uint32_t nextUpdateTicks = 0;
-		UvUdpBase(MemPool* mp, UvLoop& loop);
+		UvUdpBase(UvLoop& loop);
 	};
 
 	class UvUdpPeer : public UvUdpBase
@@ -328,8 +328,8 @@ namespace xx
 	public:
 		UvUdpListener& listener;
 
-		UvUdpPeer(MemPool* mp, UvUdpListener& listener
-			, Guid const& g
+		UvUdpPeer(UvUdpListener& listener
+			, Guid const& g = Guid()
 			, int sndwnd = 128, int rcvwnd = 128
 			, int nodelay = 1/*, int interval = 10*/, int resend = 2, int nc = 1, int minrto = 100);
 		~UvUdpPeer();
@@ -350,7 +350,7 @@ namespace xx
 	{
 	public:
 		void* kcpPtr = nullptr;
-		UvUdpClient(MemPool* mp, UvLoop& loop);
+		UvUdpClient(UvLoop& loop);
 		~UvUdpClient();
 
 		void Connect(Guid const& guid
