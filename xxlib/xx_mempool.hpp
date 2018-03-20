@@ -18,10 +18,14 @@ namespace xx
 	inline MemPool::MemPool() noexcept
 	{
 		headers.fill(nullptr);
+		MPCreateTo(ptrStore);
+		MPCreateTo(idxStore);
 	}
 
 	inline MemPool::~MemPool() noexcept
 	{
+		Release(idxStore);
+		Release(ptrStore);
 		for (auto header : headers)
 		{
 			while (header)

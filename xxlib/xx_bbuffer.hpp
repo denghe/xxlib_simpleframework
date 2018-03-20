@@ -46,28 +46,14 @@ namespace xx
 
 	inline void BBuffer::BeginWrite()
 	{
-		if (!ptrStore) mempool->CreateTo(ptrStore, mempool, 16);
-		else ptrStore->Clear();
+		mempool->ptrStore->Clear();
 		offsetRoot = dataLen;
-	}
-
-	inline void BBuffer::EndWrite()
-	{
-		assert(ptrStore);
-		ptrStore->Clear();
 	}
 
 	inline void BBuffer::BeginRead()
 	{
-		if (!idxStore) mempool->CreateTo(idxStore, mempool, 16);
-		else idxStore->Clear();
+		mempool->idxStore->Clear();
 		offsetRoot = offset;
-	}
-
-	inline void BBuffer::EndRead()
-	{
-		assert(idxStore);
-		idxStore->Clear();
 	}
 
 	template<typename T>
@@ -75,22 +61,18 @@ namespace xx
 	{
 		BeginWrite();
 		Write(v);
-		EndWrite();
 	}
 
 	template<typename T>
 	int BBuffer::ReadRoot(T &v)
 	{
 		BeginRead();
-		auto rtv = Read(v);
-		EndRead();
-		return rtv;
+		return Read(v);
 	}
 
 	template<typename T>
 	void BBuffer::WritePtr(T* const& v)
 	{
-		assert(ptrStore);
 		if (!v)
 		{
 			Write((uint8_t)0);
@@ -98,8 +80,8 @@ namespace xx
 		}
 		Write(v->memHeader().typeId);
 
-		auto rtv = ptrStore->Add((void*)v, dataLen - offsetRoot);
-		Write(ptrStore->ValueAt(rtv.index));
+		auto rtv = mempool->ptrStore->Add((void*)v, dataLen - offsetRoot);
+		Write(mempool->ptrStore->ValueAt(rtv.index));
 		if (rtv.success)
 		{
 			v->ToBBuffer(*this);
@@ -109,8 +91,6 @@ namespace xx
 	template<typename T>
 	int BBuffer::ReadPtr(T* &v)
 	{
-		assert(idxStore);
-
 		// get typeid
 		uint16_t tid;
 		if (auto rtv = Read(tid)) return rtv;
@@ -144,7 +124,7 @@ namespace xx
 		{
 			// try get ptr from dict
 			std::pair<void*, uint16_t> val;
-			if (!idxStore->TryGetValue(ptr_offset, val)) return -4;
+			if (!mempool->idxStore->TryGetValue(ptr_offset, val)) return -4;
 
 			// inherit validate
 			if (!mempool->IsBaseOf(TypeId<T>::value, val.second)) return -2;

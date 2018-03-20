@@ -9,8 +9,6 @@ namespace xx
 		size_t										offsetRoot = 0;			// offset值写入修正
 		size_t										dataLenBak = 0;			// WritePackage 时用于备份当前数据写入偏移
 		size_t										readLengthLimit = 0;	// 主用于传递给容器类进行长度合法校验
-		Dict_p<void*, size_t>						ptrStore;				// 临时记录 key: 指针, value: offset
-		Dict_p<size_t, std::pair<void*, uint16_t>>	idxStore;				// 临时记录 key: 读offset, value: pair<ptr, typeId>
 
 		BBuffer(BBuffer const&o) = delete;
 		BBuffer& operator=(BBuffer const&o) = delete;
@@ -37,10 +35,7 @@ namespace xx
 
 
 		void BeginWrite();
-		void EndWrite();
-
 		void BeginRead();
-		void EndRead();
 
 		template<typename T>
 		void WriteRoot(T const& v);

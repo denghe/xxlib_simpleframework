@@ -62,6 +62,8 @@ namespace xx
 	class BBuffer;
 	class Object;
 	class String;
+	template <typename TK, typename TV>
+	class Dict;
 
 
 	/***********************************************************************************/
@@ -168,6 +170,9 @@ namespace xx
 		template<typename T>
 		static T* TryCast(Object* p) noexcept;
 
+		// BBuffer 序列化 & 反序列化时会用到
+		Dict<void*, size_t>* ptrStore;
+		Dict<size_t, std::pair<void*, uint16_t>>* idxStore;
 	};
 
 
