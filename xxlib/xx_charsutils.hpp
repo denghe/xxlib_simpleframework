@@ -470,4 +470,17 @@ namespace xx
 		}
 	};
 
+	// 适配 Ref<T>
+	template<typename T>
+	struct StrFunc<T, std::enable_if_t<IsRef_v<T>>>
+	{
+		static inline void WriteTo(String& s, T const &in)
+		{
+			if (in)
+			{
+				in->ToString(s);
+			}
+		}
+	};
+
 }

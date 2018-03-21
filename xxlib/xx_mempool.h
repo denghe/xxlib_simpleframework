@@ -195,6 +195,7 @@ namespace xx
 		MemHeader_Object& memHeader() const noexcept;
 
 		virtual void ToString(String &s) const;
+		virtual void ToStringCore(String &s) const;
 
 		virtual void ToBBuffer(BBuffer &bb) const;
 		virtual int FromBBuffer(BBuffer &bb);

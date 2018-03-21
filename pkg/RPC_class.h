@@ -1,11 +1,9 @@
-﻿#include <xx_mempool.h>
-#include <xx_bbuffer.h>
-
+﻿
 namespace RPC
 {
 	struct PkgGenMd5
 	{
-		static constexpr char const* value = "ef692c7f0e1cc9f6550064bb8e6e1767";
+		static constexpr char const* value = "2fa4a130abea2f67bd10938ca6e6959a";
 
     };
 
@@ -13,42 +11,42 @@ namespace DB_Manage
 {
     struct MsgResult;
     using MsgResult_p = xx::Ptr<MsgResult>;
-    using MsgResult_v = xx::Dock<MsgResult>;
+    using MsgResult_r = xx::Ref<MsgResult>;
 
 }
 namespace Manage_DB
 {
     struct Msg;
     using Msg_p = xx::Ptr<Msg>;
-    using Msg_v = xx::Dock<Msg>;
+    using Msg_r = xx::Ref<Msg>;
 
 }
 namespace Login_Client
 {
     struct LoginSuccess;
     using LoginSuccess_p = xx::Ptr<LoginSuccess>;
-    using LoginSuccess_v = xx::Dock<LoginSuccess>;
+    using LoginSuccess_r = xx::Ref<LoginSuccess>;
 
 }
 namespace Client_Login
 {
     struct Login;
     using Login_p = xx::Ptr<Login>;
-    using Login_v = xx::Dock<Login>;
+    using Login_r = xx::Ref<Login>;
 
 }
 namespace DB_Login
 {
     struct AuthSuccess;
     using AuthSuccess_p = xx::Ptr<AuthSuccess>;
-    using AuthSuccess_v = xx::Dock<AuthSuccess>;
+    using AuthSuccess_r = xx::Ref<AuthSuccess>;
 
 }
 namespace Login_DB
 {
     struct Auth;
     using Auth_p = xx::Ptr<Auth>;
-    using Auth_v = xx::Dock<Auth>;
+    using Auth_r = xx::Ref<Auth>;
 
 }
 namespace Generic
@@ -56,22 +54,22 @@ namespace Generic
     // 服务间创建连接, 刚连上时, 首包需要发这个来说明自己是谁
     struct ServiceInfo;
     using ServiceInfo_p = xx::Ptr<ServiceInfo>;
-    using ServiceInfo_v = xx::Dock<ServiceInfo>;
+    using ServiceInfo_r = xx::Ref<ServiceInfo>;
 
     // 通用错误返回
     struct Error;
     using Error_p = xx::Ptr<Error>;
-    using Error_v = xx::Dock<Error>;
+    using Error_r = xx::Ref<Error>;
 
     // 心跳保持兼延迟测试 -- 请求
     struct Ping;
     using Ping_p = xx::Ptr<Ping>;
-    using Ping_v = xx::Dock<Ping>;
+    using Ping_r = xx::Ref<Ping>;
 
     // 心跳保持兼延迟测试 -- 回应
     struct Pong;
     using Pong_p = xx::Ptr<Pong>;
-    using Pong_v = xx::Dock<Pong>;
+    using Pong_r = xx::Ref<Pong>;
 
 }
 namespace Generic
@@ -95,7 +93,7 @@ namespace DB_Manage
 
         typedef MsgResult ThisType;
         typedef xx::Object BaseType;
-	    MsgResult();
+	    MsgResult(xx::MemPool* mempool);
 	    MsgResult(xx::BBuffer *bb);
 		MsgResult(MsgResult const&) = delete;
 		MsgResult& operator=(MsgResult const&) = delete;
@@ -113,7 +111,7 @@ namespace Manage_DB
 
         typedef Msg ThisType;
         typedef xx::Object BaseType;
-	    Msg();
+	    Msg(xx::MemPool* mempool);
 	    Msg(xx::BBuffer *bb);
 		Msg(Msg const&) = delete;
 		Msg& operator=(Msg const&) = delete;
@@ -131,7 +129,7 @@ namespace Login_Client
 
         typedef LoginSuccess ThisType;
         typedef xx::Object BaseType;
-	    LoginSuccess();
+	    LoginSuccess(xx::MemPool* mempool);
 	    LoginSuccess(xx::BBuffer *bb);
 		LoginSuccess(LoginSuccess const&) = delete;
 		LoginSuccess& operator=(LoginSuccess const&) = delete;
@@ -150,7 +148,7 @@ namespace Client_Login
 
         typedef Login ThisType;
         typedef xx::Object BaseType;
-	    Login();
+	    Login(xx::MemPool* mempool);
 	    Login(xx::BBuffer *bb);
 		Login(Login const&) = delete;
 		Login& operator=(Login const&) = delete;
@@ -168,7 +166,7 @@ namespace DB_Login
 
         typedef AuthSuccess ThisType;
         typedef xx::Object BaseType;
-	    AuthSuccess();
+	    AuthSuccess(xx::MemPool* mempool);
 	    AuthSuccess(xx::BBuffer *bb);
 		AuthSuccess(AuthSuccess const&) = delete;
 		AuthSuccess& operator=(AuthSuccess const&) = delete;
@@ -187,7 +185,7 @@ namespace Login_DB
 
         typedef Auth ThisType;
         typedef xx::Object BaseType;
-	    Auth();
+	    Auth(xx::MemPool* mempool);
 	    Auth(xx::BBuffer *bb);
 		Auth(Auth const&) = delete;
 		Auth& operator=(Auth const&) = delete;
@@ -207,7 +205,7 @@ namespace Generic
 
         typedef ServiceInfo ThisType;
         typedef xx::Object BaseType;
-	    ServiceInfo();
+	    ServiceInfo(xx::MemPool* mempool);
 	    ServiceInfo(xx::BBuffer *bb);
 		ServiceInfo(ServiceInfo const&) = delete;
 		ServiceInfo& operator=(ServiceInfo const&) = delete;
@@ -226,7 +224,7 @@ namespace Generic
 
         typedef Error ThisType;
         typedef xx::Object BaseType;
-	    Error();
+	    Error(xx::MemPool* mempool);
 	    Error(xx::BBuffer *bb);
 		Error(Error const&) = delete;
 		Error& operator=(Error const&) = delete;
@@ -242,7 +240,7 @@ namespace Generic
 
         typedef Ping ThisType;
         typedef xx::Object BaseType;
-	    Ping();
+	    Ping(xx::MemPool* mempool);
 	    Ping(xx::BBuffer *bb);
 		Ping(Ping const&) = delete;
 		Ping& operator=(Ping const&) = delete;
@@ -258,7 +256,7 @@ namespace Generic
 
         typedef Pong ThisType;
         typedef xx::Object BaseType;
-	    Pong();
+	    Pong(xx::MemPool* mempool);
 	    Pong(xx::BBuffer *bb);
 		Pong(Pong const&) = delete;
 		Pong& operator=(Pong const&) = delete;
@@ -270,10 +268,12 @@ namespace Generic
 }
 namespace DB_Manage
 {
-	inline MsgResult::MsgResult()
+	inline MsgResult::MsgResult(xx::MemPool* mempool)
+        : xx::Object(mempool)
 	{
 	}
 	inline MsgResult::MsgResult(xx::BBuffer *bb)
+        : xx::Object(bb)
 	{
 	    int rtv = 0;
         bb->readLengthLimit = 0;
@@ -293,18 +293,18 @@ namespace DB_Manage
 
     inline void MsgResult::ToString(xx::String &str) const
     {
-        if (tsFlags())
+        if (memHeader().flags)
         {
         	str.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else tsFlags() = 1;
+        else memHeader().flags = 1;
 
         str.Append("{ \"type\" : \"MsgResult\"");
         ToStringCore(str);
         str.Append(" }");
         
-        tsFlags() = 0;
+        memHeader().flags = 0;
     }
     inline void MsgResult::ToStringCore(xx::String &str) const
     {
@@ -316,10 +316,12 @@ namespace DB_Manage
 }
 namespace Manage_DB
 {
-	inline Msg::Msg()
+	inline Msg::Msg(xx::MemPool* mempool)
+        : xx::Object(mempool)
 	{
 	}
 	inline Msg::Msg(xx::BBuffer *bb)
+        : xx::Object(bb)
 	{
 	    int rtv = 0;
         bb->readLengthLimit = 200;
@@ -339,18 +341,18 @@ namespace Manage_DB
 
     inline void Msg::ToString(xx::String &str) const
     {
-        if (tsFlags())
+        if (memHeader().flags)
         {
         	str.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else tsFlags() = 1;
+        else memHeader().flags = 1;
 
         str.Append("{ \"type\" : \"Msg\"");
         ToStringCore(str);
         str.Append(" }");
         
-        tsFlags() = 0;
+        memHeader().flags = 0;
     }
     inline void Msg::ToStringCore(xx::String &str) const
     {
@@ -362,10 +364,12 @@ namespace Manage_DB
 }
 namespace Login_Client
 {
-	inline LoginSuccess::LoginSuccess()
+	inline LoginSuccess::LoginSuccess(xx::MemPool* mempool)
+        : xx::Object(mempool)
 	{
 	}
 	inline LoginSuccess::LoginSuccess(xx::BBuffer *bb)
+        : xx::Object(bb)
 	{
 	    int rtv = 0;
         if (rtv = bb->Read(id)) throw rtv;
@@ -383,18 +387,18 @@ namespace Login_Client
 
     inline void LoginSuccess::ToString(xx::String &str) const
     {
-        if (tsFlags())
+        if (memHeader().flags)
         {
         	str.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else tsFlags() = 1;
+        else memHeader().flags = 1;
 
         str.Append("{ \"type\" : \"LoginSuccess\"");
         ToStringCore(str);
         str.Append(" }");
         
-        tsFlags() = 0;
+        memHeader().flags = 0;
     }
     inline void LoginSuccess::ToStringCore(xx::String &str) const
     {
@@ -406,10 +410,12 @@ namespace Login_Client
 }
 namespace Client_Login
 {
-	inline Login::Login()
+	inline Login::Login(xx::MemPool* mempool)
+        : xx::Object(mempool)
 	{
 	}
 	inline Login::Login(xx::BBuffer *bb)
+        : xx::Object(bb)
 	{
 	    int rtv = 0;
         bb->readLengthLimit = 50;
@@ -434,18 +440,18 @@ namespace Client_Login
 
     inline void Login::ToString(xx::String &str) const
     {
-        if (tsFlags())
+        if (memHeader().flags)
         {
         	str.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else tsFlags() = 1;
+        else memHeader().flags = 1;
 
         str.Append("{ \"type\" : \"Login\"");
         ToStringCore(str);
         str.Append(" }");
         
-        tsFlags() = 0;
+        memHeader().flags = 0;
     }
     inline void Login::ToStringCore(xx::String &str) const
     {
@@ -458,10 +464,12 @@ namespace Client_Login
 }
 namespace DB_Login
 {
-	inline AuthSuccess::AuthSuccess()
+	inline AuthSuccess::AuthSuccess(xx::MemPool* mempool)
+        : xx::Object(mempool)
 	{
 	}
 	inline AuthSuccess::AuthSuccess(xx::BBuffer *bb)
+        : xx::Object(bb)
 	{
 	    int rtv = 0;
         if (rtv = bb->Read(id)) throw rtv;
@@ -479,18 +487,18 @@ namespace DB_Login
 
     inline void AuthSuccess::ToString(xx::String &str) const
     {
-        if (tsFlags())
+        if (memHeader().flags)
         {
         	str.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else tsFlags() = 1;
+        else memHeader().flags = 1;
 
         str.Append("{ \"type\" : \"AuthSuccess\"");
         ToStringCore(str);
         str.Append(" }");
         
-        tsFlags() = 0;
+        memHeader().flags = 0;
     }
     inline void AuthSuccess::ToStringCore(xx::String &str) const
     {
@@ -502,10 +510,12 @@ namespace DB_Login
 }
 namespace Login_DB
 {
-	inline Auth::Auth()
+	inline Auth::Auth(xx::MemPool* mempool)
+        : xx::Object(mempool)
 	{
 	}
 	inline Auth::Auth(xx::BBuffer *bb)
+        : xx::Object(bb)
 	{
 	    int rtv = 0;
         bb->readLengthLimit = 0;
@@ -530,18 +540,18 @@ namespace Login_DB
 
     inline void Auth::ToString(xx::String &str) const
     {
-        if (tsFlags())
+        if (memHeader().flags)
         {
         	str.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else tsFlags() = 1;
+        else memHeader().flags = 1;
 
         str.Append("{ \"type\" : \"Auth\"");
         ToStringCore(str);
         str.Append(" }");
         
-        tsFlags() = 0;
+        memHeader().flags = 0;
     }
     inline void Auth::ToStringCore(xx::String &str) const
     {
@@ -554,10 +564,12 @@ namespace Login_DB
 }
 namespace Generic
 {
-	inline ServiceInfo::ServiceInfo()
+	inline ServiceInfo::ServiceInfo(xx::MemPool* mempool)
+        : xx::Object(mempool)
 	{
 	}
 	inline ServiceInfo::ServiceInfo(xx::BBuffer *bb)
+        : xx::Object(bb)
 	{
 	    int rtv = 0;
         if (rtv = bb->Read(type)) throw rtv;
@@ -575,18 +587,18 @@ namespace Generic
 
     inline void ServiceInfo::ToString(xx::String &str) const
     {
-        if (tsFlags())
+        if (memHeader().flags)
         {
         	str.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else tsFlags() = 1;
+        else memHeader().flags = 1;
 
         str.Append("{ \"type\" : \"ServiceInfo\"");
         ToStringCore(str);
         str.Append(" }");
         
-        tsFlags() = 0;
+        memHeader().flags = 0;
     }
     inline void ServiceInfo::ToStringCore(xx::String &str) const
     {
@@ -595,10 +607,12 @@ namespace Generic
     }
 
 
-	inline Error::Error()
+	inline Error::Error(xx::MemPool* mempool)
+        : xx::Object(mempool)
 	{
 	}
 	inline Error::Error(xx::BBuffer *bb)
+        : xx::Object(bb)
 	{
 	    int rtv = 0;
         if (rtv = bb->Read(errNo)) throw rtv;
@@ -621,18 +635,18 @@ namespace Generic
 
     inline void Error::ToString(xx::String &str) const
     {
-        if (tsFlags())
+        if (memHeader().flags)
         {
         	str.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else tsFlags() = 1;
+        else memHeader().flags = 1;
 
         str.Append("{ \"type\" : \"Error\"");
         ToStringCore(str);
         str.Append(" }");
         
-        tsFlags() = 0;
+        memHeader().flags = 0;
     }
     inline void Error::ToStringCore(xx::String &str) const
     {
@@ -642,10 +656,12 @@ namespace Generic
     }
 
 
-	inline Ping::Ping()
+	inline Ping::Ping(xx::MemPool* mempool)
+        : xx::Object(mempool)
 	{
 	}
 	inline Ping::Ping(xx::BBuffer *bb)
+        : xx::Object(bb)
 	{
 	    int rtv = 0;
         if (rtv = bb->Read(ticks)) throw rtv;
@@ -663,18 +679,18 @@ namespace Generic
 
     inline void Ping::ToString(xx::String &str) const
     {
-        if (tsFlags())
+        if (memHeader().flags)
         {
         	str.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else tsFlags() = 1;
+        else memHeader().flags = 1;
 
         str.Append("{ \"type\" : \"Ping\"");
         ToStringCore(str);
         str.Append(" }");
         
-        tsFlags() = 0;
+        memHeader().flags = 0;
     }
     inline void Ping::ToStringCore(xx::String &str) const
     {
@@ -683,10 +699,12 @@ namespace Generic
     }
 
 
-	inline Pong::Pong()
+	inline Pong::Pong(xx::MemPool* mempool)
+        : xx::Object(mempool)
 	{
 	}
 	inline Pong::Pong(xx::BBuffer *bb)
+        : xx::Object(bb)
 	{
 	    int rtv = 0;
         if (rtv = bb->Read(ticks)) throw rtv;
@@ -704,18 +722,18 @@ namespace Generic
 
     inline void Pong::ToString(xx::String &str) const
     {
-        if (tsFlags())
+        if (memHeader().flags)
         {
         	str.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else tsFlags() = 1;
+        else memHeader().flags = 1;
 
         str.Append("{ \"type\" : \"Pong\"");
         ToStringCore(str);
         str.Append(" }");
         
-        tsFlags() = 0;
+        memHeader().flags = 0;
     }
     inline void Pong::ToStringCore(xx::String &str) const
     {
@@ -728,8 +746,6 @@ namespace Generic
 }
 namespace xx
 {
-	template<> struct TypeId<xx::String> { static const uint16_t value = 1; };
-	template<> struct TypeId<xx::BBuffer> { static const uint16_t value = 2; };
 	template<> struct TypeId<RPC::DB_Manage::MsgResult> { static const uint16_t value = 11; };
 	template<> struct TypeId<RPC::Manage_DB::Msg> { static const uint16_t value = 12; };
 	template<> struct TypeId<RPC::Login_Client::LoginSuccess> { static const uint16_t value = 4; };
@@ -745,8 +761,6 @@ namespace RPC
 {
 	inline void AllTypesRegister()
 	{
-	    xx::MemPool::Register<xx::String, xx::Object>();
-	    xx::MemPool::Register<xx::BBuffer, xx::Object>();
 	    xx::MemPool::Register<RPC::DB_Manage::MsgResult, xx::Object>();
 	    xx::MemPool::Register<RPC::Manage_DB::Msg, xx::Object>();
 	    xx::MemPool::Register<RPC::Login_Client::LoginSuccess, xx::Object>();

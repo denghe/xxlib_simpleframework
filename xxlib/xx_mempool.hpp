@@ -233,7 +233,7 @@ namespace xx
 		creators[TypeId_v<T>] = [](MemPool* mp, BBuffer* bb, size_t ptrOffset) ->void*
 		{
 			// 插入字典占位, 分配到实际指针后替换
-			auto addResult = bb->idxStore->Add(ptrOffset, std::make_pair(nullptr, TypeId_v<T>));
+			auto addResult = mp->idxStore->Add(ptrOffset, std::make_pair(nullptr, TypeId_v<T>));
 
 			// 拿内存
 			auto p = mp->Alloc<MemHeader_Object>(sizeof(T));
@@ -245,7 +245,7 @@ namespace xx
 			h->typeId = TypeId_v<T>;
 
 			// 将字典中的 value 替换成真实指针
-			bb->idxStore->ValueAt(addResult.index).first = p;
+			mp->idxStore->ValueAt(addResult.index).first = p;
 			try
 			{
 				// 调构造函数
@@ -254,7 +254,7 @@ namespace xx
 			catch (...)
 			{
 				// 从字典移除
-				bb->idxStore->RemoveAt(addResult.index);
+				mp->idxStore->RemoveAt(addResult.index);
 				mp->Free<MemHeader_Object>(p);
 				return nullptr;
 			}
@@ -314,6 +314,7 @@ namespace xx
 	inline MemHeader_Object& Object::memHeader() const noexcept { return *((MemHeader_Object*)this - 1); }
 
 	inline void Object::ToString(String &s) const {}
+	inline void Object::ToStringCore(String &s) const {}
 	inline void Object::ToBBuffer(BBuffer &bb) const {}
 	inline int Object::FromBBuffer(BBuffer &bb) { return 0; }
 

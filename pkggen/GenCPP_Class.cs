@@ -11,11 +11,6 @@ public static class GenCPP_Class
     {
         var sb = new StringBuilder();
 
-        // usings
-        sb.Append(@"#include <xx_mempool.h>
-#include <xx_bbuffer.h>
-");
-
         // template namespace
         sb.Append(@"
 namespace " + templateName + @"
@@ -48,7 +43,7 @@ namespace " + c.Namespace + @"
             sb.Append(c._GetDesc()._GetComment_Cpp(4) + @"
     struct " + c.Name + @";
     using " + c.Name + @"_p = xx::Ptr<" + c.Name + @">;
-    using " + c.Name + @"_v = xx::Dock<" + c.Name + @">;
+    using " + c.Name + @"_r = xx::Ref<" + c.Name + @">;
 ");
 
             // namespace }
@@ -211,7 +206,7 @@ namespace " + c.Namespace + @"
 
         typedef " + c.Name + @" ThisType;
         typedef " + btn + @" BaseType;
-	    " + c.Name + @"();
+	    " + c.Name + @"(xx::MemPool* mempool);
 	    " + c.Name + @"(xx::BBuffer *bb);
 		" + c.Name + @"(" + c.Name + @" const&) = delete;
 		" + c.Name + @"& operator=(" + c.Name + @" const&) = delete;
@@ -250,12 +245,8 @@ namespace " + c.Namespace + @"
             var btn = c._HasBaseType() ? bt._GetTypeDecl_Cpp(templateName).CutLast() : "xx::Object";
 
             sb.Append(@"
-	inline " + c.Name + @"::" + c.Name + @"()");
-            if (c._HasBaseType())
-            {
-                sb.Append(@"
-        : " + btn + @"()");
-            }
+	inline " + c.Name + @"::" + c.Name + @"(xx::MemPool* mempool)
+        : " + btn + @"(mempool)");
             sb.Append(@"
 	{");
             var fs = c._GetFields();
@@ -270,12 +261,8 @@ namespace " + c.Namespace + @"
             //    }
             sb.Append(@"
 	}
-	inline " + c.Name + @"::" + c.Name + @"(xx::BBuffer *bb)");
-            if (c._HasBaseType())
-            {
-                sb.Append(@"
+	inline " + c.Name + @"::" + c.Name + @"(xx::BBuffer *bb)
         : " + btn + @"(bb)");
-            }
             //// 其他 _v 成员初始化
             //fs = c._GetFields();
             //foreach (var f in fs)
@@ -365,18 +352,18 @@ namespace " + c.Namespace + @"
 
     inline void " + c.Name + @"::ToString(xx::String &str) const
     {
-        if (tsFlags())
+        if (memHeader().flags)
         {
         	str.Append(""[ \""***** recursived *****\"" ]"");
         	return;
         }
-        else tsFlags() = 1;
+        else memHeader().flags = 1;
 
         str.Append(""{ \""type\"" : \""" + c.Name + @"\"""");
         ToStringCore(str);
         str.Append("" }"");
         
-        tsFlags() = 0;
+        memHeader().flags = 0;
     }
     inline void " + c.Name + @"::ToStringCore(xx::String &str) const
     {
@@ -417,18 +404,9 @@ namespace xx
 	template<>
 	struct BytesFunc<" + ctn + @", void>
 	{
-		static inline uint32_t Calc(" + ctn + @" const &in)
+		static inline void WriteTo(BBuffer& bb, " + ctn + @" const &in)
 		{
-			return BBCalc(");
-            foreach (var f in fs)
-            {
-                sb.Append((f == fs[0] ? "" : ", ") + "in." + f.Name);
-            }
-            sb.Append(@");
-		}
-		static inline uint32_t WriteTo(char *dstBuf, " + ctn + @" const &in)
-		{
-			return BBWriteTo(dstBuf");
+			bb.Write(");
             foreach (var f in fs)
             {
                 if (f._Has<TemplateLibrary.NotSerialize>())
@@ -437,17 +415,17 @@ namespace xx
                 }
                 else
                 {
-                    sb.Append(@", " + "in." + f.Name);
+                    sb.Append((f == fs.First() ? "" : @", ") + "in." + f.Name);
                 }
             }
             sb.Append(@");
 		}
-		static inline int ReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, " + ctn + @" &out)
+		static inline int ReadFrom(BBuffer& bb, " + ctn + @" &out)
 		{
-			return BBReadFrom(srcBuf, dataLen, offset");
+			return bb.Read(");
             foreach (var f in fs)
             {
-                sb.Append(@", " + "out." + f.Name);
+                sb.Append((f == fs.First() ? "" : @", ") + "out." + f.Name);
             }
             sb.Append(@");
 		}
@@ -455,19 +433,9 @@ namespace xx
 	template<>
 	struct StrFunc<" + ctn + @", void>
 	{
-		static inline uint32_t Calc(" + ctn + @" const &in)
+		static inline void WriteTo(xx::String& s, " + ctn + @" const &in)
 		{
-			return StrCalc(");
-            foreach (var f in fs)
-            {
-                sb.Append((f == fs[0] ? "" : ", ") + "in." + f.Name);
-            }
-            // todo: 这里先简单粗略的计算一下 json 格式消耗附加值
-            sb.Append(@") + " + (fs.Count * 5 + 10) + @";
-		}
-		static inline uint32_t WriteTo(char *dstBuf, " + ctn + @" const &in)
-		{
-			return StrWriteTo(dstBuf, ""{ \""type\"" : \""" + c.Name + @"\""""");
+			s.Append(""{ \""type\"" : \""" + c.Name + @"\""""");
             foreach (var f in fs)
             {
                 sb.Append(@", "", \""" + f.Name + @"\"" : "", in." + f.Name);
@@ -479,7 +447,7 @@ namespace xx
         }
 
 
-        // 遍历所有 type 及成员数据类型 生成  BBuffer.Register< T >( typeId ) 函数组. 0 不能占. String 占掉 1. BBuffer 占掉 2.
+        // 遍历所有 type 及成员数据类型 生成  BBuffer.Register< T >( typeId ) 函数组. 0 不能占. String 占掉 1. BBuffer 占掉 2. ( 这两个不生成 )
         // 在基础命名空间中造一个静态类 AllTypes 静态方法 Register
 
         var typeIds = new TemplateLibrary.TypeIds(asm);
@@ -491,6 +459,7 @@ namespace xx
             if (ct._IsList()) ctn = ct._GetSafeTypeDecl_Cpp(templateName, true);
             else ctn = ct._GetTypeDecl_Cpp(templateName).CutLast();
 
+            if (ct._IsString() || ct._IsBBuffer()) continue;
             sb.Append(@"
 	template<> struct TypeId<" + ctn + @"> { static const uint16_t value = " + typeId + @"; };");
         }
@@ -511,6 +480,7 @@ namespace " + templateName + @"
             var bt = ct.BaseType;
             var btn = ct._HasBaseType() ? bt._GetTypeDecl_Cpp(templateName).CutLast() : "xx::Object";
 
+            if (ct._IsString() || ct._IsBBuffer()) continue;
             sb.Append(@"
 	    xx::MemPool::Register<" + ctn + @", " + btn + @">();");
         }

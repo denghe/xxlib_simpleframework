@@ -1,34 +1,32 @@
-﻿#include <xx_mempool.h>
-#include <xx_bbuffer.h>
-
+﻿
 namespace PKG2
 {
 	struct PkgGenMd5
 	{
-		static constexpr char const* value = "23fe8c4ca861c399d5ad090c854c7529";
+		static constexpr char const* value = "b40a1c4ba007969d69cfeb3c4a6f3b9f";
 
     };
 
     // 测试一下各种数据类型
     struct 基类;
     using 基类_p = xx::Ptr<基类>;
-    using 基类_v = xx::Dock<基类>;
+    using 基类_r = xx::Ref<基类>;
 
     struct 派生类;
     using 派生类_p = xx::Ptr<派生类>;
-    using 派生类_v = xx::Dock<派生类>;
+    using 派生类_r = xx::Ref<派生类>;
 
     struct Base;
     using Base_p = xx::Ptr<Base>;
-    using Base_v = xx::Dock<Base>;
+    using Base_r = xx::Ref<Base>;
 
     struct Derive1;
     using Derive1_p = xx::Ptr<Derive1>;
-    using Derive1_v = xx::Dock<Derive1>;
+    using Derive1_r = xx::Ref<Derive1>;
 
     struct Derive2;
     using Derive2_p = xx::Ptr<Derive2>;
-    using Derive2_v = xx::Dock<Derive2>;
+    using Derive2_r = xx::Ref<Derive2>;
 
     struct Base : xx::Object
     {
@@ -37,7 +35,7 @@ namespace PKG2
 
         typedef Base ThisType;
         typedef xx::Object BaseType;
-	    Base();
+	    Base(xx::MemPool* mempool);
 	    Base(xx::BBuffer *bb);
 		Base(Base const&) = delete;
 		Base& operator=(Base const&) = delete;
@@ -65,7 +63,7 @@ namespace PKG2
 
         typedef 基类 ThisType;
         typedef xx::Object BaseType;
-	    基类();
+	    基类(xx::MemPool* mempool);
 	    基类(xx::BBuffer *bb);
 		基类(基类 const&) = delete;
 		基类& operator=(基类 const&) = delete;
@@ -93,7 +91,7 @@ namespace PKG2
 
         typedef 派生类 ThisType;
         typedef PKG2::基类 BaseType;
-	    派生类();
+	    派生类(xx::MemPool* mempool);
 	    派生类(xx::BBuffer *bb);
 		派生类(派生类 const&) = delete;
 		派生类& operator=(派生类 const&) = delete;
@@ -110,7 +108,7 @@ namespace PKG2
 
         typedef Derive1 ThisType;
         typedef PKG2::Base BaseType;
-	    Derive1();
+	    Derive1(xx::MemPool* mempool);
 	    Derive1(xx::BBuffer *bb);
 		Derive1(Derive1 const&) = delete;
 		Derive1& operator=(Derive1 const&) = delete;
@@ -127,7 +125,7 @@ namespace PKG2
 
         typedef Derive2 ThisType;
         typedef PKG2::Base BaseType;
-	    Derive2();
+	    Derive2(xx::MemPool* mempool);
 	    Derive2(xx::BBuffer *bb);
 		Derive2(Derive2 const&) = delete;
 		Derive2& operator=(Derive2 const&) = delete;
@@ -136,10 +134,12 @@ namespace PKG2
         virtual void ToBBuffer(xx::BBuffer &bb) const override;
         virtual int FromBBuffer(xx::BBuffer &bb) override;
     };
-	inline 基类::基类()
+	inline 基类::基类(xx::MemPool* mempool)
+        : xx::Object(mempool)
 	{
 	}
 	inline 基类::基类(xx::BBuffer *bb)
+        : xx::Object(bb)
 	{
 	    int rtv = 0;
         if (rtv = bb->Read(不淋)) throw rtv;
@@ -197,18 +197,18 @@ namespace PKG2
 
     inline void 基类::ToString(xx::String &str) const
     {
-        if (tsFlags())
+        if (memHeader().flags)
         {
         	str.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else tsFlags() = 1;
+        else memHeader().flags = 1;
 
         str.Append("{ \"type\" : \"基类\"");
         ToStringCore(str);
         str.Append(" }");
         
-        tsFlags() = 0;
+        memHeader().flags = 0;
     }
     inline void 基类::ToStringCore(xx::String &str) const
     {
@@ -229,8 +229,8 @@ namespace PKG2
     }
 
 
-	inline 派生类::派生类()
-        : PKG2::基类()
+	inline 派生类::派生类(xx::MemPool* mempool)
+        : PKG2::基类(mempool)
 	{
 	}
 	inline 派生类::派生类(xx::BBuffer *bb)
@@ -316,18 +316,18 @@ namespace PKG2
 
     inline void 派生类::ToString(xx::String &str) const
     {
-        if (tsFlags())
+        if (memHeader().flags)
         {
         	str.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else tsFlags() = 1;
+        else memHeader().flags = 1;
 
         str.Append("{ \"type\" : \"派生类\"");
         ToStringCore(str);
         str.Append(" }");
         
-        tsFlags() = 0;
+        memHeader().flags = 0;
     }
     inline void 派生类::ToStringCore(xx::String &str) const
     {
@@ -348,10 +348,12 @@ namespace PKG2
     }
 
 
-	inline Base::Base()
+	inline Base::Base(xx::MemPool* mempool)
+        : xx::Object(mempool)
 	{
 	}
 	inline Base::Base(xx::BBuffer *bb)
+        : xx::Object(bb)
 	{
 	    int rtv = 0;
         if (rtv = bb->Read(i1)) throw rtv;
@@ -372,18 +374,18 @@ namespace PKG2
 
     inline void Base::ToString(xx::String &str) const
     {
-        if (tsFlags())
+        if (memHeader().flags)
         {
         	str.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else tsFlags() = 1;
+        else memHeader().flags = 1;
 
         str.Append("{ \"type\" : \"Base\"");
         ToStringCore(str);
         str.Append(" }");
         
-        tsFlags() = 0;
+        memHeader().flags = 0;
     }
     inline void Base::ToStringCore(xx::String &str) const
     {
@@ -393,8 +395,8 @@ namespace PKG2
     }
 
 
-	inline Derive1::Derive1()
-        : PKG2::Base()
+	inline Derive1::Derive1(xx::MemPool* mempool)
+        : PKG2::Base(mempool)
 	{
 	}
 	inline Derive1::Derive1(xx::BBuffer *bb)
@@ -424,18 +426,18 @@ namespace PKG2
 
     inline void Derive1::ToString(xx::String &str) const
     {
-        if (tsFlags())
+        if (memHeader().flags)
         {
         	str.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else tsFlags() = 1;
+        else memHeader().flags = 1;
 
         str.Append("{ \"type\" : \"Derive1\"");
         ToStringCore(str);
         str.Append(" }");
         
-        tsFlags() = 0;
+        memHeader().flags = 0;
     }
     inline void Derive1::ToStringCore(xx::String &str) const
     {
@@ -446,8 +448,8 @@ namespace PKG2
     }
 
 
-	inline Derive2::Derive2()
-        : PKG2::Base()
+	inline Derive2::Derive2(xx::MemPool* mempool)
+        : PKG2::Base(mempool)
 	{
 	}
 	inline Derive2::Derive2(xx::BBuffer *bb)
@@ -477,18 +479,18 @@ namespace PKG2
 
     inline void Derive2::ToString(xx::String &str) const
     {
-        if (tsFlags())
+        if (memHeader().flags)
         {
         	str.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else tsFlags() = 1;
+        else memHeader().flags = 1;
 
         str.Append("{ \"type\" : \"Derive2\"");
         ToStringCore(str);
         str.Append(" }");
         
-        tsFlags() = 0;
+        memHeader().flags = 0;
     }
     inline void Derive2::ToStringCore(xx::String &str) const
     {
@@ -502,8 +504,6 @@ namespace PKG2
 }
 namespace xx
 {
-	template<> struct TypeId<xx::String> { static const uint16_t value = 1; };
-	template<> struct TypeId<xx::BBuffer> { static const uint16_t value = 2; };
 	template<> struct TypeId<PKG2::基类> { static const uint16_t value = 3; };
 	template<> struct TypeId<PKG2::派生类> { static const uint16_t value = 4; };
 	template<> struct TypeId<xx::List<uint8_t>> { static const uint16_t value = 5; };
@@ -527,8 +527,6 @@ namespace PKG2
 {
 	inline void AllTypesRegister()
 	{
-	    xx::MemPool::Register<xx::String, xx::Object>();
-	    xx::MemPool::Register<xx::BBuffer, xx::Object>();
 	    xx::MemPool::Register<PKG2::基类, xx::Object>();
 	    xx::MemPool::Register<PKG2::派生类, PKG2::基类>();
 	    xx::MemPool::Register<xx::List<uint8_t>, xx::Object>();

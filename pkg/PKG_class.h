@@ -1,74 +1,72 @@
-﻿#include <xx_mempool.h>
-#include <xx_bbuffer.h>
-
+﻿
 namespace PKG
 {
 	struct PkgGenMd5
 	{
-		static constexpr char const* value = "35314f910e4988da3f774de3d5d783e7";
+		static constexpr char const* value = "aa4225edbd8eab2f73f1a1956c172de2";
 
     };
 
     // 一个请求( 当前限定为 service 与 db 间 ), 通常携带一个流水号. 这是基类
     struct Request;
     using Request_p = xx::Ptr<Request>;
-    using Request_v = xx::Dock<Request>;
+    using Request_r = xx::Ref<Request>;
 
     // 一个回应( 当前限定为 service 与 db 间 ), 通常携带一个请求发过来的流水号. 这是基类
     struct Response;
     using Response_p = xx::Ptr<Response>;
-    using Response_v = xx::Dock<Response>;
+    using Response_r = xx::Ref<Response>;
 
     // 成功
     struct Success;
     using Success_p = xx::Ptr<Success>;
-    using Success_v = xx::Dock<Success>;
+    using Success_r = xx::Ref<Success>;
 
     // 失败
     struct Fail;
     using Fail_p = xx::Ptr<Fail>;
-    using Fail_v = xx::Dock<Fail>;
+    using Fail_r = xx::Ref<Fail>;
 
     struct Property;
     using Property_p = xx::Ptr<Property>;
-    using Property_v = xx::Dock<Property>;
+    using Property_r = xx::Ref<Property>;
 
     struct Property_long;
     using Property_long_p = xx::Ptr<Property_long>;
-    using Property_long_v = xx::Dock<Property_long>;
+    using Property_long_r = xx::Ref<Property_long>;
 
     struct Property_double;
     using Property_double_p = xx::Ptr<Property_double>;
-    using Property_double_v = xx::Dock<Property_double>;
+    using Property_double_r = xx::Ref<Property_double>;
 
     struct Property_string;
     using Property_string_p = xx::Ptr<Property_string>;
-    using Property_string_v = xx::Dock<Property_string>;
+    using Property_string_r = xx::Ref<Property_string>;
 
     struct Properties;
     using Properties_p = xx::Ptr<Properties>;
-    using Properties_v = xx::Dock<Properties>;
+    using Properties_r = xx::Ref<Properties>;
 
     struct UserInfo;
     using UserInfo_p = xx::Ptr<UserInfo>;
-    using UserInfo_v = xx::Dock<UserInfo>;
+    using UserInfo_r = xx::Ref<UserInfo>;
 
 namespace Client_Server
 {
     // 请求进入服务器
     struct Join;
     using Join_p = xx::Ptr<Join>;
-    using Join_v = xx::Dock<Join>;
+    using Join_r = xx::Ref<Join>;
 
     // 发消息
     struct Message;
     using Message_p = xx::Ptr<Message>;
-    using Message_v = xx::Dock<Message>;
+    using Message_r = xx::Ref<Message>;
 
     // 主动退出
     struct Logout;
     using Logout_p = xx::Ptr<Logout>;
-    using Logout_v = xx::Dock<Logout>;
+    using Logout_r = xx::Ref<Logout>;
 
 }
 namespace Server_Client
@@ -76,27 +74,27 @@ namespace Server_Client
     // 进入成功, 返回用户信息
     struct JoinSuccess;
     using JoinSuccess_p = xx::Ptr<JoinSuccess>;
-    using JoinSuccess_v = xx::Dock<JoinSuccess>;
+    using JoinSuccess_r = xx::Ref<JoinSuccess>;
 
     // 进入失败, 返回错误信息
     struct JoinFail;
     using JoinFail_p = xx::Ptr<JoinFail>;
-    using JoinFail_v = xx::Dock<JoinFail>;
+    using JoinFail_r = xx::Ref<JoinFail>;
 
     // 推送文字消息
     struct PushJoin;
     using PushJoin_p = xx::Ptr<PushJoin>;
-    using PushJoin_v = xx::Dock<PushJoin>;
+    using PushJoin_r = xx::Ref<PushJoin>;
 
     // 推送文字消息
     struct PushMessage;
     using PushMessage_p = xx::Ptr<PushMessage>;
-    using PushMessage_v = xx::Dock<PushMessage>;
+    using PushMessage_r = xx::Ref<PushMessage>;
 
     // 推送退出消息
     struct PushLogout;
     using PushLogout_p = xx::Ptr<PushLogout>;
-    using PushLogout_v = xx::Dock<PushLogout>;
+    using PushLogout_r = xx::Ref<PushLogout>;
 
 }
 namespace Manage_DB
@@ -104,22 +102,22 @@ namespace Manage_DB
     // 请求进入服务器
     struct Login;
     using Login_p = xx::Ptr<Login>;
-    using Login_v = xx::Dock<Login>;
+    using Login_r = xx::Ref<Login>;
 
     // 注销式退出
     struct Logout;
     using Logout_p = xx::Ptr<Logout>;
-    using Logout_v = xx::Dock<Logout>;
+    using Logout_r = xx::Ref<Logout>;
 
     // 拉管理员账号列表的 id 列表( 需要相关权限 )
     struct SelectManageAccountIds;
     using SelectManageAccountIds_p = xx::Ptr<SelectManageAccountIds>;
-    using SelectManageAccountIds_v = xx::Dock<SelectManageAccountIds>;
+    using SelectManageAccountIds_r = xx::Ref<SelectManageAccountIds>;
 
     // 拉管理员账号列表( 需要相关权限 )
     struct SelectManageAccounts;
     using SelectManageAccounts_p = xx::Ptr<SelectManageAccounts>;
-    using SelectManageAccounts_v = xx::Dock<SelectManageAccounts>;
+    using SelectManageAccounts_r = xx::Ref<SelectManageAccounts>;
 
 }
 namespace Manage
@@ -127,27 +125,27 @@ namespace Manage
     // 账号
     struct Account;
     using Account_p = xx::Ptr<Account>;
-    using Account_v = xx::Dock<Account>;
+    using Account_r = xx::Ref<Account>;
 
     // 身份
     struct Role;
     using Role_p = xx::Ptr<Role>;
-    using Role_v = xx::Dock<Role>;
+    using Role_r = xx::Ref<Role>;
 
     // 权限
     struct Permission;
     using Permission_p = xx::Ptr<Permission>;
-    using Permission_v = xx::Dock<Permission>;
+    using Permission_r = xx::Ref<Permission>;
 
     // 管理人员 & 身份 绑定
     struct BindAccountRole;
     using BindAccountRole_p = xx::Ptr<BindAccountRole>;
-    using BindAccountRole_v = xx::Dock<BindAccountRole>;
+    using BindAccountRole_r = xx::Ref<BindAccountRole>;
 
     // 身份 & 权限 绑定
     struct BindRolePermission;
     using BindRolePermission_p = xx::Ptr<BindRolePermission>;
-    using BindRolePermission_v = xx::Dock<BindRolePermission>;
+    using BindRolePermission_r = xx::Ref<BindRolePermission>;
 
 }
 namespace DB_Manage
@@ -155,42 +153,42 @@ namespace DB_Manage
     // 登录成功
     struct LoginSuccess;
     using LoginSuccess_p = xx::Ptr<LoginSuccess>;
-    using LoginSuccess_v = xx::Dock<LoginSuccess>;
+    using LoginSuccess_r = xx::Ref<LoginSuccess>;
 
     // 登录失败
     struct LoginFail;
     using LoginFail_p = xx::Ptr<LoginFail>;
-    using LoginFail_v = xx::Dock<LoginFail>;
+    using LoginFail_r = xx::Ref<LoginFail>;
 
     // 注销成功
     struct LogoutSuccess;
     using LogoutSuccess_p = xx::Ptr<LogoutSuccess>;
-    using LogoutSuccess_v = xx::Dock<LogoutSuccess>;
+    using LogoutSuccess_r = xx::Ref<LogoutSuccess>;
 
     // 注销失败
     struct LogoutFail;
     using LogoutFail_p = xx::Ptr<LogoutFail>;
-    using LogoutFail_v = xx::Dock<LogoutFail>;
+    using LogoutFail_r = xx::Ref<LogoutFail>;
 
     // 拉管理员账号列表的 id 列表 成功
     struct SelectManageAccountIdsSuccess;
     using SelectManageAccountIdsSuccess_p = xx::Ptr<SelectManageAccountIdsSuccess>;
-    using SelectManageAccountIdsSuccess_v = xx::Dock<SelectManageAccountIdsSuccess>;
+    using SelectManageAccountIdsSuccess_r = xx::Ref<SelectManageAccountIdsSuccess>;
 
     // 拉管理员账号列表的 id 列表 失败
     struct SelectManageAccountIdsFail;
     using SelectManageAccountIdsFail_p = xx::Ptr<SelectManageAccountIdsFail>;
-    using SelectManageAccountIdsFail_v = xx::Dock<SelectManageAccountIdsFail>;
+    using SelectManageAccountIdsFail_r = xx::Ref<SelectManageAccountIdsFail>;
 
     // 拉管理员账号列表 成功
     struct SelectManageAccountsSuccess;
     using SelectManageAccountsSuccess_p = xx::Ptr<SelectManageAccountsSuccess>;
-    using SelectManageAccountsSuccess_v = xx::Dock<SelectManageAccountsSuccess>;
+    using SelectManageAccountsSuccess_r = xx::Ref<SelectManageAccountsSuccess>;
 
     // 拉管理员账号列表 失败
     struct SelectManageAccountsFail;
     using SelectManageAccountsFail_p = xx::Ptr<SelectManageAccountsFail>;
-    using SelectManageAccountsFail_v = xx::Dock<SelectManageAccountsFail>;
+    using SelectManageAccountsFail_r = xx::Ref<SelectManageAccountsFail>;
 
 }
 namespace Manage
@@ -211,7 +209,7 @@ namespace Manage
 
         typedef Response ThisType;
         typedef xx::Object BaseType;
-	    Response();
+	    Response(xx::MemPool* mempool);
 	    Response(xx::BBuffer *bb);
 		Response(Response const&) = delete;
 		Response& operator=(Response const&) = delete;
@@ -227,7 +225,7 @@ namespace Manage
 
         typedef Request ThisType;
         typedef xx::Object BaseType;
-	    Request();
+	    Request(xx::MemPool* mempool);
 	    Request(xx::BBuffer *bb);
 		Request(Request const&) = delete;
 		Request& operator=(Request const&) = delete;
@@ -242,7 +240,7 @@ namespace Manage
 
         typedef Success ThisType;
         typedef PKG::Response BaseType;
-	    Success();
+	    Success(xx::MemPool* mempool);
 	    Success(xx::BBuffer *bb);
 		Success(Success const&) = delete;
 		Success& operator=(Success const&) = delete;
@@ -258,7 +256,7 @@ namespace Manage
 
         typedef Fail ThisType;
         typedef PKG::Response BaseType;
-	    Fail();
+	    Fail(xx::MemPool* mempool);
 	    Fail(xx::BBuffer *bb);
 		Fail(Fail const&) = delete;
 		Fail& operator=(Fail const&) = delete;
@@ -273,7 +271,7 @@ namespace Manage
 
         typedef Property ThisType;
         typedef xx::Object BaseType;
-	    Property();
+	    Property(xx::MemPool* mempool);
 	    Property(xx::BBuffer *bb);
 		Property(Property const&) = delete;
 		Property& operator=(Property const&) = delete;
@@ -292,7 +290,7 @@ namespace Manage_DB
 
         typedef SelectManageAccounts ThisType;
         typedef PKG::Request BaseType;
-	    SelectManageAccounts();
+	    SelectManageAccounts(xx::MemPool* mempool);
 	    SelectManageAccounts(xx::BBuffer *bb);
 		SelectManageAccounts(SelectManageAccounts const&) = delete;
 		SelectManageAccounts& operator=(SelectManageAccounts const&) = delete;
@@ -312,7 +310,7 @@ namespace Manage
 
         typedef Account ThisType;
         typedef xx::Object BaseType;
-	    Account();
+	    Account(xx::MemPool* mempool);
 	    Account(xx::BBuffer *bb);
 		Account(Account const&) = delete;
 		Account& operator=(Account const&) = delete;
@@ -330,7 +328,7 @@ namespace Manage
 
         typedef Role ThisType;
         typedef xx::Object BaseType;
-	    Role();
+	    Role(xx::MemPool* mempool);
 	    Role(xx::BBuffer *bb);
 		Role(Role const&) = delete;
 		Role& operator=(Role const&) = delete;
@@ -349,7 +347,7 @@ namespace Manage
 
         typedef Permission ThisType;
         typedef xx::Object BaseType;
-	    Permission();
+	    Permission(xx::MemPool* mempool);
 	    Permission(xx::BBuffer *bb);
 		Permission(Permission const&) = delete;
 		Permission& operator=(Permission const&) = delete;
@@ -366,7 +364,7 @@ namespace Manage
 
         typedef BindAccountRole ThisType;
         typedef xx::Object BaseType;
-	    BindAccountRole();
+	    BindAccountRole(xx::MemPool* mempool);
 	    BindAccountRole(xx::BBuffer *bb);
 		BindAccountRole(BindAccountRole const&) = delete;
 		BindAccountRole& operator=(BindAccountRole const&) = delete;
@@ -383,7 +381,7 @@ namespace Manage
 
         typedef BindRolePermission ThisType;
         typedef xx::Object BaseType;
-	    BindRolePermission();
+	    BindRolePermission(xx::MemPool* mempool);
 	    BindRolePermission(xx::BBuffer *bb);
 		BindRolePermission(BindRolePermission const&) = delete;
 		BindRolePermission& operator=(BindRolePermission const&) = delete;
@@ -401,7 +399,7 @@ namespace DB_Manage
 
         typedef LoginFail ThisType;
         typedef PKG::Fail BaseType;
-	    LoginFail();
+	    LoginFail(xx::MemPool* mempool);
 	    LoginFail(xx::BBuffer *bb);
 		LoginFail(LoginFail const&) = delete;
 		LoginFail& operator=(LoginFail const&) = delete;
@@ -423,7 +421,7 @@ namespace Manage_DB
 
         typedef SelectManageAccountIds ThisType;
         typedef PKG::Request BaseType;
-	    SelectManageAccountIds();
+	    SelectManageAccountIds(xx::MemPool* mempool);
 	    SelectManageAccountIds(xx::BBuffer *bb);
 		SelectManageAccountIds(SelectManageAccountIds const&) = delete;
 		SelectManageAccountIds& operator=(SelectManageAccountIds const&) = delete;
@@ -441,7 +439,7 @@ namespace DB_Manage
 
         typedef LogoutSuccess ThisType;
         typedef PKG::Success BaseType;
-	    LogoutSuccess();
+	    LogoutSuccess(xx::MemPool* mempool);
 	    LogoutSuccess(xx::BBuffer *bb);
 		LogoutSuccess(LogoutSuccess const&) = delete;
 		LogoutSuccess& operator=(LogoutSuccess const&) = delete;
@@ -456,7 +454,7 @@ namespace DB_Manage
 
         typedef LogoutFail ThisType;
         typedef PKG::Fail BaseType;
-	    LogoutFail();
+	    LogoutFail(xx::MemPool* mempool);
 	    LogoutFail(xx::BBuffer *bb);
 		LogoutFail(LogoutFail const&) = delete;
 		LogoutFail& operator=(LogoutFail const&) = delete;
@@ -472,7 +470,7 @@ namespace DB_Manage
 
         typedef SelectManageAccountIdsSuccess ThisType;
         typedef PKG::Success BaseType;
-	    SelectManageAccountIdsSuccess();
+	    SelectManageAccountIdsSuccess(xx::MemPool* mempool);
 	    SelectManageAccountIdsSuccess(xx::BBuffer *bb);
 		SelectManageAccountIdsSuccess(SelectManageAccountIdsSuccess const&) = delete;
 		SelectManageAccountIdsSuccess& operator=(SelectManageAccountIdsSuccess const&) = delete;
@@ -487,7 +485,7 @@ namespace DB_Manage
 
         typedef SelectManageAccountIdsFail ThisType;
         typedef PKG::Fail BaseType;
-	    SelectManageAccountIdsFail();
+	    SelectManageAccountIdsFail(xx::MemPool* mempool);
 	    SelectManageAccountIdsFail(xx::BBuffer *bb);
 		SelectManageAccountIdsFail(SelectManageAccountIdsFail const&) = delete;
 		SelectManageAccountIdsFail& operator=(SelectManageAccountIdsFail const&) = delete;
@@ -504,7 +502,7 @@ namespace DB_Manage
 
         typedef LoginSuccess ThisType;
         typedef PKG::Success BaseType;
-	    LoginSuccess();
+	    LoginSuccess(xx::MemPool* mempool);
 	    LoginSuccess(xx::BBuffer *bb);
 		LoginSuccess(LoginSuccess const&) = delete;
 		LoginSuccess& operator=(LoginSuccess const&) = delete;
@@ -522,7 +520,7 @@ namespace Manage_DB
 
         typedef Logout ThisType;
         typedef PKG::Request BaseType;
-	    Logout();
+	    Logout(xx::MemPool* mempool);
 	    Logout(xx::BBuffer *bb);
 		Logout(Logout const&) = delete;
 		Logout& operator=(Logout const&) = delete;
@@ -543,7 +541,7 @@ namespace Server_Client
 
         typedef PushLogout ThisType;
         typedef xx::Object BaseType;
-	    PushLogout();
+	    PushLogout(xx::MemPool* mempool);
 	    PushLogout(xx::BBuffer *bb);
 		PushLogout(PushLogout const&) = delete;
 		PushLogout& operator=(PushLogout const&) = delete;
@@ -562,7 +560,7 @@ namespace DB_Manage
 
         typedef SelectManageAccountsSuccess ThisType;
         typedef PKG::Success BaseType;
-	    SelectManageAccountsSuccess();
+	    SelectManageAccountsSuccess(xx::MemPool* mempool);
 	    SelectManageAccountsSuccess(xx::BBuffer *bb);
 		SelectManageAccountsSuccess(SelectManageAccountsSuccess const&) = delete;
 		SelectManageAccountsSuccess& operator=(SelectManageAccountsSuccess const&) = delete;
@@ -582,7 +580,7 @@ namespace Server_Client
 
         typedef PushMessage ThisType;
         typedef xx::Object BaseType;
-	    PushMessage();
+	    PushMessage(xx::MemPool* mempool);
 	    PushMessage(xx::BBuffer *bb);
 		PushMessage(PushMessage const&) = delete;
 		PushMessage& operator=(PushMessage const&) = delete;
@@ -598,7 +596,7 @@ namespace Server_Client
 
         typedef PushJoin ThisType;
         typedef xx::Object BaseType;
-	    PushJoin();
+	    PushJoin(xx::MemPool* mempool);
 	    PushJoin(xx::BBuffer *bb);
 		PushJoin(PushJoin const&) = delete;
 		PushJoin& operator=(PushJoin const&) = delete;
@@ -614,7 +612,7 @@ namespace Server_Client
 
         typedef JoinFail ThisType;
         typedef PKG::Response BaseType;
-	    JoinFail();
+	    JoinFail(xx::MemPool* mempool);
 	    JoinFail(xx::BBuffer *bb);
 		JoinFail(JoinFail const&) = delete;
 		JoinFail& operator=(JoinFail const&) = delete;
@@ -631,7 +629,7 @@ namespace Server_Client
 
         typedef JoinSuccess ThisType;
         typedef PKG::Response BaseType;
-	    JoinSuccess();
+	    JoinSuccess(xx::MemPool* mempool);
 	    JoinSuccess(xx::BBuffer *bb);
 		JoinSuccess(JoinSuccess const&) = delete;
 		JoinSuccess& operator=(JoinSuccess const&) = delete;
@@ -650,7 +648,7 @@ namespace Client_Server
 
         typedef Logout ThisType;
         typedef xx::Object BaseType;
-	    Logout();
+	    Logout(xx::MemPool* mempool);
 	    Logout(xx::BBuffer *bb);
 		Logout(Logout const&) = delete;
 		Logout& operator=(Logout const&) = delete;
@@ -666,7 +664,7 @@ namespace Client_Server
 
         typedef Message ThisType;
         typedef xx::Object BaseType;
-	    Message();
+	    Message(xx::MemPool* mempool);
 	    Message(xx::BBuffer *bb);
 		Message(Message const&) = delete;
 		Message& operator=(Message const&) = delete;
@@ -683,7 +681,7 @@ namespace Client_Server
 
         typedef Join ThisType;
         typedef PKG::Request BaseType;
-	    Join();
+	    Join(xx::MemPool* mempool);
 	    Join(xx::BBuffer *bb);
 		Join(Join const&) = delete;
 		Join& operator=(Join const&) = delete;
@@ -700,7 +698,7 @@ namespace Client_Server
 
         typedef UserInfo ThisType;
         typedef xx::Object BaseType;
-	    UserInfo();
+	    UserInfo(xx::MemPool* mempool);
 	    UserInfo(xx::BBuffer *bb);
 		UserInfo(UserInfo const&) = delete;
 		UserInfo& operator=(UserInfo const&) = delete;
@@ -715,7 +713,7 @@ namespace Client_Server
 
         typedef Properties ThisType;
         typedef PKG::Property BaseType;
-	    Properties();
+	    Properties(xx::MemPool* mempool);
 	    Properties(xx::BBuffer *bb);
 		Properties(Properties const&) = delete;
 		Properties& operator=(Properties const&) = delete;
@@ -730,7 +728,7 @@ namespace Client_Server
 
         typedef Property_string ThisType;
         typedef PKG::Property BaseType;
-	    Property_string();
+	    Property_string(xx::MemPool* mempool);
 	    Property_string(xx::BBuffer *bb);
 		Property_string(Property_string const&) = delete;
 		Property_string& operator=(Property_string const&) = delete;
@@ -745,7 +743,7 @@ namespace Client_Server
 
         typedef Property_double ThisType;
         typedef PKG::Property BaseType;
-	    Property_double();
+	    Property_double(xx::MemPool* mempool);
 	    Property_double(xx::BBuffer *bb);
 		Property_double(Property_double const&) = delete;
 		Property_double& operator=(Property_double const&) = delete;
@@ -760,7 +758,7 @@ namespace Client_Server
 
         typedef Property_long ThisType;
         typedef PKG::Property BaseType;
-	    Property_long();
+	    Property_long(xx::MemPool* mempool);
 	    Property_long(xx::BBuffer *bb);
 		Property_long(Property_long const&) = delete;
 		Property_long& operator=(Property_long const&) = delete;
@@ -779,7 +777,7 @@ namespace Manage_DB
 
         typedef Login ThisType;
         typedef PKG::Request BaseType;
-	    Login();
+	    Login(xx::MemPool* mempool);
 	    Login(xx::BBuffer *bb);
 		Login(Login const&) = delete;
 		Login& operator=(Login const&) = delete;
@@ -797,7 +795,7 @@ namespace DB_Manage
 
         typedef SelectManageAccountsFail ThisType;
         typedef PKG::Fail BaseType;
-	    SelectManageAccountsFail();
+	    SelectManageAccountsFail(xx::MemPool* mempool);
 	    SelectManageAccountsFail(xx::BBuffer *bb);
 		SelectManageAccountsFail(SelectManageAccountsFail const&) = delete;
 		SelectManageAccountsFail& operator=(SelectManageAccountsFail const&) = delete;
@@ -807,10 +805,12 @@ namespace DB_Manage
         virtual int FromBBuffer(xx::BBuffer &bb) override;
     };
 }
-	inline Request::Request()
+	inline Request::Request(xx::MemPool* mempool)
+        : xx::Object(mempool)
 	{
 	}
 	inline Request::Request(xx::BBuffer *bb)
+        : xx::Object(bb)
 	{
 	    int rtv = 0;
         if (rtv = bb->Read(serial)) throw rtv;
@@ -828,18 +828,18 @@ namespace DB_Manage
 
     inline void Request::ToString(xx::String &str) const
     {
-        if (tsFlags())
+        if (memHeader().flags)
         {
         	str.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else tsFlags() = 1;
+        else memHeader().flags = 1;
 
         str.Append("{ \"type\" : \"Request\"");
         ToStringCore(str);
         str.Append(" }");
         
-        tsFlags() = 0;
+        memHeader().flags = 0;
     }
     inline void Request::ToStringCore(xx::String &str) const
     {
@@ -848,10 +848,12 @@ namespace DB_Manage
     }
 
 
-	inline Response::Response()
+	inline Response::Response(xx::MemPool* mempool)
+        : xx::Object(mempool)
 	{
 	}
 	inline Response::Response(xx::BBuffer *bb)
+        : xx::Object(bb)
 	{
 	    int rtv = 0;
         if (rtv = bb->Read(requestSerial)) throw rtv;
@@ -869,18 +871,18 @@ namespace DB_Manage
 
     inline void Response::ToString(xx::String &str) const
     {
-        if (tsFlags())
+        if (memHeader().flags)
         {
         	str.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else tsFlags() = 1;
+        else memHeader().flags = 1;
 
         str.Append("{ \"type\" : \"Response\"");
         ToStringCore(str);
         str.Append(" }");
         
-        tsFlags() = 0;
+        memHeader().flags = 0;
     }
     inline void Response::ToStringCore(xx::String &str) const
     {
@@ -889,8 +891,8 @@ namespace DB_Manage
     }
 
 
-	inline Success::Success()
-        : PKG::Response()
+	inline Success::Success(xx::MemPool* mempool)
+        : PKG::Response(mempool)
 	{
 	}
 	inline Success::Success(xx::BBuffer *bb)
@@ -910,18 +912,18 @@ namespace DB_Manage
 
     inline void Success::ToString(xx::String &str) const
     {
-        if (tsFlags())
+        if (memHeader().flags)
         {
         	str.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else tsFlags() = 1;
+        else memHeader().flags = 1;
 
         str.Append("{ \"type\" : \"Success\"");
         ToStringCore(str);
         str.Append(" }");
         
-        tsFlags() = 0;
+        memHeader().flags = 0;
     }
     inline void Success::ToStringCore(xx::String &str) const
     {
@@ -929,8 +931,8 @@ namespace DB_Manage
     }
 
 
-	inline Fail::Fail()
-        : PKG::Response()
+	inline Fail::Fail(xx::MemPool* mempool)
+        : PKG::Response(mempool)
 	{
 	}
 	inline Fail::Fail(xx::BBuffer *bb)
@@ -956,18 +958,18 @@ namespace DB_Manage
 
     inline void Fail::ToString(xx::String &str) const
     {
-        if (tsFlags())
+        if (memHeader().flags)
         {
         	str.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else tsFlags() = 1;
+        else memHeader().flags = 1;
 
         str.Append("{ \"type\" : \"Fail\"");
         ToStringCore(str);
         str.Append(" }");
         
-        tsFlags() = 0;
+        memHeader().flags = 0;
     }
     inline void Fail::ToStringCore(xx::String &str) const
     {
@@ -976,10 +978,12 @@ namespace DB_Manage
     }
 
 
-	inline Property::Property()
+	inline Property::Property(xx::MemPool* mempool)
+        : xx::Object(mempool)
 	{
 	}
 	inline Property::Property(xx::BBuffer *bb)
+        : xx::Object(bb)
 	{
 	    int rtv = 0;
         bb->readLengthLimit = 0;
@@ -999,18 +1003,18 @@ namespace DB_Manage
 
     inline void Property::ToString(xx::String &str) const
     {
-        if (tsFlags())
+        if (memHeader().flags)
         {
         	str.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else tsFlags() = 1;
+        else memHeader().flags = 1;
 
         str.Append("{ \"type\" : \"Property\"");
         ToStringCore(str);
         str.Append(" }");
         
-        tsFlags() = 0;
+        memHeader().flags = 0;
     }
     inline void Property::ToStringCore(xx::String &str) const
     {
@@ -1019,8 +1023,8 @@ namespace DB_Manage
     }
 
 
-	inline Property_long::Property_long()
-        : PKG::Property()
+	inline Property_long::Property_long(xx::MemPool* mempool)
+        : PKG::Property(mempool)
 	{
 	}
 	inline Property_long::Property_long(xx::BBuffer *bb)
@@ -1044,18 +1048,18 @@ namespace DB_Manage
 
     inline void Property_long::ToString(xx::String &str) const
     {
-        if (tsFlags())
+        if (memHeader().flags)
         {
         	str.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else tsFlags() = 1;
+        else memHeader().flags = 1;
 
         str.Append("{ \"type\" : \"Property_long\"");
         ToStringCore(str);
         str.Append(" }");
         
-        tsFlags() = 0;
+        memHeader().flags = 0;
     }
     inline void Property_long::ToStringCore(xx::String &str) const
     {
@@ -1064,8 +1068,8 @@ namespace DB_Manage
     }
 
 
-	inline Property_double::Property_double()
-        : PKG::Property()
+	inline Property_double::Property_double(xx::MemPool* mempool)
+        : PKG::Property(mempool)
 	{
 	}
 	inline Property_double::Property_double(xx::BBuffer *bb)
@@ -1089,18 +1093,18 @@ namespace DB_Manage
 
     inline void Property_double::ToString(xx::String &str) const
     {
-        if (tsFlags())
+        if (memHeader().flags)
         {
         	str.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else tsFlags() = 1;
+        else memHeader().flags = 1;
 
         str.Append("{ \"type\" : \"Property_double\"");
         ToStringCore(str);
         str.Append(" }");
         
-        tsFlags() = 0;
+        memHeader().flags = 0;
     }
     inline void Property_double::ToStringCore(xx::String &str) const
     {
@@ -1109,8 +1113,8 @@ namespace DB_Manage
     }
 
 
-	inline Property_string::Property_string()
-        : PKG::Property()
+	inline Property_string::Property_string(xx::MemPool* mempool)
+        : PKG::Property(mempool)
 	{
 	}
 	inline Property_string::Property_string(xx::BBuffer *bb)
@@ -1136,18 +1140,18 @@ namespace DB_Manage
 
     inline void Property_string::ToString(xx::String &str) const
     {
-        if (tsFlags())
+        if (memHeader().flags)
         {
         	str.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else tsFlags() = 1;
+        else memHeader().flags = 1;
 
         str.Append("{ \"type\" : \"Property_string\"");
         ToStringCore(str);
         str.Append(" }");
         
-        tsFlags() = 0;
+        memHeader().flags = 0;
     }
     inline void Property_string::ToStringCore(xx::String &str) const
     {
@@ -1156,8 +1160,8 @@ namespace DB_Manage
     }
 
 
-	inline Properties::Properties()
-        : PKG::Property()
+	inline Properties::Properties(xx::MemPool* mempool)
+        : PKG::Property(mempool)
 	{
 	}
 	inline Properties::Properties(xx::BBuffer *bb)
@@ -1183,18 +1187,18 @@ namespace DB_Manage
 
     inline void Properties::ToString(xx::String &str) const
     {
-        if (tsFlags())
+        if (memHeader().flags)
         {
         	str.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else tsFlags() = 1;
+        else memHeader().flags = 1;
 
         str.Append("{ \"type\" : \"Properties\"");
         ToStringCore(str);
         str.Append(" }");
         
-        tsFlags() = 0;
+        memHeader().flags = 0;
     }
     inline void Properties::ToStringCore(xx::String &str) const
     {
@@ -1203,10 +1207,12 @@ namespace DB_Manage
     }
 
 
-	inline UserInfo::UserInfo()
+	inline UserInfo::UserInfo(xx::MemPool* mempool)
+        : xx::Object(mempool)
 	{
 	}
 	inline UserInfo::UserInfo(xx::BBuffer *bb)
+        : xx::Object(bb)
 	{
 	    int rtv = 0;
         if (rtv = bb->Read(id)) throw rtv;
@@ -1229,18 +1235,18 @@ namespace DB_Manage
 
     inline void UserInfo::ToString(xx::String &str) const
     {
-        if (tsFlags())
+        if (memHeader().flags)
         {
         	str.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else tsFlags() = 1;
+        else memHeader().flags = 1;
 
         str.Append("{ \"type\" : \"UserInfo\"");
         ToStringCore(str);
         str.Append(" }");
         
-        tsFlags() = 0;
+        memHeader().flags = 0;
     }
     inline void UserInfo::ToStringCore(xx::String &str) const
     {
@@ -1252,8 +1258,8 @@ namespace DB_Manage
 
 namespace Client_Server
 {
-	inline Join::Join()
-        : PKG::Request()
+	inline Join::Join(xx::MemPool* mempool)
+        : PKG::Request(mempool)
 	{
 	}
 	inline Join::Join(xx::BBuffer *bb)
@@ -1284,18 +1290,18 @@ namespace Client_Server
 
     inline void Join::ToString(xx::String &str) const
     {
-        if (tsFlags())
+        if (memHeader().flags)
         {
         	str.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else tsFlags() = 1;
+        else memHeader().flags = 1;
 
         str.Append("{ \"type\" : \"Join\"");
         ToStringCore(str);
         str.Append(" }");
         
-        tsFlags() = 0;
+        memHeader().flags = 0;
     }
     inline void Join::ToStringCore(xx::String &str) const
     {
@@ -1305,10 +1311,12 @@ namespace Client_Server
     }
 
 
-	inline Message::Message()
+	inline Message::Message(xx::MemPool* mempool)
+        : xx::Object(mempool)
 	{
 	}
 	inline Message::Message(xx::BBuffer *bb)
+        : xx::Object(bb)
 	{
 	    int rtv = 0;
         bb->readLengthLimit = 256;
@@ -1328,18 +1336,18 @@ namespace Client_Server
 
     inline void Message::ToString(xx::String &str) const
     {
-        if (tsFlags())
+        if (memHeader().flags)
         {
         	str.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else tsFlags() = 1;
+        else memHeader().flags = 1;
 
         str.Append("{ \"type\" : \"Message\"");
         ToStringCore(str);
         str.Append(" }");
         
-        tsFlags() = 0;
+        memHeader().flags = 0;
     }
     inline void Message::ToStringCore(xx::String &str) const
     {
@@ -1348,10 +1356,12 @@ namespace Client_Server
     }
 
 
-	inline Logout::Logout()
+	inline Logout::Logout(xx::MemPool* mempool)
+        : xx::Object(mempool)
 	{
 	}
 	inline Logout::Logout(xx::BBuffer *bb)
+        : xx::Object(bb)
 	{
 	    int rtv = 0;
         if (rtv = bb->Read(ui)) throw rtv;
@@ -1369,18 +1379,18 @@ namespace Client_Server
 
     inline void Logout::ToString(xx::String &str) const
     {
-        if (tsFlags())
+        if (memHeader().flags)
         {
         	str.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else tsFlags() = 1;
+        else memHeader().flags = 1;
 
         str.Append("{ \"type\" : \"Logout\"");
         ToStringCore(str);
         str.Append(" }");
         
-        tsFlags() = 0;
+        memHeader().flags = 0;
     }
     inline void Logout::ToStringCore(xx::String &str) const
     {
@@ -1392,8 +1402,8 @@ namespace Client_Server
 }
 namespace Server_Client
 {
-	inline JoinSuccess::JoinSuccess()
-        : PKG::Response()
+	inline JoinSuccess::JoinSuccess(xx::MemPool* mempool)
+        : PKG::Response(mempool)
 	{
 	}
 	inline JoinSuccess::JoinSuccess(xx::BBuffer *bb)
@@ -1422,18 +1432,18 @@ namespace Server_Client
 
     inline void JoinSuccess::ToString(xx::String &str) const
     {
-        if (tsFlags())
+        if (memHeader().flags)
         {
         	str.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else tsFlags() = 1;
+        else memHeader().flags = 1;
 
         str.Append("{ \"type\" : \"JoinSuccess\"");
         ToStringCore(str);
         str.Append(" }");
         
-        tsFlags() = 0;
+        memHeader().flags = 0;
     }
     inline void JoinSuccess::ToStringCore(xx::String &str) const
     {
@@ -1443,8 +1453,8 @@ namespace Server_Client
     }
 
 
-	inline JoinFail::JoinFail()
-        : PKG::Response()
+	inline JoinFail::JoinFail(xx::MemPool* mempool)
+        : PKG::Response(mempool)
 	{
 	}
 	inline JoinFail::JoinFail(xx::BBuffer *bb)
@@ -1470,18 +1480,18 @@ namespace Server_Client
 
     inline void JoinFail::ToString(xx::String &str) const
     {
-        if (tsFlags())
+        if (memHeader().flags)
         {
         	str.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else tsFlags() = 1;
+        else memHeader().flags = 1;
 
         str.Append("{ \"type\" : \"JoinFail\"");
         ToStringCore(str);
         str.Append(" }");
         
-        tsFlags() = 0;
+        memHeader().flags = 0;
     }
     inline void JoinFail::ToStringCore(xx::String &str) const
     {
@@ -1490,10 +1500,12 @@ namespace Server_Client
     }
 
 
-	inline PushJoin::PushJoin()
+	inline PushJoin::PushJoin(xx::MemPool* mempool)
+        : xx::Object(mempool)
 	{
 	}
 	inline PushJoin::PushJoin(xx::BBuffer *bb)
+        : xx::Object(bb)
 	{
 	    int rtv = 0;
         if (rtv = bb->Read(id)) throw rtv;
@@ -1511,18 +1523,18 @@ namespace Server_Client
 
     inline void PushJoin::ToString(xx::String &str) const
     {
-        if (tsFlags())
+        if (memHeader().flags)
         {
         	str.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else tsFlags() = 1;
+        else memHeader().flags = 1;
 
         str.Append("{ \"type\" : \"PushJoin\"");
         ToStringCore(str);
         str.Append(" }");
         
-        tsFlags() = 0;
+        memHeader().flags = 0;
     }
     inline void PushJoin::ToStringCore(xx::String &str) const
     {
@@ -1531,10 +1543,12 @@ namespace Server_Client
     }
 
 
-	inline PushMessage::PushMessage()
+	inline PushMessage::PushMessage(xx::MemPool* mempool)
+        : xx::Object(mempool)
 	{
 	}
 	inline PushMessage::PushMessage(xx::BBuffer *bb)
+        : xx::Object(bb)
 	{
 	    int rtv = 0;
         if (rtv = bb->Read(id)) throw rtv;
@@ -1557,18 +1571,18 @@ namespace Server_Client
 
     inline void PushMessage::ToString(xx::String &str) const
     {
-        if (tsFlags())
+        if (memHeader().flags)
         {
         	str.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else tsFlags() = 1;
+        else memHeader().flags = 1;
 
         str.Append("{ \"type\" : \"PushMessage\"");
         ToStringCore(str);
         str.Append(" }");
         
-        tsFlags() = 0;
+        memHeader().flags = 0;
     }
     inline void PushMessage::ToStringCore(xx::String &str) const
     {
@@ -1578,10 +1592,12 @@ namespace Server_Client
     }
 
 
-	inline PushLogout::PushLogout()
+	inline PushLogout::PushLogout(xx::MemPool* mempool)
+        : xx::Object(mempool)
 	{
 	}
 	inline PushLogout::PushLogout(xx::BBuffer *bb)
+        : xx::Object(bb)
 	{
 	    int rtv = 0;
         if (rtv = bb->Read(id)) throw rtv;
@@ -1604,18 +1620,18 @@ namespace Server_Client
 
     inline void PushLogout::ToString(xx::String &str) const
     {
-        if (tsFlags())
+        if (memHeader().flags)
         {
         	str.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else tsFlags() = 1;
+        else memHeader().flags = 1;
 
         str.Append("{ \"type\" : \"PushLogout\"");
         ToStringCore(str);
         str.Append(" }");
         
-        tsFlags() = 0;
+        memHeader().flags = 0;
     }
     inline void PushLogout::ToStringCore(xx::String &str) const
     {
@@ -1628,8 +1644,8 @@ namespace Server_Client
 }
 namespace Manage_DB
 {
-	inline Login::Login()
-        : PKG::Request()
+	inline Login::Login(xx::MemPool* mempool)
+        : PKG::Request(mempool)
 	{
 	}
 	inline Login::Login(xx::BBuffer *bb)
@@ -1660,18 +1676,18 @@ namespace Manage_DB
 
     inline void Login::ToString(xx::String &str) const
     {
-        if (tsFlags())
+        if (memHeader().flags)
         {
         	str.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else tsFlags() = 1;
+        else memHeader().flags = 1;
 
         str.Append("{ \"type\" : \"Login\"");
         ToStringCore(str);
         str.Append(" }");
         
-        tsFlags() = 0;
+        memHeader().flags = 0;
     }
     inline void Login::ToStringCore(xx::String &str) const
     {
@@ -1681,8 +1697,8 @@ namespace Manage_DB
     }
 
 
-	inline Logout::Logout()
-        : PKG::Request()
+	inline Logout::Logout(xx::MemPool* mempool)
+        : PKG::Request(mempool)
 	{
 	}
 	inline Logout::Logout(xx::BBuffer *bb)
@@ -1702,18 +1718,18 @@ namespace Manage_DB
 
     inline void Logout::ToString(xx::String &str) const
     {
-        if (tsFlags())
+        if (memHeader().flags)
         {
         	str.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else tsFlags() = 1;
+        else memHeader().flags = 1;
 
         str.Append("{ \"type\" : \"Logout\"");
         ToStringCore(str);
         str.Append(" }");
         
-        tsFlags() = 0;
+        memHeader().flags = 0;
     }
     inline void Logout::ToStringCore(xx::String &str) const
     {
@@ -1721,8 +1737,8 @@ namespace Manage_DB
     }
 
 
-	inline SelectManageAccountIds::SelectManageAccountIds()
-        : PKG::Request()
+	inline SelectManageAccountIds::SelectManageAccountIds(xx::MemPool* mempool)
+        : PKG::Request(mempool)
 	{
 	}
 	inline SelectManageAccountIds::SelectManageAccountIds(xx::BBuffer *bb)
@@ -1749,18 +1765,18 @@ namespace Manage_DB
 
     inline void SelectManageAccountIds::ToString(xx::String &str) const
     {
-        if (tsFlags())
+        if (memHeader().flags)
         {
         	str.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else tsFlags() = 1;
+        else memHeader().flags = 1;
 
         str.Append("{ \"type\" : \"SelectManageAccountIds\"");
         ToStringCore(str);
         str.Append(" }");
         
-        tsFlags() = 0;
+        memHeader().flags = 0;
     }
     inline void SelectManageAccountIds::ToStringCore(xx::String &str) const
     {
@@ -1770,8 +1786,8 @@ namespace Manage_DB
     }
 
 
-	inline SelectManageAccounts::SelectManageAccounts()
-        : PKG::Request()
+	inline SelectManageAccounts::SelectManageAccounts(xx::MemPool* mempool)
+        : PKG::Request(mempool)
 	{
 	}
 	inline SelectManageAccounts::SelectManageAccounts(xx::BBuffer *bb)
@@ -1797,18 +1813,18 @@ namespace Manage_DB
 
     inline void SelectManageAccounts::ToString(xx::String &str) const
     {
-        if (tsFlags())
+        if (memHeader().flags)
         {
         	str.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else tsFlags() = 1;
+        else memHeader().flags = 1;
 
         str.Append("{ \"type\" : \"SelectManageAccounts\"");
         ToStringCore(str);
         str.Append(" }");
         
-        tsFlags() = 0;
+        memHeader().flags = 0;
     }
     inline void SelectManageAccounts::ToStringCore(xx::String &str) const
     {
@@ -1820,10 +1836,12 @@ namespace Manage_DB
 }
 namespace Manage
 {
-	inline Account::Account()
+	inline Account::Account(xx::MemPool* mempool)
+        : xx::Object(mempool)
 	{
 	}
 	inline Account::Account(xx::BBuffer *bb)
+        : xx::Object(bb)
 	{
 	    int rtv = 0;
         if (rtv = bb->Read(id)) throw rtv;
@@ -1846,18 +1864,18 @@ namespace Manage
 
     inline void Account::ToString(xx::String &str) const
     {
-        if (tsFlags())
+        if (memHeader().flags)
         {
         	str.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else tsFlags() = 1;
+        else memHeader().flags = 1;
 
         str.Append("{ \"type\" : \"Account\"");
         ToStringCore(str);
         str.Append(" }");
         
-        tsFlags() = 0;
+        memHeader().flags = 0;
     }
     inline void Account::ToStringCore(xx::String &str) const
     {
@@ -1867,10 +1885,12 @@ namespace Manage
     }
 
 
-	inline Role::Role()
+	inline Role::Role(xx::MemPool* mempool)
+        : xx::Object(mempool)
 	{
 	}
 	inline Role::Role(xx::BBuffer *bb)
+        : xx::Object(bb)
 	{
 	    int rtv = 0;
         if (rtv = bb->Read(id)) throw rtv;
@@ -1898,18 +1918,18 @@ namespace Manage
 
     inline void Role::ToString(xx::String &str) const
     {
-        if (tsFlags())
+        if (memHeader().flags)
         {
         	str.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else tsFlags() = 1;
+        else memHeader().flags = 1;
 
         str.Append("{ \"type\" : \"Role\"");
         ToStringCore(str);
         str.Append(" }");
         
-        tsFlags() = 0;
+        memHeader().flags = 0;
     }
     inline void Role::ToStringCore(xx::String &str) const
     {
@@ -1920,10 +1940,12 @@ namespace Manage
     }
 
 
-	inline Permission::Permission()
+	inline Permission::Permission(xx::MemPool* mempool)
+        : xx::Object(mempool)
 	{
 	}
 	inline Permission::Permission(xx::BBuffer *bb)
+        : xx::Object(bb)
 	{
 	    int rtv = 0;
         if (rtv = bb->Read(id)) throw rtv;
@@ -1956,18 +1978,18 @@ namespace Manage
 
     inline void Permission::ToString(xx::String &str) const
     {
-        if (tsFlags())
+        if (memHeader().flags)
         {
         	str.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else tsFlags() = 1;
+        else memHeader().flags = 1;
 
         str.Append("{ \"type\" : \"Permission\"");
         ToStringCore(str);
         str.Append(" }");
         
-        tsFlags() = 0;
+        memHeader().flags = 0;
     }
     inline void Permission::ToStringCore(xx::String &str) const
     {
@@ -1979,10 +2001,12 @@ namespace Manage
     }
 
 
-	inline BindAccountRole::BindAccountRole()
+	inline BindAccountRole::BindAccountRole(xx::MemPool* mempool)
+        : xx::Object(mempool)
 	{
 	}
 	inline BindAccountRole::BindAccountRole(xx::BBuffer *bb)
+        : xx::Object(bb)
 	{
 	    int rtv = 0;
         if (rtv = bb->Read(account_id)) throw rtv;
@@ -2003,18 +2027,18 @@ namespace Manage
 
     inline void BindAccountRole::ToString(xx::String &str) const
     {
-        if (tsFlags())
+        if (memHeader().flags)
         {
         	str.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else tsFlags() = 1;
+        else memHeader().flags = 1;
 
         str.Append("{ \"type\" : \"BindAccountRole\"");
         ToStringCore(str);
         str.Append(" }");
         
-        tsFlags() = 0;
+        memHeader().flags = 0;
     }
     inline void BindAccountRole::ToStringCore(xx::String &str) const
     {
@@ -2024,10 +2048,12 @@ namespace Manage
     }
 
 
-	inline BindRolePermission::BindRolePermission()
+	inline BindRolePermission::BindRolePermission(xx::MemPool* mempool)
+        : xx::Object(mempool)
 	{
 	}
 	inline BindRolePermission::BindRolePermission(xx::BBuffer *bb)
+        : xx::Object(bb)
 	{
 	    int rtv = 0;
         if (rtv = bb->Read(role_id)) throw rtv;
@@ -2048,18 +2074,18 @@ namespace Manage
 
     inline void BindRolePermission::ToString(xx::String &str) const
     {
-        if (tsFlags())
+        if (memHeader().flags)
         {
         	str.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else tsFlags() = 1;
+        else memHeader().flags = 1;
 
         str.Append("{ \"type\" : \"BindRolePermission\"");
         ToStringCore(str);
         str.Append(" }");
         
-        tsFlags() = 0;
+        memHeader().flags = 0;
     }
     inline void BindRolePermission::ToStringCore(xx::String &str) const
     {
@@ -2072,8 +2098,8 @@ namespace Manage
 }
 namespace DB_Manage
 {
-	inline LoginSuccess::LoginSuccess()
-        : PKG::Success()
+	inline LoginSuccess::LoginSuccess(xx::MemPool* mempool)
+        : PKG::Success(mempool)
 	{
 	}
 	inline LoginSuccess::LoginSuccess(xx::BBuffer *bb)
@@ -2102,18 +2128,18 @@ namespace DB_Manage
 
     inline void LoginSuccess::ToString(xx::String &str) const
     {
-        if (tsFlags())
+        if (memHeader().flags)
         {
         	str.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else tsFlags() = 1;
+        else memHeader().flags = 1;
 
         str.Append("{ \"type\" : \"LoginSuccess\"");
         ToStringCore(str);
         str.Append(" }");
         
-        tsFlags() = 0;
+        memHeader().flags = 0;
     }
     inline void LoginSuccess::ToStringCore(xx::String &str) const
     {
@@ -2123,8 +2149,8 @@ namespace DB_Manage
     }
 
 
-	inline LoginFail::LoginFail()
-        : PKG::Fail()
+	inline LoginFail::LoginFail(xx::MemPool* mempool)
+        : PKG::Fail(mempool)
 	{
 	}
 	inline LoginFail::LoginFail(xx::BBuffer *bb)
@@ -2144,18 +2170,18 @@ namespace DB_Manage
 
     inline void LoginFail::ToString(xx::String &str) const
     {
-        if (tsFlags())
+        if (memHeader().flags)
         {
         	str.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else tsFlags() = 1;
+        else memHeader().flags = 1;
 
         str.Append("{ \"type\" : \"LoginFail\"");
         ToStringCore(str);
         str.Append(" }");
         
-        tsFlags() = 0;
+        memHeader().flags = 0;
     }
     inline void LoginFail::ToStringCore(xx::String &str) const
     {
@@ -2163,8 +2189,8 @@ namespace DB_Manage
     }
 
 
-	inline LogoutSuccess::LogoutSuccess()
-        : PKG::Success()
+	inline LogoutSuccess::LogoutSuccess(xx::MemPool* mempool)
+        : PKG::Success(mempool)
 	{
 	}
 	inline LogoutSuccess::LogoutSuccess(xx::BBuffer *bb)
@@ -2184,18 +2210,18 @@ namespace DB_Manage
 
     inline void LogoutSuccess::ToString(xx::String &str) const
     {
-        if (tsFlags())
+        if (memHeader().flags)
         {
         	str.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else tsFlags() = 1;
+        else memHeader().flags = 1;
 
         str.Append("{ \"type\" : \"LogoutSuccess\"");
         ToStringCore(str);
         str.Append(" }");
         
-        tsFlags() = 0;
+        memHeader().flags = 0;
     }
     inline void LogoutSuccess::ToStringCore(xx::String &str) const
     {
@@ -2203,8 +2229,8 @@ namespace DB_Manage
     }
 
 
-	inline LogoutFail::LogoutFail()
-        : PKG::Fail()
+	inline LogoutFail::LogoutFail(xx::MemPool* mempool)
+        : PKG::Fail(mempool)
 	{
 	}
 	inline LogoutFail::LogoutFail(xx::BBuffer *bb)
@@ -2224,18 +2250,18 @@ namespace DB_Manage
 
     inline void LogoutFail::ToString(xx::String &str) const
     {
-        if (tsFlags())
+        if (memHeader().flags)
         {
         	str.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else tsFlags() = 1;
+        else memHeader().flags = 1;
 
         str.Append("{ \"type\" : \"LogoutFail\"");
         ToStringCore(str);
         str.Append(" }");
         
-        tsFlags() = 0;
+        memHeader().flags = 0;
     }
     inline void LogoutFail::ToStringCore(xx::String &str) const
     {
@@ -2243,8 +2269,8 @@ namespace DB_Manage
     }
 
 
-	inline SelectManageAccountIdsSuccess::SelectManageAccountIdsSuccess()
-        : PKG::Success()
+	inline SelectManageAccountIdsSuccess::SelectManageAccountIdsSuccess(xx::MemPool* mempool)
+        : PKG::Success(mempool)
 	{
 	}
 	inline SelectManageAccountIdsSuccess::SelectManageAccountIdsSuccess(xx::BBuffer *bb)
@@ -2270,18 +2296,18 @@ namespace DB_Manage
 
     inline void SelectManageAccountIdsSuccess::ToString(xx::String &str) const
     {
-        if (tsFlags())
+        if (memHeader().flags)
         {
         	str.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else tsFlags() = 1;
+        else memHeader().flags = 1;
 
         str.Append("{ \"type\" : \"SelectManageAccountIdsSuccess\"");
         ToStringCore(str);
         str.Append(" }");
         
-        tsFlags() = 0;
+        memHeader().flags = 0;
     }
     inline void SelectManageAccountIdsSuccess::ToStringCore(xx::String &str) const
     {
@@ -2290,8 +2316,8 @@ namespace DB_Manage
     }
 
 
-	inline SelectManageAccountIdsFail::SelectManageAccountIdsFail()
-        : PKG::Fail()
+	inline SelectManageAccountIdsFail::SelectManageAccountIdsFail(xx::MemPool* mempool)
+        : PKG::Fail(mempool)
 	{
 	}
 	inline SelectManageAccountIdsFail::SelectManageAccountIdsFail(xx::BBuffer *bb)
@@ -2311,18 +2337,18 @@ namespace DB_Manage
 
     inline void SelectManageAccountIdsFail::ToString(xx::String &str) const
     {
-        if (tsFlags())
+        if (memHeader().flags)
         {
         	str.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else tsFlags() = 1;
+        else memHeader().flags = 1;
 
         str.Append("{ \"type\" : \"SelectManageAccountIdsFail\"");
         ToStringCore(str);
         str.Append(" }");
         
-        tsFlags() = 0;
+        memHeader().flags = 0;
     }
     inline void SelectManageAccountIdsFail::ToStringCore(xx::String &str) const
     {
@@ -2330,8 +2356,8 @@ namespace DB_Manage
     }
 
 
-	inline SelectManageAccountsSuccess::SelectManageAccountsSuccess()
-        : PKG::Success()
+	inline SelectManageAccountsSuccess::SelectManageAccountsSuccess(xx::MemPool* mempool)
+        : PKG::Success(mempool)
 	{
 	}
 	inline SelectManageAccountsSuccess::SelectManageAccountsSuccess(xx::BBuffer *bb)
@@ -2357,18 +2383,18 @@ namespace DB_Manage
 
     inline void SelectManageAccountsSuccess::ToString(xx::String &str) const
     {
-        if (tsFlags())
+        if (memHeader().flags)
         {
         	str.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else tsFlags() = 1;
+        else memHeader().flags = 1;
 
         str.Append("{ \"type\" : \"SelectManageAccountsSuccess\"");
         ToStringCore(str);
         str.Append(" }");
         
-        tsFlags() = 0;
+        memHeader().flags = 0;
     }
     inline void SelectManageAccountsSuccess::ToStringCore(xx::String &str) const
     {
@@ -2377,8 +2403,8 @@ namespace DB_Manage
     }
 
 
-	inline SelectManageAccountsFail::SelectManageAccountsFail()
-        : PKG::Fail()
+	inline SelectManageAccountsFail::SelectManageAccountsFail(xx::MemPool* mempool)
+        : PKG::Fail(mempool)
 	{
 	}
 	inline SelectManageAccountsFail::SelectManageAccountsFail(xx::BBuffer *bb)
@@ -2398,18 +2424,18 @@ namespace DB_Manage
 
     inline void SelectManageAccountsFail::ToString(xx::String &str) const
     {
-        if (tsFlags())
+        if (memHeader().flags)
         {
         	str.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else tsFlags() = 1;
+        else memHeader().flags = 1;
 
         str.Append("{ \"type\" : \"SelectManageAccountsFail\"");
         ToStringCore(str);
         str.Append(" }");
         
-        tsFlags() = 0;
+        memHeader().flags = 0;
     }
     inline void SelectManageAccountsFail::ToStringCore(xx::String &str) const
     {
@@ -2421,8 +2447,6 @@ namespace DB_Manage
 }
 namespace xx
 {
-	template<> struct TypeId<xx::String> { static const uint16_t value = 1; };
-	template<> struct TypeId<xx::BBuffer> { static const uint16_t value = 2; };
 	template<> struct TypeId<PKG::Request> { static const uint16_t value = 3; };
 	template<> struct TypeId<PKG::Response> { static const uint16_t value = 4; };
 	template<> struct TypeId<PKG::Success> { static const uint16_t value = 5; };
@@ -2467,8 +2491,6 @@ namespace PKG
 {
 	inline void AllTypesRegister()
 	{
-	    xx::MemPool::Register<xx::String, xx::Object>();
-	    xx::MemPool::Register<xx::BBuffer, xx::Object>();
 	    xx::MemPool::Register<PKG::Request, xx::Object>();
 	    xx::MemPool::Register<PKG::Response, xx::Object>();
 	    xx::MemPool::Register<PKG::Success, PKG::Response>();

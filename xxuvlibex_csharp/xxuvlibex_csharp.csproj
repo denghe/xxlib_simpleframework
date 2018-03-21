@@ -50,10 +50,6 @@
       <Project>{6dd7a5a2-3411-4ecb-a811-2421be960743}</Project>
       <Name>xxlib_csharp</Name>
     </ProjectReference>
-    <ProjectReference Include="..\xxuvlib_csharp\xxuvlib_csharp.vcxproj">
-      <Project>{4129f9d2-2877-464c-9f52-18cdf331e2fb}</Project>
-      <Name>xxuvlib_csharp</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

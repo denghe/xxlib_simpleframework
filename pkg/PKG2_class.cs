@@ -4,7 +4,7 @@ namespace PKG2
 {
     public static class PkgGenMd5
     {
-        public const string value = "23fe8c4ca861c399d5ad090c854c7529"; 
+        public const string value = "b40a1c4ba007969d69cfeb3c4a6f3b9f"; 
     }
 
     /// <summary>

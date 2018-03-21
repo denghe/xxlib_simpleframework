@@ -1,5 +1,5 @@
 ﻿
-PKG2_PkgGenMd5_Value = '23fe8c4ca861c399d5ad090c854c7529'
+PKG2_PkgGenMd5_Value = 'b40a1c4ba007969d69cfeb3c4a6f3b9f'
 
 --[[
 测试一下各种数据类型

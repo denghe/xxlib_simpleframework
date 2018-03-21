@@ -1,9 +1,11 @@
 ﻿#include "xx.h"
+#include "RPC_class.h"
 
 int main()
 {
 	xx::MemPool mp;
 	xx::String_p str;
+	xx::Ref<xx::String> str_ref;
 	mp.MPCreateTo(str);
 	str->Append("a");
 	std::cout << str << std::endl;
