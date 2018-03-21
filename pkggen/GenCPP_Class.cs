@@ -370,8 +370,17 @@ namespace " + c.Namespace + @"
         this->BaseType::ToStringCore(str);");
             foreach (var f in fs)
             {
-                sb.Append(@"
+                if (f.FieldType._IsString())
+                {
+                    sb.Append(@"
+        if (this->" + f.Name + @") str.Append("", \""" + f.Name + @"\"" : \"""", this->" + f.Name + @", ""\"""");
+        else str.Append("", \""" + f.Name + @"\"" : nil"");");
+                }
+                else
+                {
+                    sb.Append(@"
         str.Append("", \""" + f.Name + @"\"" : "", this->" + f.Name + @");");
+                }
             }
             sb.Append(@"
     }

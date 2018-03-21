@@ -492,9 +492,6 @@ namespace xx
 
 
 
-
-
-
 	template<typename T>
 	Ref<T>::Ref() noexcept
 		: pointer(nullptr)

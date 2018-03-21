@@ -318,7 +318,8 @@ namespace DB_Manage
     inline void MsgResult::ToStringCore(xx::String &str) const
     {
         this->BaseType::ToStringCore(str);
-        str.Append(", \"txt\" : ", this->txt);
+        if (this->txt) str.Append(", \"txt\" : \"", this->txt, "\"");
+        else str.Append(", \"txt\" : nil");
     }
 
 
@@ -366,7 +367,8 @@ namespace Manage_DB
     inline void Msg::ToStringCore(xx::String &str) const
     {
         this->BaseType::ToStringCore(str);
-        str.Append(", \"txt\" : ", this->txt);
+        if (this->txt) str.Append(", \"txt\" : \"", this->txt, "\"");
+        else str.Append(", \"txt\" : nil");
     }
 
 
@@ -465,8 +467,10 @@ namespace Client_Login
     inline void Login::ToStringCore(xx::String &str) const
     {
         this->BaseType::ToStringCore(str);
-        str.Append(", \"username\" : ", this->username);
-        str.Append(", \"password\" : ", this->password);
+        if (this->username) str.Append(", \"username\" : \"", this->username, "\"");
+        else str.Append(", \"username\" : nil");
+        if (this->password) str.Append(", \"password\" : \"", this->password, "\"");
+        else str.Append(", \"password\" : nil");
     }
 
 
@@ -565,8 +569,10 @@ namespace Login_DB
     inline void Auth::ToStringCore(xx::String &str) const
     {
         this->BaseType::ToStringCore(str);
-        str.Append(", \"username\" : ", this->username);
-        str.Append(", \"password\" : ", this->password);
+        if (this->username) str.Append(", \"username\" : \"", this->username, "\"");
+        else str.Append(", \"username\" : nil");
+        if (this->password) str.Append(", \"password\" : \"", this->password, "\"");
+        else str.Append(", \"password\" : nil");
     }
 
 
@@ -661,7 +667,8 @@ namespace Generic
     {
         this->BaseType::ToStringCore(str);
         str.Append(", \"errNo\" : ", this->errNo);
-        str.Append(", \"errMsg\" : ", this->errMsg);
+        if (this->errMsg) str.Append(", \"errMsg\" : \"", this->errMsg, "\"");
+        else str.Append(", \"errMsg\" : nil");
     }
 
 

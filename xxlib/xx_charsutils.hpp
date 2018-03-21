@@ -467,6 +467,10 @@ namespace xx
 			{
 				in->ToString(s);
 			}
+			else
+			{
+				s.Append("nil");
+			}
 		}
 	};
 
@@ -479,6 +483,10 @@ namespace xx
 			if (in)
 			{
 				in->ToString(s);
+			}
+			else
+			{
+				s.Append("nil");
 			}
 		}
 	};
