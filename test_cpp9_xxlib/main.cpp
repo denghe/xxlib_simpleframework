@@ -1,58 +1,52 @@
 ﻿#include "xx.h"
-#include "xx_uv.h"
-#include "RPC_class.h"
 
-class Service1 : public xx::Object
+struct CoroutineTest
 {
-public:
-	xx::UvLoop& loop;
-	xx::UvTcpListener tcpListener;
-	xx::Ptr<Service1>* store = nullptr;
-	Service1(xx::UvLoop& loop)
-		: xx::Object(loop.mempool)
-		, loop(loop)
-		, tcpListener(loop)
+	int x = 0, y = 0;
+	int lineNumber = 0;
+	int Update()
 	{
-		tcpListener.Bind("0.0.0.0", 12345);
-		tcpListener.Listen();
-	}
-	~Service1()
-	{
-		assert(store);
-		store->Clear();
+		XX_CORO_BEGIN()
+		{
+			x = 1;
+			y = 2;
+		}
+		XX_CORO_(1)
+		{
+			if (x < y)
+			{
+				++x;
+				XX_CORO_YIELDTO(1);
+			}
+		}
+		XX_CORO_(2)
+		{
+			if (x > 0)
+			{
+				--x;
+				XX_CORO_YIELDTO(2);
+			}
+		}
+		XX_CORO_(3)
+		{
+			if (y < 9)
+			{
+				++y;
+				XX_CORO_YIELDTO(1);
+			}
+			return -1;
+		}
+		XX_CORO_END()
+			return 0;
 	}
 };
-using Service1_p = xx::Ptr<Service1>;
-
 
 int main()
 {
-	xx::MemPool::RegisterInternal();
-	RPC::AllTypesRegister();
-	xx::MemPool mp;
-
-	RPC::Client_Login::Login_p pkg;
-	mp.MPCreateTo(pkg);
-	mp.MPCreateTo(pkg->username);
-	mp.MPCreateTo(pkg->password);
-	pkg->username->Assign("a");
-	pkg->password->Assign("b");
-	std::cout << pkg << std::endl;
-
-	xx::BBuffer bb(&mp);
-	bb.WriteRoot(pkg);
-	std::cout << bb << std::endl;
-
-	xx::Object_p obj;
-	auto r = bb.Read(obj);
-	std::cout << r << ", " << obj << std::endl;
-
-	return 0;
-
-
-	xx::UvLoop loop(&mp);
-	auto s1 = mp.CreatePtr<Service1>(loop);
-	s1->store = &s1;
-	loop.Run();
+	CoroutineTest ct;
+	while (!ct.Update())
+	{
+		std::cout << ct.x << std::endl;
+	};
 	return 0;
 }

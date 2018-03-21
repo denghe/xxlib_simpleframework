@@ -53,6 +53,43 @@ size_t _countof(T const (&arr)[N])
 
 
 
+/***********************************************************************************/
+// CORO_ BEGIN END YIELDTO GOTO
+/***********************************************************************************/
+// need define lineNumber var 
+
+#define XX_CORO_BEGIN()		\
+switch (lineNumber)			\
+{							\
+case 0:						\
+Label0:						\
+{
+
+#define XX_CORO_(n)			\
+}							\
+lineNumber = n;				\
+return 0;					\
+case n:						\
+Label##n:					\
+{
+
+#define XX_CORO_END()		\
+}							\
+}
+
+#define XX_CORO_YIELDTO(n)	\
+{							\
+	lineNumber = n;			\
+	return 0;				\
+}
+
+#define XX_CORO_GOTO(n)		\
+goto Label##n
+
+
+
+
+
 #include "xx_mempool.h"
 #include "xx_list.h"
 #include "xx_queue.h"
