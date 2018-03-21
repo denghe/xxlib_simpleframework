@@ -151,9 +151,13 @@ namespace xx
 		// 存 typeId 到序列化构造函数的映射
 		inline static std::array<Creator, 1 << (sizeof(uint16_t) * 8)> creators;
 
+		// 注册 String, BBuffer 的 typeId 映射( 需要在程序最开始时执行 )
+		static void RegisterInternal() noexcept;
+
 		// 注册类型的父子关系. 顺便生成创建函数. Object 不需要注册. T 需要提供相应构造函数 for 反序列化
 		template<typename T, typename PT>
 		static void Register() noexcept;
+
 
 		// 根据 typeid 判断父子关系
 		static bool IsBaseOf(uint32_t baseTypeId, uint32_t typeId) noexcept;

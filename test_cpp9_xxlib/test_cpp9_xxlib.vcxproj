@@ -124,6 +124,7 @@
     <None Include="main.cpp.bak4" />
     <None Include="main.cpp.bak5" />
     <None Include="main.cpp.bak6" />
+    <None Include="main.cpp.bak7" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

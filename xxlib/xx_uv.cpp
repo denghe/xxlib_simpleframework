@@ -303,48 +303,48 @@ void xx::UvTcpListener::Listen(int backlog)
 
 
 
-xx::UvTimerBase::UvTimerBase(MemPool* mp)
+xx::UvTimeouterBase::UvTimeouterBase(MemPool* mp)
 	: Object(mp)
 {
 }
-xx::UvTimerBase::~UvTimerBase()
+xx::UvTimeouterBase::~UvTimeouterBase()
 {
 	UnbindTimerManager();
 	OnTimeout = nullptr;
 }
 
-void xx::UvTimerBase::TimerClear()
+void xx::UvTimeouterBase::TimerClear()
 {
 	timerPrev = nullptr;
 	timerNext = nullptr;
 	timerIndex = -1;
 }
 
-void xx::UvTimerBase::TimeoutReset(int interval)
+void xx::UvTimeouterBase::TimeoutReset(int interval)
 {
 	if (!timerManager) throw - 1;
 	timerManager->AddOrUpdate(this, interval);
 }
 
-void xx::UvTimerBase::TimerStop()
+void xx::UvTimeouterBase::TimerStop()
 {
 	if (!timerManager) throw - 1;
 	if (timering()) timerManager->Remove(this);
 }
 
-void xx::UvTimerBase::BindTimeouter(UvTimeouter* tm)
+void xx::UvTimeouterBase::BindTimeouter(UvTimeouter* tm)
 {
 	if (timerManager) throw - 1;
 	timerManager = tm;
 }
 
-void xx::UvTimerBase::UnbindTimerManager()
+void xx::UvTimeouterBase::UnbindTimerManager()
 {
 	if (timering()) timerManager->Remove(this);
 	timerManager = nullptr;
 }
 
-bool xx::UvTimerBase::timering()
+bool xx::UvTimeouterBase::timering()
 {
 	return timerManager && (timerIndex != -1 || timerPrev);
 }
@@ -357,7 +357,7 @@ bool xx::UvTimerBase::timering()
 
 
 xx::UvTcpUdpBase::UvTcpUdpBase(UvLoop& loop)
-	: UvTimerBase(loop.mempool)
+	: UvTimeouterBase(loop.mempool)
 	, loop(loop)
 	, bbRecv(loop.mempool)
 	, bbSend(loop.mempool)
@@ -787,7 +787,7 @@ void xx::UvTimeouter::Clear()
 	cursor = 0;
 }
 
-void xx::UvTimeouter::Add(UvTimerBase * t, int interval)
+void xx::UvTimeouter::Add(UvTimeouterBase * t, int interval)
 {
 	if (t->timering()) throw - 1;
 	auto timerssLen = (int)timerss.dataLen;
@@ -807,7 +807,7 @@ void xx::UvTimeouter::Add(UvTimerBase * t, int interval)
 	timerss[interval] = t;
 }
 
-void xx::UvTimeouter::Remove(UvTimerBase * t)
+void xx::UvTimeouter::Remove(UvTimeouterBase * t)
 {
 	if (!t->timering()) throw - 1;
 	if (t->timerNext) t->timerNext->timerPrev = t->timerPrev;
@@ -816,7 +816,7 @@ void xx::UvTimeouter::Remove(UvTimerBase * t)
 	t->TimerClear();
 }
 
-void xx::UvTimeouter::AddOrUpdate(UvTimerBase * t, int interval)
+void xx::UvTimeouter::AddOrUpdate(UvTimeouterBase * t, int interval)
 {
 	if (t->timering()) Remove(t);
 	Add(t, interval);

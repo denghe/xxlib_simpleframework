@@ -221,6 +221,12 @@ namespace xx
 
 
 
+	inline void MemPool::RegisterInternal() noexcept
+	{
+		Register<String, Object>();
+		Register<BBuffer, Object>();
+	}
+
 
 	template<typename T, typename PT>
 	void MemPool::Register() noexcept

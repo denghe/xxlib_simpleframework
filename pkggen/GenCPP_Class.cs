@@ -18,7 +18,6 @@ namespace " + templateName + @"
 	struct PkgGenMd5
 	{
 		static constexpr char const* value = """ + md5 + @""";
-
     };
 ");
         var ts = asm._GetTypes();
@@ -41,7 +40,7 @@ namespace " + c.Namespace + @"
             // desc
             // enum class xxxxxxxxx : underlyingType
             sb.Append(c._GetDesc()._GetComment_Cpp(4) + @"
-    struct " + c.Name + @";
+    " + (c.IsValueType ? "struct" : "class") + @" " + c.Name + @";
     using " + c.Name + @"_p = xx::Ptr<" + c.Name + @">;
     using " + c.Name + @"_r = xx::Ref<" + c.Name + @">;
 ");
@@ -178,8 +177,9 @@ namespace " + c.Namespace + @"
             // constexpr T xxxxxxxxx = defaultValue
 
             sb.Append(c._GetDesc()._GetComment_Cpp(4) + @"
-    struct " + c.Name + @" : " + btn + @"
-    {");
+    class " + c.Name + @" : public " + btn + @"
+    {
+    public:");
 
             // consts( static ) / fields
             var fs = c._GetFieldsConsts();
@@ -210,10 +210,10 @@ namespace " + c.Namespace + @"
 	    " + c.Name + @"(xx::BBuffer *bb);
 		" + c.Name + @"(" + c.Name + @" const&) = delete;
 		" + c.Name + @"& operator=(" + c.Name + @" const&) = delete;
-        virtual void ToString(xx::String &str) const override;
-        virtual void ToStringCore(xx::String &str) const override;
-        virtual void ToBBuffer(xx::BBuffer &bb) const override;
-        virtual int FromBBuffer(xx::BBuffer &bb) override;
+        void ToString(xx::String &str) const override;
+        void ToStringCore(xx::String &str) const override;
+        void ToBBuffer(xx::BBuffer &bb) const override;
+        int FromBBuffer(xx::BBuffer &bb) override;
     };");   // class }
 
             // namespace }

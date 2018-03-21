@@ -12,7 +12,7 @@ namespace xx
 	class UvTcpPeer;
 	class UvTcpClient;
 	class UvTimer;
-	class UvTimerBase;
+	class UvTimeouterBase;
 	class UvTimeouter;
 	class UvAsync;
 	class UvRpcManager;
@@ -103,14 +103,14 @@ namespace xx
 		void Listen(int backlog = 128);
 	};
 
-	class UvTimerBase : public Object
+	class UvTimeouterBase : public Object
 	{
 	public:
-		UvTimerBase(MemPool* mp);
-		~UvTimerBase();
+		UvTimeouterBase(MemPool* mp);
+		~UvTimeouterBase();
 		UvTimeouter* timerManager = nullptr;
-		UvTimerBase* timerPrev = nullptr;
-		UvTimerBase* timerNext = nullptr;
+		UvTimeouterBase* timerPrev = nullptr;
+		UvTimeouterBase* timerNext = nullptr;
 		int timerIndex = -1;
 		std::function<void()> OnTimeout;
 
@@ -122,7 +122,7 @@ namespace xx
 		bool timering();
 	};
 
-	class UvTcpUdpBase : public UvTimerBase
+	class UvTcpUdpBase : public UvTimeouterBase
 	{
 	public:
 		std::function<void(BBuffer&)> OnReceivePackage;
@@ -228,16 +228,16 @@ namespace xx
 	{
 	public:
 		UvTimer* timer = nullptr;
-		List<UvTimerBase*> timerss;
+		List<UvTimeouterBase*> timerss;
 		int cursor = 0;
 		int defaultInterval;
 		UvTimeouter(UvLoop& loop, uint64_t intervalMS, int wheelLen, int defaultInterval);
 		~UvTimeouter();
 		void Process();
 		void Clear();
-		void Add(UvTimerBase* t, int interval = 0);
-		void Remove(UvTimerBase* t);
-		void AddOrUpdate(UvTimerBase* t, int interval = 0);
+		void Add(UvTimeouterBase* t, int interval = 0);
+		void Remove(UvTimeouterBase* t);
+		void AddOrUpdate(UvTimeouterBase* t, int interval = 0);
 	};
 
 	class UvAsync : public Object

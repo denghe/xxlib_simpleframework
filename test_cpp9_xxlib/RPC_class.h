@@ -3,48 +3,47 @@ namespace RPC
 {
 	struct PkgGenMd5
 	{
-		static constexpr char const* value = "2fa4a130abea2f67bd10938ca6e6959a";
-
+		static constexpr char const* value = "60e4855a3a77e7e016822f33b4d765ba";
 	};
 
 	namespace DB_Manage
 	{
-		struct MsgResult;
+		class MsgResult;
 		using MsgResult_p = xx::Ptr<MsgResult>;
 		using MsgResult_r = xx::Ref<MsgResult>;
 
 	}
 	namespace Manage_DB
 	{
-		struct Msg;
+		class Msg;
 		using Msg_p = xx::Ptr<Msg>;
 		using Msg_r = xx::Ref<Msg>;
 
 	}
 	namespace Login_Client
 	{
-		struct LoginSuccess;
+		class LoginSuccess;
 		using LoginSuccess_p = xx::Ptr<LoginSuccess>;
 		using LoginSuccess_r = xx::Ref<LoginSuccess>;
 
 	}
 	namespace Client_Login
 	{
-		struct Login;
+		class Login;
 		using Login_p = xx::Ptr<Login>;
 		using Login_r = xx::Ref<Login>;
 
 	}
 	namespace DB_Login
 	{
-		struct AuthSuccess;
+		class AuthSuccess;
 		using AuthSuccess_p = xx::Ptr<AuthSuccess>;
 		using AuthSuccess_r = xx::Ref<AuthSuccess>;
 
 	}
 	namespace Login_DB
 	{
-		struct Auth;
+		class Auth;
 		using Auth_p = xx::Ptr<Auth>;
 		using Auth_r = xx::Ref<Auth>;
 
@@ -52,22 +51,22 @@ namespace RPC
 	namespace Generic
 	{
 		// 服务间创建连接, 刚连上时, 首包需要发这个来说明自己是谁
-		struct ServiceInfo;
+		class ServiceInfo;
 		using ServiceInfo_p = xx::Ptr<ServiceInfo>;
 		using ServiceInfo_r = xx::Ref<ServiceInfo>;
 
 		// 通用错误返回
-		struct Error;
+		class Error;
 		using Error_p = xx::Ptr<Error>;
 		using Error_r = xx::Ref<Error>;
 
 		// 心跳保持兼延迟测试 -- 请求
-		struct Ping;
+		class Ping;
 		using Ping_p = xx::Ptr<Ping>;
 		using Ping_r = xx::Ref<Ping>;
 
 		// 心跳保持兼延迟测试 -- 回应
-		struct Pong;
+		class Pong;
 		using Pong_p = xx::Ptr<Pong>;
 		using Pong_r = xx::Ref<Pong>;
 
@@ -87,8 +86,9 @@ namespace RPC
 	}
 	namespace DB_Manage
 	{
-		struct MsgResult : xx::Object
+		class MsgResult : public xx::Object
 		{
+		public:
 			xx::String_p txt;
 
 			typedef MsgResult ThisType;
@@ -97,16 +97,17 @@ namespace RPC
 			MsgResult(xx::BBuffer *bb);
 			MsgResult(MsgResult const&) = delete;
 			MsgResult& operator=(MsgResult const&) = delete;
-			virtual void ToString(xx::String &str) const override;
-			virtual void ToStringCore(xx::String &str) const override;
-			virtual void ToBBuffer(xx::BBuffer &bb) const override;
-			virtual int FromBBuffer(xx::BBuffer &bb) override;
+			void ToString(xx::String &str) const override;
+			void ToStringCore(xx::String &str) const override;
+			void ToBBuffer(xx::BBuffer &bb) const override;
+			int FromBBuffer(xx::BBuffer &bb) override;
 		};
 	}
 	namespace Manage_DB
 	{
-		struct Msg : xx::Object
+		class Msg : public xx::Object
 		{
+		public:
 			xx::String_p txt;
 
 			typedef Msg ThisType;
@@ -115,16 +116,17 @@ namespace RPC
 			Msg(xx::BBuffer *bb);
 			Msg(Msg const&) = delete;
 			Msg& operator=(Msg const&) = delete;
-			virtual void ToString(xx::String &str) const override;
-			virtual void ToStringCore(xx::String &str) const override;
-			virtual void ToBBuffer(xx::BBuffer &bb) const override;
-			virtual int FromBBuffer(xx::BBuffer &bb) override;
+			void ToString(xx::String &str) const override;
+			void ToStringCore(xx::String &str) const override;
+			void ToBBuffer(xx::BBuffer &bb) const override;
+			int FromBBuffer(xx::BBuffer &bb) override;
 		};
 	}
 	namespace Login_Client
 	{
-		struct LoginSuccess : xx::Object
+		class LoginSuccess : public xx::Object
 		{
+		public:
 			int32_t id = 0;
 
 			typedef LoginSuccess ThisType;
@@ -133,16 +135,17 @@ namespace RPC
 			LoginSuccess(xx::BBuffer *bb);
 			LoginSuccess(LoginSuccess const&) = delete;
 			LoginSuccess& operator=(LoginSuccess const&) = delete;
-			virtual void ToString(xx::String &str) const override;
-			virtual void ToStringCore(xx::String &str) const override;
-			virtual void ToBBuffer(xx::BBuffer &bb) const override;
-			virtual int FromBBuffer(xx::BBuffer &bb) override;
+			void ToString(xx::String &str) const override;
+			void ToStringCore(xx::String &str) const override;
+			void ToBBuffer(xx::BBuffer &bb) const override;
+			int FromBBuffer(xx::BBuffer &bb) override;
 		};
 	}
 	namespace Client_Login
 	{
-		struct Login : xx::Object
+		class Login : public xx::Object
 		{
+		public:
 			xx::String_p username;
 			xx::String_p password;
 
@@ -152,16 +155,17 @@ namespace RPC
 			Login(xx::BBuffer *bb);
 			Login(Login const&) = delete;
 			Login& operator=(Login const&) = delete;
-			virtual void ToString(xx::String &str) const override;
-			virtual void ToStringCore(xx::String &str) const override;
-			virtual void ToBBuffer(xx::BBuffer &bb) const override;
-			virtual int FromBBuffer(xx::BBuffer &bb) override;
+			void ToString(xx::String &str) const override;
+			void ToStringCore(xx::String &str) const override;
+			void ToBBuffer(xx::BBuffer &bb) const override;
+			int FromBBuffer(xx::BBuffer &bb) override;
 		};
 	}
 	namespace DB_Login
 	{
-		struct AuthSuccess : xx::Object
+		class AuthSuccess : public xx::Object
 		{
+		public:
 			int32_t id = 0;
 
 			typedef AuthSuccess ThisType;
@@ -170,16 +174,17 @@ namespace RPC
 			AuthSuccess(xx::BBuffer *bb);
 			AuthSuccess(AuthSuccess const&) = delete;
 			AuthSuccess& operator=(AuthSuccess const&) = delete;
-			virtual void ToString(xx::String &str) const override;
-			virtual void ToStringCore(xx::String &str) const override;
-			virtual void ToBBuffer(xx::BBuffer &bb) const override;
-			virtual int FromBBuffer(xx::BBuffer &bb) override;
+			void ToString(xx::String &str) const override;
+			void ToStringCore(xx::String &str) const override;
+			void ToBBuffer(xx::BBuffer &bb) const override;
+			int FromBBuffer(xx::BBuffer &bb) override;
 		};
 	}
 	namespace Login_DB
 	{
-		struct Auth : xx::Object
+		class Auth : public xx::Object
 		{
+		public:
 			xx::String_p username;
 			xx::String_p password;
 
@@ -189,17 +194,18 @@ namespace RPC
 			Auth(xx::BBuffer *bb);
 			Auth(Auth const&) = delete;
 			Auth& operator=(Auth const&) = delete;
-			virtual void ToString(xx::String &str) const override;
-			virtual void ToStringCore(xx::String &str) const override;
-			virtual void ToBBuffer(xx::BBuffer &bb) const override;
-			virtual int FromBBuffer(xx::BBuffer &bb) override;
+			void ToString(xx::String &str) const override;
+			void ToStringCore(xx::String &str) const override;
+			void ToBBuffer(xx::BBuffer &bb) const override;
+			int FromBBuffer(xx::BBuffer &bb) override;
 		};
 	}
 	namespace Generic
 	{
 		// 服务间创建连接, 刚连上时, 首包需要发这个来说明自己是谁
-		struct ServiceInfo : xx::Object
+		class ServiceInfo : public xx::Object
 		{
+		public:
 			// 服务类型
 			RPC::Generic::ServiceTypes type = (RPC::Generic::ServiceTypes)0;
 
@@ -209,14 +215,15 @@ namespace RPC
 			ServiceInfo(xx::BBuffer *bb);
 			ServiceInfo(ServiceInfo const&) = delete;
 			ServiceInfo& operator=(ServiceInfo const&) = delete;
-			virtual void ToString(xx::String &str) const override;
-			virtual void ToStringCore(xx::String &str) const override;
-			virtual void ToBBuffer(xx::BBuffer &bb) const override;
-			virtual int FromBBuffer(xx::BBuffer &bb) override;
+			void ToString(xx::String &str) const override;
+			void ToStringCore(xx::String &str) const override;
+			void ToBBuffer(xx::BBuffer &bb) const override;
+			int FromBBuffer(xx::BBuffer &bb) override;
 		};
 		// 通用错误返回
-		struct Error : xx::Object
+		class Error : public xx::Object
 		{
+		public:
 			// 错误码
 			int32_t errNo = 0;
 			// 错误文字
@@ -228,14 +235,15 @@ namespace RPC
 			Error(xx::BBuffer *bb);
 			Error(Error const&) = delete;
 			Error& operator=(Error const&) = delete;
-			virtual void ToString(xx::String &str) const override;
-			virtual void ToStringCore(xx::String &str) const override;
-			virtual void ToBBuffer(xx::BBuffer &bb) const override;
-			virtual int FromBBuffer(xx::BBuffer &bb) override;
+			void ToString(xx::String &str) const override;
+			void ToStringCore(xx::String &str) const override;
+			void ToBBuffer(xx::BBuffer &bb) const override;
+			int FromBBuffer(xx::BBuffer &bb) override;
 		};
 		// 心跳保持兼延迟测试 -- 请求
-		struct Ping : xx::Object
+		class Ping : public xx::Object
 		{
+		public:
 			int64_t ticks = 0;
 
 			typedef Ping ThisType;
@@ -244,14 +252,15 @@ namespace RPC
 			Ping(xx::BBuffer *bb);
 			Ping(Ping const&) = delete;
 			Ping& operator=(Ping const&) = delete;
-			virtual void ToString(xx::String &str) const override;
-			virtual void ToStringCore(xx::String &str) const override;
-			virtual void ToBBuffer(xx::BBuffer &bb) const override;
-			virtual int FromBBuffer(xx::BBuffer &bb) override;
+			void ToString(xx::String &str) const override;
+			void ToStringCore(xx::String &str) const override;
+			void ToBBuffer(xx::BBuffer &bb) const override;
+			int FromBBuffer(xx::BBuffer &bb) override;
 		};
 		// 心跳保持兼延迟测试 -- 回应
-		struct Pong : xx::Object
+		class Pong : public xx::Object
 		{
+		public:
 			int64_t ticks = 0;
 
 			typedef Pong ThisType;
@@ -260,10 +269,10 @@ namespace RPC
 			Pong(xx::BBuffer *bb);
 			Pong(Pong const&) = delete;
 			Pong& operator=(Pong const&) = delete;
-			virtual void ToString(xx::String &str) const override;
-			virtual void ToStringCore(xx::String &str) const override;
-			virtual void ToBBuffer(xx::BBuffer &bb) const override;
-			virtual int FromBBuffer(xx::BBuffer &bb) override;
+			void ToString(xx::String &str) const override;
+			void ToStringCore(xx::String &str) const override;
+			void ToBBuffer(xx::BBuffer &bb) const override;
+			int FromBBuffer(xx::BBuffer &bb) override;
 		};
 	}
 	namespace DB_Manage

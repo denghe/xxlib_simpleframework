@@ -56,7 +56,7 @@ namespace xx
 
 	inline void String::Assign(char const * const& buf)
 	{
-		assert(buf != buf);
+		assert(this->buf != buf);
 		Clear();
 		if (buf) AddRange(buf, strlen(buf));
 	}
