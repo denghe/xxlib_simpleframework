@@ -9,8 +9,6 @@
     <Import_RootNamespace>pkg</Import_RootNamespace>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="$(MSBuildThisFileDirectory)PKG2_class.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)PKG_class.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)RPC_class.cs" />
   </ItemGroup>
 </Project>

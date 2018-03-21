@@ -4,6 +4,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 15.0.27130.2036
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "gen_library", "gen_library\gen_library.csproj", "{7F62E40F-E079-46D2-85E9-661FCE50168C}"
+	ProjectSection(ProjectDependencies) = postProject
+		{38E47D31-F58D-490D-B6DD-18C3165E7F61} = {38E47D31-F58D-490D-B6DD-18C3165E7F61}
+		{597BC47D-B1A6-4707-8C29-F27B9C8CB711} = {597BC47D-B1A6-4707-8C29-F27B9C8CB711}
+		{6DD7A5A2-3411-4ECB-A811-2421BE960743} = {6DD7A5A2-3411-4ECB-A811-2421BE960743}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "pkggen", "pkggen\pkggen.csproj", "{6F49DE2C-1F92-47C8-B03D-D3D5C66D3CBC}"
 EndProject
