@@ -592,8 +592,8 @@ namespace xx
 	template<typename T>
 	std::ostream& operator<<(std::ostream& os, Ptr<T> const& o)
 	{
-		if (!o) return os << "nullptr";
-		return os << "\"" << *o << "\"";
+		if (!o) return os << "nil";
+		return os << *o;
 	}
 
 	template<typename T>
@@ -602,4 +602,4 @@ namespace xx
 		return os << o.Lock();
 	}
 
-	}
+}

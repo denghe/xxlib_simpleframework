@@ -206,7 +206,7 @@ namespace xx
 	{
 		for (size_t i = 0; i < dataLen; ++i)
 		{
-			if (EqualsTo(v, buf[i]))
+			if (EqualsFunc<T>::EqualsTo(v, buf[i]))
 			{
 				RemoveAt(i);
 				return;
@@ -297,7 +297,7 @@ namespace xx
 	{
 		for (size_t i = 0; i < dataLen; ++i)
 		{
-			if (EqualsTo(v, buf[i])) return i;
+			if (EqualsFunc<T>::EqualsTo(v, buf[i])) return i;
 		}
 		return size_t(-1);
 	}
@@ -409,13 +409,20 @@ namespace xx
 		}
 		else memHeader().flags = 1;
 
-		s.Append("{ \"type\" : \"List\", \"items\" : [ ");
+		s.Append("[ ");
 		for (size_t i = 0; i < dataLen; i++)
 		{
 			s.Append(buf[i], ", ");
 		}
-		if (dataLen) s.dataLen -= 2;
-		s.Append(" ] }");
+		if (dataLen)
+		{
+			s.dataLen -= 2;
+			s.Append(" ]");
+		}
+		else
+		{
+			s[s.dataLen - 1] = ']';
+		}
 
 		memHeader().flags = 0;
 	}

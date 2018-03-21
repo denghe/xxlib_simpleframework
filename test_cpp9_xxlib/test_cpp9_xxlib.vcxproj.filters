@@ -78,6 +78,9 @@
       <Filter>xxlib</Filter>
     </ClInclude>
     <ClInclude Include="RPC_class.h" />
+    <ClInclude Include="..\xxlib\xx_guid.hpp">
+      <Filter>xxlib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="main.cpp.bak1" />

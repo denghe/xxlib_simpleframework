@@ -1,33 +1,7 @@
 ﻿#pragma once
 namespace xx
 {
-	// 抄自微软 .net 源代码
-	// todo: 未来考虑是不是换成什么 xxhash 开源项目之类
-
-	// 比较器
-	template<typename T>
-	bool EqualsTo(T const& a, T const& b) noexcept;
-
-	uint32_t GetHashCode(bool in) noexcept;
-	uint32_t GetHashCode(char in) noexcept;
-	uint32_t GetHashCode(uint8_t in) noexcept;
-	uint32_t GetHashCode(int8_t in) noexcept;
-	uint32_t GetHashCode(uint16_t in) noexcept;
-	uint32_t GetHashCode(int16_t in) noexcept;
-	uint32_t GetHashCode(int32_t in) noexcept;
-	uint32_t GetHashCode(uint32_t in) noexcept;
-	uint32_t GetHashCode(uint64_t in) noexcept;
-	uint32_t GetHashCode(int64_t in) noexcept;
-	uint32_t GetHashCode(float in) noexcept;
-	uint32_t GetHashCode(double in) noexcept;
-	uint32_t GetHashCode(void* in) noexcept;
-	uint32_t GetHashCode(uint8_t const *buf, size_t len) noexcept;
-
-	template<typename T>
-	uint32_t GetHashCode(T *in) noexcept;
-
-	template<typename T>
-	uint32_t GetHashCode(T const &in) noexcept;
+	// 质数计算相关
 
 	bool IsPrime(size_t candidate) noexcept;
 
@@ -49,5 +23,30 @@ namespace xx
 		1, 2, 3, 7, 13, 31, 61, 127, 251, 509, 1021, 2039, 4093, 8191, 16381, 32749, 65521, 131071, 262139, 524287,
 		1048573, 2097143, 4194301, 8388593, 16777213, 33554393, 67108859, 134217689, 268435399, 536870909, 1073741789
 	};
+
+
+	/**************************************************************************************************/
+	// 类型--操作适配模板区
+	/**************************************************************************************************/
+
+	// 基础适配模板: Hash 计算
+	template<typename T, typename ENABLE = void>
+	struct HashFunc
+	{
+		static uint32_t GetHashCode(T const &in)
+		{
+			assert(false);
+			return 0;
+		}
+	};
+
+
+	// 基础适配模板: 比较器
+	template<typename T, typename ENABLE = void>
+	struct EqualsFunc
+	{
+		static bool EqualsTo(T const& a, T const& b) { return a == b; }
+	};
+
 
 }

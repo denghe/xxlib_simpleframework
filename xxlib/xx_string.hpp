@@ -260,8 +260,8 @@ namespace xx
 
 
 
-	inline String::String(BBuffer* bb) 
-		: BaseType(bb) 
+	inline String::String(BBuffer* bb)
+		: BaseType(bb)
 	{}
 
 	inline void String::ToString(String& s) const
@@ -276,23 +276,43 @@ namespace xx
 
 
 
-	inline uint32_t GetHashCode(String const &in) noexcept
+	template<>
+	struct HashFunc<String, void>
 	{
-		return in.dataLen == 0 ? 0 : GetHashCode((uint8_t*)in.buf, in.dataLen);
-	}
-	inline uint32_t GetHashCode(String_p const &in) noexcept
-	{
-		if (!in) return 0;
-		return GetHashCode(*in);
-	}
+		static uint32_t GetHashCode(String const& in)
+		{
+			return in.dataLen == 0 ? 0 : HashFunc<std::pair<char*, size_t>>::GetHashCode(std::make_pair(in.buf, in.dataLen));
+		}
+	};
 
-	inline bool EqualsTo(String const& a, String const& b) noexcept
+	template<>
+	struct HashFunc<String_p, void>
 	{
-		return a.Equals(b);
-	}
-	inline bool EqualsTo(String_p const& a, String_p const& b) noexcept
+		static uint32_t GetHashCode(String_p const& in)
+		{
+			return in ? HashFunc<String>::GetHashCode(*in) : 0;
+		}
+	};
+
+
+	template<>
+	struct EqualsFunc<String, void>
 	{
-		return a.pointer == b.pointer ? true : EqualsTo(*a, *b);
-	}
+		static bool EqualsTo(String const& a, String const& b)
+		{
+			return a.Equals(b);
+		}
+	};
+
+	template<>
+	struct EqualsFunc<String_p, void>
+	{
+		static bool EqualsTo(String_p const& a, String_p const& b)
+		{
+			if (a.pointer == b.pointer) return true;
+			if(a && b) return a->Equals(*b);
+			return false;
+		}
+	};
 
 }

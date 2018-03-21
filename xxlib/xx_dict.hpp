@@ -32,11 +32,11 @@ namespace xx
 		assert(bucketsLen);
 
 		// hash 按桶数取模 定位到具体 链表, 扫找
-		auto hashCode = GetHashCode(key);
+		auto hashCode = HashFunc<TK>::GetHashCode(key);
 		auto targetBucket = hashCode % bucketsLen;
 		for (int i = buckets[targetBucket]; i >= 0; i = nodes[i].next)
 		{
-			if (nodes[i].hashCode == hashCode && EqualsTo(items[i].key, key))
+			if (nodes[i].hashCode == hashCode && EqualsFunc<TK>::EqualsTo(items[i].key, key))
 			{
 				if (override)                       // 允许覆盖 value
 				{
@@ -146,10 +146,10 @@ namespace xx
 	int Dict<TK, TV>::Find(TK const &key) const noexcept
 	{
 		assert(buckets);
-		auto hashCode = GetHashCode(key);
+		auto hashCode = HashFunc<TK>::GetHashCode(key);
 		for (int i = buckets[hashCode % bucketsLen]; i >= 0; i = nodes[i].next)
 		{
-			if (nodes[i].hashCode == hashCode && EqualsTo(items[i].key, key))
+			if (nodes[i].hashCode == hashCode && EqualsFunc<TK>::EqualsTo(items[i].key, key))
 			{
 				return i;
 			}

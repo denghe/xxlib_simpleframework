@@ -108,6 +108,7 @@
     <ClInclude Include="..\xxlib\xx_dict.h" />
     <ClInclude Include="..\xxlib\xx_dict.hpp" />
     <ClInclude Include="..\xxlib\xx_guid.h" />
+    <ClInclude Include="..\xxlib\xx_guid.hpp" />
     <ClInclude Include="..\xxlib\xx_hashutils.h" />
     <ClInclude Include="..\xxlib\xx_hashutils.hpp" />
     <ClInclude Include="..\xxlib\xx_list.h" />

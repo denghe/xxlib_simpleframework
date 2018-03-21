@@ -1,64 +1,6 @@
 ﻿#pragma once
 namespace xx
 {
-	// 抄自微软 .net 源代码
-	// todo: 未来考虑是不是换成什么 xxhash 开源项目之类
-
-	// 比较器
-	template<typename T>
-	bool EqualsTo(T const& a, T const& b) noexcept
-	{
-		return a == b;
-	}
-
-	inline uint32_t GetHashCode(bool in) noexcept { return in ? 1 : 0; }
-	inline uint32_t GetHashCode(char in) noexcept { return (uint32_t)in; }
-	inline uint32_t GetHashCode(uint8_t in) noexcept { return (uint32_t)in; }
-	inline uint32_t GetHashCode(int8_t in) noexcept { return (uint8_t)in; }
-	inline uint32_t GetHashCode(uint16_t in) noexcept { return (uint32_t)in; }
-	inline uint32_t GetHashCode(int16_t in) noexcept { return (uint16_t)in; }
-	inline uint32_t GetHashCode(int32_t in) noexcept { return (uint32_t)in; }
-	inline uint32_t GetHashCode(uint32_t in) noexcept { return in; }
-	inline uint32_t GetHashCode(uint64_t in) noexcept { return (in & 0xFFFFFFFFu) ^ (in >> 32); }
-	inline uint32_t GetHashCode(int64_t in) noexcept { return GetHashCode((uint64_t)in); }
-	inline uint32_t GetHashCode(float in) noexcept { return *(uint32_t*)(float*)&in; }
-	inline uint32_t GetHashCode(double in) noexcept { return GetHashCode(*(uint64_t*)(double*)&in); }
-	// 经验数据. 经测试发现 x64 下 vc new 至少是 16 的倍数, x86 至少是 8 的倍数
-	inline uint32_t GetHashCode(void* in) noexcept { return (uint32_t)((size_t)(void*)in / (sizeof(size_t) * 2)); }
-
-	inline uint32_t GetHashCode(uint8_t const *buf, size_t len) noexcept
-	{
-		assert((size_t)buf % 4 == 0);		// buf 要求 4 字节对齐
-		if (!len)
-		{
-			return 0;
-		}
-		int32_t n2 = 0x15051505, n1 = 0x15051505;
-		uint32_t mod = len % 8, i = 0;
-		for (; i < len - mod; i += 8)
-		{
-			n1 = (((n1 << 5) + n1) + (n1 >> 0x1b)) ^ *(int32_t*)(buf + i);
-			n2 = (((n2 << 5) + n2) + (n2 >> 0x1b)) ^ *(int32_t*)(buf + i + 4);
-		}
-		if (mod > 4)
-		{
-			n1 = (((n1 << 5) + n1) + (n1 >> 0x1b)) ^ *(int32_t*)(buf + i);
-			n2 = (((n2 << 5) + n2) + (n2 >> 0x1b)) ^ (*(int32_t*)(buf + i + 4) & (0xFFFFFFFF >> ((8 - mod) * 8)));
-		}
-		else if (mod)
-		{
-			n1 = (((n1 << 5) + n1) + (n1 >> 0x1b)) ^ (*(int32_t*)(buf + i) & (0xFFFFFFFF >> ((4 - mod) * 8)));
-		}
-		return n2 + n1 * 0x5d588b65;
-	}
-
-	template<typename T>
-	uint32_t GetHashCode(T *in) noexcept { return GetHashCode(*in); };
-
-	template<typename T>
-	uint32_t GetHashCode(T const &in) noexcept { return GetHashCode((uint8_t*)&in, sizeof(in)); };
-
-
 
 	inline bool IsPrime(size_t candidate) noexcept
 	{
@@ -97,4 +39,98 @@ namespace xx
 		assert(false);
 		return -1;
 	}
+
+
+
+
+
+
+	/**************************************************************************************************/
+	// 类型--操作适配模板区
+	/**************************************************************************************************/
+
+	// 适配 4 字节整数或浮点
+	template<typename T>
+	struct HashFunc<T, std::enable_if_t<(std::is_integral_v<T> || std::is_floating_point_v<T>) && sizeof(T) == 4>>
+	{
+		static uint32_t GetHashCode(T const& in)
+		{
+			return *(uint32_t*)&in;
+		}
+	};
+
+	// 适配 小于4字节的 整数
+	template<typename T>
+	struct HashFunc<T, std::enable_if_t<std::is_integral_v<T> && sizeof(T) < 4>>
+	{
+		static uint32_t GetHashCode(T const& in)
+		{
+			return (uint32_t)(std::make_unsigned_t<T>)in;
+		}
+	};
+
+	// 适配 8 字节整数或浮点
+	template<typename T>
+	struct HashFunc<T, std::enable_if_t<(std::is_integral_v<T> || std::is_floating_point_v<T>) && sizeof(T) == 8>>
+	{
+		static uint32_t GetHashCode(T const& in)
+		{
+			return ((uint32_t*)&in)[0] ^ ((uint32_t*)&in)[1];
+		}
+	};
+
+	// 适配 void* 指针
+	// 经验数据. 经测试发现 x64 下 vc new 至少是 16 的倍数, x86 至少是 8 的倍数
+	template<>
+	struct HashFunc<void*, void>
+	{
+		static uint32_t GetHashCode(void* const& in)
+		{
+			if constexpr(sizeof(in) == 4)
+			{
+				return (size_t)in >> 3;
+			}
+			else
+			{
+				return HashFunc<size_t>::GetHashCode((size_t)in >> 4);
+			}
+		}
+	};
+
+	// 适配一段 buf
+	template<>
+	struct HashFunc<std::pair<char*, size_t>, void>
+	{
+		// 抄自微软 .net 源代码
+		// todo: 未来考虑是不是换成什么 xxhash 开源项目之类
+		static uint32_t GetHashCode(std::pair<char*, size_t> const& in)
+		{
+			auto& buf = in.first;
+			auto& len = in.second;
+
+			assert((size_t)buf % 4 == 0);		// buf 要求 4 字节对齐
+			if (!len)
+			{
+				return 0;
+			}
+			int32_t n2 = 0x15051505, n1 = 0x15051505;
+			uint32_t mod = len % 8, i = 0;
+			for (; i < len - mod; i += 8)
+			{
+				n1 = (((n1 << 5) + n1) + (n1 >> 0x1b)) ^ *(int32_t*)(buf + i);
+				n2 = (((n2 << 5) + n2) + (n2 >> 0x1b)) ^ *(int32_t*)(buf + i + 4);
+			}
+			if (mod > 4)
+			{
+				n1 = (((n1 << 5) + n1) + (n1 >> 0x1b)) ^ *(int32_t*)(buf + i);
+				n2 = (((n2 << 5) + n2) + (n2 >> 0x1b)) ^ (*(int32_t*)(buf + i + 4) & (0xFFFFFFFF >> ((8 - mod) * 8)));
+			}
+			else if (mod)
+			{
+				n1 = (((n1 << 5) + n1) + (n1 >> 0x1b)) ^ (*(int32_t*)(buf + i) & (0xFFFFFFFF >> ((4 - mod) * 8)));
+			}
+			return n2 + n1 * 0x5d588b65;
+		}
+	};
+
 }

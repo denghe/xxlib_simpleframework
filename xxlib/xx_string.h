@@ -103,6 +103,7 @@ namespace xx
 		// 实现一些 Object 的接口
 
 		String(BBuffer* bb);
+		// WriteTo, ReadFrom 直接使用基类的
 
 		void ToString(String &s) const override;
 	};
@@ -111,14 +112,4 @@ namespace xx
 	using String_p = Ptr<String>;
 
 	using String_r = Ref<String>;
-
-
-	// 各种适配函数的实现
-
-	uint32_t GetHashCode(String const &in) noexcept;
-	uint32_t GetHashCode(String_p const &in) noexcept;
-
-	bool EqualsTo(String const& a, String const& b) noexcept;
-	bool EqualsTo(String_p const& a, String_p const& b) noexcept;
-
 }

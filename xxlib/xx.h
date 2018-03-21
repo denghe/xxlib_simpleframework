@@ -100,7 +100,6 @@ goto Label##n
 #include "xx_bytesutils.h"
 #include "xx_bbuffer.h"
 #include "xx_guid.h"
-#include "xx_guid.h"
 
 #include "xx_mempool.hpp"
 #include "xx_list.hpp"
@@ -111,3 +110,4 @@ goto Label##n
 #include "xx_string.hpp"
 #include "xx_bytesutils.hpp"
 #include "xx_bbuffer.hpp"
+#include "xx_guid.hpp"
