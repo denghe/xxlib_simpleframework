@@ -4,6 +4,9 @@ dofile("RPC_class.lua")
 local yield = coroutine.yield
 local resume = coroutine.resume
 
+print("::LabBegin::")
+::LabBegin::
+
 local nbs = NBSocket_Create()
 local nbsco = coroutine.create(function()
 	print("init")
@@ -94,6 +97,10 @@ local nbsco = coroutine.create(function()
 	end
 
 
+	nbs.Disconnect()	-- 模拟退出游戏时断开. 下面注释掉模拟游戏结束
+	--[[
+	-- 先注释掉. 
+
 	::LabPing::
     yield()
 
@@ -128,13 +135,18 @@ local nbsco = coroutine.create(function()
 		yield()
 	end
 	goto LabConnect
-
+	]]
 end)
 
 
 while true do 
 	resume(nbsco)			-- 驱动逻辑代码
 	nbs.Update()			-- 驱动网络模块
+
+	if coroutine.status(nbsco) == "dead" then		-- 模拟游戏结束后重进游戏
+		print("goto LabBegin******************************************************")
+		goto LabBegin
+	end
 
 	-- 模拟帧延迟
     local timeout = os.clock() + 0.033
