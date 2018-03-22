@@ -364,30 +364,53 @@ xx::UvTcpUdpBase::UvTcpUdpBase(UvLoop& loop)
 {
 }
 
+// 包头 = 1字节掩码 + 数据长(2/4字节) + 地址(转发) + 流水号(RPC)
+// 1字节掩码:
+// ......XX :   00: 一般数据包      01: RPC请求包       10: RPC回应包
+// .....X.. :   0: 2字节数据长       1: 4字节数据长
+// ....X... :   0: 包头中不带地址    1: 带地址(长度由 XXXX.... 部分决定, 值需要+1)
 void xx::UvTcpUdpBase::ReceiveImpl(char const* bufPtr, int len)
 {
+	// 用版本号来检测事件过后当前类是否还健在
 	auto versionNumber = memHeader().versionNumber;
-	bbRecv.WriteBuf(bufPtr, len);
 
-	auto buf = (uint8_t*)bbRecv.buf;
-	auto dataLen = bbRecv.dataLen;
-	size_t offset = 0;
-	while (offset + 3 <= dataLen)
+	bbRecv.WriteBuf(bufPtr, len);					// 追加收到的数据到接收缓冲区
+
+	auto buf = (uint8_t*)bbRecv.buf;				// 方便使用
+	size_t offset = 0;								// 提速
+	while (offset + 3 <= bbRecv.dataLen)			// 确保 3字节 包头长度
 	{
-		auto typeId = buf[offset];
-		auto pkgLen = buf[offset + 1] + (buf[offset + 2] << 8);
-		if (pkgLen == 0)
+		auto typeId = buf[offset];					// 读出头
+
+		auto dataLen = (size_t)(buf[offset + 1] + (buf[offset + 2] << 8));
+		int headerLen = 3;
+		if ((typeId & 0x4) > 0)                     // 大包确保 5字节 包头长度
+		{
+			if (offset + 5 > bbRecv.dataLen) break;
+			headerLen = 5;
+			dataLen += (buf[offset + 3] << 16) + (buf[offset + 4] << 24);   // 修正为大包包长
+		}
+
+
+		if (dataLen <= 0)                           // 数据异常
 		{
 			DisconnectImpl();
 			return;
 		}
-		if (offset + 3 + pkgLen > dataLen) break;
-		offset += 3;
+		if (offset + headerLen + dataLen > bbRecv.dataLen) break;   // 确保数据长
+		auto pkgOffset = offset;
+		offset += headerLen;
 
-		bbRecv.offset = offset;
-		if (typeId == 0)
+
+		if ((typeId & 8) > 0)                       // 转发类数据包
 		{
-			if (OnReceivePackage) OnReceivePackage(bbRecv);
+			auto addrLen = (size_t)typeId >> 4;
+			auto addrOffset = offset;
+			auto pkgLen = offset + dataLen - pkgOffset;
+			offset += addrLen;
+
+			bbRecv.offset = offset;
+			if (OnReceiveRoutingPackage != nullptr) OnReceiveRoutingPackage(bbRecv, pkgOffset, pkgLen, addrOffset, addrLen);
 			if (versionNumber != memHeader().versionNumber) return;
 			if (Disconnected())
 			{
@@ -395,28 +418,12 @@ void xx::UvTcpUdpBase::ReceiveImpl(char const* bufPtr, int len)
 				return;
 			}
 		}
-		// todo: 4,5,6 做成 带 16 字节转发地址的协议
-		//else if (typeId == 4)
-		//{
-		//	//if (OnReceiveRouterPackage) OnReceiveRouterPackage(bbRecv, pkgLen, offset - 16, );
-		//	if (versionNumber != memHeader().versionNumber) return;
-		//	if (Disconnected())
-		//	{
-		//		bbRecv.Clear();
-		//		return;
-		//	}
-		//}
 		else
 		{
-			uint32_t serial = 0;
-			if (bbRecv.Read(serial))
+			bbRecv.offset = offset;
+			if (typeId == 0)
 			{
-				DisconnectImpl();
-				return;
-			}
-			if (typeId == 1)
-			{
-				if (OnReceiveRequest) OnReceiveRequest(serial, bbRecv);
+				if (OnReceivePackage) OnReceivePackage(bbRecv);
 				if (versionNumber != memHeader().versionNumber) return;
 				if (Disconnected())
 				{
@@ -424,22 +431,41 @@ void xx::UvTcpUdpBase::ReceiveImpl(char const* bufPtr, int len)
 					return;
 				}
 			}
-			else if (typeId == 2)
+			else
 			{
-				loop.rpcMgr->Callback(serial, &bbRecv);
-				if (versionNumber != memHeader().versionNumber) return;
-				if (Disconnected())
+				uint32_t serial = 0;
+				if (bbRecv.Read(serial))
 				{
-					bbRecv.Clear();
+					DisconnectImpl();
 					return;
+				}
+				if (typeId == 1)
+				{
+					if (OnReceiveRequest) OnReceiveRequest(serial, bbRecv);
+					if (versionNumber != memHeader().versionNumber) return;
+					if (Disconnected())
+					{
+						bbRecv.Clear();
+						return;
+					}
+				}
+				else if (typeId == 2)
+				{
+					loop.rpcMgr->Callback(serial, &bbRecv);
+					if (versionNumber != memHeader().versionNumber) return;
+					if (Disconnected())
+					{
+						bbRecv.Clear();
+						return;
+					}
 				}
 			}
 		}
-		offset += pkgLen;
+		offset += dataLen;
 	}
-	if (offset < dataLen)
+	if (offset < bbRecv.dataLen)
 	{
-		memmove(buf, buf + offset, dataLen - offset);
+		memmove(buf, buf + offset, bbRecv.dataLen - offset);
 	}
 	bbRecv.dataLen -= offset;
 }
