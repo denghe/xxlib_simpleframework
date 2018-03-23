@@ -1,4 +1,6 @@
 ﻿
+RPC_PkgGenMd5_Value = '437fc6cea321fd85cca8a679e2822a54'
+
 --[[
 服务类型列表
 ]]
@@ -10,8 +12,52 @@ RPC_Generic_ServiceTypes = {
     --[[
     数据库
     ]]
-    DB = 1
+    DB = 1,
+    --[[
+    管理端
+    ]]
+    Manage = 2
 }
+RPC_DB_Manage_MsgResult = {
+    typeName = "RPC_DB_Manage_MsgResult",
+    typeId = 11,
+    Create = function()
+        local o = {}
+        o.__proto = RPC_DB_Manage_MsgResult
+        o.__index = o
+        o.__newindex = o
+
+        o.txt = null -- String
+        return o
+    end,
+    FromBBuffer = function( bb, o )
+        o.txt = bb:ReadObject()
+    end,
+    ToBBuffer = function( bb, o )
+        bb:WriteObject( o.txt )
+    end
+}
+BBuffer.Register( RPC_DB_Manage_MsgResult )
+RPC_Manage_DB_Msg = {
+    typeName = "RPC_Manage_DB_Msg",
+    typeId = 12,
+    Create = function()
+        local o = {}
+        o.__proto = RPC_Manage_DB_Msg
+        o.__index = o
+        o.__newindex = o
+
+        o.txt = null -- String
+        return o
+    end,
+    FromBBuffer = function( bb, o )
+        o.txt = bb:ReadObject()
+    end,
+    ToBBuffer = function( bb, o )
+        bb:WriteObject( o.txt )
+    end
+}
+BBuffer.Register( RPC_Manage_DB_Msg )
 RPC_Login_Client_LoginSuccess = {
     typeName = "RPC_Login_Client_LoginSuccess",
     typeId = 4,
@@ -121,10 +167,10 @@ RPC_Generic_ServiceInfo = {
         return o
     end,
     FromBBuffer = function( bb, o )
-        o.type = bb:ReadObject()
+        o.type = bb:ReadInt32()
     end,
     ToBBuffer = function( bb, o )
-        bb:WriteObject( o.type )
+        bb:WriteInt32( o.type )
     end
 }
 BBuffer.Register( RPC_Generic_ServiceInfo )
@@ -172,14 +218,14 @@ RPC_Generic_Ping = {
         o.__index = o
         o.__newindex = o
 
-        o.ticks = 0 -- Int64
+        o.ticks = 0 -- Double
         return o
     end,
     FromBBuffer = function( bb, o )
-        o.ticks = bb:ReadInt64()
+        o.ticks = bb:ReadDouble()
     end,
     ToBBuffer = function( bb, o )
-        bb:WriteInt64( o.ticks )
+        bb:WriteDouble( o.ticks )
     end
 }
 BBuffer.Register( RPC_Generic_Ping )
@@ -195,14 +241,14 @@ RPC_Generic_Pong = {
         o.__index = o
         o.__newindex = o
 
-        o.ticks = 0 -- Int64
+        o.ticks = 0 -- Double
         return o
     end,
     FromBBuffer = function( bb, o )
-        o.ticks = bb:ReadInt64()
+        o.ticks = bb:ReadDouble()
     end,
     ToBBuffer = function( bb, o )
-        bb:WriteInt64( o.ticks )
+        bb:WriteDouble( o.ticks )
     end
 }
 BBuffer.Register( RPC_Generic_Pong )

@@ -4,7 +4,7 @@ namespace RPC
 {
     public static class PkgGenMd5
     {
-        public const string value = "60e4855a3a77e7e016822f33b4d765ba"; 
+        public const string value = "437fc6cea321fd85cca8a679e2822a54"; 
     }
 
 namespace Generic
@@ -248,7 +248,7 @@ namespace Generic
     /// </summary>
     public partial class Ping : IBBuffer
     {
-        public long ticks;
+        public double ticks;
 
         public virtual ushort GetPackageId()
         {
@@ -271,7 +271,7 @@ namespace Generic
     /// </summary>
     public partial class Pong : IBBuffer
     {
-        public long ticks;
+        public double ticks;
 
         public virtual ushort GetPackageId()
         {

@@ -171,7 +171,7 @@ public class DbClient : UvTcpClient
 {
     UvTimer timer;
     long pingCount = 0;
-    long pingTotal = 0;
+    double pingTotal = 0;
 
     public DbClient(UvLoop loop, string ip, int port) : base(loop)
     {
@@ -210,7 +210,7 @@ public class DbClient : UvTcpClient
                 Console.WriteLine("ping to db...");
                 SendRequest(new RPC.Generic.Ping
                 {
-                    ticks = DateTime.Now.Ticks
+                    ticks = DateTime.Now.Ticks / 10000d
                 },
                 (serial, bb) =>
                 {
@@ -221,7 +221,7 @@ public class DbClient : UvTcpClient
 
                     // ping 计数, 总 ping 值累加
                     ++pingCount;
-                    pingTotal += DateTime.Now.Ticks - pong.ticks;
+                    pingTotal += DateTime.Now.Ticks / 10000d - pong.ticks;
                 });
             }
         });
@@ -230,7 +230,7 @@ public class DbClient : UvTcpClient
     // 返回平均 ping 值( 毫秒 )
     public double GetPing()
     {
-        return (double)pingTotal / (double)pingCount / 10000d;
+        return pingTotal / pingCount;
     }
 
     // Dispose 时把 timer 杀了

@@ -8,9 +8,6 @@
     <ClCompile Include="..\xxlib\ikcp.cpp">
       <Filter>xxlib</Filter>
     </ClCompile>
-    <ClCompile Include="xbrz\xbrz.cpp">
-      <Filter>xbrz</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="main.bak" />
@@ -19,9 +16,6 @@
   <ItemGroup>
     <Filter Include="xxlib">
       <UniqueIdentifier>{65c5a69c-e368-4cf9-bdfa-8ce101cb2844}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="xbrz">
-      <UniqueIdentifier>{46b9bae7-0a80-458b-963f-111bb7535af1}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -94,22 +88,5 @@
     <ClInclude Include="..\xxlib\xx_guid.hpp">
       <Filter>xxlib</Filter>
     </ClInclude>
-    <ClInclude Include="xbrz\xbrz.h">
-      <Filter>xbrz</Filter>
-    </ClInclude>
-    <ClInclude Include="xbrz\xbrz_config.h">
-      <Filter>xbrz</Filter>
-    </ClInclude>
-    <ClInclude Include="xbrz\xbrz_tools.h">
-      <Filter>xbrz</Filter>
-    </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="xbrz\Changelog.txt">
-      <Filter>xbrz</Filter>
-    </Text>
-    <Text Include="xbrz\License.txt">
-      <Filter>xbrz</Filter>
-    </Text>
   </ItemGroup>
 </Project>

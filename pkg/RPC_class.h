@@ -3,7 +3,7 @@ namespace RPC
 {
 	struct PkgGenMd5
 	{
-		static constexpr char const* value = "60e4855a3a77e7e016822f33b4d765ba";
+		static constexpr char const* value = "437fc6cea321fd85cca8a679e2822a54";
     };
 
 namespace DB_Manage
@@ -244,7 +244,7 @@ namespace Generic
     class Ping : public xx::Object
     {
     public:
-        int64_t ticks = 0;
+        double ticks = 0;
 
         typedef Ping ThisType;
         typedef xx::Object BaseType;
@@ -261,7 +261,7 @@ namespace Generic
     class Pong : public xx::Object
     {
     public:
-        int64_t ticks = 0;
+        double ticks = 0;
 
         typedef Pong ThisType;
         typedef xx::Object BaseType;

@@ -91,7 +91,6 @@
     <ClCompile Include="..\xxlib\ikcp.cpp" />
     <ClCompile Include="..\xxlib\xx_uv.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="xbrz\xbrz.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="main.bak" />
@@ -121,13 +120,6 @@
     <ClInclude Include="..\xxlib\xx_string.h" />
     <ClInclude Include="..\xxlib\xx_string.hpp" />
     <ClInclude Include="..\xxlib\xx_uv.h" />
-    <ClInclude Include="xbrz\xbrz.h" />
-    <ClInclude Include="xbrz\xbrz_config.h" />
-    <ClInclude Include="xbrz\xbrz_tools.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="xbrz\Changelog.txt" />
-    <Text Include="xbrz\License.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

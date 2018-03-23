@@ -35,13 +35,13 @@ namespace Generic
     [Desc("心跳保持兼延迟测试 -- 请求")]
     class Ping
     {
-        long ticks;
+        double ticks;
     }
 
     [Desc("心跳保持兼延迟测试 -- 回应")]
     class Pong
     {
-        long ticks;
+        double ticks;
     }
 
 }

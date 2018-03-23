@@ -17,7 +17,7 @@ public static class Program
             shortfn = shortfn.Substring(0, shortfn.LastIndexOf('.'));
             var path = Path.Combine(Application.StartupPath, outputPath);
             var tn = shortfn.Substring(templatePrefix.Length);
-            GenCS_Class.Gen(asm, path, tn);
+            //GenCS_Class.Gen(asm, path, tn);
             //GenCS_MsSql.Gen(asm, path, tn);
             //GenCS_MultiKeyDict.Gen(asm, path, tn);
             GenCPP_Class.Gen(asm, path, tn);

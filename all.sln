@@ -18,8 +18,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "dbgen", "dbgen\dbgen.csproj
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "dbgen_template_DB", "dbgen_template_DB\dbgen_template_DB.csproj", "{4A51E5A3-6A23-46E3-ACD8-691CA3C5E9E1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "db", "db\db.csproj", "{E338DFB0-2979-4AA7-8EE1-41D31BB7F65C}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{03B66A93-339F-4940-B72F-B7D58B2FC3E5}"
 	ProjectSection(SolutionItems) = preProject
 		docs\fixed_function.hpp = docs\fixed_function.hpp
@@ -51,6 +49,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "rpc_manage", "rpc_manage\rp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "rpc_client_udp", "rpc_client_udp\rpc_client_udp.csproj", "{81F5A627-3698-43C3-84FF-DC65F2A73B47}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "dbgen_template_LOGDB", "dbgen_template_LOGDB\dbgen_template_LOGDB.csproj", "{4A51E5A3-6A23-46E3-ACD8-691CA3C5E9E2}"
+EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "db", "db\db.shproj", "{A9662F53-81E7-4019-915F-4B92FED39A70}"
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		pkg\pkg.projitems*{160a3ee0-261c-4ed1-9194-4c6e75dbc7cf}*SharedItemsImports = 13
@@ -60,6 +62,7 @@ Global
 		pkg\pkg.projitems*{77c8ba45-84f7-4f37-8a3b-33ada63edef7}*SharedItemsImports = 4
 		pkg\pkg.projitems*{81f5a627-3698-43c3-84ff-dc65f2a73b47}*SharedItemsImports = 4
 		pkg\pkg.projitems*{85f10995-1a5b-4640-bd60-89f3e1d0c483}*SharedItemsImports = 4
+		db\db.projitems*{a9662f53-81e7-4019-915f-4b92fed39a70}*SharedItemsImports = 13
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -86,10 +89,6 @@ Global
 		{4A51E5A3-6A23-46E3-ACD8-691CA3C5E9E1}.Debug|x64.Build.0 = Debug|x64
 		{4A51E5A3-6A23-46E3-ACD8-691CA3C5E9E1}.Release|x64.ActiveCfg = Release|x64
 		{4A51E5A3-6A23-46E3-ACD8-691CA3C5E9E1}.Release|x64.Build.0 = Release|x64
-		{E338DFB0-2979-4AA7-8EE1-41D31BB7F65C}.Debug|x64.ActiveCfg = Debug|x64
-		{E338DFB0-2979-4AA7-8EE1-41D31BB7F65C}.Debug|x64.Build.0 = Debug|x64
-		{E338DFB0-2979-4AA7-8EE1-41D31BB7F65C}.Release|x64.ActiveCfg = Release|x64
-		{E338DFB0-2979-4AA7-8EE1-41D31BB7F65C}.Release|x64.Build.0 = Release|x64
 		{9947D8D7-2CAB-4637-8F4B-4E2E3DCB7FAB}.Debug|x64.ActiveCfg = Debug|x64
 		{9947D8D7-2CAB-4637-8F4B-4E2E3DCB7FAB}.Debug|x64.Build.0 = Debug|x64
 		{9947D8D7-2CAB-4637-8F4B-4E2E3DCB7FAB}.Release|x64.ActiveCfg = Release|x64
@@ -134,6 +133,10 @@ Global
 		{81F5A627-3698-43C3-84FF-DC65F2A73B47}.Debug|x64.Build.0 = Debug|x64
 		{81F5A627-3698-43C3-84FF-DC65F2A73B47}.Release|x64.ActiveCfg = Release|x64
 		{81F5A627-3698-43C3-84FF-DC65F2A73B47}.Release|x64.Build.0 = Release|x64
+		{4A51E5A3-6A23-46E3-ACD8-691CA3C5E9E2}.Debug|x64.ActiveCfg = Debug|x64
+		{4A51E5A3-6A23-46E3-ACD8-691CA3C5E9E2}.Debug|x64.Build.0 = Debug|x64
+		{4A51E5A3-6A23-46E3-ACD8-691CA3C5E9E2}.Release|x64.ActiveCfg = Release|x64
+		{4A51E5A3-6A23-46E3-ACD8-691CA3C5E9E2}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

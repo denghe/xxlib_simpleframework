@@ -216,7 +216,7 @@ namespace xx
 	class Ptr
 	{
 	public:
-		static_assert(std::is_base_of_v<Object, T>);
+		//static_assert(std::is_base_of_v<Object, T>);
 		typedef T ChildType;
 		T* pointer;
 

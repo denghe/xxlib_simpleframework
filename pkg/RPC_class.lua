@@ -1,5 +1,5 @@
 ﻿
-RPC_PkgGenMd5_Value = '60e4855a3a77e7e016822f33b4d765ba'
+RPC_PkgGenMd5_Value = '437fc6cea321fd85cca8a679e2822a54'
 
 --[[
 服务类型列表
@@ -218,14 +218,14 @@ RPC_Generic_Ping = {
         o.__index = o
         o.__newindex = o
 
-        o.ticks = 0 -- Int64
+        o.ticks = 0 -- Double
         return o
     end,
     FromBBuffer = function( bb, o )
-        o.ticks = bb:ReadInt64()
+        o.ticks = bb:ReadDouble()
     end,
     ToBBuffer = function( bb, o )
-        bb:WriteInt64( o.ticks )
+        bb:WriteDouble( o.ticks )
     end
 }
 BBuffer.Register( RPC_Generic_Ping )
@@ -241,14 +241,14 @@ RPC_Generic_Pong = {
         o.__index = o
         o.__newindex = o
 
-        o.ticks = 0 -- Int64
+        o.ticks = 0 -- Double
         return o
     end,
     FromBBuffer = function( bb, o )
-        o.ticks = bb:ReadInt64()
+        o.ticks = bb:ReadDouble()
     end,
     ToBBuffer = function( bb, o )
-        bb:WriteInt64( o.ticks )
+        bb:WriteDouble( o.ticks )
     end
 }
 BBuffer.Register( RPC_Generic_Pong )

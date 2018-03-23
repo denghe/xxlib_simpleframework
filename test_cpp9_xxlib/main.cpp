@@ -1,5 +1,6 @@
 ﻿#include "xx.h"
 #include "RPC_class.h"
+#include "xx_sqlite.h"
 
 int main()
 {
