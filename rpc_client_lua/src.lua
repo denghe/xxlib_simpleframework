@@ -109,7 +109,7 @@ local nbsco = coroutine.create(function()
         yield()
         if nbs.ticks % 30 == 0 then
 			local ping = RPC_Generic_Ping.Create()
-			ping.ticks = os.clock() * 1000
+			ping.ticks = tostring(os.clock() * 1000)	-- int64 接受字串long值 或 低+高位uint32
             local serial, r = nbs.SendRequest(ping, function(s, ibb)
                 if ibb == nil then
                     print("ping timeout")
