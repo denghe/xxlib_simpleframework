@@ -117,6 +117,52 @@ namespace xx
 }
 
 
+/************************************************************************************/
+// time_point <--> DateTime.Ticks converts
+/************************************************************************************/
+
+inline int64_t TimeSinceEpochToDateTimeTicks(int64_t const& val)
+{
+	return val + 621356256000000000LL;
+}
+
+inline int64_t TimePointToDateTimeTicks(std::chrono::system_clock::time_point const& val)
+{
+	return val.time_since_epoch().count() + 621356256000000000LL;
+}
+
+inline int64_t DateTimeTicksToTimeSinceEpoch(int64_t const& val)
+{
+	return val - 621356256000000000LL;
+}
+
+inline std::chrono::system_clock::time_point TimeSinceEpochToTimePoint(int64_t const& val)
+{
+	return std::chrono::system_clock::time_point(std::chrono::system_clock::time_point::duration(val));
+}
+
+inline std::chrono::system_clock::time_point DateTimeTicksToTimePoint(int64_t const& val)
+{
+	return TimeSinceEpochToTimePoint(val - 621356256000000000LL);
+}
+
+inline std::chrono::system_clock::time_point GetNowTimePoint()
+{
+	return std::chrono::system_clock::now();
+}
+
+inline int64_t GetNowTimeSinceEpoch()
+{
+	return GetNowTimePoint().time_since_epoch().count();
+}
+
+inline int64_t GetNowDateTimeTicks()
+{
+	return GetNowTimeSinceEpoch() + 621356256000000000LL;
+}
+
+
+
 #include "xx_mempool.h"
 #include "xx_list.h"
 #include "xx_queue.h"

@@ -31,17 +31,17 @@ namespace xx
 		// 发生时间
 		int64_t time = 0;
 		// 机器名
-		String_p machine;
+		String machine;
 		// 进程/服务名
-		String_p service;
+		String service;
 		// 进程/实例id
-		String_p instanceId;
+		String instanceId;
 		// 标题
-		String_p title;
+		String title;
 		// 操作代码
 		int64_t opcode = 0;
 		// 日志明细
-		String_p desc;
+		String desc;
 
 		typedef Log ThisType;
 		typedef Object BaseType;
@@ -57,6 +57,11 @@ namespace xx
 
 	inline Log::Log(MemPool* mp)
 		: Object(mp)
+		, machine(mp)
+		, service(mp)
+		, instanceId(mp)
+		, title(mp)
+		, desc(mp)
 	{
 	}
 
@@ -211,7 +216,11 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
 						while (!bakMsgs->Empty())
 						{
 							auto& o = *bakMsgs->Top();
-							if (o.id)
+							if (o.id == 1)
+							{
+								funcs.InsertLog(o.level, o.time, machine, service, instanceId, o.title, o.opcode, o.desc);
+							}
+							else if (o.id == 2)
 							{
 								funcs.InsertLog(o.level, o.time, o.machine, o.service, o.instanceId, o.title, o.opcode, o.desc);
 							}
@@ -258,18 +267,17 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
 			std::lock_guard<std::mutex> lg(mtx);
 			if (logMsgs->Count() > writeLimit) return false;
 
-			auto qmp = logMsgs->mempool;
-			auto o = qmp->MPCreatePtr<Log>();
+			auto o = logMsgs->mempool->MPCreatePtr<Log>();
 
 			o->id = 2;             // 用来标记是通过 WaitAll 写入的
 			o->level = level;
 			o->time = time;
-			qmp->MPCreateTo(o->machine, machine);
-			qmp->MPCreateTo(o->service, service);
-			qmp->MPCreateTo(o->instanceId, instanceId);
-			qmp->MPCreateTo(o->title, title);
+			o->machine.Assign(machine);
+			o->service.Assign(service);
+			o->instanceId.Assign(instanceId);
+			o->title.Assign(title);
 			o->opcode = opcode;
-			qmp->MPCreateTo(o->desc, desc);
+			o->desc.Assign(desc);
 
 			logMsgs->Emplace(std::move(o));
 			return true;
@@ -281,20 +289,15 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
 			std::lock_guard<std::mutex> lg(mtx);
 			if (logMsgs->Count() > writeLimit) return false;
 
-			auto& mp = logMsgs->mempool();
-			auto o = mp.CreatePtr<Log>();
+			auto o = logMsgs->mempool->MPCreatePtr<Log>();
 
 			o->id = 1;             // 用来标记是通过 Write 写入的
 			o->level = level;
 
 			o->time = GetNowDateTimeTicks();
-			o->machine = &machine;
-			o->service = &service;
-			o->instanceId = &instanceId;
-
-			o->title.Create(mp, title);
+			o->title.Assign(title);
 			o->opcode = opcode;
-			o->desc.Create(mp, desc);
+			o->desc.Assign(desc);
 
 			logMsgs->Emplace(std::move(o));
 			return true;
@@ -306,13 +309,12 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
 			std::lock_guard<std::mutex> lg(mtx);
 			if (logMsgs->Count() > writeLimit) return false;
 
-			auto& mp = logMsgs->mempool();
-			auto o = mp.CreatePtr<Log>();
+			auto o = logMsgs->mempool->MPCreatePtr<Log>();
 
 			o->id = 0;				// 用来标记是通过 SetDefaultValue 写入的
-			o->machine.Create(mp, machine);
-			o->service.Create(mp, service);
-			o->instanceId.Create(mp, instanceId);
+			o->machine.Assign(machine);
+			o->service.Assign(service);
+			o->instanceId.Assign(instanceId);
 
 			logMsgs->Emplace(std::move(o));
 			return true;
