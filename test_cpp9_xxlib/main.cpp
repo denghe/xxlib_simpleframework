@@ -29,7 +29,7 @@ int main()
 	xx::Logger log("C:/Logs/xx.log.db");
 	log.SetDefaultValue("machine name", "service type", 1);
 	xx::Stopwatch sw2;
-	log.OnRelease = [&] 
+	log.OnRelease = [&]
 	{
 		std::cout << "sw2 =  " << sw2() << std::endl;
 	};
@@ -44,6 +44,7 @@ int main()
 			log.Write(xx::LogLevel::Error, "title", i, "desc.................................");
 		}
 		std::cout << "inserted " << i << " logs. elapsed ms = " << sw() << std::endl;
+		//Sleep(2000);
 	}
 	return 0;
 }

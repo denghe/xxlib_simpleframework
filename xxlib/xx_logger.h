@@ -98,18 +98,15 @@ namespace xx
 	// 从模板生成物复制小改而来
 	struct LogFuncs
 	{
-		SQLite& db;
-		LogFuncs(SQLite& db) : db(db) {}
+		SQLite* db;
+		SQLiteQuery_p query_InsertLog;
 
-		SQLiteQuery_p query_CreateTable_log;
-		// 建 log 表
-		inline void CreateTable_log()
+		LogFuncs(SQLite* db)
+			: db(db)
 		{
-			auto& q = query_CreateTable_log;
-
-			if (!q)
+			if (!db->TableExists("log"))
 			{
-				q = db.CreateQuery(R"=-=(
+				auto q = db->CreateQuery(R"=-=(
 CREATE TABLE [log](
     [id] INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE, 
     [level] INT NOT NULL,
@@ -121,12 +118,16 @@ CREATE TABLE [log](
     [opcode] INTEGER NOT NULL,
     [desc] TEXT NOT NULL
 );)=-=");
+				q->Execute();
 			}
-			q->Execute();
+
+			// 初始化插入查询
+			query_InsertLog = db->CreateQuery(R"=-=(
+insert into [log] ([level], [time], [machine], [service], [instanceId], [title], [opcode], [desc]) 
+values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
+
 		}
 
-
-		SQLiteQuery_p query_InsertLog;
 		// 插入一条 log. time 传入 DateTime.Now.Ticks
 		template<typename MachineType, typename ServiceType, typename InstanceIdType, typename TitleType, typename DescType>
 		inline void InsertLog
@@ -141,16 +142,8 @@ CREATE TABLE [log](
 			DescType const& desc
 		)
 		{
-			auto& q = query_InsertLog;
-
-			if (!q)
-			{
-				q = db.CreateQuery(R"=-=(
-insert into [log] ([level], [time], [machine], [service], [instanceId], [title], [opcode], [desc]) 
-values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
-			}
-			q->SetParameters(level, time, machine, service, instanceId, title, opcode, desc);
-			q->Execute();
+			query_InsertLog->SetParameters(level, time, machine, service, instanceId, title, opcode, desc);
+			query_InsertLog->Execute();
 		}
 
 	};
@@ -179,7 +172,7 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
 		Queue<Log_p> logMsgs2;			// 切换使用
 
 		Queue<Log_p>* logMsgs;			// 指向当前正在使用的 logMsgs
-        Queue<Log_p>* bakMsgs;          // 指向后台 logMsgs
+		Queue<Log_p>* bakMsgs;          // 指向后台 logMsgs
 		std::mutex mtx;
 
 		uint64_t writeLimit = 0;		// 当前队列写入深度如果超过这个值就不再写入( 如果设置的话 )
@@ -189,16 +182,15 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
 
 		Logger(char const* const& fn)
 			: db(&mp, fn)
-			, funcs(db)
+			, funcs(&db)
 			, machine(&mp, nameLenLimit)
 			, service(&mp, nameLenLimit)
 			, instanceId(&mp, nameLenLimit)
 			, logMsgs1(&mp1)
 			, logMsgs2(&mp2)
 			, logMsgs(&logMsgs1)
-            , bakMsgs(&logMsgs2)
+			, bakMsgs(&logMsgs2)
 		{
-			if (!db.TableExists("log")) funcs.CreateTable_log();
 			std::thread t([this]
 			{
 				while (true)
@@ -207,7 +199,7 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
 					{
 						std::lock_guard<std::mutex> lg(mtx);
 						if (!logMsgs->Count()) goto LabEnd;
-                        std::swap(logMsgs, bakMsgs);
+						std::swap(logMsgs, bakMsgs);
 					}
 
 					// 开始批量插入( 这期间前台可以继续操作 )
@@ -242,7 +234,7 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
 						std::cout << "logdb insert error! errNO = " << db.lastErrorCode << " errMsg = " << db.lastErrorMessage << std::endl;
 					}
 				LabEnd:
-                    if (disposing) break;
+					if (disposing) break;
 					Sleep(50);
 				}
 				disposing = false;
