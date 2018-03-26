@@ -53,6 +53,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "dbgen_template_LOGDB", "dbg
 EndProject
 Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "db", "db\db.shproj", "{A9662F53-81E7-4019-915F-4B92FED39A70}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "xxloglib", "xxloglib\xxloglib.vcxproj", "{D8BFF53C-188B-4D4D-8483-0A1F9DFE39F6}"
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		pkg\pkg.projitems*{160a3ee0-261c-4ed1-9194-4c6e75dbc7cf}*SharedItemsImports = 13
@@ -137,6 +139,10 @@ Global
 		{4A51E5A3-6A23-46E3-ACD8-691CA3C5E9E2}.Debug|x64.Build.0 = Debug|x64
 		{4A51E5A3-6A23-46E3-ACD8-691CA3C5E9E2}.Release|x64.ActiveCfg = Release|x64
 		{4A51E5A3-6A23-46E3-ACD8-691CA3C5E9E2}.Release|x64.Build.0 = Release|x64
+		{D8BFF53C-188B-4D4D-8483-0A1F9DFE39F6}.Debug|x64.ActiveCfg = Debug|x64
+		{D8BFF53C-188B-4D4D-8483-0A1F9DFE39F6}.Debug|x64.Build.0 = Debug|x64
+		{D8BFF53C-188B-4D4D-8483-0A1F9DFE39F6}.Release|x64.ActiveCfg = Release|x64
+		{D8BFF53C-188B-4D4D-8483-0A1F9DFE39F6}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

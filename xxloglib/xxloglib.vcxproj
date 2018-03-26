@@ -45,11 +45,11 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(SolutionDir);$(SolutionDir)xxlib;$(SolutionDir)libuv\include;$(SolutionDir)sqlite3;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir);$(SolutionDir)xxlib;$(SolutionDir)sqlite3;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(SolutionDir);$(SolutionDir)xxlib_cpp;$(SolutionDir)libuv\include;$(SolutionDir)sqlite3;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir);$(SolutionDir)xxlib;$(SolutionDir)sqlite3;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
