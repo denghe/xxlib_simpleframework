@@ -403,7 +403,7 @@ namespace xx
         // ....X... :   0: 包头中不带地址    1: 带地址(长度由 XXXX.... 部分决定, 值需要+1)
 
         // 基础收数据处理, 投递到事件函数
-        public void ReceiveImpl(IntPtr bufPtr, int len)
+        public virtual void ReceiveImpl(IntPtr bufPtr, int len)
         {
             bbRecv.WriteBuf(bufPtr, len);                   // 追加收到的数据到接收缓冲区
 
