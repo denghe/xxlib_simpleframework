@@ -95,7 +95,7 @@ namespace xx
 	}
 
 
-
+	// 从模板生成物复制小改而来
 	struct LogFuncs
 	{
 		SQLite& db;
@@ -182,9 +182,10 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
         Queue<Log_p>* bakMsgs;          // 指向后台 logMsgs
 		std::mutex mtx;
 
-		uint64_t writeLimit = 1000000;	// 当前队列写入深度如果超过这个值就不再写入
+		uint64_t writeLimit = 0;		// 当前队列写入深度如果超过这个值就不再写入( 如果设置的话 )
 		int64_t counter = 0;			// 总写入量的统计值
 		bool disposing = false;			// 通知后台线程退出的标志位
+		std::function<void()> OnRelease;
 
 		Logger(char const* const& fn)
 			: db(&mp, fn)
@@ -256,7 +257,7 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
 		{
 			disposing = true;
 			while (disposing) Sleep(1);
-			std::cout << "~Logger()" << std::endl;
+			if (OnRelease) OnRelease();
 		}
 
 		template<typename MachineType, typename ServiceType, typename InstanceIdType, typename TitleType, typename DescType>
@@ -265,7 +266,7 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
 			, TitleType const& title, int64_t const& opcode, DescType const& desc)
 		{
 			std::lock_guard<std::mutex> lg(mtx);
-			if (logMsgs->Count() > writeLimit) return false;
+			if (writeLimit && logMsgs->Count() > writeLimit) return false;
 
 			auto o = logMsgs->mempool->MPCreatePtr<Log>();
 
@@ -287,7 +288,7 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
 		bool Write(LogLevel level, TitleType const& title, int64_t const& opcode, DescType const& desc)
 		{
 			std::lock_guard<std::mutex> lg(mtx);
-			if (logMsgs->Count() > writeLimit) return false;
+			if (writeLimit && logMsgs->Count() > writeLimit) return false;
 
 			auto o = logMsgs->mempool->MPCreatePtr<Log>();
 
@@ -307,7 +308,7 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
 		bool SetDefaultValue(MachineType const& machine, ServiceType const& service, InstanceIdType const& instanceId)
 		{
 			std::lock_guard<std::mutex> lg(mtx);
-			if (logMsgs->Count() > writeLimit) return false;
+			if (writeLimit && logMsgs->Count() > writeLimit) return false;
 
 			auto o = logMsgs->mempool->MPCreatePtr<Log>();
 
