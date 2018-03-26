@@ -109,8 +109,8 @@ namespace xx
 		nodes = (Node*)mempool->Realloc(nodes, bucketsLen * sizeof(Node));
 
 		// item 数组扩容
-		if ((std::is_trivial<TK>::value || IsPtr_v<TK>)
-			&& (std::is_trivial<TV>::value || IsPtr_v<TV>))
+		if constexpr((std::is_trivial<TK>::value || IsPtr_v<TK> || IsRef_v<TK>)
+			&& (std::is_trivial<TV>::value || IsPtr_v<TV> || IsRef_v<TV>))
 		{
 			items = (Data*)mempool->Realloc(items, bucketsLen * sizeof(Data));
 		}

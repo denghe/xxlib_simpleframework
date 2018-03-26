@@ -1,13 +1,13 @@
 ﻿#pragma once
+#include "xx.h"
 #include "xx_sqlite.h"
-#include "xx_queue.h"
 #include <mutex>
 #include <thread>
 
 namespace xx
 {
 	// 对应 log 日志表
-	struct Log;
+	class Log;
 	// 日志级别
 	enum class LogLevel : int32_t
 	{
@@ -21,8 +21,9 @@ namespace xx
 	};
 
 	// 对应 log 日志表
-	struct Log : Object
+	class Log : public Object
 	{
+	public:
 		// 自增主键
 		int64_t id = 0;
 		// 日志级别
@@ -44,34 +45,35 @@ namespace xx
 
 		typedef Log ThisType;
 		typedef Object BaseType;
-		Log();
+		Log(MemPool* mp);
 		Log(Log const&) = delete;
 		Log& operator=(Log const&) = delete;
 		virtual void ToString(String &str) const override;
 		virtual void ToStringCore(String &str) const override;
 	};
 	using Log_p = Ptr<Log>;
-	using Log_v = Dock<Log>;
+	using Log_r = Ref<Log>;
 
 
-	inline Log::Log()
+	inline Log::Log(MemPool* mp)
+		: Object(mp)
 	{
 	}
 
 	inline void Log::ToString(String &str) const
 	{
-		if (tsFlags())
+		if (memHeader().flags)
 		{
 			str.Append("[ \"***** recursived *****\" ]");
 			return;
 		}
-		else tsFlags() = 1;
+		else memHeader().flags = 1;
 
 		str.Append("{ \"type\" : \"Log\"");
 		ToStringCore(str);
 		str.Append(" }");
 
-		tsFlags() = 0;
+		memHeader().flags = 0;
 	}
 	inline void Log::ToStringCore(String &str) const
 	{
@@ -86,12 +88,6 @@ namespace xx
 		str.Append(", \"opcode\" : ", this->opcode);
 		str.Append(", \"desc\" : ", this->desc);
 	}
-
-	template<>
-	struct MemmoveSupport<Log_v>
-	{
-		static const bool value = true;
-	};
 
 
 
@@ -127,16 +123,17 @@ CREATE TABLE [log](
 
 		SQLiteQuery_p query_InsertLog;
 		// 插入一条 log. time 传入 DateTime.Now.Ticks
+		template<typename MachineType, typename ServiceType, typename InstanceIdType, typename TitleType, typename DescType>
 		inline void InsertLog
 		(
 			LogLevel const& level,
 			int64_t const& time,
-			String_p const& machine,
-			String_p const& service,
-			String_p const& instanceId,
-			String_p const& title,
+			MachineType const& machine,
+			ServiceType const& service,
+			InstanceIdType const& instanceId,
+			TitleType const& title,
 			int64_t const& opcode,
-			String_p const& desc
+			DescType const& desc
 		)
 		{
 			auto& q = query_InsertLog;
@@ -151,77 +148,51 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
 			q->Execute();
 		}
 
-
-
-		//xx::SQLiteQuery_p query_InsertLog;
-		// 插入一条 log. time 传入 DateTime.Now.Ticks
-		inline void InsertLog
-		(
-			LogLevel const& level,
-			int64_t const& time,
-			char const* const& machine,
-			char const* const& service,
-			char const* const& instanceId,
-			char const* const& title,
-			int64_t const& opcode,
-			char const* const& desc
-		)
-		{
-			auto& q = query_InsertLog;
-
-			if (!q)
-			{
-				q = db.CreateQuery(R"=-=(
-insert into [log] ([level], [time], [machine], [service], [instanceId], [title], [opcode], [desc]) 
-values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
-			}
-			q->SetParameters(level, time, machine, service, instanceId, title, opcode, desc);
-			q->Execute();
-		}
 	};
 
 
 
 
 
-	struct Logger
+	class Logger
 	{
+	public:
 		MemPool mp;
-		SQLite_v db;
+		SQLite db;
 		LogFuncs funcs;
 
 		static constexpr int nameLenLimit = 200;
-		String_v machine;
-		String_v service;
-		String_v instanceId;
+		String machine;
+		String service;
+		String instanceId;
 
 		// 为每个 queue 创建一个 mp　专用．这样只需要在切换时 lock
 		MemPool mp1;
-		Queue_v<Log_p> logMsgs1;		// 切换使用
+		Queue<Log_p> logMsgs1;			// 切换使用
 
 		MemPool mp2;
-		Queue_v<Log_p> logMsgs2;		// 切换使用
+		Queue<Log_p> logMsgs2;			// 切换使用
 
 		Queue<Log_p>* logMsgs;			// 指向当前正在使用的 logMsgs
         Queue<Log_p>* bakMsgs;          // 指向后台 logMsgs
 		std::mutex mtx;
 
-		int64_t writeLimit = 1000000;	// 当前队列写入深度如果超过这个值就不再写入
+		uint64_t writeLimit = 1000000;	// 当前队列写入深度如果超过这个值就不再写入
 		int64_t counter = 0;			// 总写入量的统计值
 		bool disposing = false;			// 通知后台线程退出的标志位
 
 		Logger(char const* const& fn)
-			: db(mp, fn)
-			, funcs(*db)
-			, machine(mp, nameLenLimit)
-			, service(mp, nameLenLimit)
-			, instanceId(mp, nameLenLimit)
-			, logMsgs1(mp1)
-			, logMsgs2(mp2)
-			, logMsgs(&*logMsgs1)
-            , bakMsgs(&*logMsgs2)
+			: db(&mp, fn)
+			, funcs(db)
+			, machine(&mp, nameLenLimit)
+			, service(&mp, nameLenLimit)
+			, instanceId(&mp, nameLenLimit)
+			, logMsgs1(&mp1)
+			, logMsgs2(&mp2)
+			, logMsgs(&logMsgs1)
+            , bakMsgs(&logMsgs2)
 		{
-			if (!db->TableExists("log")) funcs.CreateTable_log();
+			if (!db.TableExists("log")) funcs.CreateTable_log();
 			std::thread t([this]
 			{
 				while (true)
@@ -236,7 +207,7 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
 					// 开始批量插入( 这期间前台可以继续操作 )
 					try
 					{
-						db->BeginTransaction();
+						db.BeginTransaction();
 						while (!bakMsgs->Empty())
 						{
 							auto& o = *bakMsgs->Top();
@@ -246,19 +217,19 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
 							}
 							else
 							{
-								machine->Assign(o.machine);
-								service->Assign(o.service);
-								instanceId->Assign(o.instanceId);
+								machine.Assign(o.machine);
+								service.Assign(o.service);
+								instanceId.Assign(o.instanceId);
 							}
 							bakMsgs->Pop();
 							++counter;
 						}
-						db->EndTransaction();
+						db.EndTransaction();
 					}
 					catch (...)
 					{
 						// 似乎只能忽略错误
-						std::cout << "logdb insert error! errNO = " << db->lastErrorCode << " errMsg = " << db->lastErrorMessage << std::endl;
+						std::cout << "logdb insert error! errNO = " << db.lastErrorCode << " errMsg = " << db.lastErrorMessage << std::endl;
 					}
 				LabEnd:
                     if (disposing) break;
@@ -287,18 +258,18 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
 			std::lock_guard<std::mutex> lg(mtx);
 			if (logMsgs->Count() > writeLimit) return false;
 
-			auto& mp = logMsgs->mempool();
-			auto o = mp.CreatePtr<Log>();
+			auto qmp = logMsgs->mempool;
+			auto o = qmp->MPCreatePtr<Log>();
 
 			o->id = 2;             // 用来标记是通过 WaitAll 写入的
 			o->level = level;
 			o->time = time;
-			o->machine.Create(mp, machine);
-			o->service.Create(mp, service);
-			o->instanceId.Create(mp, instanceId);
-			o->title.Create(mp, title);
+			qmp->MPCreateTo(o->machine, machine);
+			qmp->MPCreateTo(o->service, service);
+			qmp->MPCreateTo(o->instanceId, instanceId);
+			qmp->MPCreateTo(o->title, title);
 			o->opcode = opcode;
-			o->desc.Create(mp, desc);
+			qmp->MPCreateTo(o->desc, desc);
 
 			logMsgs->Emplace(std::move(o));
 			return true;
@@ -317,9 +288,9 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
 			o->level = level;
 
 			o->time = GetNowDateTimeTicks();
-			o->machine = &*machine;
-			o->service = &*service;
-			o->instanceId = &*instanceId;
+			o->machine = &machine;
+			o->service = &service;
+			o->instanceId = &instanceId;
 
 			o->title.Create(mp, title);
 			o->opcode = opcode;

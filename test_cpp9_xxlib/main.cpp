@@ -1,6 +1,6 @@
 ﻿#include "xx.h"
 #include "RPC_class.h"
-#include "xx_sqlite.h"
+#include "xx_logger.h"
 
 int main()
 {
@@ -25,6 +25,15 @@ int main()
 		bb.Read(o);
 		std::cout << o << std::endl;
 	}
+
+	xx::Stopwatch sw;
+	xx::Logger log("C:/Logs/xx.log.db");
+	size_t i = 0;
+	for (; i < 1000000; i++)
+	{
+		log.WriteAll(xx::LogLevel::Error, 0, "machine name", "service type", 0, "title", 0, "desc.................................");
+	}
+	std::cout << "inserted " << i << " logs. elapsed ms = " << sw() << std::endl;
 
 	return 0;
 }

@@ -116,6 +116,7 @@
     <ClInclude Include="RPC_class.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\sqlite3\sqlite3.c" />
     <ClCompile Include="..\xxlib\ikcp.cpp" />
     <ClCompile Include="..\xxlib\xx_uv.cpp" />
     <ClCompile Include="main.cpp" />

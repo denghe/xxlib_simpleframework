@@ -70,14 +70,7 @@ namespace xx
 	T& Queue<T>::Emplace(Args&&...args)
 	{
 		auto idx = tail;
-		if constexpr(std::is_base_of_v<Object, T>)
-		{
-			new (buf + tail++) T(mempool, std::forward<Args>(args)...);
-		}
-		else
-		{
-			new (buf + tail++) T(std::forward<Args>(args)...);
-		}
+		new (buf + tail++) T(std::forward<Args>(args)...);
 		if (tail == bufLen)			// cycle
 		{
 			tail = 0;
@@ -187,7 +180,7 @@ namespace xx
 		//......Head+++++++++++Tail.......
 		if (head < tail)
 		{
-			if constexpr(std::is_trivial<T>::value || IsPtr_v<T>)
+			if constexpr(std::is_trivial<T>::value || IsPtr_v<T> || IsRef_v<T>)
 			{
 				memcpy(newBuf, buf + head, dataLen * sizeof(T));
 			}
@@ -206,7 +199,7 @@ namespace xx
 		{
 			//...Head++++++
 			auto frontDataLen = bufLen - head;
-			if constexpr(std::is_trivial<T>::value || IsPtr_v<T>)
+			if constexpr(std::is_trivial<T>::value || IsPtr_v<T> || IsRef_v<T>)
 			{
 				memcpy(newBuf, buf + head, frontDataLen * sizeof(T));
 			}
@@ -220,7 +213,7 @@ namespace xx
 			}
 
 			// ++++++Tail...
-			if constexpr(std::is_trivial<T>::value || IsPtr_v<T>)
+			if constexpr(std::is_trivial<T>::value || IsPtr_v<T> || IsRef_v<T>)
 			{
 				memcpy(newBuf + frontDataLen, buf, tail * sizeof(T));
 			}

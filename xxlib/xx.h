@@ -12,6 +12,7 @@
 #include <type_traits>
 #include <string>
 #include <iostream>
+#include <chrono>
 
 #ifdef _WIN32
 #include <intrin.h>     // _BitScanReverse  64
@@ -88,6 +89,32 @@ goto Label##n
 
 
 
+/***********************************************************************************/
+// Stopwatch
+/***********************************************************************************/
+
+namespace xx
+{
+	struct Stopwatch
+	{
+		Stopwatch() { Reset(); }
+		inline void Reset() { beginTime = std::chrono::high_resolution_clock::now(); }
+		inline int64_t operator()()
+		{
+			auto bak = beginTime;
+			Reset();
+			return std::chrono::duration_cast<std::chrono::milliseconds>(beginTime - bak).count();
+		}
+		inline int64_t micros()
+		{
+			auto bak = beginTime;
+			Reset();
+			return std::chrono::duration_cast<std::chrono::microseconds>(beginTime - bak).count();
+		}
+	private:
+		std::chrono::time_point<std::chrono::high_resolution_clock> beginTime;
+	};
+}
 
 
 #include "xx_mempool.h"
