@@ -80,6 +80,9 @@ public static class TcpUdpPeerHandler
                 return;
             }
 
+            // 试记录收包日志
+            service.Log(LogLevel.Info, "OnReceiveRequest", ibb__.ToString());
+
             switch (ibb__)
             {
                 case RPC.Client_Login.Login login:
@@ -254,17 +257,32 @@ public class Service : UvLoop
     public UvTcpListener listener;
     public UvUdpListener udpListener;
     public DbClient dbClient;
+    public Logger logger;
 
     public Service()
     {
-        InitRpcManager(1000, 5);                                    // 精度:1秒, 5 秒超时
-        InitTimeouter(1000, 6, 5);                                  // 精度:1秒, 最长计时 6 秒, 默认 5 秒超时
+        logger = new Logger();
+        logger.SetDefaultValue("server1", "login server", "0");
+        try
+        {
+            InitRpcManager(1000, 5);                                    // 精度:1秒, 5 秒超时
+            InitTimeouter(1000, 6, 5);                                  // 精度:1秒, 最长计时 6 秒, 默认 5 秒超时
 
-        listener = new Listener(this, "0.0.0.0", 12345);
-        dbClient = new DbClient(this, "127.0.0.1", 12346);
+            listener = new Listener(this, "0.0.0.0", 12345);
+            dbClient = new DbClient(this, "127.0.0.1", 12346);
 
-        InitKcpFlushInterval(10);                                   // kcp 更新精度: 10毫秒
-        udpListener = new UdpListener(this, "0.0.0.0", 12345);
+            InitKcpFlushInterval(10);                                   // kcp 更新精度: 10毫秒
+            udpListener = new UdpListener(this, "0.0.0.0", 12345);
+        }
+        catch (Exception ex)
+        {
+            Log(LogLevel.Error, "Service()", ex.Message + ex.StackTrace);
+        }
+    }
+
+    public void Log(LogLevel level, string title, string desc)
+    {
+        logger.Write(level, title, 0, desc);
     }
 }
 
