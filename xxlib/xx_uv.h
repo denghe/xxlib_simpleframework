@@ -154,7 +154,7 @@ namespace xx
 		virtual size_t GetSendQueueSize() = 0;
 		virtual void SendBytes(char const* inBuf, int len = 0) = 0;
 
-		void ReceiveImpl(char const* bufPtr, int len);
+		virtual void ReceiveImpl(char const* bufPtr, int len);
 
 		void SendBytes(BBuffer& bb);
 
