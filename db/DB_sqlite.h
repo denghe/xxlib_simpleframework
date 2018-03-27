@@ -5,16 +5,16 @@
 namespace DB
 {
     // 游戏相关
-    struct SQLiteGameFuncs
+    class SQLiteGameFuncs : xx::Object
     {
+    public:
 		xx::SQLite& sqlite;
-		xx::MemPool& mp;
-		xx::SQLiteString_v s;
+		xx::SQLiteString s;
 
 		inline SQLiteGameFuncs(xx::SQLite& sqlite)
-            : sqlite(sqlite)
-            , mp(sqlite.mempool())
-            , s(mp)
+            : xx::Object(sqlite.mempool)
+            , sqlite(sqlite)
+            , s(sqlite.mempool)
         {
         }
 
@@ -22,18 +22,17 @@ namespace DB
         xx::SQLiteQuery_p query_CreateTable_game_account;
         inline void CreateTable_game_account()
         {
-			auto& q = query_CreateTable_game_account;
 
-			if (!q)
+			if (!this->query_CreateTable_game_account)
 			{
-				q = sqlite.CreateQuery(R"=-=(
+				this->query_CreateTable_game_account = this->sqlite.CreateQuery(R"=-=(
 CREATE TABLE [game_account](
     [id] INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE, 
     [username] TEXT(50) NOT NULL UNIQUE, 
     [password] TEXT(50) NOT NULL
 );)=-=");
 			}
-            q->Execute();
+            this->query_CreateTable_game_account->Execute();
         }
 
 
@@ -44,21 +43,20 @@ CREATE TABLE [game_account](
             xx::String_p const& username
         )
         {
-			auto& q = query_SelectAccountByUsername;
 
-			if (!q)
+			if (!this->query_SelectAccountByUsername)
 			{
-				q = sqlite.CreateQuery(R"=-=(
+				this->query_SelectAccountByUsername = this->sqlite.CreateQuery(R"=-=(
     select [id], [username], [password]
       from [game_account]
      where [username] = ?)=-=");
 			}
             DB::Game::Account_p rtv;
-            q->SetParameters(username);
-			q->Execute([&](xx::SQLiteReader& sr)
+            this->query_SelectAccountByUsername->SetParameters(username);
+			this->query_SelectAccountByUsername->Execute([&](xx::SQLiteReader& sr)
             {
                 assert(!rtv);
-                rtv.Create(mp);
+                this->mempool.MPCreateTo(rtv);
                 rtv->id = sr.ReadInt64(0);
                 rtv->username = mp.Create<xx::String>(sr.ReadString(1));
                 rtv->password = mp.Create<xx::String>(sr.ReadString(2));
@@ -74,21 +72,20 @@ CREATE TABLE [game_account](
             char const* const& username
         )
         {
-			auto& q = query_SelectAccountByUsername;
 
-			if (!q)
+			if (!this->query_SelectAccountByUsername)
 			{
-				q = sqlite.CreateQuery(R"=-=(
+				this->query_SelectAccountByUsername = this->sqlite.CreateQuery(R"=-=(
     select [id], [username], [password]
       from [game_account]
      where [username] = ?)=-=");
 			}
             DB::Game::Account_p rtv;
-            q->SetParameters(username);
-			q->Execute([&](xx::SQLiteReader& sr)
+            this->query_SelectAccountByUsername->SetParameters(username);
+			this->query_SelectAccountByUsername->Execute([&](xx::SQLiteReader& sr)
             {
                 assert(!rtv);
-                rtv.Create(mp);
+                this->mempool.MPCreateTo(rtv);
                 rtv->id = sr.ReadInt64(0);
                 rtv->username = mp.Create<xx::String>(sr.ReadString(1));
                 rtv->password = mp.Create<xx::String>(sr.ReadString(2));
@@ -97,16 +94,16 @@ CREATE TABLE [game_account](
         }
     };
     // 管理后台相关
-    struct SQLiteManageFuncs
+    class SQLiteManageFuncs : xx::Object
     {
+    public:
 		xx::SQLite& sqlite;
-		xx::MemPool& mp;
-		xx::SQLiteString_v s;
+		xx::SQLiteString s;
 
 		inline SQLiteManageFuncs(xx::SQLite& sqlite)
-            : sqlite(sqlite)
-            , mp(sqlite.mempool())
-            , s(mp)
+            : xx::Object(sqlite.mempool)
+            , sqlite(sqlite)
+            , s(sqlite.mempool)
         {
         }
 
@@ -114,29 +111,27 @@ CREATE TABLE [game_account](
         xx::SQLiteQuery_p query_CreateTable_manage_account;
         inline void CreateTable_manage_account()
         {
-			auto& q = query_CreateTable_manage_account;
 
-			if (!q)
+			if (!this->query_CreateTable_manage_account)
 			{
-				q = sqlite.CreateQuery(R"=-=(
+				this->query_CreateTable_manage_account = this->sqlite.CreateQuery(R"=-=(
 CREATE TABLE [manage_account](
     [id] INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE, 
     [username] TEXT(50) NOT NULL UNIQUE, 
     [password] TEXT(50) NOT NULL
 );)=-=");
 			}
-            q->Execute();
+            this->query_CreateTable_manage_account->Execute();
         }
 
 
         xx::SQLiteQuery_p query_CreateTable_manage_permission;
         inline void CreateTable_manage_permission()
         {
-			auto& q = query_CreateTable_manage_permission;
 
-			if (!q)
+			if (!this->query_CreateTable_manage_permission)
 			{
-				q = sqlite.CreateQuery(R"=-=(
+				this->query_CreateTable_manage_permission = this->sqlite.CreateQuery(R"=-=(
 CREATE TABLE [manage_permission](
     [id] INTEGER PRIMARY KEY NOT NULL UNIQUE, 
     [name] TEXT(50) NOT NULL, 
@@ -145,61 +140,58 @@ CREATE TABLE [manage_permission](
     UNIQUE([name], [group])
 );)=-=");
 			}
-            q->Execute();
+            this->query_CreateTable_manage_permission->Execute();
         }
 
 
         xx::SQLiteQuery_p query_CreateTable_manage_role;
         inline void CreateTable_manage_role()
         {
-			auto& q = query_CreateTable_manage_role;
 
-			if (!q)
+			if (!this->query_CreateTable_manage_role)
 			{
-				q = sqlite.CreateQuery(R"=-=(
+				this->query_CreateTable_manage_role = this->sqlite.CreateQuery(R"=-=(
 CREATE TABLE [manage_role](
     [id] INTEGER PRIMARY KEY NOT NULL UNIQUE, 
     [name] TEXT(50) NOT NULL UNIQUE, 
     [desc] TEXT(250) NOT NULL
 );)=-=");
 			}
-            q->Execute();
+            this->query_CreateTable_manage_role->Execute();
         }
 
 
         xx::SQLiteQuery_p query_CreateTable_manage_bind_role_permission;
         inline void CreateTable_manage_bind_role_permission()
         {
-			auto& q = query_CreateTable_manage_bind_role_permission;
 
-			if (!q)
+			if (!this->query_CreateTable_manage_bind_role_permission)
 			{
-				q = sqlite.CreateQuery(R"=-=(
+				this->query_CreateTable_manage_bind_role_permission = this->sqlite.CreateQuery(R"=-=(
 CREATE TABLE [manage_bind_role_permission](
     [role_id] INTEGER NOT NULL REFERENCES manage_role([id]), 
     [permission_id] INTEGER NOT NULL REFERENCES manage_permission([id]), 
     PRIMARY KEY([role_id], [permission_id])
 );)=-=");
 			}
-            q->Execute();
+            this->query_CreateTable_manage_bind_role_permission->Execute();
         }
 
 
         xx::SQLiteQuery_p query_CreateTable_manage_bind_account_role;
         inline void CreateTable_manage_bind_account_role()
         {
-			auto& q = query_CreateTable_manage_bind_account_role;
 
-			if (!q)
+			if (!this->query_CreateTable_manage_bind_account_role)
 			{
-				q = sqlite.CreateQuery(R"=-=(
+				this->query_CreateTable_manage_bind_account_role = this->sqlite.CreateQuery(R"=-=(
 CREATE TABLE [manage_bind_account_role](
     [account_id] INTEGER NOT NULL REFERENCES manage_account([id]), 
     [role_id] INTEGER NOT NULL REFERENCES manage_role([id]), 
     PRIMARY KEY([account_id], [role_id])
 );)=-=");
 			}
-            q->Execute();
+            this->query_CreateTable_manage_bind_account_role->Execute();
         }
 
 
@@ -211,14 +203,13 @@ CREATE TABLE [manage_bind_account_role](
             xx::String_p const& password
         )
         {
-			auto& q = query_InsertAccount;
 
-			if (!q)
+			if (!this->query_InsertAccount)
 			{
-				q = sqlite.CreateQuery(R"=-=(insert into [manage_account] ([username], [password]) values (?, ?))=-=");
+				this->query_InsertAccount = this->sqlite.CreateQuery(R"=-=(insert into [manage_account] ([username], [password]) values (?, ?))=-=");
 			}
-            q->SetParameters(username, password);
-            q->Execute();
+            this->query_InsertAccount->SetParameters(username, password);
+            this->query_InsertAccount->Execute();
         }
 
 
@@ -230,14 +221,13 @@ CREATE TABLE [manage_bind_account_role](
             char const* const& password
         )
         {
-			auto& q = query_InsertAccount;
 
-			if (!q)
+			if (!this->query_InsertAccount)
 			{
-				q = sqlite.CreateQuery(R"=-=(insert into [manage_account] ([username], [password]) values (?, ?))=-=");
+				this->query_InsertAccount = this->sqlite.CreateQuery(R"=-=(insert into [manage_account] ([username], [password]) values (?, ?))=-=");
 			}
-            q->SetParameters(username, password);
-            q->Execute();
+            this->query_InsertAccount->SetParameters(username, password);
+            this->query_InsertAccount->Execute();
         }
 
 
@@ -251,14 +241,13 @@ CREATE TABLE [manage_bind_account_role](
             xx::String_p const& desc
         )
         {
-			auto& q = query_InsertPermission;
 
-			if (!q)
+			if (!this->query_InsertPermission)
 			{
-				q = sqlite.CreateQuery(R"=-=(insert into [manage_permission] ([id], [name], [group], [desc]) values (?, ?, ?, ?))=-=");
+				this->query_InsertPermission = this->sqlite.CreateQuery(R"=-=(insert into [manage_permission] ([id], [name], [group], [desc]) values (?, ?, ?, ?))=-=");
 			}
-            q->SetParameters(id, name, group, desc);
-            q->Execute();
+            this->query_InsertPermission->SetParameters(id, name, group, desc);
+            this->query_InsertPermission->Execute();
         }
 
 
@@ -272,14 +261,13 @@ CREATE TABLE [manage_bind_account_role](
             char const* const& desc
         )
         {
-			auto& q = query_InsertPermission;
 
-			if (!q)
+			if (!this->query_InsertPermission)
 			{
-				q = sqlite.CreateQuery(R"=-=(insert into [manage_permission] ([id], [name], [group], [desc]) values (?, ?, ?, ?))=-=");
+				this->query_InsertPermission = this->sqlite.CreateQuery(R"=-=(insert into [manage_permission] ([id], [name], [group], [desc]) values (?, ?, ?, ?))=-=");
 			}
-            q->SetParameters(id, name, group, desc);
-            q->Execute();
+            this->query_InsertPermission->SetParameters(id, name, group, desc);
+            this->query_InsertPermission->Execute();
         }
 
 
@@ -292,14 +280,13 @@ CREATE TABLE [manage_bind_account_role](
             xx::String_p const& desc
         )
         {
-			auto& q = query_InsertRole;
 
-			if (!q)
+			if (!this->query_InsertRole)
 			{
-				q = sqlite.CreateQuery(R"=-=(insert into [manage_role] ([id], [name], [desc]) values (?, ?, ?))=-=");
+				this->query_InsertRole = this->sqlite.CreateQuery(R"=-=(insert into [manage_role] ([id], [name], [desc]) values (?, ?, ?))=-=");
 			}
-            q->SetParameters(id, name, desc);
-            q->Execute();
+            this->query_InsertRole->SetParameters(id, name, desc);
+            this->query_InsertRole->Execute();
         }
 
 
@@ -312,14 +299,13 @@ CREATE TABLE [manage_bind_account_role](
             char const* const& desc
         )
         {
-			auto& q = query_InsertRole;
 
-			if (!q)
+			if (!this->query_InsertRole)
 			{
-				q = sqlite.CreateQuery(R"=-=(insert into [manage_role] ([id], [name], [desc]) values (?, ?, ?))=-=");
+				this->query_InsertRole = this->sqlite.CreateQuery(R"=-=(insert into [manage_role] ([id], [name], [desc]) values (?, ?, ?))=-=");
 			}
-            q->SetParameters(id, name, desc);
-            q->Execute();
+            this->query_InsertRole->SetParameters(id, name, desc);
+            this->query_InsertRole->Execute();
         }
 
 
@@ -331,14 +317,13 @@ CREATE TABLE [manage_bind_account_role](
             int64_t const& roleId
         )
         {
-			auto& q = query_InsertBindAccountRole;
 
-			if (!q)
+			if (!this->query_InsertBindAccountRole)
 			{
-				q = sqlite.CreateQuery(R"=-=(insert into [manage_bind_account_role] ([account_id], [role_id]) values (?, ?))=-=");
+				this->query_InsertBindAccountRole = this->sqlite.CreateQuery(R"=-=(insert into [manage_bind_account_role] ([account_id], [role_id]) values (?, ?))=-=");
 			}
-            q->SetParameters(accountId, roleId);
-            q->Execute();
+            this->query_InsertBindAccountRole->SetParameters(accountId, roleId);
+            this->query_InsertBindAccountRole->Execute();
         }
 
 
@@ -350,14 +335,13 @@ CREATE TABLE [manage_bind_account_role](
             int64_t const& permissionId
         )
         {
-			auto& q = query_InsertBindRolePermission;
 
-			if (!q)
+			if (!this->query_InsertBindRolePermission)
 			{
-				q = sqlite.CreateQuery(R"=-=(insert into [manage_bind_role_permission] ([role_id], [permission_id]) values (?, ?))=-=");
+				this->query_InsertBindRolePermission = this->sqlite.CreateQuery(R"=-=(insert into [manage_bind_role_permission] ([role_id], [permission_id]) values (?, ?))=-=");
 			}
-            q->SetParameters(roleId, permissionId);
-            q->Execute();
+            this->query_InsertBindRolePermission->SetParameters(roleId, permissionId);
+            this->query_InsertBindRolePermission->Execute();
         }
 
 
@@ -369,14 +353,13 @@ CREATE TABLE [manage_bind_account_role](
             xx::String_p const& newPassword
         )
         {
-			auto& q = query_UpdateAccount_ChangePassword;
 
-			if (!q)
+			if (!this->query_UpdateAccount_ChangePassword)
 			{
-				q = sqlite.CreateQuery(R"=-=(update [manage_account] set [password] = ? where [id] = ?)=-=");
+				this->query_UpdateAccount_ChangePassword = this->sqlite.CreateQuery(R"=-=(update [manage_account] set [password] = ? where [id] = ?)=-=");
 			}
-            q->SetParameters(newPassword, id);
-            q->Execute();
+            this->query_UpdateAccount_ChangePassword->SetParameters(newPassword, id);
+            this->query_UpdateAccount_ChangePassword->Execute();
         }
 
 
@@ -388,14 +371,13 @@ CREATE TABLE [manage_bind_account_role](
             char const* const& newPassword
         )
         {
-			auto& q = query_UpdateAccount_ChangePassword;
 
-			if (!q)
+			if (!this->query_UpdateAccount_ChangePassword)
 			{
-				q = sqlite.CreateQuery(R"=-=(update [manage_account] set [password] = ? where [id] = ?)=-=");
+				this->query_UpdateAccount_ChangePassword = this->sqlite.CreateQuery(R"=-=(update [manage_account] set [password] = ? where [id] = ?)=-=");
 			}
-            q->SetParameters(newPassword, id);
-            q->Execute();
+            this->query_UpdateAccount_ChangePassword->SetParameters(newPassword, id);
+            this->query_UpdateAccount_ChangePassword->Execute();
         }
 
 
@@ -407,14 +389,13 @@ CREATE TABLE [manage_bind_account_role](
             xx::String_p const& newUsername
         )
         {
-			auto& q = query_UpdateAccount_ChangeUsername;
 
-			if (!q)
+			if (!this->query_UpdateAccount_ChangeUsername)
 			{
-				q = sqlite.CreateQuery(R"=-=(update [manage_account] set [username] = ? where [id] = ?)=-=");
+				this->query_UpdateAccount_ChangeUsername = this->sqlite.CreateQuery(R"=-=(update [manage_account] set [username] = ? where [id] = ?)=-=");
 			}
-            q->SetParameters(newUsername, id);
-            q->Execute();
+            this->query_UpdateAccount_ChangeUsername->SetParameters(newUsername, id);
+            this->query_UpdateAccount_ChangeUsername->Execute();
         }
 
 
@@ -426,14 +407,13 @@ CREATE TABLE [manage_bind_account_role](
             char const* const& newUsername
         )
         {
-			auto& q = query_UpdateAccount_ChangeUsername;
 
-			if (!q)
+			if (!this->query_UpdateAccount_ChangeUsername)
 			{
-				q = sqlite.CreateQuery(R"=-=(update [manage_account] set [username] = ? where [id] = ?)=-=");
+				this->query_UpdateAccount_ChangeUsername = this->sqlite.CreateQuery(R"=-=(update [manage_account] set [username] = ? where [id] = ?)=-=");
 			}
-            q->SetParameters(newUsername, id);
-            q->Execute();
+            this->query_UpdateAccount_ChangeUsername->SetParameters(newUsername, id);
+            this->query_UpdateAccount_ChangeUsername->Execute();
         }
 
 
@@ -446,14 +426,13 @@ CREATE TABLE [manage_bind_account_role](
             xx::String_p const& newDesc
         )
         {
-			auto& q = query_UpdateRole;
 
-			if (!q)
+			if (!this->query_UpdateRole)
 			{
-				q = sqlite.CreateQuery(R"=-=(update [manage_role] set [name] = ?, [desc] = ? where [id] = ?)=-=");
+				this->query_UpdateRole = this->sqlite.CreateQuery(R"=-=(update [manage_role] set [name] = ?, [desc] = ? where [id] = ?)=-=");
 			}
-            q->SetParameters(newName, newDesc, id);
-            q->Execute();
+            this->query_UpdateRole->SetParameters(newName, newDesc, id);
+            this->query_UpdateRole->Execute();
         }
 
 
@@ -466,14 +445,13 @@ CREATE TABLE [manage_bind_account_role](
             char const* const& newDesc
         )
         {
-			auto& q = query_UpdateRole;
 
-			if (!q)
+			if (!this->query_UpdateRole)
 			{
-				q = sqlite.CreateQuery(R"=-=(update [manage_role] set [name] = ?, [desc] = ? where [id] = ?)=-=");
+				this->query_UpdateRole = this->sqlite.CreateQuery(R"=-=(update [manage_role] set [name] = ?, [desc] = ? where [id] = ?)=-=");
 			}
-            q->SetParameters(newName, newDesc, id);
-            q->Execute();
+            this->query_UpdateRole->SetParameters(newName, newDesc, id);
+            this->query_UpdateRole->Execute();
         }
 
 
@@ -487,14 +465,13 @@ CREATE TABLE [manage_bind_account_role](
             xx::String_p const& newDesc
         )
         {
-			auto& q = query_UpdatePermission;
 
-			if (!q)
+			if (!this->query_UpdatePermission)
 			{
-				q = sqlite.CreateQuery(R"=-=(update [manage_permission] set [group] = ?, [name] = ?, [desc] = ? where [id] = ?)=-=");
+				this->query_UpdatePermission = this->sqlite.CreateQuery(R"=-=(update [manage_permission] set [group] = ?, [name] = ?, [desc] = ? where [id] = ?)=-=");
 			}
-            q->SetParameters(newGroup, newName, newDesc, id);
-            q->Execute();
+            this->query_UpdatePermission->SetParameters(newGroup, newName, newDesc, id);
+            this->query_UpdatePermission->Execute();
         }
 
 
@@ -508,14 +485,13 @@ CREATE TABLE [manage_bind_account_role](
             char const* const& newDesc
         )
         {
-			auto& q = query_UpdatePermission;
 
-			if (!q)
+			if (!this->query_UpdatePermission)
 			{
-				q = sqlite.CreateQuery(R"=-=(update [manage_permission] set [group] = ?, [name] = ?, [desc] = ? where [id] = ?)=-=");
+				this->query_UpdatePermission = this->sqlite.CreateQuery(R"=-=(update [manage_permission] set [group] = ?, [name] = ?, [desc] = ? where [id] = ?)=-=");
 			}
-            q->SetParameters(newGroup, newName, newDesc, id);
-            q->Execute();
+            this->query_UpdatePermission->SetParameters(newGroup, newName, newDesc, id);
+            this->query_UpdatePermission->Execute();
         }
 
 
@@ -526,14 +502,13 @@ CREATE TABLE [manage_bind_account_role](
             int64_t const& accountId
         )
         {
-			auto& q = query_DeleteBindAccountRoleByAccountId;
 
-			if (!q)
+			if (!this->query_DeleteBindAccountRoleByAccountId)
 			{
-				q = sqlite.CreateQuery(R"=-=(delete from [manage_bind_account_role] where [account_id] = ?)=-=");
+				this->query_DeleteBindAccountRoleByAccountId = this->sqlite.CreateQuery(R"=-=(delete from [manage_bind_account_role] where [account_id] = ?)=-=");
 			}
-            q->SetParameters(accountId);
-            q->Execute();
+            this->query_DeleteBindAccountRoleByAccountId->SetParameters(accountId);
+            this->query_DeleteBindAccountRoleByAccountId->Execute();
         }
 
 
@@ -544,14 +519,13 @@ CREATE TABLE [manage_bind_account_role](
             int64_t const& roleId
         )
         {
-			auto& q = query_DeleteBindAccountRoleByRoleId;
 
-			if (!q)
+			if (!this->query_DeleteBindAccountRoleByRoleId)
 			{
-				q = sqlite.CreateQuery(R"=-=(delete from [manage_bind_account_role] where [role_id] = ?)=-=");
+				this->query_DeleteBindAccountRoleByRoleId = this->sqlite.CreateQuery(R"=-=(delete from [manage_bind_account_role] where [role_id] = ?)=-=");
 			}
-            q->SetParameters(roleId);
-            q->Execute();
+            this->query_DeleteBindAccountRoleByRoleId->SetParameters(roleId);
+            this->query_DeleteBindAccountRoleByRoleId->Execute();
         }
 
 
@@ -562,14 +536,13 @@ CREATE TABLE [manage_bind_account_role](
             int64_t const& roleId
         )
         {
-			auto& q = query_DeleteBindRolePermissionByRoleId;
 
-			if (!q)
+			if (!this->query_DeleteBindRolePermissionByRoleId)
 			{
-				q = sqlite.CreateQuery(R"=-=(delete from [manage_bind_role_permission] where [role_id] = ?)=-=");
+				this->query_DeleteBindRolePermissionByRoleId = this->sqlite.CreateQuery(R"=-=(delete from [manage_bind_role_permission] where [role_id] = ?)=-=");
 			}
-            q->SetParameters(roleId);
-            q->Execute();
+            this->query_DeleteBindRolePermissionByRoleId->SetParameters(roleId);
+            this->query_DeleteBindRolePermissionByRoleId->Execute();
         }
 
 
@@ -580,14 +553,13 @@ CREATE TABLE [manage_bind_account_role](
             int64_t const& id
         )
         {
-			auto& q = query_DeleteAccount;
 
-			if (!q)
+			if (!this->query_DeleteAccount)
 			{
-				q = sqlite.CreateQuery(R"=-=(delete from [manage_account] where [id] = ?)=-=");
+				this->query_DeleteAccount = this->sqlite.CreateQuery(R"=-=(delete from [manage_account] where [id] = ?)=-=");
 			}
-            q->SetParameters(id);
-            q->Execute();
+            this->query_DeleteAccount->SetParameters(id);
+            this->query_DeleteAccount->Execute();
         }
 
 
@@ -598,14 +570,13 @@ CREATE TABLE [manage_bind_account_role](
             int64_t const& id
         )
         {
-			auto& q = query_DeletePermission;
 
-			if (!q)
+			if (!this->query_DeletePermission)
 			{
-				q = sqlite.CreateQuery(R"=-=(delete from [manage_permission] where [id] = ?)=-=");
+				this->query_DeletePermission = this->sqlite.CreateQuery(R"=-=(delete from [manage_permission] where [id] = ?)=-=");
 			}
-            q->SetParameters(id);
-            q->Execute();
+            this->query_DeletePermission->SetParameters(id);
+            this->query_DeletePermission->Execute();
         }
 
 
@@ -616,14 +587,13 @@ CREATE TABLE [manage_bind_account_role](
             int64_t const& id
         )
         {
-			auto& q = query_DeleteRole;
 
-			if (!q)
+			if (!this->query_DeleteRole)
 			{
-				q = sqlite.CreateQuery(R"=-=(delete from [manage_role] where [id] = ?)=-=");
+				this->query_DeleteRole = this->sqlite.CreateQuery(R"=-=(delete from [manage_role] where [id] = ?)=-=");
 			}
-            q->SetParameters(id);
-            q->Execute();
+            this->query_DeleteRole->SetParameters(id);
+            this->query_DeleteRole->Execute();
         }
 
 
@@ -631,17 +601,16 @@ CREATE TABLE [manage_bind_account_role](
         // 获取账号表所有数据
         inline xx::List_p<DB::Manage::Account_p> SelectAccounts()
         {
-			auto& q = query_SelectAccounts;
 
-			if (!q)
+			if (!this->query_SelectAccounts)
 			{
-				q = sqlite.CreateQuery(R"=-=(select [id], [username], [password] from [manage_account])=-=");
+				this->query_SelectAccounts = this->sqlite.CreateQuery(R"=-=(select [id], [username], [password] from [manage_account])=-=");
 			}
             xx::List_p<DB::Manage::Account_p> rtv;
-            rtv.Create(mp);
-			q->Execute([&](xx::SQLiteReader& sr)
+            this->mempool.MPCreateTo(rtv);
+			this->query_SelectAccounts->Execute([&](xx::SQLiteReader& sr)
             {
-				auto& r = rtv->EmplaceMP();
+				auto& r = rtv->Emplace(this->mempool);
                 r->id = sr.ReadInt64(0);
                 r->username = mp.Create<xx::String>(sr.ReadString(1));
                 r->password = mp.Create<xx::String>(sr.ReadString(2));
@@ -654,17 +623,16 @@ CREATE TABLE [manage_bind_account_role](
         // 读所有 身份 数据
         inline xx::List_p<DB::Manage::Role_p> SelectRoles()
         {
-			auto& q = query_SelectRoles;
 
-			if (!q)
+			if (!this->query_SelectRoles)
 			{
-				q = sqlite.CreateQuery(R"=-=(select [id], [name], [desc] from [manage_role])=-=");
+				this->query_SelectRoles = this->sqlite.CreateQuery(R"=-=(select [id], [name], [desc] from [manage_role])=-=");
 			}
             xx::List_p<DB::Manage::Role_p> rtv;
-            rtv.Create(mp);
-			q->Execute([&](xx::SQLiteReader& sr)
+            this->mempool.MPCreateTo(rtv);
+			this->query_SelectRoles->Execute([&](xx::SQLiteReader& sr)
             {
-				auto& r = rtv->EmplaceMP();
+				auto& r = rtv->Emplace(this->mempool);
                 r->id = sr.ReadInt32(0);
                 if (!sr.IsDBNull(0)) r->name = mp.Create<xx::String>(sr.ReadString(1));
                 if (!sr.IsDBNull(0)) r->desc = mp.Create<xx::String>(sr.ReadString(2));
@@ -677,17 +645,16 @@ CREATE TABLE [manage_bind_account_role](
         // 读所有权限数据
         inline xx::List_p<DB::Manage::Permission_p> SelectPermissions()
         {
-			auto& q = query_SelectPermissions;
 
-			if (!q)
+			if (!this->query_SelectPermissions)
 			{
-				q = sqlite.CreateQuery(R"=-=(select [id], [group], [name], [desc] from [manage_permission])=-=");
+				this->query_SelectPermissions = this->sqlite.CreateQuery(R"=-=(select [id], [group], [name], [desc] from [manage_permission])=-=");
 			}
             xx::List_p<DB::Manage::Permission_p> rtv;
-            rtv.Create(mp);
-			q->Execute([&](xx::SQLiteReader& sr)
+            this->mempool.MPCreateTo(rtv);
+			this->query_SelectPermissions->Execute([&](xx::SQLiteReader& sr)
             {
-				auto& r = rtv->EmplaceMP();
+				auto& r = rtv->Emplace(this->mempool);
                 r->id = sr.ReadInt32(0);
                 if (!sr.IsDBNull(0)) r->group = mp.Create<xx::String>(sr.ReadString(1));
                 if (!sr.IsDBNull(0)) r->name = mp.Create<xx::String>(sr.ReadString(2));
@@ -701,17 +668,16 @@ CREATE TABLE [manage_bind_account_role](
         // 读所有 身份 数据
         inline xx::List_p<DB::Manage::BindRolePermission_p> SelectBindRolePermissions()
         {
-			auto& q = query_SelectBindRolePermissions;
 
-			if (!q)
+			if (!this->query_SelectBindRolePermissions)
 			{
-				q = sqlite.CreateQuery(R"=-=(select [role_id], [permission_id] from [manage_bind_role_permission])=-=");
+				this->query_SelectBindRolePermissions = this->sqlite.CreateQuery(R"=-=(select [role_id], [permission_id] from [manage_bind_role_permission])=-=");
 			}
             xx::List_p<DB::Manage::BindRolePermission_p> rtv;
-            rtv.Create(mp);
-			q->Execute([&](xx::SQLiteReader& sr)
+            this->mempool.MPCreateTo(rtv);
+			this->query_SelectBindRolePermissions->Execute([&](xx::SQLiteReader& sr)
             {
-				auto& r = rtv->EmplaceMP();
+				auto& r = rtv->Emplace(this->mempool);
                 r->role_id = sr.ReadInt32(0);
                 r->permission_id = sr.ReadInt32(1);
             });
@@ -723,17 +689,16 @@ CREATE TABLE [manage_bind_account_role](
         // 读所有权限数据
         inline xx::List_p<DB::Manage::BindAccountRole_p> SelectBindAccountRoles()
         {
-			auto& q = query_SelectBindAccountRoles;
 
-			if (!q)
+			if (!this->query_SelectBindAccountRoles)
 			{
-				q = sqlite.CreateQuery(R"=-=(select [account_id], [role_id] from [manage_bind_account_role])=-=");
+				this->query_SelectBindAccountRoles = this->sqlite.CreateQuery(R"=-=(select [account_id], [role_id] from [manage_bind_account_role])=-=");
 			}
             xx::List_p<DB::Manage::BindAccountRole_p> rtv;
-            rtv.Create(mp);
-			q->Execute([&](xx::SQLiteReader& sr)
+            this->mempool.MPCreateTo(rtv);
+			this->query_SelectBindAccountRoles->Execute([&](xx::SQLiteReader& sr)
             {
-				auto& r = rtv->EmplaceMP();
+				auto& r = rtv->Emplace(this->mempool);
                 r->account_id = sr.ReadInt32(0);
                 r->role_id = sr.ReadInt32(1);
             });
@@ -749,17 +714,16 @@ CREATE TABLE [manage_bind_account_role](
             int64_t const& limit
         )
         {
-			auto& q = query_SelectAccountIdsBySortLimit;
 
-            s->Clear();
-            s->Append(R"=-=(select [id] from [manage_account] order by )=-=");
-            s->Append(sort);
-            s->Append(R"=-=( limit 0, )=-=");
-            s->Append(limit);
-            q = sqlite.CreateQuery(s->C_str(), s->dataLen);
+            this->s->Clear();
+            this->s->Append(R"=-=(select [id] from [manage_account] order by )=-=");
+            this->s->Append(sort);
+            this->s->Append(R"=-=( limit 0, )=-=");
+            this->s->Append(limit);
+            this->query_SelectAccountIdsBySortLimit = sqlite.CreateQuery(s->C_str(), s->dataLen);
             xx::List_p<int64_t> rtv;
-            rtv.Create(mp);
-            q->Execute([&](xx::SQLiteReader& sr)
+            this->mempool.MPCreateTo(rtv);
+            this->query_SelectAccountIdsBySortLimit->Execute([&](xx::SQLiteReader& sr)
             {
 				rtv->Add(sr.ReadInt64(0));
             });
@@ -775,17 +739,16 @@ CREATE TABLE [manage_bind_account_role](
             int64_t const& limit
         )
         {
-			auto& q = query_SelectAccountIdsBySortLimit;
 
-            s->Clear();
-            s->Append(R"=-=(select [id] from [manage_account] order by )=-=");
-            s->Append(sort);
-            s->Append(R"=-=( limit 0, )=-=");
-            s->Append(limit);
-            q = sqlite.CreateQuery(s->C_str(), s->dataLen);
+            this->s->Clear();
+            this->s->Append(R"=-=(select [id] from [manage_account] order by )=-=");
+            this->s->Append(sort);
+            this->s->Append(R"=-=( limit 0, )=-=");
+            this->s->Append(limit);
+            this->query_SelectAccountIdsBySortLimit = sqlite.CreateQuery(s->C_str(), s->dataLen);
             xx::List_p<int64_t> rtv;
-            rtv.Create(mp);
-            q->Execute([&](xx::SQLiteReader& sr)
+            this->mempool.MPCreateTo(rtv);
+            this->query_SelectAccountIdsBySortLimit->Execute([&](xx::SQLiteReader& sr)
             {
 				rtv->Add(sr.ReadInt64(0));
             });
@@ -800,17 +763,16 @@ CREATE TABLE [manage_bind_account_role](
             xx::List_p<int64_t> const& ids
         )
         {
-			auto& q = query_SelectAccountsByIds;
 
-            s->Clear();
-            s->Append(R"=-=(select [id], [username], '' from [manage_account] where [id] in )=-=");
-            s->SQLAppend(ids);
-            q = sqlite.CreateQuery(s->C_str(), s->dataLen);
+            this->s->Clear();
+            this->s->Append(R"=-=(select [id], [username], '' from [manage_account] where [id] in )=-=");
+            this->s->SQLAppend(ids);
+            this->query_SelectAccountsByIds = sqlite.CreateQuery(s->C_str(), s->dataLen);
             xx::List_p<DB::Manage::Account_p> rtv;
-            rtv.Create(mp);
-			q->Execute([&](xx::SQLiteReader& sr)
+            this->mempool.MPCreateTo(rtv);
+			this->query_SelectAccountsByIds->Execute([&](xx::SQLiteReader& sr)
             {
-				auto& r = rtv->EmplaceMP();
+				auto& r = rtv->Emplace(this->mempool);
                 r->id = sr.ReadInt64(0);
                 r->username = mp.Create<xx::String>(sr.ReadString(1));
                 r->password = mp.Create<xx::String>(sr.ReadString(2));
@@ -826,18 +788,17 @@ CREATE TABLE [manage_bind_account_role](
             xx::String_p const& username
         )
         {
-			auto& q = query_SelectAccountByUsername;
 
-			if (!q)
+			if (!this->query_SelectAccountByUsername)
 			{
-				q = sqlite.CreateQuery(R"=-=(select [id], [username], [password] from [manage_account] where [username] = ?)=-=");
+				this->query_SelectAccountByUsername = this->sqlite.CreateQuery(R"=-=(select [id], [username], [password] from [manage_account] where [username] = ?)=-=");
 			}
             DB::Manage::Account_p rtv;
-            q->SetParameters(username);
-			q->Execute([&](xx::SQLiteReader& sr)
+            this->query_SelectAccountByUsername->SetParameters(username);
+			this->query_SelectAccountByUsername->Execute([&](xx::SQLiteReader& sr)
             {
                 assert(!rtv);
-                rtv.Create(mp);
+                this->mempool.MPCreateTo(rtv);
                 rtv->id = sr.ReadInt64(0);
                 rtv->username = mp.Create<xx::String>(sr.ReadString(1));
                 rtv->password = mp.Create<xx::String>(sr.ReadString(2));
@@ -853,18 +814,17 @@ CREATE TABLE [manage_bind_account_role](
             char const* const& username
         )
         {
-			auto& q = query_SelectAccountByUsername;
 
-			if (!q)
+			if (!this->query_SelectAccountByUsername)
 			{
-				q = sqlite.CreateQuery(R"=-=(select [id], [username], [password] from [manage_account] where [username] = ?)=-=");
+				this->query_SelectAccountByUsername = this->sqlite.CreateQuery(R"=-=(select [id], [username], [password] from [manage_account] where [username] = ?)=-=");
 			}
             DB::Manage::Account_p rtv;
-            q->SetParameters(username);
-			q->Execute([&](xx::SQLiteReader& sr)
+            this->query_SelectAccountByUsername->SetParameters(username);
+			this->query_SelectAccountByUsername->Execute([&](xx::SQLiteReader& sr)
             {
                 assert(!rtv);
-                rtv.Create(mp);
+                this->mempool.MPCreateTo(rtv);
                 rtv->id = sr.ReadInt64(0);
                 rtv->username = mp.Create<xx::String>(sr.ReadString(1));
                 rtv->password = mp.Create<xx::String>(sr.ReadString(2));
@@ -880,11 +840,10 @@ CREATE TABLE [manage_bind_account_role](
             int64_t const& accountId
         )
         {
-			auto& q = query_SelectPermissionIdsByAccountId;
 
-			if (!q)
+			if (!this->query_SelectPermissionIdsByAccountId)
 			{
-				q = sqlite.CreateQuery(R"=-=(
+				this->query_SelectPermissionIdsByAccountId = this->sqlite.CreateQuery(R"=-=(
 select distinct b.[permission_id]
   from [manage_bind_account_role] a
   join [manage_bind_role_permission] b
@@ -892,9 +851,9 @@ select distinct b.[permission_id]
  where a.[account_id] = ?;)=-=");
 			}
             xx::List_p<int64_t> rtv;
-            rtv.Create(mp);
-            q->SetParameters(accountId);
-            q->Execute([&](xx::SQLiteReader& sr)
+            this->mempool.MPCreateTo(rtv);
+            this->query_SelectPermissionIdsByAccountId->SetParameters(accountId);
+            this->query_SelectPermissionIdsByAccountId->Execute([&](xx::SQLiteReader& sr)
             {
 				rtv->Add(sr.ReadInt64(0));
             });
@@ -909,19 +868,18 @@ select distinct b.[permission_id]
             int64_t const& accountId
         )
         {
-			auto& q = query_SelectRoleIdsByAccountId;
 
-			if (!q)
+			if (!this->query_SelectRoleIdsByAccountId)
 			{
-				q = sqlite.CreateQuery(R"=-=(
+				this->query_SelectRoleIdsByAccountId = this->sqlite.CreateQuery(R"=-=(
 select [role_id]
   from [manage_bind_account_role]
  where [account_id] = ?;)=-=");
 			}
             xx::List_p<int64_t> rtv;
-            rtv.Create(mp);
-            q->SetParameters(accountId);
-            q->Execute([&](xx::SQLiteReader& sr)
+            this->mempool.MPCreateTo(rtv);
+            this->query_SelectRoleIdsByAccountId->SetParameters(accountId);
+            this->query_SelectRoleIdsByAccountId->Execute([&](xx::SQLiteReader& sr)
             {
 				rtv->Add(sr.ReadInt64(0));
             });

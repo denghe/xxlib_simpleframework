@@ -1,50 +1,52 @@
 ﻿#pragma once
-#include <xx_bbuffer.h>
+#include "xx.h"
 #include <optional>
+
 
 namespace DB
 {
 namespace Game
 {
     // 对应 game_account 账号表
-    struct Account;
+    class Account;
     using Account_p = xx::Ptr<Account>;
-	using Account_v = xx::Dock<Account>;
+	using Account_r = xx::Ref<Account>;
 
 }
 namespace Manage
 {
     // 对应 manage_account 账号表
-    struct Account;
+    class Account;
     using Account_p = xx::Ptr<Account>;
-	using Account_v = xx::Dock<Account>;
+	using Account_r = xx::Ref<Account>;
 
     // 对应 manage_role 身份表
-    struct Role;
+    class Role;
     using Role_p = xx::Ptr<Role>;
-	using Role_v = xx::Dock<Role>;
+	using Role_r = xx::Ref<Role>;
 
     // 对应 manage_permission 权限表
-    struct Permission;
+    class Permission;
     using Permission_p = xx::Ptr<Permission>;
-	using Permission_v = xx::Dock<Permission>;
+	using Permission_r = xx::Ref<Permission>;
 
     // 对应 manage_bind_account_role 管理人员 & 身份 绑定表
-    struct BindAccountRole;
+    class BindAccountRole;
     using BindAccountRole_p = xx::Ptr<BindAccountRole>;
-	using BindAccountRole_v = xx::Dock<BindAccountRole>;
+	using BindAccountRole_r = xx::Ref<BindAccountRole>;
 
     // 对应 manage_bind_role_permission 身份 & 权限 绑定表
-    struct BindRolePermission;
+    class BindRolePermission;
     using BindRolePermission_p = xx::Ptr<BindRolePermission>;
-	using BindRolePermission_v = xx::Dock<BindRolePermission>;
+	using BindRolePermission_r = xx::Ref<BindRolePermission>;
 
 }
 namespace Game
 {
     // 对应 game_account 账号表
-    struct Account : xx::Object
+    class Account : public xx::Object
     {
+    public:
         // 自增主键
         int64_t id = 0;
         // 用户名( 唯一索引 )
@@ -57,8 +59,8 @@ namespace Game
 	    Account();
 		Account(Account const&) = delete;
 		Account& operator=(Account const&) = delete;
-        virtual void ToString(xx::String &str) const override;
-        virtual void ToStringCore(xx::String &str) const override;
+        virtual void ToString(xx::String &s) const override;
+        virtual void ToStringCore(xx::String &s) const override;
     };
 
 
@@ -66,8 +68,9 @@ namespace Game
 namespace Manage
 {
     // 对应 manage_account 账号表
-    struct Account : xx::Object
+    class Account : public xx::Object
     {
+    public:
         // 自增主键
         int64_t id = 0;
         // 用户名( 唯一索引 )
@@ -80,14 +83,15 @@ namespace Manage
 	    Account();
 		Account(Account const&) = delete;
 		Account& operator=(Account const&) = delete;
-        virtual void ToString(xx::String &str) const override;
-        virtual void ToStringCore(xx::String &str) const override;
+        virtual void ToString(xx::String &s) const override;
+        virtual void ToStringCore(xx::String &s) const override;
     };
 
 
     // 对应 manage_role 身份表
-    struct Role : xx::Object
+    class Role : public xx::Object
     {
+    public:
         // 主键
         int32_t id = 0;
         // 身份名
@@ -100,14 +104,15 @@ namespace Manage
 	    Role();
 		Role(Role const&) = delete;
 		Role& operator=(Role const&) = delete;
-        virtual void ToString(xx::String &str) const override;
-        virtual void ToStringCore(xx::String &str) const override;
+        virtual void ToString(xx::String &s) const override;
+        virtual void ToStringCore(xx::String &s) const override;
     };
 
 
     // 对应 manage_permission 权限表
-    struct Permission : xx::Object
+    class Permission : public xx::Object
     {
+    public:
         // 主键
         int32_t id = 0;
         // 分组依据( 仅用于显示 )
@@ -122,14 +127,15 @@ namespace Manage
 	    Permission();
 		Permission(Permission const&) = delete;
 		Permission& operator=(Permission const&) = delete;
-        virtual void ToString(xx::String &str) const override;
-        virtual void ToStringCore(xx::String &str) const override;
+        virtual void ToString(xx::String &s) const override;
+        virtual void ToStringCore(xx::String &s) const override;
     };
 
 
     // 对应 manage_bind_account_role 管理人员 & 身份 绑定表
-    struct BindAccountRole : xx::Object
+    class BindAccountRole : public xx::Object
     {
+    public:
         // 管理人员主键
         int32_t account_id = 0;
         // 身份主键
@@ -140,14 +146,15 @@ namespace Manage
 	    BindAccountRole();
 		BindAccountRole(BindAccountRole const&) = delete;
 		BindAccountRole& operator=(BindAccountRole const&) = delete;
-        virtual void ToString(xx::String &str) const override;
-        virtual void ToStringCore(xx::String &str) const override;
+        virtual void ToString(xx::String &s) const override;
+        virtual void ToStringCore(xx::String &s) const override;
     };
 
 
     // 对应 manage_bind_role_permission 身份 & 权限 绑定表
-    struct BindRolePermission : xx::Object
+    class BindRolePermission : public xx::Object
     {
+    public:
         // 身份主键
         int32_t role_id = 0;
         // 权限主键
@@ -158,8 +165,8 @@ namespace Manage
 	    BindRolePermission();
 		BindRolePermission(BindRolePermission const&) = delete;
 		BindRolePermission& operator=(BindRolePermission const&) = delete;
-        virtual void ToString(xx::String &str) const override;
-        virtual void ToStringCore(xx::String &str) const override;
+        virtual void ToString(xx::String &s) const override;
+        virtual void ToStringCore(xx::String &s) const override;
     };
 
 
@@ -170,27 +177,29 @@ namespace Game
 	{
 	}
 
-    inline void Account::ToString(xx::String &str) const
+    inline void Account::ToString(xx::String &s) const
     {
-        if (tsFlags())
+        if (memHeader().flags)
         {
-        	str.Append("[ \"***** recursived *****\" ]");
+        	s.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else tsFlags() = 1;
+        else memHeader().flags = 1;
 
-        str.Append("{ \"type\" : \"Account\"");
-        ToStringCore(str);
-        str.Append(" }");
+        s.Append("{ \"type\" : \"Account\"");
+        ToStringCore(s);
+        s.Append(" }");
         
-        tsFlags() = 0;
+        memHeader().flags = 0;
     }
-    inline void Account::ToStringCore(xx::String &str) const
+    inline void Account::ToStringCore(xx::String &s) const
     {
-        this->BaseType::ToStringCore(str);
+        this->BaseType::ToStringCore(s);
         str.Append(", \"id\" : ", this->id);
-        str.Append(", \"username\" : ", this->username);
-        str.Append(", \"password\" : ", this->password);
+        if (this->username) str.Append(", \"username\" : \"", this->username, "\"");
+        else str.Append(", \"username\" : nil");
+        if (this->password) str.Append(", \"password\" : \"", this->password, "\"");
+        else str.Append(", \"password\" : nil");
     }
 }
 namespace Manage
@@ -199,103 +208,110 @@ namespace Manage
 	{
 	}
 
-    inline void Account::ToString(xx::String &str) const
+    inline void Account::ToString(xx::String &s) const
     {
-        if (tsFlags())
+        if (memHeader().flags)
         {
-        	str.Append("[ \"***** recursived *****\" ]");
+        	s.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else tsFlags() = 1;
+        else memHeader().flags = 1;
 
-        str.Append("{ \"type\" : \"Account\"");
-        ToStringCore(str);
-        str.Append(" }");
+        s.Append("{ \"type\" : \"Account\"");
+        ToStringCore(s);
+        s.Append(" }");
         
-        tsFlags() = 0;
+        memHeader().flags = 0;
     }
-    inline void Account::ToStringCore(xx::String &str) const
+    inline void Account::ToStringCore(xx::String &s) const
     {
-        this->BaseType::ToStringCore(str);
+        this->BaseType::ToStringCore(s);
         str.Append(", \"id\" : ", this->id);
-        str.Append(", \"username\" : ", this->username);
-        str.Append(", \"password\" : ", this->password);
+        if (this->username) str.Append(", \"username\" : \"", this->username, "\"");
+        else str.Append(", \"username\" : nil");
+        if (this->password) str.Append(", \"password\" : \"", this->password, "\"");
+        else str.Append(", \"password\" : nil");
     }
 	inline Role::Role()
 	{
 	}
 
-    inline void Role::ToString(xx::String &str) const
+    inline void Role::ToString(xx::String &s) const
     {
-        if (tsFlags())
+        if (memHeader().flags)
         {
-        	str.Append("[ \"***** recursived *****\" ]");
+        	s.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else tsFlags() = 1;
+        else memHeader().flags = 1;
 
-        str.Append("{ \"type\" : \"Role\"");
-        ToStringCore(str);
-        str.Append(" }");
+        s.Append("{ \"type\" : \"Role\"");
+        ToStringCore(s);
+        s.Append(" }");
         
-        tsFlags() = 0;
+        memHeader().flags = 0;
     }
-    inline void Role::ToStringCore(xx::String &str) const
+    inline void Role::ToStringCore(xx::String &s) const
     {
-        this->BaseType::ToStringCore(str);
+        this->BaseType::ToStringCore(s);
         str.Append(", \"id\" : ", this->id);
-        str.Append(", \"name\" : ", this->name);
-        str.Append(", \"desc\" : ", this->desc);
+        if (this->name) str.Append(", \"name\" : \"", this->name, "\"");
+        else str.Append(", \"name\" : nil");
+        if (this->desc) str.Append(", \"desc\" : \"", this->desc, "\"");
+        else str.Append(", \"desc\" : nil");
     }
 	inline Permission::Permission()
 	{
 	}
 
-    inline void Permission::ToString(xx::String &str) const
+    inline void Permission::ToString(xx::String &s) const
     {
-        if (tsFlags())
+        if (memHeader().flags)
         {
-        	str.Append("[ \"***** recursived *****\" ]");
+        	s.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else tsFlags() = 1;
+        else memHeader().flags = 1;
 
-        str.Append("{ \"type\" : \"Permission\"");
-        ToStringCore(str);
-        str.Append(" }");
+        s.Append("{ \"type\" : \"Permission\"");
+        ToStringCore(s);
+        s.Append(" }");
         
-        tsFlags() = 0;
+        memHeader().flags = 0;
     }
-    inline void Permission::ToStringCore(xx::String &str) const
+    inline void Permission::ToStringCore(xx::String &s) const
     {
-        this->BaseType::ToStringCore(str);
+        this->BaseType::ToStringCore(s);
         str.Append(", \"id\" : ", this->id);
-        str.Append(", \"group\" : ", this->group);
-        str.Append(", \"name\" : ", this->name);
-        str.Append(", \"desc\" : ", this->desc);
+        if (this->group) str.Append(", \"group\" : \"", this->group, "\"");
+        else str.Append(", \"group\" : nil");
+        if (this->name) str.Append(", \"name\" : \"", this->name, "\"");
+        else str.Append(", \"name\" : nil");
+        if (this->desc) str.Append(", \"desc\" : \"", this->desc, "\"");
+        else str.Append(", \"desc\" : nil");
     }
 	inline BindAccountRole::BindAccountRole()
 	{
 	}
 
-    inline void BindAccountRole::ToString(xx::String &str) const
+    inline void BindAccountRole::ToString(xx::String &s) const
     {
-        if (tsFlags())
+        if (memHeader().flags)
         {
-        	str.Append("[ \"***** recursived *****\" ]");
+        	s.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else tsFlags() = 1;
+        else memHeader().flags = 1;
 
-        str.Append("{ \"type\" : \"BindAccountRole\"");
-        ToStringCore(str);
-        str.Append(" }");
+        s.Append("{ \"type\" : \"BindAccountRole\"");
+        ToStringCore(s);
+        s.Append(" }");
         
-        tsFlags() = 0;
+        memHeader().flags = 0;
     }
-    inline void BindAccountRole::ToStringCore(xx::String &str) const
+    inline void BindAccountRole::ToStringCore(xx::String &s) const
     {
-        this->BaseType::ToStringCore(str);
+        this->BaseType::ToStringCore(s);
         str.Append(", \"account_id\" : ", this->account_id);
         str.Append(", \"role_id\" : ", this->role_id);
     }
@@ -303,63 +319,26 @@ namespace Manage
 	{
 	}
 
-    inline void BindRolePermission::ToString(xx::String &str) const
+    inline void BindRolePermission::ToString(xx::String &s) const
     {
-        if (tsFlags())
+        if (memHeader().flags)
         {
-        	str.Append("[ \"***** recursived *****\" ]");
+        	s.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else tsFlags() = 1;
+        else memHeader().flags = 1;
 
-        str.Append("{ \"type\" : \"BindRolePermission\"");
-        ToStringCore(str);
-        str.Append(" }");
+        s.Append("{ \"type\" : \"BindRolePermission\"");
+        ToStringCore(s);
+        s.Append(" }");
         
-        tsFlags() = 0;
+        memHeader().flags = 0;
     }
-    inline void BindRolePermission::ToStringCore(xx::String &str) const
+    inline void BindRolePermission::ToStringCore(xx::String &s) const
     {
-        this->BaseType::ToStringCore(str);
+        this->BaseType::ToStringCore(s);
         str.Append(", \"role_id\" : ", this->role_id);
         str.Append(", \"permission_id\" : ", this->permission_id);
     }
 }
-}
-namespace xx
-{
-	template<>
-	struct MemmoveSupport<DB::Game::Account_v>
-	{
-		static const bool value = true;
-    };
-	template<>
-	struct MemmoveSupport<DB::Manage::Account_v>
-	{
-		static const bool value = true;
-    };
-	template<>
-	struct MemmoveSupport<DB::Manage::Role_v>
-	{
-		static const bool value = true;
-    };
-	template<>
-	struct MemmoveSupport<DB::Manage::Permission_v>
-	{
-		static const bool value = true;
-    };
-	template<>
-	struct MemmoveSupport<DB::Manage::BindAccountRole_v>
-	{
-		static const bool value = true;
-    };
-	template<>
-	struct MemmoveSupport<DB::Manage::BindRolePermission_v>
-	{
-		static const bool value = true;
-    };
-}
-
-namespace xx
-{
 }

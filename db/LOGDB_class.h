@@ -1,13 +1,14 @@
 ﻿#pragma once
-#include <xx_bbuffer.h>
+#include "xx.h"
 #include <optional>
+
 
 namespace LOGDB
 {
     // 对应 log 日志表
-    struct Log;
+    class Log;
     using Log_p = xx::Ptr<Log>;
-	using Log_v = xx::Dock<Log>;
+	using Log_r = xx::Ref<Log>;
 
     // 日志级别
     enum class Level : int32_t
@@ -21,8 +22,9 @@ namespace LOGDB
         All = 6,
     };
     // 对应 log 日志表
-    struct Log : xx::Object
+    class Log : public xx::Object
     {
+    public:
         // 自增主键
         int64_t id = 0;
         // 日志级别
@@ -47,8 +49,8 @@ namespace LOGDB
 	    Log();
 		Log(Log const&) = delete;
 		Log& operator=(Log const&) = delete;
-        virtual void ToString(xx::String &str) const override;
-        virtual void ToStringCore(xx::String &str) const override;
+        virtual void ToString(xx::String &s) const override;
+        virtual void ToStringCore(xx::String &s) const override;
     };
 
 
@@ -56,44 +58,37 @@ namespace LOGDB
 	{
 	}
 
-    inline void Log::ToString(xx::String &str) const
+    inline void Log::ToString(xx::String &s) const
     {
-        if (tsFlags())
+        if (memHeader().flags)
         {
-        	str.Append("[ \"***** recursived *****\" ]");
+        	s.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else tsFlags() = 1;
+        else memHeader().flags = 1;
 
-        str.Append("{ \"type\" : \"Log\"");
-        ToStringCore(str);
-        str.Append(" }");
+        s.Append("{ \"type\" : \"Log\"");
+        ToStringCore(s);
+        s.Append(" }");
         
-        tsFlags() = 0;
+        memHeader().flags = 0;
     }
-    inline void Log::ToStringCore(xx::String &str) const
+    inline void Log::ToStringCore(xx::String &s) const
     {
-        this->BaseType::ToStringCore(str);
+        this->BaseType::ToStringCore(s);
         str.Append(", \"id\" : ", this->id);
         str.Append(", \"level\" : ", this->level);
         str.Append(", \"time\" : ", this->time);
-        str.Append(", \"machine\" : ", this->machine);
-        str.Append(", \"service\" : ", this->service);
-        str.Append(", \"instanceId\" : ", this->instanceId);
-        str.Append(", \"title\" : ", this->title);
+        if (this->machine) str.Append(", \"machine\" : \"", this->machine, "\"");
+        else str.Append(", \"machine\" : nil");
+        if (this->service) str.Append(", \"service\" : \"", this->service, "\"");
+        else str.Append(", \"service\" : nil");
+        if (this->instanceId) str.Append(", \"instanceId\" : \"", this->instanceId, "\"");
+        else str.Append(", \"instanceId\" : nil");
+        if (this->title) str.Append(", \"title\" : \"", this->title, "\"");
+        else str.Append(", \"title\" : nil");
         str.Append(", \"opcode\" : ", this->opcode);
-        str.Append(", \"desc\" : ", this->desc);
+        if (this->desc) str.Append(", \"desc\" : \"", this->desc, "\"");
+        else str.Append(", \"desc\" : nil");
     }
-}
-namespace xx
-{
-	template<>
-	struct MemmoveSupport<LOGDB::Log_v>
-	{
-		static const bool value = true;
-    };
-}
-
-namespace xx
-{
 }

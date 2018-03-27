@@ -36,16 +36,16 @@ namespace " + iface.Namespace + @"
 
             // struct {
             sb.Append(iface._GetDesc()._GetComment_Cpp(4) + @"
-    struct " + iface.Name + @"
+    class " + iface.Name + @" : xx::Object
     {
+    public:
 		xx::SQLite& sqlite;
-		xx::MemPool& mp;
-		xx::SQLiteString_v s;
+		xx::SQLiteString s;
 
 		inline " + iface.Name + @"(xx::SQLite& sqlite)
-            : sqlite(sqlite)
-            , mp(sqlite.mempool())
-            , s(mp)
+            : xx::Object(sqlite.mempool)
+            , sqlite(sqlite)
+            , s(sqlite.mempool)
         {
         }");
             //int recordsAffected // todo
@@ -102,7 +102,6 @@ namespace " + iface.Namespace + @"
                 }
                 sb2.Append(@")
         {
-			auto& q = query_" + fn + @";
 ");
                 // recordsAffecteds.Clear();
 
@@ -133,13 +132,13 @@ namespace " + iface.Namespace + @"
                 if (needSqlAppend)
                 {
                     sb2.Append(@"
-            s->Clear();");
+            this->s->Clear();");
                     foreach (var o in sqls)
                     {
                         if (o is string)
                         {
                             sb2.Append(@"
-            s->Append(R""=-=(" + o + @")=-="");");
+            this->s->Append(R""=-=(" + o + @")=-="");");
                         }
                         else
                         {
@@ -147,18 +146,18 @@ namespace " + iface.Namespace + @"
                             var pn = p.Name;
                             var pt = p.ParameterType;
                             sb2.Append(@"
-            s->" + (p._Has<Literal>() ? "" : "SQL") + "Append(" + pn + @");");
+            this->s->" + (p._Has<Literal>() ? "" : "SQL") + "Append(" + pn + @");");
                         }
                     }
                     sb2.Append(@"
-            q = sqlite.CreateQuery(s->C_str(), s->dataLen);");
+            this->query_" + fn + @" = sqlite.CreateQuery(s->C_str(), s->dataLen);");
                 }
                 else
                 {
                     sb2.Append(@"
-			if (!q)
+			if (!this->query_" + fn + @")
 			{
-				q = sqlite.CreateQuery(R""=-=(" + sqlcombine + @")=-="");
+				this->query_" + fn + @" = this->sqlite.CreateQuery(R""=-=(" + sqlcombine + @")=-="");
 			}");
                 }
                 if (rtn == "void")
@@ -169,13 +168,13 @@ namespace " + iface.Namespace + @"
                     sb2.Append(@"
             " + rtn + @" rtv;");
                     if (rt._IsList()) sb2.Append(@"
-            rtv.Create(mp);");
+            this->mempool.MPCreateTo(rtv);");
                 }
 
                 if (ps.Where(p => !p.ParameterType._IsList() && !p._Has<Literal>()).Count() > 0)
                 {
                     sb2.Append(@"
-            q->SetParameters(");
+            this->query_" + fn + @"->SetParameters(");
                     foreach (var o in sqls)
                     {
                         if (o is string) continue;
@@ -204,9 +203,9 @@ namespace " + iface.Namespace + @"
                     if (ct._IsUserClass())
                     {
                         sb2.Append(@"
-			q->Execute([&](xx::SQLiteReader& sr)
+			this->query_" + fn + @"->Execute([&](xx::SQLiteReader& sr)
             {
-				auto& r = rtv->EmplaceMP();");
+				auto& r = rtv->Emplace(this->mempool);");
                         var ctfs = ct._GetFields();
                         if (ctfs.Count() == 0)
                             throw new Exception("the class's fields can't be empty");
@@ -226,7 +225,7 @@ namespace " + iface.Namespace + @"
                     else
                     {
                         sb2.Append(@"
-            q->Execute([&](xx::SQLiteReader& sr)
+            this->query_" + fn + @"->Execute([&](xx::SQLiteReader& sr)
             {
 				" + (ct._IsSqlNullable() ? @"if (sr.IsDBNull(0)) rtv->Emplace();
                 else " : "") + @"rtv->Add(" + ct._GetDataReaderFuncName_Cpp(0) + @");");
@@ -242,7 +241,7 @@ namespace " + iface.Namespace + @"
                     {
                         // 无返回值
                         sb2.Append(@"
-            q->Execute();");
+            this->query_" + fn + @"->Execute();");
                     }
                     // 用户类
                     else if (rt._IsUserClass())
@@ -252,10 +251,10 @@ namespace " + iface.Namespace + @"
                             throw new Exception("the class's fields can't be empty");
 
                         sb2.Append(@"
-			q->Execute([&](xx::SQLiteReader& sr)
+			this->query_" + fn + @"->Execute([&](xx::SQLiteReader& sr)
             {
                 assert(!rtv);
-                rtv.Create(mp);");
+                this->mempool.MPCreateTo(rtv);");
                         for (int i = 0; i < rtfs.Count; ++i)
                         {
                             var m = rtfs[i];
@@ -274,7 +273,7 @@ namespace " + iface.Namespace + @"
                     else
                     {
                         sb2.Append(@"
-            q->Execute([&](xx::SQLiteReader& sr)
+            this->query_" + fn + @"->Execute([&](xx::SQLiteReader& sr)
             {");
                         sb2.Append(@"
                 " + (rt._IsSqlNullable() ? "if (!sr.IsDBNull(0)) " : "") + "rtv = " + rt._GetDataReaderFuncName_Cpp(0) + @";");

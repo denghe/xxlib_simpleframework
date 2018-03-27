@@ -13,6 +13,8 @@ public static class GenCPP_Class
 
         // template namespace
         sb.Append(@"
+#include ""xx.h""
+
 namespace " + templateName + @"
 {
 	struct PkgGenMd5

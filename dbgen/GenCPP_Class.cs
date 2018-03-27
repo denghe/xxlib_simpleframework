@@ -13,8 +13,9 @@ public static class GenCPP_Class
 
         // usings
         sb.Append(@"#pragma once
-#include <xx_bbuffer.h>
+#include ""xx.h""
 #include <optional>
+
 ");
 
         // template namespace
@@ -39,12 +40,11 @@ namespace " + c.Namespace + @"
 {");
             }
 
-            // desc
-            // enum class xxxxxxxxx : underlyingType
+            // 预声明
             sb.Append(c._GetDesc()._GetComment_Cpp(4) + @"
-    struct " + c.Name + @";
+    " + (c.IsValueType ? "struct" : "class") + @" " + c.Name + @";
     using " + c.Name + @"_p = xx::Ptr<" + c.Name + @">;
-	using " + c.Name + @"_v = xx::Dock<" + c.Name + @">;
+	using " + c.Name + @"_r = xx::Ref<" + c.Name + @">;
 ");
 
             // namespace }
@@ -179,8 +179,9 @@ namespace " + c.Namespace + @"
             // constexpr T xxxxxxxxx = defaultValue
 
             sb.Append(c._GetDesc()._GetComment_Cpp(4) + @"
-    struct " + c.Name + @" : " + btn + @"
-    {");
+    class " + c.Name + @" : public " + btn + @"
+    {
+    public:");
 
             // consts( static ) / fields
             var fs = c._GetFieldsConsts();
@@ -210,8 +211,8 @@ namespace " + c.Namespace + @"
 	    " + c.Name + @"();
 		" + c.Name + @"(" + c.Name + @" const&) = delete;
 		" + c.Name + @"& operator=(" + c.Name + @" const&) = delete;
-        virtual void ToString(xx::String &str) const override;
-        virtual void ToStringCore(xx::String &str) const override;
+        virtual void ToString(xx::String &s) const override;
+        virtual void ToStringCore(xx::String &s) const override;
     };
 
 ");   // class }
@@ -253,53 +254,42 @@ namespace " + c.Namespace + @"
         " + (dot ? "." : ":") + " " + btn + @"()");
                 dot = true;
             }
-            var fs = c._GetFields();
-            //    foreach (var f in fs)
-            //    {
-            //        var ft = f.FieldType;
-            //        if (f._Has<TemplateLibrary.CreateInstance>() || ft._IsString())
-            //        {
-            //            var v = f.GetValue(f.IsStatic ? null : o);
-            //            var dv = v._GetDefaultValueDecl_Cpp(templateName);
-            //            if (dv != "nullptr" && ft._IsString())
-            //            {
-            //                sb.Append(@"
-            //" + (dot ? "," : ":") + " " + f.Name + "(mempool(), " + dv + ")");
-            //            }
-            //            else if (f._Has<TemplateLibrary.CreateInstance>())
-            //            {
-            //                sb.Append(@"
-            //" + (dot ? "," : ":") + " " + f.Name + "(mempool())");
-            //            }
-            //            dot = true;
-            //        }
-            //    }
             sb.Append(@"
 	{
 	}
 
-    inline void " + c.Name + @"::ToString(xx::String &str) const
+    inline void " + c.Name + @"::ToString(xx::String &s) const
     {
-        if (tsFlags())
+        if (memHeader().flags)
         {
-        	str.Append(""[ \""***** recursived *****\"" ]"");
+        	s.Append(""[ \""***** recursived *****\"" ]"");
         	return;
         }
-        else tsFlags() = 1;
+        else memHeader().flags = 1;
 
-        str.Append(""{ \""type\"" : \""" + c.Name + @"\"""");
-        ToStringCore(str);
-        str.Append("" }"");
+        s.Append(""{ \""type\"" : \""" + c.Name + @"\"""");
+        ToStringCore(s);
+        s.Append("" }"");
         
-        tsFlags() = 0;
+        memHeader().flags = 0;
     }
-    inline void " + c.Name + @"::ToStringCore(xx::String &str) const
+    inline void " + c.Name + @"::ToStringCore(xx::String &s) const
     {
-        this->BaseType::ToStringCore(str);");
+        this->BaseType::ToStringCore(s);");
+            var fs = c._GetFields();
             foreach (var f in fs)
             {
-                sb.Append(@"
+                if (f.FieldType._IsString())
+                {
+                    sb.Append(@"
+        if (this->" + f.Name + @") str.Append("", \""" + f.Name + @"\"" : \"""", this->" + f.Name + @", ""\"""");
+        else str.Append("", \""" + f.Name + @"\"" : nil"");");
+                }
+                else
+                {
+                    sb.Append(@"
         str.Append("", \""" + f.Name + @"\"" : "", this->" + f.Name + @");");
+                }
             }
             sb.Append(@"
     }");
@@ -316,67 +306,39 @@ namespace " + c.Namespace + @"
         sb.Append(@"
 }");
 
-
-        // MemmoveSupport 适配
-        sb.Append(@"
-namespace xx
-{");
-        cs = ts._GetClasss();
-        foreach (var c in cs)
-        {
-            var ctn = c._GetTypeDecl_Cpp(templateName).CutLast() + "_v";
-            sb.Append(@"
-	template<>
-	struct MemmoveSupport<" + ctn + @">
-	{
-		static const bool value = true;
-    };");
-        }
-        sb.Append(@"
-}
-");
-
-
         // 泛型接口适配
-        sb.Append(@"
+        cs = ts._GetStructs();
+        if (cs.Count > 0)
+        {
+            sb.Append(@"
 namespace xx
 {");
-        cs = ts._GetStructs();
-        foreach (var c in cs)
-        {
-            var ctn = c._GetTypeDecl_Cpp(templateName);
-            var fs = c._GetFields();
+            foreach (var c in cs)
+            {
+                var ctn = c._GetTypeDecl_Cpp(templateName);
+                var fs = c._GetFields();
 
-            sb.Append(@"
+                sb.Append(@"
 	template<>
 	struct StrFunc<" + ctn + @", void>
 	{
-		static inline uint32_t Calc(" + ctn + @" const &in)
+		static inline void WriteTo(xx::String& s, " + ctn + @" const &in)
 		{
-			return StrCalc(");
-            foreach (var f in fs)
-            {
-                sb.Append((f == fs[0] ? "" : ", ") + "in." + f.Name);
-            }
-            // todo: 这里先简单粗略的计算一下 json 格式消耗附加值
-            sb.Append(@") + " + (fs.Count * 5 + 10) + @";
-		}
-		static inline uint32_t WriteTo(char *dstBuf, " + ctn + @" const &in)
-		{
-			return StrWriteTo(dstBuf, ""{ \""type\"" : \""" + c.Name + @"\""""");
-            foreach (var f in fs)
-            {
-                sb.Append(@", "", \""" + f.Name + @"\"" : "", in." + f.Name);
-            }
-            sb.Append(@", "" }"");
+			s.Append(""{ \""type\"" : \""" + c.Name + @"\""""");
+                foreach (var f in fs)
+                {
+                    sb.Append(@", "", \""" + f.Name + @"\"" : "", in." + f.Name);
+                }
+                sb.Append(@", "" }"");
         }
     };");
 
-        }
+            }
 
-        sb.Append(@"
+            sb.Append(@"
 }
 ");
+        }
 
         sb._WriteToFile(Path.Combine(outDir, templateName + "_class.h"));
     }
