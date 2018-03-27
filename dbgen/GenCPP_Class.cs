@@ -208,7 +208,7 @@ namespace " + c.Namespace + @"
 
         typedef " + c.Name + @" ThisType;
         typedef " + btn + @" BaseType;
-	    " + c.Name + @"();
+	    " + c.Name + @"(xx::MemPool* mempool);
 		" + c.Name + @"(" + c.Name + @" const&) = delete;
 		" + c.Name + @"& operator=(" + c.Name + @" const&) = delete;
         virtual void ToString(xx::String &s) const override;
@@ -246,14 +246,8 @@ namespace " + c.Namespace + @"
             var btn = c._HasBaseType() ? bt._GetTypeDecl_Cpp(templateName).CutLast() : "xx::Object";
 
             sb.Append(@"
-	inline " + c.Name + @"::" + c.Name + @"()");
-            bool dot = false;
-            if (c._HasBaseType())
-            {
-                sb.Append(@"
-        " + (dot ? "." : ":") + " " + btn + @"()");
-                dot = true;
-            }
+	inline " + c.Name + @"::" + c.Name + @"(xx::MemPool* mempool)
+        : " + btn + @"(mempool)");
             sb.Append(@"
 	{
 	}
@@ -282,13 +276,13 @@ namespace " + c.Namespace + @"
                 if (f.FieldType._IsString())
                 {
                     sb.Append(@"
-        if (this->" + f.Name + @") str.Append("", \""" + f.Name + @"\"" : \"""", this->" + f.Name + @", ""\"""");
-        else str.Append("", \""" + f.Name + @"\"" : nil"");");
+        if (this->" + f.Name + @") s.Append("", \""" + f.Name + @"\"" : \"""", this->" + f.Name + @", ""\"""");
+        else s.Append("", \""" + f.Name + @"\"" : nil"");");
                 }
                 else
                 {
                     sb.Append(@"
-        str.Append("", \""" + f.Name + @"\"" : "", this->" + f.Name + @");");
+        s.Append("", \""" + f.Name + @"\"" : "", this->" + f.Name + @");");
                 }
             }
             sb.Append(@"

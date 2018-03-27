@@ -119,10 +119,10 @@ namespace xx
         /// </summary>
         public int Find(T item)
         {
-            if ((Object)item == null)
+            if ((object)item == null)
             {
                 for (int i = 0; i < dataLen; i++)
-                    if ((Object)buf[i] == null)
+                    if ((object)buf[i] == null)
                         return i;
             }
             else

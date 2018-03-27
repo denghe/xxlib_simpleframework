@@ -46,7 +46,7 @@ namespace LOGDB
 
         typedef Log ThisType;
         typedef xx::Object BaseType;
-	    Log();
+	    Log(xx::MemPool* mempool);
 		Log(Log const&) = delete;
 		Log& operator=(Log const&) = delete;
         virtual void ToString(xx::String &s) const override;
@@ -54,7 +54,8 @@ namespace LOGDB
     };
 
 
-	inline Log::Log()
+	inline Log::Log(xx::MemPool* mempool)
+        : xx::Object(mempool)
 	{
 	}
 
@@ -76,19 +77,19 @@ namespace LOGDB
     inline void Log::ToStringCore(xx::String &s) const
     {
         this->BaseType::ToStringCore(s);
-        str.Append(", \"id\" : ", this->id);
-        str.Append(", \"level\" : ", this->level);
-        str.Append(", \"time\" : ", this->time);
-        if (this->machine) str.Append(", \"machine\" : \"", this->machine, "\"");
-        else str.Append(", \"machine\" : nil");
-        if (this->service) str.Append(", \"service\" : \"", this->service, "\"");
-        else str.Append(", \"service\" : nil");
-        if (this->instanceId) str.Append(", \"instanceId\" : \"", this->instanceId, "\"");
-        else str.Append(", \"instanceId\" : nil");
-        if (this->title) str.Append(", \"title\" : \"", this->title, "\"");
-        else str.Append(", \"title\" : nil");
-        str.Append(", \"opcode\" : ", this->opcode);
-        if (this->desc) str.Append(", \"desc\" : \"", this->desc, "\"");
-        else str.Append(", \"desc\" : nil");
+        s.Append(", \"id\" : ", this->id);
+        s.Append(", \"level\" : ", this->level);
+        s.Append(", \"time\" : ", this->time);
+        if (this->machine) s.Append(", \"machine\" : \"", this->machine, "\"");
+        else s.Append(", \"machine\" : nil");
+        if (this->service) s.Append(", \"service\" : \"", this->service, "\"");
+        else s.Append(", \"service\" : nil");
+        if (this->instanceId) s.Append(", \"instanceId\" : \"", this->instanceId, "\"");
+        else s.Append(", \"instanceId\" : nil");
+        if (this->title) s.Append(", \"title\" : \"", this->title, "\"");
+        else s.Append(", \"title\" : nil");
+        s.Append(", \"opcode\" : ", this->opcode);
+        if (this->desc) s.Append(", \"desc\" : \"", this->desc, "\"");
+        else s.Append(", \"desc\" : nil");
     }
 }

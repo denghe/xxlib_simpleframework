@@ -168,7 +168,7 @@ namespace " + iface.Namespace + @"
                     sb2.Append(@"
             " + rtn + @" rtv;");
                     if (rt._IsList()) sb2.Append(@"
-            this->mempool.MPCreateTo(rtv);");
+            this->mempool->MPCreateTo(rtv);");
                 }
 
                 if (ps.Where(p => !p.ParameterType._IsList() && !p._Has<Literal>()).Count() > 0)
@@ -205,7 +205,7 @@ namespace " + iface.Namespace + @"
                         sb2.Append(@"
 			this->query_" + fn + @"->Execute([&](xx::SQLiteReader& sr)
             {
-				auto& r = rtv->Emplace(this->mempool);");
+				auto& r = rtv->Emplace();");
                         var ctfs = ct._GetFields();
                         if (ctfs.Count() == 0)
                             throw new Exception("the class's fields can't be empty");
@@ -254,7 +254,7 @@ namespace " + iface.Namespace + @"
 			this->query_" + fn + @"->Execute([&](xx::SQLiteReader& sr)
             {
                 assert(!rtv);
-                this->mempool.MPCreateTo(rtv);");
+                this->mempool->MPCreateTo(rtv);");
                         for (int i = 0; i < rtfs.Count; ++i)
                         {
                             var m = rtfs[i];

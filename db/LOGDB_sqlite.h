@@ -140,19 +140,19 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
 				this->query_SelectLogs = this->sqlite.CreateQuery(R"=-=(select [id], [level], [time], [machine], [service], [instanceId], [title], [opcode], [desc] from [log])=-=");
 			}
             xx::List_p<LOGDB::Log_p> rtv;
-            this->mempool.MPCreateTo(rtv);
+            this->mempool->MPCreateTo(rtv);
 			this->query_SelectLogs->Execute([&](xx::SQLiteReader& sr)
             {
-				auto& r = rtv->Emplace(this->mempool);
+				auto& r = rtv->Emplace();
                 r->id = sr.ReadInt64(0);
                 r->level = (Level)sr.ReadInt32(1);
                 r->time = sr.ReadInt64(2);
-                r->machine = mp.Create<xx::String>(sr.ReadString(3));
-                r->service = mp.Create<xx::String>(sr.ReadString(4));
-                r->instanceId = mp.Create<xx::String>(sr.ReadString(5));
-                r->title = mp.Create<xx::String>(sr.ReadString(6));
+                r->machine = this->mempool->MPCreate<xx::String>(sr.ReadString(3));
+                r->service = this->mempool->MPCreate<xx::String>(sr.ReadString(4));
+                r->instanceId = this->mempool->MPCreate<xx::String>(sr.ReadString(5));
+                r->title = this->mempool->MPCreate<xx::String>(sr.ReadString(6));
                 r->opcode = sr.ReadInt64(7);
-                r->desc = mp.Create<xx::String>(sr.ReadString(8));
+                r->desc = this->mempool->MPCreate<xx::String>(sr.ReadString(8));
             });
 			return rtv;
         }
@@ -174,7 +174,7 @@ select [id], [level], [time], [machine], [service], [instanceId], [title], [opco
  where [id] = ?;)=-=");
 			}
             xx::List_p<int64_t> rtv;
-            this->mempool.MPCreateTo(rtv);
+            this->mempool->MPCreateTo(rtv);
             this->query_SelectLog->SetParameters(id);
             this->query_SelectLog->Execute([&](xx::SQLiteReader& sr)
             {
@@ -198,20 +198,20 @@ select [id], [level], [time], [machine], [service], [instanceId], [title], [opco
 				this->query_SelectLogsByTimeRange = this->sqlite.CreateQuery(R"=-=(delete from [log] where [time] >= ? and [time] <= ?)=-=");
 			}
             xx::List_p<LOGDB::Log_p> rtv;
-            this->mempool.MPCreateTo(rtv);
+            this->mempool->MPCreateTo(rtv);
             this->query_SelectLogsByTimeRange->SetParameters(timeFrom, timeFrom);
 			this->query_SelectLogsByTimeRange->Execute([&](xx::SQLiteReader& sr)
             {
-				auto& r = rtv->Emplace(this->mempool);
+				auto& r = rtv->Emplace();
                 r->id = sr.ReadInt64(0);
                 r->level = (Level)sr.ReadInt32(1);
                 r->time = sr.ReadInt64(2);
-                r->machine = mp.Create<xx::String>(sr.ReadString(3));
-                r->service = mp.Create<xx::String>(sr.ReadString(4));
-                r->instanceId = mp.Create<xx::String>(sr.ReadString(5));
-                r->title = mp.Create<xx::String>(sr.ReadString(6));
+                r->machine = this->mempool->MPCreate<xx::String>(sr.ReadString(3));
+                r->service = this->mempool->MPCreate<xx::String>(sr.ReadString(4));
+                r->instanceId = this->mempool->MPCreate<xx::String>(sr.ReadString(5));
+                r->title = this->mempool->MPCreate<xx::String>(sr.ReadString(6));
                 r->opcode = sr.ReadInt64(7);
-                r->desc = mp.Create<xx::String>(sr.ReadString(8));
+                r->desc = this->mempool->MPCreate<xx::String>(sr.ReadString(8));
             });
 			return rtv;
         }

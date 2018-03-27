@@ -1031,7 +1031,7 @@ public static class GenExtensions
                 //case "DateTime":
                 //    return "sr.GetDateTime";
                 case "BBuffer":
-                    return "mp.Create<xx::BBuffer>(sr.ReadBlob(" + colIdx + "))";
+                    return "this->mempool->MPCreate<xx::BBuffer>(sr.ReadBlob(" + colIdx + "))";
 
                 default:
                     throw new Exception("unhandled data type");
@@ -1074,7 +1074,7 @@ public static class GenExtensions
                 case "Bool":
                     return "sr.ReadInt32(" + colIdx + ") ? true : false";
                 case "String":
-                    return "mp.Create<xx::String>(sr.ReadString(" + colIdx + "))";
+                    return "this->mempool->MPCreate<xx::String>(sr.ReadString(" + colIdx + "))";
                 //case "DateTime":
                 //    return "sr.GetDateTime";
 

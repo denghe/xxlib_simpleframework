@@ -56,7 +56,7 @@ namespace Game
 
         typedef Account ThisType;
         typedef xx::Object BaseType;
-	    Account();
+	    Account(xx::MemPool* mempool);
 		Account(Account const&) = delete;
 		Account& operator=(Account const&) = delete;
         virtual void ToString(xx::String &s) const override;
@@ -80,7 +80,7 @@ namespace Manage
 
         typedef Account ThisType;
         typedef xx::Object BaseType;
-	    Account();
+	    Account(xx::MemPool* mempool);
 		Account(Account const&) = delete;
 		Account& operator=(Account const&) = delete;
         virtual void ToString(xx::String &s) const override;
@@ -101,7 +101,7 @@ namespace Manage
 
         typedef Role ThisType;
         typedef xx::Object BaseType;
-	    Role();
+	    Role(xx::MemPool* mempool);
 		Role(Role const&) = delete;
 		Role& operator=(Role const&) = delete;
         virtual void ToString(xx::String &s) const override;
@@ -124,7 +124,7 @@ namespace Manage
 
         typedef Permission ThisType;
         typedef xx::Object BaseType;
-	    Permission();
+	    Permission(xx::MemPool* mempool);
 		Permission(Permission const&) = delete;
 		Permission& operator=(Permission const&) = delete;
         virtual void ToString(xx::String &s) const override;
@@ -143,7 +143,7 @@ namespace Manage
 
         typedef BindAccountRole ThisType;
         typedef xx::Object BaseType;
-	    BindAccountRole();
+	    BindAccountRole(xx::MemPool* mempool);
 		BindAccountRole(BindAccountRole const&) = delete;
 		BindAccountRole& operator=(BindAccountRole const&) = delete;
         virtual void ToString(xx::String &s) const override;
@@ -162,7 +162,7 @@ namespace Manage
 
         typedef BindRolePermission ThisType;
         typedef xx::Object BaseType;
-	    BindRolePermission();
+	    BindRolePermission(xx::MemPool* mempool);
 		BindRolePermission(BindRolePermission const&) = delete;
 		BindRolePermission& operator=(BindRolePermission const&) = delete;
         virtual void ToString(xx::String &s) const override;
@@ -173,7 +173,8 @@ namespace Manage
 }
 namespace Game
 {
-	inline Account::Account()
+	inline Account::Account(xx::MemPool* mempool)
+        : xx::Object(mempool)
 	{
 	}
 
@@ -195,16 +196,17 @@ namespace Game
     inline void Account::ToStringCore(xx::String &s) const
     {
         this->BaseType::ToStringCore(s);
-        str.Append(", \"id\" : ", this->id);
-        if (this->username) str.Append(", \"username\" : \"", this->username, "\"");
-        else str.Append(", \"username\" : nil");
-        if (this->password) str.Append(", \"password\" : \"", this->password, "\"");
-        else str.Append(", \"password\" : nil");
+        s.Append(", \"id\" : ", this->id);
+        if (this->username) s.Append(", \"username\" : \"", this->username, "\"");
+        else s.Append(", \"username\" : nil");
+        if (this->password) s.Append(", \"password\" : \"", this->password, "\"");
+        else s.Append(", \"password\" : nil");
     }
 }
 namespace Manage
 {
-	inline Account::Account()
+	inline Account::Account(xx::MemPool* mempool)
+        : xx::Object(mempool)
 	{
 	}
 
@@ -226,13 +228,14 @@ namespace Manage
     inline void Account::ToStringCore(xx::String &s) const
     {
         this->BaseType::ToStringCore(s);
-        str.Append(", \"id\" : ", this->id);
-        if (this->username) str.Append(", \"username\" : \"", this->username, "\"");
-        else str.Append(", \"username\" : nil");
-        if (this->password) str.Append(", \"password\" : \"", this->password, "\"");
-        else str.Append(", \"password\" : nil");
+        s.Append(", \"id\" : ", this->id);
+        if (this->username) s.Append(", \"username\" : \"", this->username, "\"");
+        else s.Append(", \"username\" : nil");
+        if (this->password) s.Append(", \"password\" : \"", this->password, "\"");
+        else s.Append(", \"password\" : nil");
     }
-	inline Role::Role()
+	inline Role::Role(xx::MemPool* mempool)
+        : xx::Object(mempool)
 	{
 	}
 
@@ -254,13 +257,14 @@ namespace Manage
     inline void Role::ToStringCore(xx::String &s) const
     {
         this->BaseType::ToStringCore(s);
-        str.Append(", \"id\" : ", this->id);
-        if (this->name) str.Append(", \"name\" : \"", this->name, "\"");
-        else str.Append(", \"name\" : nil");
-        if (this->desc) str.Append(", \"desc\" : \"", this->desc, "\"");
-        else str.Append(", \"desc\" : nil");
+        s.Append(", \"id\" : ", this->id);
+        if (this->name) s.Append(", \"name\" : \"", this->name, "\"");
+        else s.Append(", \"name\" : nil");
+        if (this->desc) s.Append(", \"desc\" : \"", this->desc, "\"");
+        else s.Append(", \"desc\" : nil");
     }
-	inline Permission::Permission()
+	inline Permission::Permission(xx::MemPool* mempool)
+        : xx::Object(mempool)
 	{
 	}
 
@@ -282,15 +286,16 @@ namespace Manage
     inline void Permission::ToStringCore(xx::String &s) const
     {
         this->BaseType::ToStringCore(s);
-        str.Append(", \"id\" : ", this->id);
-        if (this->group) str.Append(", \"group\" : \"", this->group, "\"");
-        else str.Append(", \"group\" : nil");
-        if (this->name) str.Append(", \"name\" : \"", this->name, "\"");
-        else str.Append(", \"name\" : nil");
-        if (this->desc) str.Append(", \"desc\" : \"", this->desc, "\"");
-        else str.Append(", \"desc\" : nil");
+        s.Append(", \"id\" : ", this->id);
+        if (this->group) s.Append(", \"group\" : \"", this->group, "\"");
+        else s.Append(", \"group\" : nil");
+        if (this->name) s.Append(", \"name\" : \"", this->name, "\"");
+        else s.Append(", \"name\" : nil");
+        if (this->desc) s.Append(", \"desc\" : \"", this->desc, "\"");
+        else s.Append(", \"desc\" : nil");
     }
-	inline BindAccountRole::BindAccountRole()
+	inline BindAccountRole::BindAccountRole(xx::MemPool* mempool)
+        : xx::Object(mempool)
 	{
 	}
 
@@ -312,10 +317,11 @@ namespace Manage
     inline void BindAccountRole::ToStringCore(xx::String &s) const
     {
         this->BaseType::ToStringCore(s);
-        str.Append(", \"account_id\" : ", this->account_id);
-        str.Append(", \"role_id\" : ", this->role_id);
+        s.Append(", \"account_id\" : ", this->account_id);
+        s.Append(", \"role_id\" : ", this->role_id);
     }
-	inline BindRolePermission::BindRolePermission()
+	inline BindRolePermission::BindRolePermission(xx::MemPool* mempool)
+        : xx::Object(mempool)
 	{
 	}
 
@@ -337,8 +343,8 @@ namespace Manage
     inline void BindRolePermission::ToStringCore(xx::String &s) const
     {
         this->BaseType::ToStringCore(s);
-        str.Append(", \"role_id\" : ", this->role_id);
-        str.Append(", \"permission_id\" : ", this->permission_id);
+        s.Append(", \"role_id\" : ", this->role_id);
+        s.Append(", \"permission_id\" : ", this->permission_id);
     }
 }
 }
