@@ -385,6 +385,20 @@ namespace xx
 			++pointer->memHeader().refs;
 		}
 	}
+
+	template<typename T>
+	Ptr<T>& Ptr<T>::operator=(Ptr const& o) noexcept
+	{
+		return operator=(o.pointer);
+	}
+	template<typename T>
+	Ptr<T>& Ptr<T>::operator=(Ptr&& o) noexcept
+	{
+		std::swap(this->pointer, o.pointer);
+		return *this;
+	}
+
+
 	template<typename T>
 	template<typename O>
 	Ptr<T>& Ptr<T>::operator=(Ptr<O> const& o) noexcept
