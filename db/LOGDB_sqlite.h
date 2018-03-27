@@ -216,4 +216,8 @@ select [id], [level], [time], [machine], [service], [instanceId], [title], [opco
 			return rtv;
         }
     };
+
+    using SQLiteFuncs_p = xx::Ptr<SQLiteFuncs>;
+	using SQLiteFuncs_r = xx::Ref<SQLiteFuncs>;
+
 }

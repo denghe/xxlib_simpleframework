@@ -300,7 +300,11 @@ namespace " + iface.Namespace + @"
 
             // class }
             sb.Append(@"
-    };");
+    };
+
+    using " + iface.Name + @"_p = xx::Ptr<" + iface.Name + @">;
+	using " + iface.Name + @"_r = xx::Ref<" + iface.Name + @">;
+");
 
             // namespace xxx }
             if (iface.Namespace != null)

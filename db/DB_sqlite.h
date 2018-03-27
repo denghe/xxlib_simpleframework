@@ -93,6 +93,10 @@ CREATE TABLE [game_account](
             return rtv;
         }
     };
+
+    using SQLiteGameFuncs_p = xx::Ptr<SQLiteGameFuncs>;
+	using SQLiteGameFuncs_r = xx::Ref<SQLiteGameFuncs>;
+
     // 管理后台相关
     class SQLiteManageFuncs : xx::Object
     {
@@ -886,4 +890,8 @@ select [role_id]
 			return rtv;
         }
     };
+
+    using SQLiteManageFuncs_p = xx::Ptr<SQLiteManageFuncs>;
+	using SQLiteManageFuncs_r = xx::Ref<SQLiteManageFuncs>;
+
 }
