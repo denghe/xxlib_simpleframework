@@ -130,12 +130,21 @@ namespace xx
 		// uint32_t: 流水号
 		std::function<void(uint32_t, BBuffer&)> OnReceiveRequest;
 
+
+
+		// 由于路由服务需要保持 routingAddress 为空, 在收到 Routing 包时, 可抛出 OnReceiveRouting, 以便进一步用相应的 client 转发
+		// 如果 routingAddress 非空, 在收到 Routing 包时, 可抛出 OnReceivePackage, OnReceiveRequest 或 触发 RPC 回调.
+		// 不同的是, recvingAddress 将被填充返回地址. 故可根据它来判断 接收事件 属于何种数据来源.
+		xx::String routingAddress;
+		xx::String recvingAddress;
+
+		// (xx::BBuffer& bb, size_t pkgOffset, size_t pkgLen, size_t addrOffset, size_t addrLen)
 		// 4个 size_t 代表 包起始offset, 含包头的总包长, 地址起始偏移, 地址长度( 方便替换地址并 memcpy )
-		// BBuffer 的 offset 停在数据区起始位置
-		std::function<void(BBuffer&, size_t, size_t, size_t, size_t)> OnReceiveRoutingPackage;
+		// BBuffer 的 offset 停在地址后方( 流水号或数据起始位置 )
+		std::function<void(BBuffer&, size_t, size_t, size_t, size_t)> OnReceiveRouting;
+
 
 		std::function<void()> OnDispose;
-
 
 
 		UvLoop& loop;
@@ -158,6 +167,7 @@ namespace xx
 
 		void SendBytes(BBuffer& bb);
 
+
 		template<typename T>
 		void Send(T const& pkg);
 
@@ -166,6 +176,38 @@ namespace xx
 
 		template<typename T>
 		void SendResponse(uint32_t serial, T const& pkg);
+
+		// 转发的相关重载, Send 配套函数
+		template<typename T>
+		void SendRouting(xx::String& rAddr, T const& pkg);
+
+		template<typename T>
+		uint32_t SendRoutingRequest(xx::String& rAddr, T const& pkg, std::function<void(uint32_t, BBuffer)> cb, int interval = 0);
+
+		template<typename T>
+		void SendRoutingResponse(xx::String& rAddr, uint32_t serial, T const& pkg);
+
+
+		// 上面 6 个的 Big 版
+
+		template<typename T>
+		void SendBig(T const& pkg);
+
+		template<typename T>
+		uint32_t SendBigRequest(T const& pkg, std::function<void(uint32_t, BBuffer)> cb, int interval = 0);
+
+		template<typename T>
+		void SendBigResponse(uint32_t serial, T const& pkg);
+
+		// 转发的相关重载, Send 配套函数
+		template<typename T>
+		void SendBigRouting(xx::String& rAddr, T const& pkg);
+
+		template<typename T>
+		uint32_t SendBigRoutingRequest(xx::String& rAddr, T const& pkg, std::function<void(uint32_t, BBuffer)> cb, int interval = 0);
+
+		template<typename T>
+		void SendBigRoutingResponse(xx::String& rAddr, uint32_t serial, T const& pkg);
 	};
 
 	class UvTcpBase : public UvTcpUdpBase
@@ -410,5 +452,155 @@ namespace xx
 		bbSend.EndWritePackage();
 		SendBytes(bbSend);
 	}
+
+	template<typename T>
+	inline void UvTcpUdpBase::SendRouting(xx::String& rAddr, T const & pkg)
+	{
+		if (!ptr) throw - 1;
+		bbSend.Clear();
+		bbSend.BeginWritePackage();	// todo
+		bbSend.WriteRoot(pkg);
+		bbSend.EndWritePackage();	// todo
+		SendBytes(bbSend);
+	}
+
+	template<typename T>
+	inline uint32_t UvTcpUdpBase::SendRoutingRequest(xx::String& rAddr, T const & pkg, std::function<void(uint32_t, BBuffer)> cb, int interval)
+	{
+		if (!ptr) throw - 1;
+		auto serial = loop.rpcMgr.Register(cb, interval);
+		bbSend.Clear();
+		bbSend.BeginWritePackage(1, serial);	// todo
+		bbSend.WriteRoot(pkg);
+		bbSend.EndWritePackage();	// todo
+		SendBytes(bbSend);
+		return serial;
+	}
+
+	template<typename T>
+	inline void UvTcpUdpBase::SendRoutingResponse(xx::String& rAddr, uint32_t serial, T const & pkg)
+	{
+		template<typename T>
+		bbSend.Clear();
+		bbSend.BeginWritePackage(2, serial);	// todo
+		bbSend.WriteRoot(pkg);
+		bbSend.EndWritePackage();	// todo
+		SendBytes(bbSend);
+	}
+
+
+
+
+	template<typename T>
+	inline void UvTcpUdpBase::SendBig(T const & pkg)
+	{
+		if (!ptr) throw - 1;
+		bbSend.Clear();
+		bbSend.BeginWritePackage();	// todo
+		bbSend.WriteRoot(pkg);
+		bbSend.EndWritePackage();	// todo
+		SendBytes(bbSend);
+	}
+
+	template<typename T>
+	inline uint32_t UvTcpUdpBase::SendBigRequest(T const & pkg, std::function<void(uint32_t, BBuffer)> cb, int interval)
+	{
+		if (!ptr) throw - 1;
+		auto serial = loop.rpcMgr.Register(cb, interval);
+		bbSend.Clear();
+		bbSend.BeginWritePackage(1, serial);	// todo
+		bbSend.WriteRoot(pkg);
+		bbSend.EndWritePackage();	// todo
+		SendBytes(bbSend);
+		return serial;
+	}
+
+	template<typename T>
+	inline void UvTcpUdpBase::SendBigResponse(uint32_t serial, T const & pkg)
+	{
+		template<typename T>
+		bbSend.Clear();
+		bbSend.BeginWritePackage(2, serial);	// todo
+		bbSend.WriteRoot(pkg);
+		bbSend.EndWritePackage();	// todo
+		SendBytes(bbSend);
+	}
+
+	template<typename T>
+	inline void UvTcpUdpBase::SendBigRouting(xx::String& rAddr, T const & pkg)
+	{
+		if (!ptr) throw - 1;
+		bbSend.Clear();
+		bbSend.BeginWritePackage();	// todo
+		bbSend.WriteRoot(pkg);
+		bbSend.EndWritePackage();	// todo
+		SendBytes(bbSend);
+	}
+
+	template<typename T>
+	inline uint32_t UvTcpUdpBase::SendBigRoutingRequest(xx::String& rAddr, T const & pkg, std::function<void(uint32_t, BBuffer)> cb, int interval)
+	{
+		if (!ptr) throw - 1;
+		auto serial = loop.rpcMgr.Register(cb, interval);
+		bbSend.Clear();
+		bbSend.BeginWritePackage(1, serial);	// todo
+		bbSend.WriteRoot(pkg);
+		bbSend.EndWritePackage();	// todo
+		SendBytes(bbSend);
+		return serial;
+	}
+
+	template<typename T>
+	inline void UvTcpUdpBase::SendBigRoutingResponse(xx::String& rAddr, uint32_t serial, T const & pkg)
+	{
+		template<typename T>
+		bbSend.Clear();
+		bbSend.BeginWritePackage(2, serial);	// todo
+		bbSend.WriteRoot(pkg);
+		bbSend.EndWritePackage();	// todo
+		SendBytes(bbSend);
+	}
+
+
+
+
+	// 万一会用到的一些声明
+	using UvLoop_p = Ptr<UvLoop>;
+	using UvListenerBase_p = Ptr<UvListenerBase>;
+	using UvTcpListener_p = Ptr<UvTcpListener>;
+	using UvTcpUdpBase_p = Ptr<UvTcpUdpBase>;
+	using UvTcpBase_p = Ptr<UvTcpBase>;
+	using UvTcpPeer_p = Ptr<UvTcpPeer>;
+	using UvTcpClient_p = Ptr<UvTcpClient>;
+	using UvTimer_p = Ptr<UvTimer>;
+	using UvTimeouterBase_p = Ptr<UvTimeouterBase>;
+	using UvTimeouter_p = Ptr<UvTimeouter>;
+	using UvAsync_p = Ptr<UvAsync>;
+	using UvRpcManager_p = Ptr<UvRpcManager>;
+	using UvTimeouter_p = Ptr<UvTimeouter>;
+	using UvContextBase_p = Ptr<UvContextBase>;
+	using UvUdpListener_p = Ptr<UvUdpListener>;
+	using UvUdpBase_p = Ptr<UvUdpBase>;
+	using UvUdpPeer_p = Ptr<UvUdpPeer>;
+	using UvUdpClient_p = Ptr<UvUdpClient>;
+
+	using UvLoop_r = Ref<UvLoop>;
+	using UvListenerBase_r = Ref<UvListenerBase>;
+	using UvTcpListener_r = Ref<UvTcpListener>;
+	using UvTcpUdpBase_r = Ref<UvTcpUdpBase>;
+	using UvTcpBase_r = Ref<UvTcpBase>;
+	using UvTcpPeer_r = Ref<UvTcpPeer>;
+	using UvTcpClient_r = Ref<UvTcpClient>;
+	using UvTimer_r = Ref<UvTimer>;
+	using UvTimeouterBase_r = Ref<UvTimeouterBase>;
+	using UvTimeouter_r = Ref<UvTimeouter>;
+	using UvAsync_r = Ref<UvAsync>;
+	using UvRpcManager_r = Ref<UvRpcManager>;
+	using UvTimeouter_r = Ref<UvTimeouter>;
+	using UvContextBase_r = Ref<UvContextBase>;
+	using UvUdpListener_r = Ref<UvUdpListener>;
+	using UvUdpBase_r = Ref<UvUdpBase>;
+	using UvUdpPeer_r = Ref<UvUdpPeer>;
+	using UvUdpClient_r = Ref<UvUdpClient>;
 
 }

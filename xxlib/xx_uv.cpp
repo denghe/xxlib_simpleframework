@@ -358,6 +358,8 @@ bool xx::UvTimeouterBase::timering()
 
 xx::UvTcpUdpBase::UvTcpUdpBase(UvLoop& loop)
 	: UvTimeouterBase(loop.mempool)
+	, routingAddress(loop.mempool)
+	, recvingAddress(loop.mempool)
 	, loop(loop)
 	, bbRecv(loop.mempool)
 	, bbSend(loop.mempool)
@@ -382,6 +384,7 @@ void xx::UvTcpUdpBase::ReceiveImpl(char const* bufPtr, int len)
 	{
 		auto typeId = buf[offset];					// 读出头
 
+
 		auto dataLen = (size_t)(buf[offset + 1] + (buf[offset + 2] << 8));
 		int headerLen = 3;
 		if ((typeId & 0x4) > 0)                     // 大包确保 5字节 包头长度
@@ -404,13 +407,40 @@ void xx::UvTcpUdpBase::ReceiveImpl(char const* bufPtr, int len)
 
 		if ((typeId & 8) > 0)                       // 转发类数据包
 		{
-			auto addrLen = (size_t)typeId >> 4;
+			auto addrLen = ((size_t)typeId >> 4) + 1;
 			auto addrOffset = offset;
 			auto pkgLen = offset + dataLen - pkgOffset;
 			offset += addrLen;
 
+			// 进一步判断是否有设置地址信息( 如果 routingAddress 非空, 表示当前连接为数据接收方, 否则就是路由 )
+			if (routingAddress.dataLen)
+			{
+				// 存返件地址之后 跳到正常包逻辑代码继续处理
+				recvingAddress.Assign((char*)buf + addrOffset, addrLen);
+				goto LabAfterAddress;
+			}
+
 			bbRecv.offset = offset;
-			if (OnReceiveRoutingPackage != nullptr) OnReceiveRoutingPackage(bbRecv, pkgOffset, pkgLen, addrOffset, addrLen);
+			if (OnReceiveRouting) OnReceiveRouting(bbRecv, pkgOffset, pkgLen, addrOffset, addrLen);
+			if (versionNumber != memHeader().versionNumber) return;
+			if (Disconnected())
+			{
+				bbRecv.Clear();
+				return;
+			}
+			// 路由服务直接全权处理, 不再继续抛出进阶事件, 故跳之
+			goto LabEnd;
+		}
+		// 非转发包不含返回地址, 清空以便于在事件函数中判断来源( goto LabAfterAddress 的会跳过这步 )
+		recvingAddress.Clear();
+
+
+	LabAfterAddress:
+		bbRecv.offset = offset;
+		auto pkgType = typeId & 3;
+		if (pkgType == 0)
+		{
+			if (OnReceivePackage) OnReceivePackage(bbRecv);
 			if (versionNumber != memHeader().versionNumber) return;
 			if (Disconnected())
 			{
@@ -420,10 +450,15 @@ void xx::UvTcpUdpBase::ReceiveImpl(char const* bufPtr, int len)
 		}
 		else
 		{
-			bbRecv.offset = offset;
-			if (typeId == 0)
+			uint32_t serial = 0;
+			if (bbRecv.Read(serial))
 			{
-				if (OnReceivePackage) OnReceivePackage(bbRecv);
+				DisconnectImpl();
+				return;
+			}
+			if (pkgType == 1)
+			{
+				if (OnReceiveRequest) OnReceiveRequest(serial, bbRecv);
 				if (versionNumber != memHeader().versionNumber) return;
 				if (Disconnected())
 				{
@@ -431,36 +466,19 @@ void xx::UvTcpUdpBase::ReceiveImpl(char const* bufPtr, int len)
 					return;
 				}
 			}
-			else
+			else if (pkgType == 2)
 			{
-				uint32_t serial = 0;
-				if (bbRecv.Read(serial))
+				loop.rpcMgr->Callback(serial, &bbRecv);
+				if (versionNumber != memHeader().versionNumber) return;
+				if (Disconnected())
 				{
-					DisconnectImpl();
+					bbRecv.Clear();
 					return;
-				}
-				if (typeId == 1)
-				{
-					if (OnReceiveRequest) OnReceiveRequest(serial, bbRecv);
-					if (versionNumber != memHeader().versionNumber) return;
-					if (Disconnected())
-					{
-						bbRecv.Clear();
-						return;
-					}
-				}
-				else if (typeId == 2)
-				{
-					loop.rpcMgr->Callback(serial, &bbRecv);
-					if (versionNumber != memHeader().versionNumber) return;
-					if (Disconnected())
-					{
-						bbRecv.Clear();
-						return;
-					}
 				}
 			}
 		}
+
+	LabEnd:
 		offset += dataLen;
 	}
 	if (offset < bbRecv.dataLen)
