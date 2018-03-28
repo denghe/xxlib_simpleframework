@@ -11,21 +11,27 @@ namespace xx
 
 		template<size_t len>
 		String(MemPool* mempool, char const(&s)[len]);
+		template<size_t len>
+		String(MemPool* mempool, wchar_t const(&ws)[len]);
 		String(MemPool* mempool, char const* const& s);
 		String(MemPool* mempool, char const* const& s, size_t const& len);
 		String(MemPool* mempool, std::string const& s);
-		String(MemPool* mempool, std::pair<char const*, int> const& buff);
+		String(MemPool* mempool, std::pair<char const*, int> const& str_len);
+
 
 		String(String &&o);
 		String(String const&o) = delete;
 		String& operator=(String const&o) = delete;
 
 		template<size_t len>
-		void Assign(char const(&buf)[len]);
-		void Assign(char const * const& buf, size_t const& dataLen);
-		void Assign(char const * const& buf);
-		void Assign(String const& in);
-		void Assign(Ptr<String> const& in);
+		void Assign(char const(&s)[len]);
+		template<size_t len>
+		void Assign(wchar_t const(&ws)[len]);
+		void Assign(char const* const& s);
+		void Assign(char const* const& s, size_t const& len);
+		void Assign(wchar_t const* const& ws, size_t const& len);
+		void Assign(String const& s);
+		void Assign(Ptr<String> const& s);
 
 		template<typename T>
 		void Assign(T const& in);

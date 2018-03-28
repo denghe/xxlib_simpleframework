@@ -13,6 +13,13 @@ namespace xx
 		static_assert(len > 0);
 		AddRange(s, len - 1);
 	}
+	template<size_t len>
+	String::String(MemPool* mempool, wchar_t const(&ws)[len])
+		: BaseType(mempool, 0)
+	{
+		static_assert(len > 0);
+		Assign(ws, len - 1);
+	}
 
 	inline String::String(MemPool* mempool, char const* const& s)
 		: BaseType(mempool, 0)
@@ -42,36 +49,55 @@ namespace xx
 	{}
 
 	template<size_t len>
-	void String::Assign(char const(&buf)[len])
+	void String::Assign(char const(&s)[len])
 	{
 		Clear();
-		AddRange(buf, dataLen);
+		AddRange(s, len - 1);
 	}
-
-	inline void String::Assign(char const * const& buf, size_t const& dataLen)
+	template<size_t len>
+	void String::Assign(wchar_t const(&ws)[len])
 	{
 		Clear();
-		if (buf && dataLen) AddRange(buf, dataLen);
+		Assign(ws, len - 1);
 	}
 
-	inline void String::Assign(char const * const& buf)
+	inline void String::Assign(char const* const& s, size_t const& len)
 	{
-		assert(this->buf != buf);
 		Clear();
-		if (buf) AddRange(buf, strlen(buf));
+		if (s && len) AddRange(s, len);
 	}
 
-	inline void String::Assign(String const& in)
+	inline void String::Assign(wchar_t const* const& s, size_t const& len)
 	{
-		assert(this != &in);
 		Clear();
-		AddRange(in.buf, in.dataLen);
+		Reserve(len * 3);
+		if (s)
+		{
+			for (size_t i = 0; i < len; ++i)
+			{
+				dataLen += ToUtf8(buf + i, s[i]);
+			}
+		}
 	}
 
-	inline void String::Assign(Ptr<String> const& in)
+	inline void String::Assign(char const* const& s)
 	{
-		assert(in.pointer);
-		Assign(*in);
+		assert(this->buf != s);
+		Clear();
+		if (s) AddRange(s, strlen(s));
+	}
+
+	inline void String::Assign(String const& s)
+	{
+		assert(this != &s);
+		Clear();
+		AddRange(s.buf, s.dataLen);
+	}
+
+	inline void String::Assign(Ptr<String> const& s)
+	{
+		assert(s.pointer);
+		Assign(*s);
 	}
 
 	template<typename T>
@@ -82,7 +108,7 @@ namespace xx
 		assert(dataLen <= bufLen);
 	}
 
-	inline String& String::operator=(char const * const& buf)
+	inline String& String::operator=(char const* const& buf)
 	{
 		Assign(buf);
 		return *this;
@@ -310,7 +336,7 @@ namespace xx
 		static bool EqualsTo(String_p const& a, String_p const& b)
 		{
 			if (a.pointer == b.pointer) return true;
-			if(a && b) return a->Equals(*b);
+			if (a && b) return a->Equals(*b);
 			return false;
 		}
 	};

@@ -180,7 +180,7 @@ namespace xx
 		//......Head+++++++++++Tail.......
 		if (head < tail)
 		{
-			if constexpr(std::is_trivial<T>::value || IsPtr_v<T> || IsRef_v<T>)
+			if constexpr(IsTrivial_v<T>)
 			{
 				memcpy(newBuf, buf + head, dataLen * sizeof(T));
 			}
@@ -199,7 +199,7 @@ namespace xx
 		{
 			//...Head++++++
 			auto frontDataLen = bufLen - head;
-			if constexpr(std::is_trivial<T>::value || IsPtr_v<T> || IsRef_v<T>)
+			if constexpr(IsTrivial_v<T>)
 			{
 				memcpy(newBuf, buf + head, frontDataLen * sizeof(T));
 			}
@@ -213,7 +213,7 @@ namespace xx
 			}
 
 			// ++++++Tail...
-			if constexpr(std::is_trivial<T>::value || IsPtr_v<T> || IsRef_v<T>)
+			if constexpr(IsTrivial_v<T>)
 			{
 				memcpy(newBuf + frontDataLen, buf, tail * sizeof(T));
 			}

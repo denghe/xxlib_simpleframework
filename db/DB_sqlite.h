@@ -38,38 +38,10 @@ CREATE TABLE [game_account](
 
         xx::SQLiteQuery_p query_SelectAccountByUsername;
         // 根据用户名查找并返回账号. 未找到将返回 null
+        template<typename UsernameType_String>
         inline DB::Game::Account_p SelectAccountByUsername
         (
-            xx::String_p const& username
-        )
-        {
-
-			if (!this->query_SelectAccountByUsername)
-			{
-				this->query_SelectAccountByUsername = this->sqlite.CreateQuery(R"=-=(
-    select [id], [username], [password]
-      from [game_account]
-     where [username] = ?)=-=");
-			}
-            DB::Game::Account_p rtv;
-            this->query_SelectAccountByUsername->SetParameters(username);
-			this->query_SelectAccountByUsername->Execute([&](xx::SQLiteReader& sr)
-            {
-                assert(!rtv);
-                this->mempool->MPCreateTo(rtv);
-                rtv->id = sr.ReadInt64(0);
-                rtv->username = this->mempool->MPCreate<xx::String>(sr.ReadString(1));
-                rtv->password = this->mempool->MPCreate<xx::String>(sr.ReadString(2));
-            });
-            return rtv;
-        }
-
-
-        // xx::SQLiteQuery_p query_SelectAccountByUsername;
-        // 根据用户名查找并返回账号. 未找到将返回 null
-        inline DB::Game::Account_p SelectAccountByUsername
-        (
-            char const* const& username
+            UsernameType_String const& username
         )
         {
 
@@ -201,28 +173,12 @@ CREATE TABLE [manage_bind_account_role](
 
         xx::SQLiteQuery_p query_InsertAccount;
         // 插入一条 账号. 可能因为 username 已存在而失败
+        template<typename UsernameType_String
+            ,typename PasswordType_String>
         inline void InsertAccount
         (
-            xx::String_p const& username,
-            xx::String_p const& password
-        )
-        {
-
-			if (!this->query_InsertAccount)
-			{
-				this->query_InsertAccount = this->sqlite.CreateQuery(R"=-=(insert into [manage_account] ([username], [password]) values (?, ?))=-=");
-			}
-            this->query_InsertAccount->SetParameters(username, password);
-            this->query_InsertAccount->Execute();
-        }
-
-
-        // xx::SQLiteQuery_p query_InsertAccount;
-        // 插入一条 账号. 可能因为 username 已存在而失败
-        inline void InsertAccount
-        (
-            char const* const& username,
-            char const* const& password
+            UsernameType_String const& username,
+            PasswordType_String const& password
         )
         {
 
@@ -237,32 +193,16 @@ CREATE TABLE [manage_bind_account_role](
 
         xx::SQLiteQuery_p query_InsertPermission;
         // 插入一条 权限. 可能因为 name 已存在而失败
+        template<typename IdType_Int64
+            ,typename NameType_String
+            ,typename GroupType_String
+            ,typename DescType_String>
         inline void InsertPermission
         (
-            int64_t const& id,
-            xx::String_p const& name,
-            xx::String_p const& group,
-            xx::String_p const& desc
-        )
-        {
-
-			if (!this->query_InsertPermission)
-			{
-				this->query_InsertPermission = this->sqlite.CreateQuery(R"=-=(insert into [manage_permission] ([id], [name], [group], [desc]) values (?, ?, ?, ?))=-=");
-			}
-            this->query_InsertPermission->SetParameters(id, name, group, desc);
-            this->query_InsertPermission->Execute();
-        }
-
-
-        // xx::SQLiteQuery_p query_InsertPermission;
-        // 插入一条 权限. 可能因为 name 已存在而失败
-        inline void InsertPermission
-        (
-            int64_t const& id,
-            char const* const& name,
-            char const* const& group,
-            char const* const& desc
+            IdType_Int64 const& id,
+            NameType_String const& name,
+            GroupType_String const& group,
+            DescType_String const& desc
         )
         {
 
@@ -277,30 +217,14 @@ CREATE TABLE [manage_bind_account_role](
 
         xx::SQLiteQuery_p query_InsertRole;
         // 插入一条 身份. 可能因为 id 已存在, name 已存在而失败
+        template<typename IdType_Int64
+            ,typename NameType_String
+            ,typename DescType_String>
         inline void InsertRole
         (
-            int64_t const& id,
-            xx::String_p const& name,
-            xx::String_p const& desc
-        )
-        {
-
-			if (!this->query_InsertRole)
-			{
-				this->query_InsertRole = this->sqlite.CreateQuery(R"=-=(insert into [manage_role] ([id], [name], [desc]) values (?, ?, ?))=-=");
-			}
-            this->query_InsertRole->SetParameters(id, name, desc);
-            this->query_InsertRole->Execute();
-        }
-
-
-        // xx::SQLiteQuery_p query_InsertRole;
-        // 插入一条 身份. 可能因为 id 已存在, name 已存在而失败
-        inline void InsertRole
-        (
-            int64_t const& id,
-            char const* const& name,
-            char const* const& desc
+            IdType_Int64 const& id,
+            NameType_String const& name,
+            DescType_String const& desc
         )
         {
 
@@ -315,10 +239,12 @@ CREATE TABLE [manage_bind_account_role](
 
         xx::SQLiteQuery_p query_InsertBindAccountRole;
         // 插入一条 账号.身份 绑定
+        template<typename AccountIdType_Int64
+            ,typename RoleIdType_Int64>
         inline void InsertBindAccountRole
         (
-            int64_t const& accountId,
-            int64_t const& roleId
+            AccountIdType_Int64 const& accountId,
+            RoleIdType_Int64 const& roleId
         )
         {
 
@@ -333,10 +259,12 @@ CREATE TABLE [manage_bind_account_role](
 
         xx::SQLiteQuery_p query_InsertBindRolePermission;
         // 插入一条 身份.权限 绑定
+        template<typename RoleIdType_Int64
+            ,typename PermissionIdType_Int64>
         inline void InsertBindRolePermission
         (
-            int64_t const& roleId,
-            int64_t const& permissionId
+            RoleIdType_Int64 const& roleId,
+            PermissionIdType_Int64 const& permissionId
         )
         {
 
@@ -351,28 +279,12 @@ CREATE TABLE [manage_bind_account_role](
 
         xx::SQLiteQuery_p query_UpdateAccount_ChangePassword;
         // 改密码. 可能因 找不到 id 而失败
+        template<typename IdType_Int64
+            ,typename NewPasswordType_String>
         inline void UpdateAccount_ChangePassword
         (
-            int64_t const& id,
-            xx::String_p const& newPassword
-        )
-        {
-
-			if (!this->query_UpdateAccount_ChangePassword)
-			{
-				this->query_UpdateAccount_ChangePassword = this->sqlite.CreateQuery(R"=-=(update [manage_account] set [password] = ? where [id] = ?)=-=");
-			}
-            this->query_UpdateAccount_ChangePassword->SetParameters(newPassword, id);
-            this->query_UpdateAccount_ChangePassword->Execute();
-        }
-
-
-        // xx::SQLiteQuery_p query_UpdateAccount_ChangePassword;
-        // 改密码. 可能因 找不到 id 而失败
-        inline void UpdateAccount_ChangePassword
-        (
-            int64_t const& id,
-            char const* const& newPassword
+            IdType_Int64 const& id,
+            NewPasswordType_String const& newPassword
         )
         {
 
@@ -387,28 +299,12 @@ CREATE TABLE [manage_bind_account_role](
 
         xx::SQLiteQuery_p query_UpdateAccount_ChangeUsername;
         // 改用户名. 可能因 找不到 id 或 新 username 已存在而失败
+        template<typename IdType_Int64
+            ,typename NewUsernameType_String>
         inline void UpdateAccount_ChangeUsername
         (
-            int64_t const& id,
-            xx::String_p const& newUsername
-        )
-        {
-
-			if (!this->query_UpdateAccount_ChangeUsername)
-			{
-				this->query_UpdateAccount_ChangeUsername = this->sqlite.CreateQuery(R"=-=(update [manage_account] set [username] = ? where [id] = ?)=-=");
-			}
-            this->query_UpdateAccount_ChangeUsername->SetParameters(newUsername, id);
-            this->query_UpdateAccount_ChangeUsername->Execute();
-        }
-
-
-        // xx::SQLiteQuery_p query_UpdateAccount_ChangeUsername;
-        // 改用户名. 可能因 找不到 id 或 新 username 已存在而失败
-        inline void UpdateAccount_ChangeUsername
-        (
-            int64_t const& id,
-            char const* const& newUsername
+            IdType_Int64 const& id,
+            NewUsernameType_String const& newUsername
         )
         {
 
@@ -423,30 +319,14 @@ CREATE TABLE [manage_bind_account_role](
 
         xx::SQLiteQuery_p query_UpdateRole;
         // 更新 身份 数据. 可能因 找不到 id 或 新 name 已存在而失败
+        template<typename IdType_Int64
+            ,typename NewNameType_String
+            ,typename NewDescType_String>
         inline void UpdateRole
         (
-            int64_t const& id,
-            xx::String_p const& newName,
-            xx::String_p const& newDesc
-        )
-        {
-
-			if (!this->query_UpdateRole)
-			{
-				this->query_UpdateRole = this->sqlite.CreateQuery(R"=-=(update [manage_role] set [name] = ?, [desc] = ? where [id] = ?)=-=");
-			}
-            this->query_UpdateRole->SetParameters(newName, newDesc, id);
-            this->query_UpdateRole->Execute();
-        }
-
-
-        // xx::SQLiteQuery_p query_UpdateRole;
-        // 更新 身份 数据. 可能因 找不到 id 或 新 name 已存在而失败
-        inline void UpdateRole
-        (
-            int64_t const& id,
-            char const* const& newName,
-            char const* const& newDesc
+            IdType_Int64 const& id,
+            NewNameType_String const& newName,
+            NewDescType_String const& newDesc
         )
         {
 
@@ -461,32 +341,16 @@ CREATE TABLE [manage_bind_account_role](
 
         xx::SQLiteQuery_p query_UpdatePermission;
         // 更新 权限 数据. 可能因 找不到 id 或 新 name 已存在而失败
+        template<typename IdType_Int64
+            ,typename NewGroupType_String
+            ,typename NewNameType_String
+            ,typename NewDescType_String>
         inline void UpdatePermission
         (
-            int64_t const& id,
-            xx::String_p const& newGroup,
-            xx::String_p const& newName,
-            xx::String_p const& newDesc
-        )
-        {
-
-			if (!this->query_UpdatePermission)
-			{
-				this->query_UpdatePermission = this->sqlite.CreateQuery(R"=-=(update [manage_permission] set [group] = ?, [name] = ?, [desc] = ? where [id] = ?)=-=");
-			}
-            this->query_UpdatePermission->SetParameters(newGroup, newName, newDesc, id);
-            this->query_UpdatePermission->Execute();
-        }
-
-
-        // xx::SQLiteQuery_p query_UpdatePermission;
-        // 更新 权限 数据. 可能因 找不到 id 或 新 name 已存在而失败
-        inline void UpdatePermission
-        (
-            int64_t const& id,
-            char const* const& newGroup,
-            char const* const& newName,
-            char const* const& newDesc
+            IdType_Int64 const& id,
+            NewGroupType_String const& newGroup,
+            NewNameType_String const& newName,
+            NewDescType_String const& newDesc
         )
         {
 
@@ -501,9 +365,10 @@ CREATE TABLE [manage_bind_account_role](
 
         xx::SQLiteQuery_p query_DeleteBindAccountRoleByAccountId;
         // 根据 accountId 删掉 账号.身份 绑定数据
+        template<typename AccountIdType_Int64>
         inline void DeleteBindAccountRoleByAccountId
         (
-            int64_t const& accountId
+            AccountIdType_Int64 const& accountId
         )
         {
 
@@ -518,9 +383,10 @@ CREATE TABLE [manage_bind_account_role](
 
         xx::SQLiteQuery_p query_DeleteBindAccountRoleByRoleId;
         // 根据 roleId 删掉 账号.身份 绑定数据
+        template<typename RoleIdType_Int64>
         inline void DeleteBindAccountRoleByRoleId
         (
-            int64_t const& roleId
+            RoleIdType_Int64 const& roleId
         )
         {
 
@@ -535,9 +401,10 @@ CREATE TABLE [manage_bind_account_role](
 
         xx::SQLiteQuery_p query_DeleteBindRolePermissionByRoleId;
         // 根据 roleId 删掉 身份.权限 绑定数据
+        template<typename RoleIdType_Int64>
         inline void DeleteBindRolePermissionByRoleId
         (
-            int64_t const& roleId
+            RoleIdType_Int64 const& roleId
         )
         {
 
@@ -552,9 +419,10 @@ CREATE TABLE [manage_bind_account_role](
 
         xx::SQLiteQuery_p query_DeleteAccount;
         // 根据主键删一条 账号. 需要先删相关绑定, 否则可能失败. 也有可能 id 找不到而没删到数据. 要用 GetAffectedRows 的值来判断
+        template<typename IdType_Int64>
         inline void DeleteAccount
         (
-            int64_t const& id
+            IdType_Int64 const& id
         )
         {
 
@@ -569,9 +437,10 @@ CREATE TABLE [manage_bind_account_role](
 
         xx::SQLiteQuery_p query_DeletePermission;
         // 根据主键删一条 权限. 需要先删掉相关绑定, 否则可能失败
+        template<typename IdType_Int64>
         inline void DeletePermission
         (
-            int64_t const& id
+            IdType_Int64 const& id
         )
         {
 
@@ -586,9 +455,10 @@ CREATE TABLE [manage_bind_account_role](
 
         xx::SQLiteQuery_p query_DeleteRole;
         // 根据主键删一条 角色. 需要先删掉相关绑定, 否则可能失败
+        template<typename IdType_Int64>
         inline void DeleteRole
         (
-            int64_t const& id
+            IdType_Int64 const& id
         )
         {
 
@@ -615,6 +485,7 @@ CREATE TABLE [manage_bind_account_role](
 			this->query_SelectAccounts->Execute([&](xx::SQLiteReader& sr)
             {
 				auto& r = rtv->Emplace();
+                this->mempool->MPCreateTo(r);
                 r->id = sr.ReadInt64(0);
                 r->username = this->mempool->MPCreate<xx::String>(sr.ReadString(1));
                 r->password = this->mempool->MPCreate<xx::String>(sr.ReadString(2));
@@ -637,6 +508,7 @@ CREATE TABLE [manage_bind_account_role](
 			this->query_SelectRoles->Execute([&](xx::SQLiteReader& sr)
             {
 				auto& r = rtv->Emplace();
+                this->mempool->MPCreateTo(r);
                 r->id = sr.ReadInt32(0);
                 if (!sr.IsDBNull(0)) r->name = this->mempool->MPCreate<xx::String>(sr.ReadString(1));
                 if (!sr.IsDBNull(0)) r->desc = this->mempool->MPCreate<xx::String>(sr.ReadString(2));
@@ -659,6 +531,7 @@ CREATE TABLE [manage_bind_account_role](
 			this->query_SelectPermissions->Execute([&](xx::SQLiteReader& sr)
             {
 				auto& r = rtv->Emplace();
+                this->mempool->MPCreateTo(r);
                 r->id = sr.ReadInt32(0);
                 if (!sr.IsDBNull(0)) r->group = this->mempool->MPCreate<xx::String>(sr.ReadString(1));
                 if (!sr.IsDBNull(0)) r->name = this->mempool->MPCreate<xx::String>(sr.ReadString(2));
@@ -682,6 +555,7 @@ CREATE TABLE [manage_bind_account_role](
 			this->query_SelectBindRolePermissions->Execute([&](xx::SQLiteReader& sr)
             {
 				auto& r = rtv->Emplace();
+                this->mempool->MPCreateTo(r);
                 r->role_id = sr.ReadInt32(0);
                 r->permission_id = sr.ReadInt32(1);
             });
@@ -703,6 +577,7 @@ CREATE TABLE [manage_bind_account_role](
 			this->query_SelectBindAccountRoles->Execute([&](xx::SQLiteReader& sr)
             {
 				auto& r = rtv->Emplace();
+                this->mempool->MPCreateTo(r);
                 r->account_id = sr.ReadInt32(0);
                 r->role_id = sr.ReadInt32(1);
             });
@@ -712,35 +587,12 @@ CREATE TABLE [manage_bind_account_role](
 
         xx::SQLiteQuery_p query_SelectAccountIdsBySortLimit;
         // 根据排序规则返回 limit 行账号记录.
+        template<typename SortType_String
+            ,typename LimitType_Int64>
         inline xx::List_p<int64_t> SelectAccountIdsBySortLimit
         (
-            xx::String_p const& sort,
-            int64_t const& limit
-        )
-        {
-
-            this->s->Clear();
-            this->s->Append(R"=-=(select [id] from [manage_account] order by )=-=");
-            this->s->Append(sort);
-            this->s->Append(R"=-=( limit 0, )=-=");
-            this->s->Append(limit);
-            this->query_SelectAccountIdsBySortLimit = sqlite.CreateQuery(s->C_str(), s->dataLen);
-            xx::List_p<int64_t> rtv;
-            this->mempool->MPCreateTo(rtv);
-            this->query_SelectAccountIdsBySortLimit->Execute([&](xx::SQLiteReader& sr)
-            {
-				rtv->Add(sr.ReadInt64(0));
-            });
-			return rtv;
-        }
-
-
-        // xx::SQLiteQuery_p query_SelectAccountIdsBySortLimit;
-        // 根据排序规则返回 limit 行账号记录.
-        inline xx::List_p<int64_t> SelectAccountIdsBySortLimit
-        (
-            char const* const& sort,
-            int64_t const& limit
+            SortType_String const& sort,
+            LimitType_Int64 const& limit
         )
         {
 
@@ -762,9 +614,10 @@ CREATE TABLE [manage_bind_account_role](
 
         xx::SQLiteQuery_p query_SelectAccountsByIds;
         // 根据用户 ids 查找并返回一批账号记录.
+        template<typename IdsType_List`1>
         inline xx::List_p<DB::Manage::Account_p> SelectAccountsByIds
         (
-            xx::List_p<int64_t> const& ids
+            IdsType_List`1 const& ids
         )
         {
 
@@ -777,6 +630,7 @@ CREATE TABLE [manage_bind_account_role](
 			this->query_SelectAccountsByIds->Execute([&](xx::SQLiteReader& sr)
             {
 				auto& r = rtv->Emplace();
+                this->mempool->MPCreateTo(r);
                 r->id = sr.ReadInt64(0);
                 r->username = this->mempool->MPCreate<xx::String>(sr.ReadString(1));
                 r->password = this->mempool->MPCreate<xx::String>(sr.ReadString(2));
@@ -787,35 +641,10 @@ CREATE TABLE [manage_bind_account_role](
 
         xx::SQLiteQuery_p query_SelectAccountByUsername;
         // 根据用户名查找并返回一条账号记录. 未找到将返回 null
+        template<typename UsernameType_String>
         inline DB::Manage::Account_p SelectAccountByUsername
         (
-            xx::String_p const& username
-        )
-        {
-
-			if (!this->query_SelectAccountByUsername)
-			{
-				this->query_SelectAccountByUsername = this->sqlite.CreateQuery(R"=-=(select [id], [username], [password] from [manage_account] where [username] = ?)=-=");
-			}
-            DB::Manage::Account_p rtv;
-            this->query_SelectAccountByUsername->SetParameters(username);
-			this->query_SelectAccountByUsername->Execute([&](xx::SQLiteReader& sr)
-            {
-                assert(!rtv);
-                this->mempool->MPCreateTo(rtv);
-                rtv->id = sr.ReadInt64(0);
-                rtv->username = this->mempool->MPCreate<xx::String>(sr.ReadString(1));
-                rtv->password = this->mempool->MPCreate<xx::String>(sr.ReadString(2));
-            });
-            return rtv;
-        }
-
-
-        // xx::SQLiteQuery_p query_SelectAccountByUsername;
-        // 根据用户名查找并返回一条账号记录. 未找到将返回 null
-        inline DB::Manage::Account_p SelectAccountByUsername
-        (
-            char const* const& username
+            UsernameType_String const& username
         )
         {
 
@@ -839,9 +668,10 @@ CREATE TABLE [manage_bind_account_role](
 
         xx::SQLiteQuery_p query_SelectPermissionIdsByAccountId;
         // 根据 accountId 获取 身份id列表 以及 去重后的 权限id列表
+        template<typename AccountIdType_Int64>
         inline xx::List_p<int64_t> SelectPermissionIdsByAccountId
         (
-            int64_t const& accountId
+            AccountIdType_Int64 const& accountId
         )
         {
 
@@ -867,9 +697,10 @@ select distinct b.[permission_id]
 
         xx::SQLiteQuery_p query_SelectRoleIdsByAccountId;
         // 根据 accountId 获取 身份id列表
+        template<typename AccountIdType_Int64>
         inline xx::List_p<int64_t> SelectRoleIdsByAccountId
         (
-            int64_t const& accountId
+            AccountIdType_Int64 const& accountId
         )
         {
 

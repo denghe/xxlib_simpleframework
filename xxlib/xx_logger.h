@@ -287,7 +287,7 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
 			o->id = 1;             // 用来标记是通过 Write 写入的
 			o->level = level;
 
-			o->time = GetNowDateTimeTicks();
+			o->time = GetDateTimeNowTicks();
 			o->title.Assign(title);
 			o->opcode = opcode;
 			o->desc.Assign(desc);

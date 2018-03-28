@@ -49,7 +49,44 @@ namespace xx
 
 
 
+	/**************************************************************************************************/
+	// 从 sqlite 源代码中复制来的 wchar -> utf8 ( 原型是 WRITE_UTF8 宏 ), 返回写入长度
+	/**************************************************************************************************/
 
+	template <typename WCharType>
+	size_t ToUtf8(char* const& zOut, WCharType const& c) noexcept
+	{
+
+		if (c < 0x00080)
+		{
+			zOut[0] = (uint8_t)(c & 0xFF);
+			return 1;
+		}
+		else if (c < 0x00800)
+		{
+			zOut[0] = 0xC0 + (uint8_t)((c >> 6) & 0x1F);
+			zOut[1] = 0x80 + (uint8_t)(c & 0x3F);
+			return 2;
+		}
+		else if (c < 0x10000)
+		{
+			zOut[0] = 0xE0 + (uint8_t)((c >> 12) & 0x0F);
+			zOut[1] = 0x80 + (uint8_t)((c >> 6) & 0x3F);
+			zOut[2] = 0x80 + (uint8_t)(c & 0x3F);
+			return 3;
+		}
+		else
+		{
+			if constexpr(sizeof(WCharType) >= 4)
+			{
+				zOut[0] = 0xF0 + (uint8_t)((c >> 18) & 0x07);
+				zOut[1] = 0x80 + (uint8_t)((c >> 12) & 0x3F);
+				zOut[2] = 0x80 + (uint8_t)((c >> 6) & 0x3F);
+				zOut[3] = 0x80 + (uint8_t)(c & 0x3F);
+				return 4;
+			}
+		}
+	}
 
 
 

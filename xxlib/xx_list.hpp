@@ -49,7 +49,7 @@ namespace xx
 		auto newBuf = (T*)mempool->Alloc(newBufByteLen);
 		if (!newBuf) throw - 1;
 
-		if constexpr(std::is_trivial<T>::value || IsPtr_v<T> || IsRef_v<T>)
+		if constexpr(IsTrivial_v<T>)
 		{
 			memcpy(newBuf, buf, dataLen * sizeof(T));
 		}
@@ -175,7 +175,7 @@ namespace xx
 	{
 		assert(idx < dataLen);
 		--dataLen;
-		if constexpr(std::is_trivial<T>::value || IsPtr_v<T> || IsRef_v<T>)
+		if constexpr(IsTrivial_v<T>)
 		{
 			buf[idx].~T();
 			memmove(buf + idx, buf + idx + 1, (dataLen - idx) * sizeof(T));
@@ -229,7 +229,7 @@ namespace xx
 		Reserve(dataLen + 1);
 		if (idx < dataLen)
 		{
-			if constexpr(std::is_trivial<T>::value || IsPtr_v<T> || IsRef_v<T>)
+			if constexpr(IsTrivial_v<T>)
 			{
 				memmove(buf + idx + 1, buf + idx, (dataLen - idx) * sizeof(T));
 			}
@@ -278,7 +278,7 @@ namespace xx
 	void List<T>::AddRange(T const* items, size_t count)
 	{
 		Reserve(dataLen + count);
-		if constexpr(std::is_trivial<T>::value || IsPtr_v<T> || IsRef_v<T>)
+		if constexpr(IsTrivial_v<T>)
 		{
 			std::memcpy(buf, items, count * sizeof(T));
 		}

@@ -352,4 +352,9 @@ namespace xx
 
 	typedef Ref<Object> Object_r;
 
+
+	// 增强版, 用于替代 is_trivial 的判断以实现针对 Ptr<> Ref<> 的 memcpy 操作. 未来可以继续在此加料
+	template<typename T>
+	constexpr bool IsTrivial_v = std::is_trivial<T>::value || IsPtr_v<T> || IsRef_v<T>;
+
 }

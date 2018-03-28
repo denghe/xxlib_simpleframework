@@ -396,11 +396,11 @@ namespace xx
 		{
 			s.Reserve(s.dataLen + 5);
 			if (in)
-			{ 
+			{
 				memcpy(s.buf + s.dataLen, "true", 4);
 				s.dataLen += 4;
 			}
-			else 
+			else
 			{
 				memcpy(s.buf + s.dataLen, "false", 5);
 				s.dataLen += 5;
@@ -435,7 +435,7 @@ namespace xx
 		}
 	};
 
-	// 适配 literal string
+	// 适配 literal char[len] string
 	template<size_t len>
 	struct StrFunc<char[len], void>
 	{
@@ -446,6 +446,55 @@ namespace xx
 			s.dataLen += len - 1;
 		}
 	};
+
+
+
+
+	// 适配 wchar_t
+	template<>
+	struct StrFunc<wchar_t, void>
+	{
+		static inline void WriteTo(String& s, wchar_t const &in)
+		{
+			s.Reserve(s.dataLen + 3);
+			s.dataLen += ToUtf8(s.buf + s.dataLen, in);
+		}
+	};
+
+	// 适配 wchar_t* \0 结尾 字串( 不是很高效 )
+	template<>
+	struct StrFunc<wchar_t const*, void>
+	{
+		static inline void WriteTo(String& s, wchar_t const* const &in)
+		{
+			if (in)
+			{
+				size_t i = 0;
+				while (auto c = in[i])
+				{
+					StrFunc<wchar_t>::WriteTo(s, c);
+				}
+			}
+		}
+	};
+
+	// 适配 literal wchar_t[len] string
+	template<size_t len>
+	struct StrFunc<wchar_t[len], void>
+	{
+		static inline void WriteTo(String& s, wchar_t const(&in)[len])
+		{
+			s.Reserve(s.dataLen + (len - 1) * 3);
+			for (size_t i = 0; i < len - 1; ++i)
+			{
+				s.dataLen += ToUtf8(s.buf + s.dataLen, in[i]);
+			}
+		}
+	};
+
+
+
+
 
 	// 适配 Object
 	template<typename T>
