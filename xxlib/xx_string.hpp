@@ -251,6 +251,7 @@ namespace xx
 	bool String::Equals(char const(&o)[len]) const noexcept
 	{
 		static_assert(len, "must be a literal string");
+		if (dataLen != len - 1) return false;
 		return memcmp(buf, o, dataLen) == 0;
 	}
 

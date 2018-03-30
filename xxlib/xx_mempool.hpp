@@ -425,7 +425,7 @@ namespace xx
 	Ptr<T>& Ptr<T>::operator=(Ptr<O>&& o) noexcept
 	{
 		static_assert(std::is_base_of_v<T, O>);
-		std::swap(pointer, o.pointer);
+		std::swap(pointer, (T*)o.pointer);
 		return *this;
 	}
 	template<typename T>
@@ -452,6 +452,12 @@ namespace xx
 			}
 			pointer = nullptr;
 		}
+	}
+
+	template<typename T>
+	Ref<T> Ptr<T>::MakeRef() const noexcept
+	{
+		return Ref<T>(pointer);
 	}
 
 	template<typename T>

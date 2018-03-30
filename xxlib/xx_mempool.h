@@ -213,6 +213,9 @@ namespace xx
 	/***********************************************************************************/
 
 	template<typename T>
+	class Ref;
+
+	template<typename T>
 	class Ptr
 	{
 	public:
@@ -259,6 +262,9 @@ namespace xx
 
 
 		void Clear();
+
+		Ref<T> MakeRef() const noexcept;
+
 		~Ptr();
 
 		template<typename O>

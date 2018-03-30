@@ -359,7 +359,7 @@ bool xx::UvTimeouterBase::timering()
 xx::UvTcpUdpBase::UvTcpUdpBase(UvLoop& loop)
 	: UvTimeouterBase(loop.mempool)
 	, routingAddress(loop.mempool)
-	, recvingAddress(loop.mempool)
+	, senderAddress(loop.mempool)
 	, loop(loop)
 	, bbRecv(loop.mempool)
 	, bbSend(loop.mempool)
@@ -416,7 +416,7 @@ void xx::UvTcpUdpBase::ReceiveImpl(char const* bufPtr, int len)
 			if (routingAddress.dataLen)
 			{
 				// 存返件地址之后 跳到正常包逻辑代码继续处理
-				recvingAddress.Assign((char*)buf + addrOffset, addrLen);
+				senderAddress.Assign((char*)buf + addrOffset, addrLen);
 				goto LabAfterAddress;
 			}
 
@@ -432,7 +432,7 @@ void xx::UvTcpUdpBase::ReceiveImpl(char const* bufPtr, int len)
 			goto LabEnd;
 		}
 		// 非转发包不含返回地址, 清空以便于在事件函数中判断来源( goto LabAfterAddress 的会跳过这步 )
-		recvingAddress.Clear();
+		senderAddress.Clear();
 
 
 	LabAfterAddress:
@@ -984,7 +984,7 @@ void xx::UvRpcManager::Process()
 	}
 }
 
-uint32_t xx::UvRpcManager::Register(std::function<void(uint32_t, BBuffer const*)>&& cb, int interval)
+uint32_t xx::UvRpcManager::Register(std::function<void(uint32_t, BBuffer*)>&& cb, int interval)
 {
 	if (interval == 0) interval = defaultInterval;
 	++serial;
@@ -998,7 +998,7 @@ void xx::UvRpcManager::Unregister(uint32_t serial)
 	mapping.Remove(serial);
 }
 
-void xx::UvRpcManager::Callback(uint32_t serial, BBuffer const* bb)
+void xx::UvRpcManager::Callback(uint32_t serial, BBuffer* bb)
 {
 	int idx = mapping.Find(serial);
 	if (idx == -1) return;
