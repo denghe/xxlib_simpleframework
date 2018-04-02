@@ -312,7 +312,7 @@ inline Router::Router(xx::UvLoop& loop)
 			if (c->addr.dataLen)
 			{
 				serviceClientMappings.Remove(&c->addr);
-				serviceClientGuests.Emplace(c);
+				serviceClientGuests.Add(c);
 				c->addr.Clear();
 			}
 		};
@@ -354,50 +354,42 @@ inline Router::Router(xx::UvLoop& loop)
 			// 如果有定位到, 则继续操作
 			if (idx != -1)
 			{
-				// 取出 c
+				// 取出 c( 位于这个容器的 c 一定是 alive 的 )
 				auto c = serviceClientMappings.ValueAt(idx);
 
-				// 如果未断开
-				if (c->alive())
-				{
-					// 开始填充 c->bbSend, 构造转发包. 除了数据区, 这里需要完全解析包结构. 
-					// 需要保留原有 Request Response 特性, 算出新的 addrLen. 
-					// 如果因为附加地址导致数据超过 64k, 还要用大包标记来发
+				// 开始填充 c->bbSend, 构造转发包. 除了数据区, 这里需要完全解析包结构. 
+				// 需要保留原有 Request Response 特性, 算出新的 addrLen. 
+				// 如果因为附加地址导致数据超过 64k, 还要用大包标记来发
 
-					// 下面先直接实现拼数据逻辑, 测试验证通过之后, 移到 c 的成员函数中去. 比如叫 SendRouting
-					// 其接口大概长相应该是传入 OnReceiveRouting 的事件参数
+				// 下面先直接实现拼数据逻辑, 测试验证通过之后, 移到 c 的成员函数中去. 比如叫 SendRouting
+				// 其接口大概长相应该是传入 OnReceiveRouting 的事件参数
 
-					// 引用到 bbSend
-					auto& sBB = c->bbSend;
+				// 引用到 bbSend
+				auto& sBB = c->bbSend;
 
-					// 清空以备用
-					sBB.Clear();
+				// 清空以备用
+				sBB.Clear();
 
-					auto typeId = (uint8_t)bb[pkgOffset];
-					
+				auto typeId = (uint8_t)bb[pkgOffset];
 
-					// 将包头的 type, datalen 部分 复制到目标
-					sBB.AddRange(bb.buf + pkgOffset, addrOffset - pkgOffset);
 
-					// 记录当前数据长, 准备在写入发送者 addr 后算 addrLen
-					auto dataLen_bak = sBB.dataLen;
-					sBB.Write(p->addr);
+				// 将包头的 type, datalen 部分 复制到目标
+				sBB.AddRange(bb.buf + pkgOffset, addrOffset - pkgOffset);
 
-					// 算出 addr 区长度
-					auto sAddrLen = sBB.dataLen - dataLen_bak;
+				// 记录当前数据长, 准备在写入发送者 addr 后算 addrLen
+				auto dataLen_bak = sBB.dataLen;
+				sBB.Write(p->addr);
 
-					// 修正头部的掩码
-					sBB[0] = sBB[0] & 0xF | ((sAddrLen - 1) << 4);
+				// 算出 addr 区长度
+				auto sAddrLen = sBB.dataLen - dataLen_bak;
 
-					// todo
+				// 修正头部的掩码
+				sBB[0] = sBB[0] & 0xF | ((sAddrLen - 1) << 4);
 
-					// 发送 bbSend
-					//c->Send();
-				}
-				else
-				{
-					p->Release();
-				}
+				// todo
+
+				// 发送 bbSend
+				//c->Send();
 			}
 			// 否则将 p 回收掉
 			else
@@ -407,7 +399,7 @@ inline Router::Router(xx::UvLoop& loop)
 		};
 
 		// 在 p 的销毁事件中, 将自己从 map 中移除
-		p->OnDispose = [this, p]() 
+		p->OnDispose = [this, p]()
 		{
 			clientPeerMappings.Remove(p->addr);
 		};
