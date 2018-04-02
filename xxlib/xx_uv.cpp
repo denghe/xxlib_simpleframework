@@ -410,7 +410,6 @@ void xx::UvTcpUdpBase::ReceiveImpl(char const* bufPtr, int len)
 			auto addrLen = ((size_t)typeId >> 4) + 1;
 			auto addrOffset = offset;
 			auto pkgLen = offset + dataLen - pkgOffset;
-			offset += addrLen;
 
 			// 进一步判断是否有设置地址信息( 如果 routingAddress 非空, 表示当前连接为数据接收方, 否则就是路由 )
 			if (routingAddress.dataLen)
@@ -420,7 +419,7 @@ void xx::UvTcpUdpBase::ReceiveImpl(char const* bufPtr, int len)
 				goto LabAfterAddress;
 			}
 
-			bbRecv.offset = offset;
+			bbRecv.offset = offset + addrLen;
 			if (OnReceiveRouting) OnReceiveRouting(bbRecv, pkgOffset, pkgLen, addrOffset, addrLen);
 			if (versionNumber != memHeader().versionNumber) return;
 			if (Disconnected())
@@ -492,7 +491,6 @@ void xx::UvTcpUdpBase::SendBytes(BBuffer& bb)
 {
 	SendBytes(bb.buf, (int)bb.dataLen);
 }
-
 
 
 

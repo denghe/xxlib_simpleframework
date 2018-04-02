@@ -167,7 +167,6 @@ namespace xx
 
 		void SendBytes(BBuffer& bb);
 
-
 		template<typename T>
 		void Send(T const& pkg);
 
