@@ -8,6 +8,8 @@
 // decls
 /*******************************************************************/
 
+
+/*************************/
 // 服务器1
 class Service1 : public xx::Object
 {
@@ -20,7 +22,9 @@ public:
 };
 
 
+/*************************/
 // 服务器2
+
 class Service2 : public xx::Object
 {
 public:
@@ -32,7 +36,10 @@ public:
 };
 
 
+/*************************/
 // 路由器
+
+// 服务连接
 class ServiceClient : public xx::UvTcpClient
 {
 public:
@@ -40,6 +47,16 @@ public:
 	xx::String addr;				// 连上服务器后从服务器收到的地址信息
 };
 using ServiceClient_p = xx::Ptr<ServiceClient>;
+
+// 客户对端
+class ClientPeer : public xx::UvTcpPeer
+{
+public:
+	ClientPeer(xx::UvTcpListener& listener);
+	xx::String addr;				// 接受客户端连接后为其生成一个唯一连接id
+};
+using ClientPeer_p = xx::Ptr<ClientPeer>;
+
 class Router : public xx::Object
 {
 public:
@@ -48,13 +65,16 @@ public:
 	// 接受客户端的连接
 	xx::UvTcpListener clientListener;
 
-	// 拿来做断线自动重连
+	// 所有玩家对端连接上下文, 地址做 key
+	xx::Dict<xx::String*, ClientPeer_p> clientPeerMappings;
+
+	// 拿来做 ServiceClients 断线自动重连
 	xx::UvTimer timer;
 
-	// 连所有内部服务器. 在连上或收到其 addr 之前为匿名状态, 存在这里
+	// 连所有内部服务. 在连上或收到其 addr 之前为匿名状态, 存在这里
 	xx::List<ServiceClient_p> serviceClientGuests;
 
-	// 所有内部服务器连接上下文, 地址做 key
+	// 所有内部服务连接上下文, 地址做 key
 	xx::Dict<xx::String*, ServiceClient_p> serviceClientMappings;
 
 	// 用于发送时拼接指令
@@ -66,6 +86,7 @@ public:
 };
 
 
+/*************************/
 // 客户端
 class Client : public xx::Object
 {
@@ -77,7 +98,6 @@ public:
 	Client(xx::UvLoop& loop);
 	~Client();
 };
-
 
 
 
@@ -204,6 +224,7 @@ inline Router::Router(xx::UvLoop& loop)
 	: xx::Object(loop.mempool)
 	, loop(loop)
 	, clientListener(loop)
+	, clientPeerMappings(loop.mempool)
 	, timer(loop, 0, 1000, [this] { Update(); })
 	, serviceClientGuests(loop.mempool)
 	, serviceClientMappings(loop.mempool)
@@ -222,27 +243,31 @@ inline Router::Router(xx::UvLoop& loop)
 
 	for (auto& c : serviceClientGuests)
 	{
-		// 引用传递 this, c 到 lambda 备用
-		c->OnConnect = [&](int status)
+		// this 生命周期可确保死在 c 之后
+		// 取 c 的 Ref 传入 lambda, 以便探测当回调发生时 c 已 release 的情况
+		c->OnConnect = [this, cRef = c.MakeRef()](int status)
 		{
+			// c 已释放
+			auto c = cRef.Lock();
+			if (!c) return;
+
 			// 没连上
-			if (!status) return;	
+			if (!status) return;
 
 			// 连上后发起地址请求
 			cmd.Assign("get routing address");
 
-			// 取 c 的 Ref 传入 lambda, 以便探测当回调发生时 c 已 release 的情况
-			c->SendRequest(cmd, [this, cRef = c.MakeRef()](uint32_t serial, xx::BBuffer* bb)
+			c->SendRequest(cmd, [this, cRef](uint32_t serial, xx::BBuffer* bb)
 			{
-				// 超时
-				if (!bb) return;
-
 				// c 已释放
 				auto c = cRef.Lock();
 				if (!c) return;
 
+				// 超时
+				if (!bb) return;
+
 				// c 已断开
-				if (!c->alive) return;
+				if (!c->alive()) return;
 
 				// 试着反序列化填充地址. 失败则断开并退出( 理论上讲不应该出现 )
 				if (auto r = bb->ReadRoot(c->addr))
@@ -251,25 +276,43 @@ inline Router::Router(xx::UvLoop& loop)
 					return;
 				}
 
-				// todo: 将 c 从 list 移至 map
+				// 将 c 从 list 移至 map
+				serviceClientGuests.Remove(c);
+				auto r = serviceClientMappings.Add(&c->addr, std::move(c));
+				assert(r.success);
 			});
 		};
 
-		c->OnDisconnect = [this] 
+		c->OnDisconnect = [this, cRef = c.MakeRef()]
 		{
-			// todo: 如果 c 位于 map ( addr 有值即位于 map ), 要从 map 移除并放入 guests 并清 addr
+			// c 已释放
+			auto c = cRef.Lock();
+			if (!c) return;
+
+			// 如果 c 位于 map ( addr 有值即位于 map ), 要从 map 移除并放入 guests 并清 addr
+			if (c->addr.dataLen)
+			{
+				serviceClientMappings.Remove(&c->addr);
+				serviceClientGuests.Emplace(std::move(c));
+				c->addr.Clear();
+			}
 		};
 	}
 
 	clientListener.Bind("0.0.0.0", 12344);
 	clientListener.Listen();
-	clientListener.OnAccept = [this](xx::UvTcpPeer *p)
-	{
-		p->OnReceiveRouting = [this, p](xx::BBuffer& bb, size_t pkgOffset, size_t pkgLen, size_t addrOffset, size_t addrLen)
-		{
-			// todo: 读出 addr, 在 map 中定位到 c, 修改 bb 中 addr 部分后用 c 发送
-		};
-	};
+	//clientListener.OnCreatePeer = [this]() 
+	//{
+	//	// p = Create
+	//	// p->addr = xxxx
+	//	p->OnReceiveRouting = [this, p](xx::BBuffer& bb, size_t pkgOffset, size_t pkgLen, size_t addrOffset, size_t addrLen)
+	//	{
+	//		// todo: 读出 addr, 在 map 中定位到 c, 修改 bb 中 addr 部分后用 c 发送
+	//		cmd.Assign(bb.buf + addrOffset, addrLen);
+
+	//	};
+	//	return p;
+	//};
 }
 
 inline void Router::Update()
@@ -277,7 +320,7 @@ inline void Router::Update()
 	// 断线自动重连
 	for (auto& c : serviceClientGuests)
 	{
-		if (!c->alive) c->Connect();
+		if (!c->alive()) c->Connect();
 	}
 }
 inline Router::~Router()

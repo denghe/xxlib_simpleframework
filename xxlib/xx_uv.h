@@ -172,7 +172,7 @@ namespace xx
 		void Send(T const& pkg);
 
 		template<typename T>
-		uint32_t SendRequest(T const& pkg, std::function<void(uint32_t, BBuffer*)> cb, int interval = 0);
+		uint32_t SendRequest(T const& pkg, std::function<void(uint32_t, BBuffer*)>&& cb, int interval = 0);
 
 		template<typename T>
 		void SendResponse(uint32_t serial, T const& pkg);
@@ -182,7 +182,7 @@ namespace xx
 		void SendRouting(xx::String& rAddr, T const& pkg);
 
 		template<typename T>
-		uint32_t SendRoutingRequest(xx::String& rAddr, T const& pkg, std::function<void(uint32_t, BBuffer*)> cb, int interval = 0);
+		uint32_t SendRoutingRequest(xx::String& rAddr, T const& pkg, std::function<void(uint32_t, BBuffer*)>&& cb, int interval = 0);
 
 		template<typename T>
 		void SendRoutingResponse(xx::String& rAddr, uint32_t serial, T const& pkg);
@@ -430,10 +430,10 @@ namespace xx
 	}
 
 	template<typename T>
-	inline uint32_t UvTcpUdpBase::SendRequest(T const & pkg, std::function<void(uint32_t, BBuffer*)> cb, int interval)
+	inline uint32_t UvTcpUdpBase::SendRequest(T const & pkg, std::function<void(uint32_t, BBuffer*)>&& cb, int interval)
 	{
 		if (!ptr) throw - 1;
-		auto serial = loop.rpcMgr.Register(cb, interval);
+		auto serial = loop.rpcMgr->Register(std::move(cb), interval);
 		bbSend.Clear();
 		bbSend.BeginWritePackage(1, serial);
 		bbSend.WriteRoot(pkg);
@@ -464,10 +464,10 @@ namespace xx
 	}
 
 	template<typename T>
-	inline uint32_t UvTcpUdpBase::SendRoutingRequest(xx::String& rAddr, T const & pkg, std::function<void(uint32_t, BBuffer*)> cb, int interval)
+	inline uint32_t UvTcpUdpBase::SendRoutingRequest(xx::String& rAddr, T const & pkg, std::function<void(uint32_t, BBuffer*)>&& cb, int interval)
 	{
 		if (!ptr) throw - 1;
-		auto serial = loop.rpcMgr.Register(cb, interval);
+		auto serial = loop.rpcMgr->Register(std::move(cb), interval);
 		bbSend.Clear();
 		bbSend.BeginWritePackage(1, serial);	// todo
 		bbSend.WriteRoot(pkg);
@@ -504,7 +504,7 @@ namespace xx
 	inline uint32_t UvTcpUdpBase::SendBigRequest(T const & pkg, std::function<void(uint32_t, BBuffer*)> cb, int interval)
 	{
 		if (!ptr) throw - 1;
-		auto serial = loop.rpcMgr.Register(cb, interval);
+		auto serial = loop.rpcMgr->Register(cb, interval);
 		bbSend.Clear();
 		bbSend.BeginWritePackage(1, serial);	// todo
 		bbSend.WriteRoot(pkg);
@@ -539,7 +539,7 @@ namespace xx
 	inline uint32_t UvTcpUdpBase::SendBigRoutingRequest(xx::String& rAddr, T const & pkg, std::function<void(uint32_t, BBuffer*)> cb, int interval)
 	{
 		if (!ptr) throw - 1;
-		auto serial = loop.rpcMgr.Register(cb, interval);
+		auto serial = loop.rpcMgr->Register(cb, interval);
 		bbSend.Clear();
 		bbSend.BeginWritePackage(1, serial);	// todo
 		bbSend.WriteRoot(pkg);
