@@ -425,7 +425,7 @@ namespace xx
 	};
 
 
-
+	// todo: 将 BB 中的 包相关函数移除, 直接展开写到下面的 Send 函数中, 以令 BB 的职能更单纯固定, 以及修改包结构时不必两头改
 
 	template<typename T>
 	inline void UvTcpUdpBase::Send(T const & pkg)
