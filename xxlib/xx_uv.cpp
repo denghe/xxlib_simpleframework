@@ -557,10 +557,10 @@ void xx::UvTcpUdpBase::SendRoutingEx(xx::BBuffer& bb, size_t pkgLen, size_t addr
 	}
 
 	// 开始填充新包
-	p1[0] = p2[0];											// 写包头( 直接复制 )
 	if (!isBig)												// 接着写长度
 	{
 		// 2字节长度
+		p1[0] = p2[0] & 0b11111011;
 		p1[1] = (uint8_t)new_addr_serial_data_len;
 		p1[2] = (uint8_t)(new_addr_serial_data_len >> 8);
 		memcpy(p1 + 3, senderAddr, senderAddrLen);
@@ -569,6 +569,7 @@ void xx::UvTcpUdpBase::SendRoutingEx(xx::BBuffer& bb, size_t pkgLen, size_t addr
 	else
 	{
 		// 4字节长度
+		p1[0] = p2[0] | 0b00000100;
 		p1[1] = (uint8_t)new_addr_serial_data_len;
 		p1[2] = (uint8_t)(new_addr_serial_data_len >> 8);
 		p1[3] = (uint8_t)(new_addr_serial_data_len >> 16);

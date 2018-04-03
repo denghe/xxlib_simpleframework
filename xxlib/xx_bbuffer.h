@@ -7,7 +7,6 @@ namespace xx
 		typedef List<char> BaseType;
 		size_t										offset = 0;				// 读指针偏移量
 		size_t										offsetRoot = 0;			// offset值写入修正
-		size_t										dataLenBak = 0;			// WritePackage 时用于备份当前数据写入偏移
 		size_t										readLengthLimit = 0;	// 主用于传递给容器类进行长度合法校验
 
 		BBuffer(BBuffer const&o) = delete;
@@ -91,21 +90,6 @@ namespace xx
 		/*************************************************************************/
 		//  包相关
 		/*************************************************************************/
-
-		// todo: 大包支持
-
-		// 开始写一个包
-		void BeginWritePackage(uint8_t const& pkgTypeId = 0, uint32_t const& serial = 0);
-
-		// 结束写一个包, 返回长度是否在包头表达范围内( 如果 true 则会填充包头, false 则回滚长度 )
-		bool EndWritePackage();
-
-		// 一键爽 write 定长 字节长度 + root数据. 如果超过 长度最大计数, 将回滚 dataLen 并返回 false
-		template<typename T>
-		bool WritePackage(uint8_t const& pkgTypeId = 0, uint32_t const& serial = 0);
-
-		// 在已知数据长度的情况下, 直接以包头格式写入长度. 成功返回 true( 只针对 pkgTypeId == 0 的情况 )
-		bool WritePackageLength(uint16_t const& len);
 
 		// 尝试一次性反序列化一到多个包, 将结果填充到 outPkgs, 返回 0 或 错误码
 		// 注意: 注意其元素的 引用计数, 通通为 1( 即便是递归互引 )

@@ -167,6 +167,10 @@ namespace xx
 
 		void SendBytes(BBuffer& bb);
 
+
+
+		// 三种常用 Send 函数
+
 		template<typename T>
 		void Send(T const& pkg);
 
@@ -176,7 +180,25 @@ namespace xx
 		template<typename T>
 		void SendResponse(uint32_t serial, T const& pkg);
 
-		// 转发的相关重载, Send 配套函数
+
+
+		// 下面是上面 3 个 Send 的 Routing 版( 客户端, 非路由服务端专用 )
+
+		// 向路由服务发包
+		template<typename T>
+		void SendRouting(char const* serviceAddr, size_t serviceAddrLen, T const& pkg);
+
+		// 向路由服务发请求
+		template<typename T>
+		uint32_t SendRoutingRequest(char const* serviceAddr, size_t serviceAddrLen, T const& pkg, std::function<void(uint32_t, BBuffer*)>&& cb, int interval = 0);
+
+		// 向路由服务发回应
+		template<typename T>
+		void SendRoutingResponse(char const* serviceAddr, size_t serviceAddrLen, uint32_t serial, T const& pkg);
+
+
+
+		// 下面是路由服务专用
 
 		// 纯下发地址. 
 		void SendRoutingAddress(char const* buf, size_t len);
@@ -186,37 +208,6 @@ namespace xx
 
 		// 在不解析数据的情况下直接替换地址部分转发( 路由专用 )
 		void SendRoutingEx(xx::BBuffer& bb, size_t pkgLen, size_t addrOffset, size_t addrLen, char const* senderAddr, size_t senderAddrLen);
-
-		template<typename T>
-		void SendRouting(xx::String& rAddr, T const& pkg);
-
-		template<typename T>
-		uint32_t SendRoutingRequest(xx::String& rAddr, T const& pkg, std::function<void(uint32_t, BBuffer*)>&& cb, int interval = 0);
-
-		template<typename T>
-		void SendRoutingResponse(xx::String& rAddr, uint32_t serial, T const& pkg);
-
-
-		// 上面 6 个的 Big 版
-
-		template<typename T>
-		void SendBig(T const& pkg);
-
-		template<typename T>
-		uint32_t SendBigRequest(T const& pkg, std::function<void(uint32_t, BBuffer*)> cb, int interval = 0);
-
-		template<typename T>
-		void SendBigResponse(uint32_t serial, T const& pkg);
-
-		// 转发的相关重载, Send 配套函数
-		template<typename T>
-		void SendBigRouting(xx::String& rAddr, T const& pkg);
-
-		template<typename T>
-		uint32_t SendBigRoutingRequest(xx::String& rAddr, T const& pkg, std::function<void(uint32_t, BBuffer*)> cb, int interval = 0);
-
-		template<typename T>
-		void SendBigRoutingResponse(xx::String& rAddr, uint32_t serial, T const& pkg);
 	};
 
 	class UvTcpBase : public UvTcpUdpBase
@@ -425,149 +416,192 @@ namespace xx
 	};
 
 
-	// todo: 将 BB 中的 包相关函数移除, 直接展开写到下面的 Send 函数中, 以令 BB 的职能更单纯固定, 以及修改包结构时不必两头改
-
 	template<typename T>
 	inline void UvTcpUdpBase::Send(T const & pkg)
 	{
 		if (!ptr) throw - 1;
 		bbSend.Clear();
-		bbSend.BeginWritePackage();
+		bbSend.Reserve(5);
+		bbSend.dataLen = 5;
 		bbSend.WriteRoot(pkg);
-		bbSend.EndWritePackage();
-		SendBytes(bbSend);
+		auto dataLen = bbSend.dataLen - 5;
+		if (dataLen <= std::numeric_limits<uint16_t>::max())
+		{
+			auto p = bbSend.buf + 2;
+			p[0] = 0;
+			p[1] = (uint8_t)dataLen;
+			p[2] = (uint8_t)(dataLen >> 8);
+			SendBytes(p, (int)(dataLen + 3));
+		}
+		else
+		{
+			auto p = bbSend.buf;
+			p[0] = 0b00000100;
+			p[1] = (uint8_t)dataLen;
+			p[2] = (uint8_t)(dataLen >> 8);
+			p[3] = (uint8_t)(dataLen >> 16);
+			p[4] = (uint8_t)(dataLen >> 24);
+			SendBytes(p, (int)(dataLen + 5));
+		}
 	}
 
 	template<typename T>
 	inline uint32_t UvTcpUdpBase::SendRequest(T const & pkg, std::function<void(uint32_t, BBuffer*)>&& cb, int interval)
 	{
 		if (!ptr) throw - 1;
-		auto serial = loop.rpcMgr->Register(std::move(cb), interval);
 		bbSend.Clear();
-		bbSend.BeginWritePackage(1, serial);
+		bbSend.Reserve(5);
+		bbSend.dataLen = 5;
+		auto serial = loop.rpcMgr->Register(std::move(cb), interval);	// 注册回调并得到流水号
+		bbSend.Write(serial);											// 在包前写入流水号
 		bbSend.WriteRoot(pkg);
-		bbSend.EndWritePackage();
-		SendBytes(bbSend);
-		return serial;
+		auto dataLen = bbSend.dataLen - 5;
+		if (dataLen <= std::numeric_limits<uint16_t>::max())
+		{
+			auto p = bbSend.buf + 2;
+			p[0] = 0b00000001;											// 这里标记包头为 Request 类型
+			p[1] = (uint8_t)dataLen;
+			p[2] = (uint8_t)(dataLen >> 8);
+			SendBytes(p, (int)(dataLen + 3));
+		}
+		else
+		{
+			auto p = bbSend.buf;
+			p[0] = 0b00000101;											// 这里标记包头为 Big + Request 类型
+			p[1] = (uint8_t)dataLen;
+			p[2] = (uint8_t)(dataLen >> 8);
+			p[3] = (uint8_t)(dataLen >> 16);
+			p[4] = (uint8_t)(dataLen >> 24);
+			SendBytes(p, (int)(dataLen + 5));
+		}
+		return serial;													// 返回流水号
 	}
 
 	template<typename T>
 	inline void UvTcpUdpBase::SendResponse(uint32_t serial, T const & pkg)
 	{
+		if (!ptr) throw - 1;
 		bbSend.Clear();
-		bbSend.BeginWritePackage(2, serial);
+		bbSend.Reserve(5);
+		bbSend.dataLen = 5;
+		bbSend.Write(serial);											// 在包前写入流水号
 		bbSend.WriteRoot(pkg);
-		bbSend.EndWritePackage();
-		SendBytes(bbSend);
+		auto dataLen = bbSend.dataLen - 5;
+		if (dataLen <= std::numeric_limits<uint16_t>::max())
+		{
+			auto p = bbSend.buf + 2;
+			p[0] = 0b00000010;											// 这里标记包头为 Response 类型
+			p[1] = (uint8_t)dataLen;
+			p[2] = (uint8_t)(dataLen >> 8);
+			SendBytes(p, (int)(dataLen + 3));
+		}
+		else
+		{
+			auto p = bbSend.buf;
+			p[0] = 0b00000110;											// 这里标记包头为 Big + Response 类型
+			p[1] = (uint8_t)dataLen;
+			p[2] = (uint8_t)(dataLen >> 8);
+			p[3] = (uint8_t)(dataLen >> 16);
+			p[4] = (uint8_t)(dataLen >> 24);
+			SendBytes(p, (int)(dataLen + 5));
+		}
 	}
 
 
 	template<typename T>
-	inline void UvTcpUdpBase::SendRouting(xx::String& rAddr, T const & pkg)
+	inline void UvTcpUdpBase::SendRouting(char const* serviceAddr, size_t serviceAddrLen, T const & pkg)
 	{
 		if (!ptr) throw - 1;
 		bbSend.Clear();
-		bbSend.BeginWritePackage();	// todo
+		bbSend.Reserve(5);
+		bbSend.dataLen = 5;
+		bbSend.WriteBuf(serviceAddr, serviceAddrLen);					// 在包前写入地址
 		bbSend.WriteRoot(pkg);
-		bbSend.EndWritePackage();	// todo
-		SendBytes(bbSend);
+		auto dataLen = bbSend.dataLen - 5;
+		if (dataLen <= std::numeric_limits<uint16_t>::max())
+		{
+			auto p = bbSend.buf + 2;
+			p[0] = (uint8_t)(0b00001000 | ((serviceAddrLen - 1) << 4));	// 拼接为 XXXX1000 的含长度信息的路由包头
+			p[1] = (uint8_t)dataLen;
+			p[2] = (uint8_t)(dataLen >> 8);
+			SendBytes(p, (int)(dataLen + 3));
+		}
+		else
+		{
+			auto p = bbSend.buf;
+			p[0] = (uint8_t)(0b00001100 | ((serviceAddrLen - 1) << 4));	// 拼接为 XXXX1100 的含长度信息的 Big 路由包头
+			p[1] = (uint8_t)dataLen;
+			p[2] = (uint8_t)(dataLen >> 8);
+			p[3] = (uint8_t)(dataLen >> 16);
+			p[4] = (uint8_t)(dataLen >> 24);
+			SendBytes(p, (int)(dataLen + 5));
+		}
 	}
 
 	template<typename T>
-	inline uint32_t UvTcpUdpBase::SendRoutingRequest(xx::String& rAddr, T const & pkg, std::function<void(uint32_t, BBuffer*)>&& cb, int interval)
-	{
-		if (!ptr) throw - 1;
-		auto serial = loop.rpcMgr->Register(std::move(cb), interval);
-		bbSend.Clear();
-		bbSend.BeginWritePackage(1, serial);	// todo
-		bbSend.WriteRoot(pkg);
-		bbSend.EndWritePackage();	// todo
-		SendBytes(bbSend);
-		return serial;
-	}
-
-	template<typename T>
-	inline void UvTcpUdpBase::SendRoutingResponse(xx::String& rAddr, uint32_t serial, T const & pkg)
-	{
-		bbSend.Clear();
-		bbSend.BeginWritePackage(2, serial);	// todo
-		bbSend.WriteRoot(pkg);
-		bbSend.EndWritePackage();	// todo
-		SendBytes(bbSend);
-	}
-
-
-
-
-	template<typename T>
-	inline void UvTcpUdpBase::SendBig(T const & pkg)
+	inline uint32_t UvTcpUdpBase::SendRoutingRequest(char const* serviceAddr, size_t serviceAddrLen, T const & pkg, std::function<void(uint32_t, BBuffer*)>&& cb, int interval)
 	{
 		if (!ptr) throw - 1;
 		bbSend.Clear();
-		bbSend.BeginWritePackage();	// todo
+		bbSend.Reserve(5);
+		bbSend.dataLen = 5;
+		bbSend.WriteBuf(serviceAddr, serviceAddrLen);					// 在包前写入地址
+		auto serial = loop.rpcMgr->Register(std::move(cb), interval);	// 注册回调并得到流水号
+		bbSend.Write(serial);											// 在包前写入流水号
 		bbSend.WriteRoot(pkg);
-		bbSend.EndWritePackage();	// todo
-		SendBytes(bbSend);
+		auto dataLen = bbSend.dataLen - 5;
+		if (dataLen <= std::numeric_limits<uint16_t>::max())
+		{
+			auto p = bbSend.buf + 2;
+			p[0] = (uint8_t)(0b00001001 | ((serviceAddrLen - 1) << 4));	// 这里标记包头为 addrLen + Routing + Request 类型
+			p[1] = (uint8_t)dataLen;
+			p[2] = (uint8_t)(dataLen >> 8);
+			SendBytes(p, (int)(dataLen + 3));
+		}
+		else
+		{
+			auto p = bbSend.buf;
+			p[0] = (uint8_t)(0b00001101 | ((serviceAddrLen - 1) << 4));	// 这里标记包头为 addrLen + Routing + Big + Request 类型
+			p[1] = (uint8_t)dataLen;
+			p[2] = (uint8_t)(dataLen >> 8);
+			p[3] = (uint8_t)(dataLen >> 16);
+			p[4] = (uint8_t)(dataLen >> 24);
+			SendBytes(p, (int)(dataLen + 5));
+		}
+		return serial;													// 返回流水号
 	}
 
 	template<typename T>
-	inline uint32_t UvTcpUdpBase::SendBigRequest(T const & pkg, std::function<void(uint32_t, BBuffer*)> cb, int interval)
+	inline void UvTcpUdpBase::SendRoutingResponse(char const* serviceAddr, size_t serviceAddrLen, uint32_t serial, T const & pkg)
 	{
 		if (!ptr) throw - 1;
-		auto serial = loop.rpcMgr->Register(cb, interval);
 		bbSend.Clear();
-		bbSend.BeginWritePackage(1, serial);	// todo
+		bbSend.Reserve(5);
+		bbSend.dataLen = 5;
+		bbSend.WriteBuf(serviceAddr, serviceAddrLen);					// 在包前写入地址
+		bbSend.Write(serial);											// 在包前写入流水号
 		bbSend.WriteRoot(pkg);
-		bbSend.EndWritePackage();	// todo
-		SendBytes(bbSend);
-		return serial;
+		auto dataLen = bbSend.dataLen - 5;
+		if (dataLen <= std::numeric_limits<uint16_t>::max())
+		{
+			auto p = bbSend.buf + 2;
+			p[0] = (uint8_t)(0b00001010 | ((serviceAddrLen - 1) << 4));	// 这里标记包头为 addrLen + Routing + Response 类型
+			p[1] = (uint8_t)dataLen;
+			p[2] = (uint8_t)(dataLen >> 8);
+			SendBytes(p, (int)(dataLen + 3));
+		}
+		else
+		{
+			auto p = bbSend.buf;
+			p[0] = (uint8_t)(0b00001110 | ((serviceAddrLen - 1) << 4));	// 这里标记包头为 addrLen + Routing + Big + Response 类型
+			p[1] = (uint8_t)dataLen;
+			p[2] = (uint8_t)(dataLen >> 8);
+			p[3] = (uint8_t)(dataLen >> 16);
+			p[4] = (uint8_t)(dataLen >> 24);
+			SendBytes(p, (int)(dataLen + 5));
+		}
 	}
 
-	template<typename T>
-	inline void UvTcpUdpBase::SendBigResponse(uint32_t serial, T const & pkg)
-	{
-		template<typename T>
-		bbSend.Clear();
-		bbSend.BeginWritePackage(2, serial);	// todo
-		bbSend.WriteRoot(pkg);
-		bbSend.EndWritePackage();	// todo
-		SendBytes(bbSend);
-	}
-
-	template<typename T>
-	inline void UvTcpUdpBase::SendBigRouting(xx::String& rAddr, T const & pkg)
-	{
-		if (!ptr) throw - 1;
-		bbSend.Clear();
-		bbSend.BeginWritePackage();	// todo
-		bbSend.WriteRoot(pkg);
-		bbSend.EndWritePackage();	// todo
-		SendBytes(bbSend);
-	}
-
-	template<typename T>
-	inline uint32_t UvTcpUdpBase::SendBigRoutingRequest(xx::String& rAddr, T const & pkg, std::function<void(uint32_t, BBuffer*)> cb, int interval)
-	{
-		if (!ptr) throw - 1;
-		auto serial = loop.rpcMgr->Register(cb, interval);
-		bbSend.Clear();
-		bbSend.BeginWritePackage(1, serial);	// todo
-		bbSend.WriteRoot(pkg);
-		bbSend.EndWritePackage();	// todo
-		SendBytes(bbSend);
-		return serial;
-	}
-
-	template<typename T>
-	inline void UvTcpUdpBase::SendBigRoutingResponse(xx::String& rAddr, uint32_t serial, T const & pkg)
-	{
-		template<typename T>
-		bbSend.Clear();
-		bbSend.BeginWritePackage(2, serial);	// todo
-		bbSend.WriteRoot(pkg);
-		bbSend.EndWritePackage();	// todo
-		SendBytes(bbSend);
-	}
 
 
 

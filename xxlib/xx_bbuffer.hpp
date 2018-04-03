@@ -224,51 +224,8 @@ namespace xx
 
 
 	/*************************************************************************/
-	//  包相关
+	//  包相关( 不含包头的处理 )
 	/*************************************************************************/
-
-	// 开始写一个包
-	inline void BBuffer::BeginWritePackage(uint8_t const& pkgTypeId, uint32_t const& serial)
-	{
-		dataLenBak = dataLen;
-		Reserve(dataLen + 3);
-		buf[dataLen] = pkgTypeId;
-		dataLen += 3;
-		if (pkgTypeId == 1 || pkgTypeId == 2) Write(serial);
-	}
-
-	// 结束写一个包, 返回长度是否在包头表达范围内( 如果 true 则会填充包头, false 则回滚长度 )
-	inline bool BBuffer::EndWritePackage()
-	{
-		auto pkgLen = dataLen - dataLenBak - 3;
-		if (pkgLen > std::numeric_limits<uint16_t>::max())
-		{
-			dataLen = dataLenBak;
-			return false;
-		}
-		memcpy(buf + dataLenBak + 1, &pkgLen, 2);
-		return true;
-	}
-
-	// 一键爽 write 定长 字节长度 + root数据. 如果超过 长度最大计数, 将回滚 dataLen 并返回 false
-	template<typename T>
-	bool BBuffer::WritePackage(uint8_t const& pkgTypeId, uint32_t const& serial)
-	{
-		BeginWritePackage(pkgTypeId, serial);
-		WriteRoot(v);
-		return EndWritePackage();
-	}
-
-	// 在已知数据长度的情况下, 直接以包头格式写入长度. 成功返回 true( 只针对 pkgTypeId == 0 的情况 )
-	inline bool BBuffer::WritePackageLength(uint16_t const& len)
-	{
-		if (len > std::numeric_limits<uint16_t>::max()) return false;
-		Reserve(dataLen + 8 + len);
-		buf[dataLen] = 0;
-		memcpy(buf + dataLen + 1, &len, 2);
-		dataLen += 3;
-		return true;
-	}
 
 	// 尝试一次性反序列化一到多个包, 将结果填充到 outPkgs, 返回 0 或 错误码
 	// 注意: 注意其元素的 引用计数, 通通为 1( 即便是递归互引 )

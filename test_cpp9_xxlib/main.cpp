@@ -144,7 +144,7 @@ inline Service1::Service1(xx::UvLoop& loop)
 				// 这时候可以 p + 该地址 作为连接标识 记录到相应的玩家上下文
 
 				// 先简单的直发回去
-				p->SendRoutingResponse(p->senderAddress, serial, xx::String(mempool, "Service2"));
+				p->SendRoutingResponse(p->senderAddress.buf, p->senderAddress.dataLen, serial, xx::String(mempool, "Service2"));
 			}
 			// 非转发包
 			else
@@ -184,7 +184,7 @@ inline Service2::Service2(xx::UvLoop& loop)
 				// 这时候可以 p + 该地址 作为连接标识 记录到相应的玩家上下文
 
 				// 先简单的直发回去
-				p->SendRoutingResponse(p->senderAddress, serial, xx::String(mempool, "ok"));
+				p->SendRoutingResponse(p->senderAddress.buf, p->senderAddress.dataLen, serial, xx::String(mempool, "ok"));
 			}
 			// 非转发包
 			else
