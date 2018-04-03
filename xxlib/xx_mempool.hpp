@@ -589,7 +589,29 @@ namespace xx
 		return pointer && pointer->memHeader().versionNumber == versionNumber;
 	}
 
+	template<typename T>
+	T const* Ref<T>::operator->() const noexcept
+	{
+		return pointer;
+	}
 
+	template<typename T>
+	T* & Ref<T>::operator->() noexcept
+	{
+		return pointer;
+	}
+
+	template<typename T>
+	T& Ref<T>::operator*() noexcept
+	{
+		return *pointer;
+	}
+
+	template<typename T>
+	T const& Ref<T>::operator*() const noexcept
+	{
+		return *pointer;
+	}
 
 
 

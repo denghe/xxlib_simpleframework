@@ -335,7 +335,10 @@ inline void Router::Update()
 	// 断线自动重连
 	for (auto& c : serviceClientGuests)
 	{
-		if (!c->alive()) c->Connect();
+		if (c->state == xx::UvTcpStates::Disconnected)
+		{
+			c->Connect();
+		}
 	}
 }
 inline Router::~Router()
@@ -348,26 +351,41 @@ inline Client::Client(xx::UvLoop& loop)
 	: xx::Object(loop.mempool)
 	, loop(loop)
 	, routerClient(loop)
-	, timer(loop, 0, 33, [this] { Update(); })
+	, timer(loop, 1000, 1000, [this] { Update(); })
 {
 	routerClient.SetAddress("127.0.0.1", 12344);
-	routerClient.Connect();
-	routerClient.routingAddress = "client";
+	routerClient.routingAddress = "client";	// 这个只是令包事件分发器检测到这是非路由端
 	routerClient.OnReceiveRequest = [this](uint32_t serial, xx::BBuffer& bb)
 	{
-		// 路由过来的包, 带返回地址
+		// 路由过来的包, 带返回地址( 当前应该都是收到这种路由包 )
 		if (routerClient.senderAddress.dataLen)
 		{
+
 		}
-		// 非转发包( 默认向某一个接受非转发包的服务转发, 例如登录服务 )
 		else
 		{
+			assert(false);
 		}
 	};
 }
 inline void Client::Update()
 {
-	// todo
+	if (routerClient.state == xx::UvTcpStates::Disconnected)
+	{
+		routerClient.Connect();
+	}
+	else if (routerClient.alive())
+	{
+		routerClient.SendRoutingRequest("Service1", 8, xx::String(mempool, "hi"), [this](uint32_t serial, xx::BBuffer* bb) 
+		{
+			// RPC超时
+			if (!bb) return;
+
+			xx::String str(mempool);
+			bb->ToString(str);
+			std::cout << str << std::endl;
+		});
+	}
 }
 inline Client::~Client()
 {
@@ -386,6 +404,7 @@ int main()
 	xx::MemPool::RegisterInternal();
 	xx::MemPool mp;
 	xx::UvLoop loop(&mp);
+	loop.InitRpcManager();
 	Service1 s1(loop);
 	Service2 s2(loop);
 	Router r(loop);

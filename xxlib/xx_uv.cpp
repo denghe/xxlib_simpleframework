@@ -498,9 +498,9 @@ void xx::UvTcpUdpBase::SendRoutingAddress(char const* buf, size_t len)
 	assert(len <= 16);
 	bbSend.Clear();
 	bbSend.Reserve(3 + len);
-	bbSend[0] = 0;
-	bbSend[1] = (uint8_t)len;
-	bbSend[2] = (uint8_t)(len >> 8);
+	bbSend.buf[0] = 0;
+	bbSend.buf[1] = (uint8_t)len;
+	bbSend.buf[2] = (uint8_t)(len >> 8);
 	memcpy(bbSend.buf + 3, buf, len);
 	SendBytes(bbSend.buf, (int)(3 + len));
 }

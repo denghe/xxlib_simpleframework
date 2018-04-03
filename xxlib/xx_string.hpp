@@ -321,6 +321,36 @@ namespace xx
 		}
 	};
 
+	template<>
+	struct HashFunc<String*, void>
+	{
+		static uint32_t GetHashCode(String* const& in)
+		{
+			return in ? HashFunc<String>::GetHashCode(*in) : 0;
+		}
+	};
+
+	template<>
+	struct HashFunc<String const*, void>
+	{
+		static uint32_t GetHashCode(String const* const& in)
+		{
+			return in ? HashFunc<String>::GetHashCode(*in) : 0;
+		}
+	};
+
+	template<>
+	struct HashFunc<String_r, void>
+	{
+		static uint32_t GetHashCode(String_r const& in)
+		{
+			return in ? HashFunc<String const*>::GetHashCode(in.pointer) : 0;
+		}
+	};
+
+
+
+
 
 	template<>
 	struct EqualsFunc<String, void>
@@ -337,6 +367,39 @@ namespace xx
 		static bool EqualsTo(String_p const& a, String_p const& b)
 		{
 			if (a.pointer == b.pointer) return true;
+			if (a && b) return a->Equals(*b);
+			return false;
+		}
+	};
+
+	template<>
+	struct EqualsFunc<String_r, void>
+	{
+		static bool EqualsTo(String_r const& a, String_r const& b)
+		{
+			if (a.pointer == b.pointer) return true;
+			if (a && b) return a->Equals(*b);
+			return false;
+		}
+	};
+
+	template<>
+	struct EqualsFunc<String const*, void>
+	{
+		static bool EqualsTo(String const* const& a, String const* const& b)
+		{
+			if (a == b) return true;
+			if (a && b) return a->Equals(*b);
+			return false;
+		}
+	};
+
+	template<>
+	struct EqualsFunc<String*, void>
+	{
+		static bool EqualsTo(String* const& a, String* const& b)
+		{
+			if (a == b) return true;
 			if (a && b) return a->Equals(*b);
 			return false;
 		}

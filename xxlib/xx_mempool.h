@@ -337,7 +337,11 @@ namespace xx
 		Ptr<O> Lock() const noexcept;
 
 		operator bool() const noexcept;
-
+		// unsafe funcs
+		T const* operator->() const noexcept;
+		T* & operator->() noexcept;
+		T& operator*() noexcept;
+		T const& operator*() const noexcept;
 	};
 
 
