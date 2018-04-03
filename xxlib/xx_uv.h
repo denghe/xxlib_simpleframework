@@ -52,7 +52,7 @@ namespace xx
 		UvRpcManager* rpcMgr = nullptr;
 		UvTimer* udpTimer = nullptr;
 		uint32_t udpTicks = 0;
-		std::array<char,65536> udpRecvBuf;
+		std::array<char, 65536> udpRecvBuf;
 		uint32_t kcpInterval = 0;
 
 		explicit UvLoop(MemPool* mp);
@@ -139,9 +139,9 @@ namespace xx
 		xx::String senderAddress;
 
 		// (xx::BBuffer& bb, size_t pkgOffset, size_t pkgLen, size_t addrOffset, size_t addrLen)
-		// 4个 size_t 代表 包起始offset, 含包头的总包长, 地址起始偏移, 地址长度( 方便替换地址并 memcpy )
-		// BBuffer 的 offset 停在地址后方( 流水号或数据起始位置 )
-		std::function<void(BBuffer&, size_t, size_t, size_t, size_t)> OnReceiveRouting;
+		// 3 个 size_t 代表 含包头的总包长, 地址起始偏移, 地址长度( 方便替换地址并 memcpy )
+		// BBuffer 的 offset 停在包头起始处
+		std::function<void(BBuffer&, size_t, size_t, size_t)> OnReceiveRouting;
 
 
 		std::function<void()> OnDispose;
@@ -177,6 +177,16 @@ namespace xx
 		void SendResponse(uint32_t serial, T const& pkg);
 
 		// 转发的相关重载, Send 配套函数
+
+		// 纯下发地址. 
+		void SendRoutingAddress(char const* buf, size_t len);
+
+		// 读出上面函数下发的地址长度
+		static size_t GetRoutingAddressLength(BBuffer& bb);
+
+		// 在不解析数据的情况下直接替换地址部分转发( 路由专用 )
+		void SendRoutingEx(xx::BBuffer& bb, size_t pkgLen, size_t addrOffset, size_t addrLen, char const* senderAddr, size_t senderAddrLen);
+
 		template<typename T>
 		void SendRouting(xx::String& rAddr, T const& pkg);
 
@@ -272,7 +282,7 @@ namespace xx
 	class UvTimeouter : public Object
 	{
 	public:
-		UvTimer* timer = nullptr;
+		UvTimer * timer = nullptr;
 		List<UvTimeouterBase*> timerss;
 		int cursor = 0;
 		int defaultInterval;
@@ -306,7 +316,7 @@ namespace xx
 	class UvRpcManager : public Object
 	{
 	public:
-		UvTimer* timer = nullptr;
+		UvTimer * timer = nullptr;
 		uint32_t serial = 0;
 		Dict<uint32_t, std::function<void(uint32_t, BBuffer*)>> mapping;
 		Queue<std::pair<int, uint32_t>> serials;
@@ -324,7 +334,7 @@ namespace xx
 	class UvContextBase : public Object
 	{
 	public:
-		UvTcpUdpBase* peer = nullptr;
+		UvTcpUdpBase * peer = nullptr;
 
 		UvContextBase(MemPool* mp);
 		~UvContextBase();
@@ -371,7 +381,7 @@ namespace xx
 	class UvUdpPeer : public UvUdpBase
 	{
 	public:
-		UvUdpListener& listener;
+		UvUdpListener & listener;
 
 		UvUdpPeer(UvUdpListener& listener
 			, Guid const& g = Guid()
@@ -450,6 +460,7 @@ namespace xx
 		bbSend.EndWritePackage();
 		SendBytes(bbSend);
 	}
+
 
 	template<typename T>
 	inline void UvTcpUdpBase::SendRouting(xx::String& rAddr, T const & pkg)

@@ -19,9 +19,6 @@ public:
 	// 接受路由的连接
 	xx::UvTcpListener routerListener;
 
-	// 用于解析收到的指令
-	xx::String cmd;
-
 	Service1(xx::UvLoop& loop);
 	~Service1();
 };
@@ -37,9 +34,6 @@ public:
 
 	// 接受路由的连接
 	xx::UvTcpListener routerListener;
-
-	// 用于解析收到的指令
-	xx::String cmd;
 
 	Service2(xx::UvLoop& loop);
 	~Service2();
@@ -93,8 +87,8 @@ public:
 	xx::Dict<xx::String*, ServiceClient*> serviceClientMappings;
 
 
-	// 用于发送时拼接指令或公用于其他会用到 string 的地儿
-	xx::String cmd;
+	// 公用 String
+	xx::String str;
 
 	void Update();
 	Router(xx::UvLoop& loop);
@@ -134,7 +128,6 @@ inline Service1::Service1(xx::UvLoop& loop)
 	: xx::Object(loop.mempool)
 	, loop(loop)
 	, routerListener(loop)
-	, cmd(loop.mempool)
 {
 	routerListener.Bind("0.0.0.0", 12345);
 	routerListener.Listen();
@@ -156,25 +149,13 @@ inline Service1::Service1(xx::UvLoop& loop)
 			// 非转发包
 			else
 			{
-				// 反序列化出指令
-				if (auto r = bb.ReadRoot(cmd))
-				{
-					// 解析失败
-					p->Release();
-					return;
-				}
-				// 先随便定义一个路由找服务要 addr 的指令, 简单判断
-				if (cmd.Equals("get routing address"))
-				{
-					// 将自己的地址发回去
-					p->SendResponse(serial, p->routingAddress);
-					return;
-				}
 				// 未知指令
 				p->Release();
-				return;
 			}
 		};
+
+		// 在连接成功后先行下发一个只含地址的特殊包
+		p->SendRoutingAddress(p->routingAddress.buf, p->routingAddress.dataLen);
 	};
 }
 inline Service1::~Service1()
@@ -187,7 +168,6 @@ inline Service2::Service2(xx::UvLoop& loop)
 	: xx::Object(loop.mempool)
 	, loop(loop)
 	, routerListener(loop)
-	, cmd(loop.mempool)
 {
 	routerListener.Bind("0.0.0.0", 12346);
 	routerListener.Listen();
@@ -209,25 +189,13 @@ inline Service2::Service2(xx::UvLoop& loop)
 			// 非转发包
 			else
 			{
-				// 反序列化出指令
-				if (auto r = bb.ReadRoot(cmd))
-				{
-					// 解析失败
-					p->Release();
-					return;
-				}
-				// 先随便定义一个路由找服务要 addr 的指令, 简单判断
-				if (cmd.Equals("get routing address"))
-				{
-					// 将自己的地址发回去
-					p->SendResponse(serial, p->routingAddress);
-					return;
-				}
 				// 未知指令
 				p->Release();
-				return;
 			}
 		};
+
+		// 在连接成功后先行下发一个只含地址的特殊包
+		p->SendRoutingAddress(p->routingAddress.buf, p->routingAddress.dataLen);
 	};
 }
 inline Service2::~Service2()
@@ -257,7 +225,7 @@ inline Router::Router(xx::UvLoop& loop)
 	, timer(loop, 0, 1000, [this] { Update(); })
 	, serviceClientGuests(loop.mempool)
 	, serviceClientMappings(loop.mempool)
-	, cmd(loop.mempool)
+	, str(loop.mempool)
 {
 
 	// 先根据 服务配置创建所有相应的连接实例
@@ -274,38 +242,6 @@ inline Router::Router(xx::UvLoop& loop)
 	// 批量绑连接实例的事件
 	for (auto& c : serviceClientGuests)
 	{
-		// this 生命周期可确保死在 c 之后
-		// 取 c 的 Ref 传入 lambda, 以便探测当回调发生时 c 已 release 的情况
-		c->OnConnect = [this, c](int status)
-		{
-			// 没连上( 判断 status 非0也行 )
-			if (!c->alive()) return;
-
-			// 连上后发起地址请求
-			cmd.Assign("get routing address");
-
-			c->SendRequest(cmd, [this, c](uint32_t serial, xx::BBuffer* bb)
-			{
-				// 超时
-				if (!bb) return;
-
-				// c 已断开
-				if (!c->alive()) return;
-
-				// 试着反序列化填充地址. 失败则断开并退出( 理论上讲不应该出现 )
-				if (auto r = bb->ReadRoot(c->addr))
-				{
-					c->Disconnect();
-					return;
-				}
-
-				// 将 c 从 list 移至 map
-				serviceClientGuests.Remove(c);
-				auto r = serviceClientMappings.Add(&c->addr, c);
-				assert(r.success);
-			});
-		};
-
 		c->OnDisconnect = [this, c]
 		{
 			// 如果 c 位于 map ( addr 有值即位于 map ), 要从 map 移除并放入 guests 并清 addr
@@ -315,6 +251,18 @@ inline Router::Router(xx::UvLoop& loop)
 				serviceClientGuests.Add(c);
 				c->addr.Clear();
 			}
+		};
+
+		// 当 c 连接成功时, Service 应该发地址包过来. 
+		c->OnReceivePackage = [this, c](xx::BBuffer& bb)
+		{
+			// 填充地址
+			c->addr.Assign(bb.buf + bb.offset, c->GetRoutingAddressLength(bb));
+
+			// 将 c 从 list 移至 map
+			serviceClientGuests.Remove(c);
+			auto r = serviceClientMappings.Add(&c->addr, c);
+			assert(r.success);
 		};
 	}
 
@@ -333,63 +281,33 @@ inline Router::Router(xx::UvLoop& loop)
 		// 对于客户端首次通信来说, 可能并不知道应该找哪个服务通信, 应该约定一种表示 "未知" "默认" 的地址来发起内容, 以便路由转发给相应的处理服务
 		// 另一种解决方案为用不带地址的版本收发, 但这会导致路由服务处理函数多写一份, 先不考虑. 姑且先用 addrLen 为 1, 内容为 \0 来约定.
 		// 这样的地址, 将导致与 Service1 服务通信.
-		p->OnReceiveRouting = [this, p](xx::BBuffer& bb, size_t pkgOffset, size_t pkgLen, size_t addrOffset, size_t addrLen)
+		p->OnReceiveRouting = [this, p](xx::BBuffer& bb, size_t pkgLen, size_t addrOffset, size_t addrLen)
 		{
 			// 读出 addr, 在 map 中定位到 c, 构造数据后发出( 如果无法定位到 c, 或 c 连接异常, 则将 p 踢掉 )
 
 			// 先判断是否为默认地址. 如果是就填充映射地址
 			if (addrLen == 1 && !bb[addrOffset])
 			{
-				cmd.Assign("Service1");
+				str.Assign("Service1");
 			}
 			// 否则将地址复制到 String 结构以方便后续查字典
 			else
 			{
-				cmd.Assign(bb.buf + addrOffset, addrLen);
+				str.Assign(bb.buf + addrOffset, addrLen);
 			}
 
 			// 得到查找结果下标
-			auto idx = serviceClientMappings.Find(&cmd);
+			auto idx = serviceClientMappings.Find(&str);
 
 			// 如果有定位到, 则继续操作
 			if (idx != -1)
 			{
 				// 取出 c( 位于这个容器的 c 一定是 alive 的 )
 				auto c = serviceClientMappings.ValueAt(idx);
+				assert(c->alive());
 
-				// 开始填充 c->bbSend, 构造转发包. 除了数据区, 这里需要完全解析包结构. 
-				// 需要保留原有 Request Response 特性, 算出新的 addrLen. 
-				// 如果因为附加地址导致数据超过 64k, 还要用大包标记来发
-
-				// 下面先直接实现拼数据逻辑, 测试验证通过之后, 移到 c 的成员函数中去. 比如叫 SendRouting
-				// 其接口大概长相应该是传入 OnReceiveRouting 的事件参数
-
-				// 引用到 bbSend
-				auto& sBB = c->bbSend;
-
-				// 清空以备用
-				sBB.Clear();
-
-				auto typeId = (uint8_t)bb[pkgOffset];
-
-
-				// 将包头的 type, datalen 部分 复制到目标
-				sBB.AddRange(bb.buf + pkgOffset, addrOffset - pkgOffset);
-
-				// 记录当前数据长, 准备在写入发送者 addr 后算 addrLen
-				auto dataLen_bak = sBB.dataLen;
-				sBB.Write(p->addr);
-
-				// 算出 addr 区长度
-				auto sAddrLen = sBB.dataLen - dataLen_bak;
-
-				// 修正头部的掩码
-				sBB[0] = sBB[0] & 0xF | ((sAddrLen - 1) << 4);
-
-				// todo
-
-				// 发送 bbSend
-				//c->Send();
+				// 篡改地址部分为客户对端的 key 并转发
+				c->SendRoutingEx(bb, pkgLen, addrOffset, addrLen, (char*)&p->addr, sizeof(p->addr));
 			}
 			// 否则将 p 回收掉
 			else

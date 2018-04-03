@@ -379,7 +379,7 @@ void xx::UvTcpUdpBase::ReceiveImpl(char const* bufPtr, int len)
 	bbRecv.WriteBuf(bufPtr, len);					// 追加收到的数据到接收缓冲区
 
 	auto buf = (uint8_t*)bbRecv.buf;				// 方便使用
-	size_t offset = 0;								// 提速
+	size_t offset = 0;								// 独立于 bbRecv 以避免受到其负面影响
 	while (offset + 3 <= bbRecv.dataLen)			// 确保 3字节 包头长度
 	{
 		auto typeId = buf[offset];					// 读出头
@@ -419,14 +419,15 @@ void xx::UvTcpUdpBase::ReceiveImpl(char const* bufPtr, int len)
 				goto LabAfterAddress;
 			}
 
-			bbRecv.offset = offset + addrLen;
-			if (OnReceiveRouting) OnReceiveRouting(bbRecv, pkgOffset, pkgLen, addrOffset, addrLen);
+			bbRecv.offset = offset - headerLen;
+			if (OnReceiveRouting) OnReceiveRouting(bbRecv, pkgLen, addrOffset, addrLen);
 			if (versionNumber != memHeader().versionNumber) return;
 			if (Disconnected())
 			{
 				bbRecv.Clear();
 				return;
 			}
+
 			// 路由服务直接全权处理, 不再继续抛出进阶事件, 故跳之
 			goto LabEnd;
 		}
@@ -492,9 +493,92 @@ void xx::UvTcpUdpBase::SendBytes(BBuffer& bb)
 	SendBytes(bb.buf, (int)bb.dataLen);
 }
 
+void xx::UvTcpUdpBase::SendRoutingAddress(char const* buf, size_t len)
+{
+	assert(len <= 16);
+	bbSend.Clear();
+	bbSend.Reserve(3 + len);
+	bbSend[0] = 0;
+	bbSend[1] = (uint8_t)len;
+	bbSend[2] = (uint8_t)(len >> 8);
+	memcpy(bbSend.buf + 3, buf, len);
+	SendBytes(bbSend.buf, (int)(3 + len));
+}
+
+size_t xx::UvTcpUdpBase::GetRoutingAddressLength(BBuffer& bb)
+{
+	auto p = (uint8_t*)(bb.buf + bb.offset - 2);
+	return p[0] + (p[1] << 8);
+}
 
 
+void xx::UvTcpUdpBase::SendRoutingEx(xx::BBuffer& bb, size_t pkgLen, size_t addrOffset, size_t addrLen, char const* senderAddr, size_t senderAddrLen)
+{
+	// 防止误用
+	assert(bb[bb.offset] & 8);
 
+	// 如果发送方地址长与当前包地址相同, 走捷径, 直接替换地址部分即发送. 不需要再次拼接
+	if (senderAddrLen == addrLen)
+	{
+		memcpy(bb.buf + addrOffset, senderAddr, addrLen);
+		SendBytes(bb.buf + bb.offset, (int)pkgLen);
+		return;
+	}
+
+	// 否则老实拼接一次( 当然, 理论上讲调用 pair<char*, size_t>[] 的多 buf 发送版本也可以不必拼接, 这里为简化设计, 先用唯一 buf 版的函数来实现
+	bbSend.Clear();
+	auto newPkgLen = pkgLen - addrLen + senderAddrLen;		// 新包总长
+	bbSend.Reserve(newPkgLen);
+
+	// 用 p1 p2 定位到两个 包 的包头部位
+	auto p1 = bbSend.buf;
+	auto p2 = bb.buf + bb.offset;
+
+	auto isBig = (p2[0] & 4) != 0;							// 是否大包
+	size_t addr_serial_data_len = 0;						// 地址 + 流水 + 数据 的长度
+	if (!isBig)
+	{
+		// 2字节长度
+		addr_serial_data_len = (size_t)(p2[1] + (p2[2] << 8));
+	}
+	else
+	{
+		// 4字节长度
+		addr_serial_data_len = (size_t)(p2[1] + (p2[2] << 8)) + (p2[3] << 16) + (p2[4] << 24);
+	}
+	size_t serial_data_len = addr_serial_data_len - addrLen;// 流水 + 数据 的长度
+
+	size_t new_addr_serial_data_len = serial_data_len + senderAddrLen;	// 新包的 地址 + 流水 + 数据 的长度
+
+																		// 如果新包加上新地址超过 2字节能表达的长度, 转为大包
+	if (new_addr_serial_data_len > std::numeric_limits<uint16_t>::max())
+	{
+		isBig = true;
+	}
+
+	// 开始填充新包
+	p1[0] = p2[0];											// 写包头( 直接复制 )
+	if (!isBig)												// 接着写长度
+	{
+		// 2字节长度
+		p1[1] = (uint8_t)new_addr_serial_data_len;
+		p1[2] = (uint8_t)(new_addr_serial_data_len >> 8);
+		memcpy(p1 + 3, senderAddr, senderAddrLen);
+		memcpy(p1 + 3 + senderAddrLen, p2 + 3 + addrLen, serial_data_len);
+	}
+	else
+	{
+		// 4字节长度
+		p1[1] = (uint8_t)new_addr_serial_data_len;
+		p1[2] = (uint8_t)(new_addr_serial_data_len >> 8);
+		p1[3] = (uint8_t)(new_addr_serial_data_len >> 16);
+		p1[4] = (uint8_t)(new_addr_serial_data_len >> 24);
+		memcpy(p1 + 5, senderAddr, senderAddrLen);
+		memcpy(p1 + 5 + senderAddrLen, p2 + 5 + addrLen, serial_data_len);
+	}
+
+	SendBytes(p1, (int)newPkgLen);
+}
 
 
 xx::UvTcpBase::UvTcpBase(UvLoop& loop)
