@@ -416,6 +416,7 @@ void xx::UvTcpUdpBase::ReceiveImpl(char const* bufPtr, int len)
 			{
 				// 存返件地址之后 跳到正常包逻辑代码继续处理
 				senderAddress.Assign((char*)buf + addrOffset, addrLen);
+				offset += addrLen;
 				goto LabAfterAddress;
 			}
 
