@@ -404,10 +404,10 @@ void xx::UvTcpUdpBase::ReceiveImpl(char const* bufPtr, int len)
 		auto pkgOffset = offset;
 		offset += headerLen;
 
-
+		size_t addrLen = 0;
 		if ((typeId & 8) > 0)                       // 转发类数据包
 		{
-			auto addrLen = ((size_t)typeId >> 4) + 1;
+			addrLen = ((size_t)typeId >> 4) + 1;
 			auto addrOffset = offset;
 			auto pkgLen = offset + dataLen - pkgOffset;
 
@@ -416,7 +416,6 @@ void xx::UvTcpUdpBase::ReceiveImpl(char const* bufPtr, int len)
 			{
 				// 存返件地址之后 跳到正常包逻辑代码继续处理
 				senderAddress.Assign((char*)buf + addrOffset, addrLen);
-				offset += addrLen;
 				goto LabAfterAddress;
 			}
 
@@ -437,7 +436,7 @@ void xx::UvTcpUdpBase::ReceiveImpl(char const* bufPtr, int len)
 
 
 	LabAfterAddress:
-		bbRecv.offset = offset;
+		bbRecv.offset = offset + addrLen;
 		auto pkgType = typeId & 3;
 		if (pkgType == 0)
 		{
