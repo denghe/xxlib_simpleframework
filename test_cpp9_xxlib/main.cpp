@@ -138,6 +138,8 @@ inline Service1::Service1(xx::UvLoop& loop)
 
 		p->OnReceiveRequest = [this, p](uint32_t serial, xx::BBuffer& bb)
 		{
+			//std::cout << "p->OnReceiveRequest = [this, p](uint32_t serial, xx::BBuffer& bb)" << std::endl;
+
 			// 路由过来的包, 带返回地址
 			if (p->senderAddress.dataLen)
 			{
@@ -178,6 +180,8 @@ inline Service2::Service2(xx::UvLoop& loop)
 
 		p->OnReceiveRequest = [this, p](uint32_t serial, xx::BBuffer& bb)
 		{
+			//std::cout << "p->OnReceiveRequest = [this, p](uint32_t serial, xx::BBuffer& bb)" << std::endl;
+
 			// 路由过来的包, 带返回地址
 			if (p->senderAddress.dataLen)
 			{
@@ -264,6 +268,30 @@ inline Router::Router(xx::UvLoop& loop)
 			auto r = serviceClientMappings.Add(&c->addr, c);
 			assert(r.success);
 		};
+
+		c->OnReceiveRouting = [this, c](xx::BBuffer& bb, size_t pkgLen, size_t addrOffset, size_t addrLen)
+		{
+			//std::cout << "c->OnReceiveRouting = [this, c](xx::BBuffer& bb, size_t pkgLen, size_t addrOffset, size_t addrLen)" << std::endl;
+
+			// 还原出 客户端连接 查找用 key
+			uint64_t addr;
+			assert(addrLen == sizeof(addr));
+			memcpy(&addr, bb.buf + addrOffset, sizeof(addr));
+
+			// 得到查找结果下标
+			auto idx = clientPeerMappings.Find(addr);
+
+			// 如果有定位到, 则继续操作
+			if (idx != -1)
+			{
+				// 取出 c( 位于这个容器的 c 一定是 alive 的 )
+				auto c = clientPeerMappings.ValueAt(idx);
+
+				// 篡改地址部分为 实际发信服务 addr 并转发
+				c->SendRoutingEx(bb, pkgLen, addrOffset, addrLen, (char*)&c->addr, sizeof(c->addr));
+			}
+			// 否则表示 客户端早已断开 不必理会
+		};
 	}
 
 	clientListener.Bind("0.0.0.0", 12344);
@@ -272,6 +300,7 @@ inline Router::Router(xx::UvLoop& loop)
 	// Accept 的时候创建 key 并映射之, 创建时要将 key 存起来( 理论上讲直接用 指针+版本号 当 key 是 ok 的. 不过跨语言不方便 )
 	clientListener.OnCreatePeer = [this]()
 	{
+		//std::cout << "clientListener.OnCreatePeer = [this]()" << std::endl;
 		// 创建
 		auto p = mempool->Create<ClientPeer>(clientListener);
 
@@ -283,6 +312,7 @@ inline Router::Router(xx::UvLoop& loop)
 		// 这样的地址, 将导致与 Service1 服务通信.
 		p->OnReceiveRouting = [this, p](xx::BBuffer& bb, size_t pkgLen, size_t addrOffset, size_t addrLen)
 		{
+			//std::cout << "p->OnReceiveRouting = [this, p](xx::BBuffer& bb, size_t pkgLen, size_t addrOffset, size_t addrLen)" << std::endl;
 			// 读出 addr, 在 map 中定位到 c, 构造数据后发出( 如果无法定位到 c, 或 c 连接异常, 则将 p 踢掉 )
 
 			// 先判断是否为默认地址. 如果是就填充映射地址
@@ -355,35 +385,46 @@ inline Client::Client(xx::UvLoop& loop)
 {
 	routerClient.SetAddress("127.0.0.1", 12344);
 	routerClient.routingAddress = "client";	// 这个只是令包事件分发器检测到这是非路由端
-	routerClient.OnReceiveRequest = [this](uint32_t serial, xx::BBuffer& bb)
-	{
-		// 路由过来的包, 带返回地址( 当前应该都是收到这种路由包 )
-		if (routerClient.senderAddress.dataLen)
-		{
-
-		}
-		else
-		{
-			assert(false);
-		}
-	};
 }
 inline void Client::Update()
 {
 	if (routerClient.state == xx::UvTcpStates::Disconnected)
 	{
 		routerClient.Connect();
+		//std::cout << "routerClient.Connect();" << std::endl;
 	}
 	else if (routerClient.alive())
 	{
-		routerClient.SendRoutingRequest("Service1", 8, xx::String(mempool, "hi"), [this](uint32_t serial, xx::BBuffer* bb) 
+		//std::cout << "routerClient.SendRoutingRequest" << std::endl;
+		routerClient.SendRoutingRequest("Service1", 8, xx::String(mempool, "hi"), [this](uint32_t serial, xx::BBuffer* bb)
 		{
 			// RPC超时
 			if (!bb) return;
 
 			xx::String str(mempool);
 			bb->ToString(str);
-			std::cout << str << std::endl;
+			//std::cout << "recv " << routerClient.senderAddress << "'s response: " << str << std::endl;
+
+			// 试解包( 应该是收到地址 Service2 )
+			if (int r = bb->ReadPackage(str))
+			{
+				// 解包失败, 忽略
+				return;
+			}
+
+			// 根据收到的 服务地址, 继续发包( 前提是没断开 )
+			if (routerClient.alive())
+			{
+				routerClient.SendRoutingRequest(str.buf, str.dataLen, xx::String(mempool, "hi!!!"), [this](uint32_t serial, xx::BBuffer* bb)
+				{
+					// RPC超时
+					if (!bb) return;
+
+					xx::String str2(mempool);
+					bb->ToString(str2);
+					std::cout << "recv " << routerClient.senderAddress << "'s response: " << str2 << std::endl;
+				});
+			}
 		});
 	}
 }
