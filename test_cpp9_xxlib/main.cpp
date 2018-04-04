@@ -233,45 +233,45 @@ inline Router::Router(xx::UvLoop& loop)
 {
 
 	// 先根据 服务配置创建所有相应的连接实例
-	auto c = mempool->Create<ServiceClient>(loop);
-	c->SetAddress("127.0.0.1", 12345);	// Service1
-	c->Connect();
-	serviceClientGuests.Add(c);
+	auto sc = mempool->Create<ServiceClient>(loop);
+	sc->SetAddress("127.0.0.1", 12345);	// Service1
+	sc->Connect();
+	serviceClientGuests.Add(sc);
 
-	c = mempool->Create<ServiceClient>(loop);
-	c->SetAddress("127.0.0.1", 12346);	// Service2
-	c->Connect();
-	serviceClientGuests.Add(c);
+	sc = mempool->Create<ServiceClient>(loop);
+	sc->SetAddress("127.0.0.1", 12346);	// Service2
+	sc->Connect();
+	serviceClientGuests.Add(sc);
 
 	// 批量绑连接实例的事件
-	for (auto& c : serviceClientGuests)
+	for (auto& sc : serviceClientGuests)
 	{
-		c->OnDisconnect = [this, c]
+		sc->OnDisconnect = [this, sc]
 		{
-			// 如果 c 位于 map ( addr 有值即位于 map ), 要从 map 移除并放入 guests 并清 addr
-			if (c->addr.dataLen)
+			// 如果 sc 位于 map ( addr 有值即位于 map ), 要从 map 移除并放入 guests 并清 addr
+			if (sc->addr.dataLen)
 			{
-				serviceClientMappings.Remove(&c->addr);
-				serviceClientGuests.Add(c);
-				c->addr.Clear();
+				serviceClientMappings.Remove(&sc->addr);
+				serviceClientGuests.Add(sc);
+				sc->addr.Clear();
 			}
 		};
 
-		// 当 c 连接成功时, Service 应该发地址包过来. 
-		c->OnReceivePackage = [this, c](xx::BBuffer& bb)
+		// 当 sc 连接成功时, Service 应该发地址包过来. 
+		sc->OnReceivePackage = [this, sc](xx::BBuffer& bb)
 		{
 			// 填充地址
-			c->addr.Assign(bb.buf + bb.offset, c->GetRoutingAddressLength(bb));
+			sc->addr.Assign(bb.buf + bb.offset, sc->GetRoutingAddressLength(bb));
 
-			// 将 c 从 list 移至 map
-			serviceClientGuests.Remove(c);
-			auto r = serviceClientMappings.Add(&c->addr, c);
+			// 将 sc 从 list 移至 map
+			serviceClientGuests.Remove(sc);
+			auto r = serviceClientMappings.Add(&sc->addr, sc);
 			assert(r.success);
 		};
 
-		c->OnReceiveRouting = [this, c](xx::BBuffer& bb, size_t pkgLen, size_t addrOffset, size_t addrLen)
+		sc->OnReceiveRouting = [this, sc](xx::BBuffer& bb, size_t pkgLen, size_t addrOffset, size_t addrLen)
 		{
-			//std::cout << "c->OnReceiveRouting = [this, c](xx::BBuffer& bb, size_t pkgLen, size_t addrOffset, size_t addrLen)" << std::endl;
+			//std::cout << "sc->OnReceiveRouting = [this, sc](xx::BBuffer& bb, size_t pkgLen, size_t addrOffset, size_t addrLen)" << std::endl;
 
 			// 还原出 客户端连接 查找用 key
 			uint64_t addr;
@@ -284,11 +284,11 @@ inline Router::Router(xx::UvLoop& loop)
 			// 如果有定位到, 则继续操作
 			if (idx != -1)
 			{
-				// 取出 c( 位于这个容器的 c 一定是 alive 的 )
-				auto c = clientPeerMappings.ValueAt(idx);
+				// 取出 cp( 位于这个容器的 cp 一定是 alive 的 )
+				auto cp = clientPeerMappings.ValueAt(idx);
 
 				// 篡改地址部分为 实际发信服务 addr 并转发
-				c->SendRoutingEx(bb, pkgLen, addrOffset, addrLen, (char*)&c->addr, sizeof(c->addr));
+				cp->SendRoutingEx(bb, pkgLen, addrOffset, addrLen, sc->addr.buf, sc->addr.bufLen);
 			}
 			// 否则表示 客户端早已断开 不必理会
 		};
