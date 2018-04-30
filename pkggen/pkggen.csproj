@@ -60,6 +60,10 @@
       <Project>{7f62e40f-e079-46d2-85e9-661fce50168c}</Project>
       <Name>gen_library</Name>
     </ProjectReference>
+    <ProjectReference Include="..\pkggen_template_PKG\pkggen_template_PKG.csproj">
+      <Project>{82112fe9-6a59-4f6d-a295-d4c7c039a977}</Project>
+      <Name>pkggen_template_PKG</Name>
+    </ProjectReference>
     <ProjectReference Include="..\pkggen_template_RPC\pkggen_template_RPC.csproj">
       <Project>{081fd731-af90-4ec5-8cac-603fc9d3a4cb}</Project>
       <Name>pkggen_template_RPC</Name>
