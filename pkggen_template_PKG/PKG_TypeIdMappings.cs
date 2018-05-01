@@ -66,6 +66,8 @@ interface ITypeIdMappings
 
     CatchFish.Fish _33 { get; }
 
+    xx.Random _45 { get; }
+
     List<CatchFish.Player> _34 { get; }
 
     List<CatchFish.Fish> _35 { get; }

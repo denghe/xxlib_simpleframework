@@ -175,6 +175,7 @@ namespace xx
 #include "xx_bytesutils.h"
 #include "xx_bbuffer.h"
 #include "xx_guid.h"
+#include "xx_random.h"
 
 #include "xx_mempool.hpp"
 #include "xx_list.hpp"
@@ -186,3 +187,4 @@ namespace xx
 #include "xx_bytesutils.hpp"
 #include "xx_bbuffer.hpp"
 #include "xx_guid.hpp"
+#include "xx_random.hpp"

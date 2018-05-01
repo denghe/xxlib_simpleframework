@@ -4,7 +4,7 @@ namespace PKG
 {
     public static class PkgGenMd5
     {
-        public const string value = "bbd82eda64925618d4195ddb09310fc8"; 
+        public const string value = "4f3f7104775a2e0eaf3e0f1dc81df631"; 
     }
 
 namespace CatchFish_Client
@@ -677,6 +677,10 @@ namespace CatchFish
         /// 帧编号, 每帧 + 1
         /// </summary>
         public int frameNumber;
+        /// <summary>
+        /// 全场景公用随机数发生器
+        /// </summary>
+        public xx.Random rnd;
         public List<CatchFish.Player> players;
         public List<CatchFish.Fish> fishs;
         public List<CatchFish.Bullet> bullets;
@@ -689,6 +693,7 @@ namespace CatchFish
         public virtual void ToBBuffer(BBuffer bb)
         {
             bb.Write(this.frameNumber);
+            bb.Write(this.rnd);
             bb.Write(this.players);
             bb.Write(this.fishs);
             bb.Write(this.bullets);
@@ -697,6 +702,7 @@ namespace CatchFish
         public virtual void FromBBuffer(BBuffer bb)
         {
             bb.Read(ref this.frameNumber);
+            bb.Read(ref this.rnd);
             bb.readLengthLimit = 0;
             bb.Read(ref this.players);
             bb.readLengthLimit = 0;
@@ -1016,6 +1022,7 @@ namespace CatchFish.Events
             BBuffer.Register<CatchFish.MoveObject>(31);
             BBuffer.Register<CatchFish.Bullet>(32);
             BBuffer.Register<CatchFish.Fish>(33);
+            BBuffer.Register<xx.Random>(45);
             BBuffer.Register<List<CatchFish.Player>>(34);
             BBuffer.Register<List<CatchFish.Fish>>(35);
             BBuffer.Register<List<CatchFish.Bullet>>(36);

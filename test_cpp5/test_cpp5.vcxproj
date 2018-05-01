@@ -117,6 +117,8 @@
     <ClInclude Include="..\xxlib\xx_mempool.hpp" />
     <ClInclude Include="..\xxlib\xx_queue.h" />
     <ClInclude Include="..\xxlib\xx_queue.hpp" />
+    <ClInclude Include="..\xxlib\xx_random.h" />
+    <ClInclude Include="..\xxlib\xx_random.hpp" />
     <ClInclude Include="..\xxlib\xx_string.h" />
     <ClInclude Include="..\xxlib\xx_string.hpp" />
     <ClInclude Include="..\xxlib\xx_uv.h" />

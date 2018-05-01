@@ -1,5 +1,5 @@
 ﻿
-PKG_PkgGenMd5_Value = 'bbd82eda64925618d4195ddb09310fc8'
+PKG_PkgGenMd5_Value = '4f3f7104775a2e0eaf3e0f1dc81df631'
 
 --[[
 进入游戏成功
@@ -92,6 +92,10 @@ PKG_CatchFish_Scene = {
         帧编号, 每帧 + 1
         ]]
         o.frameNumber = 0 -- Int32
+        --[[
+        全场景公用随机数发生器
+        ]]
+        o.rnd = null -- _xx_Random
         o.players = null -- List_PKG_CatchFish_Player_
         o.fishs = null -- List_PKG_CatchFish_Fish_
         o.bullets = null -- List_PKG_CatchFish_Bullet_
@@ -100,6 +104,7 @@ PKG_CatchFish_Scene = {
     FromBBuffer = function( bb, o )
         local ReadObject = bb.ReadObject
         o.frameNumber = bb:ReadInt32()
+        o.rnd = ReadObject( bb )
         o.players = ReadObject( bb )
         o.fishs = ReadObject( bb )
         o.bullets = ReadObject( bb )
@@ -107,6 +112,7 @@ PKG_CatchFish_Scene = {
     ToBBuffer = function( bb, o )
         local WriteObject = bb.WriteObject
         bb:WriteInt32( o.frameNumber )
+        WriteObject( bb, o.rnd )
         WriteObject( bb, o.players )
         WriteObject( bb, o.fishs )
         WriteObject( bb, o.bullets )
@@ -1025,6 +1031,23 @@ PKG_CatchFish_Fish = {
     end
 }
 BBuffer.Register( PKG_CatchFish_Fish )
+_xx_Random = {
+    typeName = "_xx_Random",
+    typeId = 45,
+    Create = function()
+        local o = {}
+        o.__proto = _xx_Random
+        o.__index = o
+        o.__newindex = o
+
+        return o
+    end,
+    FromBBuffer = function( bb, o )
+    end,
+    ToBBuffer = function( bb, o )
+    end
+}
+BBuffer.Register( _xx_Random )
 List_PKG_CatchFish_Player_ = {
     typeName = "List_PKG_CatchFish_Player_",
     typeId = 34,

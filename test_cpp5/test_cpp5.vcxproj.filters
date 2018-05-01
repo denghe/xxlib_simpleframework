@@ -88,5 +88,11 @@
     <ClInclude Include="..\xxlib\xx_guid.hpp">
       <Filter>xxlib</Filter>
     </ClInclude>
+    <ClInclude Include="..\xxlib\xx_random.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\xxlib\xx_random.hpp">
+      <Filter>xxlib</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

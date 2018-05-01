@@ -44,7 +44,7 @@ interface ITypeIdMappings
 
     CatchFish.CollisionArea _22 { get; }
 
-    List<CatchFish.Pos> _23 { get; }
+    List<xx.Pos> _23 { get; }
 
     CatchFish.FishSpriteFrame _24 { get; }
 
@@ -65,6 +65,8 @@ interface ITypeIdMappings
     CatchFish.Bullet _32 { get; }
 
     CatchFish.Fish _33 { get; }
+
+    xx.Random _45 { get; }
 
     List<CatchFish.Player> _34 { get; }
 

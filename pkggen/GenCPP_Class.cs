@@ -35,7 +35,7 @@ namespace " + templateName + @"
             if (c.Namespace != null && (i == 0 || (i > 0 && cs[i - 1].Namespace != c.Namespace))) // namespace 去重
             {
                 sb.Append(@"
-namespace " + c.Namespace + @"
+namespace " + c.Namespace.Replace(".", "::") + @"
 {");
             }
 
@@ -66,7 +66,7 @@ namespace " + c.Namespace + @"
             if (e.Namespace != null && (i == 0 || (i > 0 && es[i - 1].Namespace != e.Namespace))) // namespace 去重
             {
                 sb.Append(@"
-namespace " + e.Namespace + @"
+namespace " + e.Namespace.Replace(".", "::") + @"
 {");
             }
 
@@ -107,7 +107,7 @@ namespace " + e.Namespace + @"
             if (c.Namespace != null && (i == 0 || (i > 0 && es[i - 1].Namespace != c.Namespace))) // namespace 去重
             {
                 sb.Append(@"
-namespace " + c.Namespace + @"
+namespace " + c.Namespace.Replace(".", "::") + @"
 {");
             }
 
@@ -166,7 +166,7 @@ namespace " + c.Namespace + @"
             if (c.Namespace != null && (i == 0 || (i > 0 && cs[i - 1].Namespace != c.Namespace))) // namespace 去重
             {
                 sb.Append(@"
-namespace " + c.Namespace + @"
+namespace " + c.Namespace.Replace(".", "::") + @"
 {");
             }
 
@@ -238,7 +238,7 @@ namespace " + c.Namespace + @"
             if (c.Namespace != null && (i == 0 || (i > 0 && cs[i - 1].Namespace != c.Namespace))) // namespace 去重
             {
                 sb.Append(@"
-namespace " + c.Namespace + @"
+namespace " + c.Namespace.Replace(".", "::") + @"
 {");
             }
 
@@ -470,7 +470,7 @@ namespace xx
             if (ct._IsList()) ctn = ct._GetSafeTypeDecl_Cpp(templateName, true);
             else ctn = ct._GetTypeDecl_Cpp(templateName).CutLast();
 
-            if (ct._IsString() || ct._IsBBuffer() || ct._IsExternal()) continue;
+            if (ct._IsString() || ct._IsBBuffer()/* || ct._IsExternal()*/) continue;
             sb.Append(@"
 	template<> struct TypeId<" + ctn + @"> { static const uint16_t value = " + typeId + @"; };");
         }
@@ -491,7 +491,7 @@ namespace " + templateName + @"
             var bt = ct.BaseType;
             var btn = ct._HasBaseType() ? bt._GetTypeDecl_Cpp(templateName).CutLast() : "xx::Object";
 
-            if (ct._IsString() || ct._IsBBuffer() || ct._IsExternal()) continue;
+            if (ct._IsString() || ct._IsBBuffer()/* || ct._IsExternal()*/) continue;
             sb.Append(@"
 	    xx::MemPool::Register<" + ctn + @", " + btn + @">();");
         }

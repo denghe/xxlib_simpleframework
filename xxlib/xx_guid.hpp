@@ -74,4 +74,23 @@ namespace xx
 		}
 	};
 
+	// 适配 Guid 之 序列化 & 反序列化
+	template<>
+	struct BytesFunc<Guid, void>
+	{
+		static inline void WriteTo(BBuffer& bb, Guid const &in)
+		{
+			bb.Reserve(bb.dataLen + sizeof(Guid));
+			memcpy(bb.buf + bb.dataLen, &in, sizeof(Guid));
+			bb.dataLen += sizeof(Guid);
+		}
+		static inline int ReadFrom(BBuffer& bb, Guid &out)
+		{
+			if (bb.offset + sizeof(Guid) > bb.dataLen) return -1;
+			memcpy(&out, bb.buf + bb.offset, sizeof(Guid));
+			bb.offset += sizeof(Guid);
+			return 0;
+		}
+	};
+
 }

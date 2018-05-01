@@ -5,7 +5,7 @@ namespace PKG
 {
 	struct PkgGenMd5
 	{
-		static constexpr char const* value = "bbd82eda64925618d4195ddb09310fc8";
+		static constexpr char const* value = "4f3f7104775a2e0eaf3e0f1dc81df631";
     };
 
 namespace CatchFish_Client
@@ -112,7 +112,7 @@ namespace CatchFish
     using Scene_r = xx::Ref<Scene>;
 
 }
-namespace CatchFish.Events
+namespace CatchFish::Events
 {
     // 玩家离开( 比进入的处理优先级高 )
     class LeavePlayer;
@@ -209,7 +209,7 @@ namespace CatchFish_Client
         int FromBBuffer(xx::BBuffer &bb) override;
     };
 }
-namespace CatchFish.Events
+namespace CatchFish::Events
 {
     // 玩家停止开火( 连发, 仅适合帧同步服务器算法 )
     class FireEnd : public xx::Object
@@ -342,6 +342,8 @@ namespace CatchFish
     public:
         // 帧编号, 每帧 + 1
         int32_t frameNumber = 0;
+        // 全场景公用随机数发生器
+        ::xx::Random_p rnd;
         xx::List_p<PKG::CatchFish::Player_p> players;
         xx::List_p<PKG::CatchFish::Fish_p> fishs;
         xx::List_p<PKG::CatchFish::Bullet_p> bullets;
@@ -426,7 +428,7 @@ namespace CatchFish
         int FromBBuffer(xx::BBuffer &bb) override;
     };
 }
-namespace CatchFish.Events
+namespace CatchFish::Events
 {
     // 子弹命中( 与鱼死分离. 鱼死相关可能要等服务器跨线程回调送回结果才能下发 )
     class BulletHit : public xx::Object
@@ -724,7 +726,7 @@ namespace CatchFish
         int FromBBuffer(xx::BBuffer &bb) override;
     };
 }
-namespace CatchFish.Events
+namespace CatchFish::Events
 {
     // 鱼被打死
     class FishDead : public xx::Object
@@ -1690,6 +1692,7 @@ namespace CatchFish
 	{
 	    int rtv = 0;
         if (rtv = bb->Read(frameNumber)) throw rtv;
+        if (rtv = bb->Read(rnd)) throw rtv;
         bb->readLengthLimit = 0;
         if (rtv = bb->Read(players)) throw rtv;
         bb->readLengthLimit = 0;
@@ -1700,6 +1703,7 @@ namespace CatchFish
     inline void Scene::ToBBuffer(xx::BBuffer &bb) const
     {
         bb.Write(this->frameNumber);
+        bb.Write(this->rnd);
         bb.Write(this->players);
         bb.Write(this->fishs);
         bb.Write(this->bullets);
@@ -1708,6 +1712,7 @@ namespace CatchFish
     {
         int rtv = 0;
         if (rtv = bb.Read(this->frameNumber)) return rtv;
+        if (rtv = bb.Read(this->rnd)) return rtv;
         bb.readLengthLimit = 0;
         if (rtv = bb.Read(this->players)) return rtv;
         bb.readLengthLimit = 0;
@@ -1736,6 +1741,7 @@ namespace CatchFish
     {
         this->BaseType::ToStringCore(str);
         str.Append(", \"frameNumber\" : ", this->frameNumber);
+        str.Append(", \"rnd\" : ", this->rnd);
         str.Append(", \"players\" : ", this->players);
         str.Append(", \"fishs\" : ", this->fishs);
         str.Append(", \"bullets\" : ", this->bullets);
@@ -1743,7 +1749,7 @@ namespace CatchFish
 
 
 }
-namespace CatchFish.Events
+namespace CatchFish::Events
 {
 	inline LeavePlayer::LeavePlayer(xx::MemPool* mempool)
         : xx::Object(mempool)
@@ -2167,6 +2173,7 @@ namespace xx
 	template<> struct TypeId<PKG::CatchFish::MoveObject> { static const uint16_t value = 31; };
 	template<> struct TypeId<PKG::CatchFish::Bullet> { static const uint16_t value = 32; };
 	template<> struct TypeId<PKG::CatchFish::Fish> { static const uint16_t value = 33; };
+	template<> struct TypeId<::xx::Random> { static const uint16_t value = 45; };
 	template<> struct TypeId<xx::List<PKG::CatchFish::Player_p>> { static const uint16_t value = 34; };
 	template<> struct TypeId<xx::List<PKG::CatchFish::Fish_p>> { static const uint16_t value = 35; };
 	template<> struct TypeId<xx::List<PKG::CatchFish::Bullet_p>> { static const uint16_t value = 36; };
@@ -2214,6 +2221,7 @@ namespace PKG
 	    xx::MemPool::Register<PKG::CatchFish::MoveObject, xx::Object>();
 	    xx::MemPool::Register<PKG::CatchFish::Bullet, PKG::CatchFish::MoveObject>();
 	    xx::MemPool::Register<PKG::CatchFish::Fish, PKG::CatchFish::MoveObject>();
+	    xx::MemPool::Register<::xx::Random, xx::Object>();
 	    xx::MemPool::Register<xx::List<PKG::CatchFish::Player_p>, xx::Object>();
 	    xx::MemPool::Register<xx::List<PKG::CatchFish::Fish_p>, xx::Object>();
 	    xx::MemPool::Register<xx::List<PKG::CatchFish::Bullet_p>, xx::Object>();
