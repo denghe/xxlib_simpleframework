@@ -5,22 +5,14 @@ using TemplateLibrary;
 
 namespace CatchFish
 {
-
-    [Desc("用来描述坐标的类")]
-    class Pos
-    {
-        float x, y;
-    }
-
-
     [Desc("圆形碰撞区")]
     class CollisionArea
     {
         [Desc("初始方向的位置偏移( 运算时要根据角度来算实际偏移值 )")]
-        Pos offset;
+        xx.Pos offset;
 
         [Desc("初始方向的位置偏移( 按 256 划分精度的角度值为下标, 运行时先行计算出来 )")]
-        List<Pos> offsets;
+        List<xx.Pos> offsets;
 
         [Desc("半径")]
         int radius;
@@ -92,13 +84,13 @@ namespace CatchFish
         int bornFrameNumber;
 
         [Desc("创建时的位置")]
-        Pos bornPos;
+        xx.Pos bornPos;
 
         [Desc("当前位置")]
-        Pos pos;
+        xx.Pos pos;
 
         [Desc("每帧的移动增量")]
-        Pos moveInc;
+        xx.Pos moveInc;
 
         [Desc("逻辑角度")]
         float angle;
@@ -135,6 +127,9 @@ namespace CatchFish
     {
         [Desc("帧编号, 每帧 + 1")]
         int frameNumber;
+
+        [Desc("全场景公用随机数发生器")]
+        xx.Random rnd;
 
         List<Player> players;
         List<Fish> fishs;
@@ -209,32 +204,29 @@ namespace CatchFish
             int sitIndex;
         }
 
-        [Desc("子弹命中")]
+        [Desc("子弹命中( 与鱼死分离. 鱼死相关可能要等服务器跨线程回调送回结果才能下发 )")]
         class BulletHit
-        {
-            [Desc("子弹流水号")]
-            int bulletSerial;
-
-            [Desc("鱼流水号")]
-            int fishSerial;
-        }
-
-        [Desc("子弹命中且鱼被打死, 附加金币信息")]
-        class BulletHitFishDead : BulletHit
-        {
-            [Desc("金币所得")]
-            long coin;
-        }
-
-        [Desc("同一玩家, 多粒子弹命中或消失")]
-        class BulletHits
         {
             [Desc("座位索引( 0: 左上  1: 右上  2: 左下 3: 右下 )")]
             int sitIndex;
 
-            [Desc("子弹命中信息集合")]
-            List<BulletHit> hits;
+            [Desc("子弹流水号")]
+            int bulletSerial;
         }
+
+        [Desc("鱼被打死")]
+        class FishDead
+        {
+            [Desc("座位索引( 0: 左上  1: 右上  2: 左下 3: 右下 )")]
+            int sitIndex;
+
+            [Desc("鱼流水号")]
+            int fishSerial;
+
+            [Desc("金币所得")]
+            long coin;
+        }
+
     }
 }
 
@@ -325,8 +317,11 @@ namespace CatchFish_Client
         [Desc("一帧内所有进入的玩家列表( 有序 )")]
         List<CatchFish.Events.JoinPlayer> joins;
 
-        [Desc("多个玩家的子弹批量 命中 & 结算 信息")]
-        List<CatchFish.Events.BulletHits> hitss;
+        [Desc("多个玩家的子弹 命中 信息( 相同玩家可能有多条 )")]
+        List<CatchFish.Events.BulletHit> hitss;
+
+        [Desc("多条鱼 死亡 & 结算 信息")]
+        List<CatchFish.Events.FishDead> fishDeads;
 
         [Desc("多个玩家的单次开火信息( 自带 frameNumber, 可能小于当前值 )")]
         List<CatchFish.Events.Fire> fires;

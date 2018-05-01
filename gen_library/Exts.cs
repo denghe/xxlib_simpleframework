@@ -31,33 +31,33 @@ public static class GenExtensions
     /// <summary>
     /// 从 types 中过滤出所有枚举类型
     /// </summary>
-    public static List<Type> _GetEnums(this List<Type> ts)
+    public static List<Type> _GetEnums(this List<Type> ts, bool exceptExternal = true)
     {
-        return ts.Where(t => t.IsEnum).ToList();
+        return ts.Where(t => t.IsEnum && !t._IsExternal()).ToList();
     }
 
     /// <summary>
     /// 从 types 中过滤出所有值类型
     /// </summary>
-    public static List<Type> _GetStructs(this List<Type> ts)
+    public static List<Type> _GetStructs(this List<Type> ts, bool exceptExternal = true)
     {
-        return ts.Where(t => t.IsValueType && !t.IsEnum).ToList();
+        return ts.Where(t => (t.IsValueType && !t.IsEnum) && !t._IsExternal()).ToList();
     }
 
     /// <summary>
     /// 从 types 中过滤出所有引用类型
     /// </summary>
-    public static List<Type> _GetClasss(this List<Type> ts)
+    public static List<Type> _GetClasss(this List<Type> ts, bool exceptExternal = true)
     {
-        return ts.Where(t => t.IsClass).ToList();
+        return ts.Where(t => t.IsClass && !t._IsExternal()).ToList();
     }
 
     /// <summary>
     /// 从 types 中过滤出所有引用类型
     /// </summary>
-    public static List<Type> _GetClasssStructs(this List<Type> ts)
+    public static List<Type> _GetClasssStructs(this List<Type> ts, bool exceptExternal = true)
     {
-        return ts.Where(t => t.IsClass || t.IsValueType && !t.IsEnum).ToList();
+        return ts.Where(t => (t.IsClass || t.IsValueType && !t.IsEnum) && !t._IsExternal()).ToList();
     }
 
 
@@ -275,6 +275,13 @@ public static class GenExtensions
         return t.IsGenericType && t.Namespace == nameof(TemplateLibrary) && t.Name == "List`1";
     }
 
+    /// <summary>
+    /// 返回 t 是否为外部扩展类型
+    /// </summary>
+    public static bool _IsExternal(this Type t)
+    {
+        return t._Has<TemplateLibrary.External>();
+    }
 
     /// <summary>
     /// 获取 class 的成员列表( 含 const )
@@ -543,7 +550,7 @@ public static class GenExtensions
         }
         else if (t.IsEnum) // enum & struct
         {
-            return templateName + "::" + t.FullName.Replace(".", "::");
+            return (t._IsExternal() ? "" : templateName) + "::" + t.FullName.Replace(".", "::");
         }
         else
         {
@@ -603,7 +610,7 @@ public static class GenExtensions
                 }
             }
 
-            return templateName + "::" + t.FullName.Replace(".", "::") + (t.IsValueType ? "" : "*");
+            return (t._IsExternal() ? "" : templateName) + "::" + t.FullName.Replace(".", "::") + (t.IsValueType ? "" : "*");
             //throw new Exception("unhandled data type");
         }
     }
@@ -644,7 +651,7 @@ public static class GenExtensions
         }
         else if (t.IsEnum) // enum & struct
         {
-            return templateName + "::" + t.FullName.Replace(".", "::");
+            return (t._IsExternal() ? "" : templateName) + "::" + t.FullName.Replace(".", "::");
         }
         else
         {
@@ -704,7 +711,7 @@ public static class GenExtensions
                 }
             }
 
-            return templateName + "::" + t.FullName.Replace(".", "::") + (t.IsValueType ? "" : "_p");
+            return (t._IsExternal() ? "" : templateName) + "::" + t.FullName.Replace(".", "::") + (t.IsValueType ? "" : "_p");
             //throw new Exception("unhandled data type");
         }
     }
@@ -731,7 +738,7 @@ public static class GenExtensions
         {
             return t.Name;
         }
-        return templateName + "_" + t.FullName.Replace(".", "_");
+        return (t._IsExternal() ? "" : templateName) + "_" + t.FullName.Replace(".", "_");
     }
 
 

@@ -1,9 +1,11 @@
 ﻿
+#include "xx.h"
+
 namespace RPC
 {
 	struct PkgGenMd5
 	{
-		static constexpr char const* value = "437fc6cea321fd85cca8a679e2822a54";
+		static constexpr char const* value = "47a178b08c07152dea889a7a484251b6";
     };
 
 namespace DB_Manage

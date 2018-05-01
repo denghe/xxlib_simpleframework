@@ -15,7 +15,7 @@
 // Title( "字段名" )                        // 用于导出为 excel 时的列名生成
 // Desc( "注释" )                           // 用于类 及类成员
 // Limit(最大长)                            // 用于 string, bbuffer, List 容器等还原时的长度安全限制
-// External( "path / namespace 啥的 " )     // 对标记为这个的 枚举或结构体，属于外部引用，不再填充或生成
+// External()                               // 对标记为这个的 枚举或结构体，属于外部引用，不再填充或生成. 其本身所处命名空间与实际对应, 不受 模板大命名空间影响
 // NaN, Infinity                            // 标记当反列化 浮点 时, 如果值是 nan / infinity, 就替换成指定 Value
 
 /********************************************************/
@@ -56,17 +56,6 @@ namespace TemplateLibrary
     /// 模拟 System.DateTime
     /// </summary>
     public class DateTime { }
-
-    ///// <summary>
-    ///// 模拟 xx.String_v
-    ///// </summary>
-    //public class String_v { }
-
-    ///// <summary>
-    ///// 模拟 xx.List_v
-    ///// </summary>
-    //public class List_v<T> { }
-
 
     /// <summary>
     /// 标记一个枚举的内容用于 生成时的 项目分类( 与项目对应的 根命名空间 白名单 ), 以便做分类转发之类的功能

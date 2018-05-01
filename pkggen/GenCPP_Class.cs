@@ -470,7 +470,7 @@ namespace xx
             if (ct._IsList()) ctn = ct._GetSafeTypeDecl_Cpp(templateName, true);
             else ctn = ct._GetTypeDecl_Cpp(templateName).CutLast();
 
-            if (ct._IsString() || ct._IsBBuffer()) continue;
+            if (ct._IsString() || ct._IsBBuffer() || ct._IsExternal()) continue;
             sb.Append(@"
 	template<> struct TypeId<" + ctn + @"> { static const uint16_t value = " + typeId + @"; };");
         }
@@ -491,7 +491,7 @@ namespace " + templateName + @"
             var bt = ct.BaseType;
             var btn = ct._HasBaseType() ? bt._GetTypeDecl_Cpp(templateName).CutLast() : "xx::Object";
 
-            if (ct._IsString() || ct._IsBBuffer()) continue;
+            if (ct._IsString() || ct._IsBBuffer() || ct._IsExternal()) continue;
             sb.Append(@"
 	    xx::MemPool::Register<" + ctn + @", " + btn + @">();");
         }
