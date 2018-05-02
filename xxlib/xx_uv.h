@@ -330,6 +330,8 @@ namespace xx
 		UvContextBase(MemPool* mp);
 		~UvContextBase();
 		bool PeerAlive();
+
+		// 重要!! 如果该函数执行点位于 peer 之 OnXxxxx 中, 则在 Bind 成功之时, 先前的 lambda 上下文将被 "顶掉", 所有捕获将变"野", 故该函数只能于此类函数退出前执行
 		bool BindPeer(UvTcpUdpBase* p);
 		void KickPeer(bool immediately = true);
 		void OnPeerReceiveRequest(uint32_t serial, BBuffer& bb);

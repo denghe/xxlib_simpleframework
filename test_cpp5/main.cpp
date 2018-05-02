@@ -81,14 +81,19 @@ public:
 		// 初始化网络监听部分
 		listener.Bind("0.0.0.0", 12345);
 		listener.Listen();
-		listener.OnAccept = [this](xx::UvTcpPeer *p)
+		listener.OnAccept = [this](xx::UvTcpPeer *p_)
 		{
-			std::cout << p->ip() << " accepted." << std::endl;
+			std::cout << p_->ip() << " accepted." << std::endl;
 
 			// 未绑定到上下文之前，作为匿名连接，先接收 Join 指令
-			p->OnReceivePackage = [this, p](xx::BBuffer& bb)
+			p_->OnReceivePackage = [this, p_](xx::BBuffer& bb)
 			{
+				// 打印收到的数据
 				std::cout << bb << std::endl;
+
+				// 转储捕获变量, 以应对 p->OnReceivePackage 的覆盖绑定时捕获变量的丢失
+				auto self = this;
+				auto p = p_;
 
 				xx::Object_p o_;
 
@@ -113,7 +118,7 @@ public:
 					auto& o = *(PKG::Client_CatchFish::Join_p*)&o_;
 
 					// 如果玩家已在线( name已存在 ), 就禁止登陆，踢掉
-					if (scene->players->Exists([&o](PKG::CatchFish::Player_p& plr)
+					if (self->scene->players->Exists([&o](PKG::CatchFish::Player_p& plr)
 					{
 						return plr->name->Equals(o->username);
 					}))
@@ -123,18 +128,18 @@ public:
 					}
 
 					// 选空位
-					freeSits.Clear();
-					freeSits.Add(0);
-					freeSits.Add(1);
-					freeSits.Add(2);
-					freeSits.Add(3);
-					for (size_t i = 0; i < scene->players->dataLen; ++i)
+					self->freeSits.Clear();
+					self->freeSits.Add(0);
+					self->freeSits.Add(1);
+					self->freeSits.Add(2);
+					self->freeSits.Add(3);
+					for (size_t i = 0; i < self->scene->players->dataLen; ++i)
 					{
-						freeSits.Remove(scene->players->At(i)->sitIndex);
+						self->freeSits.Remove(self->scene->players->At(i)->sitIndex);
 					}
 
 					// 没有空位了( 理论上讲如果是大厅分配过来的，不应该出现这种情况 )
-					if (freeSits.dataLen == 0)
+					if (self->freeSits.dataLen == 0)
 					{
 						p->Release();
 						return;
@@ -142,27 +147,25 @@ public:
 
 					// 创建玩家及网络上下文
 					PKG::CatchFish::Player_p plr;
-					plr.MPCreate(mempool);
-					plr->bullets.MPCreate(mempool);
+					plr.MPCreate(self->mempool);
+					plr->bullets.MPCreate(self->mempool);
 					plr->coin = 10000;						// todo: 读配置
 					plr->name = std::move(o->username);
-					plr->sitIndex = freeSits[0];
-					plr->ctx.Create(mempool, this, plr.pointer);
-					auto r = plr->ctx->BindPeer(p);
+					plr->sitIndex = self->freeSits[0];
+					plr->ctx.Create(self->mempool, self, plr.pointer);
+					auto r = plr->ctx->BindPeer(p);			// 这句之后无法继续访问捕获变量
 					assert(r);								// 必然成功
 
 					// 向场景每帧包合并变量压入 Join 事件
 					PKG::CatchFish::Events::JoinPlayer_p j;
-					j.MPCreate(mempool);
+					j.MPCreate(self->mempool);
 					j->name = plr->name;
 					j->sitIndex = plr->sitIndex;
-					scene->frameEvents->joins->Add(std::move(j));
-				}
-			};
+					self->scene->frameEvents->joins->Add(std::move(j));
 
-			p->OnDispose = [p]() 
-			{
-				std::cout << p->ip() << " disposed." << std::endl;
+					// 因为上面有引用到, 故最后再移入队列
+					self->scene->players->Add(std::move(plr));
+				}
 			};
 		};
 	}
