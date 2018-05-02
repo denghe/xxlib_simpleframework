@@ -469,6 +469,9 @@ int main()
 
 	// 创建基础内存池
 	xx::MemPool mp;
-
+	xx::UvLoop loop(&mp);
+	loop.InitRpcManager();
+	ServiceCatchFish service(loop);
+	loop.Run();
 	return 0;
 }
