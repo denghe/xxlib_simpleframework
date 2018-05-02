@@ -4,15 +4,15 @@ namespace xx
 {
 	// 并不清掉 o 的数据
 	inline Random::Random(Random && o)
-		: Object((MemPool*)nullptr)
+		: Object(o.mempool)
 	{
 		inext = o.inext;
 		inextp = o.inextp;
 		memcpy(SeedArray, o.SeedArray, sizeof(SeedArray));
 	}
 
-	inline Random::Random(int32_t seed)
-		: Object((MemPool*)nullptr)
+	inline Random::Random(MemPool* mp, int32_t seed)
+		: Object(mp)
 	{
 		Init(seed);
 	}
@@ -148,7 +148,7 @@ namespace xx
 
 
 	inline Random::Random(BBuffer* bb)
-		: Object((MemPool*)nullptr)
+		: Object(bb)
 	{
 		if (int r = FromBBuffer(*bb)) throw r;
 	}

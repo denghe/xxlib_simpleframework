@@ -506,7 +506,19 @@ namespace xx
 	}
 
 
+	template<typename T>
+	template<typename ...Args>
+	Ptr<T>& Ptr<T>::Create(MemPool* mp, Args &&... args)
+	{
+		return operator=(mp->Create<T>(std::forward<Args>(args)...));
+	}
 
+	template<typename T>
+	template<typename ...Args>
+	Ptr<T>& Ptr<T>::MPCreate(MemPool* mp, Args &&... args)
+	{
+		return operator=(mp->MPCreate<T>(std::forward<Args>(args)...));
+	}
 
 
 

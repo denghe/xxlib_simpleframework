@@ -6,11 +6,6 @@ namespace xx
 	// 必须传入种子
 	class Random : public Object
 	{
-		explicit Random(int32_t seed = 0);
-		Random(Random && o);
-		Random(Random const&) = delete;
-		Random& operator=(Random const&) = delete;
-
 		static constexpr int32_t MBIG = std::numeric_limits<int32_t>::max();
 		static constexpr int32_t MSEED = 161803398;
 		static constexpr int32_t MZ = 0;
@@ -33,6 +28,10 @@ namespace xx
 		double GetSampleForLargeRange();
 
 	public:
+		explicit Random(MemPool* mp, int32_t seed = 0);
+		Random(Random && o);
+		Random(Random const&) = delete;
+		Random& operator=(Random const&) = delete;
 		/*=====================================Next=====================================
 		**Returns: An int32_t [0..Int32.MaxValue)
 		**Arguments: None

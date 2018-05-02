@@ -277,6 +277,13 @@ namespace xx
 		T* & operator->() noexcept;
 		T& operator*() noexcept;
 		T const& operator*() const noexcept;
+
+
+		template<typename ...Args>
+		Ptr<T>& Create(MemPool* mp, Args &&... args);
+
+		template<typename ...Args>
+		Ptr<T>& MPCreate(MemPool* mp, Args &&... args);
 	};
 
 	template<typename T>
