@@ -83,9 +83,13 @@ public:
 		listener.Listen();
 		listener.OnAccept = [this](xx::UvTcpPeer *p)
 		{
+			std::cout << p->ip() << " accepted." << std::endl;
+
 			// 未绑定到上下文之前，作为匿名连接，先接收 Join 指令
 			p->OnReceivePackage = [this, p](xx::BBuffer& bb)
 			{
+				std::cout << bb << std::endl;
+
 				xx::Object_p o_;
 
 				// 试解包, 解包失败, 断线
@@ -154,6 +158,11 @@ public:
 					j->sitIndex = plr->sitIndex;
 					scene->frameEvents->joins->Add(std::move(j));
 				}
+			};
+
+			p->OnDispose = [p]() 
+			{
+				std::cout << p->ip() << " disposed." << std::endl;
 			};
 		};
 	}
