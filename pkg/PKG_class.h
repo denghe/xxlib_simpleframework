@@ -5,7 +5,7 @@ namespace PKG
 {
 	struct PkgGenMd5
 	{
-		static constexpr char const* value = "4f3f7104775a2e0eaf3e0f1dc81df631";
+		static constexpr char const* value = "573f3204de5ce9a0f9f76111d81176c6";
     };
 
 namespace CatchFish_Client
@@ -161,8 +161,8 @@ namespace CatchFish
     class MoveObject : public xx::Object
     {
     public:
-        // 所在场景
-        PKG::CatchFish::Scene_p scene;
+        // 位于容器时的下标
+        int32_t indexAtContainer = 0;
         // 序列号( 当发生碰撞时用于标识 )
         int32_t serial = 0;
         // 创建时的帧编号
@@ -342,11 +342,16 @@ namespace CatchFish
     public:
         // 帧编号, 每帧 + 1
         int32_t frameNumber = 0;
-        // 全场景公用随机数发生器
+        // 公用随机数发生器
         ::xx::Random_p rnd;
+        // 公用配置信息
+        PKG::CatchFish::Config_p cfg;
+        // 所有玩家( 子弹在玩家下面 )
         xx::List_p<PKG::CatchFish::Player_p> players;
+        // 所有鱼
         xx::List_p<PKG::CatchFish::Fish_p> fishs;
-        xx::List_p<PKG::CatchFish::Bullet_p> bullets;
+        // 当前帧所有事件的合并包容器, 服务器专用, 不参与网络传输
+        PKG::CatchFish_Client::FrameEvents_p frameEvents;
 
         typedef Scene ThisType;
         typedef xx::Object BaseType;
@@ -369,6 +374,18 @@ namespace CatchFish
         int32_t intAngle = 0;
         // 鱼的配置信息( 不参与网络传输, 需要根据 typeId 去 cfgs 定位手工还原 )
         PKG::CatchFish::FishConfig_p cfg;
+        // 当前坐标( 这个每帧都通过 += posFrameInc 的方式改变 )
+        ::xx::Pos pos;
+        // 出生点配置
+        ::xx::Pos posFrom;
+        // 消失点配置
+        ::xx::Pos posTo;
+        // 一次性计算出来的每帧的坐标增量( 以稳定 60 fps 为大前提 )
+        ::xx::Pos posFrameInc;
+        // 当前移动步数( 步数一到就认为鱼已移至目的地可以清掉了 )
+        int32_t moveStep = 0;
+        // 总移动步数
+        int32_t moveStepCount = 0;
 
         typedef Fish ThisType;
         typedef PKG::CatchFish::MoveObject BaseType;
@@ -389,6 +406,8 @@ namespace CatchFish
         PKG::CatchFish::Player_p shooter;
         // 金币价值( 也可理解为倍率 )
         int64_t coin = 0;
+        // 一次性计算出来的每帧的坐标增量( 以稳定 60 fps为大前提 )
+        ::xx::Pos posFrameInc;
 
         typedef Bullet ThisType;
         typedef PKG::CatchFish::MoveObject BaseType;
@@ -405,16 +424,18 @@ namespace CatchFish
     class Player : public xx::Object
     {
     public:
-        // 所在场景
-        PKG::CatchFish::Scene_p scene;
-        // 位于 Scene.players 中的下标, 会因为交换删除而变化
-        int32_t indexAtScenePlayers = 0;
+        // 位于容器时的下标
+        int32_t indexAtContainer = 0;
         // 玩家名字
         xx::String_p name;
         // 座位索引( 0: 左上  1: 右上  2: 左下 3: 右下 ), 同时也用于标识玩家
         int32_t sitIndex = 0;
         // 当前金币数
         int64_t coin = 0;
+        // 所有子弹
+        xx::List_p<PKG::CatchFish::Bullet_p> bullets;
+        // 玩家网络上下文, 不参与网络传输
+        ::PlayerContext_p ctx;
 
         typedef Player ThisType;
         typedef xx::Object BaseType;
@@ -459,6 +480,8 @@ namespace CatchFish
     public:
         // 所有鱼的配置信息
         xx::List_p<PKG::CatchFish::FishConfig_p> fishCfgs;
+        // 子弹配置( 当前就一种子弹，先这样放置 )
+        int32_t bulletRadius = 0;
 
         typedef Config ThisType;
         typedef xx::Object BaseType;
@@ -707,6 +730,8 @@ namespace CatchFish
     public:
         // 鱼类编号
         int32_t typeId = 0;
+        // 鱼名
+        xx::String_p name;
         // 打死鱼的金币所得基数( 也可理解成倍率 )
         int64_t coin = 0;
         // 基于整个鱼的最大晃动范围的圆形检测区( 粗判 )
@@ -1359,6 +1384,8 @@ namespace CatchFish
 	{
 	    int rtv = 0;
         if (rtv = bb->Read(typeId)) throw rtv;
+        bb->readLengthLimit = 0;
+        if (rtv = bb->Read(name)) throw rtv;
         if (rtv = bb->Read(coin)) throw rtv;
         if (rtv = bb->Read(collisionArea)) throw rtv;
         bb->readLengthLimit = 0;
@@ -1367,6 +1394,7 @@ namespace CatchFish
     inline void FishConfig::ToBBuffer(xx::BBuffer &bb) const
     {
         bb.Write(this->typeId);
+        bb.Write(this->name);
         bb.Write(this->coin);
         bb.Write(this->collisionArea);
         bb.Write(this->frames);
@@ -1375,6 +1403,8 @@ namespace CatchFish
     {
         int rtv = 0;
         if (rtv = bb.Read(this->typeId)) return rtv;
+        bb.readLengthLimit = 0;
+        if (rtv = bb.Read(this->name)) return rtv;
         if (rtv = bb.Read(this->coin)) return rtv;
         if (rtv = bb.Read(this->collisionArea)) return rtv;
         bb.readLengthLimit = 0;
@@ -1401,6 +1431,8 @@ namespace CatchFish
     {
         this->BaseType::ToStringCore(str);
         str.Append(", \"typeId\" : ", this->typeId);
+        if (this->name) str.Append(", \"name\" : \"", this->name, "\"");
+        else str.Append(", \"name\" : nil");
         str.Append(", \"coin\" : ", this->coin);
         str.Append(", \"collisionArea\" : ", this->collisionArea);
         str.Append(", \"frames\" : ", this->frames);
@@ -1417,16 +1449,19 @@ namespace CatchFish
 	    int rtv = 0;
         bb->readLengthLimit = 0;
         if (rtv = bb->Read(fishCfgs)) throw rtv;
+        if (rtv = bb->Read(bulletRadius)) throw rtv;
 	}
     inline void Config::ToBBuffer(xx::BBuffer &bb) const
     {
         bb.Write(this->fishCfgs);
+        bb.Write(this->bulletRadius);
     }
     inline int Config::FromBBuffer(xx::BBuffer &bb)
     {
         int rtv = 0;
         bb.readLengthLimit = 0;
         if (rtv = bb.Read(this->fishCfgs)) return rtv;
+        if (rtv = bb.Read(this->bulletRadius)) return rtv;
         return rtv;
     }
 
@@ -1449,6 +1484,7 @@ namespace CatchFish
     {
         this->BaseType::ToStringCore(str);
         str.Append(", \"fishCfgs\" : ", this->fishCfgs);
+        str.Append(", \"bulletRadius\" : ", this->bulletRadius);
     }
 
 
@@ -1460,30 +1496,34 @@ namespace CatchFish
         : xx::Object(bb)
 	{
 	    int rtv = 0;
-        if (rtv = bb->Read(scene)) throw rtv;
-        if (rtv = bb->Read(indexAtScenePlayers)) throw rtv;
+        if (rtv = bb->Read(indexAtContainer)) throw rtv;
         bb->readLengthLimit = 0;
         if (rtv = bb->Read(name)) throw rtv;
         if (rtv = bb->Read(sitIndex)) throw rtv;
         if (rtv = bb->Read(coin)) throw rtv;
+        bb->readLengthLimit = 0;
+        if (rtv = bb->Read(bullets)) throw rtv;
+        if (rtv = bb->Read(ctx)) throw rtv;
 	}
     inline void Player::ToBBuffer(xx::BBuffer &bb) const
     {
-        bb.Write(this->scene);
-        bb.Write(this->indexAtScenePlayers);
+        bb.Write(this->indexAtContainer);
         bb.Write(this->name);
         bb.Write(this->sitIndex);
         bb.Write(this->coin);
+        bb.Write(this->bullets);
     }
     inline int Player::FromBBuffer(xx::BBuffer &bb)
     {
         int rtv = 0;
-        if (rtv = bb.Read(this->scene)) return rtv;
-        if (rtv = bb.Read(this->indexAtScenePlayers)) return rtv;
+        if (rtv = bb.Read(this->indexAtContainer)) return rtv;
         bb.readLengthLimit = 0;
         if (rtv = bb.Read(this->name)) return rtv;
         if (rtv = bb.Read(this->sitIndex)) return rtv;
         if (rtv = bb.Read(this->coin)) return rtv;
+        bb.readLengthLimit = 0;
+        if (rtv = bb.Read(this->bullets)) return rtv;
+        if (rtv = bb.Read(this->ctx)) return rtv;
         return rtv;
     }
 
@@ -1505,12 +1545,13 @@ namespace CatchFish
     inline void Player::ToStringCore(xx::String &str) const
     {
         this->BaseType::ToStringCore(str);
-        str.Append(", \"scene\" : ", this->scene);
-        str.Append(", \"indexAtScenePlayers\" : ", this->indexAtScenePlayers);
+        str.Append(", \"indexAtContainer\" : ", this->indexAtContainer);
         if (this->name) str.Append(", \"name\" : \"", this->name, "\"");
         else str.Append(", \"name\" : nil");
         str.Append(", \"sitIndex\" : ", this->sitIndex);
         str.Append(", \"coin\" : ", this->coin);
+        str.Append(", \"bullets\" : ", this->bullets);
+        str.Append(", \"ctx\" : ", this->ctx);
     }
 
 
@@ -1522,7 +1563,7 @@ namespace CatchFish
         : xx::Object(bb)
 	{
 	    int rtv = 0;
-        if (rtv = bb->Read(scene)) throw rtv;
+        if (rtv = bb->Read(indexAtContainer)) throw rtv;
         if (rtv = bb->Read(serial)) throw rtv;
         if (rtv = bb->Read(bornFrameNumber)) throw rtv;
         if (rtv = bb->Read(bornPos)) throw rtv;
@@ -1532,7 +1573,7 @@ namespace CatchFish
 	}
     inline void MoveObject::ToBBuffer(xx::BBuffer &bb) const
     {
-        bb.Write(this->scene);
+        bb.Write(this->indexAtContainer);
         bb.Write(this->serial);
         bb.Write(this->bornFrameNumber);
         bb.Write(this->bornPos);
@@ -1543,7 +1584,7 @@ namespace CatchFish
     inline int MoveObject::FromBBuffer(xx::BBuffer &bb)
     {
         int rtv = 0;
-        if (rtv = bb.Read(this->scene)) return rtv;
+        if (rtv = bb.Read(this->indexAtContainer)) return rtv;
         if (rtv = bb.Read(this->serial)) return rtv;
         if (rtv = bb.Read(this->bornFrameNumber)) return rtv;
         if (rtv = bb.Read(this->bornPos)) return rtv;
@@ -1571,7 +1612,7 @@ namespace CatchFish
     inline void MoveObject::ToStringCore(xx::String &str) const
     {
         this->BaseType::ToStringCore(str);
-        str.Append(", \"scene\" : ", this->scene);
+        str.Append(", \"indexAtContainer\" : ", this->indexAtContainer);
         str.Append(", \"serial\" : ", this->serial);
         str.Append(", \"bornFrameNumber\" : ", this->bornFrameNumber);
         str.Append(", \"bornPos\" : ", this->bornPos);
@@ -1591,12 +1632,14 @@ namespace CatchFish
 	    int rtv = 0;
         if (rtv = bb->Read(shooter)) throw rtv;
         if (rtv = bb->Read(coin)) throw rtv;
+        if (rtv = bb->Read(posFrameInc)) throw rtv;
 	}
     inline void Bullet::ToBBuffer(xx::BBuffer &bb) const
     {
         this->BaseType::ToBBuffer(bb);
         bb.Write(this->shooter);
         bb.Write(this->coin);
+        bb.Write(this->posFrameInc);
     }
     inline int Bullet::FromBBuffer(xx::BBuffer &bb)
     {
@@ -1604,6 +1647,7 @@ namespace CatchFish
         if (rtv = this->BaseType::FromBBuffer(bb)) return rtv;
         if (rtv = bb.Read(this->shooter)) return rtv;
         if (rtv = bb.Read(this->coin)) return rtv;
+        if (rtv = bb.Read(this->posFrameInc)) return rtv;
         return rtv;
     }
 
@@ -1627,6 +1671,7 @@ namespace CatchFish
         this->BaseType::ToStringCore(str);
         str.Append(", \"shooter\" : ", this->shooter);
         str.Append(", \"coin\" : ", this->coin);
+        str.Append(", \"posFrameInc\" : ", this->posFrameInc);
     }
 
 
@@ -1641,6 +1686,12 @@ namespace CatchFish
         if (rtv = bb->Read(typeId)) throw rtv;
         if (rtv = bb->Read(intAngle)) throw rtv;
         if (rtv = bb->Read(cfg)) throw rtv;
+        if (rtv = bb->Read(pos)) throw rtv;
+        if (rtv = bb->Read(posFrom)) throw rtv;
+        if (rtv = bb->Read(posTo)) throw rtv;
+        if (rtv = bb->Read(posFrameInc)) throw rtv;
+        if (rtv = bb->Read(moveStep)) throw rtv;
+        if (rtv = bb->Read(moveStepCount)) throw rtv;
 	}
     inline void Fish::ToBBuffer(xx::BBuffer &bb) const
     {
@@ -1648,6 +1699,12 @@ namespace CatchFish
         bb.Write(this->typeId);
         bb.Write(this->intAngle);
         bb.WriteDefaultValue<PKG::CatchFish::FishConfig_p>();
+        bb.Write(this->pos);
+        bb.Write(this->posFrom);
+        bb.Write(this->posTo);
+        bb.Write(this->posFrameInc);
+        bb.Write(this->moveStep);
+        bb.Write(this->moveStepCount);
     }
     inline int Fish::FromBBuffer(xx::BBuffer &bb)
     {
@@ -1656,6 +1713,12 @@ namespace CatchFish
         if (rtv = bb.Read(this->typeId)) return rtv;
         if (rtv = bb.Read(this->intAngle)) return rtv;
         if (rtv = bb.Read(this->cfg)) return rtv;
+        if (rtv = bb.Read(this->pos)) return rtv;
+        if (rtv = bb.Read(this->posFrom)) return rtv;
+        if (rtv = bb.Read(this->posTo)) return rtv;
+        if (rtv = bb.Read(this->posFrameInc)) return rtv;
+        if (rtv = bb.Read(this->moveStep)) return rtv;
+        if (rtv = bb.Read(this->moveStepCount)) return rtv;
         return rtv;
     }
 
@@ -1680,6 +1743,12 @@ namespace CatchFish
         str.Append(", \"typeId\" : ", this->typeId);
         str.Append(", \"intAngle\" : ", this->intAngle);
         str.Append(", \"cfg\" : ", this->cfg);
+        str.Append(", \"pos\" : ", this->pos);
+        str.Append(", \"posFrom\" : ", this->posFrom);
+        str.Append(", \"posTo\" : ", this->posTo);
+        str.Append(", \"posFrameInc\" : ", this->posFrameInc);
+        str.Append(", \"moveStep\" : ", this->moveStep);
+        str.Append(", \"moveStepCount\" : ", this->moveStepCount);
     }
 
 
@@ -1693,32 +1762,33 @@ namespace CatchFish
 	    int rtv = 0;
         if (rtv = bb->Read(frameNumber)) throw rtv;
         if (rtv = bb->Read(rnd)) throw rtv;
+        if (rtv = bb->Read(cfg)) throw rtv;
         bb->readLengthLimit = 0;
         if (rtv = bb->Read(players)) throw rtv;
         bb->readLengthLimit = 0;
         if (rtv = bb->Read(fishs)) throw rtv;
-        bb->readLengthLimit = 0;
-        if (rtv = bb->Read(bullets)) throw rtv;
+        if (rtv = bb->Read(frameEvents)) throw rtv;
 	}
     inline void Scene::ToBBuffer(xx::BBuffer &bb) const
     {
         bb.Write(this->frameNumber);
         bb.Write(this->rnd);
+        bb.Write(this->cfg);
         bb.Write(this->players);
         bb.Write(this->fishs);
-        bb.Write(this->bullets);
+        bb.WriteDefaultValue<PKG::CatchFish_Client::FrameEvents_p>();
     }
     inline int Scene::FromBBuffer(xx::BBuffer &bb)
     {
         int rtv = 0;
         if (rtv = bb.Read(this->frameNumber)) return rtv;
         if (rtv = bb.Read(this->rnd)) return rtv;
+        if (rtv = bb.Read(this->cfg)) return rtv;
         bb.readLengthLimit = 0;
         if (rtv = bb.Read(this->players)) return rtv;
         bb.readLengthLimit = 0;
         if (rtv = bb.Read(this->fishs)) return rtv;
-        bb.readLengthLimit = 0;
-        if (rtv = bb.Read(this->bullets)) return rtv;
+        if (rtv = bb.Read(this->frameEvents)) return rtv;
         return rtv;
     }
 
@@ -1742,9 +1812,10 @@ namespace CatchFish
         this->BaseType::ToStringCore(str);
         str.Append(", \"frameNumber\" : ", this->frameNumber);
         str.Append(", \"rnd\" : ", this->rnd);
+        str.Append(", \"cfg\" : ", this->cfg);
         str.Append(", \"players\" : ", this->players);
         str.Append(", \"fishs\" : ", this->fishs);
-        str.Append(", \"bullets\" : ", this->bullets);
+        str.Append(", \"frameEvents\" : ", this->frameEvents);
     }
 
 
@@ -2170,21 +2241,21 @@ namespace xx
 	template<> struct TypeId<PKG::CatchFish::Config> { static const uint16_t value = 28; };
 	template<> struct TypeId<xx::List<PKG::CatchFish::FishConfig_p>> { static const uint16_t value = 29; };
 	template<> struct TypeId<PKG::CatchFish::Player> { static const uint16_t value = 30; };
-	template<> struct TypeId<PKG::CatchFish::MoveObject> { static const uint16_t value = 31; };
-	template<> struct TypeId<PKG::CatchFish::Bullet> { static const uint16_t value = 32; };
-	template<> struct TypeId<PKG::CatchFish::Fish> { static const uint16_t value = 33; };
-	template<> struct TypeId<::xx::Random> { static const uint16_t value = 45; };
-	template<> struct TypeId<xx::List<PKG::CatchFish::Player_p>> { static const uint16_t value = 34; };
-	template<> struct TypeId<xx::List<PKG::CatchFish::Fish_p>> { static const uint16_t value = 35; };
-	template<> struct TypeId<xx::List<PKG::CatchFish::Bullet_p>> { static const uint16_t value = 36; };
-	template<> struct TypeId<PKG::CatchFish::Events::LeavePlayer> { static const uint16_t value = 37; };
-	template<> struct TypeId<PKG::CatchFish::Events::JoinPlayer> { static const uint16_t value = 38; };
-	template<> struct TypeId<PKG::CatchFish::Events::Fire> { static const uint16_t value = 39; };
-	template<> struct TypeId<PKG::CatchFish::Events::FireBegin> { static const uint16_t value = 40; };
-	template<> struct TypeId<PKG::CatchFish::Events::FireChangeAngle> { static const uint16_t value = 41; };
-	template<> struct TypeId<PKG::CatchFish::Events::FireEnd> { static const uint16_t value = 42; };
-	template<> struct TypeId<PKG::CatchFish::Events::BulletHit> { static const uint16_t value = 43; };
-	template<> struct TypeId<PKG::CatchFish::Events::FishDead> { static const uint16_t value = 44; };
+	template<> struct TypeId<xx::List<PKG::CatchFish::Bullet_p>> { static const uint16_t value = 31; };
+	template<> struct TypeId<PKG::CatchFish::MoveObject> { static const uint16_t value = 33; };
+	template<> struct TypeId<PKG::CatchFish::Bullet> { static const uint16_t value = 34; };
+	template<> struct TypeId<PKG::CatchFish::Fish> { static const uint16_t value = 35; };
+	template<> struct TypeId<::xx::Random> { static const uint16_t value = 36; };
+	template<> struct TypeId<xx::List<PKG::CatchFish::Player_p>> { static const uint16_t value = 37; };
+	template<> struct TypeId<xx::List<PKG::CatchFish::Fish_p>> { static const uint16_t value = 38; };
+	template<> struct TypeId<PKG::CatchFish::Events::LeavePlayer> { static const uint16_t value = 39; };
+	template<> struct TypeId<PKG::CatchFish::Events::JoinPlayer> { static const uint16_t value = 40; };
+	template<> struct TypeId<PKG::CatchFish::Events::Fire> { static const uint16_t value = 41; };
+	template<> struct TypeId<PKG::CatchFish::Events::FireBegin> { static const uint16_t value = 42; };
+	template<> struct TypeId<PKG::CatchFish::Events::FireChangeAngle> { static const uint16_t value = 43; };
+	template<> struct TypeId<PKG::CatchFish::Events::FireEnd> { static const uint16_t value = 44; };
+	template<> struct TypeId<PKG::CatchFish::Events::BulletHit> { static const uint16_t value = 45; };
+	template<> struct TypeId<PKG::CatchFish::Events::FishDead> { static const uint16_t value = 46; };
 }
 namespace PKG
 {
@@ -2218,13 +2289,13 @@ namespace PKG
 	    xx::MemPool::Register<PKG::CatchFish::Config, xx::Object>();
 	    xx::MemPool::Register<xx::List<PKG::CatchFish::FishConfig_p>, xx::Object>();
 	    xx::MemPool::Register<PKG::CatchFish::Player, xx::Object>();
+	    xx::MemPool::Register<xx::List<PKG::CatchFish::Bullet_p>, xx::Object>();
 	    xx::MemPool::Register<PKG::CatchFish::MoveObject, xx::Object>();
 	    xx::MemPool::Register<PKG::CatchFish::Bullet, PKG::CatchFish::MoveObject>();
 	    xx::MemPool::Register<PKG::CatchFish::Fish, PKG::CatchFish::MoveObject>();
 	    xx::MemPool::Register<::xx::Random, xx::Object>();
 	    xx::MemPool::Register<xx::List<PKG::CatchFish::Player_p>, xx::Object>();
 	    xx::MemPool::Register<xx::List<PKG::CatchFish::Fish_p>, xx::Object>();
-	    xx::MemPool::Register<xx::List<PKG::CatchFish::Bullet_p>, xx::Object>();
 	    xx::MemPool::Register<PKG::CatchFish::Events::LeavePlayer, xx::Object>();
 	    xx::MemPool::Register<PKG::CatchFish::Events::JoinPlayer, xx::Object>();
 	    xx::MemPool::Register<PKG::CatchFish::Events::Fire, xx::Object>();

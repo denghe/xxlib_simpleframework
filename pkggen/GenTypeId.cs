@@ -21,7 +21,9 @@ interface ITypeIdMappings
 {");
         foreach (var kv in typeIds.types)
         {
-            if (kv.Key == typeof(string) || kv.Key == typeof(TemplateLibrary.BBuffer)) continue;
+            if (kv.Key == typeof(string) 
+                || kv.Key == typeof(TemplateLibrary.BBuffer)
+                ) continue;
             var typeId = (ushort)kv.Value;
             var c = kv.Key;
             var cn = c._GetTypeDecl_Csharp();

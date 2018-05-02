@@ -34,6 +34,9 @@ namespace CatchFish
         [Desc("鱼类编号")]
         int typeId;
 
+        [Desc("鱼名")]
+        string name;
+
         [Desc("打死鱼的金币所得基数( 也可理解成倍率 )")]
         long coin;
 
@@ -49,17 +52,17 @@ namespace CatchFish
     {
         [Desc("所有鱼的配置信息")]
         List<FishConfig> fishCfgs;
+
+        [Desc("子弹配置( 当前就一种子弹，先这样放置 )")]
+        int bulletRadius;
     }
 
 
     [Desc("玩家")]
     class Player
     {
-        [Desc("所在场景")]
-        Scene scene;
-
-        [Desc("位于 Scene.players 中的下标, 会因为交换删除而变化")]
-        int indexAtScenePlayers;
+        [Desc("位于容器时的下标")]
+        int indexAtContainer;
 
         [Desc("玩家名字")]
         string name;
@@ -69,13 +72,19 @@ namespace CatchFish
 
         [Desc("当前金币数")]
         long coin;
+
+        [Desc("所有子弹")]
+        List<Bullet> bullets;
+
+        [Desc("玩家网络上下文, 不参与网络传输")]
+        PlayerContext ctx;
     }
 
     [Desc("鱼和子弹的基类")]
     class MoveObject
     {
-        [Desc("所在场景")]
-        Scene scene;
+        [Desc("位于容器时的下标")]
+        int indexAtContainer;
 
         [Desc("序列号( 当发生碰撞时用于标识 )")]
         int serial;
@@ -105,6 +114,9 @@ namespace CatchFish
 
         [Desc("金币价值( 也可理解为倍率 )")]
         long coin;
+
+        [Desc("一次性计算出来的每帧的坐标增量( 以稳定 60 fps为大前提 )")]
+        xx.Pos posFrameInc;
     }
 
 
@@ -120,6 +132,24 @@ namespace CatchFish
         [Desc("鱼的配置信息( 不参与网络传输, 需要根据 typeId 去 cfgs 定位手工还原 )")]
         [NotSerialize]
         FishConfig cfg;
+
+        [Desc("当前坐标( 这个每帧都通过 += posFrameInc 的方式改变 )")]
+        xx.Pos pos;
+
+        [Desc("出生点配置")]
+        xx.Pos posFrom;
+
+        [Desc("消失点配置")]
+        xx.Pos posTo;
+
+        [Desc("一次性计算出来的每帧的坐标增量( 以稳定 60 fps 为大前提 )")]
+        xx.Pos posFrameInc;
+
+        [Desc("当前移动步数( 步数一到就认为鱼已移至目的地可以清掉了 )")]
+        int moveStep = 0;
+
+        [Desc("总移动步数")]
+        int moveStepCount = 0;
     }
 
     [Desc("场景")]
@@ -128,12 +158,24 @@ namespace CatchFish
         [Desc("帧编号, 每帧 + 1")]
         int frameNumber;
 
-        [Desc("全场景公用随机数发生器")]
+        [Desc("公用随机数发生器")]
         xx.Random rnd;
 
+        [Desc("公用配置信息")]
+        Config cfg;
+
+        [Desc("所有玩家( 子弹在玩家下面 )")]
         List<Player> players;
+
+        [Desc("所有鱼")]
         List<Fish> fishs;
-        List<Bullet> bullets;
+
+        //[Desc("所有子弹")]
+        //List<Bullet> bullets;
+
+        [Desc("当前帧所有事件的合并包容器, 服务器专用, 不参与网络传输")]
+        [NotSerialize]
+        CatchFish_Client.FrameEvents frameEvents;
     }
 
 

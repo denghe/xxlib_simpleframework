@@ -14,3 +14,6 @@ namespace xx
     class Random { }
 
 }
+
+[External(false)]
+class PlayerContext { }

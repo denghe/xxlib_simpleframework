@@ -60,34 +60,36 @@ interface ITypeIdMappings
 
     CatchFish.Player _30 { get; }
 
-    CatchFish.MoveObject _31 { get; }
+    List<CatchFish.Bullet> _31 { get; }
 
-    CatchFish.Bullet _32 { get; }
+    PlayerContext _47 { get; }
 
-    CatchFish.Fish _33 { get; }
+    CatchFish.MoveObject _33 { get; }
 
-    xx.Random _45 { get; }
+    CatchFish.Bullet _34 { get; }
 
-    List<CatchFish.Player> _34 { get; }
+    CatchFish.Fish _35 { get; }
 
-    List<CatchFish.Fish> _35 { get; }
+    xx.Random _36 { get; }
 
-    List<CatchFish.Bullet> _36 { get; }
+    List<CatchFish.Player> _37 { get; }
 
-    CatchFish.Events.LeavePlayer _37 { get; }
+    List<CatchFish.Fish> _38 { get; }
 
-    CatchFish.Events.JoinPlayer _38 { get; }
+    CatchFish.Events.LeavePlayer _39 { get; }
 
-    CatchFish.Events.Fire _39 { get; }
+    CatchFish.Events.JoinPlayer _40 { get; }
 
-    CatchFish.Events.FireBegin _40 { get; }
+    CatchFish.Events.Fire _41 { get; }
 
-    CatchFish.Events.FireChangeAngle _41 { get; }
+    CatchFish.Events.FireBegin _42 { get; }
 
-    CatchFish.Events.FireEnd _42 { get; }
+    CatchFish.Events.FireChangeAngle _43 { get; }
 
-    CatchFish.Events.BulletHit _43 { get; }
+    CatchFish.Events.FireEnd _44 { get; }
 
-    CatchFish.Events.FishDead _44 { get; }
+    CatchFish.Events.BulletHit _45 { get; }
+
+    CatchFish.Events.FishDead _46 { get; }
 
 }

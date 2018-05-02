@@ -12,6 +12,7 @@
   <ItemGroup>
     <None Include="main.bak" />
     <None Include="main.bak2" />
+    <None Include="main.bak3" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="xxlib">
@@ -94,5 +95,6 @@
     <ClInclude Include="..\xxlib\xx_random.hpp">
       <Filter>xxlib</Filter>
     </ClInclude>
+    <ClInclude Include="xx_pos.h" />
   </ItemGroup>
 </Project>

@@ -900,7 +900,7 @@ void xx::UvTimeouter::Process()
 
 void xx::UvTimeouter::Clear()
 {
-	for (int i = 0; i < timerss.dataLen; ++i)
+	for (size_t i = 0; i < timerss.dataLen; ++i)
 	{
 		auto t = timerss[i];
 		while (t)

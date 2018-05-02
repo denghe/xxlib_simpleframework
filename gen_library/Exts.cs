@@ -280,7 +280,16 @@ public static class GenExtensions
     /// </summary>
     public static bool _IsExternal(this Type t)
     {
-        return t._Has<TemplateLibrary.External>();
+        return _Has<TemplateLibrary.External>(t);
+    }
+    public static bool _GetExternalSerializable(this Type t)
+    {
+        foreach (var a in t.GetCustomAttributes(false))
+        {
+            if (a is TemplateLibrary.External)
+                return ((TemplateLibrary.External)a).serializable;
+        }
+        return false;
     }
 
     /// <summary>

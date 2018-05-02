@@ -4,7 +4,7 @@ namespace PKG
 {
     public static class PkgGenMd5
     {
-        public const string value = "4f3f7104775a2e0eaf3e0f1dc81df631"; 
+        public const string value = "573f3204de5ce9a0f9f76111d81176c6"; 
     }
 
 namespace CatchFish_Client
@@ -419,6 +419,10 @@ namespace CatchFish
         /// </summary>
         public int typeId;
         /// <summary>
+        /// 鱼名
+        /// </summary>
+        public string name;
+        /// <summary>
         /// 打死鱼的金币所得基数( 也可理解成倍率 )
         /// </summary>
         public long coin;
@@ -439,6 +443,7 @@ namespace CatchFish
         public virtual void ToBBuffer(BBuffer bb)
         {
             bb.Write(this.typeId);
+            bb.Write(this.name);
             bb.Write(this.coin);
             bb.Write(this.collisionArea);
             bb.Write(this.frames);
@@ -447,6 +452,8 @@ namespace CatchFish
         public virtual void FromBBuffer(BBuffer bb)
         {
             bb.Read(ref this.typeId);
+            bb.readLengthLimit = 0;
+            bb.Read(ref this.name);
             bb.Read(ref this.coin);
             bb.Read(ref this.collisionArea);
             bb.readLengthLimit = 0;
@@ -463,6 +470,10 @@ namespace CatchFish
         /// 所有鱼的配置信息
         /// </summary>
         public List<CatchFish.FishConfig> fishCfgs;
+        /// <summary>
+        /// 子弹配置( 当前就一种子弹，先这样放置 )
+        /// </summary>
+        public int bulletRadius;
 
         public virtual ushort GetPackageId()
         {
@@ -472,12 +483,14 @@ namespace CatchFish
         public virtual void ToBBuffer(BBuffer bb)
         {
             bb.Write(this.fishCfgs);
+            bb.Write(this.bulletRadius);
         }
 
         public virtual void FromBBuffer(BBuffer bb)
         {
             bb.readLengthLimit = 0;
             bb.Read(ref this.fishCfgs);
+            bb.Read(ref this.bulletRadius);
         }
 
     }
@@ -487,13 +500,9 @@ namespace CatchFish
     public partial class Player : IBBuffer
     {
         /// <summary>
-        /// 所在场景
+        /// 位于容器时的下标
         /// </summary>
-        public CatchFish.Scene scene;
-        /// <summary>
-        /// 位于 Scene.players 中的下标, 会因为交换删除而变化
-        /// </summary>
-        public int indexAtScenePlayers;
+        public int indexAtContainer;
         /// <summary>
         /// 玩家名字
         /// </summary>
@@ -506,6 +515,14 @@ namespace CatchFish
         /// 当前金币数
         /// </summary>
         public long coin;
+        /// <summary>
+        /// 所有子弹
+        /// </summary>
+        public List<CatchFish.Bullet> bullets;
+        /// <summary>
+        /// 玩家网络上下文, 不参与网络传输
+        /// </summary>
+        public PlayerContext ctx;
 
         public virtual ushort GetPackageId()
         {
@@ -514,21 +531,24 @@ namespace CatchFish
 
         public virtual void ToBBuffer(BBuffer bb)
         {
-            bb.Write(this.scene);
-            bb.Write(this.indexAtScenePlayers);
+            bb.Write(this.indexAtContainer);
             bb.Write(this.name);
             bb.Write(this.sitIndex);
             bb.Write(this.coin);
+            bb.Write(this.bullets);
+            bb.Write(this.ctx);
         }
 
         public virtual void FromBBuffer(BBuffer bb)
         {
-            bb.Read(ref this.scene);
-            bb.Read(ref this.indexAtScenePlayers);
+            bb.Read(ref this.indexAtContainer);
             bb.readLengthLimit = 0;
             bb.Read(ref this.name);
             bb.Read(ref this.sitIndex);
             bb.Read(ref this.coin);
+            bb.readLengthLimit = 0;
+            bb.Read(ref this.bullets);
+            bb.Read(ref this.ctx);
         }
 
     }
@@ -538,9 +558,9 @@ namespace CatchFish
     public partial class MoveObject : IBBuffer
     {
         /// <summary>
-        /// 所在场景
+        /// 位于容器时的下标
         /// </summary>
-        public CatchFish.Scene scene;
+        public int indexAtContainer;
         /// <summary>
         /// 序列号( 当发生碰撞时用于标识 )
         /// </summary>
@@ -573,7 +593,7 @@ namespace CatchFish
 
         public virtual void ToBBuffer(BBuffer bb)
         {
-            bb.Write(this.scene);
+            bb.Write(this.indexAtContainer);
             bb.Write(this.serial);
             bb.Write(this.bornFrameNumber);
             ((IBBuffer)this.bornPos).ToBBuffer(bb);
@@ -584,7 +604,7 @@ namespace CatchFish
 
         public virtual void FromBBuffer(BBuffer bb)
         {
-            bb.Read(ref this.scene);
+            bb.Read(ref this.indexAtContainer);
             bb.Read(ref this.serial);
             bb.Read(ref this.bornFrameNumber);
             ((IBBuffer)this.bornPos).FromBBuffer(bb);
@@ -607,6 +627,10 @@ namespace CatchFish
         /// 金币价值( 也可理解为倍率 )
         /// </summary>
         public long coin;
+        /// <summary>
+        /// 一次性计算出来的每帧的坐标增量( 以稳定 60 fps为大前提 )
+        /// </summary>
+        public xx.Pos posFrameInc;
 
         public override ushort GetPackageId()
         {
@@ -618,6 +642,7 @@ namespace CatchFish
             base.ToBBuffer(bb);
             bb.Write(this.shooter);
             bb.Write(this.coin);
+            ((IBBuffer)this.posFrameInc).ToBBuffer(bb);
         }
 
         public override void FromBBuffer(BBuffer bb)
@@ -625,6 +650,7 @@ namespace CatchFish
             base.FromBBuffer(bb);
             bb.Read(ref this.shooter);
             bb.Read(ref this.coin);
+            ((IBBuffer)this.posFrameInc).FromBBuffer(bb);
         }
 
     }
@@ -645,6 +671,30 @@ namespace CatchFish
         /// 鱼的配置信息( 不参与网络传输, 需要根据 typeId 去 cfgs 定位手工还原 )
         /// </summary>
         public CatchFish.FishConfig cfg;
+        /// <summary>
+        /// 当前坐标( 这个每帧都通过 += posFrameInc 的方式改变 )
+        /// </summary>
+        public xx.Pos pos;
+        /// <summary>
+        /// 出生点配置
+        /// </summary>
+        public xx.Pos posFrom;
+        /// <summary>
+        /// 消失点配置
+        /// </summary>
+        public xx.Pos posTo;
+        /// <summary>
+        /// 一次性计算出来的每帧的坐标增量( 以稳定 60 fps 为大前提 )
+        /// </summary>
+        public xx.Pos posFrameInc;
+        /// <summary>
+        /// 当前移动步数( 步数一到就认为鱼已移至目的地可以清掉了 )
+        /// </summary>
+        public int moveStep;
+        /// <summary>
+        /// 总移动步数
+        /// </summary>
+        public int moveStepCount;
 
         public override ushort GetPackageId()
         {
@@ -657,6 +707,12 @@ namespace CatchFish
             bb.Write(this.typeId);
             bb.Write(this.intAngle);
             bb.Write(default(CatchFish.FishConfig));
+            ((IBBuffer)this.pos).ToBBuffer(bb);
+            ((IBBuffer)this.posFrom).ToBBuffer(bb);
+            ((IBBuffer)this.posTo).ToBBuffer(bb);
+            ((IBBuffer)this.posFrameInc).ToBBuffer(bb);
+            bb.Write(this.moveStep);
+            bb.Write(this.moveStepCount);
         }
 
         public override void FromBBuffer(BBuffer bb)
@@ -665,6 +721,12 @@ namespace CatchFish
             bb.Read(ref this.typeId);
             bb.Read(ref this.intAngle);
             bb.Read(ref this.cfg);
+            ((IBBuffer)this.pos).FromBBuffer(bb);
+            ((IBBuffer)this.posFrom).FromBBuffer(bb);
+            ((IBBuffer)this.posTo).FromBBuffer(bb);
+            ((IBBuffer)this.posFrameInc).FromBBuffer(bb);
+            bb.Read(ref this.moveStep);
+            bb.Read(ref this.moveStepCount);
         }
 
     }
@@ -678,12 +740,25 @@ namespace CatchFish
         /// </summary>
         public int frameNumber;
         /// <summary>
-        /// 全场景公用随机数发生器
+        /// 公用随机数发生器
         /// </summary>
         public xx.Random rnd;
+        /// <summary>
+        /// 公用配置信息
+        /// </summary>
+        public CatchFish.Config cfg;
+        /// <summary>
+        /// 所有玩家( 子弹在玩家下面 )
+        /// </summary>
         public List<CatchFish.Player> players;
+        /// <summary>
+        /// 所有鱼
+        /// </summary>
         public List<CatchFish.Fish> fishs;
-        public List<CatchFish.Bullet> bullets;
+        /// <summary>
+        /// 当前帧所有事件的合并包容器, 服务器专用, 不参与网络传输
+        /// </summary>
+        public CatchFish_Client.FrameEvents frameEvents;
 
         public virtual ushort GetPackageId()
         {
@@ -694,21 +769,22 @@ namespace CatchFish
         {
             bb.Write(this.frameNumber);
             bb.Write(this.rnd);
+            bb.Write(this.cfg);
             bb.Write(this.players);
             bb.Write(this.fishs);
-            bb.Write(this.bullets);
+            bb.Write(default(CatchFish_Client.FrameEvents));
         }
 
         public virtual void FromBBuffer(BBuffer bb)
         {
             bb.Read(ref this.frameNumber);
             bb.Read(ref this.rnd);
+            bb.Read(ref this.cfg);
             bb.readLengthLimit = 0;
             bb.Read(ref this.players);
             bb.readLengthLimit = 0;
             bb.Read(ref this.fishs);
-            bb.readLengthLimit = 0;
-            bb.Read(ref this.bullets);
+            bb.Read(ref this.frameEvents);
         }
 
     }
@@ -1019,21 +1095,22 @@ namespace CatchFish.Events
             BBuffer.Register<CatchFish.Config>(28);
             BBuffer.Register<List<CatchFish.FishConfig>>(29);
             BBuffer.Register<CatchFish.Player>(30);
-            BBuffer.Register<CatchFish.MoveObject>(31);
-            BBuffer.Register<CatchFish.Bullet>(32);
-            BBuffer.Register<CatchFish.Fish>(33);
-            BBuffer.Register<xx.Random>(45);
-            BBuffer.Register<List<CatchFish.Player>>(34);
-            BBuffer.Register<List<CatchFish.Fish>>(35);
-            BBuffer.Register<List<CatchFish.Bullet>>(36);
-            BBuffer.Register<CatchFish.Events.LeavePlayer>(37);
-            BBuffer.Register<CatchFish.Events.JoinPlayer>(38);
-            BBuffer.Register<CatchFish.Events.Fire>(39);
-            BBuffer.Register<CatchFish.Events.FireBegin>(40);
-            BBuffer.Register<CatchFish.Events.FireChangeAngle>(41);
-            BBuffer.Register<CatchFish.Events.FireEnd>(42);
-            BBuffer.Register<CatchFish.Events.BulletHit>(43);
-            BBuffer.Register<CatchFish.Events.FishDead>(44);
+            BBuffer.Register<List<CatchFish.Bullet>>(31);
+            BBuffer.Register<PlayerContext>(47);
+            BBuffer.Register<CatchFish.MoveObject>(33);
+            BBuffer.Register<CatchFish.Bullet>(34);
+            BBuffer.Register<CatchFish.Fish>(35);
+            BBuffer.Register<xx.Random>(36);
+            BBuffer.Register<List<CatchFish.Player>>(37);
+            BBuffer.Register<List<CatchFish.Fish>>(38);
+            BBuffer.Register<CatchFish.Events.LeavePlayer>(39);
+            BBuffer.Register<CatchFish.Events.JoinPlayer>(40);
+            BBuffer.Register<CatchFish.Events.Fire>(41);
+            BBuffer.Register<CatchFish.Events.FireBegin>(42);
+            BBuffer.Register<CatchFish.Events.FireChangeAngle>(43);
+            BBuffer.Register<CatchFish.Events.FireEnd>(44);
+            BBuffer.Register<CatchFish.Events.BulletHit>(45);
+            BBuffer.Register<CatchFish.Events.FishDead>(46);
         }
     }
 }

@@ -1,5 +1,5 @@
 ﻿
-PKG_PkgGenMd5_Value = '4f3f7104775a2e0eaf3e0f1dc81df631'
+PKG_PkgGenMd5_Value = '573f3204de5ce9a0f9f76111d81176c6'
 
 --[[
 进入游戏成功
@@ -93,29 +93,44 @@ PKG_CatchFish_Scene = {
         ]]
         o.frameNumber = 0 -- Int32
         --[[
-        全场景公用随机数发生器
+        公用随机数发生器
         ]]
         o.rnd = null -- _xx_Random
+        --[[
+        公用配置信息
+        ]]
+        o.cfg = null -- PKG_CatchFish_Config
+        --[[
+        所有玩家( 子弹在玩家下面 )
+        ]]
         o.players = null -- List_PKG_CatchFish_Player_
+        --[[
+        所有鱼
+        ]]
         o.fishs = null -- List_PKG_CatchFish_Fish_
-        o.bullets = null -- List_PKG_CatchFish_Bullet_
+        --[[
+        当前帧所有事件的合并包容器, 服务器专用, 不参与网络传输
+        ]]
+        o.frameEvents = null -- PKG_CatchFish_Client_FrameEvents
         return o
     end,
     FromBBuffer = function( bb, o )
         local ReadObject = bb.ReadObject
         o.frameNumber = bb:ReadInt32()
         o.rnd = ReadObject( bb )
+        o.cfg = ReadObject( bb )
         o.players = ReadObject( bb )
         o.fishs = ReadObject( bb )
-        o.bullets = ReadObject( bb )
+        o.frameEvents = ReadObject( bb )
     end,
     ToBBuffer = function( bb, o )
         local WriteObject = bb.WriteObject
         bb:WriteInt32( o.frameNumber )
         WriteObject( bb, o.rnd )
+        WriteObject( bb, o.cfg )
         WriteObject( bb, o.players )
         WriteObject( bb, o.fishs )
-        WriteObject( bb, o.bullets )
+        WriteObject( bb, o.frameEvents )
     end
 }
 BBuffer.Register( PKG_CatchFish_Scene )
@@ -720,6 +735,10 @@ PKG_CatchFish_FishConfig = {
         ]]
         o.typeId = 0 -- Int32
         --[[
+        鱼名
+        ]]
+        o.name = null -- String
+        --[[
         打死鱼的金币所得基数( 也可理解成倍率 )
         ]]
         o.coin = 0 -- Int64
@@ -736,6 +755,7 @@ PKG_CatchFish_FishConfig = {
     FromBBuffer = function( bb, o )
         local ReadObject = bb.ReadObject
         o.typeId = bb:ReadInt32()
+        o.name = ReadObject( bb )
         o.coin = bb:ReadInt64()
         o.collisionArea = ReadObject( bb )
         o.frames = ReadObject( bb )
@@ -743,6 +763,7 @@ PKG_CatchFish_FishConfig = {
     ToBBuffer = function( bb, o )
         local WriteObject = bb.WriteObject
         bb:WriteInt32( o.typeId )
+        WriteObject( bb, o.name )
         bb:WriteInt64( o.coin )
         WriteObject( bb, o.collisionArea )
         WriteObject( bb, o.frames )
@@ -792,13 +813,19 @@ PKG_CatchFish_Config = {
         所有鱼的配置信息
         ]]
         o.fishCfgs = null -- List_PKG_CatchFish_FishConfig_
+        --[[
+        子弹配置( 当前就一种子弹，先这样放置 )
+        ]]
+        o.bulletRadius = 0 -- Int32
         return o
     end,
     FromBBuffer = function( bb, o )
         o.fishCfgs = bb:ReadObject()
+        o.bulletRadius = bb:ReadInt32()
     end,
     ToBBuffer = function( bb, o )
         bb:WriteObject( o.fishCfgs )
+        bb:WriteInt32( o.bulletRadius )
     end
 }
 BBuffer.Register( PKG_CatchFish_Config )
@@ -842,13 +869,9 @@ PKG_CatchFish_Player = {
         o.__newindex = o
 
         --[[
-        所在场景
+        位于容器时的下标
         ]]
-        o.scene = null -- PKG_CatchFish_Scene
-        --[[
-        位于 Scene.players 中的下标, 会因为交换删除而变化
-        ]]
-        o.indexAtScenePlayers = 0 -- Int32
+        o.indexAtContainer = 0 -- Int32
         --[[
         玩家名字
         ]]
@@ -861,34 +884,88 @@ PKG_CatchFish_Player = {
         当前金币数
         ]]
         o.coin = 0 -- Int64
+        --[[
+        所有子弹
+        ]]
+        o.bullets = null -- List_PKG_CatchFish_Bullet_
+        --[[
+        玩家网络上下文, 不参与网络传输
+        ]]
+        o.ctx = null -- _PlayerContext
         return o
     end,
     FromBBuffer = function( bb, o )
-        local ReadObject = bb.ReadObject
         local ReadInt32 = bb.ReadInt32
-        o.scene = ReadObject( bb )
-        o.indexAtScenePlayers = ReadInt32( bb )
+        local ReadObject = bb.ReadObject
+        o.indexAtContainer = ReadInt32( bb )
         o.name = ReadObject( bb )
         o.sitIndex = ReadInt32( bb )
         o.coin = bb:ReadInt64()
+        o.bullets = ReadObject( bb )
+        o.ctx = ReadObject( bb )
     end,
     ToBBuffer = function( bb, o )
-        local WriteObject = bb.WriteObject
         local WriteInt32 = bb.WriteInt32
-        WriteObject( bb, o.scene )
-        WriteInt32( bb, o.indexAtScenePlayers )
+        local WriteObject = bb.WriteObject
+        WriteInt32( bb, o.indexAtContainer )
         WriteObject( bb, o.name )
         WriteInt32( bb, o.sitIndex )
         bb:WriteInt64( o.coin )
+        WriteObject( bb, o.bullets )
+        WriteObject( bb, o.ctx )
     end
 }
 BBuffer.Register( PKG_CatchFish_Player )
+List_PKG_CatchFish_Bullet_ = {
+    typeName = "List_PKG_CatchFish_Bullet_",
+    typeId = 31,
+    Create = function()
+        local o = {}
+        o.__proto = List_PKG_CatchFish_Bullet_
+        o.__index = o
+        o.__newindex = o
+        return o
+    end,
+    FromBBuffer = function( bb, o )
+		local len = bb:ReadUInt32()
+        local f = BBuffer.ReadObject
+		for i = 1, len do
+			o[ i ] = f( bb )
+		end
+    end,
+    ToBBuffer = function( bb, o )
+        local len = #o
+		bb:WriteUInt32( len )
+        local f = BBuffer.WriteObject
+        for i = 1, len do
+			f( bb, o[ i ] )
+		end
+    end
+}
+BBuffer.Register( List_PKG_CatchFish_Bullet_ )
+_PlayerContext = {
+    typeName = "_PlayerContext",
+    typeId = 47,
+    Create = function()
+        local o = {}
+        o.__proto = _PlayerContext
+        o.__index = o
+        o.__newindex = o
+
+        return o
+    end,
+    FromBBuffer = function( bb, o )
+    end,
+    ToBBuffer = function( bb, o )
+    end
+}
+BBuffer.Register( _PlayerContext )
 --[[
 鱼和子弹的基类
 ]]
 PKG_CatchFish_MoveObject = {
     typeName = "PKG_CatchFish_MoveObject",
-    typeId = 31,
+    typeId = 33,
     Create = function()
         local o = {}
         o.__proto = PKG_CatchFish_MoveObject
@@ -896,9 +973,9 @@ PKG_CatchFish_MoveObject = {
         o.__newindex = o
 
         --[[
-        所在场景
+        位于容器时的下标
         ]]
-        o.scene = null -- PKG_CatchFish_Scene
+        o.indexAtContainer = 0 -- Int32
         --[[
         序列号( 当发生碰撞时用于标识 )
         ]]
@@ -926,9 +1003,9 @@ PKG_CatchFish_MoveObject = {
         return o
     end,
     FromBBuffer = function( bb, o )
-        local ReadObject = bb.ReadObject
         local ReadInt32 = bb.ReadInt32
-        o.scene = ReadObject( bb )
+        local ReadObject = bb.ReadObject
+        o.indexAtContainer = ReadInt32( bb )
         o.serial = ReadInt32( bb )
         o.bornFrameNumber = ReadInt32( bb )
         o.bornPos = ReadObject( bb )
@@ -937,9 +1014,9 @@ PKG_CatchFish_MoveObject = {
         o.angle = bb:ReadSingle()
     end,
     ToBBuffer = function( bb, o )
-        local WriteObject = bb.WriteObject
         local WriteInt32 = bb.WriteInt32
-        WriteObject( bb, o.scene )
+        local WriteObject = bb.WriteObject
+        WriteInt32( bb, o.indexAtContainer )
         WriteInt32( bb, o.serial )
         WriteInt32( bb, o.bornFrameNumber )
         WriteObject( bb, o.bornPos )
@@ -954,7 +1031,7 @@ BBuffer.Register( PKG_CatchFish_MoveObject )
 ]]
 PKG_CatchFish_Bullet = {
     typeName = "PKG_CatchFish_Bullet",
-    typeId = 32,
+    typeId = 34,
     Create = function()
         local o = {}
         o.__proto = PKG_CatchFish_Bullet
@@ -969,20 +1046,28 @@ PKG_CatchFish_Bullet = {
         金币价值( 也可理解为倍率 )
         ]]
         o.coin = 0 -- Int64
+        --[[
+        一次性计算出来的每帧的坐标增量( 以稳定 60 fps为大前提 )
+        ]]
+        o.posFrameInc = null -- _xx_Pos
         setmetatable( o, PKG_CatchFish_MoveObject.Create() )
         return o
     end,
     FromBBuffer = function( bb, o )
         local p = getmetatable( o )
         p.__proto.FromBBuffer( bb, p )
-        o.shooter = bb:ReadObject()
+        local ReadObject = bb.ReadObject
+        o.shooter = ReadObject( bb )
         o.coin = bb:ReadInt64()
+        o.posFrameInc = ReadObject( bb )
     end,
     ToBBuffer = function( bb, o )
         local p = getmetatable( o )
         p.__proto.ToBBuffer( bb, p )
-        bb:WriteObject( o.shooter )
+        local WriteObject = bb.WriteObject
+        WriteObject( bb, o.shooter )
         bb:WriteInt64( o.coin )
+        WriteObject( bb, o.posFrameInc )
     end
 }
 BBuffer.Register( PKG_CatchFish_Bullet )
@@ -991,7 +1076,7 @@ BBuffer.Register( PKG_CatchFish_Bullet )
 ]]
 PKG_CatchFish_Fish = {
     typeName = "PKG_CatchFish_Fish",
-    typeId = 33,
+    typeId = 35,
     Create = function()
         local o = {}
         o.__proto = PKG_CatchFish_Fish
@@ -1010,6 +1095,30 @@ PKG_CatchFish_Fish = {
         鱼的配置信息( 不参与网络传输, 需要根据 typeId 去 cfgs 定位手工还原 )
         ]]
         o.cfg = null -- PKG_CatchFish_FishConfig
+        --[[
+        当前坐标( 这个每帧都通过 += posFrameInc 的方式改变 )
+        ]]
+        o.pos = null -- _xx_Pos
+        --[[
+        出生点配置
+        ]]
+        o.posFrom = null -- _xx_Pos
+        --[[
+        消失点配置
+        ]]
+        o.posTo = null -- _xx_Pos
+        --[[
+        一次性计算出来的每帧的坐标增量( 以稳定 60 fps 为大前提 )
+        ]]
+        o.posFrameInc = null -- _xx_Pos
+        --[[
+        当前移动步数( 步数一到就认为鱼已移至目的地可以清掉了 )
+        ]]
+        o.moveStep = 0 -- Int32
+        --[[
+        总移动步数
+        ]]
+        o.moveStepCount = 0 -- Int32
         setmetatable( o, PKG_CatchFish_MoveObject.Create() )
         return o
     end,
@@ -1017,23 +1126,37 @@ PKG_CatchFish_Fish = {
         local p = getmetatable( o )
         p.__proto.FromBBuffer( bb, p )
         local ReadInt32 = bb.ReadInt32
+        local ReadObject = bb.ReadObject
         o.typeId = ReadInt32( bb )
         o.intAngle = ReadInt32( bb )
-        o.cfg = bb:ReadObject()
+        o.cfg = ReadObject( bb )
+        o.pos = ReadObject( bb )
+        o.posFrom = ReadObject( bb )
+        o.posTo = ReadObject( bb )
+        o.posFrameInc = ReadObject( bb )
+        o.moveStep = ReadInt32( bb )
+        o.moveStepCount = ReadInt32( bb )
     end,
     ToBBuffer = function( bb, o )
         local p = getmetatable( o )
         p.__proto.ToBBuffer( bb, p )
         local WriteInt32 = bb.WriteInt32
+        local WriteObject = bb.WriteObject
         WriteInt32( bb, o.typeId )
         WriteInt32( bb, o.intAngle )
-        bb:WriteObject( o.cfg )
+        WriteObject( bb, o.cfg )
+        WriteObject( bb, o.pos )
+        WriteObject( bb, o.posFrom )
+        WriteObject( bb, o.posTo )
+        WriteObject( bb, o.posFrameInc )
+        WriteInt32( bb, o.moveStep )
+        WriteInt32( bb, o.moveStepCount )
     end
 }
 BBuffer.Register( PKG_CatchFish_Fish )
 _xx_Random = {
     typeName = "_xx_Random",
-    typeId = 45,
+    typeId = 36,
     Create = function()
         local o = {}
         o.__proto = _xx_Random
@@ -1050,7 +1173,7 @@ _xx_Random = {
 BBuffer.Register( _xx_Random )
 List_PKG_CatchFish_Player_ = {
     typeName = "List_PKG_CatchFish_Player_",
-    typeId = 34,
+    typeId = 37,
     Create = function()
         local o = {}
         o.__proto = List_PKG_CatchFish_Player_
@@ -1077,7 +1200,7 @@ List_PKG_CatchFish_Player_ = {
 BBuffer.Register( List_PKG_CatchFish_Player_ )
 List_PKG_CatchFish_Fish_ = {
     typeName = "List_PKG_CatchFish_Fish_",
-    typeId = 35,
+    typeId = 38,
     Create = function()
         local o = {}
         o.__proto = List_PKG_CatchFish_Fish_
@@ -1102,39 +1225,12 @@ List_PKG_CatchFish_Fish_ = {
     end
 }
 BBuffer.Register( List_PKG_CatchFish_Fish_ )
-List_PKG_CatchFish_Bullet_ = {
-    typeName = "List_PKG_CatchFish_Bullet_",
-    typeId = 36,
-    Create = function()
-        local o = {}
-        o.__proto = List_PKG_CatchFish_Bullet_
-        o.__index = o
-        o.__newindex = o
-        return o
-    end,
-    FromBBuffer = function( bb, o )
-		local len = bb:ReadUInt32()
-        local f = BBuffer.ReadObject
-		for i = 1, len do
-			o[ i ] = f( bb )
-		end
-    end,
-    ToBBuffer = function( bb, o )
-        local len = #o
-		bb:WriteUInt32( len )
-        local f = BBuffer.WriteObject
-        for i = 1, len do
-			f( bb, o[ i ] )
-		end
-    end
-}
-BBuffer.Register( List_PKG_CatchFish_Bullet_ )
 --[[
 玩家离开( 比进入的处理优先级高 )
 ]]
 PKG_CatchFish_Events_LeavePlayer = {
     typeName = "PKG_CatchFish_Events_LeavePlayer",
-    typeId = 37,
+    typeId = 39,
     Create = function()
         local o = {}
         o.__proto = PKG_CatchFish_Events_LeavePlayer
@@ -1160,7 +1256,7 @@ BBuffer.Register( PKG_CatchFish_Events_LeavePlayer )
 ]]
 PKG_CatchFish_Events_JoinPlayer = {
     typeName = "PKG_CatchFish_Events_JoinPlayer",
-    typeId = 38,
+    typeId = 40,
     Create = function()
         local o = {}
         o.__proto = PKG_CatchFish_Events_JoinPlayer
@@ -1192,7 +1288,7 @@ BBuffer.Register( PKG_CatchFish_Events_JoinPlayer )
 ]]
 PKG_CatchFish_Events_Fire = {
     typeName = "PKG_CatchFish_Events_Fire",
-    typeId = 39,
+    typeId = 41,
     Create = function()
         local o = {}
         o.__proto = PKG_CatchFish_Events_Fire
@@ -1244,7 +1340,7 @@ BBuffer.Register( PKG_CatchFish_Events_Fire )
 ]]
 PKG_CatchFish_Events_FireBegin = {
     typeName = "PKG_CatchFish_Events_FireBegin",
-    typeId = 40,
+    typeId = 42,
     Create = function()
         local o = {}
         o.__proto = PKG_CatchFish_Events_FireBegin
@@ -1276,7 +1372,7 @@ BBuffer.Register( PKG_CatchFish_Events_FireBegin )
 ]]
 PKG_CatchFish_Events_FireChangeAngle = {
     typeName = "PKG_CatchFish_Events_FireChangeAngle",
-    typeId = 41,
+    typeId = 43,
     Create = function()
         local o = {}
         o.__proto = PKG_CatchFish_Events_FireChangeAngle
@@ -1308,7 +1404,7 @@ BBuffer.Register( PKG_CatchFish_Events_FireChangeAngle )
 ]]
 PKG_CatchFish_Events_FireEnd = {
     typeName = "PKG_CatchFish_Events_FireEnd",
-    typeId = 42,
+    typeId = 44,
     Create = function()
         local o = {}
         o.__proto = PKG_CatchFish_Events_FireEnd
@@ -1334,7 +1430,7 @@ BBuffer.Register( PKG_CatchFish_Events_FireEnd )
 ]]
 PKG_CatchFish_Events_BulletHit = {
     typeName = "PKG_CatchFish_Events_BulletHit",
-    typeId = 43,
+    typeId = 45,
     Create = function()
         local o = {}
         o.__proto = PKG_CatchFish_Events_BulletHit
@@ -1368,7 +1464,7 @@ BBuffer.Register( PKG_CatchFish_Events_BulletHit )
 ]]
 PKG_CatchFish_Events_FishDead = {
     typeName = "PKG_CatchFish_Events_FishDead",
-    typeId = 44,
+    typeId = 46,
     Create = function()
         local o = {}
         o.__proto = PKG_CatchFish_Events_FishDead

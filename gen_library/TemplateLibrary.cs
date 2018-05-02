@@ -119,14 +119,13 @@ namespace TemplateLibrary
     }
 
     /// <summary>
-    /// 外部扩展。内容通常是 namespace。以 . 间隔的。
+    /// 外部扩展。命名空间根据类所在实际命名空间获取，去除根模板名。参数如果传 false 则表示该类不支持序列化，无法用于收发
     /// </summary>
     [System.AttributeUsage(System.AttributeTargets.Enum | System.AttributeTargets.Class | System.AttributeTargets.Struct)]
     public class External : System.Attribute
     {
-        public External() { }
-        public External(string v) { value = v; }
-        public string value;
+        public External(bool serializable = true) { this.serializable = serializable; }
+        public bool serializable;
     }
 
     /// <summary>
