@@ -106,10 +106,10 @@ public:
 				if (o_->memHeader().typeId == xx::TypeId_v<PKG::Client_CatchFish::Join>)
 				{
 					// 硬转还原出真实类型备用
-					auto o = (PKG::Client_CatchFish::Join*)o_.pointer;
+					auto& o = *(PKG::Client_CatchFish::Join_p*)&o_;
 
 					// 如果玩家已在线( name已存在 ), 就禁止登陆，踢掉
-					if (scene->players->Exists([o](PKG::CatchFish::Player_p& plr)
+					if (scene->players->Exists([&o](PKG::CatchFish::Player_p& plr)
 					{
 						return plr->name->Equals(o->username);
 					}))
@@ -148,22 +148,39 @@ public:
 					assert(r);								// 必然成功
 
 					// 向场景每帧包合并变量压入 Join 事件
-
+					PKG::CatchFish::Events::JoinPlayer_p j;
+					j.MPCreate(mempool);
+					j->name = plr->name;
+					j->sitIndex = plr->sitIndex;
+					scene->frameEvents->joins->Add(std::move(j));
 				}
 			};
 		};
 	}
 
+
 	// 场景初始化
 	inline void SceneInit()
 	{
-		// 初始化鱼场景
+		// 初始化鱼场景成员变量( 包括部分子的子成员 )
 		scene.MPCreate(mempool);
+		scene->frameNumber = 0;
 		scene->rnd.MPCreate(mempool, 123);	// 先随便来个 seed
-		scene->players.MPCreate(mempool);
-		scene->fishs.MPCreate(mempool);
 		scene->cfg.MPCreate(mempool);
 		scene->cfg->fishCfgs.MPCreate(mempool);
+		scene->players.MPCreate(mempool);
+		scene->fishs.MPCreate(mempool);
+		scene->frameEvents.MPCreate(mempool);
+		scene->frameEvents->frameNumber = scene->frameNumber;
+		scene->frameEvents->leaves.MPCreate(mempool);
+		scene->frameEvents->joins.MPCreate(mempool);
+		scene->frameEvents->hitss.MPCreate(mempool);
+		scene->frameEvents->fishDeads.MPCreate(mempool);
+		scene->frameEvents->fires.MPCreate(mempool);
+		scene->frameEvents->fireEnds.MPCreate(mempool);
+		scene->frameEvents->fireBegins.MPCreate(mempool);
+		scene->frameEvents->fireChangeAngles.MPCreate(mempool);
+
 
 		// 捏造鱼的配置信息( 当前就不具体到每一帧了，coin 同时拿来当作 判定半径使用， 如果需要的话 )
 		{
@@ -268,6 +285,9 @@ public:
 			auto& rnd = *scene.rnd;
 			auto& fishCfgs = *scene.cfg->fishCfgs;
 
+			//// 如果没有任何玩家在线, 就暂停游戏不更新了
+			//if (!scene.players->dataLen) return;
+
 			// 遍历所有鱼 令其前进( 倒着扫以兼容交换删除 )
 			for (int i = (int)fishs.dataLen - 1; i >= 0; --i)
 			{
@@ -350,7 +370,31 @@ public:
 
 			// 将鱼放入容器
 			fishs.Add(std::move(fish));
+
+
+
+
+			// todo: 广播给本帧进入的玩家 FullSync
+
+			// todo: 广播给所有玩家( 除了本帧进入的 ) frameEvents
+			
+			// 清除帧累积事件
+			ClearFrameEvents();
 		};
+	}
+
+	// 在每帧的结尾处清除累计事件数据
+	inline void ClearFrameEvents()
+	{
+		scene->frameEvents->frameNumber = scene->frameNumber;
+		scene->frameEvents->leaves.MPCreate(mempool);
+		scene->frameEvents->joins.MPCreate(mempool);
+		scene->frameEvents->hitss.MPCreate(mempool);
+		scene->frameEvents->fishDeads.MPCreate(mempool);
+		scene->frameEvents->fires.MPCreate(mempool);
+		scene->frameEvents->fireEnds.MPCreate(mempool);
+		scene->frameEvents->fireBegins.MPCreate(mempool);
+		scene->frameEvents->fireChangeAngles.MPCreate(mempool);
 	}
 
 	~ServiceCatchFish()
@@ -365,13 +409,57 @@ inline PlayerContext::PlayerContext(ServiceCatchFish* service, PKG::CatchFish::P
 {
 }
 
-inline void PlayerContext::HandlePackage(xx::Object_p& o)
+inline void PlayerContext::HandlePackage(xx::Object_p& o_)
 {
+	// 收到非法包, 断线
+	if (!o_)
+	{
+		//p->Release();
+		return;
+	}
 
+	if (o_->memHeader().typeId == xx::TypeId_v<PKG::Client_CatchFish::Fire>)
+	{
+		// 硬转还原出真实类型备用
+		auto& o = *(PKG::Client_CatchFish::Fire_p*)&o_;
+
+		// 先直接压入帧事件集 转发出去, 合法性判断，cd 判断先不加
+		PKG::CatchFish::Events::Fire_p f;
+		f.MPCreate(mempool);
+		f->angle = o->angle;
+		f->bulletSerial = o->bulletSerial;
+		f->coin = o->coin;
+		f->frameNumber = o->frameNumber;
+		f->sitIndex = player->sitIndex;
+
+		service->scene->frameEvents->fires->Add(std::move(f));
+	}
+
+	// todo: Leave 指令处理
 }
 
-inline void PlayerContext::HandleRequest(uint32_t serial, xx::Object_p& o) {	}
-inline void PlayerContext::HandleDisconnect() {	}
+inline void PlayerContext::HandleRequest(uint32_t serial, xx::Object_p& o) {}
+inline void PlayerContext::HandleDisconnect() 
+{
+	// 压 Leave 事件, 清除指定玩家在游戏内的所有数据
+	PKG::CatchFish::Events::LeavePlayer_p lp;
+	lp.MPCreate(mempool);
+	lp->sitIndex = player->sitIndex;
+	service->scene->frameEvents->leaves->Add(std::move(lp));
+
+	auto& players = *service->scene->players;
+
+	// 将数据上下文从容器交换移除
+	auto lastIdx = players.dataLen - 1;
+	if (lastIdx > 0 && player->indexAtContainer != lastIdx)
+	{
+		players[lastIdx]->indexAtContainer = player->indexAtContainer;
+		players[player->indexAtContainer] = std::move(players[lastIdx]);
+	}
+
+	// 从队列清除 player, 随着 player 被 Release, player 中的 ctx( 当前类 ) 也被析构，故下面就不写其他代码了
+	players.Pop();
+}
 
 int main()
 {
