@@ -96,5 +96,6 @@
       <Filter>xxlib</Filter>
     </ClInclude>
     <ClInclude Include="xx_pos.h" />
+    <ClInclude Include="fill_fish_cfg.h" />
   </ItemGroup>
 </Project>

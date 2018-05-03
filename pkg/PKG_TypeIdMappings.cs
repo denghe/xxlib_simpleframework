@@ -54,6 +54,8 @@ interface ITypeIdMappings
 
     List<CatchFish.FishSpriteFrame> _27 { get; }
 
+    Animation _49 { get; }
+
     CatchFish.Config _28 { get; }
 
     List<CatchFish.FishConfig> _29 { get; }
@@ -65,6 +67,8 @@ interface ITypeIdMappings
     PlayerContext _47 { get; }
 
     CatchFish.MoveObject _33 { get; }
+
+    Sprite _48 { get; }
 
     CatchFish.Bullet _34 { get; }
 

@@ -21,7 +21,7 @@ namespace CatchFish
     [Desc("鱼帧动画信息")]
     class FishSpriteFrame
     {
-        [Desc("打包前的散文件名")]
+        [Desc("打包前的散文件名( 帧定位名 )")]
         string fileName;
 
         [Desc("基于当前帧图的圆形碰撞区明细表")]
@@ -40,11 +40,17 @@ namespace CatchFish
         [Desc("打死鱼的金币所得基数( 也可理解成倍率 )")]
         long coin;
 
+        [Desc("帧总数")]
+        int frameCount;
+
         [Desc("基于整个鱼的最大晃动范围的圆形检测区( 粗判 )")]
         CollisionArea collisionArea;
 
         [Desc("鱼帧动画信息集合")]
         List<FishSpriteFrame> frames;
+
+        [Desc("鱼动画( 仅客户端 )")]
+        Animation anim;
     }
 
     [Desc("游戏配置信息( 配置信息并不会随着网络同步而下发, 反序列化后需要手工还原 )")]
@@ -55,6 +61,9 @@ namespace CatchFish
 
         [Desc("子弹配置( 当前就一种子弹，先这样放置 )")]
         int bulletRadius;
+
+        [Desc("玩家初始金币值")]
+        long playerInitCoin;
     }
 
 
@@ -103,6 +112,9 @@ namespace CatchFish
 
         [Desc("逻辑角度")]
         float angle;
+
+        [Desc("显示用主体精灵( 仅客户端 )")]
+        Sprite spriteBody;
     }
 
 
@@ -146,7 +158,8 @@ namespace CatchFish
         [Desc("公用随机数发生器")]
         xx.Random rnd;
 
-        [Desc("公用配置信息")]
+        [Desc("公用配置信息( 不参与网络传输, 需要根据 typeId 去 cfgs 定位手工还原 )")]
+        [NotSerialize]
         Config cfg;
 
         [Desc("所有玩家( 子弹在玩家下面 )")]
@@ -158,7 +171,7 @@ namespace CatchFish
         //[Desc("所有子弹")]
         //List<Bullet> bullets;
 
-        [Desc("当前帧所有事件的合并包容器, 服务器专用, 不参与网络传输")]
+        [Desc("当前帧所有事件的合并包容器, 服务器专用, 独立发送")]
         [NotSerialize]
         CatchFish_Client.FrameEvents frameEvents;
     }

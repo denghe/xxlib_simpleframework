@@ -1116,7 +1116,7 @@ xx::UvContextBase::~UvContextBase()
 
 bool xx::UvContextBase::PeerAlive()
 {
-	return peer && peer->Disconnected();
+	return peer && !peer->Disconnected();
 }
 
 bool xx::UvContextBase::BindPeer(UvTcpUdpBase* p)

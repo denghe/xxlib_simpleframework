@@ -284,11 +284,9 @@ namespace DB_Manage
 	{
 	}
 	inline MsgResult::MsgResult(xx::BBuffer *bb)
-        : xx::Object(bb)
+        : xx::Object(bb->mempool)
 	{
-	    int rtv = 0;
-        bb->readLengthLimit = 0;
-        if (rtv = bb->Read(txt)) throw rtv;
+        if (int rtv = FromBBuffer(*bb)) throw rtv;
 	}
     inline void MsgResult::ToBBuffer(xx::BBuffer &bb) const
     {
@@ -333,11 +331,9 @@ namespace Manage_DB
 	{
 	}
 	inline Msg::Msg(xx::BBuffer *bb)
-        : xx::Object(bb)
+        : xx::Object(bb->mempool)
 	{
-	    int rtv = 0;
-        bb->readLengthLimit = 200;
-        if (rtv = bb->Read(txt)) throw rtv;
+        if (int rtv = FromBBuffer(*bb)) throw rtv;
 	}
     inline void Msg::ToBBuffer(xx::BBuffer &bb) const
     {
@@ -382,10 +378,9 @@ namespace Login_Client
 	{
 	}
 	inline LoginSuccess::LoginSuccess(xx::BBuffer *bb)
-        : xx::Object(bb)
+        : xx::Object(bb->mempool)
 	{
-	    int rtv = 0;
-        if (rtv = bb->Read(id)) throw rtv;
+        if (int rtv = FromBBuffer(*bb)) throw rtv;
 	}
     inline void LoginSuccess::ToBBuffer(xx::BBuffer &bb) const
     {
@@ -428,13 +423,9 @@ namespace Client_Login
 	{
 	}
 	inline Login::Login(xx::BBuffer *bb)
-        : xx::Object(bb)
+        : xx::Object(bb->mempool)
 	{
-	    int rtv = 0;
-        bb->readLengthLimit = 50;
-        if (rtv = bb->Read(username)) throw rtv;
-        bb->readLengthLimit = 50;
-        if (rtv = bb->Read(password)) throw rtv;
+        if (int rtv = FromBBuffer(*bb)) throw rtv;
 	}
     inline void Login::ToBBuffer(xx::BBuffer &bb) const
     {
@@ -484,10 +475,9 @@ namespace DB_Login
 	{
 	}
 	inline AuthSuccess::AuthSuccess(xx::BBuffer *bb)
-        : xx::Object(bb)
+        : xx::Object(bb->mempool)
 	{
-	    int rtv = 0;
-        if (rtv = bb->Read(id)) throw rtv;
+        if (int rtv = FromBBuffer(*bb)) throw rtv;
 	}
     inline void AuthSuccess::ToBBuffer(xx::BBuffer &bb) const
     {
@@ -530,13 +520,9 @@ namespace Login_DB
 	{
 	}
 	inline Auth::Auth(xx::BBuffer *bb)
-        : xx::Object(bb)
+        : xx::Object(bb->mempool)
 	{
-	    int rtv = 0;
-        bb->readLengthLimit = 0;
-        if (rtv = bb->Read(username)) throw rtv;
-        bb->readLengthLimit = 0;
-        if (rtv = bb->Read(password)) throw rtv;
+        if (int rtv = FromBBuffer(*bb)) throw rtv;
 	}
     inline void Auth::ToBBuffer(xx::BBuffer &bb) const
     {
@@ -586,10 +572,9 @@ namespace Generic
 	{
 	}
 	inline ServiceInfo::ServiceInfo(xx::BBuffer *bb)
-        : xx::Object(bb)
+        : xx::Object(bb->mempool)
 	{
-	    int rtv = 0;
-        if (rtv = bb->Read(type)) throw rtv;
+        if (int rtv = FromBBuffer(*bb)) throw rtv;
 	}
     inline void ServiceInfo::ToBBuffer(xx::BBuffer &bb) const
     {
@@ -629,12 +614,9 @@ namespace Generic
 	{
 	}
 	inline Error::Error(xx::BBuffer *bb)
-        : xx::Object(bb)
+        : xx::Object(bb->mempool)
 	{
-	    int rtv = 0;
-        if (rtv = bb->Read(errNo)) throw rtv;
-        bb->readLengthLimit = 0;
-        if (rtv = bb->Read(errMsg)) throw rtv;
+        if (int rtv = FromBBuffer(*bb)) throw rtv;
 	}
     inline void Error::ToBBuffer(xx::BBuffer &bb) const
     {
@@ -679,10 +661,9 @@ namespace Generic
 	{
 	}
 	inline Ping::Ping(xx::BBuffer *bb)
-        : xx::Object(bb)
+        : xx::Object(bb->mempool)
 	{
-	    int rtv = 0;
-        if (rtv = bb->Read(ticks)) throw rtv;
+        if (int rtv = FromBBuffer(*bb)) throw rtv;
 	}
     inline void Ping::ToBBuffer(xx::BBuffer &bb) const
     {
@@ -722,10 +703,9 @@ namespace Generic
 	{
 	}
 	inline Pong::Pong(xx::BBuffer *bb)
-        : xx::Object(bb)
+        : xx::Object(bb->mempool)
 	{
-	    int rtv = 0;
-        if (rtv = bb->Read(ticks)) throw rtv;
+        if (int rtv = FromBBuffer(*bb)) throw rtv;
 	}
     inline void Pong::ToBBuffer(xx::BBuffer &bb) const
     {

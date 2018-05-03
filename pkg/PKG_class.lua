@@ -1,5 +1,5 @@
 ﻿
-PKG_PkgGenMd5_Value = '573f3204de5ce9a0f9f76111d81176c6'
+PKG_PkgGenMd5_Value = 'bac9c98b741ca3d5779c9a18d795d3d1'
 
 --[[
 进入游戏成功
@@ -97,7 +97,7 @@ PKG_CatchFish_Scene = {
         ]]
         o.rnd = null -- _xx_Random
         --[[
-        公用配置信息
+        公用配置信息( 不参与网络传输, 需要根据 typeId 去 cfgs 定位手工还原 )
         ]]
         o.cfg = null -- PKG_CatchFish_Config
         --[[
@@ -109,7 +109,7 @@ PKG_CatchFish_Scene = {
         ]]
         o.fishs = null -- List_PKG_CatchFish_Fish_
         --[[
-        当前帧所有事件的合并包容器, 服务器专用, 不参与网络传输
+        当前帧所有事件的合并包容器, 服务器专用, 独立发送
         ]]
         o.frameEvents = null -- PKG_CatchFish_Client_FrameEvents
         return o
@@ -670,7 +670,7 @@ PKG_CatchFish_FishSpriteFrame = {
         o.__newindex = o
 
         --[[
-        打包前的散文件名
+        打包前的散文件名( 帧定位名 )
         ]]
         o.fileName = null -- String
         --[[
@@ -743,6 +743,10 @@ PKG_CatchFish_FishConfig = {
         ]]
         o.coin = 0 -- Int64
         --[[
+        帧总数
+        ]]
+        o.frameCount = 0 -- Int32
+        --[[
         基于整个鱼的最大晃动范围的圆形检测区( 粗判 )
         ]]
         o.collisionArea = null -- PKG_CatchFish_CollisionArea
@@ -750,23 +754,33 @@ PKG_CatchFish_FishConfig = {
         鱼帧动画信息集合
         ]]
         o.frames = null -- List_PKG_CatchFish_FishSpriteFrame_
+        --[[
+        鱼动画( 仅客户端 )
+        ]]
+        o.anim = null -- _Animation
         return o
     end,
     FromBBuffer = function( bb, o )
+        local ReadInt32 = bb.ReadInt32
         local ReadObject = bb.ReadObject
-        o.typeId = bb:ReadInt32()
+        o.typeId = ReadInt32( bb )
         o.name = ReadObject( bb )
         o.coin = bb:ReadInt64()
+        o.frameCount = ReadInt32( bb )
         o.collisionArea = ReadObject( bb )
         o.frames = ReadObject( bb )
+        o.anim = ReadObject( bb )
     end,
     ToBBuffer = function( bb, o )
+        local WriteInt32 = bb.WriteInt32
         local WriteObject = bb.WriteObject
-        bb:WriteInt32( o.typeId )
+        WriteInt32( bb, o.typeId )
         WriteObject( bb, o.name )
         bb:WriteInt64( o.coin )
+        WriteInt32( bb, o.frameCount )
         WriteObject( bb, o.collisionArea )
         WriteObject( bb, o.frames )
+        WriteObject( bb, o.anim )
     end
 }
 BBuffer.Register( PKG_CatchFish_FishConfig )
@@ -797,6 +811,23 @@ List_PKG_CatchFish_FishSpriteFrame_ = {
     end
 }
 BBuffer.Register( List_PKG_CatchFish_FishSpriteFrame_ )
+_Animation = {
+    typeName = "_Animation",
+    typeId = 49,
+    Create = function()
+        local o = {}
+        o.__proto = _Animation
+        o.__index = o
+        o.__newindex = o
+
+        return o
+    end,
+    FromBBuffer = function( bb, o )
+    end,
+    ToBBuffer = function( bb, o )
+    end
+}
+BBuffer.Register( _Animation )
 --[[
 游戏配置信息( 配置信息并不会随着网络同步而下发, 反序列化后需要手工还原 )
 ]]
@@ -817,15 +848,21 @@ PKG_CatchFish_Config = {
         子弹配置( 当前就一种子弹，先这样放置 )
         ]]
         o.bulletRadius = 0 -- Int32
+        --[[
+        玩家初始金币值
+        ]]
+        o.playerInitCoin = 0 -- Int64
         return o
     end,
     FromBBuffer = function( bb, o )
         o.fishCfgs = bb:ReadObject()
         o.bulletRadius = bb:ReadInt32()
+        o.playerInitCoin = bb:ReadInt64()
     end,
     ToBBuffer = function( bb, o )
         bb:WriteObject( o.fishCfgs )
         bb:WriteInt32( o.bulletRadius )
+        bb:WriteInt64( o.playerInitCoin )
     end
 }
 BBuffer.Register( PKG_CatchFish_Config )
@@ -993,13 +1030,17 @@ PKG_CatchFish_MoveObject = {
         ]]
         o.pos = null -- _xx_Pos
         --[[
-        每帧的移动增量
+        一次性计算出来的每帧的坐标增量( 以稳定 fps 为大前提 )
         ]]
         o.moveInc = null -- _xx_Pos
         --[[
         逻辑角度
         ]]
         o.angle = 0 -- Single
+        --[[
+        显示用主体精灵( 仅客户端 )
+        ]]
+        o.spriteBody = null -- _Sprite
         return o
     end,
     FromBBuffer = function( bb, o )
@@ -1012,6 +1053,7 @@ PKG_CatchFish_MoveObject = {
         o.pos = ReadObject( bb )
         o.moveInc = ReadObject( bb )
         o.angle = bb:ReadSingle()
+        o.spriteBody = ReadObject( bb )
     end,
     ToBBuffer = function( bb, o )
         local WriteInt32 = bb.WriteInt32
@@ -1023,9 +1065,27 @@ PKG_CatchFish_MoveObject = {
         WriteObject( bb, o.pos )
         WriteObject( bb, o.moveInc )
         bb:WriteSingle( o.angle )
+        WriteObject( bb, o.spriteBody )
     end
 }
 BBuffer.Register( PKG_CatchFish_MoveObject )
+_Sprite = {
+    typeName = "_Sprite",
+    typeId = 48,
+    Create = function()
+        local o = {}
+        o.__proto = _Sprite
+        o.__index = o
+        o.__newindex = o
+
+        return o
+    end,
+    FromBBuffer = function( bb, o )
+    end,
+    ToBBuffer = function( bb, o )
+    end
+}
+BBuffer.Register( _Sprite )
 --[[
 子弹
 ]]
@@ -1039,35 +1099,21 @@ PKG_CatchFish_Bullet = {
         o.__newindex = o
 
         --[[
-        哪个玩家射的
-        ]]
-        o.shooter = null -- PKG_CatchFish_Player
-        --[[
         金币价值( 也可理解为倍率 )
         ]]
         o.coin = 0 -- Int64
-        --[[
-        一次性计算出来的每帧的坐标增量( 以稳定 60 fps为大前提 )
-        ]]
-        o.posFrameInc = null -- _xx_Pos
         setmetatable( o, PKG_CatchFish_MoveObject.Create() )
         return o
     end,
     FromBBuffer = function( bb, o )
         local p = getmetatable( o )
         p.__proto.FromBBuffer( bb, p )
-        local ReadObject = bb.ReadObject
-        o.shooter = ReadObject( bb )
         o.coin = bb:ReadInt64()
-        o.posFrameInc = ReadObject( bb )
     end,
     ToBBuffer = function( bb, o )
         local p = getmetatable( o )
         p.__proto.ToBBuffer( bb, p )
-        local WriteObject = bb.WriteObject
-        WriteObject( bb, o.shooter )
         bb:WriteInt64( o.coin )
-        WriteObject( bb, o.posFrameInc )
     end
 }
 BBuffer.Register( PKG_CatchFish_Bullet )
@@ -1096,21 +1142,9 @@ PKG_CatchFish_Fish = {
         ]]
         o.cfg = null -- PKG_CatchFish_FishConfig
         --[[
-        当前坐标( 这个每帧都通过 += posFrameInc 的方式改变 )
-        ]]
-        o.pos = null -- _xx_Pos
-        --[[
-        出生点配置
-        ]]
-        o.posFrom = null -- _xx_Pos
-        --[[
         消失点配置
         ]]
-        o.posTo = null -- _xx_Pos
-        --[[
-        一次性计算出来的每帧的坐标增量( 以稳定 60 fps 为大前提 )
-        ]]
-        o.posFrameInc = null -- _xx_Pos
+        o.moveTo = null -- _xx_Pos
         --[[
         当前移动步数( 步数一到就认为鱼已移至目的地可以清掉了 )
         ]]
@@ -1130,10 +1164,7 @@ PKG_CatchFish_Fish = {
         o.typeId = ReadInt32( bb )
         o.intAngle = ReadInt32( bb )
         o.cfg = ReadObject( bb )
-        o.pos = ReadObject( bb )
-        o.posFrom = ReadObject( bb )
-        o.posTo = ReadObject( bb )
-        o.posFrameInc = ReadObject( bb )
+        o.moveTo = ReadObject( bb )
         o.moveStep = ReadInt32( bb )
         o.moveStepCount = ReadInt32( bb )
     end,
@@ -1145,10 +1176,7 @@ PKG_CatchFish_Fish = {
         WriteInt32( bb, o.typeId )
         WriteInt32( bb, o.intAngle )
         WriteObject( bb, o.cfg )
-        WriteObject( bb, o.pos )
-        WriteObject( bb, o.posFrom )
-        WriteObject( bb, o.posTo )
-        WriteObject( bb, o.posFrameInc )
+        WriteObject( bb, o.moveTo )
         WriteInt32( bb, o.moveStep )
         WriteInt32( bb, o.moveStepCount )
     end

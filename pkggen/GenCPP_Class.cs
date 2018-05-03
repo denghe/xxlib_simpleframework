@@ -264,7 +264,7 @@ namespace " + c.Namespace.Replace(".", "::") + @"
             sb.Append(@"
 	}
 	inline " + c.Name + @"::" + c.Name + @"(xx::BBuffer *bb)
-        : " + btn + @"(bb)");
+        : " + btn + @"(bb->mempool)");
             //// 其他 _v 成员初始化
             //fs = c._GetFields();
             //foreach (var f in fs)
@@ -278,25 +278,8 @@ namespace " + c.Namespace.Replace(".", "::") + @"
             //    }
             //}
             sb.Append(@"
-	{");
-            fs = c._GetFields();
-            if (fs.Count > 0)
-            {
-                sb.Append(@"
-	    int rtv = 0;");
-            }
-            foreach (var f in fs)
-            {
-                var ft = f.FieldType;
-                if (ft.IsClass && f.FieldType._IsContainer())
-                {
-                    sb.Append(@"
-        bb->readLengthLimit = " + f._GetLimit() + ";");
-                }
-                sb.Append(@"
-        if (rtv = bb->Read(" + f.Name + ")) throw rtv;");
-            }
-            sb.Append(@"
+	{
+        if (int rtv = FromBBuffer(*bb)) throw rtv;
 	}
     inline void " + c.Name + @"::ToBBuffer(xx::BBuffer &bb) const
     {");
@@ -340,6 +323,7 @@ namespace " + c.Namespace.Replace(".", "::") + @"
             fs = c._GetFields();
             foreach (var f in fs)
             {
+                if (f.FieldType._IsExternal() && !f.FieldType._GetExternalSerializable()) continue;
                 if (f.FieldType._IsContainer())
                 {
                     sb.Append(@"

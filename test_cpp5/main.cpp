@@ -45,9 +45,12 @@ public:
 };
 using PlayerContext_p = xx::Ptr<PlayerContext>;
 
-
+// 客户端only 类占位符
+class Sprite_p {};
+class Animation_p {};
 
 #include "../pkg/PKG_class.h"
+#include "fill_fish_cfg.h"
 
 // 服务上下文
 class ServiceCatchFish : public xx::Object
@@ -149,7 +152,7 @@ public:
 					PKG::CatchFish::Player_p plr;
 					plr.MPCreate(self->mempool);
 					plr->bullets.MPCreate(self->mempool);
-					plr->coin = 10000;						// todo: 读配置
+					plr->coin = self->scene->cfg->playerInitCoin;
 					plr->name = std::move(o->username);
 					plr->sitIndex = self->freeSits[0];
 					plr->ctx.Create(self->mempool, self, plr.pointer);
@@ -178,8 +181,6 @@ public:
 		scene.MPCreate(mempool);
 		scene->frameNumber = 0;
 		scene->rnd.MPCreate(mempool, 123);	// 先随便来个 seed
-		scene->cfg.MPCreate(mempool);
-		scene->cfg->fishCfgs.MPCreate(mempool);
 		scene->players.MPCreate(mempool);
 		scene->fishs.MPCreate(mempool);
 		scene->frameEvents.MPCreate(mempool);
@@ -193,88 +194,8 @@ public:
 		scene->frameEvents->fireBegins.MPCreate(mempool);
 		scene->frameEvents->fireChangeAngles.MPCreate(mempool);
 
-
-		// 捏造鱼的配置信息( 当前就不具体到每一帧了，coin 同时拿来当作 判定半径使用， 如果需要的话 )
-		{
-			auto fc = mempool->MPCreate<PKG::CatchFish::FishConfig>();
-			fc->typeId = 0;
-			fc->coin = 55;
-			fc->name.MPCreate(mempool, "angler");
-			scene->cfg->fishCfgs->Add(std::move(fc));
-		}
-		{
-			auto fc = mempool->MPCreate<PKG::CatchFish::FishConfig>();
-			fc->typeId = 1;
-			fc->coin = 55;
-			fc->name.MPCreate(mempool, "bomb");
-			scene->cfg->fishCfgs->Add(std::move(fc));
-		}
-		{
-			auto fc = mempool->MPCreate<PKG::CatchFish::FishConfig>();
-			fc->typeId = 2;
-			fc->coin = 40;
-			fc->name.MPCreate(mempool, "butterfly");
-			scene->cfg->fishCfgs->Add(std::move(fc));
-		}
-		{
-			auto fc = mempool->MPCreate<PKG::CatchFish::FishConfig>();
-			fc->typeId = 3;
-			fc->coin = 50;
-			fc->name.MPCreate(mempool, "flat");
-			scene->cfg->fishCfgs->Add(std::move(fc));
-		}
-		{
-			auto fc = mempool->MPCreate<PKG::CatchFish::FishConfig>();
-			fc->typeId = 4;
-			fc->coin = 50;
-			fc->name.MPCreate(mempool, "lobster");
-			scene->cfg->fishCfgs->Add(std::move(fc));
-		}
-		{
-			auto fc = mempool->MPCreate<PKG::CatchFish::FishConfig>();
-			fc->typeId = 5;
-			fc->coin = 30;
-			fc->name.MPCreate(mempool, "nemo");
-			scene->cfg->fishCfgs->Add(std::move(fc));
-		}
-		{
-			auto fc = mempool->MPCreate<PKG::CatchFish::FishConfig>();
-			fc->typeId = 6;
-			fc->coin = 50;
-			fc->name.MPCreate(mempool, "octopus");
-			scene->cfg->fishCfgs->Add(std::move(fc));
-		}
-		{
-			auto fc = mempool->MPCreate<PKG::CatchFish::FishConfig>();
-			fc->typeId = 7;
-			fc->coin = 50;
-			fc->name.MPCreate(mempool, "sali");
-			scene->cfg->fishCfgs->Add(std::move(fc));
-		}
-		{
-			auto fc = mempool->MPCreate<PKG::CatchFish::FishConfig>();
-			fc->typeId = 8;
-			fc->coin = 50;
-			fc->name.MPCreate(mempool, "seasnail");
-			scene->cfg->fishCfgs->Add(std::move(fc));
-		}
-		{
-			auto fc = mempool->MPCreate<PKG::CatchFish::FishConfig>();
-			fc->typeId = 9;
-			fc->coin = 60;
-			fc->name.MPCreate(mempool, "seaturtle");
-			scene->cfg->fishCfgs->Add(std::move(fc));
-		}
-		{
-			auto fc = mempool->MPCreate<PKG::CatchFish::FishConfig>();
-			fc->typeId = 10;
-			fc->coin = 80;
-			fc->name.MPCreate(mempool, "shark");
-			scene->cfg->fishCfgs->Add(std::move(fc));
-		}
-
-		// 填充子弹半径配置
-		scene->cfg->bulletRadius = 20;
+		// 填充配置文件
+		FillFishCfg(mempool, scene->cfg);
 	}
 
 
@@ -293,6 +214,7 @@ public:
 		{
 			auto& scene = *this->scene;
 			auto& fishs = *scene.fishs;
+			auto& players = *scene.players;
 			auto& frameNumber = scene.frameNumber;
 			auto& rnd = *scene.rnd;
 			auto& fishCfgs = *scene.cfg->fishCfgs;
@@ -337,28 +259,29 @@ public:
 			fish->indexAtContainer = (int)fishs.dataLen;
 
 			// 先随机出鱼边
-			auto idx = rand() % 8;
+			auto idx = rnd.Next(8);
 
 			// 定位到边
 			auto line = &bornLines[idx];
 
 			// 随出具体坐标
-			fish->pos = fish->posFrom = RandVec2(line->x1, line->x2, line->y1, line->y2);
+			fish->pos = fish->bornPos = RandVec2(line->x1, line->x2, line->y1, line->y2);
 
 			// 再随机消失边
-			idx = (rand() & 1) ? bornLines[idx].o1 : bornLines[idx].o2;
+			idx = rnd.Next(2) ? bornLines[idx].o1 : bornLines[idx].o2;
 
 			// 定位到边
 			line = &bornLines[idx];
 
 			// 随出具体坐标
-			fish->posTo = RandVec2(line->x1, line->x2, line->y1, line->y2);
+			fish->moveTo = RandVec2(line->x1, line->x2, line->y1, line->y2);
 
 			// 随机一条鱼下标
 			idx = rnd.Next((int)fishCfgs.dataLen);
 
-			// 存相关信息及半径( 暂行方案 )
+			// 设置其配置 & id
 			fish->cfg = fishCfgs[idx];
+			fish->typeId = fish->cfg->typeId;
 
 			//// 画鱼
 			//auto sprite = Sprite::create();
@@ -375,20 +298,35 @@ public:
 
 			// 计划鱼需要花 20 秒从起点游到终点. 1 秒 60帖, 如果每 3 帧画 1 条鱼, 每秒会出 20 条, 20 秒后将有 400 条同屏
 			// 算鱼每帧的移动增量( 每秒 60 帧 )
-			fish->posFrameInc.x = (fish->posTo.x - fish->posFrom.x) / (60 * 20);	// 移20秒
-			fish->posFrameInc.y = (fish->posTo.y - fish->posFrom.y) / (60 * 20);	// 移20秒
+			fish->moveInc.x = (fish->moveTo.x - fish->bornPos.x) / (60 * 20);	// 移20秒
+			fish->moveInc.y = (fish->moveTo.y - fish->bornPos.y) / (60 * 20);	// 移20秒
 			fish->moveStepCount = 60 * 20;
 			fish->moveStep = 0;
 
 			// 将鱼放入容器
 			fishs.Add(std::move(fish));
 
+			// 广播给本帧进入的玩家 FullSync	
+			// 广播给所有玩家( 除了本帧进入的 ) frameEvents
+			// todo: 先序列化 scene, frameEvents 再批量发送序列化后的结果
+			for (auto& p : players)
+			{
+				if (scene.frameEvents->joins->Exists([&](auto& j) { return j->sitIndex == p->sitIndex; }))
+				{
+					if (p->ctx->PeerAlive())
+					{
+						p->ctx->peer->Send(this->scene);
+					}
+				}
+				else
+				{
+					if (p->ctx->PeerAlive())
+					{
+						p->ctx->peer->Send(this->scene->frameEvents);
+					}
+				}
+			}
 
-
-
-			// todo: 广播给本帧进入的玩家 FullSync
-
-			// todo: 广播给所有玩家( 除了本帧进入的 ) frameEvents
 			
 			// 清除帧累积事件
 			ClearFrameEvents();
@@ -484,6 +422,7 @@ int main()
 	xx::UvLoop loop(&mp);
 	loop.InitRpcManager();
 	ServiceCatchFish service(loop);
+	std::cout << "CatchFish service runing ... port = 12345" << std::endl;
 	loop.Run();
 	return 0;
 }
