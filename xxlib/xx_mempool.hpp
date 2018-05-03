@@ -80,7 +80,8 @@ namespace xx
 		}
 		if (!p) return Alloc(newSize);
 
-		auto originalSize = (size_t(1) << *(size_t*)((void**)p - 1)) - sizeof(void*);
+		auto h = (MemHeader*)p - 1;
+		auto originalSize = (size_t(1) << h->mpIndex()) - sizeof(MemHeader);
 		if (originalSize >= newSize) return p;
 
 		auto np = Alloc(newSize);

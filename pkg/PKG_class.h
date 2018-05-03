@@ -1395,7 +1395,6 @@ namespace CatchFish
         str.Append(", \"frameCount\" : ", this->frameCount);
         str.Append(", \"collisionArea\" : ", this->collisionArea);
         str.Append(", \"frames\" : ", this->frames);
-        str.Append(", \"anim\" : ", this->anim);
     }
 
 
@@ -1502,7 +1501,6 @@ namespace CatchFish
         str.Append(", \"sitIndex\" : ", this->sitIndex);
         str.Append(", \"coin\" : ", this->coin);
         str.Append(", \"bullets\" : ", this->bullets);
-        str.Append(", \"ctx\" : ", this->ctx);
     }
 
 
@@ -1563,7 +1561,6 @@ namespace CatchFish
         str.Append(", \"pos\" : ", this->pos);
         str.Append(", \"moveInc\" : ", this->moveInc);
         str.Append(", \"angle\" : ", this->angle);
-        str.Append(", \"spriteBody\" : ", this->spriteBody);
     }
 
 

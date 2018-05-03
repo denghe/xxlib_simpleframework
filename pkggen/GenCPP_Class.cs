@@ -357,6 +357,7 @@ namespace " + c.Namespace.Replace(".", "::") + @"
         this->BaseType::ToStringCore(str);");
             foreach (var f in fs)
             {
+                if (f.FieldType._IsExternal() && !f.FieldType._GetExternalSerializable()) continue;
                 if (f.FieldType._IsString())
                 {
                     sb.Append(@"

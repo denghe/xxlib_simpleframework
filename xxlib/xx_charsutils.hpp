@@ -384,7 +384,7 @@ namespace xx
 		static inline void WriteTo(String& s, T const &in)
 		{
 			s.Reserve(s.dataLen + sizeof(T) * 3);
-			sprintf(s.buf + s.dataLen, "%g", in);
+			s.dataLen += sprintf(s.buf + s.dataLen, "%g", in);
 		}
 	};
 

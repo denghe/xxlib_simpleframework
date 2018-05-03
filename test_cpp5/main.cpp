@@ -209,6 +209,9 @@ public:
 		NetInit();
 		SceneInit();
 
+
+
+
 		// 针对 scene 做 update ( 随机出鱼, 鱼生命周期管理 )
 		timer.OnFire = [this]
 		{
@@ -249,9 +252,9 @@ public:
 				}
 			}
 
-			// 每 3 帧生成 1 条鱼
+			// 每 xx 帧生成 1 条鱼
 			++frameNumber;
-			if ((frameNumber % 3) > 0) return;
+			//if ((frameNumber % 10) > 0) return;
 
 
 			// 创建鱼之上下文
@@ -315,6 +318,30 @@ public:
 				{
 					if (p->ctx->PeerAlive())
 					{
+						//this->scene->cfg.Clear();
+						//this->scene->players.Clear();
+						//this->scene->frameEvents.Clear();
+						//for (auto& f : *this->scene->fishs)
+						//{
+						//	f->cfg.Clear();
+						//}
+
+						//// 在这里测试一下序列化功能模块
+						//xx::BBuffer bb(mempool);
+						////bb.Reserve(5);
+						////bb.dataLen = 5;
+						//bb.WriteRoot(this->scene);
+						////memmove(bb.buf + 2, bb.buf + 5, bb.dataLen - 5);
+
+						//PKG::CatchFish::Scene_p scene2;
+						////bb.offset = 2;
+						//bb.ReadRoot(scene2);
+
+						//std::cout << this->scene << std::endl;
+						//std::cout << "\n\n\n" << bb.dataLen << ", " << bb.offset << std::endl;
+						//std::cout << scene2 << std::endl;
+
+
 						p->ctx->peer->Send(this->scene);
 					}
 				}
