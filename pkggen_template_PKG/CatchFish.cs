@@ -98,7 +98,7 @@ namespace CatchFish
         [Desc("当前位置")]
         xx.Pos pos;
 
-        [Desc("每帧的移动增量")]
+        [Desc("一次性计算出来的每帧的坐标增量( 以稳定 fps 为大前提 )")]
         xx.Pos moveInc;
 
         [Desc("逻辑角度")]
@@ -109,14 +109,8 @@ namespace CatchFish
     [Desc("子弹")]
     class Bullet : MoveObject
     {
-        [Desc("哪个玩家射的")]
-        Player shooter;
-
         [Desc("金币价值( 也可理解为倍率 )")]
         long coin;
-
-        [Desc("一次性计算出来的每帧的坐标增量( 以稳定 60 fps为大前提 )")]
-        xx.Pos posFrameInc;
     }
 
 
@@ -133,17 +127,8 @@ namespace CatchFish
         [NotSerialize]
         FishConfig cfg;
 
-        [Desc("当前坐标( 这个每帧都通过 += posFrameInc 的方式改变 )")]
-        xx.Pos pos;
-
-        [Desc("出生点配置")]
-        xx.Pos posFrom;
-
         [Desc("消失点配置")]
-        xx.Pos posTo;
-
-        [Desc("一次性计算出来的每帧的坐标增量( 以稳定 60 fps 为大前提 )")]
-        xx.Pos posFrameInc;
+        xx.Pos moveTo;
 
         [Desc("当前移动步数( 步数一到就认为鱼已移至目的地可以清掉了 )")]
         int moveStep = 0;
