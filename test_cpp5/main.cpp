@@ -35,7 +35,7 @@ namespace PKG::CatchFish
 class PlayerContext : public xx::UvContextBase
 {
 public:
-	ServiceCatchFish* service;
+	ServiceCatchFish * service;
 	PKG::CatchFish::Player* player;
 	PlayerContext(ServiceCatchFish* service, PKG::CatchFish::Player* player);
 
@@ -51,6 +51,18 @@ class Animation_p {};
 
 #include "../pkg/PKG_class.h"
 #include "fill_fish_cfg.h"
+
+// 派生一下以方便放置 scene, player 指针
+class ClientPeer : public xx::UvTcpPeer
+{
+public:
+	// 这几个成员变量不需要回收
+	ServiceCatchFish * service;
+	PKG::CatchFish::Scene_r scene;
+	PKG::CatchFish::Player_r player;
+
+	ClientPeer(ServiceCatchFish * service);
+};
 
 // 服务上下文
 class ServiceCatchFish : public xx::Object
@@ -84,6 +96,7 @@ public:
 		// 初始化网络监听部分
 		listener.Bind("0.0.0.0", 12345);
 		listener.Listen();
+		listener.OnCreatePeer = [this] { return mempool->Create<ClientPeer>(this); };
 		listener.OnAccept = [this](xx::UvTcpPeer *p_)
 		{
 			std::cout << p_->ip() << " accepted." << std::endl;
@@ -96,7 +109,7 @@ public:
 
 				// 转储捕获变量, 以应对 p->OnReceivePackage 的覆盖绑定时捕获变量的丢失
 				auto self = this;
-				auto p = p_;
+				auto p = (ClientPeer*)p_;
 
 				xx::Object_p o_;
 
@@ -114,7 +127,7 @@ public:
 					return;
 				}
 
-				// 收到 join 包，开始逻辑处理
+				// 收到 join 包，开始逻辑处理( 只可能在这个 lambda 里出现这个包 )
 				if (o_->memHeader().typeId == xx::TypeId_v<PKG::Client_CatchFish::Join>)
 				{
 					// 硬转还原出真实类型备用
@@ -148,23 +161,28 @@ public:
 						return;
 					}
 
-					// 创建玩家及网络上下文
+					// 创建玩家
 					PKG::CatchFish::Player_p plr;
 					plr.MPCreate(self->mempool);
 					plr->bullets.MPCreate(self->mempool);
 					plr->coin = self->scene->cfg->playerInitCoin;
 					plr->name = std::move(o->username);
 					plr->sitIndex = self->freeSits[0];
-					plr->ctx.Create(self->mempool, self, plr.pointer);
-					auto r = plr->ctx->BindPeer(p);			// 这句之后无法继续访问捕获变量
-					assert(r);								// 必然成功
 
 					// 向场景每帧包合并变量压入 Join 事件
 					PKG::CatchFish::Events::JoinPlayer_p j;
 					j.MPCreate(self->mempool);
 					j->name = plr->name;
 					j->sitIndex = plr->sitIndex;
+					j->coin = plr->coin;
 					self->scene->frameEvents->joins->Add(std::move(j));
+
+					// 绑定玩家网络上下文
+					plr->ctx.Create(self->mempool, self, plr.pointer);
+					auto r = plr->ctx->BindPeer(p);			// 这句之后无法继续访问捕获变量
+					assert(r);								// 必然成功
+					p->player = plr;
+					p->scene = self->scene;
 
 					// 因为上面有引用到, 故最后再移入队列
 					self->scene->players->Add(std::move(plr));
@@ -187,7 +205,6 @@ public:
 		scene->frameEvents->frameNumber = scene->frameNumber;
 		scene->frameEvents->leaves.MPCreate(mempool);
 		scene->frameEvents->joins.MPCreate(mempool);
-		scene->frameEvents->hitss.MPCreate(mempool);
 		scene->frameEvents->fishDeads.MPCreate(mempool);
 		scene->frameEvents->fires.MPCreate(mempool);
 		scene->frameEvents->fireEnds.MPCreate(mempool);
@@ -237,77 +254,72 @@ public:
 				}
 				else
 				{
-					// 将数据上下文从容器交换移除
-					auto lastIdx = fishs.dataLen - 1;
-					if (lastIdx > 0 && f->indexAtContainer != lastIdx)
-					{
-						fishs[lastIdx]->indexAtContainer = f->indexAtContainer;
-						fishs[f->indexAtContainer] = std::move(fishs[lastIdx]);
-					}
-					fishs.Pop();
-
 					// 资源回收
 					//f->spriteBody->removeFromParentAndCleanup(true);	// 同步显示( 移除 )
-					//delete f;
+
+					// 将数据上下文从容器交换移除
+					fishs[fishs.dataLen - 1]->indexAtContainer = f->indexAtContainer;
+					fishs.SwapRemoveAt(f->indexAtContainer);
 				}
 			}
 
 			// 每 xx 帧生成 1 条鱼
 			++frameNumber;
-			//if ((frameNumber % 10) > 0) return;
+			if ((frameNumber % 30) == 0)
+			{
+				// 创建鱼之上下文
+				auto fish = mempool->MPCreate<PKG::CatchFish::Fish>();
+				fish->indexAtContainer = (int)fishs.dataLen;
 
+				// 先随机出鱼边
+				auto idx = rnd.Next(8);
 
-			// 创建鱼之上下文
-			auto fish = mempool->MPCreate<PKG::CatchFish::Fish>();
-			fish->indexAtContainer = (int)fishs.dataLen;
+				// 定位到边
+				auto line = &bornLines[idx];
 
-			// 先随机出鱼边
-			auto idx = rnd.Next(8);
+				// 随出具体坐标
+				fish->pos = fish->bornPos = RandVec2(line->x1, line->x2, line->y1, line->y2);
 
-			// 定位到边
-			auto line = &bornLines[idx];
+				// 再随机消失边
+				idx = rnd.Next(2) ? bornLines[idx].o1 : bornLines[idx].o2;
 
-			// 随出具体坐标
-			fish->pos = fish->bornPos = RandVec2(line->x1, line->x2, line->y1, line->y2);
+				// 定位到边
+				line = &bornLines[idx];
 
-			// 再随机消失边
-			idx = rnd.Next(2) ? bornLines[idx].o1 : bornLines[idx].o2;
+				// 随出具体坐标
+				fish->moveTo = RandVec2(line->x1, line->x2, line->y1, line->y2);
 
-			// 定位到边
-			line = &bornLines[idx];
+				// 随机一条鱼下标
+				idx = rnd.Next((int)fishCfgs.dataLen);
 
-			// 随出具体坐标
-			fish->moveTo = RandVec2(line->x1, line->x2, line->y1, line->y2);
+				// 设置其配置 & id
+				fish->cfg = fishCfgs[idx];
+				fish->typeId = fish->cfg->typeId;
 
-			// 随机一条鱼下标
-			idx = rnd.Next((int)fishCfgs.dataLen);
+				//// 画鱼
+				//auto sprite = Sprite::create();
+				//fish->spriteBody = sprite;
+				//addChild(sprite);
 
-			// 设置其配置 & id
-			fish->cfg = fishCfgs[idx];
-			fish->typeId = fish->cfg->typeId;
+				//// 设鱼的起点和转向前进方向
+				//sprite->setPosition(fish->posFrom);
+				//::RotateTo(sprite, fish->posTo);
 
-			//// 画鱼
-			//auto sprite = Sprite::create();
-			//fish->spriteBody = sprite;
-			//addChild(sprite);
+				//// 简单的创建一个游鱼动画
+				//auto anim = fish->animInfo->anim;
+				//sprite->runAction(Animate::create(anim));
 
-			//// 设鱼的起点和转向前进方向
-			//sprite->setPosition(fish->posFrom);
-			//::RotateTo(sprite, fish->posTo);
+				// 计划鱼需要花 20 秒从起点游到终点. 1 秒 60帖, 如果每 3 帧画 1 条鱼, 每秒会出 20 条, 20 秒后将有 400 条同屏
+				// 算鱼每帧的移动增量( 每秒 60 帧 )
+				fish->moveInc.x = (fish->moveTo.x - fish->bornPos.x) / (60 * 20);	// 移20秒
+				fish->moveInc.y = (fish->moveTo.y - fish->bornPos.y) / (60 * 20);	// 移20秒
+				fish->moveStepCount = 60 * 20;
+				fish->moveStep = 0;
+				fish->serialNumber = scene.fishSerialNumber++;
 
-			//// 简单的创建一个游鱼动画
-			//auto anim = fish->animInfo->anim;
-			//sprite->runAction(Animate::create(anim));
-
-			// 计划鱼需要花 20 秒从起点游到终点. 1 秒 60帖, 如果每 3 帧画 1 条鱼, 每秒会出 20 条, 20 秒后将有 400 条同屏
-			// 算鱼每帧的移动增量( 每秒 60 帧 )
-			fish->moveInc.x = (fish->moveTo.x - fish->bornPos.x) / (60 * 20);	// 移20秒
-			fish->moveInc.y = (fish->moveTo.y - fish->bornPos.y) / (60 * 20);	// 移20秒
-			fish->moveStepCount = 60 * 20;
-			fish->moveStep = 0;
-
-			// 将鱼放入容器
-			fishs.Add(std::move(fish));
+				// 将鱼放入容器
+				fishs.Add(std::move(fish));
+			}
 
 			// 广播给本帧进入的玩家 FullSync	
 			// 广播给所有玩家( 除了本帧进入的 ) frameEvents
@@ -318,43 +330,40 @@ public:
 				{
 					if (p->ctx->PeerAlive())
 					{
-						//this->scene->cfg.Clear();
-						//this->scene->players.Clear();
-						//this->scene->frameEvents.Clear();
-						//for (auto& f : *this->scene->fishs)
-						//{
-						//	f->cfg.Clear();
-						//}
-
-						//// 在这里测试一下序列化功能模块
-						//xx::BBuffer bb(mempool);
-						////bb.Reserve(5);
-						////bb.dataLen = 5;
-						//bb.WriteRoot(this->scene);
-						////memmove(bb.buf + 2, bb.buf + 5, bb.dataLen - 5);
-
-						//PKG::CatchFish::Scene_p scene2;
-						////bb.offset = 2;
-						//bb.ReadRoot(scene2);
-
-						//std::cout << this->scene << std::endl;
-						//std::cout << "\n\n\n" << bb.dataLen << ", " << bb.offset << std::endl;
-						//std::cout << scene2 << std::endl;
-
-
-						p->ctx->peer->Send(this->scene);
+						PKG::CatchFish_Client::FullSync_p fs;
+						fs.MPCreate(mempool);
+						fs->scene = this->scene;
+						p->ctx->peer->Send(fs);
 					}
 				}
 				else
 				{
-					if (p->ctx->PeerAlive())
+					// 检查 this->scene->frameEvents 的各项是否有填充内容，空的就不用发了. 
+					// todo: 长时间不下发也不好，定期来一发空包
+					auto& fe = this->scene->frameEvents;
+					if (fe->fireBegins->dataLen
+						|| fe->fireChangeAngles->dataLen
+						|| fe->fireEnds->dataLen
+						|| fe->fires->dataLen
+						|| fe->fishDeads->dataLen
+						|| fe->joins->dataLen
+						|| fe->leaves->dataLen)
 					{
-						p->ctx->peer->Send(this->scene->frameEvents);
+						//// debug 输出一下
+						//if (fe->fires->dataLen)
+						//{
+						//	std::cout << fe->fires << std::endl;
+						//}
+
+						if (p->ctx->PeerAlive())
+						{
+							p->ctx->peer->Send(fe);
+						}
 					}
 				}
 			}
 
-			
+
 			// 清除帧累积事件
 			ClearFrameEvents();
 		};
@@ -366,7 +375,6 @@ public:
 		scene->frameEvents->frameNumber = scene->frameNumber;
 		scene->frameEvents->leaves.MPCreate(mempool);
 		scene->frameEvents->joins.MPCreate(mempool);
-		scene->frameEvents->hitss.MPCreate(mempool);
 		scene->frameEvents->fishDeads.MPCreate(mempool);
 		scene->frameEvents->fires.MPCreate(mempool);
 		scene->frameEvents->fireEnds.MPCreate(mempool);
@@ -378,6 +386,13 @@ public:
 	{
 	}
 };
+
+ClientPeer::ClientPeer(ServiceCatchFish * service)
+	: xx::UvTcpPeer(service->listener)
+	, service(service)
+{
+}
+
 
 inline PlayerContext::PlayerContext(ServiceCatchFish* service, PKG::CatchFish::Player* player)
 	: xx::UvContextBase(service->mempool)
@@ -395,28 +410,99 @@ inline void PlayerContext::HandlePackage(xx::Object_p& o_)
 		return;
 	}
 
+	assert(peer);
+	auto p = (ClientPeer*)peer;
+	assert(p->player);
+	auto& bullets = *p->player->bullets;
+
+	// todo: 将包存到某个队列，移动下面的代码，在扫 scene 的某个时机来处理，以确保扣钱加钱顺序正确
+
 	if (o_->memHeader().typeId == xx::TypeId_v<PKG::Client_CatchFish::Fire>)
 	{
 		// 硬转还原出真实类型备用
 		auto& o = *(PKG::Client_CatchFish::Fire_p*)&o_;
 
-		// 先直接压入帧事件集 转发出去, 合法性判断，cd 判断先不加
+		// 扣玩家钱，判断钱够不够, 不够就忽略这个消息	// todo: 日志，调公式
+		if (p->player->coin < o->coin) return;
+		p->player->coin -= o->coin;
+
+		// 压入帧事件集 转发出去, 合法性判断，cd 判断先不加
 		PKG::CatchFish::Events::Fire_p f;
 		f.MPCreate(mempool);
-		f->angle = o->angle;
-		f->bulletSerial = o->bulletSerial;
+		f->moveInc = o->moveInc;
+		f->bulletSerialNumber = o->bulletSerialNumber;
 		f->coin = o->coin;
 		f->frameNumber = o->frameNumber;
 		f->sitIndex = player->sitIndex;
 
 		service->scene->frameEvents->fires->Add(std::move(f));
+
+		// 创建子弹上下文
+		PKG::CatchFish::Bullet_p bullet;
+		bullet.MPCreate(mempool);
+		bullet->indexAtContainer = bullets.dataLen;
+		bullet->bornFrameNumber = o->frameNumber;
+		bullet->serialNumber = o->bulletSerialNumber;
+		bullet->coin = o->coin;
+		bullet->pos = xx::Pos{ 1280 / 2, 0 };
+		bullet->moveInc = o->moveInc;
+		bullets.Add(std::move(bullet));
+
+		// todo: 存储子弹创建时间？以便于清除存在太长时间的子弹（可能因掉线而变野，或是掉线时清除子弹，回收金币?）
+	}
+	else if (o_->memHeader().typeId == xx::TypeId_v<PKG::Client_CatchFish::Hit>)
+	{
+		// 硬转还原出真实类型备用
+		auto& o = *(PKG::Client_CatchFish::Hit_p*)&o_;
+
+		// 先粗暴判断鱼和子弹在不在，在就算命中并下发( 压入帧事件 )
+		PKG::CatchFish::Bullet* b_ = nullptr;
+		for (auto& b : bullets)
+		{
+			if (b->serialNumber == o->bulletSerialNumber)
+			{
+				b_ = b.pointer;
+				break;
+			}
+		}
+
+		PKG::CatchFish::Fish* f_ = nullptr;
+		for (auto& f : *service->scene->fishs)
+		{
+			if (f->serialNumber == o->fishSerialNumber)
+			{
+				f_ = f.pointer;
+				break;
+			}
+		}
+		if (b_ && f_)
+		{
+			// todo: 调用杀鱼公式
+
+			// 这里假设一定打死鱼
+			PKG::CatchFish::Events::FishDead_p fd;
+			fd.MPCreate(mempool);
+			fd->coin = b_->coin * f_->cfg->coin;
+			fd->fishSerialNumber = f_->serialNumber;
+			fd->sitIndex = player->sitIndex;
+			p->player->coin += fd->coin;
+			service->scene->frameEvents->fishDeads->Add(std::move(fd));
+
+			// 将子弹干掉
+			//// 资源回收
+			//b_->spriteBody->removeFromParentAndCleanup(true);	// 同步显示( 移除 )
+			//b_->spriteBody = nullptr;
+
+			bullets[bullets.dataLen - 1]->indexAtContainer = b_->indexAtContainer;
+			bullets.SwapRemoveAt(b_->indexAtContainer);
+		}
 	}
 
 	// todo: Leave 指令处理
 }
 
 inline void PlayerContext::HandleRequest(uint32_t serial, xx::Object_p& o) {}
-inline void PlayerContext::HandleDisconnect() 
+inline void PlayerContext::HandleDisconnect()
 {
 	// 压 Leave 事件, 清除指定玩家在游戏内的所有数据
 	PKG::CatchFish::Events::LeavePlayer_p lp;
@@ -427,15 +513,9 @@ inline void PlayerContext::HandleDisconnect()
 	auto& players = *service->scene->players;
 
 	// 将数据上下文从容器交换移除
-	auto lastIdx = players.dataLen - 1;
-	if (lastIdx > 0 && player->indexAtContainer != lastIdx)
-	{
-		players[lastIdx]->indexAtContainer = player->indexAtContainer;
-		players[player->indexAtContainer] = std::move(players[lastIdx]);
-	}
-
 	// 从队列清除 player, 随着 player 被 Release, player 中的 ctx( 当前类 ) 也被析构，故下面就不写其他代码了
-	players.Pop();
+	players[players.dataLen - 1]->indexAtContainer = player->indexAtContainer;
+	players.SwapRemoveAt(player->indexAtContainer);
 }
 
 int main()

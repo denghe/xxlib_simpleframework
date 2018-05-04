@@ -4,7 +4,7 @@ namespace PKG
 {
     public static class PkgGenMd5
     {
-        public const string value = "bac9c98b741ca3d5779c9a18d795d3d1"; 
+        public const string value = "2bbf1ed41239f78a65541eb2ddd51868"; 
     }
 
 namespace CatchFish_Client
@@ -103,10 +103,6 @@ namespace CatchFish_Client
         /// </summary>
         public List<CatchFish.Events.JoinPlayer> joins;
         /// <summary>
-        /// 多个玩家的子弹 命中 信息( 相同玩家可能有多条 )
-        /// </summary>
-        public List<CatchFish.Events.BulletHit> hitss;
-        /// <summary>
         /// 多条鱼 死亡 & 结算 信息
         /// </summary>
         public List<CatchFish.Events.FishDead> fishDeads;
@@ -137,7 +133,6 @@ namespace CatchFish_Client
             bb.Write(this.frameNumber);
             bb.Write(this.leaves);
             bb.Write(this.joins);
-            bb.Write(this.hitss);
             bb.Write(this.fishDeads);
             bb.Write(this.fires);
             bb.Write(this.fireEnds);
@@ -152,8 +147,6 @@ namespace CatchFish_Client
             bb.Read(ref this.leaves);
             bb.readLengthLimit = 0;
             bb.Read(ref this.joins);
-            bb.readLengthLimit = 0;
-            bb.Read(ref this.hitss);
             bb.readLengthLimit = 0;
             bb.Read(ref this.fishDeads);
             bb.readLengthLimit = 0;
@@ -192,7 +185,7 @@ namespace Client_CatchFish
 
         public virtual void FromBBuffer(BBuffer bb)
         {
-            bb.readLengthLimit = 16;
+            bb.readLengthLimit = 64;
             bb.Read(ref this.username);
         }
 
@@ -229,15 +222,15 @@ namespace Client_CatchFish
         /// <summary>
         /// 子弹流水号
         /// </summary>
-        public int bulletSerial;
+        public int bulletSerialNumber;
         /// <summary>
         /// 金币价值( 也可理解为倍率 )
         /// </summary>
         public long coin;
         /// <summary>
-        /// 射击角度( 相对于炮台自己的正方向角度 )
+        /// 步进
         /// </summary>
-        public float angle;
+        public xx.Pos moveInc;
 
         public virtual ushort GetPackageId()
         {
@@ -247,17 +240,49 @@ namespace Client_CatchFish
         public virtual void ToBBuffer(BBuffer bb)
         {
             bb.Write(this.frameNumber);
-            bb.Write(this.bulletSerial);
+            bb.Write(this.bulletSerialNumber);
             bb.Write(this.coin);
-            bb.Write(this.angle);
+            ((IBBuffer)this.moveInc).ToBBuffer(bb);
         }
 
         public virtual void FromBBuffer(BBuffer bb)
         {
             bb.Read(ref this.frameNumber);
-            bb.Read(ref this.bulletSerial);
+            bb.Read(ref this.bulletSerialNumber);
             bb.Read(ref this.coin);
-            bb.Read(ref this.angle);
+            ((IBBuffer)this.moveInc).FromBBuffer(bb);
+        }
+
+    }
+    /// <summary>
+    /// 当前玩家自己的子弹打中鱼
+    /// </summary>
+    public partial class Hit : IBBuffer
+    {
+        /// <summary>
+        /// 子弹流水号
+        /// </summary>
+        public int bulletSerialNumber;
+        /// <summary>
+        /// 鱼流水号
+        /// </summary>
+        public int fishSerialNumber;
+
+        public virtual ushort GetPackageId()
+        {
+            return TypeIdMaps<Hit>.typeId;
+        }
+
+        public virtual void ToBBuffer(BBuffer bb)
+        {
+            bb.Write(this.bulletSerialNumber);
+            bb.Write(this.fishSerialNumber);
+        }
+
+        public virtual void FromBBuffer(BBuffer bb)
+        {
+            bb.Read(ref this.bulletSerialNumber);
+            bb.Read(ref this.fishSerialNumber);
         }
 
     }
@@ -534,6 +559,10 @@ namespace CatchFish
         /// </summary>
         public long coin;
         /// <summary>
+        /// 子弹的自增流水号
+        /// </summary>
+        public int bulletSerialNumber;
+        /// <summary>
         /// 所有子弹
         /// </summary>
         public List<CatchFish.Bullet> bullets;
@@ -553,6 +582,7 @@ namespace CatchFish
             bb.Write(this.name);
             bb.Write(this.sitIndex);
             bb.Write(this.coin);
+            bb.Write(this.bulletSerialNumber);
             bb.Write(this.bullets);
             bb.Write(this.ctx);
         }
@@ -564,6 +594,7 @@ namespace CatchFish
             bb.Read(ref this.name);
             bb.Read(ref this.sitIndex);
             bb.Read(ref this.coin);
+            bb.Read(ref this.bulletSerialNumber);
             bb.readLengthLimit = 0;
             bb.Read(ref this.bullets);
             bb.Read(ref this.ctx);
@@ -582,7 +613,7 @@ namespace CatchFish
         /// <summary>
         /// 序列号( 当发生碰撞时用于标识 )
         /// </summary>
-        public int serial;
+        public int serialNumber;
         /// <summary>
         /// 创建时的帧编号
         /// </summary>
@@ -616,7 +647,7 @@ namespace CatchFish
         public virtual void ToBBuffer(BBuffer bb)
         {
             bb.Write(this.indexAtContainer);
-            bb.Write(this.serial);
+            bb.Write(this.serialNumber);
             bb.Write(this.bornFrameNumber);
             ((IBBuffer)this.bornPos).ToBBuffer(bb);
             ((IBBuffer)this.pos).ToBBuffer(bb);
@@ -628,7 +659,7 @@ namespace CatchFish
         public virtual void FromBBuffer(BBuffer bb)
         {
             bb.Read(ref this.indexAtContainer);
-            bb.Read(ref this.serial);
+            bb.Read(ref this.serialNumber);
             bb.Read(ref this.bornFrameNumber);
             ((IBBuffer)this.bornPos).FromBBuffer(bb);
             ((IBBuffer)this.pos).FromBBuffer(bb);
@@ -746,6 +777,10 @@ namespace CatchFish
         /// </summary>
         public List<CatchFish.Player> players;
         /// <summary>
+        /// 鱼的自增流水号
+        /// </summary>
+        public int fishSerialNumber;
+        /// <summary>
         /// 所有鱼
         /// </summary>
         public List<CatchFish.Fish> fishs;
@@ -765,6 +800,7 @@ namespace CatchFish
             bb.Write(this.rnd);
             bb.Write(default(CatchFish.Config));
             bb.Write(this.players);
+            bb.Write(this.fishSerialNumber);
             bb.Write(this.fishs);
             bb.Write(default(CatchFish_Client.FrameEvents));
         }
@@ -776,6 +812,7 @@ namespace CatchFish
             bb.Read(ref this.cfg);
             bb.readLengthLimit = 0;
             bb.Read(ref this.players);
+            bb.Read(ref this.fishSerialNumber);
             bb.readLengthLimit = 0;
             bb.Read(ref this.fishs);
             bb.Read(ref this.frameEvents);
@@ -824,6 +861,10 @@ namespace CatchFish.Events
         /// 座位索引( 0: 左上  1: 右上  2: 左下 3: 右下 )
         /// </summary>
         public int sitIndex;
+        /// <summary>
+        /// 进入的玩家拥有的金币数量
+        /// </summary>
+        public long coin;
 
         public virtual ushort GetPackageId()
         {
@@ -834,6 +875,7 @@ namespace CatchFish.Events
         {
             bb.Write(this.name);
             bb.Write(this.sitIndex);
+            bb.Write(this.coin);
         }
 
         public virtual void FromBBuffer(BBuffer bb)
@@ -841,6 +883,7 @@ namespace CatchFish.Events
             bb.readLengthLimit = 0;
             bb.Read(ref this.name);
             bb.Read(ref this.sitIndex);
+            bb.Read(ref this.coin);
         }
 
     }
@@ -854,21 +897,21 @@ namespace CatchFish.Events
         /// </summary>
         public int sitIndex;
         /// <summary>
-        /// 当时的帧编号
+        /// 起始帧编号
         /// </summary>
         public int frameNumber;
         /// <summary>
         /// 子弹流水号
         /// </summary>
-        public int bulletSerial;
+        public int bulletSerialNumber;
         /// <summary>
         /// 金币价值( 也可理解为倍率 )
         /// </summary>
         public long coin;
         /// <summary>
-        /// 射击角度( 相对于炮台自己的正方向角度 )
+        /// 步进
         /// </summary>
-        public float angle;
+        public xx.Pos moveInc;
 
         public virtual ushort GetPackageId()
         {
@@ -879,18 +922,18 @@ namespace CatchFish.Events
         {
             bb.Write(this.sitIndex);
             bb.Write(this.frameNumber);
-            bb.Write(this.bulletSerial);
+            bb.Write(this.bulletSerialNumber);
             bb.Write(this.coin);
-            bb.Write(this.angle);
+            ((IBBuffer)this.moveInc).ToBBuffer(bb);
         }
 
         public virtual void FromBBuffer(BBuffer bb)
         {
             bb.Read(ref this.sitIndex);
             bb.Read(ref this.frameNumber);
-            bb.Read(ref this.bulletSerial);
+            bb.Read(ref this.bulletSerialNumber);
             bb.Read(ref this.coin);
-            bb.Read(ref this.angle);
+            ((IBBuffer)this.moveInc).FromBBuffer(bb);
         }
 
     }
@@ -996,7 +1039,7 @@ namespace CatchFish.Events
         /// <summary>
         /// 子弹流水号
         /// </summary>
-        public int bulletSerial;
+        public int bulletSerialNumber;
 
         public virtual ushort GetPackageId()
         {
@@ -1006,13 +1049,13 @@ namespace CatchFish.Events
         public virtual void ToBBuffer(BBuffer bb)
         {
             bb.Write(this.sitIndex);
-            bb.Write(this.bulletSerial);
+            bb.Write(this.bulletSerialNumber);
         }
 
         public virtual void FromBBuffer(BBuffer bb)
         {
             bb.Read(ref this.sitIndex);
-            bb.Read(ref this.bulletSerial);
+            bb.Read(ref this.bulletSerialNumber);
         }
 
     }
@@ -1028,7 +1071,7 @@ namespace CatchFish.Events
         /// <summary>
         /// 鱼流水号
         /// </summary>
-        public int fishSerial;
+        public int fishSerialNumber;
         /// <summary>
         /// 金币所得
         /// </summary>
@@ -1042,14 +1085,14 @@ namespace CatchFish.Events
         public virtual void ToBBuffer(BBuffer bb)
         {
             bb.Write(this.sitIndex);
-            bb.Write(this.fishSerial);
+            bb.Write(this.fishSerialNumber);
             bb.Write(this.coin);
         }
 
         public virtual void FromBBuffer(BBuffer bb)
         {
             bb.Read(ref this.sitIndex);
-            bb.Read(ref this.fishSerial);
+            bb.Read(ref this.fishSerialNumber);
             bb.Read(ref this.coin);
         }
 
@@ -1068,7 +1111,6 @@ namespace CatchFish.Events
             BBuffer.Register<CatchFish_Client.FrameEvents>(7);
             BBuffer.Register<List<CatchFish.Events.LeavePlayer>>(8);
             BBuffer.Register<List<CatchFish.Events.JoinPlayer>>(9);
-            BBuffer.Register<List<CatchFish.Events.BulletHit>>(10);
             BBuffer.Register<List<CatchFish.Events.FishDead>>(11);
             BBuffer.Register<List<CatchFish.Events.Fire>>(12);
             BBuffer.Register<List<CatchFish.Events.FireEnd>>(13);
@@ -1077,6 +1119,7 @@ namespace CatchFish.Events
             BBuffer.Register<Client_CatchFish.Join>(16);
             BBuffer.Register<Client_CatchFish.Leave>(17);
             BBuffer.Register<Client_CatchFish.Fire>(18);
+            BBuffer.Register<Client_CatchFish.Hit>(50);
             BBuffer.Register<Client_CatchFish.FireBegin>(19);
             BBuffer.Register<Client_CatchFish.FireChangeAngle>(20);
             BBuffer.Register<Client_CatchFish.FireEnd>(21);

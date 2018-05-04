@@ -16,6 +16,7 @@ namespace xx
 		String(MemPool* mempool, char const* const& s);
 		String(MemPool* mempool, char const* const& s, size_t const& len);
 		String(MemPool* mempool, std::string const& s);
+		String(MemPool* mempool, Ptr<String> const& s);
 		String(MemPool* mempool, std::pair<char const*, int> const& str_len);
 
 

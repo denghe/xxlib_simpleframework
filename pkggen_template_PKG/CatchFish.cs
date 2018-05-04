@@ -82,6 +82,9 @@ namespace CatchFish
         [Desc("当前金币数")]
         long coin;
 
+        [Desc("子弹的自增流水号")]
+        int bulletSerialNumber;
+
         [Desc("所有子弹")]
         List<Bullet> bullets;
 
@@ -96,7 +99,7 @@ namespace CatchFish
         int indexAtContainer;
 
         [Desc("序列号( 当发生碰撞时用于标识 )")]
-        int serial;
+        int serialNumber;
 
         [Desc("创建时的帧编号")]
         int bornFrameNumber;
@@ -124,7 +127,6 @@ namespace CatchFish
         [Desc("金币价值( 也可理解为倍率 )")]
         long coin;
     }
-
 
     [Desc("鱼")]
     class Fish : MoveObject
@@ -165,6 +167,9 @@ namespace CatchFish
         [Desc("所有玩家( 子弹在玩家下面 )")]
         List<Player> players;
 
+        [Desc("鱼的自增流水号")]
+        int fishSerialNumber;
+
         [Desc("所有鱼")]
         List<Fish> fishs;
 
@@ -195,6 +200,9 @@ namespace CatchFish
 
             [Desc("座位索引( 0: 左上  1: 右上  2: 左下 3: 右下 )")]
             int sitIndex;
+
+            [Desc("进入的玩家拥有的金币数量")]
+            long coin;
         }
 
         [Desc("玩家开火( 单次 )")]
@@ -203,19 +211,18 @@ namespace CatchFish
             [Desc("座位索引( 0: 左上  1: 右上  2: 左下 3: 右下 )")]
             int sitIndex;
 
-            [Desc("当时的帧编号")]
+            [Desc("起始帧编号")]
             int frameNumber;
 
             [Desc("子弹流水号")]
-            int bulletSerial;
+            int bulletSerialNumber;
 
             [Desc("金币价值( 也可理解为倍率 )")]
             long coin;
 
-            [Desc("射击角度( 相对于炮台自己的正方向角度 )")]
-            float angle;
+            [Desc("步进")]
+            xx.Pos moveInc;
         }
-
 
         [Desc("玩家开始开火( 连发, 仅适合帧同步服务器算法 )")]
         class FireBegin
@@ -251,7 +258,7 @@ namespace CatchFish
             int sitIndex;
 
             [Desc("子弹流水号")]
-            int bulletSerial;
+            int bulletSerialNumber;
         }
 
         [Desc("鱼被打死")]
@@ -261,7 +268,7 @@ namespace CatchFish
             int sitIndex;
 
             [Desc("鱼流水号")]
-            int fishSerial;
+            int fishSerialNumber;
 
             [Desc("金币所得")]
             long coin;
@@ -277,7 +284,7 @@ namespace Client_CatchFish
     class Join
     {
         [Desc("客户端进游戏前自己填的名字. 可以写磁盘存在本地.")]
-        [Limit(16)]
+        [Limit(64)]
         string username;
     }
 
@@ -293,13 +300,23 @@ namespace Client_CatchFish
         int frameNumber;
 
         [Desc("子弹流水号")]
-        int bulletSerial;
+        int bulletSerialNumber;
 
         [Desc("金币价值( 也可理解为倍率 )")]
         long coin;
 
-        [Desc("射击角度( 相对于炮台自己的正方向角度 )")]
-        float angle;
+        [Desc("步进")]
+        xx.Pos moveInc;
+    }
+
+    [Desc("当前玩家自己的子弹打中鱼")]
+    class Hit
+    {
+        [Desc("子弹流水号")]
+        int bulletSerialNumber;
+
+        [Desc("鱼流水号")]
+        int fishSerialNumber;
     }
 
     [Desc("玩家开始开火( 连发, 仅适合帧同步服务器算法 )")]
@@ -356,9 +373,6 @@ namespace CatchFish_Client
 
         [Desc("一帧内所有进入的玩家列表( 有序 )")]
         List<CatchFish.Events.JoinPlayer> joins;
-
-        [Desc("多个玩家的子弹 命中 信息( 相同玩家可能有多条 )")]
-        List<CatchFish.Events.BulletHit> hitss;
 
         [Desc("多条鱼 死亡 & 结算 信息")]
         List<CatchFish.Events.FishDead> fishDeads;

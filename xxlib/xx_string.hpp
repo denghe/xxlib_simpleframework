@@ -38,6 +38,12 @@ namespace xx
 		AddRange(s.data(), s.size());
 	}
 
+	inline String::String(MemPool* mempool, Ptr<String> const& s)
+		: BaseType(mempool, s ? 0 : s->dataLen)
+	{
+		if(s) Assign(s);
+	}
+
 	inline String::String(MemPool* mempool, std::pair<char const*, int> const& buff)
 		: BaseType(mempool, buff.second)
 	{

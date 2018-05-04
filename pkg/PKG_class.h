@@ -5,7 +5,7 @@ namespace PKG
 {
 	struct PkgGenMd5
 	{
-		static constexpr char const* value = "bac9c98b741ca3d5779c9a18d795d3d1";
+		static constexpr char const* value = "2bbf1ed41239f78a65541eb2ddd51868";
     };
 
 namespace CatchFish_Client
@@ -47,6 +47,11 @@ namespace Client_CatchFish
     class Fire;
     using Fire_p = xx::Ptr<Fire>;
     using Fire_r = xx::Ref<Fire>;
+
+    // 当前玩家自己的子弹打中鱼
+    class Hit;
+    using Hit_p = xx::Ptr<Hit>;
+    using Hit_r = xx::Ref<Hit>;
 
     // 玩家开始开火( 连发, 仅适合帧同步服务器算法 )
     class FireBegin;
@@ -164,7 +169,7 @@ namespace CatchFish
         // 位于容器时的下标
         int32_t indexAtContainer = 0;
         // 序列号( 当发生碰撞时用于标识 )
-        int32_t serial = 0;
+        int32_t serialNumber = 0;
         // 创建时的帧编号
         int32_t bornFrameNumber = 0;
         // 创建时的位置
@@ -277,14 +282,14 @@ namespace CatchFish::Events
     public:
         // 座位索引( 0: 左上  1: 右上  2: 左下 3: 右下 )
         int32_t sitIndex = 0;
-        // 当时的帧编号
+        // 起始帧编号
         int32_t frameNumber = 0;
         // 子弹流水号
-        int32_t bulletSerial = 0;
+        int32_t bulletSerialNumber = 0;
         // 金币价值( 也可理解为倍率 )
         int64_t coin = 0;
-        // 射击角度( 相对于炮台自己的正方向角度 )
-        float angle = 0;
+        // 步进
+        ::xx::Pos moveInc;
 
         typedef Fire ThisType;
         typedef xx::Object BaseType;
@@ -305,6 +310,8 @@ namespace CatchFish::Events
         xx::String_p name;
         // 座位索引( 0: 左上  1: 右上  2: 左下 3: 右下 )
         int32_t sitIndex = 0;
+        // 进入的玩家拥有的金币数量
+        int64_t coin = 0;
 
         typedef JoinPlayer ThisType;
         typedef xx::Object BaseType;
@@ -350,6 +357,8 @@ namespace CatchFish
         PKG::CatchFish::Config_p cfg;
         // 所有玩家( 子弹在玩家下面 )
         xx::List_p<PKG::CatchFish::Player_p> players;
+        // 鱼的自增流水号
+        int32_t fishSerialNumber = 0;
         // 所有鱼
         xx::List_p<PKG::CatchFish::Fish_p> fishs;
         // 当前帧所有事件的合并包容器, 服务器专用, 独立发送
@@ -424,6 +433,8 @@ namespace CatchFish
         int32_t sitIndex = 0;
         // 当前金币数
         int64_t coin = 0;
+        // 子弹的自增流水号
+        int32_t bulletSerialNumber = 0;
         // 所有子弹
         xx::List_p<PKG::CatchFish::Bullet_p> bullets;
         // 玩家网络上下文, 不参与网络传输
@@ -440,32 +451,6 @@ namespace CatchFish
         void ToBBuffer(xx::BBuffer &bb) const override;
         int FromBBuffer(xx::BBuffer &bb) override;
     };
-}
-namespace CatchFish::Events
-{
-    // 子弹命中( 与鱼死分离. 鱼死相关可能要等服务器跨线程回调送回结果才能下发 )
-    class BulletHit : public xx::Object
-    {
-    public:
-        // 座位索引( 0: 左上  1: 右上  2: 左下 3: 右下 )
-        int32_t sitIndex = 0;
-        // 子弹流水号
-        int32_t bulletSerial = 0;
-
-        typedef BulletHit ThisType;
-        typedef xx::Object BaseType;
-	    BulletHit(xx::MemPool* mempool);
-	    BulletHit(xx::BBuffer *bb);
-		BulletHit(BulletHit const&) = delete;
-		BulletHit& operator=(BulletHit const&) = delete;
-        void ToString(xx::String &str) const override;
-        void ToStringCore(xx::String &str) const override;
-        void ToBBuffer(xx::BBuffer &bb) const override;
-        int FromBBuffer(xx::BBuffer &bb) override;
-    };
-}
-namespace CatchFish
-{
     // 游戏配置信息( 配置信息并不会随着网络同步而下发, 反序列化后需要手工还原 )
     class Config : public xx::Object
     {
@@ -483,6 +468,36 @@ namespace CatchFish
 	    Config(xx::BBuffer *bb);
 		Config(Config const&) = delete;
 		Config& operator=(Config const&) = delete;
+        void ToString(xx::String &str) const override;
+        void ToStringCore(xx::String &str) const override;
+        void ToBBuffer(xx::BBuffer &bb) const override;
+        int FromBBuffer(xx::BBuffer &bb) override;
+    };
+    // 鱼配置信息
+    class FishConfig : public xx::Object
+    {
+    public:
+        // 鱼类编号
+        int32_t typeId = 0;
+        // 鱼名
+        xx::String_p name;
+        // 打死鱼的金币所得基数( 也可理解成倍率 )
+        int64_t coin = 0;
+        // 帧总数
+        int32_t frameCount = 0;
+        // 基于整个鱼的最大晃动范围的圆形检测区( 粗判 )
+        PKG::CatchFish::CollisionArea_p collisionArea;
+        // 鱼帧动画信息集合
+        xx::List_p<PKG::CatchFish::FishSpriteFrame_p> frames;
+        // 鱼动画( 仅客户端 )
+        ::Animation_p anim;
+
+        typedef FishConfig ThisType;
+        typedef xx::Object BaseType;
+	    FishConfig(xx::MemPool* mempool);
+	    FishConfig(xx::BBuffer *bb);
+		FishConfig(FishConfig const&) = delete;
+		FishConfig& operator=(FishConfig const&) = delete;
         void ToString(xx::String &str) const override;
         void ToStringCore(xx::String &str) const override;
         void ToBBuffer(xx::BBuffer &bb) const override;
@@ -585,6 +600,26 @@ namespace Client_CatchFish
         void ToBBuffer(xx::BBuffer &bb) const override;
         int FromBBuffer(xx::BBuffer &bb) override;
     };
+    // 当前玩家自己的子弹打中鱼
+    class Hit : public xx::Object
+    {
+    public:
+        // 子弹流水号
+        int32_t bulletSerialNumber = 0;
+        // 鱼流水号
+        int32_t fishSerialNumber = 0;
+
+        typedef Hit ThisType;
+        typedef xx::Object BaseType;
+	    Hit(xx::MemPool* mempool);
+	    Hit(xx::BBuffer *bb);
+		Hit(Hit const&) = delete;
+		Hit& operator=(Hit const&) = delete;
+        void ToString(xx::String &str) const override;
+        void ToStringCore(xx::String &str) const override;
+        void ToBBuffer(xx::BBuffer &bb) const override;
+        int FromBBuffer(xx::BBuffer &bb) override;
+    };
     // 开火( 单次, 或频繁单次模拟伪连发 )
     class Fire : public xx::Object
     {
@@ -592,11 +627,11 @@ namespace Client_CatchFish
         // 当时的帧编号
         int32_t frameNumber = 0;
         // 子弹流水号
-        int32_t bulletSerial = 0;
+        int32_t bulletSerialNumber = 0;
         // 金币价值( 也可理解为倍率 )
         int64_t coin = 0;
-        // 射击角度( 相对于炮台自己的正方向角度 )
-        float angle = 0;
+        // 步进
+        ::xx::Pos moveInc;
 
         typedef Fire ThisType;
         typedef xx::Object BaseType;
@@ -656,8 +691,6 @@ namespace CatchFish_Client
         xx::List_p<PKG::CatchFish::Events::LeavePlayer_p> leaves;
         // 一帧内所有进入的玩家列表( 有序 )
         xx::List_p<PKG::CatchFish::Events::JoinPlayer_p> joins;
-        // 多个玩家的子弹 命中 信息( 相同玩家可能有多条 )
-        xx::List_p<PKG::CatchFish::Events::BulletHit_p> hitss;
         // 多条鱼 死亡 & 结算 信息
         xx::List_p<PKG::CatchFish::Events::FishDead_p> fishDeads;
         // 多个玩家的单次开火信息( 自带 frameNumber, 可能小于当前值 )
@@ -716,41 +749,28 @@ namespace CatchFish_Client
         int FromBBuffer(xx::BBuffer &bb) override;
     };
 }
-namespace CatchFish
+namespace CatchFish::Events
 {
-    // 鱼配置信息
-    class FishConfig : public xx::Object
+    // 子弹命中( 与鱼死分离. 鱼死相关可能要等服务器跨线程回调送回结果才能下发 )
+    class BulletHit : public xx::Object
     {
     public:
-        // 鱼类编号
-        int32_t typeId = 0;
-        // 鱼名
-        xx::String_p name;
-        // 打死鱼的金币所得基数( 也可理解成倍率 )
-        int64_t coin = 0;
-        // 帧总数
-        int32_t frameCount = 0;
-        // 基于整个鱼的最大晃动范围的圆形检测区( 粗判 )
-        PKG::CatchFish::CollisionArea_p collisionArea;
-        // 鱼帧动画信息集合
-        xx::List_p<PKG::CatchFish::FishSpriteFrame_p> frames;
-        // 鱼动画( 仅客户端 )
-        ::Animation_p anim;
+        // 座位索引( 0: 左上  1: 右上  2: 左下 3: 右下 )
+        int32_t sitIndex = 0;
+        // 子弹流水号
+        int32_t bulletSerialNumber = 0;
 
-        typedef FishConfig ThisType;
+        typedef BulletHit ThisType;
         typedef xx::Object BaseType;
-	    FishConfig(xx::MemPool* mempool);
-	    FishConfig(xx::BBuffer *bb);
-		FishConfig(FishConfig const&) = delete;
-		FishConfig& operator=(FishConfig const&) = delete;
+	    BulletHit(xx::MemPool* mempool);
+	    BulletHit(xx::BBuffer *bb);
+		BulletHit(BulletHit const&) = delete;
+		BulletHit& operator=(BulletHit const&) = delete;
         void ToString(xx::String &str) const override;
         void ToStringCore(xx::String &str) const override;
         void ToBBuffer(xx::BBuffer &bb) const override;
         int FromBBuffer(xx::BBuffer &bb) override;
     };
-}
-namespace CatchFish::Events
-{
     // 鱼被打死
     class FishDead : public xx::Object
     {
@@ -758,7 +778,7 @@ namespace CatchFish::Events
         // 座位索引( 0: 左上  1: 右上  2: 左下 3: 右下 )
         int32_t sitIndex = 0;
         // 鱼流水号
-        int32_t fishSerial = 0;
+        int32_t fishSerialNumber = 0;
         // 金币所得
         int64_t coin = 0;
 
@@ -918,7 +938,6 @@ namespace CatchFish_Client
         bb.Write(this->frameNumber);
         bb.Write(this->leaves);
         bb.Write(this->joins);
-        bb.Write(this->hitss);
         bb.Write(this->fishDeads);
         bb.Write(this->fires);
         bb.Write(this->fireEnds);
@@ -933,8 +952,6 @@ namespace CatchFish_Client
         if (rtv = bb.Read(this->leaves)) return rtv;
         bb.readLengthLimit = 0;
         if (rtv = bb.Read(this->joins)) return rtv;
-        bb.readLengthLimit = 0;
-        if (rtv = bb.Read(this->hitss)) return rtv;
         bb.readLengthLimit = 0;
         if (rtv = bb.Read(this->fishDeads)) return rtv;
         bb.readLengthLimit = 0;
@@ -969,7 +986,6 @@ namespace CatchFish_Client
         str.Append(", \"frameNumber\" : ", this->frameNumber);
         str.Append(", \"leaves\" : ", this->leaves);
         str.Append(", \"joins\" : ", this->joins);
-        str.Append(", \"hitss\" : ", this->hitss);
         str.Append(", \"fishDeads\" : ", this->fishDeads);
         str.Append(", \"fires\" : ", this->fires);
         str.Append(", \"fireEnds\" : ", this->fireEnds);
@@ -997,7 +1013,7 @@ namespace Client_CatchFish
     inline int Join::FromBBuffer(xx::BBuffer &bb)
     {
         int rtv = 0;
-        bb.readLengthLimit = 16;
+        bb.readLengthLimit = 64;
         if (rtv = bb.Read(this->username)) return rtv;
         return rtv;
     }
@@ -1076,17 +1092,17 @@ namespace Client_CatchFish
     inline void Fire::ToBBuffer(xx::BBuffer &bb) const
     {
         bb.Write(this->frameNumber);
-        bb.Write(this->bulletSerial);
+        bb.Write(this->bulletSerialNumber);
         bb.Write(this->coin);
-        bb.Write(this->angle);
+        bb.Write(this->moveInc);
     }
     inline int Fire::FromBBuffer(xx::BBuffer &bb)
     {
         int rtv = 0;
         if (rtv = bb.Read(this->frameNumber)) return rtv;
-        if (rtv = bb.Read(this->bulletSerial)) return rtv;
+        if (rtv = bb.Read(this->bulletSerialNumber)) return rtv;
         if (rtv = bb.Read(this->coin)) return rtv;
-        if (rtv = bb.Read(this->angle)) return rtv;
+        if (rtv = bb.Read(this->moveInc)) return rtv;
         return rtv;
     }
 
@@ -1109,9 +1125,54 @@ namespace Client_CatchFish
     {
         this->BaseType::ToStringCore(str);
         str.Append(", \"frameNumber\" : ", this->frameNumber);
-        str.Append(", \"bulletSerial\" : ", this->bulletSerial);
+        str.Append(", \"bulletSerialNumber\" : ", this->bulletSerialNumber);
         str.Append(", \"coin\" : ", this->coin);
-        str.Append(", \"angle\" : ", this->angle);
+        str.Append(", \"moveInc\" : ", this->moveInc);
+    }
+
+
+	inline Hit::Hit(xx::MemPool* mempool)
+        : xx::Object(mempool)
+	{
+	}
+	inline Hit::Hit(xx::BBuffer *bb)
+        : xx::Object(bb->mempool)
+	{
+        if (int rtv = FromBBuffer(*bb)) throw rtv;
+	}
+    inline void Hit::ToBBuffer(xx::BBuffer &bb) const
+    {
+        bb.Write(this->bulletSerialNumber);
+        bb.Write(this->fishSerialNumber);
+    }
+    inline int Hit::FromBBuffer(xx::BBuffer &bb)
+    {
+        int rtv = 0;
+        if (rtv = bb.Read(this->bulletSerialNumber)) return rtv;
+        if (rtv = bb.Read(this->fishSerialNumber)) return rtv;
+        return rtv;
+    }
+
+    inline void Hit::ToString(xx::String &str) const
+    {
+        if (memHeader().flags)
+        {
+        	str.Append("[ \"***** recursived *****\" ]");
+        	return;
+        }
+        else memHeader().flags = 1;
+
+        str.Append("{ \"type\" : \"Hit\"");
+        ToStringCore(str);
+        str.Append(" }");
+        
+        memHeader().flags = 0;
+    }
+    inline void Hit::ToStringCore(xx::String &str) const
+    {
+        this->BaseType::ToStringCore(str);
+        str.Append(", \"bulletSerialNumber\" : ", this->bulletSerialNumber);
+        str.Append(", \"fishSerialNumber\" : ", this->fishSerialNumber);
     }
 
 
@@ -1462,6 +1523,7 @@ namespace CatchFish
         bb.Write(this->name);
         bb.Write(this->sitIndex);
         bb.Write(this->coin);
+        bb.Write(this->bulletSerialNumber);
         bb.Write(this->bullets);
     }
     inline int Player::FromBBuffer(xx::BBuffer &bb)
@@ -1472,6 +1534,7 @@ namespace CatchFish
         if (rtv = bb.Read(this->name)) return rtv;
         if (rtv = bb.Read(this->sitIndex)) return rtv;
         if (rtv = bb.Read(this->coin)) return rtv;
+        if (rtv = bb.Read(this->bulletSerialNumber)) return rtv;
         bb.readLengthLimit = 0;
         if (rtv = bb.Read(this->bullets)) return rtv;
         return rtv;
@@ -1500,6 +1563,7 @@ namespace CatchFish
         else str.Append(", \"name\" : nil");
         str.Append(", \"sitIndex\" : ", this->sitIndex);
         str.Append(", \"coin\" : ", this->coin);
+        str.Append(", \"bulletSerialNumber\" : ", this->bulletSerialNumber);
         str.Append(", \"bullets\" : ", this->bullets);
     }
 
@@ -1516,7 +1580,7 @@ namespace CatchFish
     inline void MoveObject::ToBBuffer(xx::BBuffer &bb) const
     {
         bb.Write(this->indexAtContainer);
-        bb.Write(this->serial);
+        bb.Write(this->serialNumber);
         bb.Write(this->bornFrameNumber);
         bb.Write(this->bornPos);
         bb.Write(this->pos);
@@ -1527,7 +1591,7 @@ namespace CatchFish
     {
         int rtv = 0;
         if (rtv = bb.Read(this->indexAtContainer)) return rtv;
-        if (rtv = bb.Read(this->serial)) return rtv;
+        if (rtv = bb.Read(this->serialNumber)) return rtv;
         if (rtv = bb.Read(this->bornFrameNumber)) return rtv;
         if (rtv = bb.Read(this->bornPos)) return rtv;
         if (rtv = bb.Read(this->pos)) return rtv;
@@ -1555,7 +1619,7 @@ namespace CatchFish
     {
         this->BaseType::ToStringCore(str);
         str.Append(", \"indexAtContainer\" : ", this->indexAtContainer);
-        str.Append(", \"serial\" : ", this->serial);
+        str.Append(", \"serialNumber\" : ", this->serialNumber);
         str.Append(", \"bornFrameNumber\" : ", this->bornFrameNumber);
         str.Append(", \"bornPos\" : ", this->bornPos);
         str.Append(", \"pos\" : ", this->pos);
@@ -1682,6 +1746,7 @@ namespace CatchFish
         bb.Write(this->rnd);
         bb.WriteDefaultValue<PKG::CatchFish::Config_p>();
         bb.Write(this->players);
+        bb.Write(this->fishSerialNumber);
         bb.Write(this->fishs);
         bb.WriteDefaultValue<PKG::CatchFish_Client::FrameEvents_p>();
     }
@@ -1693,6 +1758,7 @@ namespace CatchFish
         if (rtv = bb.Read(this->cfg)) return rtv;
         bb.readLengthLimit = 0;
         if (rtv = bb.Read(this->players)) return rtv;
+        if (rtv = bb.Read(this->fishSerialNumber)) return rtv;
         bb.readLengthLimit = 0;
         if (rtv = bb.Read(this->fishs)) return rtv;
         if (rtv = bb.Read(this->frameEvents)) return rtv;
@@ -1721,6 +1787,7 @@ namespace CatchFish
         str.Append(", \"rnd\" : ", this->rnd);
         str.Append(", \"cfg\" : ", this->cfg);
         str.Append(", \"players\" : ", this->players);
+        str.Append(", \"fishSerialNumber\" : ", this->fishSerialNumber);
         str.Append(", \"fishs\" : ", this->fishs);
         str.Append(", \"frameEvents\" : ", this->frameEvents);
     }
@@ -1784,6 +1851,7 @@ namespace CatchFish::Events
     {
         bb.Write(this->name);
         bb.Write(this->sitIndex);
+        bb.Write(this->coin);
     }
     inline int JoinPlayer::FromBBuffer(xx::BBuffer &bb)
     {
@@ -1791,6 +1859,7 @@ namespace CatchFish::Events
         bb.readLengthLimit = 0;
         if (rtv = bb.Read(this->name)) return rtv;
         if (rtv = bb.Read(this->sitIndex)) return rtv;
+        if (rtv = bb.Read(this->coin)) return rtv;
         return rtv;
     }
 
@@ -1815,6 +1884,7 @@ namespace CatchFish::Events
         if (this->name) str.Append(", \"name\" : \"", this->name, "\"");
         else str.Append(", \"name\" : nil");
         str.Append(", \"sitIndex\" : ", this->sitIndex);
+        str.Append(", \"coin\" : ", this->coin);
     }
 
 
@@ -1831,18 +1901,18 @@ namespace CatchFish::Events
     {
         bb.Write(this->sitIndex);
         bb.Write(this->frameNumber);
-        bb.Write(this->bulletSerial);
+        bb.Write(this->bulletSerialNumber);
         bb.Write(this->coin);
-        bb.Write(this->angle);
+        bb.Write(this->moveInc);
     }
     inline int Fire::FromBBuffer(xx::BBuffer &bb)
     {
         int rtv = 0;
         if (rtv = bb.Read(this->sitIndex)) return rtv;
         if (rtv = bb.Read(this->frameNumber)) return rtv;
-        if (rtv = bb.Read(this->bulletSerial)) return rtv;
+        if (rtv = bb.Read(this->bulletSerialNumber)) return rtv;
         if (rtv = bb.Read(this->coin)) return rtv;
-        if (rtv = bb.Read(this->angle)) return rtv;
+        if (rtv = bb.Read(this->moveInc)) return rtv;
         return rtv;
     }
 
@@ -1866,9 +1936,9 @@ namespace CatchFish::Events
         this->BaseType::ToStringCore(str);
         str.Append(", \"sitIndex\" : ", this->sitIndex);
         str.Append(", \"frameNumber\" : ", this->frameNumber);
-        str.Append(", \"bulletSerial\" : ", this->bulletSerial);
+        str.Append(", \"bulletSerialNumber\" : ", this->bulletSerialNumber);
         str.Append(", \"coin\" : ", this->coin);
-        str.Append(", \"angle\" : ", this->angle);
+        str.Append(", \"moveInc\" : ", this->moveInc);
     }
 
 
@@ -2016,13 +2086,13 @@ namespace CatchFish::Events
     inline void BulletHit::ToBBuffer(xx::BBuffer &bb) const
     {
         bb.Write(this->sitIndex);
-        bb.Write(this->bulletSerial);
+        bb.Write(this->bulletSerialNumber);
     }
     inline int BulletHit::FromBBuffer(xx::BBuffer &bb)
     {
         int rtv = 0;
         if (rtv = bb.Read(this->sitIndex)) return rtv;
-        if (rtv = bb.Read(this->bulletSerial)) return rtv;
+        if (rtv = bb.Read(this->bulletSerialNumber)) return rtv;
         return rtv;
     }
 
@@ -2045,7 +2115,7 @@ namespace CatchFish::Events
     {
         this->BaseType::ToStringCore(str);
         str.Append(", \"sitIndex\" : ", this->sitIndex);
-        str.Append(", \"bulletSerial\" : ", this->bulletSerial);
+        str.Append(", \"bulletSerialNumber\" : ", this->bulletSerialNumber);
     }
 
 
@@ -2061,14 +2131,14 @@ namespace CatchFish::Events
     inline void FishDead::ToBBuffer(xx::BBuffer &bb) const
     {
         bb.Write(this->sitIndex);
-        bb.Write(this->fishSerial);
+        bb.Write(this->fishSerialNumber);
         bb.Write(this->coin);
     }
     inline int FishDead::FromBBuffer(xx::BBuffer &bb)
     {
         int rtv = 0;
         if (rtv = bb.Read(this->sitIndex)) return rtv;
-        if (rtv = bb.Read(this->fishSerial)) return rtv;
+        if (rtv = bb.Read(this->fishSerialNumber)) return rtv;
         if (rtv = bb.Read(this->coin)) return rtv;
         return rtv;
     }
@@ -2092,7 +2162,7 @@ namespace CatchFish::Events
     {
         this->BaseType::ToStringCore(str);
         str.Append(", \"sitIndex\" : ", this->sitIndex);
-        str.Append(", \"fishSerial\" : ", this->fishSerial);
+        str.Append(", \"fishSerialNumber\" : ", this->fishSerialNumber);
         str.Append(", \"coin\" : ", this->coin);
     }
 
@@ -2108,7 +2178,6 @@ namespace xx
 	template<> struct TypeId<PKG::CatchFish_Client::FrameEvents> { static const uint16_t value = 7; };
 	template<> struct TypeId<xx::List<PKG::CatchFish::Events::LeavePlayer_p>> { static const uint16_t value = 8; };
 	template<> struct TypeId<xx::List<PKG::CatchFish::Events::JoinPlayer_p>> { static const uint16_t value = 9; };
-	template<> struct TypeId<xx::List<PKG::CatchFish::Events::BulletHit_p>> { static const uint16_t value = 10; };
 	template<> struct TypeId<xx::List<PKG::CatchFish::Events::FishDead_p>> { static const uint16_t value = 11; };
 	template<> struct TypeId<xx::List<PKG::CatchFish::Events::Fire_p>> { static const uint16_t value = 12; };
 	template<> struct TypeId<xx::List<PKG::CatchFish::Events::FireEnd_p>> { static const uint16_t value = 13; };
@@ -2117,6 +2186,7 @@ namespace xx
 	template<> struct TypeId<PKG::Client_CatchFish::Join> { static const uint16_t value = 16; };
 	template<> struct TypeId<PKG::Client_CatchFish::Leave> { static const uint16_t value = 17; };
 	template<> struct TypeId<PKG::Client_CatchFish::Fire> { static const uint16_t value = 18; };
+	template<> struct TypeId<PKG::Client_CatchFish::Hit> { static const uint16_t value = 50; };
 	template<> struct TypeId<PKG::Client_CatchFish::FireBegin> { static const uint16_t value = 19; };
 	template<> struct TypeId<PKG::Client_CatchFish::FireChangeAngle> { static const uint16_t value = 20; };
 	template<> struct TypeId<PKG::Client_CatchFish::FireEnd> { static const uint16_t value = 21; };
@@ -2156,7 +2226,6 @@ namespace PKG
 	    xx::MemPool::Register<PKG::CatchFish_Client::FrameEvents, xx::Object>();
 	    xx::MemPool::Register<xx::List<PKG::CatchFish::Events::LeavePlayer_p>, xx::Object>();
 	    xx::MemPool::Register<xx::List<PKG::CatchFish::Events::JoinPlayer_p>, xx::Object>();
-	    xx::MemPool::Register<xx::List<PKG::CatchFish::Events::BulletHit_p>, xx::Object>();
 	    xx::MemPool::Register<xx::List<PKG::CatchFish::Events::FishDead_p>, xx::Object>();
 	    xx::MemPool::Register<xx::List<PKG::CatchFish::Events::Fire_p>, xx::Object>();
 	    xx::MemPool::Register<xx::List<PKG::CatchFish::Events::FireEnd_p>, xx::Object>();
@@ -2165,6 +2234,7 @@ namespace PKG
 	    xx::MemPool::Register<PKG::Client_CatchFish::Join, xx::Object>();
 	    xx::MemPool::Register<PKG::Client_CatchFish::Leave, xx::Object>();
 	    xx::MemPool::Register<PKG::Client_CatchFish::Fire, xx::Object>();
+	    xx::MemPool::Register<PKG::Client_CatchFish::Hit, xx::Object>();
 	    xx::MemPool::Register<PKG::Client_CatchFish::FireBegin, xx::Object>();
 	    xx::MemPool::Register<PKG::Client_CatchFish::FireChangeAngle, xx::Object>();
 	    xx::MemPool::Register<PKG::Client_CatchFish::FireEnd, xx::Object>();

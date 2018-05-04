@@ -1,5 +1,5 @@
 ﻿
-PKG_PkgGenMd5_Value = 'bac9c98b741ca3d5779c9a18d795d3d1'
+PKG_PkgGenMd5_Value = '2bbf1ed41239f78a65541eb2ddd51868'
 
 --[[
 进入游戏成功
@@ -105,6 +105,10 @@ PKG_CatchFish_Scene = {
         ]]
         o.players = null -- List_PKG_CatchFish_Player_
         --[[
+        鱼的自增流水号
+        ]]
+        o.fishSerialNumber = 0 -- Int32
+        --[[
         所有鱼
         ]]
         o.fishs = null -- List_PKG_CatchFish_Fish_
@@ -115,20 +119,24 @@ PKG_CatchFish_Scene = {
         return o
     end,
     FromBBuffer = function( bb, o )
+        local ReadInt32 = bb.ReadInt32
         local ReadObject = bb.ReadObject
-        o.frameNumber = bb:ReadInt32()
+        o.frameNumber = ReadInt32( bb )
         o.rnd = ReadObject( bb )
         o.cfg = ReadObject( bb )
         o.players = ReadObject( bb )
+        o.fishSerialNumber = ReadInt32( bb )
         o.fishs = ReadObject( bb )
         o.frameEvents = ReadObject( bb )
     end,
     ToBBuffer = function( bb, o )
+        local WriteInt32 = bb.WriteInt32
         local WriteObject = bb.WriteObject
-        bb:WriteInt32( o.frameNumber )
+        WriteInt32( bb, o.frameNumber )
         WriteObject( bb, o.rnd )
         WriteObject( bb, o.cfg )
         WriteObject( bb, o.players )
+        WriteInt32( bb, o.fishSerialNumber )
         WriteObject( bb, o.fishs )
         WriteObject( bb, o.frameEvents )
     end
@@ -159,10 +167,6 @@ PKG_CatchFish_Client_FrameEvents = {
         ]]
         o.joins = null -- List_PKG_CatchFish_Events_JoinPlayer_
         --[[
-        多个玩家的子弹 命中 信息( 相同玩家可能有多条 )
-        ]]
-        o.hitss = null -- List_PKG_CatchFish_Events_BulletHit_
-        --[[
         多条鱼 死亡 & 结算 信息
         ]]
         o.fishDeads = null -- List_PKG_CatchFish_Events_FishDead_
@@ -189,7 +193,6 @@ PKG_CatchFish_Client_FrameEvents = {
         o.frameNumber = bb:ReadInt32()
         o.leaves = ReadObject( bb )
         o.joins = ReadObject( bb )
-        o.hitss = ReadObject( bb )
         o.fishDeads = ReadObject( bb )
         o.fires = ReadObject( bb )
         o.fireEnds = ReadObject( bb )
@@ -201,7 +204,6 @@ PKG_CatchFish_Client_FrameEvents = {
         bb:WriteInt32( o.frameNumber )
         WriteObject( bb, o.leaves )
         WriteObject( bb, o.joins )
-        WriteObject( bb, o.hitss )
         WriteObject( bb, o.fishDeads )
         WriteObject( bb, o.fires )
         WriteObject( bb, o.fireEnds )
@@ -264,33 +266,6 @@ List_PKG_CatchFish_Events_JoinPlayer_ = {
     end
 }
 BBuffer.Register( List_PKG_CatchFish_Events_JoinPlayer_ )
-List_PKG_CatchFish_Events_BulletHit_ = {
-    typeName = "List_PKG_CatchFish_Events_BulletHit_",
-    typeId = 10,
-    Create = function()
-        local o = {}
-        o.__proto = List_PKG_CatchFish_Events_BulletHit_
-        o.__index = o
-        o.__newindex = o
-        return o
-    end,
-    FromBBuffer = function( bb, o )
-		local len = bb:ReadUInt32()
-        local f = BBuffer.ReadObject
-		for i = 1, len do
-			o[ i ] = f( bb )
-		end
-    end,
-    ToBBuffer = function( bb, o )
-        local len = #o
-		bb:WriteUInt32( len )
-        local f = BBuffer.WriteObject
-        for i = 1, len do
-			f( bb, o[ i ] )
-		end
-    end
-}
-BBuffer.Register( List_PKG_CatchFish_Events_BulletHit_ )
 List_PKG_CatchFish_Events_FishDead_ = {
     typeName = "List_PKG_CatchFish_Events_FishDead_",
     typeId = 11,
@@ -491,33 +466,67 @@ PKG_Client_CatchFish_Fire = {
         --[[
         子弹流水号
         ]]
-        o.bulletSerial = 0 -- Int32
+        o.bulletSerialNumber = 0 -- Int32
         --[[
         金币价值( 也可理解为倍率 )
         ]]
         o.coin = 0 -- Int64
         --[[
-        射击角度( 相对于炮台自己的正方向角度 )
+        步进
         ]]
-        o.angle = 0 -- Single
+        o.moveInc = null -- _xx_Pos
         return o
     end,
     FromBBuffer = function( bb, o )
         local ReadInt32 = bb.ReadInt32
         o.frameNumber = ReadInt32( bb )
-        o.bulletSerial = ReadInt32( bb )
+        o.bulletSerialNumber = ReadInt32( bb )
         o.coin = bb:ReadInt64()
-        o.angle = bb:ReadSingle()
+        o.moveInc = bb:ReadObject()
     end,
     ToBBuffer = function( bb, o )
         local WriteInt32 = bb.WriteInt32
         WriteInt32( bb, o.frameNumber )
-        WriteInt32( bb, o.bulletSerial )
+        WriteInt32( bb, o.bulletSerialNumber )
         bb:WriteInt64( o.coin )
-        bb:WriteSingle( o.angle )
+        bb:WriteObject( o.moveInc )
     end
 }
 BBuffer.Register( PKG_Client_CatchFish_Fire )
+--[[
+当前玩家自己的子弹打中鱼
+]]
+PKG_Client_CatchFish_Hit = {
+    typeName = "PKG_Client_CatchFish_Hit",
+    typeId = 50,
+    Create = function()
+        local o = {}
+        o.__proto = PKG_Client_CatchFish_Hit
+        o.__index = o
+        o.__newindex = o
+
+        --[[
+        子弹流水号
+        ]]
+        o.bulletSerialNumber = 0 -- Int32
+        --[[
+        鱼流水号
+        ]]
+        o.fishSerialNumber = 0 -- Int32
+        return o
+    end,
+    FromBBuffer = function( bb, o )
+        local ReadInt32 = bb.ReadInt32
+        o.bulletSerialNumber = ReadInt32( bb )
+        o.fishSerialNumber = ReadInt32( bb )
+    end,
+    ToBBuffer = function( bb, o )
+        local WriteInt32 = bb.WriteInt32
+        WriteInt32( bb, o.bulletSerialNumber )
+        WriteInt32( bb, o.fishSerialNumber )
+    end
+}
+BBuffer.Register( PKG_Client_CatchFish_Hit )
 --[[
 玩家开始开火( 连发, 仅适合帧同步服务器算法 )
 ]]
@@ -922,6 +931,10 @@ PKG_CatchFish_Player = {
         ]]
         o.coin = 0 -- Int64
         --[[
+        子弹的自增流水号
+        ]]
+        o.bulletSerialNumber = 0 -- Int32
+        --[[
         所有子弹
         ]]
         o.bullets = null -- List_PKG_CatchFish_Bullet_
@@ -938,6 +951,7 @@ PKG_CatchFish_Player = {
         o.name = ReadObject( bb )
         o.sitIndex = ReadInt32( bb )
         o.coin = bb:ReadInt64()
+        o.bulletSerialNumber = ReadInt32( bb )
         o.bullets = ReadObject( bb )
         o.ctx = ReadObject( bb )
     end,
@@ -948,6 +962,7 @@ PKG_CatchFish_Player = {
         WriteObject( bb, o.name )
         WriteInt32( bb, o.sitIndex )
         bb:WriteInt64( o.coin )
+        WriteInt32( bb, o.bulletSerialNumber )
         WriteObject( bb, o.bullets )
         WriteObject( bb, o.ctx )
     end
@@ -1016,7 +1031,7 @@ PKG_CatchFish_MoveObject = {
         --[[
         序列号( 当发生碰撞时用于标识 )
         ]]
-        o.serial = 0 -- Int32
+        o.serialNumber = 0 -- Int32
         --[[
         创建时的帧编号
         ]]
@@ -1047,7 +1062,7 @@ PKG_CatchFish_MoveObject = {
         local ReadInt32 = bb.ReadInt32
         local ReadObject = bb.ReadObject
         o.indexAtContainer = ReadInt32( bb )
-        o.serial = ReadInt32( bb )
+        o.serialNumber = ReadInt32( bb )
         o.bornFrameNumber = ReadInt32( bb )
         o.bornPos = ReadObject( bb )
         o.pos = ReadObject( bb )
@@ -1059,7 +1074,7 @@ PKG_CatchFish_MoveObject = {
         local WriteInt32 = bb.WriteInt32
         local WriteObject = bb.WriteObject
         WriteInt32( bb, o.indexAtContainer )
-        WriteInt32( bb, o.serial )
+        WriteInt32( bb, o.serialNumber )
         WriteInt32( bb, o.bornFrameNumber )
         WriteObject( bb, o.bornPos )
         WriteObject( bb, o.pos )
@@ -1299,15 +1314,21 @@ PKG_CatchFish_Events_JoinPlayer = {
         座位索引( 0: 左上  1: 右上  2: 左下 3: 右下 )
         ]]
         o.sitIndex = 0 -- Int32
+        --[[
+        进入的玩家拥有的金币数量
+        ]]
+        o.coin = 0 -- Int64
         return o
     end,
     FromBBuffer = function( bb, o )
         o.name = bb:ReadObject()
         o.sitIndex = bb:ReadInt32()
+        o.coin = bb:ReadInt64()
     end,
     ToBBuffer = function( bb, o )
         bb:WriteObject( o.name )
         bb:WriteInt32( o.sitIndex )
+        bb:WriteInt64( o.coin )
     end
 }
 BBuffer.Register( PKG_CatchFish_Events_JoinPlayer )
@@ -1328,38 +1349,38 @@ PKG_CatchFish_Events_Fire = {
         ]]
         o.sitIndex = 0 -- Int32
         --[[
-        当时的帧编号
+        起始帧编号
         ]]
         o.frameNumber = 0 -- Int32
         --[[
         子弹流水号
         ]]
-        o.bulletSerial = 0 -- Int32
+        o.bulletSerialNumber = 0 -- Int32
         --[[
         金币价值( 也可理解为倍率 )
         ]]
         o.coin = 0 -- Int64
         --[[
-        射击角度( 相对于炮台自己的正方向角度 )
+        步进
         ]]
-        o.angle = 0 -- Single
+        o.moveInc = null -- _xx_Pos
         return o
     end,
     FromBBuffer = function( bb, o )
         local ReadInt32 = bb.ReadInt32
         o.sitIndex = ReadInt32( bb )
         o.frameNumber = ReadInt32( bb )
-        o.bulletSerial = ReadInt32( bb )
+        o.bulletSerialNumber = ReadInt32( bb )
         o.coin = bb:ReadInt64()
-        o.angle = bb:ReadSingle()
+        o.moveInc = bb:ReadObject()
     end,
     ToBBuffer = function( bb, o )
         local WriteInt32 = bb.WriteInt32
         WriteInt32( bb, o.sitIndex )
         WriteInt32( bb, o.frameNumber )
-        WriteInt32( bb, o.bulletSerial )
+        WriteInt32( bb, o.bulletSerialNumber )
         bb:WriteInt64( o.coin )
-        bb:WriteSingle( o.angle )
+        bb:WriteObject( o.moveInc )
     end
 }
 BBuffer.Register( PKG_CatchFish_Events_Fire )
@@ -1472,18 +1493,18 @@ PKG_CatchFish_Events_BulletHit = {
         --[[
         子弹流水号
         ]]
-        o.bulletSerial = 0 -- Int32
+        o.bulletSerialNumber = 0 -- Int32
         return o
     end,
     FromBBuffer = function( bb, o )
         local ReadInt32 = bb.ReadInt32
         o.sitIndex = ReadInt32( bb )
-        o.bulletSerial = ReadInt32( bb )
+        o.bulletSerialNumber = ReadInt32( bb )
     end,
     ToBBuffer = function( bb, o )
         local WriteInt32 = bb.WriteInt32
         WriteInt32( bb, o.sitIndex )
-        WriteInt32( bb, o.bulletSerial )
+        WriteInt32( bb, o.bulletSerialNumber )
     end
 }
 BBuffer.Register( PKG_CatchFish_Events_BulletHit )
@@ -1506,7 +1527,7 @@ PKG_CatchFish_Events_FishDead = {
         --[[
         鱼流水号
         ]]
-        o.fishSerial = 0 -- Int32
+        o.fishSerialNumber = 0 -- Int32
         --[[
         金币所得
         ]]
@@ -1516,13 +1537,13 @@ PKG_CatchFish_Events_FishDead = {
     FromBBuffer = function( bb, o )
         local ReadInt32 = bb.ReadInt32
         o.sitIndex = ReadInt32( bb )
-        o.fishSerial = ReadInt32( bb )
+        o.fishSerialNumber = ReadInt32( bb )
         o.coin = bb:ReadInt64()
     end,
     ToBBuffer = function( bb, o )
         local WriteInt32 = bb.WriteInt32
         WriteInt32( bb, o.sitIndex )
-        WriteInt32( bb, o.fishSerial )
+        WriteInt32( bb, o.fishSerialNumber )
         bb:WriteInt64( o.coin )
     end
 }

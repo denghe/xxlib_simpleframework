@@ -36,6 +36,8 @@ interface ITypeIdMappings
 
     Client_CatchFish.Fire _18 { get; }
 
+    Client_CatchFish.Hit _50 { get; }
+
     Client_CatchFish.FireBegin _19 { get; }
 
     Client_CatchFish.FireChangeAngle _20 { get; }
