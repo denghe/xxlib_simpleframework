@@ -66,7 +66,7 @@ interface ITypeIdMappings
 
     List<CatchFish.Bullet> _31 { get; }
 
-    PlayerContext _47 { get; }
+    ClientPeer _47 { get; }
 
     CatchFish.MoveObject _33 { get; }
 

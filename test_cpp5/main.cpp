@@ -28,41 +28,31 @@ class ServiceCatchFish;
 
 namespace PKG::CatchFish
 {
+	class Scene;
 	class Player;
 }
 
-// 玩家上下文( 在 service 中放置，下标与 scene.players 保持同步 )
-class PlayerContext : public xx::UvContextBase
-{
-public:
-	ServiceCatchFish * service;
-	PKG::CatchFish::Player* player;
-	PlayerContext(ServiceCatchFish* service, PKG::CatchFish::Player* player);
-
-	void HandlePackage(xx::Object_p& o) override;
-	void HandleRequest(uint32_t serial, xx::Object_p& o) override;
-	void HandleDisconnect() override;
-};
-using PlayerContext_p = xx::Ptr<PlayerContext>;
 
 // 客户端only 类占位符
 class Sprite_p {};
 class Animation_p {};
 
-#include "../pkg/PKG_class.h"
-#include "fill_fish_cfg.h"
-
 // 派生一下以方便放置 scene, player 指针
 class ClientPeer : public xx::UvTcpPeer
 {
 public:
-	// 这几个成员变量不需要回收
-	ServiceCatchFish * service;
-	PKG::CatchFish::Scene_r scene;
-	PKG::CatchFish::Player_r player;
+	// 保存一个引用
+	PKG::CatchFish::Player* player = nullptr;
 
-	ClientPeer(ServiceCatchFish * service);
+	ClientPeer(ServiceCatchFish* service);
 };
+using ClientPeer_p = ClientPeer*;
+
+
+#include "../pkg/PKG_class.h"
+#include "fill_fish_cfg.h"
+
+
 
 // 服务上下文
 class ServiceCatchFish : public xx::Object
@@ -104,13 +94,13 @@ public:
 			// 未绑定到上下文之前，作为匿名连接，先接收 Join 指令
 			p_->OnReceivePackage = [this, p_](xx::BBuffer& bb)
 			{
-				// 打印收到的数据
+				// debug: 打印收到的数据
 				std::cout << bb << std::endl;
 
-				// 转储捕获变量, 以应对 p->OnReceivePackage 的覆盖绑定时捕获变量的丢失
-				auto self = this;
+				// 恢复 peer 原本的类型
 				auto p = (ClientPeer*)p_;
 
+				// 解包容器变量
 				xx::Object_p o_;
 
 				// 试解包, 解包失败, 断线
@@ -127,14 +117,21 @@ public:
 					return;
 				}
 
-				// 收到 join 包，开始逻辑处理( 只可能在这个 lambda 里出现这个包 )
+				// 收到 join 包
 				if (o_->memHeader().typeId == xx::TypeId_v<PKG::Client_CatchFish::Join>)
 				{
 					// 硬转还原出真实类型备用
 					auto& o = *(PKG::Client_CatchFish::Join_p*)&o_;
 
+					// 前置检查: peer 得是没有绑定过的
+					if (p->player)
+					{
+						p->Release();
+						return;
+					}
+
 					// 如果玩家已在线( name已存在 ), 就禁止登陆，踢掉
-					if (self->scene->players->Exists([&o](PKG::CatchFish::Player_p& plr)
+					if (scene->players->Exists([&o](PKG::CatchFish::Player_p& plr)
 					{
 						return plr->name->Equals(o->username);
 					}))
@@ -144,18 +141,18 @@ public:
 					}
 
 					// 选空位
-					self->freeSits.Clear();
-					self->freeSits.Add(0);
-					self->freeSits.Add(1);
-					self->freeSits.Add(2);
-					self->freeSits.Add(3);
-					for (size_t i = 0; i < self->scene->players->dataLen; ++i)
+					freeSits.Clear();
+					freeSits.Add(0);
+					freeSits.Add(1);
+					freeSits.Add(2);
+					freeSits.Add(3);
+					for (size_t i = 0; i < scene->players->dataLen; ++i)
 					{
-						self->freeSits.Remove(self->scene->players->At(i)->sitIndex);
+						freeSits.Remove(scene->players->At(i)->sitIndex);
 					}
 
 					// 没有空位了( 理论上讲如果是大厅分配过来的，不应该出现这种情况 )
-					if (self->freeSits.dataLen == 0)
+					if (freeSits.dataLen == 0)
 					{
 						p->Release();
 						return;
@@ -163,30 +160,165 @@ public:
 
 					// 创建玩家
 					PKG::CatchFish::Player_p plr;
-					plr.MPCreate(self->mempool);
-					plr->bullets.MPCreate(self->mempool);
-					plr->coin = self->scene->cfg->playerInitCoin;
+					plr.MPCreate(mempool);
+					plr->bullets.MPCreate(mempool);
+					plr->coin = scene->cfg->playerInitCoin;
 					plr->name = std::move(o->username);
-					plr->sitIndex = self->freeSits[0];
+					plr->sitIndex = freeSits[0];
+
+					// plr 绑定 peer
+					plr->peer = p;
+					p->player = plr.pointer;
 
 					// 向场景每帧包合并变量压入 Join 事件
 					PKG::CatchFish::Events::JoinPlayer_p j;
-					j.MPCreate(self->mempool);
+					j.MPCreate(mempool);
 					j->name = plr->name;
 					j->sitIndex = plr->sitIndex;
 					j->coin = plr->coin;
-					self->scene->frameEvents->joins->Add(std::move(j));
+					scene->frameEvents->joins->Add(std::move(j));
 
-					// 绑定玩家网络上下文
-					plr->ctx.Create(self->mempool, self, plr.pointer);
-					auto r = plr->ctx->BindPeer(p);			// 这句之后无法继续访问捕获变量
-					assert(r);								// 必然成功
-					p->player = plr;
-					p->scene = self->scene;
-
-					// 因为上面有引用到, 故最后再移入队列
-					self->scene->players->Add(std::move(plr));
+					// 最后将 player 移入队列
+					scene->players->Add(std::move(plr));
 				}
+				// 收到 开火
+				else if (o_->memHeader().typeId == xx::TypeId_v<PKG::Client_CatchFish::Fire>)
+				{
+					// 硬转还原出真实类型备用
+					auto& o = *(PKG::Client_CatchFish::Fire_p*)&o_;
+
+					// 前置检查：需要是 plr 绑定 peer 过的
+					if (!p->player)
+					{
+						p->Release();
+						return;
+					}
+
+					auto& plr = p->player;
+
+					// 扣玩家钱，判断钱够不够, 不够就忽略这个消息	// todo: 日志，调公式
+					if (plr->coin < o->coin) return;
+					plr->coin -= o->coin;
+
+					// 压入帧事件集 转发出去, 合法性判断，cd 判断先不加
+					PKG::CatchFish::Events::Fire_p f;
+					f.MPCreate(mempool);
+					f->moveInc = o->moveInc;
+					f->bulletSerialNumber = o->bulletSerialNumber;
+					f->coin = o->coin;
+					f->frameNumber = o->frameNumber;
+					f->sitIndex = plr->sitIndex;
+
+					scene->frameEvents->fires->Add(std::move(f));
+
+					// 创建子弹上下文
+					PKG::CatchFish::Bullet_p bullet;
+					bullet.MPCreate(mempool);
+					bullet->indexAtContainer = (int)plr->bullets->dataLen;
+					bullet->bornFrameNumber = o->frameNumber;
+					bullet->serialNumber = o->bulletSerialNumber;
+					bullet->coin = o->coin;
+					bullet->pos = xx::Pos{ 1280 / 2, 0 };
+					bullet->moveInc = o->moveInc;
+					plr->bullets->Add(std::move(bullet));
+
+					// todo: 存储子弹创建时间？以便于清除存在太长时间的子弹（可能因掉线而变野，或是掉线时清除子弹，回收金币?）
+				}
+				else if (o_->memHeader().typeId == xx::TypeId_v<PKG::Client_CatchFish::Hit>)
+				{
+					// 硬转还原出真实类型备用
+					auto& o = *(PKG::Client_CatchFish::Hit_p*)&o_;
+
+					// 前置检查：需要是 plr 绑定 peer 过的
+					if (!p->player)
+					{
+						p->Release();
+						return;
+					}
+
+					auto& plr = p->player;
+					auto& bullets = *plr->bullets;
+
+					// 先粗暴判断鱼和子弹在不在，在就算命中并下发( 压入帧事件 )
+					PKG::CatchFish::Bullet* b_ = nullptr;
+					for (auto& b : bullets)
+					{
+						if (b->serialNumber == o->bulletSerialNumber)
+						{
+							b_ = b.pointer;
+							break;
+						}
+					}
+
+					PKG::CatchFish::Fish* f_ = nullptr;
+					for (auto& f : *scene->fishs)
+					{
+						if (f->serialNumber == o->fishSerialNumber)
+						{
+							f_ = f.pointer;
+							break;
+						}
+					}
+					if (b_ && f_)
+					{
+						// todo: 调用杀鱼公式
+
+						// 这里假设一定打死鱼
+						PKG::CatchFish::Events::FishDead_p fd;
+						fd.MPCreate(mempool);
+						fd->coin = b_->coin * f_->cfg->coin;
+						fd->fishSerialNumber = f_->serialNumber;
+						fd->sitIndex = plr->sitIndex;
+						p->player->coin += fd->coin;
+						scene->frameEvents->fishDeads->Add(std::move(fd));
+
+						// 将子弹干掉
+						//// 资源回收
+						//b_->spriteBody->removeFromParentAndCleanup(true);	// 同步显示( 移除 )
+						//b_->spriteBody = nullptr;
+
+						bullets[bullets.dataLen - 1]->indexAtContainer = b_->indexAtContainer;
+						bullets.SwapRemoveAt(b_->indexAtContainer);
+					}
+				}
+				// todo: Leave 指令处理
+			};
+
+			p_->OnDispose = [this, p_] 
+			{
+				std::cout << p_->ip() << " disconnected." << std::endl;
+
+				// 恢复 peer 原本的类型
+				auto p = (ClientPeer*)p_;
+
+				// 前置检查: 看是否已 join
+				if (p->player)
+				{
+					// 压 Leave 事件, 清除指定玩家在游戏内的所有数据
+					PKG::CatchFish::Events::LeavePlayer_p lp;
+					lp.MPCreate(mempool);
+					lp->sitIndex = p->player->sitIndex;
+					scene->frameEvents->leaves->Add(std::move(lp));
+
+					auto& players = *scene->players;
+
+					// 将数据上下文从容器交换移除
+					// 从队列清除 player, 随着 player 被 Release, player 中的 ctx( 当前类 ) 也被析构，故下面就不写其他代码了
+					players[players.dataLen - 1]->indexAtContainer = p->player->indexAtContainer;
+					players.SwapRemoveAt(p->player->indexAtContainer);
+
+					// todo: 怀疑这里没有成功的删除 player, 场景那边似乎遍历到了 peer 无效的 player
+					p->player->peer = nullptr;
+					p->player = nullptr;
+				}
+				else
+				{
+					// 不必理会了
+				}
+
+				// 清除 p 的事件绑定( 这步可能导致 lambda 上下文立即回收，故下面不应该有 this, p_ 等捕获对象的访问
+				p->OnReceivePackage = nullptr;
+				p->OnDispose = nullptr;
 			};
 		};
 	}
@@ -265,7 +397,7 @@ public:
 
 			// 每 xx 帧生成 1 条鱼
 			++frameNumber;
-			if ((frameNumber % 30) == 0)
+			if ((frameNumber % 15) == 0)
 			{
 				// 创建鱼之上下文
 				auto fish = mempool->MPCreate<PKG::CatchFish::Fish>();
@@ -328,13 +460,10 @@ public:
 			{
 				if (scene.frameEvents->joins->Exists([&](auto& j) { return j->sitIndex == p->sitIndex; }))
 				{
-					if (p->ctx->PeerAlive())
-					{
-						PKG::CatchFish_Client::FullSync_p fs;
-						fs.MPCreate(mempool);
-						fs->scene = this->scene;
-						p->ctx->peer->Send(fs);
-					}
+					PKG::CatchFish_Client::FullSync_p fs;
+					fs.MPCreate(mempool);
+					fs->scene = this->scene;
+					p->peer->Send(fs);
 				}
 				else
 				{
@@ -355,10 +484,7 @@ public:
 						//	std::cout << fe->fires << std::endl;
 						//}
 
-						if (p->ctx->PeerAlive())
-						{
-							p->ctx->peer->Send(fe);
-						}
+						p->peer->Send(fe);
 					}
 				}
 			}
@@ -389,133 +515,7 @@ public:
 
 ClientPeer::ClientPeer(ServiceCatchFish * service)
 	: xx::UvTcpPeer(service->listener)
-	, service(service)
 {
-}
-
-
-inline PlayerContext::PlayerContext(ServiceCatchFish* service, PKG::CatchFish::Player* player)
-	: xx::UvContextBase(service->mempool)
-	, service(service)
-	, player(player)
-{
-}
-
-inline void PlayerContext::HandlePackage(xx::Object_p& o_)
-{
-	// 收到非法包, 断线
-	if (!o_)
-	{
-		//p->Release();
-		return;
-	}
-
-	assert(peer);
-	auto p = (ClientPeer*)peer;
-	assert(p->player);
-	auto& bullets = *p->player->bullets;
-
-	// todo: 将包存到某个队列，移动下面的代码，在扫 scene 的某个时机来处理，以确保扣钱加钱顺序正确
-
-	if (o_->memHeader().typeId == xx::TypeId_v<PKG::Client_CatchFish::Fire>)
-	{
-		// 硬转还原出真实类型备用
-		auto& o = *(PKG::Client_CatchFish::Fire_p*)&o_;
-
-		// 扣玩家钱，判断钱够不够, 不够就忽略这个消息	// todo: 日志，调公式
-		if (p->player->coin < o->coin) return;
-		p->player->coin -= o->coin;
-
-		// 压入帧事件集 转发出去, 合法性判断，cd 判断先不加
-		PKG::CatchFish::Events::Fire_p f;
-		f.MPCreate(mempool);
-		f->moveInc = o->moveInc;
-		f->bulletSerialNumber = o->bulletSerialNumber;
-		f->coin = o->coin;
-		f->frameNumber = o->frameNumber;
-		f->sitIndex = player->sitIndex;
-
-		service->scene->frameEvents->fires->Add(std::move(f));
-
-		// 创建子弹上下文
-		PKG::CatchFish::Bullet_p bullet;
-		bullet.MPCreate(mempool);
-		bullet->indexAtContainer = bullets.dataLen;
-		bullet->bornFrameNumber = o->frameNumber;
-		bullet->serialNumber = o->bulletSerialNumber;
-		bullet->coin = o->coin;
-		bullet->pos = xx::Pos{ 1280 / 2, 0 };
-		bullet->moveInc = o->moveInc;
-		bullets.Add(std::move(bullet));
-
-		// todo: 存储子弹创建时间？以便于清除存在太长时间的子弹（可能因掉线而变野，或是掉线时清除子弹，回收金币?）
-	}
-	else if (o_->memHeader().typeId == xx::TypeId_v<PKG::Client_CatchFish::Hit>)
-	{
-		// 硬转还原出真实类型备用
-		auto& o = *(PKG::Client_CatchFish::Hit_p*)&o_;
-
-		// 先粗暴判断鱼和子弹在不在，在就算命中并下发( 压入帧事件 )
-		PKG::CatchFish::Bullet* b_ = nullptr;
-		for (auto& b : bullets)
-		{
-			if (b->serialNumber == o->bulletSerialNumber)
-			{
-				b_ = b.pointer;
-				break;
-			}
-		}
-
-		PKG::CatchFish::Fish* f_ = nullptr;
-		for (auto& f : *service->scene->fishs)
-		{
-			if (f->serialNumber == o->fishSerialNumber)
-			{
-				f_ = f.pointer;
-				break;
-			}
-		}
-		if (b_ && f_)
-		{
-			// todo: 调用杀鱼公式
-
-			// 这里假设一定打死鱼
-			PKG::CatchFish::Events::FishDead_p fd;
-			fd.MPCreate(mempool);
-			fd->coin = b_->coin * f_->cfg->coin;
-			fd->fishSerialNumber = f_->serialNumber;
-			fd->sitIndex = player->sitIndex;
-			p->player->coin += fd->coin;
-			service->scene->frameEvents->fishDeads->Add(std::move(fd));
-
-			// 将子弹干掉
-			//// 资源回收
-			//b_->spriteBody->removeFromParentAndCleanup(true);	// 同步显示( 移除 )
-			//b_->spriteBody = nullptr;
-
-			bullets[bullets.dataLen - 1]->indexAtContainer = b_->indexAtContainer;
-			bullets.SwapRemoveAt(b_->indexAtContainer);
-		}
-	}
-
-	// todo: Leave 指令处理
-}
-
-inline void PlayerContext::HandleRequest(uint32_t serial, xx::Object_p& o) {}
-inline void PlayerContext::HandleDisconnect()
-{
-	// 压 Leave 事件, 清除指定玩家在游戏内的所有数据
-	PKG::CatchFish::Events::LeavePlayer_p lp;
-	lp.MPCreate(mempool);
-	lp->sitIndex = player->sitIndex;
-	service->scene->frameEvents->leaves->Add(std::move(lp));
-
-	auto& players = *service->scene->players;
-
-	// 将数据上下文从容器交换移除
-	// 从队列清除 player, 随着 player 被 Release, player 中的 ctx( 当前类 ) 也被析构，故下面就不写其他代码了
-	players[players.dataLen - 1]->indexAtContainer = player->indexAtContainer;
-	players.SwapRemoveAt(player->indexAtContainer);
 }
 
 int main()

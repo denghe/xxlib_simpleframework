@@ -89,7 +89,7 @@ namespace CatchFish
         List<Bullet> bullets;
 
         [Desc("玩家网络上下文, 不参与网络传输")]
-        PlayerContext ctx;
+        ClientPeer peer;
     }
 
     [Desc("鱼和子弹的基类")]

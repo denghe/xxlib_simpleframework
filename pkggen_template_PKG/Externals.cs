@@ -15,9 +15,9 @@ namespace xx
 
 }
 
-// 玩家上下文（仅服务器端）
+// 玩家网络连接（仅服务器端）
 [External(false)]
-class PlayerContext { }
+class ClientPeer { }
 
 // 显示用精灵（仅客户端）
 [External(false)]
