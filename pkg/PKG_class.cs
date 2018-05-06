@@ -4,7 +4,7 @@ namespace PKG
 {
     public static class PkgGenMd5
     {
-        public const string value = "2bbf1ed41239f78a65541eb2ddd51868"; 
+        public const string value = "73fe90a587f1d8cfc9b7aaca273a0806"; 
     }
 
 namespace CatchFish_Client
@@ -569,7 +569,7 @@ namespace CatchFish
         /// <summary>
         /// 玩家网络上下文, 不参与网络传输
         /// </summary>
-        public PlayerContext ctx;
+        public ClientPeer peer;
 
         public virtual ushort GetPackageId()
         {
@@ -584,7 +584,7 @@ namespace CatchFish
             bb.Write(this.coin);
             bb.Write(this.bulletSerialNumber);
             bb.Write(this.bullets);
-            bb.Write(this.ctx);
+            bb.Write(this.peer);
         }
 
         public virtual void FromBBuffer(BBuffer bb)
@@ -597,7 +597,7 @@ namespace CatchFish
             bb.Read(ref this.bulletSerialNumber);
             bb.readLengthLimit = 0;
             bb.Read(ref this.bullets);
-            bb.Read(ref this.ctx);
+            bb.Read(ref this.peer);
         }
 
     }
@@ -769,10 +769,6 @@ namespace CatchFish
         /// </summary>
         public xx.Random rnd;
         /// <summary>
-        /// 公用配置信息( 不参与网络传输, 需要根据 typeId 去 cfgs 定位手工还原 )
-        /// </summary>
-        public CatchFish.Config cfg;
-        /// <summary>
         /// 所有玩家( 子弹在玩家下面 )
         /// </summary>
         public List<CatchFish.Player> players;
@@ -798,7 +794,6 @@ namespace CatchFish
         {
             bb.Write(this.frameNumber);
             bb.Write(this.rnd);
-            bb.Write(default(CatchFish.Config));
             bb.Write(this.players);
             bb.Write(this.fishSerialNumber);
             bb.Write(this.fishs);
@@ -809,7 +804,6 @@ namespace CatchFish
         {
             bb.Read(ref this.frameNumber);
             bb.Read(ref this.rnd);
-            bb.Read(ref this.cfg);
             bb.readLengthLimit = 0;
             bb.Read(ref this.players);
             bb.Read(ref this.fishSerialNumber);
@@ -1134,7 +1128,7 @@ namespace CatchFish.Events
             BBuffer.Register<List<CatchFish.FishConfig>>(29);
             BBuffer.Register<CatchFish.Player>(30);
             BBuffer.Register<List<CatchFish.Bullet>>(31);
-            BBuffer.Register<PlayerContext>(47);
+            BBuffer.Register<ClientPeer>(47);
             BBuffer.Register<CatchFish.MoveObject>(33);
             BBuffer.Register<Sprite>(48);
             BBuffer.Register<CatchFish.Bullet>(34);

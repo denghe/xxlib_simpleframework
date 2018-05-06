@@ -1,5 +1,5 @@
 ﻿
-PKG_PkgGenMd5_Value = '2bbf1ed41239f78a65541eb2ddd51868'
+PKG_PkgGenMd5_Value = '73fe90a587f1d8cfc9b7aaca273a0806'
 
 --[[
 进入游戏成功
@@ -97,10 +97,6 @@ PKG_CatchFish_Scene = {
         ]]
         o.rnd = null -- _xx_Random
         --[[
-        公用配置信息( 不参与网络传输, 需要根据 typeId 去 cfgs 定位手工还原 )
-        ]]
-        o.cfg = null -- PKG_CatchFish_Config
-        --[[
         所有玩家( 子弹在玩家下面 )
         ]]
         o.players = null -- List_PKG_CatchFish_Player_
@@ -123,7 +119,6 @@ PKG_CatchFish_Scene = {
         local ReadObject = bb.ReadObject
         o.frameNumber = ReadInt32( bb )
         o.rnd = ReadObject( bb )
-        o.cfg = ReadObject( bb )
         o.players = ReadObject( bb )
         o.fishSerialNumber = ReadInt32( bb )
         o.fishs = ReadObject( bb )
@@ -134,7 +129,6 @@ PKG_CatchFish_Scene = {
         local WriteObject = bb.WriteObject
         WriteInt32( bb, o.frameNumber )
         WriteObject( bb, o.rnd )
-        WriteObject( bb, o.cfg )
         WriteObject( bb, o.players )
         WriteInt32( bb, o.fishSerialNumber )
         WriteObject( bb, o.fishs )
@@ -941,7 +935,7 @@ PKG_CatchFish_Player = {
         --[[
         玩家网络上下文, 不参与网络传输
         ]]
-        o.ctx = null -- _PlayerContext
+        o.peer = null -- _ClientPeer
         return o
     end,
     FromBBuffer = function( bb, o )
@@ -953,7 +947,7 @@ PKG_CatchFish_Player = {
         o.coin = bb:ReadInt64()
         o.bulletSerialNumber = ReadInt32( bb )
         o.bullets = ReadObject( bb )
-        o.ctx = ReadObject( bb )
+        o.peer = ReadObject( bb )
     end,
     ToBBuffer = function( bb, o )
         local WriteInt32 = bb.WriteInt32
@@ -964,7 +958,7 @@ PKG_CatchFish_Player = {
         bb:WriteInt64( o.coin )
         WriteInt32( bb, o.bulletSerialNumber )
         WriteObject( bb, o.bullets )
-        WriteObject( bb, o.ctx )
+        WriteObject( bb, o.peer )
     end
 }
 BBuffer.Register( PKG_CatchFish_Player )
@@ -995,12 +989,12 @@ List_PKG_CatchFish_Bullet_ = {
     end
 }
 BBuffer.Register( List_PKG_CatchFish_Bullet_ )
-_PlayerContext = {
-    typeName = "_PlayerContext",
+_ClientPeer = {
+    typeName = "_ClientPeer",
     typeId = 47,
     Create = function()
         local o = {}
-        o.__proto = _PlayerContext
+        o.__proto = _ClientPeer
         o.__index = o
         o.__newindex = o
 
@@ -1011,7 +1005,7 @@ _PlayerContext = {
     ToBBuffer = function( bb, o )
     end
 }
-BBuffer.Register( _PlayerContext )
+BBuffer.Register( _ClientPeer )
 --[[
 鱼和子弹的基类
 ]]

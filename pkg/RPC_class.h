@@ -5,7 +5,7 @@ namespace RPC
 {
 	struct PkgGenMd5
 	{
-		static constexpr char const* value = "b1d4ca3c471be971ef93f664b3a59e49";
+		static constexpr char const* value = "2e1aee30571f0f412450c108f11c989a";
     };
 
 namespace DB_Manage

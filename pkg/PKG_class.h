@@ -5,7 +5,7 @@ namespace PKG
 {
 	struct PkgGenMd5
 	{
-		static constexpr char const* value = "2bbf1ed41239f78a65541eb2ddd51868";
+		static constexpr char const* value = "73fe90a587f1d8cfc9b7aaca273a0806";
     };
 
 namespace CatchFish_Client
@@ -353,8 +353,6 @@ namespace CatchFish
         int32_t frameNumber = 0;
         // 公用随机数发生器
         ::xx::Random_p rnd;
-        // 公用配置信息( 不参与网络传输, 需要根据 typeId 去 cfgs 定位手工还原 )
-        PKG::CatchFish::Config_p cfg;
         // 所有玩家( 子弹在玩家下面 )
         xx::List_p<PKG::CatchFish::Player_p> players;
         // 鱼的自增流水号
@@ -438,7 +436,7 @@ namespace CatchFish
         // 所有子弹
         xx::List_p<PKG::CatchFish::Bullet_p> bullets;
         // 玩家网络上下文, 不参与网络传输
-        ::PlayerContext_p ctx;
+        ::ClientPeer_p peer;
 
         typedef Player ThisType;
         typedef xx::Object BaseType;
@@ -1744,7 +1742,6 @@ namespace CatchFish
     {
         bb.Write(this->frameNumber);
         bb.Write(this->rnd);
-        bb.WriteDefaultValue<PKG::CatchFish::Config_p>();
         bb.Write(this->players);
         bb.Write(this->fishSerialNumber);
         bb.Write(this->fishs);
@@ -1755,7 +1752,6 @@ namespace CatchFish
         int rtv = 0;
         if (rtv = bb.Read(this->frameNumber)) return rtv;
         if (rtv = bb.Read(this->rnd)) return rtv;
-        if (rtv = bb.Read(this->cfg)) return rtv;
         bb.readLengthLimit = 0;
         if (rtv = bb.Read(this->players)) return rtv;
         if (rtv = bb.Read(this->fishSerialNumber)) return rtv;
@@ -1785,7 +1781,6 @@ namespace CatchFish
         this->BaseType::ToStringCore(str);
         str.Append(", \"frameNumber\" : ", this->frameNumber);
         str.Append(", \"rnd\" : ", this->rnd);
-        str.Append(", \"cfg\" : ", this->cfg);
         str.Append(", \"players\" : ", this->players);
         str.Append(", \"fishSerialNumber\" : ", this->fishSerialNumber);
         str.Append(", \"fishs\" : ", this->fishs);

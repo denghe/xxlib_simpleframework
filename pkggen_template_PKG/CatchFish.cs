@@ -160,10 +160,6 @@ namespace CatchFish
         [Desc("公用随机数发生器")]
         xx.Random rnd;
 
-        [Desc("公用配置信息( 不参与网络传输, 需要根据 typeId 去 cfgs 定位手工还原 )")]
-        [NotSerialize]
-        Config cfg;
-
         [Desc("所有玩家( 子弹在玩家下面 )")]
         List<Player> players;
 
@@ -172,9 +168,6 @@ namespace CatchFish
 
         [Desc("所有鱼")]
         List<Fish> fishs;
-
-        //[Desc("所有子弹")]
-        //List<Bullet> bullets;
 
         [Desc("当前帧所有事件的合并包容器, 服务器专用, 独立发送")]
         [NotSerialize]
