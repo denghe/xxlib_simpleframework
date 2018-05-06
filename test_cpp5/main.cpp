@@ -380,6 +380,8 @@ public:
 					freeSits.Add(1);
 					freeSits.Add(2);
 					freeSits.Add(3);
+					freeSits.Add(4);
+					freeSits.Add(5);
 					for (size_t i = 0; i < fishScene->players->dataLen; ++i)
 					{
 						freeSits.Remove(fishScene->players->At(i)->sitIndex);
