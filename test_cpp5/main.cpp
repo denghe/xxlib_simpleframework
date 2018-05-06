@@ -325,8 +325,8 @@ public:
 			// 未绑定到上下文之前，作为匿名连接，先接收 Join 指令
 			p_->OnReceivePackage = [this, p_](xx::BBuffer& bb)
 			{
-				// debug: 打印收到的数据
-				std::cout << bb << std::endl;
+				//// debug: 打印收到的数据
+				//std::cout << bb << std::endl;
 
 				// 恢复 peer 原本的类型
 				auto p = (ClientPeer*)p_;
@@ -347,6 +347,9 @@ public:
 					p->Release();
 					return;
 				}
+
+				// debug: 打印收到的数据
+				std::cout << o_ << std::endl;
 
 				// 收到 join 包
 				if (o_->memHeader().typeId == xx::TypeId_v<PKG::Client_CatchFish::Join>)
@@ -392,7 +395,7 @@ public:
 					// 创建玩家
 					PKG::CatchFish::Player_p plr;
 					plr.MPCreate(mempool);
-					plr->indexAtContainer = fishScene->players->dataLen;
+					plr->indexAtContainer = (int)fishScene->players->dataLen;
 					plr->bullets.MPCreate(mempool);
 					plr->coin = cfg->playerInitCoin;
 					plr->name = std::move(o->username);
@@ -457,7 +460,6 @@ public:
 				// 前置检查: 看是否已 join
 				if (p->player)
 				{
-
 					// 压 Leave 事件, 清除指定玩家在游戏内的所有数据
 					PKG::CatchFish::Events::LeavePlayer_p lp;
 					lp.MPCreate(mempool);
@@ -466,18 +468,8 @@ public:
 
 					// 从队列清除 player, 随着 player 被 Release, player 中的 ctx( 当前类 ) 也被析构，故下面就不写其他代码了
 					auto& players = *fishScene->players;
-					std::cout << std::endl << players << std::endl;
-
-					std::cout << p << std::endl << std::endl;
-					for (auto& plr : players)
-					{
-						std::cout << plr->peer << std::endl;
-					}
-
 					players[players.dataLen - 1]->indexAtContainer = p->player->indexAtContainer;
 					players.SwapRemoveAt(p->player->indexAtContainer);
-
-					std::cout << std::endl << players << std::endl;
 				}
 				else
 				{
