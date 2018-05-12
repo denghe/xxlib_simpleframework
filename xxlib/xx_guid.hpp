@@ -1,9 +1,12 @@
 ﻿#pragma once
 
+#ifdef __ANDROID_NDK__
+extern void uuid_generate(unsigned char* buf);
+#endif
+
 namespace xx
 {
-
-	inline Guid::Guid(bool fill) noexcept
+    inline Guid::Guid(bool fill) noexcept
 	{
 		if (fill)
 		{
@@ -40,7 +43,7 @@ namespace xx
 #ifdef _WIN32
 		CoCreateGuid((GUID*)this);
 #else
-		uuid_generate(reinterpret_cast<unsigned char *>this);
+		uuid_generate((unsigned char*)this);
 #endif
 	}
 

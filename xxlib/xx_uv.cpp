@@ -62,19 +62,19 @@ static int FillIP(uv_tcp_t* stream, char* buf, size_t bufLen)
 	sockaddr_in saddr;
 	int len = sizeof(saddr);
 	int r = 0;
-	if (r = uv_tcp_getpeername(stream, (sockaddr*)&saddr, &len)) return r;
-	if (r = uv_ip4_name(&saddr, buf, (int)bufLen)) throw r;
+	if ((r = uv_tcp_getpeername(stream, (sockaddr*)&saddr, &len))) return r;
+	if ((r = uv_ip4_name(&saddr, buf, (int)bufLen))) throw r;
 	auto dataLen = strlen(buf);
-	sprintf_s(buf + dataLen, bufLen - dataLen, ":%d", ntohs(saddr.sin_port));
+	sprintf(buf + dataLen, ":%d", ntohs(saddr.sin_port));
 	return r;
 }
 
 static int FillIP(sockaddr_in* addr, char* buf, size_t bufLen)
 {
 	int r = 0;
-	if (r = uv_ip4_name(addr, buf, (int)bufLen)) throw r;
+	if ((r = uv_ip4_name(addr, buf, (int)bufLen))) throw r;
 	auto dataLen = strlen(buf);
-	sprintf_s(buf + dataLen, bufLen - dataLen, ":%d", ntohs(addr->sin_port));
+	sprintf(buf + dataLen, ":%d", ntohs(addr->sin_port));
 	return r;
 }
 
@@ -383,7 +383,7 @@ void xx::UvTcpUdpBase::ReceiveImpl(char const* bufPtr, int len)
 	while (offset + 3 <= bbRecv.dataLen)			// 确保 3字节 包头长度
 	{
 		auto typeId = buf[offset];					// 读出头
-
+		int pkgType = 0;							// 备用
 
 		auto dataLen = (size_t)(buf[offset + 1] + (buf[offset + 2] << 8));
 		int headerLen = 3;
@@ -437,7 +437,7 @@ void xx::UvTcpUdpBase::ReceiveImpl(char const* bufPtr, int len)
 
 	LabAfterAddress:
 		bbRecv.offset = offset + addrLen;
-		auto pkgType = typeId & 3;
+		pkgType = typeId & 3;
 		if (pkgType == 0)
 		{
 			if (OnReceivePackage) OnReceivePackage(bbRecv);
@@ -778,7 +778,7 @@ void xx::UvTcpClient::Connect()
 
 void xx::UvTcpClient::Disconnect()
 {
-	if (!addrPtr) throw - 1;
+	if (!addrPtr) return;
 	if (state == UvTcpStates::Disconnected) return;
 	if (OnDisconnect) OnDisconnect();
 	Close((uv_handle_t*)ptr);
@@ -1475,7 +1475,7 @@ xx::UvUdpClient::~UvUdpClient()
 	Disconnect();
 
 	loop.udpClients.RemoveAt(index_at_container);
-	index_at_container = -1;
+	index_at_container = (size_t)-1;
 }
 
 void xx::UvUdpClient::Connect(xx::Guid const& g
@@ -1490,14 +1490,14 @@ void xx::UvUdpClient::Connect(xx::Guid const& g
 	if (!ptr) throw - 3;
 
 	int r = 0;
-	if (r = uv_udp_init((uv_loop_t*)loop.ptr, (uv_udp_t*)ptr))
+	if ((r = uv_udp_init((uv_loop_t*)loop.ptr, (uv_udp_t*)ptr)))
 	{
 		Free(mempool, ptr);
 		ptr = nullptr;
 		throw r;
 	}
 
-	if (r = uv_udp_recv_start((uv_udp_t*)ptr, AllocCB, (uv_udp_recv_cb)OnRecvCBImpl))
+	if ((r = uv_udp_recv_start((uv_udp_t*)ptr, AllocCB, (uv_udp_recv_cb)OnRecvCBImpl)))
 	{
 		Close((uv_handle_t*)ptr);
 		ptr = nullptr;

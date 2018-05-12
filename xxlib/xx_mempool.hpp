@@ -262,7 +262,7 @@ namespace xx
 			{
 				// 从字典移除
 				mp->idxStore->RemoveAt(addResult.index);
-				mp->Free<MemHeader_Object>(p);
+				mp->template Free<MemHeader_Object>(p);
 				return nullptr;
 			}
 		};
@@ -292,7 +292,7 @@ namespace xx
 	template<typename T>
 	T* MemPool::TryCast(Object* p) noexcept
 	{
-		return IsBaseOf(TypeId<T>::value, p->typeId()) ? (T*)p : nullptr;
+		return IsBaseOf(TypeId<T>::value, p->memHeader().typeId) ? (T*)p : nullptr;
 	}
 
 
@@ -449,7 +449,7 @@ namespace xx
 			{
 				auto mp = pointer->mempool;
 				pointer->~T();
-				mp->Free<MemHeader_Object>(pointer);
+				mp->template Free<MemHeader_Object>(pointer);
 			}
 			pointer = nullptr;
 		}

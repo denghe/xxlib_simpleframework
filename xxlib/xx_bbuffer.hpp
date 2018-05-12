@@ -15,7 +15,7 @@ namespace xx
 	template<typename ...TS>
 	void BBuffer::Write(TS const & ...vs)
 	{
-		std::initializer_list<int>{ (BytesFunc<TS>::WriteTo(*this, vs), 0)... };
+		std::initializer_list<int> n{ (BytesFunc<TS>::WriteTo(*this, vs), 0)... };
 		assert(this->dataLen <= this->bufLen);
 	}
 
@@ -102,6 +102,9 @@ namespace xx
 			return 0;
 		}
 
+		// simple validate tid( bad data or forget register typeid ? )
+		if (!MemPool::creators[tid]) return -5;
+
 		// get offset
 		size_t ptr_offset = 0, bb_offset_bak = offset - offsetRoot;
 		if (auto rtv = Read(ptr_offset)) return rtv;
@@ -113,8 +116,7 @@ namespace xx
 			if (!mempool->IsBaseOf(TypeId<T>::value, tid)) return -2;
 
 			// try get creator func
-			auto f = MemPool::creators[tid];
-			assert(f);
+			auto& f = MemPool::creators[tid];
 
 			// try create & read from bb
 			v = (T*)f(mempool, this, ptr_offset);

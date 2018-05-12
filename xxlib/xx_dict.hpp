@@ -317,11 +317,11 @@ namespace xx
 		return const_cast<Dict*>(this)->IndexAtValue(idx);
 	}
 
-	template <typename TK, typename TV>
-	Dict<TK, TV>::template Data const& Dict<TK, TV>::DataAt(int idx) const noexcept
-	{
-		return const_cast<Dict*>(this)->At(idx);
-	}
+//	template <typename TK, typename TV>
+//	Dict<TK, TV>::Data const& Dict<TK, TV>::DataAt(int idx) const noexcept
+//	{
+//		return const_cast<Dict*>(this)->At(idx);
+//	}
 
 	template <typename TK, typename TV>
 	bool Dict<TK, TV>::IndexExists(int idx) const noexcept

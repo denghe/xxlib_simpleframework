@@ -79,7 +79,7 @@ namespace xx
 		TK const& KeyAt(int idx) const noexcept;
 		TV& ValueAt(int idx) noexcept;
 		TV const& ValueAt(int idx) const noexcept;
-		Data const& DataAt(int idx) const noexcept;
+		//Data const& DataAt(int idx) const noexcept;
 
 		bool IndexExists(int idx) const noexcept;
 

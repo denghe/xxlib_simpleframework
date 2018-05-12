@@ -18,7 +18,7 @@
 #include <intrin.h>     // _BitScanReverse  64
 #include <objbase.h>
 #else
-#include <uuid/uuid.h>
+//#include <uuid/uuid.h>
 typedef struct _GUID {
 	unsigned int   Data1;
 	unsigned short Data2;

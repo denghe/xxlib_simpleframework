@@ -135,7 +135,7 @@ namespace xx
 	template<typename ...TS>
 	void String::Append(TS const & ...vs)
 	{
-		std::initializer_list<int>{ (StrFunc<TS>::WriteTo(*this, vs), 0)... };
+		std::initializer_list<int> n{ (StrFunc<TS>::WriteTo(*this, vs), 0)... };
 		assert(dataLen <= bufLen);
 	}
 

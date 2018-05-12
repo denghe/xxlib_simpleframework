@@ -14,7 +14,7 @@ namespace xx
 			};
 			struct // for ToString
 			{
-				unsigned long  data1;
+				uint32_t  data1;
 				unsigned short data2;
 				unsigned short data3;
 				unsigned char  data4[8];
