@@ -1,7 +1,8 @@
 ﻿基于 libuv, 适合用 C# 开发服务器端的基础框架
 
-开发需要 vs2017( 升级到最新 ) 并勾安 C++, CLI 相关, windows 通用 CRT SDK(旧版), windows 8.1 SDK, windows 通用  C 运行时
+开发需要 vs2017( 升级到最新 ) 并勾安 C++ 相关, windows 通用 CRT SDK(旧版), windows 8.1 SDK, windows 通用  C 运行时
 用 vs2017 打开 all.sln 即可看到所有最新项目.
+注意: 需要切换 Debug, Release 反复编译直到全部通过( 因为部分依赖采用了直接引用生成目录的 dll 文件的方式 )
 
 技术讨论群: 125081098
 
