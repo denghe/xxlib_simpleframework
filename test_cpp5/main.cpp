@@ -1,4 +1,11 @@
 ﻿#include "xx_uv.h"
+#include <concurrent_queue.h>
+struct Task
+{
+	xx::UvTcpPeer_r peer;
+	uint32_t serial;
+	std::string str;
+};
 void f1()			// rpc echo server
 {
 	xx::MemPool mp;
@@ -7,10 +14,37 @@ void f1()			// rpc echo server
 	auto listener = loop.CreateTcpListener();
 	listener->Bind("0.0.0.0", 12345);
 	listener->Listen();
-	uint64_t counter = 0;
-	listener->OnAccept = [&loop, &counter](xx::UvTcpPeer* peer)
+	xx::UvAsync dispacher(loop);
+
+	// 模拟一个线程池
+	Concurrency::concurrent_queue<Task*> tasks;
+	std::thread t([&]
 	{
-		peer->OnReceiveRequest = [peer, &counter](uint32_t serial, xx::BBuffer& bb)
+		while (true)
+		{
+			Task* task = nullptr;
+			while (tasks.try_pop(task))
+			{
+				dispacher.Dispatch([task] 
+				{
+					if (task->peer)
+					{
+						xx::String_p str;
+						task->peer->mempool->MPCreateTo(str, task->str);
+						task->peer->SendResponse(task->serial, str);
+					}
+					delete task;
+				});
+			}
+			Sleep(1);
+		}
+	});
+	t.detach();
+
+	uint64_t counter = 0;
+	listener->OnAccept = [&loop, &counter, &tasks](xx::UvTcpPeer* peer)
+	{
+		peer->OnReceiveRequest = [peer, &counter, &tasks](uint32_t serial, xx::BBuffer& bb)
 		{
 			xx::Object_p o;
 			if (int r = bb.ReadRoot(o))			// 解不出来
@@ -20,7 +54,9 @@ void f1()			// rpc echo server
 			}
 			auto& pkg = *(xx::String_p*)&o;
 			if (pkg->Equals("asdf"))	++counter;
-			peer->SendResponse(serial, o);
+			
+			tasks.push(new Task{ peer, serial, pkg->c_str() });
+			//peer->SendResponse(serial, o);
 		};
 	};
 	auto timer = loop.CreateTimer(1000, 1000, [&loop, &counter]()
@@ -45,7 +81,7 @@ void f2()			// test client
 	});
 	auto timer2 = loop.CreateTimer(10, 1, [&]()
 	{
-		for (int i = 0; i < 600; ++i)
+		for (int i = 0; i < 500; ++i)
 		{
 			xx::String_p pkg;
 			mp.MPCreateTo(pkg);

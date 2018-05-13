@@ -974,6 +974,8 @@ xx::UvAsync::UvAsync(UvLoop & loop)
 		throw r;
 	}
 
+	OnFire = std::bind(&UvAsync::OnFireImpl, this);
+
 	index_at_container = loop.asyncs.dataLen;
 	loop.asyncs.Add(this);
 }
