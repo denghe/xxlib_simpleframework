@@ -583,7 +583,7 @@ namespace xx
         /// </summary>
         public void WriteBuf(byte[] buf, int offset, int dataLen)
         {
-            Reserve(offset + dataLen);
+            Reserve(dataLen + this.dataLen);
             Buffer.BlockCopy(buf, offset, this.buf, this.dataLen, dataLen);
             this.dataLen += dataLen;
         }
