@@ -14,8 +14,7 @@
 #include <iostream>
 #include <chrono>
 
-// IOS 如果要开启 C++/GNU++17 支持, 需要设置最低 IOS 版本为 11 以上, 这不太符合现状. 
-// 故在其值为 < 11 的情况下, 开启 C++/GNU++14 支持即可, constexpr 会报警告但可以继续使用
+// 当 IOS 最低版本兼容参数低于 11 时无法启用 C++17, 故启用 C++14 结合下面的各种造假来解决
 #ifdef __IPHONE_OS_VERSION_MIN_REQUIRED
 #if __IPHONE_OS_VERSION_MIN_REQUIRED < 110000
 namespace std
@@ -34,6 +33,18 @@ namespace std
 	inline constexpr bool is_enum_v = is_enum<T>::value;
 	template<class T1, class T2>
 	inline constexpr bool is_same_v = is_same<T1, T2>::value;
+
+	template<class MutexType>
+	class scoped_lock<MutexType>
+	{
+	public:
+		explicit scoped_lock(MutexType& m) : m(m) { m.lock(); }
+		~scoped_lock() { m.unlock(); }
+		scoped_lock(const scoped_lock&) = delete;
+		scoped_lock& operator=(const scoped_lock&) = delete;
+	private:
+		MutexType& m;
+	};
 }
 #endif
 #endif
