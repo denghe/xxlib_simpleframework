@@ -14,7 +14,8 @@
 #include <iostream>
 #include <chrono>
 
-// if ios min version < 11, it can't support c++17 aligned alloc new, so can choose c++14, support constexpr
+// IOS 如果要开启 C++/GNU++17 支持, 需要设置最低 IOS 版本为 11 以上, 这不太符合现状. 
+// 故在其值为 < 11 的情况下, 开启 C++/GNU++14 支持即可, constexpr 会报警告但可以继续使用
 #ifdef __IPHONE_OS_VERSION_MIN_REQUIRED
 #if __IPHONE_OS_VERSION_MIN_REQUIRED < 110000
 namespace std
@@ -31,6 +32,8 @@ namespace std
 	inline constexpr bool is_unsigned_v = is_unsigned<T>::value;
 	template<class T>
 	inline constexpr bool is_enum_v = is_enum<T>::value;
+	template<class T1, class T2>
+	inline constexpr bool is_same_v = is_same<T1, T2>::value;
 }
 #endif
 #endif
