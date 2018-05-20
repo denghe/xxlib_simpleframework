@@ -2,6 +2,10 @@
 
 #ifdef __ANDROID_NDK__
 extern void uuid_generate(unsigned char* buf);
+#else
+#ifndef _WIN32
+#include <uuid/uuid.h>
+#endif
 #endif
 
 namespace xx

@@ -1,4 +1,5 @@
-﻿#include <uv.h>
+﻿#define _CRT_SECURE_NO_WARNINGS
+#include <uv.h>
 #include "ikcp.h"
 #include "xx_uv.h"
 

@@ -14,17 +14,30 @@
 #include <iostream>
 #include <chrono>
 
+// if ios min version < 11, it can't support c++17 aligned alloc new, so can choose c++14, support constexpr
+#ifdef __IPHONE_OS_VERSION_MIN_REQUIRED
+#if __IPHONE_OS_VERSION_MIN_REQUIRED < 110000
+namespace std
+{
+	template<class B, class D>
+	inline constexpr bool is_base_of_v = is_base_of(B, D);
+	template<class T>
+	inline constexpr bool is_arithmetic_v = is_arithmetic<T>::value;
+	template<class T>
+	inline constexpr bool is_floating_point_v = is_floating_point<T>::value;
+	template<class T>
+	inline constexpr bool is_integral_v = is_integral<T>::value;
+	template<class T>
+	inline constexpr bool is_unsigned_v = is_unsigned<T>::value;
+	template<class T>
+	inline constexpr bool is_enum_v = is_enum<T>::value;
+}
+#endif
+#endif
+
 #ifdef _WIN32
 #include <intrin.h>     // _BitScanReverse  64
 #include <objbase.h>
-#else
-//#include <uuid/uuid.h>
-typedef struct _GUID {
-	unsigned int   Data1;
-	unsigned short Data2;
-	unsigned short Data3;
-	unsigned char  Data4[8];
-} GUID;
 #endif
 
 #ifdef min

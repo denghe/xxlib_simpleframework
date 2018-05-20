@@ -200,11 +200,17 @@ namespace xx
 		static inline void WriteTo(BBuffer& bb, T const &in)
 		{
 			bb.Reserve(bb.dataLen + sizeof(T) + 1);
-			bb.dataLen += VarWrite7(bb.buf + bb.dataLen, in);
+			//bb.dataLen += VarWrite7(bb.buf + bb.dataLen, in);   // ios compile error
+			if constexpr (sizeof(T) == 2) bb.dataLen += VarWrite7(bb.buf + bb.dataLen, *(uint16_t const*)&in);
+			if constexpr (sizeof(T) == 4) bb.dataLen += VarWrite7(bb.buf + bb.dataLen, *(uint32_t const*)&in);
+			if constexpr (sizeof(T) == 8) bb.dataLen += VarWrite7(bb.buf + bb.dataLen, *(uint64_t const*)&in);
 		}
 		static inline int ReadFrom(BBuffer& bb, T &out)
 		{
-			return VarRead7(bb.buf, bb.dataLen, bb.offset, out);
+			//return VarRead7(bb.buf, bb.dataLen, bb.offset, out);   // ios compile error
+			if constexpr (sizeof(T) == 2) return VarRead7(bb.buf, bb.dataLen, bb.offset, *(uint16_t*)&out);
+			if constexpr (sizeof(T) == 4) return VarRead7(bb.buf, bb.dataLen, bb.offset, *(uint32_t*)&out);
+			if constexpr (sizeof(T) == 8) return VarRead7(bb.buf, bb.dataLen, bb.offset, *(uint64_t*)&out);
 		}
 	};
 
