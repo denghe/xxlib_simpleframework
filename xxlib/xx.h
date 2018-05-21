@@ -20,7 +20,7 @@
 namespace std
 {
 	template<class B, class D>
-	inline constexpr bool is_base_of_v = is_base_of(B, D);
+    inline constexpr bool is_base_of_v = is_base_of<B, D>::value;
 	template<class T>
 	inline constexpr bool is_arithmetic_v = is_arithmetic<T>::value;
 	template<class T>
@@ -35,7 +35,7 @@ namespace std
 	inline constexpr bool is_same_v = is_same<T1, T2>::value;
 
 	template<class MutexType>
-	class scoped_lock<MutexType>
+	class scoped_lock
 	{
 	public:
 		explicit scoped_lock(MutexType& m) : m(m) { m.lock(); }
