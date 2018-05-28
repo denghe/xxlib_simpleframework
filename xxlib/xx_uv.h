@@ -108,17 +108,24 @@ namespace xx
 	public:
 		UvTimeouterBase(MemPool* mp);
 		~UvTimeouterBase();
-		UvTimeouter* timerManager = nullptr;
+		UvTimeouter* timeouter = nullptr;
 		UvTimeouterBase* timerPrev = nullptr;
 		UvTimeouterBase* timerNext = nullptr;
 		int timerIndex = -1;
 		std::function<void()> OnTimeout;
 
-		void TimerClear();
+		void TimeouterClear();
 		void TimeoutReset(int interval = 0);
-		void TimerStop();
-		void BindTimeouter(UvTimeouter* tm);
-		void UnbindTimerManager();
+		void TimeouterStop();
+		virtual void BindTimeouter(UvTimeouter*) = 0;
+		/*
+		void xx::T::BindTimeouter(UvTimeouter* tm = nullptr)
+		{
+			if (timeouter) throw - 1;
+			timeouter = tm ? tm : loop.timeouter;
+		}
+		*/
+		void UnbindTimeouter();
 		bool timering();
 	};
 
@@ -157,6 +164,8 @@ namespace xx
 		BBuffer bbSend;
 
 		UvTcpUdpBase(UvLoop& loop);
+
+		virtual void BindTimeouter(UvTimeouter* t = nullptr);
 
 		virtual void DisconnectImpl() = 0;
 		virtual bool Disconnected() = 0;

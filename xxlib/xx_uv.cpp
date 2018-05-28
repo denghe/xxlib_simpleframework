@@ -310,11 +310,11 @@ xx::UvTimeouterBase::UvTimeouterBase(MemPool* mp)
 }
 xx::UvTimeouterBase::~UvTimeouterBase()
 {
-	UnbindTimerManager();
+	UnbindTimeouter();
 	OnTimeout = nullptr;
 }
 
-void xx::UvTimeouterBase::TimerClear()
+void xx::UvTimeouterBase::TimeouterClear()
 {
 	timerPrev = nullptr;
 	timerNext = nullptr;
@@ -323,31 +323,25 @@ void xx::UvTimeouterBase::TimerClear()
 
 void xx::UvTimeouterBase::TimeoutReset(int interval)
 {
-	if (!timerManager) throw - 1;
-	timerManager->AddOrUpdate(this, interval);
+	if (!timeouter) throw - 1;
+	timeouter->AddOrUpdate(this, interval);
 }
 
-void xx::UvTimeouterBase::TimerStop()
+void xx::UvTimeouterBase::TimeouterStop()
 {
-	if (!timerManager) throw - 1;
-	if (timering()) timerManager->Remove(this);
+	if (!timeouter) throw - 1;
+	if (timering()) timeouter->Remove(this);
 }
 
-void xx::UvTimeouterBase::BindTimeouter(UvTimeouter* tm)
+void xx::UvTimeouterBase::UnbindTimeouter()
 {
-	if (timerManager) throw - 1;
-	timerManager = tm;
-}
-
-void xx::UvTimeouterBase::UnbindTimerManager()
-{
-	if (timering()) timerManager->Remove(this);
-	timerManager = nullptr;
+	if (timering()) timeouter->Remove(this);
+	timeouter = nullptr;
 }
 
 bool xx::UvTimeouterBase::timering()
 {
-	return timerManager && (timerIndex != -1 || timerPrev);
+	return timeouter && (timerIndex != -1 || timerPrev);
 }
 
 
@@ -365,6 +359,12 @@ xx::UvTcpUdpBase::UvTcpUdpBase(UvLoop& loop)
 	, bbRecv(loop.mempool)
 	, bbSend(loop.mempool)
 {
+}
+
+void xx::UvTcpUdpBase::BindTimeouter(UvTimeouter* t)
+{
+	if (timeouter) throw - 1;
+	timeouter = t ? t : loop.timeouter;
 }
 
 // 包头 = 1字节掩码 + 数据长(2/4字节) + 地址(转发) + 流水号(RPC)
@@ -894,9 +894,10 @@ void xx::UvTimeouter::Process()
 	auto t = timerss[cursor];
 	while (t)
 	{
+		assert(t->OnTimeout);
 		t->OnTimeout();
 		auto nt = t->timerNext;
-		t->TimerClear();
+		t->TimeouterClear();
 		t = nt;
 	};
 	timerss[cursor] = nullptr;
@@ -912,7 +913,7 @@ void xx::UvTimeouter::Clear()
 		while (t)
 		{
 			auto nt = t->timerNext;
-			t->TimerClear();
+			t->TimeouterClear();
 			t = nt;
 		};
 		timerss[i] = nullptr;
@@ -946,7 +947,7 @@ void xx::UvTimeouter::Remove(UvTimeouterBase * t)
 	if (t->timerNext) t->timerNext->timerPrev = t->timerPrev;
 	if (t->timerPrev) t->timerPrev->timerNext = t->timerNext;
 	else timerss[t->timerIndex] = t->timerNext;
-	t->TimerClear();
+	t->TimeouterClear();
 }
 
 void xx::UvTimeouter::AddOrUpdate(UvTimeouterBase * t, int interval)
