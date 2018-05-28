@@ -53,3 +53,34 @@ rpc_xxxxxxx
 test_cppxxx
 一些测试项目( 包含 C++ 部分最新的库的使用示例, 通常和 C# 部分差不多 )
 
+
+
+
+
+
+
+附: ubuntu 下的一些操作记录
+
+安装新版 gcc 并令其成为默认
+
+sudo apt-get install software-properties-common
+sudo add-apt-repository ppa:jonathonf/gcc-8.1
+sudo apt-get update
+sudo apt-get install gcc-8 g++-8
+
+sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 60 --slave /usr/bin/g++ g++ /usr/bin/g++-8
+sudo update-alternatives --config gcc
+gcc --version
+g++ --version
+
+
+libuv 自动 make 脚本需要的依赖
+
+sudo apt-get install autotools-dev
+
+
+sudo apt-get install uuid-dev
+
+
+test_cpp5 目录下编译出执行文件:
+ g++ -std=c++1z main.cpp ../xxlib/xx_uv.cpp ../xxlib/ikcp.cpp -o xx -I../xxlib -luv -luuid -static -lpthread
