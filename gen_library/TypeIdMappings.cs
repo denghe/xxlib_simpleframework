@@ -86,6 +86,18 @@ namespace TemplateLibrary
                     {
                         if (!types.ContainsKey(ft)) types.Add(ft, GetTypeId(ft));
                     }
+
+                    // 递归添加 List 的子类型
+                    LabBegin:
+                    while (ft.IsGenericType)
+                    {
+                        ft = ft.GenericTypeArguments[0];
+                        if (ft._IsUserClass() || ft.IsGenericType)
+                        {
+                            if (!types.ContainsKey(ft)) types.Add(ft, GetTypeId(ft));
+                        }
+                        goto LabBegin;
+                    }
                 }
             }
         }

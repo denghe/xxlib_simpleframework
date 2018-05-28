@@ -142,6 +142,7 @@ namespace " + c.Namespace + @"
             fs = c._GetFields();
             foreach (var f in fs)
             {
+                if (f.FieldType._IsExternal() && !f.FieldType._GetExternalSerializable()) continue;
                 var ft = f.FieldType;
                 if (f._Has<TemplateLibrary.NotSerialize>())
                 {
@@ -183,6 +184,7 @@ namespace " + c.Namespace + @"
             fs = c._GetFields();
             foreach (var f in fs)
             {
+                if (f.FieldType._IsExternal() && !f.FieldType._GetExternalSerializable()) continue;
                 var ft = f.FieldType;
 
                 if (ft.IsEnum)
@@ -246,8 +248,8 @@ namespace " + c.Namespace + @"
 
         foreach (var kv in typeIds.types)
         {
-            if (kv.Key == typeof(string) || kv.Key == typeof(TemplateLibrary.BBuffer)) continue;
             var ct = kv.Key;
+            if (ct._IsString() || ct._IsBBuffer() || ct._IsExternal() && !ct._GetExternalSerializable()) continue;
             var ctn = ct._GetTypeDecl_Cpp(templateName).CutLast();
             var typeId = kv.Value;
 

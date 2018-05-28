@@ -318,7 +318,7 @@ namespace " + c.Namespace.Replace(".", "::") + @"
             if (c._HasBaseType())
             {
                 sb.Append(@"
-        if (rtv = this->BaseType::FromBBuffer(bb)) return rtv;");
+        if ((rtv = this->BaseType::FromBBuffer(bb))) return rtv;");
             }
             fs = c._GetFields();
             foreach (var f in fs)
@@ -331,7 +331,7 @@ namespace " + c.Namespace.Replace(".", "::") + @"
                 }
 
                 sb.Append(@"
-        if (rtv = bb.Read(this->" + f.Name + @")) return rtv;");
+        if ((rtv = bb.Read(this->" + f.Name + @"))) return rtv;");
             }
             sb.Append(@"
         return rtv;
@@ -450,13 +450,13 @@ namespace xx
         var typeIds = new TemplateLibrary.TypeIds(asm);
         foreach (var kv in typeIds.types)
         {
-            var typeId = kv.Value;
             var ct = kv.Key;
+            if (ct._IsString() || ct._IsBBuffer() || ct._IsExternal() && !ct._GetExternalSerializable()) continue;
+            var typeId = kv.Value;
             string ctn;
             if (ct._IsList()) ctn = ct._GetSafeTypeDecl_Cpp(templateName, true);
             else ctn = ct._GetTypeDecl_Cpp(templateName).CutLast();
 
-            if (ct._IsString() || ct._IsBBuffer() || ct._IsExternal() && !ct._GetExternalSerializable()) continue;
             sb.Append(@"
 	template<> struct TypeId<" + ctn + @"> { static const uint16_t value = " + typeId + @"; };");
         }
@@ -471,13 +471,13 @@ namespace " + templateName + @"
         foreach (var kv in typeIds.types)
         {
             var ct = kv.Key;
+            if (ct._IsString() || ct._IsBBuffer() || ct._IsExternal() && !ct._GetExternalSerializable()) continue;
             string ctn;
             if (ct._IsList()) ctn = ct._GetSafeTypeDecl_Cpp(templateName, true);
             else ctn = ct._GetTypeDecl_Cpp(templateName).CutLast();
             var bt = ct.BaseType;
             var btn = ct._HasBaseType() ? bt._GetTypeDecl_Cpp(templateName).CutLast() : "xx::Object";
 
-            if (ct._IsString() || ct._IsBBuffer() || ct._IsExternal() && !ct._GetExternalSerializable()) continue;
             sb.Append(@"
 	    xx::MemPool::Register<" + ctn + @", " + btn + @">();");
         }
