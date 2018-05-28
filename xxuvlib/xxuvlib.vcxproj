@@ -45,11 +45,11 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IncludePath>$(SolutionDir);$(SolutionDir)libuv\include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)libuv\lib\release;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)libuv\lib\win64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IncludePath>$(SolutionDir);$(SolutionDir)libuv\include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)libuv\lib\release;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)libuv\lib\win64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>

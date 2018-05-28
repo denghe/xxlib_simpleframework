@@ -596,10 +596,15 @@ void xx::UvTcpBase::OnReadCBImpl(void * stream, ptrdiff_t nread, const void * bu
 	int len = (int)nread;
 	if (len > 0)
 	{
+		auto vn = tcp->memHeader().versionNumber;
 		tcp->ReceiveImpl(bufPtr, len);
+		if (vn != tcp->memHeader().versionNumber)
+		{
+			tcp = nullptr;
+		}
 	}
 	mp->Free(bufPtr);
-	if (len < 0)
+	if (tcp && len < 0)
 	{
 		tcp->DisconnectImpl();
 	}

@@ -604,47 +604,4 @@ namespace xx
 		}
 	}
 
-
-
-
-
-	// 万一会用到的一些声明
-	using UvLoop_p = Ptr<UvLoop>;
-	using UvListenerBase_p = Ptr<UvListenerBase>;
-	using UvTcpListener_p = Ptr<UvTcpListener>;
-	using UvTcpUdpBase_p = Ptr<UvTcpUdpBase>;
-	using UvTcpBase_p = Ptr<UvTcpBase>;
-	using UvTcpPeer_p = Ptr<UvTcpPeer>;
-	using UvTcpClient_p = Ptr<UvTcpClient>;
-	using UvTimer_p = Ptr<UvTimer>;
-	using UvTimeouterBase_p = Ptr<UvTimeouterBase>;
-	using UvTimeouter_p = Ptr<UvTimeouter>;
-	using UvAsync_p = Ptr<UvAsync>;
-	using UvRpcManager_p = Ptr<UvRpcManager>;
-	using UvTimeouter_p = Ptr<UvTimeouter>;
-	using UvContextBase_p = Ptr<UvContextBase>;
-	using UvUdpListener_p = Ptr<UvUdpListener>;
-	using UvUdpBase_p = Ptr<UvUdpBase>;
-	using UvUdpPeer_p = Ptr<UvUdpPeer>;
-	using UvUdpClient_p = Ptr<UvUdpClient>;
-
-	using UvLoop_r = Ref<UvLoop>;
-	using UvListenerBase_r = Ref<UvListenerBase>;
-	using UvTcpListener_r = Ref<UvTcpListener>;
-	using UvTcpUdpBase_r = Ref<UvTcpUdpBase>;
-	using UvTcpBase_r = Ref<UvTcpBase>;
-	using UvTcpPeer_r = Ref<UvTcpPeer>;
-	using UvTcpClient_r = Ref<UvTcpClient>;
-	using UvTimer_r = Ref<UvTimer>;
-	using UvTimeouterBase_r = Ref<UvTimeouterBase>;
-	using UvTimeouter_r = Ref<UvTimeouter>;
-	using UvAsync_r = Ref<UvAsync>;
-	using UvRpcManager_r = Ref<UvRpcManager>;
-	using UvTimeouter_r = Ref<UvTimeouter>;
-	using UvContextBase_r = Ref<UvContextBase>;
-	using UvUdpListener_r = Ref<UvUdpListener>;
-	using UvUdpBase_r = Ref<UvUdpBase>;
-	using UvUdpPeer_r = Ref<UvUdpPeer>;
-	using UvUdpClient_r = Ref<UvUdpClient>;
-
 }

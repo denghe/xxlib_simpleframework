@@ -1,108 +1,85 @@
 ﻿#include "xx_uv.h"
-#include <concurrent_queue.h>
-struct Task
+
+//void f1()			// rpc echo server
+//{
+//	xx::MemPool mp;
+//	xx::UvLoop loop(&mp);
+//	loop.InitRpcManager();
+//	auto listener = loop.CreateTcpListener();
+//	listener->Bind("0.0.0.0", 12345);
+//	listener->Listen();
+//	xx::UvAsync dispacher(loop);
+//
+//	// 模拟一个线程池
+//	Concurrency::concurrent_queue<Task*> tasks;
+//	std::thread t([&]
+//	{
+//		while (true)
+//		{
+//			Task* task = nullptr;
+//			while (tasks.try_pop(task))
+//			{
+//				dispacher.Dispatch([task] 
+//				{
+//					if (task->peer)
+//					{
+//						xx::String_p str;
+//						task->peer->mempool->MPCreateTo(str, task->str);
+//						task->peer->SendResponse(task->serial, str);
+//					}
+//					delete task;
+//				});
+//			}
+//			Sleep(1);
+//		}
+//	});
+//	t.detach();
+//
+//	uint64_t counter = 0;
+//	listener->OnAccept = [&loop, &counter, &tasks](xx::UvTcpPeer* peer)
+//	{
+//		peer->OnReceiveRequest = [peer, &counter, &tasks](uint32_t serial, xx::BBuffer& bb)
+//		{
+//			xx::Object_p o;
+//			if (int r = bb.ReadRoot(o))			// 解不出来
+//			{
+//				peer->Release();
+//				return;
+//			}
+//			auto& pkg = *(xx::String_p*)&o;
+//			if (pkg->Equals("asdf"))	++counter;
+//			
+//			tasks.push(new Task{ peer, serial, pkg->c_str() });
+//			//peer->SendResponse(serial, o);
+//		};
+//	};
+//	auto timer = loop.CreateTimer(1000, 1000, [&loop, &counter]()
+//	{
+//		std::cout << "server counter = " << counter << std::endl;
+//	});
+//	loop.Run();
+//}
+
+class MyListener : public xx::UvTcpListener
 {
-	xx::UvTcpPeer_r peer;
-	uint32_t serial;
-	std::string str;
+public:
+	xx::String lastIp;
 };
-void f1()			// rpc echo server
+class MyPeer : public xx::UvTcpPeer
 {
-	xx::MemPool mp;
-	xx::UvLoop loop(&mp);
-	loop.InitRpcManager();
-	auto listener = loop.CreateTcpListener();
-	listener->Bind("0.0.0.0", 12345);
-	listener->Listen();
-	xx::UvAsync dispacher(loop);
+public:
+	inline virtual void ReceiveImpl(char const* bufPtr, int len) override
+	{
+		((MyListener*)&this->listener)->lastIp = ip();
+		Release();
+	}
+};
 
-	// 模拟一个线程池
-	Concurrency::concurrent_queue<Task*> tasks;
-	std::thread t([&]
-	{
-		while (true)
-		{
-			Task* task = nullptr;
-			while (tasks.try_pop(task))
-			{
-				dispacher.Dispatch([task] 
-				{
-					if (task->peer)
-					{
-						xx::String_p str;
-						task->peer->mempool->MPCreateTo(str, task->str);
-						task->peer->SendResponse(task->serial, str);
-					}
-					delete task;
-				});
-			}
-			Sleep(1);
-		}
-	});
-	t.detach();
 
-	uint64_t counter = 0;
-	listener->OnAccept = [&loop, &counter, &tasks](xx::UvTcpPeer* peer)
-	{
-		peer->OnReceiveRequest = [peer, &counter, &tasks](uint32_t serial, xx::BBuffer& bb)
-		{
-			xx::Object_p o;
-			if (int r = bb.ReadRoot(o))			// 解不出来
-			{
-				peer->Release();
-				return;
-			}
-			auto& pkg = *(xx::String_p*)&o;
-			if (pkg->Equals("asdf"))	++counter;
-			
-			tasks.push(new Task{ peer, serial, pkg->c_str() });
-			//peer->SendResponse(serial, o);
-		};
-	};
-	auto timer = loop.CreateTimer(1000, 1000, [&loop, &counter]()
-	{
-		std::cout << "server counter = " << counter << std::endl;
-	});
-	loop.Run();
-}
-void f2()			// test client
+int main(int arg, char *arv[])
 {
-	std::this_thread::sleep_for(std::chrono::milliseconds(100));
-	xx::MemPool mp;
-	xx::UvLoop loop(&mp);
-	loop.InitRpcManager(10);
-	uint64_t counter = 0;
-	auto client = loop.CreateTcpClient();
-	client->SetAddress("127.0.0.1", 12345);
-	client->Connect();
-	auto timer = loop.CreateTimer(1000, 1000, [&]()
-	{
-		std::cout << "client counter = " << counter << std::endl;
-	});
-	auto timer2 = loop.CreateTimer(10, 1, [&]()
-	{
-		for (int i = 0; i < 500; ++i)
-		{
-			xx::String_p pkg;
-			mp.MPCreateTo(pkg);
-			pkg->Assign("asdf");
-			client->SendRequest(pkg, [&](uint32_t serial, xx::BBuffer* bb)
-			{
-				if (!bb) return;	// 超时
-				xx::Object_p o;
-				if (int r = bb->ReadRoot(o)) return;	// 解不出来
-				auto& pkg = *(xx::String_p*)&o;
-				if (pkg->Equals("asdf")) ++counter;
-			});
-		}
-	});
-	loop.Run();
-}
-int main()
-{
-	xx::MemPool::RegisterInternal();
-	std::thread t(f2);
-	t.detach();
-	f1();
+	// 从参数读端口并建立监听
+
+
 	return 0;
 }

@@ -46,12 +46,12 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>$(SolutionDir);$(SolutionDir)xxlib;$(SolutionDir)libuv\include;$(SolutionDir)sqlite3;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)libuv\lib\release;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)libuv\lib\win64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>$(SolutionDir);$(SolutionDir)xxlib;$(SolutionDir)libuv\include;$(SolutionDir)sqlite3;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)libuv\lib\release;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)libuv\lib\win64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -124,8 +124,6 @@
     <ClInclude Include="..\xxlib\xx_string.h" />
     <ClInclude Include="..\xxlib\xx_string.hpp" />
     <ClInclude Include="..\xxlib\xx_uv.h" />
-    <ClInclude Include="fill_fish_cfg.h" />
-    <ClInclude Include="xx_pos.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

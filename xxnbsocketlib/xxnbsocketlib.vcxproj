@@ -60,12 +60,12 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>$(SolutionDir);$(SolutionDir)libuv\include;$(SolutionDir)luaex;$(SolutionDir)lua;$(SolutionDir)xxuvlib;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)libuv\lib\release;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)libuv\lib\win64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>$(SolutionDir);$(SolutionDir)libuv\include;$(SolutionDir)luaex;$(SolutionDir)lua;$(SolutionDir)xxuvlib;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)libuv\lib\release;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)libuv\lib\win64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
