@@ -1,4 +1,6 @@
-﻿#include <vector>
+﻿// 脏字替换
+
+#include <vector>
 #include <string>
 #include <array>
 #include <bitset>

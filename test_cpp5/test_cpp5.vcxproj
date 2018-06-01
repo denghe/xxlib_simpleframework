@@ -115,12 +115,14 @@
     <ClInclude Include="..\xxlib\xx_hashutils.hpp" />
     <ClInclude Include="..\xxlib\xx_list.h" />
     <ClInclude Include="..\xxlib\xx_list.hpp" />
+    <ClInclude Include="..\xxlib\xx_logger.h" />
     <ClInclude Include="..\xxlib\xx_mempool.h" />
     <ClInclude Include="..\xxlib\xx_mempool.hpp" />
     <ClInclude Include="..\xxlib\xx_queue.h" />
     <ClInclude Include="..\xxlib\xx_queue.hpp" />
     <ClInclude Include="..\xxlib\xx_random.h" />
     <ClInclude Include="..\xxlib\xx_random.hpp" />
+    <ClInclude Include="..\xxlib\xx_sqlite.h" />
     <ClInclude Include="..\xxlib\xx_string.h" />
     <ClInclude Include="..\xxlib\xx_string.hpp" />
     <ClInclude Include="..\xxlib\xx_uv.h" />

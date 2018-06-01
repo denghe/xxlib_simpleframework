@@ -1,160 +1,56 @@
 ﻿#include "xx_uv.h"
 
-// 简单的实现一个记录动态 IP 的功能( 利用路由器定时的用 http 方式请求端口的方式 )
-// 创建两个监听器, 一个用于路由器连接, 一个用于看 ip
+// todo: xx_mysql.h
+
+// 实现一个基于 libuv + mariadb 异步接口的数据库模块, 提供类似 xx_sqlite 的用法
+// 具体为: 使用 mysql_get_socket 从 MYSQL* 拿到 socket 原始句柄, 再交由 libuv 的 pool_t 管理起来.
+// 以实现当 socket 状态变化时, 自动产生 libuv 的回调, 然后就可以执行 各种 mysql_xxxxxxxxxxx_cont 来检查正在执行的指令的执行情况.
+
+// 函数执行方式主要为回调模式, 执行期间无法继续下达其他指令. 执行期间整套类以状态机方式运作.
+// 不同于 sqlite, MYSQL* 上下文无法携带多个查询对象, 要同时做多个查询需要创建多个上下文. 即: 建立多个连接.
 
 
-
-// 主循环体, 正好拿来存 ip
-class MyLoop : public xx::UvLoop
+namespace xx
 {
-public:
-	typedef xx::UvLoop BaseType;
-	MyLoop(xx::MemPool* mp);
-	xx::String lastIp;
-};
-
-// 存 ip 的 listener
-class Listener_SaveIP : public xx::UvTcpListener
-{
-public:
-	typedef xx::UvTcpListener BaseType;
-	Listener_SaveIP(MyLoop* loop);
-};
-
-// 存 ip 的 listener 创建的 peer
-class Peer_SaveIP : public xx::UvTcpPeer
-{
-public:
-	typedef xx::UvTcpPeer BaseType;
-	Peer_SaveIP(Listener_SaveIP* listener) : BaseType(*listener) {}
-	inline virtual void ReceiveImpl(char const* bufPtr, int len) override;
-};
-
-// 取 ip 的 listener
-class Listener_ShowIP : public xx::UvTcpListener
-{
-public:
-	typedef xx::UvTcpListener BaseType;
-	Listener_ShowIP(MyLoop* loop);
-};
-
-// 取 ip 的 listener 创建的 peer
-class Peer_ShowIP : public xx::UvTcpPeer
-{
-public:
-	typedef xx::UvTcpPeer BaseType;
-	Peer_ShowIP(Listener_ShowIP* listener) : BaseType(*listener) {}
-	inline virtual void ReceiveImpl(char const* bufPtr, int len) override;
-};
-
-
-
-
-
-
-inline MyLoop::MyLoop(xx::MemPool* mp)
-	: BaseType(mp)
-	, lastIp(mp)
-{
-}
-
-inline Listener_SaveIP::Listener_SaveIP(MyLoop* loop)
-	: BaseType(*loop)
-{
-	this->OnCreatePeer = [this]
+	class Mysql : public xx::Object
 	{
-		auto p = mempool->Create<Peer_SaveIP>(this);
-		p->BindTimeouter();
-		p->TimeoutReset();
-		p->OnTimeout = [p] { p->Release(); };
-		return p;
+		MysqlManager& mgr;
+		Mysql(MysqlManager& mgr);
+		// todo
 	};
-}
 
-inline Listener_ShowIP::Listener_ShowIP(MyLoop* loop)
-	: BaseType(*loop)
-{
-	this->OnCreatePeer = [this]
+	// 根据连接串异步创建多个连接. 创建完毕后 cb
+	// 如果连接已经用完, 则不再继续创建, 而是将任务放入等待队列, 直到有连接还回
+	class MysqlManager : public xx::Object
 	{
-		auto p = mempool->Create<Peer_ShowIP>(this);
-		p->BindTimeouter();
-		p->TimeoutReset();
-		p->OnTimeout = [p] { p->Release(); };
-		return p;
+		MysqlManager(UvLoop& loop, String connStr, int ctxCount, std::function<void> onComplete)
+			: xx::Object(loop.mempool)
+			, loop(loop)
+			, ctxPool(loop.mempool)
+			, tasks(loop.mempool)
+		{
+		}
+
+		// 用来管理 MYSQL* 中的 socket
+		UvLoop& loop;
+
+		// 预创建的连接池
+		List<Ptr<Mysql>> ctxPool;
+
+		// 无连接可用时的任务存放队列
+		Queue<std::function<Ptr<Mysql>>> tasks;
 	};
-}
 
-inline void Peer_SaveIP::ReceiveImpl(char const* bufPtr, int len)
-{
-	if (!len)
+	inline Mysql::Mysql(MysqlManager& mgr)
+		: xx::Object(mgr.mempool)
+		, mgr(mgr)
 	{
-		Release();
-		return;
 	}
-	if (*bufPtr == 'G')	// 记录 ip( http 请求头为 GET XXXX )
-	{
-		auto ml = (MyLoop*)&this->listener.loop;
-		ml->lastIp = ip();
-		Release();
-	}
-	else
-	{
-		Release();
-	}
-}
 
-inline void Peer_ShowIP::ReceiveImpl(char const* bufPtr, int len)
-{
-	if (!len)
-	{
-		Release();
-		return;
-	}
-	if (*bufPtr == 'G')	// 返回 ip ( 来自浏览器的请求? )
-	{
-		auto ml = (MyLoop*)&this->listener.loop;
-		SendBytes(ml->lastIp.c_str(), (int)ml->lastIp.dataLen + 1);
-	}
-	else
-	{
-		Release();
-	}
 }
-
 
 
 int main(int numArgs, char *args[])
 {
-	// 从参数读端口并建立监听
-	int port_save = 0, port_show = 0;
-	if (numArgs != 3 || !(port_save = std::atoi(args[1])) || !(port_show = std::atoi(args[2])))
-	{
-		std::cout << "args must be a valid tcp ports: save port, show port." << std::endl;
-		std::cin.get();
-		return -1;
-	}
-	xx::MemPool mp;
-	MyLoop loop(&mp);
-	loop.InitTimeouter();
-	Listener_SaveIP listener_saveip(&loop);
-	Listener_ShowIP listener_showip(&loop);
-	try
-	{
-		listener_saveip.Bind("0.0.0.0", port_save);
-		listener_showip.Bind("0.0.0.0", port_show);
-	}
-	catch (int e)
-	{
-		std::cout << "listen error. e = " << e << std::endl;
-		std::cin.get();
-		return -1;
-	}
-
-	std::cout << "listen to port:" << port_save << ", " << port_show << std::endl;
-
-	listener_saveip.Listen();
-	listener_showip.Listen();
-	loop.Run();
 	return 0;
 }
