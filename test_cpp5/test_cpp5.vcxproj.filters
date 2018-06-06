@@ -96,5 +96,11 @@
     <ClInclude Include="..\xxlib\xx_random.hpp">
       <Filter>xxlib</Filter>
     </ClInclude>
+    <ClInclude Include="..\xxlib\xx_logger.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\xxlib\xx_sqlite.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
