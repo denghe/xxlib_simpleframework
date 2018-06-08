@@ -500,7 +500,7 @@ namespace xx
 	}
 
 	template<typename T>
-	T* & Ptr<T>::operator->() noexcept
+	T* Ptr<T>::operator->() noexcept
 	{
 		return pointer;
 	}
@@ -555,6 +555,15 @@ namespace xx
 	{
 		static_assert(std::is_base_of_v<T, O>);
 		versionNumber = o ? o->memHeader().versionNumber : 0;
+	}
+
+	template<typename T>
+	template<typename O>
+	Ref<T>::Ref(O* const& o, decltype(MemHeader::versionNumber) versionNumber) noexcept
+		: pointer(o)
+		, versionNumber(versionNumber)
+	{
+		static_assert(std::is_base_of_v<T, O>);
 	}
 
 	template<typename T>
@@ -626,7 +635,7 @@ namespace xx
 	}
 
 	template<typename T>
-	T* & Ref<T>::operator->() noexcept
+	T* Ref<T>::operator->() noexcept
 	{
 		return pointer;
 	}

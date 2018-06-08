@@ -281,7 +281,7 @@ namespace xx
 		operator bool() const noexcept;
 		// unsafe funcs
 		T const* operator->() const noexcept;
-		T* & operator->() noexcept;
+		T* operator->() noexcept;
 		T& operator*() noexcept;
 		T const& operator*() const noexcept;
 
@@ -332,6 +332,9 @@ namespace xx
 		Ref(O* const& o) noexcept;
 
 		template<typename O>
+		Ref(O* const& o, decltype(MemHeader::versionNumber) versionNumber) noexcept;
+
+		template<typename O>
 		Ref(Ptr<O> const& o) noexcept;
 
 		Ref(Ref const& o) noexcept;
@@ -353,7 +356,7 @@ namespace xx
 		operator bool() const noexcept;
 		// unsafe funcs
 		T const* operator->() const noexcept;
-		T* & operator->() noexcept;
+		T* operator->() noexcept;
 		T& operator*() noexcept;
 		T const& operator*() const noexcept;
 	};
