@@ -577,15 +577,17 @@ namespace xx
 
 	template<typename T>
 	Ref<T>::Ref(Ref const& o) noexcept
+		: pointer(o.pointer)
+		, versionNumber(o.versionNumber)
 	{
-		operator=(o.Lock());
 	}
 	template<typename T>
 	template<typename O>
 	Ref<T>::Ref(Ref<O> const& o) noexcept
+		: pointer(o.pointer)
+		, versionNumber(o.versionNumber)
 	{
 		static_assert(std::is_base_of_v<T, O>);
-		operator=(o.Lock());
 	}
 
 	template<typename T>
@@ -684,7 +686,8 @@ namespace xx
 	template<typename T>
 	std::ostream& operator<<(std::ostream& os, Ref<T> const& o)
 	{
-		return os << o.Lock();
+		if (!o) return os << "nil";
+		return os << *o;
 	}
 
 }
