@@ -265,6 +265,13 @@ namespace xx
 
 		Ref<T> MakeRef() const noexcept;
 
+		// base type to child type convert.
+		template<typename O>
+		Ptr<O> const& As() const noexcept;
+		template<typename O>
+		Ptr<O>& As() noexcept;
+
+
 		~Ptr();
 
 		template<typename O>

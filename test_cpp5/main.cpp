@@ -12,6 +12,7 @@
 
 namespace xx
 {
+	class MysqlManager;
 	class Mysql : public xx::Object
 	{
 		MysqlManager& mgr;
@@ -23,7 +24,7 @@ namespace xx
 	// 如果连接已经用完, 则不再继续创建, 而是将任务放入等待队列, 直到有连接还回
 	class MysqlManager : public xx::Object
 	{
-		MysqlManager(UvLoop& loop, String connStr, int ctxCount, std::function<void> onComplete)
+		MysqlManager(UvLoop& loop, String connStr, int ctxCount, std::function<void()> onComplete)
 			: xx::Object(loop.mempool)
 			, loop(loop)
 			, ctxPool(loop.mempool)
@@ -38,7 +39,7 @@ namespace xx
 		List<Ptr<Mysql>> ctxPool;
 
 		// 无连接可用时的任务存放队列
-		Queue<std::function<Ptr<Mysql>>> tasks;
+		Queue<std::function<void(Ptr<Mysql>)>> tasks;
 	};
 
 	inline Mysql::Mysql(MysqlManager& mgr)
@@ -52,5 +53,10 @@ namespace xx
 
 int main(int numArgs, char *args[])
 {
+	xx::MemPool mp;
+	xx::Object_p o = mp.MPCreatePtr<xx::String>();
+	o.As<xx::String>()->Append("xxx");
+	std::cout << o << std::endl;
+
 	return 0;
 }

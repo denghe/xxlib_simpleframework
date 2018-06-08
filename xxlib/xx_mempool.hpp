@@ -461,6 +461,23 @@ namespace xx
 		return Ref<T>(pointer);
 	}
 
+
+	template<typename T>
+	template<typename O>
+	Ptr<O> const& Ptr<T>::As() const noexcept
+	{
+		static_assert(std::is_base_of_v<T, O>);
+		return *(Ptr<O>*)this;
+	}
+	template<typename T>
+	template<typename O>
+	Ptr<O>& Ptr<T>::As() noexcept
+	{
+		static_assert(std::is_base_of_v<T, O>);
+		return *(Ptr<O>*)this;
+	}
+
+
 	template<typename T>
 	Ptr<T>::~Ptr()
 	{
