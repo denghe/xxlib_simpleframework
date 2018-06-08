@@ -601,13 +601,17 @@ namespace xx
 	template<typename T>
 	Ref<T>& Ref<T>::operator=(Ref const& o) noexcept
 	{
-		return operator=(o.Lock());
+		pointer = o.pointer;
+		versionNumber = o.versionNumber;
+		return *this;
 	}
 	template<typename T>
 	template<typename O>
 	Ref<T>& Ref<T>::operator=(Ref<O> const& o) noexcept
 	{
-		return operator=(o.Lock());
+		pointer = o.pointer;
+		versionNumber = o.versionNumber;
+		return *this;
 	}
 
 	template<typename T>
