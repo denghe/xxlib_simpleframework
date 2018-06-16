@@ -21,7 +21,7 @@ namespace xx
 			};
 		};
 
-		explicit inline Guid(bool fill = true) noexcept;
+		explicit Guid(bool fill = true) noexcept;
 		Guid(Guid const& o) noexcept = default;
 		Guid& operator=(Guid const& o) noexcept = default;
 		bool operator==(Guid const& o) const noexcept;

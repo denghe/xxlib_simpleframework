@@ -412,7 +412,7 @@ namespace xx
 	template<>
 	struct StrFunc<char, void>
 	{
-		static inline void WriteTo(String& s, char const &in)
+		static inline void WriteTo(String& s, char const& in)
 		{
 			s.Reserve(s.dataLen + 1);
 			s.buf[s.dataLen++] = in;
@@ -421,9 +421,9 @@ namespace xx
 
 	// 适配 char* \0 结尾 字串( 不是很高效 )
 	template<>
-	struct StrFunc<char const*, void>
+	struct StrFunc<char*, void>
 	{
-		static inline void WriteTo(String& s, char const* const &in)
+		static inline void WriteTo(String& s, char* const& in)
 		{
 			if (in)
 			{
@@ -434,6 +434,23 @@ namespace xx
 			};
 		}
 	};
+
+	// 适配 char const* \0 结尾 字串( 不是很高效 )
+	template<>
+	struct StrFunc<char const*, void>
+	{
+		static inline void WriteTo(String& s, char const* const& in)
+		{
+			if (in)
+			{
+				auto len = strlen(in);
+				s.Reserve(s.dataLen + len);
+				memcpy(s.buf + s.dataLen, in, len);
+				s.dataLen += len;
+			};
+		}
+	};
+
 
 	// 适配 literal char[len] string
 	template<size_t len>
@@ -461,11 +478,28 @@ namespace xx
 		}
 	};
 
-	// 适配 wchar_t* \0 结尾 字串( 不是很高效 )
+	// 适配 wchar_t const* \0 结尾 字串( 不是很高效 )
 	template<>
 	struct StrFunc<wchar_t const*, void>
 	{
 		static inline void WriteTo(String& s, wchar_t const* const &in)
+		{
+			if (in)
+			{
+				size_t i = 0;
+				while (auto c = in[i])
+				{
+					StrFunc<wchar_t>::WriteTo(s, c);
+				}
+			}
+		}
+	};
+
+	// 适配 wchar_t* \0 结尾 字串( 不是很高效 )
+	template<>
+	struct StrFunc<wchar_t*, void>
+	{
+		static inline void WriteTo(String& s, wchar_t* const& in)
 		{
 			if (in)
 			{
@@ -493,7 +527,17 @@ namespace xx
 	};
 
 
-
+	// 适配 std::string
+	template<>
+	struct StrFunc<std::string, void>
+	{
+		static inline void WriteTo(String& s, std::string const& in)
+		{
+			s.Reserve(s.dataLen + in.size());
+			memcpy(s.buf + s.dataLen, in.data(), in.size());
+			s.dataLen += in.size();
+		}
+	};
 
 
 	// 适配 Object

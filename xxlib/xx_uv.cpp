@@ -58,7 +58,7 @@ static int TcpWrite(void* stream, char* inBuf, uint32_t len) noexcept
 	});
 }
 
-static int FillIP(uv_tcp_t* stream, char* buf, size_t bufLen)
+static int FillIP(uv_tcp_t* stream, char* buf, size_t bufLen, bool withPort = true)
 {
 	sockaddr_in saddr;
 	int len = sizeof(saddr);
@@ -66,7 +66,7 @@ static int FillIP(uv_tcp_t* stream, char* buf, size_t bufLen)
 	if ((r = uv_tcp_getpeername(stream, (sockaddr*)&saddr, &len))) return r;
 	if ((r = uv_ip4_name(&saddr, buf, (int)bufLen))) throw r;
 	auto dataLen = strlen(buf);
-	sprintf(buf + dataLen, ":%d", ntohs(saddr.sin_port));
+	if (withPort) sprintf(buf + dataLen, ":%d", ntohs(saddr.sin_port));
 	return r;
 }
 
@@ -693,11 +693,11 @@ bool xx::UvTcpPeer::Disconnected()
 	return false;
 }
 
-char* xx::UvTcpPeer::ip()
+const char* xx::UvTcpPeer::ip(bool withPort)
 {
 	if (!ptr) throw - 1;
-	if (ipBuf[0]) return ipBuf.data();
-	if (int r = FillIP((uv_tcp_t*)ptr, ipBuf.data(), (int)ipBuf.size())) throw r;
+	if (ipBuf[0] && withPort) return ipBuf.data();
+	if (int r = FillIP((uv_tcp_t*)ptr, ipBuf.data(), (int)ipBuf.size(), withPort)) throw r;
 	return ipBuf.data();
 }
 

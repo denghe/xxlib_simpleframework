@@ -7,35 +7,23 @@ namespace xx
 	public:
 		typedef List<char> BaseType;
 
-		explicit String(MemPool* mempool, size_t const& capacity = 0);
+		explicit String(MemPool* mempool);
 
-		template<size_t len>
-		String(MemPool* mempool, char const(&s)[len]);
-		template<size_t len>
-		String(MemPool* mempool, wchar_t const(&ws)[len]);
-		String(MemPool* mempool, char const* const& s);
-		String(MemPool* mempool, char const* const& s, size_t const& len);
-		String(MemPool* mempool, std::string const& s);
-		String(MemPool* mempool, Ptr<String> const& s);
-		String(MemPool* mempool, std::pair<char const*, int> const& str_len);
+		explicit String(MemPool* mempool, char const* const& s, size_t const& len);
+		explicit String(MemPool* mempool, wchar_t const* const& ws, size_t const& len);
 
+		template<typename T>
+		explicit String(MemPool* mempool, T const& in);
 
 		String(String &&o);
 		String(String const&o) = delete;
 		String& operator=(String const&o) = delete;
 
-		template<size_t len>
-		void Assign(char const(&s)[len]);
-		template<size_t len>
-		void Assign(wchar_t const(&ws)[len]);
-		void Assign(char const* const& s);
-		void Assign(char const* const& s, size_t const& len);
-		void Assign(wchar_t const* const& ws, size_t const& len);
-		void Assign(String const& s);
-		void Assign(Ptr<String> const& s);
+		String* Assign(char const* const& s, size_t const& len);
+		String* Assign(wchar_t const* const& ws, size_t const& len);
 
 		template<typename T>
-		void Assign(T const& in);
+		String* Assign(T const& in);
 
 		String& operator=(char const * const& buf);
 

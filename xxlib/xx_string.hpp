@@ -2,116 +2,69 @@
 #pragma once
 namespace xx
 {
-	inline String::String(MemPool* mempool, size_t const& capacity)
-		: BaseType(mempool, capacity)
+	inline String::String(MemPool* mempool)
+		: BaseType(mempool, 0)
 	{}
-
-	template<size_t len>
-	String::String(MemPool* mempool, char const(&s)[len])
-		: BaseType(mempool, len - 1)
-	{
-		static_assert(len > 0);
-		AddRange(s, len - 1);
-	}
-	template<size_t len>
-	String::String(MemPool* mempool, wchar_t const(&ws)[len])
-		: BaseType(mempool, 0)
-	{
-		static_assert(len > 0);
-		Assign(ws, len - 1);
-	}
-
-	inline String::String(MemPool* mempool, char const* const& s)
-		: BaseType(mempool, 0)
-	{
-		if (s) AddRange(s, strlen(s));
-	}
-	inline String::String(MemPool* mempool, char const* const& s, size_t const& len)
-		: BaseType(mempool, len)
-	{
-		AddRange(s, len);
-	}
-
-	inline String::String(MemPool* mempool, std::string const& s)
-		: BaseType(mempool, s.size())
-	{
-		AddRange(s.data(), s.size());
-	}
-
-	inline String::String(MemPool* mempool, Ptr<String> const& s)
-		: BaseType(mempool, s ? 0 : s->dataLen)
-	{
-		if(s) Assign(s);
-	}
-
-	inline String::String(MemPool* mempool, std::pair<char const*, int> const& buff)
-		: BaseType(mempool, buff.second)
-	{
-		AddRange(buff.first, buff.second);
-	}
 
 	inline String::String(String &&o)
 		: BaseType((BaseType&&)o)
 	{}
 
-	template<size_t len>
-	void String::Assign(char const(&s)[len])
+	inline String::String(MemPool* mempool, char const* const& s, size_t const& len)
+		: BaseType(mempool, 0)
 	{
-		Clear();
-		AddRange(s, len - 1);
-	}
-	template<size_t len>
-	void String::Assign(wchar_t const(&ws)[len])
-	{
-		Clear();
-		Assign(ws, len - 1);
-	}
-
-	inline void String::Assign(char const* const& s, size_t const& len)
-	{
-		Clear();
 		if (s && len) AddRange(s, len);
 	}
-
-	inline void String::Assign(wchar_t const* const& s, size_t const& len)
+	inline String::String(MemPool* mempool, wchar_t const* const& ws, size_t const& len)
+		: BaseType(mempool, 0)
 	{
-		Clear();
 		Reserve(len * 3);
-		if (s)
+		if (ws)
 		{
 			for (size_t i = 0; i < len; ++i)
 			{
-				dataLen += ToUtf8(buf + i, s[i]);
+				dataLen += ToUtf8(buf + i, ws[i]);
 			}
 		}
 	}
 
-	inline void String::Assign(char const* const& s)
+	template<typename T>
+	inline String::String(MemPool* mempool, T const& in)
+		: BaseType(mempool, 0)
 	{
-		assert(this->buf != s);
-		Clear();
-		if (s) AddRange(s, strlen(s));
+		StrFunc<T>::WriteTo(*this, in);
+		assert(dataLen <= bufLen);
 	}
 
-	inline void String::Assign(String const& s)
+
+	inline String* String::Assign(char const* const& s, size_t const& len)
 	{
-		assert(this != &s);
 		Clear();
-		AddRange(s.buf, s.dataLen);
+		if (s && len) AddRange(s, len);
+		return this;
 	}
 
-	inline void String::Assign(Ptr<String> const& s)
+	inline String* String::Assign(wchar_t const* const& ws, size_t const& len)
 	{
-		assert(s.pointer);
-		Assign(*s);
+		Clear();
+		Reserve(len * 3);
+		if (ws)
+		{
+			for (size_t i = 0; i < len; ++i)
+			{
+				dataLen += ToUtf8(buf + i, ws[i]);
+			}
+		}
+		return this;
 	}
 
 	template<typename T>
-	void String::Assign(T const& in)
+	inline String* String::Assign(T const& in)
 	{
 		Clear();
 		StrFunc<T>::WriteTo(*this, in);
 		assert(dataLen <= bufLen);
+		return this;
 	}
 
 	inline String& String::operator=(char const* const& buf)

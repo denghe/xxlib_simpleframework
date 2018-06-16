@@ -14,6 +14,7 @@ namespace xx
 	inline Random::Random(MemPool* mp, int32_t seed)
 		: Object(mp)
 	{
+		memset(SeedArray, 0, sizeof(SeedArray));
 		Init(seed);
 	}
 

@@ -241,7 +241,7 @@ namespace xx
 		void DisconnectImpl() override;
 		bool Disconnected() override;
 		std::array<char, 64> ipBuf;
-		char* ip();
+		const char* ip(bool withPort = true);
 	};
 
 	class UvTcpClient : public UvTcpBase
