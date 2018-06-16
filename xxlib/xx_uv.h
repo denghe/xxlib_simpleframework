@@ -612,5 +612,24 @@ namespace xx
 			SendBytes(p, (int)(dataLen + 5));
 		}
 	}
+	
+	using UvLoop_r = Ref<UvLoop>;
+	using UvListenerBase_r = Ref<UvListenerBase>;
+	using UvTcpListener_r = Ref<UvTcpListener>;
+	using UvTcpUdpBase_r = Ref<UvTcpUdpBase>;
+	using UvTcpBase_r = Ref<UvTcpBase>;
+	using UvTcpPeer_r = Ref<UvTcpPeer>;
+	using UvTcpClient_r = Ref<UvTcpClient>;
+	using UvTimer_r = Ref<UvTimer>;
+	using UvTimeouterBase_r = Ref<UvTimeouterBase>;
+	using UvTimeouter_r = Ref<UvTimeouter>;
+	using UvAsync_r = Ref<UvAsync>;
+	using UvRpcManager_r = Ref<UvRpcManager>;
+	using UvTimeouter_r = Ref<UvTimeouter>;
+	using UvContextBase_r = Ref<UvContextBase>;
+	using UvUdpListener_r = Ref<UvUdpListener>;
+	using UvUdpBase_r = Ref<UvUdpBase>;
+	using UvUdpPeer_r = Ref<UvUdpPeer>;
+	using UvUdpClient_r = Ref<UvUdpClient>;
 
 }
