@@ -148,6 +148,26 @@ namespace xx
 	// time_point <--> .net DateTime.Now.Ticks converts
 	/************************************************************************************/
 
+	/*
+	
+	// some example for output:
+
+	#include <ctime>
+	#include <iomanip>
+
+	std::time_t t = std::time(nullptr);
+	std::tm tm;
+	localtime_s(&tm, &t);
+	std::cout << std::put_time(&tm, "%Y-%m-%d %X") << std::endl;
+
+	auto tp = xx::DateTimeTicksToTimePoint(636650305817699126);
+	t = std::chrono::system_clock::to_time_t(tp);
+	localtime_s(&tm, &t);
+	std::cout << std::put_time(&tm, "%Y-%m-%d %X") << std::endl;
+
+	*/
+
+
 	inline int64_t TimeSinceEpochToDateTimeTicks(int64_t const& val)
 	{
 		return val + 621356256000000000LL;

@@ -50,13 +50,24 @@ namespace xx
 
 }
 
-
+#include <ctime>
+#include <iomanip>
 int main(int numArgs, char *args[])
 {
 	xx::MemPool mp;
 	xx::Object_p o = mp.MPCreatePtr<xx::String>();
 	o.As<xx::String>()->Append("xxx");
 	std::cout << o << std::endl;
+	std::cout << xx::GetDateTimeNowTicks() << std::endl;
 
+	std::time_t t = std::time(nullptr);
+	std::tm tm;
+	localtime_s(&tm, &t);
+	std::cout << std::put_time(&tm, "%Y-%m-%d %X") << std::endl;
+
+	auto tp = xx::DateTimeTicksToTimePoint(636650305817699126);
+	t = std::chrono::system_clock::to_time_t(tp);
+	localtime_s(&tm, &t);
+	std::cout << std::put_time(&tm, "%Y-%m-%d %X") << std::endl;
 	return 0;
 }
