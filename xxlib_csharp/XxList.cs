@@ -1107,6 +1107,7 @@ namespace xx
 
             bb.Reserve(bb.dataLen + vsDataLen * 4);
             Buffer.BlockCopy(vs.buf, 0, bb.buf, bb.dataLen, vsDataLen * 4);
+            bb.dataLen += vsDataLen * 4;
         }
         public override void FromBBuffer(BBuffer bb, List<float> vs)
         {
