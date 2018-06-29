@@ -395,7 +395,7 @@ namespace xx
 	template<typename T>
 	Ptr<T>& Ptr<T>::operator=(Ptr&& o) noexcept
 	{
-		std::swap(this->pointer, o.pointer);
+		Assign(std::move(o));
 		return *this;
 	}
 
@@ -413,6 +413,7 @@ namespace xx
 	{
 		o.pointer = nullptr;
 	}
+
 	template<typename T>
 	template<typename O>
 	Ptr<T>::Ptr(Ptr<O>&& o) noexcept
@@ -421,14 +422,15 @@ namespace xx
 		static_assert(std::is_base_of_v<T, O>);
 		o.pointer = nullptr;
 	}
+
 	template<typename T>
 	template<typename O>
 	Ptr<T>& Ptr<T>::operator=(Ptr<O>&& o) noexcept
 	{
-		static_assert(std::is_base_of_v<T, O>);
-		std::swap(pointer, (T*)o.pointer);
+		Assign(std::move(o));
 		return *this;
 	}
+
 	template<typename T>
 	template<typename O>
 	void Ptr<T>::Assign(Ptr<O>&& o) noexcept
