@@ -316,9 +316,9 @@ xx::UvTimeouterBase::~UvTimeouterBase()
 
 void xx::UvTimeouterBase::TimeouterClear()
 {
-	timerPrev = nullptr;
-	timerNext = nullptr;
-	timerIndex = -1;
+	timeouterPrev = nullptr;
+	timeouterNext = nullptr;
+	timeouterIndex = -1;
 }
 
 void xx::UvTimeouterBase::TimeoutReset(int interval)
@@ -330,18 +330,18 @@ void xx::UvTimeouterBase::TimeoutReset(int interval)
 void xx::UvTimeouterBase::TimeouterStop()
 {
 	if (!timeouter) throw - 1;
-	if (timering()) timeouter->Remove(this);
+	if (timeouting()) timeouter->Remove(this);
 }
 
 void xx::UvTimeouterBase::UnbindTimeouter()
 {
-	if (timering()) timeouter->Remove(this);
+	if (timeouting()) timeouter->Remove(this);
 	timeouter = nullptr;
 }
 
-bool xx::UvTimeouterBase::timering()
+bool xx::UvTimeouterBase::timeouting()
 {
-	return timeouter && (timerIndex != -1 || timerPrev);
+	return timeouter && (timeouterIndex != -1 || timeouterPrev);
 }
 
 
@@ -877,10 +877,10 @@ void xx::UvTimer::Stop()
 
 xx::UvTimeouter::UvTimeouter(UvLoop & loop, uint64_t intervalMS, int wheelLen, int defaultInterval)
 	: Object(loop.mempool)
-	, timerss(loop.mempool)
+	, timeouterss(loop.mempool)
 {
 	mempool->CreateTo(timer, loop, 0, intervalMS, [this] { Process(); });
-	timerss.Resize(wheelLen);
+	timeouterss.Resize(wheelLen);
 	this->defaultInterval = defaultInterval;
 }
 
@@ -891,68 +891,68 @@ xx::UvTimeouter::~UvTimeouter()
 
 void xx::UvTimeouter::Process()
 {
-	auto t = timerss[cursor];
+	auto t = timeouterss[cursor];
 	while (t)
 	{
 		assert(t->OnTimeout);
 		t->OnTimeout();
-		auto nt = t->timerNext;
+		auto nt = t->timeouterNext;
 		t->TimeouterClear();
 		t = nt;
 	};
-	timerss[cursor] = nullptr;
+	timeouterss[cursor] = nullptr;
 	cursor++;
-	if (cursor == timerss.dataLen) cursor = 0;
+	if (cursor == timeouterss.dataLen) cursor = 0;
 }
 
 void xx::UvTimeouter::Clear()
 {
-	for (size_t i = 0; i < timerss.dataLen; ++i)
+	for (size_t i = 0; i < timeouterss.dataLen; ++i)
 	{
-		auto t = timerss[i];
+		auto t = timeouterss[i];
 		while (t)
 		{
-			auto nt = t->timerNext;
+			auto nt = t->timeouterNext;
 			t->TimeouterClear();
 			t = nt;
 		};
-		timerss[i] = nullptr;
+		timeouterss[i] = nullptr;
 	}
 	cursor = 0;
 }
 
 void xx::UvTimeouter::Add(UvTimeouterBase * t, int interval)
 {
-	if (t->timering()) throw - 1;
-	auto timerssLen = (int)timerss.dataLen;
+	if (t->timeouting()) throw - 1;
+	auto timerssLen = (int)timeouterss.dataLen;
 	if (!t || (interval < 0 && interval >= timerssLen)) throw - 2;
 	if (interval == 0) interval = defaultInterval;
 
 	interval += cursor;
 	if (interval >= timerssLen) interval -= timerssLen;
 
-	t->timerPrev = nullptr;
-	t->timerIndex = interval;
-	t->timerNext = timerss[interval];
-	if (t->timerNext)
+	t->timeouterPrev = nullptr;
+	t->timeouterIndex = interval;
+	t->timeouterNext = timeouterss[interval];
+	if (t->timeouterNext)
 	{
-		t->timerNext->timerPrev = t;
+		t->timeouterNext->timeouterPrev = t;
 	}
-	timerss[interval] = t;
+	timeouterss[interval] = t;
 }
 
 void xx::UvTimeouter::Remove(UvTimeouterBase * t)
 {
-	if (!t->timering()) throw - 1;
-	if (t->timerNext) t->timerNext->timerPrev = t->timerPrev;
-	if (t->timerPrev) t->timerPrev->timerNext = t->timerNext;
-	else timerss[t->timerIndex] = t->timerNext;
+	if (!t->timeouting()) throw - 1;
+	if (t->timeouterNext) t->timeouterNext->timeouterPrev = t->timeouterPrev;
+	if (t->timeouterPrev) t->timeouterPrev->timeouterNext = t->timeouterNext;
+	else timeouterss[t->timeouterIndex] = t->timeouterNext;
 	t->TimeouterClear();
 }
 
 void xx::UvTimeouter::AddOrUpdate(UvTimeouterBase * t, int interval)
 {
-	if (t->timering()) Remove(t);
+	if (t->timeouting()) Remove(t);
 	Add(t, interval);
 }
 

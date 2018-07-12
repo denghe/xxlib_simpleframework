@@ -214,6 +214,14 @@ namespace xx
 		return memcmp(buf, o, dataLen) == 0;
 	}
 
+	inline bool String::Equals(char const * const& o) const noexcept
+	{
+		if (!o) return false;
+		auto len = strlen(o);
+		if (dataLen != len) return false;
+		return memcmp(buf, o, dataLen) == 0;
+	}
+
 	inline bool String::Equals(String const& o) const noexcept
 	{
 		if (this == &o) return true;

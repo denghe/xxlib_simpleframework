@@ -109,9 +109,9 @@ namespace xx
 		UvTimeouterBase(MemPool* mp);
 		~UvTimeouterBase();
 		UvTimeouter* timeouter = nullptr;
-		UvTimeouterBase* timerPrev = nullptr;
-		UvTimeouterBase* timerNext = nullptr;
-		int timerIndex = -1;
+		UvTimeouterBase* timeouterPrev = nullptr;
+		UvTimeouterBase* timeouterNext = nullptr;
+		int timeouterIndex = -1;
 		std::function<void()> OnTimeout;
 
 		void TimeouterClear();
@@ -126,7 +126,7 @@ namespace xx
 		}
 		*/
 		void UnbindTimeouter();
-		bool timering();
+		bool timeouting();
 	};
 
 	class UvTcpUdpBase : public UvTimeouterBase
@@ -283,7 +283,7 @@ namespace xx
 	{
 	public:
 		UvTimer * timer = nullptr;
-		List<UvTimeouterBase*> timerss;
+		List<UvTimeouterBase*> timeouterss;
 		int cursor = 0;
 		int defaultInterval;
 		UvTimeouter(UvLoop& loop, uint64_t intervalMS, int wheelLen, int defaultInterval);
@@ -430,7 +430,7 @@ namespace xx
 	template<typename T>
 	inline void UvTcpUdpBase::Send(T const & pkg)
 	{
-		if (!ptr) throw - 1;
+		assert(pkg);
 		bbSend.Clear();
 		bbSend.Reserve(5);
 		bbSend.dataLen = 5;
@@ -459,7 +459,8 @@ namespace xx
 	template<typename T>
 	inline uint32_t UvTcpUdpBase::SendRequest(T const & pkg, std::function<void(uint32_t, BBuffer*)>&& cb, int interval)
 	{
-		if (!ptr) throw - 1;
+		assert(pkg);
+		if (!loop.rpcMgr) throw - 1;
 		bbSend.Clear();
 		bbSend.Reserve(5);
 		bbSend.dataLen = 5;
@@ -491,7 +492,7 @@ namespace xx
 	template<typename T>
 	inline void UvTcpUdpBase::SendResponse(uint32_t serial, T const & pkg)
 	{
-		if (!ptr) throw - 1;
+		assert(pkg);
 		bbSend.Clear();
 		bbSend.Reserve(5);
 		bbSend.dataLen = 5;
@@ -522,7 +523,7 @@ namespace xx
 	template<typename T>
 	inline void UvTcpUdpBase::SendRouting(char const* serviceAddr, size_t serviceAddrLen, T const & pkg)
 	{
-		if (!ptr) throw - 1;
+		assert(pkg);
 		bbSend.Clear();
 		bbSend.Reserve(5);
 		bbSend.dataLen = 5;
@@ -552,7 +553,7 @@ namespace xx
 	template<typename T>
 	inline uint32_t UvTcpUdpBase::SendRoutingRequest(char const* serviceAddr, size_t serviceAddrLen, T const & pkg, std::function<void(uint32_t, BBuffer*)>&& cb, int interval)
 	{
-		if (!ptr) throw - 1;
+		assert(pkg);
 		bbSend.Clear();
 		bbSend.Reserve(5);
 		bbSend.dataLen = 5;
@@ -585,7 +586,7 @@ namespace xx
 	template<typename T>
 	inline void UvTcpUdpBase::SendRoutingResponse(char const* serviceAddr, size_t serviceAddrLen, uint32_t serial, T const & pkg)
 	{
-		if (!ptr) throw - 1;
+		assert(pkg);
 		bbSend.Clear();
 		bbSend.Reserve(5);
 		bbSend.dataLen = 5;
@@ -612,7 +613,7 @@ namespace xx
 			SendBytes(p, (int)(dataLen + 5));
 		}
 	}
-	
+
 	using UvLoop_r = Ref<UvLoop>;
 	using UvListenerBase_r = Ref<UvListenerBase>;
 	using UvTcpListener_r = Ref<UvTcpListener>;

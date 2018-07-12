@@ -261,7 +261,7 @@ namespace xx
 		void Assign(Ptr<O>&& o) noexcept;
 
 
-		void Clear();
+		void Reset();
 
 		Ref<T> MakeRef() const noexcept;
 
@@ -352,6 +352,11 @@ namespace xx
 
 		template<typename O = T>
 		Ptr<O> Lock() const noexcept;
+
+		template<typename O>
+		Ref& operator=(O* const& o) noexcept;
+
+		void Reset();
 
 		operator bool() const noexcept;
 		// unsafe funcs

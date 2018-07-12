@@ -315,49 +315,45 @@ namespace xx
         #endregion
     }
 
-    public class UvTimerBase
+    public abstract class UvTimeouterBase
     {
         // TimerManager 于 Add 时填充下列成员
-        public UvTimeouter timerManager;         // 指向时间管理( 初始为空 )
-        public UvTimerBase timerPrev;               // 指向同一 ticks 下的上一 timer
-        public UvTimerBase timerNext;               // 指向同一 ticks 下的下一 timer
-        public int timerIndex = -1;                 // 位于管理器 timerss 数组的下标
-        public Action OnTimeout;                  // 时间到达后要执行的函数
+        public UvTimeouter timeouterManager;        // 指向时间管理( 初始为空 )
+        public UvTimeouterBase timeouterPrev;       // 指向同一 ticks 下的上一 timer
+        public UvTimeouterBase timeouterNext;       // 指向同一 ticks 下的下一 timer
+        public int timeouterIndex = -1;             // 位于管理器 timeouterss 数组的下标
+        public Action OnTimeout;                    // 时间到达后要执行的函数
 
-        public void TimerClear()
+        public void TimeouterClear()
         {
-            timerPrev = null;
-            timerNext = null;
-            timerIndex = -1;
+            timeouterPrev = null;
+            timeouterNext = null;
+            timeouterIndex = -1;
         }
 
         public void TimeoutReset(int interval = 0)
         {
-            if (timerManager == null) throw new InvalidOperationException();
-            timerManager.AddOrUpdate(this, interval);
+            if (timeouterManager == null) throw new InvalidOperationException();
+            timeouterManager.AddOrUpdate(this, interval);
         }
-        public void TimerStop()
+        public void TimeouterStop()
         {
-            if (timerManager == null) throw new InvalidOperationException();
-            if (timering) timerManager.Remove(this);
+            if (timeouterManager == null) throw new InvalidOperationException();
+            if (timeouting) timeouterManager.Remove(this);
         }
 
-        public void BindTimeouter(UvTimeouter tm)
+        public abstract void BindTimeouter(UvTimeouter tm);
+
+        public void UnbindTimeouter()
         {
-            if (timerManager != null) throw new InvalidOperationException();
-            timerManager = tm;
+            if (timeouting) timeouterManager.Remove(this);
+            timeouterManager = null;
         }
 
-        public void UnbindTimerManager()
-        {
-            if (timering) timerManager.Remove(this);
-            timerManager = null;
-        }
-
-        public bool timering { get { return timerManager != null && (timerIndex != -1 || timerPrev != null); } }
+        public bool timeouting { get { return timeouterManager != null && (timeouterIndex != -1 || timeouterPrev != null); } }
     }
 
-    public abstract class UvTcpUdpBase : UvTimerBase, IDisposable
+    public abstract class UvTcpUdpBase : UvTimeouterBase, IDisposable
     {
         /******************************************************************************/
         // 用户事件绑定
@@ -386,6 +382,13 @@ namespace xx
 
         protected BBuffer bbRecv = new BBuffer();               // 复用的接收缓冲区
         protected BBuffer bbSend = new BBuffer();               // 复用
+
+        public override void BindTimeouter(UvTimeouter tm = null)
+        {
+            if (timeouterManager != null) throw new InvalidOperationException();
+            timeouterManager = tm == null ? loop.timeouter : tm;
+        }
+
 
         public abstract bool Disconnected();
         protected abstract void DisconnectImpl();
@@ -509,109 +512,102 @@ namespace xx
             SendBytes(bb.buf, 0, bb.dataLen);
         }
 
+
+        // todo: SendRouting 系列从 C++ 那边同步过来
+
+
+
         // 每个类一个包, 返回总字节数
-        public int Send(params xx.IBBuffer[] pkgs)
+        public void Send(xx.IBBuffer pkg)
         {
             if (disposed) throw new ObjectDisposedException("XxUvTcpBase");
-            if (pkgs == null || pkgs.Length == 0) throw new NullReferenceException();
-            var sum = 0;
-            var len = pkgs.Length;
-            for (int i = 0; i < len; ++i)
+
+            bbSend.Clear();
+            bbSend.Reserve(5);
+            bbSend.dataLen = 5;
+            bbSend.WriteRoot(pkg);
+            var p = bbSend.buf;
+            var dataLen = bbSend.dataLen - 5;
+            if (dataLen <= ushort.MaxValue)
             {
-                var pkg = pkgs[i];
-                bbSend.Clear();
-                bbSend.BeginWritePackageEx();
-                bbSend.WriteRoot(pkg);
-                bbSend.EndWritePackageEx();
-                sum += bbSend.dataLen;
-                SendBytes(bbSend.buf, 0, bbSend.dataLen);
+                p[2] = 0;
+                p[3] = (byte)dataLen;
+                p[4] = (byte)(dataLen >> 8);
+                SendBytes(p, 2, dataLen + 3);
             }
-            return sum;
+            else
+            {
+                p[0] = 0b00000100;
+                p[1] = (byte)dataLen;
+                p[2] = (byte)(dataLen >> 8);
+                p[3] = (byte)(dataLen >> 16);
+                p[4] = (byte)(dataLen >> 24);
+                SendBytes(p, 0, dataLen + 5);
+            }
         }
 
-        // 合并所有类一个包, 返回总字节数
-        public int SendCombine(params xx.IBBuffer[] pkgs)
-        {
-            if (disposed) throw new ObjectDisposedException("XxUvTcpBase");
-            bbSend.Clear();
-            bbSend.BeginWritePackageEx();
-            var len = pkgs.Length;
-            for (int i = 0; i < len; ++i)
-            {
-                var ibb = pkgs[i];
-                bbSend.WriteRoot(ibb);
-            }
-            bbSend.EndWritePackageEx();
-            SendBytes(bbSend.buf, 0, bbSend.dataLen);
-            return bbSend.dataLen;
-        }
 
         // 发送 RPC 的请求包, 返回流水号
         public uint SendRequest(xx.IBBuffer pkg, Action<uint, BBuffer> cb, int interval = 0)
         {
             if (disposed) throw new ObjectDisposedException("XxUvTcpBase");
             if (loop.rpcMgr == null) throw new NullReferenceException("forget InitRpcManager ?");
-            var serial = loop.rpcMgr.Register(cb, interval);
+
             bbSend.Clear();
-            bbSend.BeginWritePackageEx(true, serial);
+            bbSend.Reserve(5);
+            bbSend.dataLen = 5;
+            var serial = loop.rpcMgr.Register(cb, interval);                // 注册回调并得到流水号
+            bbSend.Write(serial);                                           // 在包前写入流水号
             bbSend.WriteRoot(pkg);
-            bbSend.EndWritePackageEx(1);
-            SendBytes(bbSend.buf, 0, bbSend.dataLen);
-            return serial;
+            var p = bbSend.buf;
+            var dataLen = bbSend.dataLen - 5;
+            if (dataLen <= ushort.MaxValue)
+            {
+                p[2] = 0b00000001;                                          // 这里标记包头为 Request 类型
+                p[3] = (byte)dataLen;
+                p[4] = (byte)(dataLen >> 8);
+                SendBytes(p, 2, dataLen + 3);
+            }
+            else
+            {
+                p[0] = 0b00000101;                                          // 这里标记包头为 Big + Request 类型
+                p[1] = (byte)dataLen;
+                p[2] = (byte)(dataLen >> 8);
+                p[3] = (byte)(dataLen >> 16);
+                p[4] = (byte)(dataLen >> 24);
+                SendBytes(p, 0, dataLen + 5);
+            }
+            return serial;													// 返回流水号
         }
 
-        // 发送 RPC 的应答包, 返回字节数
-        public int SendResponse(uint serial, xx.IBBuffer pkg)
+        // 发送 RPC 的应答包
+        public void SendResponse(uint serial, xx.IBBuffer pkg)
         {
             if (disposed) throw new ObjectDisposedException("XxUvTcpBase");
+
             bbSend.Clear();
-            bbSend.BeginWritePackageEx(true, serial);
+            bbSend.Reserve(5);
+            bbSend.dataLen = 5;
+            bbSend.Write(serial);                                           // 在包前写入流水号
             bbSend.WriteRoot(pkg);
-            bbSend.EndWritePackageEx(2);
-            SendBytes(bbSend.buf, 0, bbSend.dataLen);
-            return bbSend.dataLen;
-        }
-
-
-
-        // 下面是发大包系列
-
-        // 发一个可能大于 64k 的包, 返回总字节数
-        public int SendBig(xx.IBBuffer pkg)
-        {
-            if (disposed) throw new ObjectDisposedException("XxUvTcpBase");
-            bbSend.Clear();
-            bbSend.BeginWritePackageEx2();
-            bbSend.WriteRoot(pkg);
-            bbSend.EndWritePackageEx2();
-            SendBytes(bbSend.buf, 0, bbSend.dataLen);
-            return bbSend.dataLen;
-        }
-
-        // 发一个可能大于 64k 的 RPC 请求包, 返回流水号
-        public uint SendBigRequest(xx.IBBuffer pkg, Action<uint, BBuffer> cb, int interval = 0)
-        {
-            if (disposed) throw new ObjectDisposedException("XxUvTcpBase");
-            if (loop.rpcMgr == null) throw new NullReferenceException("forget InitRpcManager ?");
-            var serial = loop.rpcMgr.Register(cb, interval);
-            bbSend.Clear();
-            bbSend.BeginWritePackageEx2(true, serial);
-            bbSend.WriteRoot(pkg);
-            bbSend.EndWritePackageEx2(1);
-            SendBytes(bbSend.buf, 0, bbSend.dataLen);
-            return serial;
-        }
-
-        // 发一个可能大于 64k 的 RPC 的应答包, 返回字节数
-        public int SendBigResponse(uint serial, xx.IBBuffer pkg)
-        {
-            if (disposed) throw new ObjectDisposedException("XxUvTcpBase");
-            bbSend.Clear();
-            bbSend.BeginWritePackageEx2(true, serial);
-            bbSend.WriteRoot(pkg);
-            bbSend.EndWritePackageEx2(2);
-            SendBytes(bbSend.buf, 0, bbSend.dataLen);
-            return bbSend.dataLen;
+            var p = bbSend.buf;
+            var dataLen = bbSend.dataLen - 5;
+            if (dataLen <= ushort.MaxValue)
+            {
+                p[2] = 0b00000010;                                          // 这里标记包头为 Request 类型
+                p[3] = (byte)dataLen;
+                p[4] = (byte)(dataLen >> 8);
+                SendBytes(p, 2, dataLen + 3);
+            }
+            else
+            {
+                p[0] = 0b00000110;                                          // 这里标记包头为 Big + Request 类型
+                p[1] = (byte)dataLen;
+                p[2] = (byte)(dataLen >> 8);
+                p[3] = (byte)(dataLen >> 16);
+                p[4] = (byte)(dataLen >> 24);
+                SendBytes(p, 0, dataLen + 5);
+            }
         }
 
         public abstract void Dispose();
@@ -780,7 +776,7 @@ namespace xx
                 this.Free(ref addrPtr);
                 this.Unhandle(ref handle, ref handlePtr);
 
-                UnbindTimerManager();
+                UnbindTimeouter();
                 OnTimeout = null;
 
                 bbSend = null;
@@ -935,7 +931,7 @@ namespace xx
                 this.Free(ref addrPtr);
                 this.Unhandle(ref handle, ref handlePtr);
 
-                UnbindTimerManager();
+                UnbindTimeouter();
                 OnTimeout = null;
 
                 bbSend = null;
@@ -1079,7 +1075,7 @@ namespace xx
     public class UvTimeouter
     {
         UvTimer timer;
-        List<UvTimerBase> timerss = new List<UvTimerBase>();
+        List<UvTimeouterBase> timeouterss = new List<UvTimeouterBase>();
         int cursor = 0;                         // 环形游标
         int defaultInterval;
 
@@ -1087,79 +1083,79 @@ namespace xx
         public UvTimeouter(UvLoop loop, ulong intervalMS, int wheelLen, int defaultInterval)
         {
             timer = new UvTimer(loop, 0, intervalMS, Process);
-            timerss.Resize(wheelLen);
+            timeouterss.Resize(wheelLen);
             this.defaultInterval = defaultInterval;
         }
 
         public void Process()
         {
-            var t = timerss[cursor];            // 遍历当前 ticks 链表
+            var t = timeouterss[cursor];            // 遍历当前 ticks 链表
             while (t != null)
             {
                 t.OnTimeout();                // 执行
-                var nt = t.timerNext;
-                t.TimerClear();
+                var nt = t.timeouterNext;
+                t.TimeouterClear();
                 t = nt;
             };
-            timerss[cursor] = null;
+            timeouterss[cursor] = null;
             cursor++;                           // 环移游标
-            if (cursor == timerss.dataLen) cursor = 0;
+            if (cursor == timeouterss.dataLen) cursor = 0;
         }
 
         // 不触发 OnTimerFire
         public void Clear()
         {
-            for (int i = 0; i < timerss.dataLen; ++i)
+            for (int i = 0; i < timeouterss.dataLen; ++i)
             {
-                var t = timerss[i];
+                var t = timeouterss[i];
                 while (t != null)               // 遍历链表
                 {
-                    var nt = t.timerNext;
-                    t.TimerClear();             // 清理关联
+                    var nt = t.timeouterNext;
+                    t.TimeouterClear();             // 清理关联
                     t = nt;
                 };
-                timerss[i] = null;              // 清空链表头
+                timeouterss[i] = null;              // 清空链表头
             }
             cursor = 0;
         }
 
         // 于指定 interval 所在 timers 链表处放入一个 timer
-        public void Add(UvTimerBase t, int interval = 0)
+        public void Add(UvTimeouterBase t, int interval = 0)
         {
-            if (t.timering) throw new InvalidOperationException();
-            var timerssLen = timerss.dataLen;
-            if (t == null || (interval < 0 && interval >= timerss.dataLen)) throw new ArgumentException();
+            if (t.timeouting) throw new InvalidOperationException();
+            var timeouterssLen = timeouterss.dataLen;
+            if (t == null || (interval < 0 && interval >= timeouterss.dataLen)) throw new ArgumentException();
             if (interval == 0) interval = defaultInterval;
 
             // 环形定位到 timers 下标
             interval += cursor;
-            if (interval >= timerssLen) interval -= timerssLen;
+            if (interval >= timeouterssLen) interval -= timeouterssLen;
 
             // 填充 链表信息
-            t.timerPrev = null;
-            t.timerIndex = interval;
-            t.timerNext = timerss[interval];
-            if (t.timerNext != null)            // 有就链起来
+            t.timeouterPrev = null;
+            t.timeouterIndex = interval;
+            t.timeouterNext = timeouterss[interval];
+            if (t.timeouterNext != null)            // 有就链起来
             {
-                t.timerNext.timerPrev = t;
+                t.timeouterNext.timeouterPrev = t;
             }
-            timerss[interval] = t;              // 成为链表头
+            timeouterss[interval] = t;              // 成为链表头
         }
 
         // 移除
-        public void Remove(UvTimerBase t)
+        public void Remove(UvTimeouterBase t)
         {
-            if (!t.timering) throw new InvalidOperationException();
-            if (t.timerNext != null) t.timerNext.timerPrev = t.timerPrev;
-            if (t.timerPrev != null) t.timerPrev.timerNext = t.timerNext;
-            else timerss[t.timerIndex] = t.timerNext;
-            t.TimerClear();
+            if (!t.timeouting) throw new InvalidOperationException();
+            if (t.timeouterNext != null) t.timeouterNext.timeouterPrev = t.timeouterPrev;
+            if (t.timeouterPrev != null) t.timeouterPrev.timeouterNext = t.timeouterNext;
+            else timeouterss[t.timeouterIndex] = t.timeouterNext;
+            t.TimeouterClear();
         }
 
         // 如果存在就移除并放置到新的时间点
-        public void AddOrUpdate(UvTimerBase t, int interval = 0)
+        public void AddOrUpdate(UvTimeouterBase t, int interval = 0)
         {
-            if (t.timering) Remove(t);
+            if (t.timeouting) Remove(t);
             Add(t, interval);
         }
 
@@ -1390,7 +1386,7 @@ namespace xx
         // RPC 请求解包, 调处理函数
         public void OnPeerReceiveRequest(uint serial, BBuffer bb)
         {
-            var ibb = bb.TryReadPackage<IBBuffer>();
+            var ibb = bb.TryReadRoot<IBBuffer>();
             if (ibb == null)
             {
                 KickPeer();
@@ -1403,7 +1399,7 @@ namespace xx
         // 普通 解包, 调处理函数
         public void OnPeerReceivePackage(BBuffer bb)
         {
-            var ibb = bb.TryReadPackage<IBBuffer>();
+            var ibb = bb.TryReadRoot<IBBuffer>();
             if (ibb == null)
             {
                 KickPeer();
@@ -1781,7 +1777,7 @@ namespace xx
                 this.Unhandle(ref handle, ref handlePtr);
 
 
-                UnbindTimerManager();
+                UnbindTimeouter();
                 OnTimeout = null;
 
                 bbSend = null;
@@ -2025,7 +2021,7 @@ namespace xx
                 this.Free(ref addrPtr);
                 this.Unhandle(ref handle, ref handlePtr);
 
-                UnbindTimerManager();
+                UnbindTimeouter();
                 OnTimeout = null;
 
                 bbSend = null;

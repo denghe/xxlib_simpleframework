@@ -85,6 +85,7 @@ namespace xx
 
 		template<size_t len>
 		bool Equals(char const(&o)[len]) const noexcept;
+		bool Equals(char const * const& o) const noexcept;
 		bool Equals(String const& o) const noexcept;
 		bool Equals(Ptr<String> const& o) const noexcept;
 

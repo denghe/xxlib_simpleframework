@@ -7,7 +7,7 @@ using System.Reflection;
 using System.Text;
 using TemplateLibrary;
 
-public static class GenCS_MsSql
+public static class GenCS_MySql
 {
     public static void Gen(Assembly asm, string outDir, string templateName)
     {
@@ -18,7 +18,7 @@ public static class GenCS_MsSql
         sb.Append(@"using System;
 using System.Collections.Generic;
 using System.Text;
-using System.Data.SqlClient;
+using MySql.Data.MySqlClient;
 using System.Diagnostics;
 ");
 
@@ -26,18 +26,18 @@ using System.Diagnostics;
         sb.Append(@"
 namespace " + templateName + @"
 {
-    public static class MsSqlAppendExt
+    public static class MySqlAppendExt
     {
-        public static void MsSqlAppend<T>(this StringBuilder sb, T v)
+        public static void MySqlAppend<T>(this StringBuilder sb, T v)
         {
             sb.Append(v);
         }
 
-        public static void MsSqlAppend<T>(this StringBuilder sb, T? o) where T : struct
+        public static void MySqlAppend<T>(this StringBuilder sb, T? o) where T : struct
         {
             if (o.HasValue)
             {
-                sb.MsSqlAppend(o.Value);
+                sb.MySqlAppend(o.Value);
             }
             else
             {
@@ -45,29 +45,29 @@ namespace " + templateName + @"
             }
         }
 
-        public static void MsSqlAppend(this StringBuilder sb, string v)
+        public static void MySqlAppend(this StringBuilder sb, string v)
         {
             sb.Append(""'"" + v.Replace(""'"", ""''"") + ""'"");
         }
 
-        public static void MsSqlAppend(this StringBuilder sb, DateTime o)
+        public static void MySqlAppend(this StringBuilder sb, DateTime o)
         {
             sb.Append(""'"" + o.ToString(""yyyy-MM-dd HH:mm:ss"") + ""'"");
         }
 
-        public static void MsSqlAppend<T>(this StringBuilder sb, List<T> os) { Debug.Assert(os.Count > 0); for (int i = 0; i < os.Count; ++i) { sb.MsSqlAppend(os[i]); sb.Append("", ""); }; if (os.Count > 0) sb.Length -= 2; }
-        public static void MsSqlAppend(this StringBuilder sb, List<DateTime> os) { Debug.Assert(os.Count > 0); sb.Append(""( ""); for (int i = 0; i < os.Count; ++i) { sb.MsSqlAppend(os[i]); sb.Append("", ""); }; sb.Length -= 2; sb.Append("" )""); }
-        public static void MsSqlAppend(this StringBuilder sb, List<byte> os) { Debug.Assert(os.Count > 0); sb.Append(""( ""); for (int i = 0; i < os.Count; ++i) { sb.Append(os[i]); sb.Append("", ""); }; sb.Length -= 2; sb.Append("" )""); }
-        public static void MsSqlAppend(this StringBuilder sb, List<ushort> os) { Debug.Assert(os.Count > 0); sb.Append(""( ""); for (int i = 0; i < os.Count; ++i) { sb.Append(os[i]); sb.Append("", ""); }; sb.Length -= 2; sb.Append("" )""); }
-        public static void MsSqlAppend(this StringBuilder sb, List<uint> os) { Debug.Assert(os.Count > 0); sb.Append(""( ""); for (int i = 0; i < os.Count; ++i) { sb.Append(os[i]); sb.Append("", ""); }; sb.Length -= 2; sb.Append("" )""); }
-        public static void MsSqlAppend(this StringBuilder sb, List<ulong> os) { Debug.Assert(os.Count > 0); sb.Append(""( ""); for (int i = 0; i < os.Count; ++i) { sb.Append(os[i]); sb.Append("", ""); }; sb.Length -= 2; sb.Append("" )""); }
-        public static void MsSqlAppend(this StringBuilder sb, List<sbyte> os) { Debug.Assert(os.Count > 0); sb.Append(""( ""); for (int i = 0; i < os.Count; ++i) { sb.Append(os[i]); sb.Append("", ""); }; sb.Length -= 2; sb.Append("" )""); }
-        public static void MsSqlAppend(this StringBuilder sb, List<short> os) { Debug.Assert(os.Count > 0); sb.Append(""( ""); for (int i = 0; i < os.Count; ++i) { sb.Append(os[i]); sb.Append("", ""); }; sb.Length -= 2; sb.Append("" )""); }
-        public static void MsSqlAppend(this StringBuilder sb, List<int> os) { Debug.Assert(os.Count > 0); sb.Append(""( ""); for (int i = 0; i < os.Count; ++i) { sb.Append(os[i]); sb.Append("", ""); }; sb.Length -= 2; sb.Append("" )""); }
-        public static void MsSqlAppend(this StringBuilder sb, List<long> os) { Debug.Assert(os.Count > 0); sb.Append(""( ""); for (int i = 0; i < os.Count; ++i) { sb.Append(os[i]); sb.Append("", ""); }; sb.Length -= 2; sb.Append("" )""); }
-        public static void MsSqlAppend(this StringBuilder sb, List<double> os) { Debug.Assert(os.Count > 0); sb.Append(""( ""); for (int i = 0; i < os.Count; ++i) { sb.Append(os[i]); sb.Append("", ""); }; sb.Length -= 2; sb.Append("" )""); }
-        public static void MsSqlAppend(this StringBuilder sb, List<float> os) { Debug.Assert(os.Count > 0); sb.Append(""( ""); for (int i = 0; i < os.Count; ++i) { sb.Append(os[i]); sb.Append("", ""); }; sb.Length -= 2; sb.Append("" )""); }
-        public static void MsSqlAppend(this StringBuilder sb, List<bool> os) { Debug.Assert(os.Count > 0); sb.Append(""( ""); for (int i = 0; i < os.Count; ++i) { sb.Append(os[i]); sb.Append("", ""); }; sb.Length -= 2; sb.Append("" )""); }
+        public static void MySqlAppend<T>(this StringBuilder sb, List<T> os) { Debug.Assert(os.Count > 0); for (int i = 0; i < os.Count; ++i) { sb.MySqlAppend(os[i]); sb.Append("", ""); }; if (os.Count > 0) sb.Length -= 2; }
+        public static void MySqlAppend(this StringBuilder sb, List<DateTime> os) { Debug.Assert(os.Count > 0); sb.Append(""( ""); for (int i = 0; i < os.Count; ++i) { sb.MySqlAppend(os[i]); sb.Append("", ""); }; sb.Length -= 2; sb.Append("" )""); }
+        public static void MySqlAppend(this StringBuilder sb, List<byte> os) { Debug.Assert(os.Count > 0); sb.Append(""( ""); for (int i = 0; i < os.Count; ++i) { sb.Append(os[i]); sb.Append("", ""); }; sb.Length -= 2; sb.Append("" )""); }
+        public static void MySqlAppend(this StringBuilder sb, List<ushort> os) { Debug.Assert(os.Count > 0); sb.Append(""( ""); for (int i = 0; i < os.Count; ++i) { sb.Append(os[i]); sb.Append("", ""); }; sb.Length -= 2; sb.Append("" )""); }
+        public static void MySqlAppend(this StringBuilder sb, List<uint> os) { Debug.Assert(os.Count > 0); sb.Append(""( ""); for (int i = 0; i < os.Count; ++i) { sb.Append(os[i]); sb.Append("", ""); }; sb.Length -= 2; sb.Append("" )""); }
+        public static void MySqlAppend(this StringBuilder sb, List<ulong> os) { Debug.Assert(os.Count > 0); sb.Append(""( ""); for (int i = 0; i < os.Count; ++i) { sb.Append(os[i]); sb.Append("", ""); }; sb.Length -= 2; sb.Append("" )""); }
+        public static void MySqlAppend(this StringBuilder sb, List<sbyte> os) { Debug.Assert(os.Count > 0); sb.Append(""( ""); for (int i = 0; i < os.Count; ++i) { sb.Append(os[i]); sb.Append("", ""); }; sb.Length -= 2; sb.Append("" )""); }
+        public static void MySqlAppend(this StringBuilder sb, List<short> os) { Debug.Assert(os.Count > 0); sb.Append(""( ""); for (int i = 0; i < os.Count; ++i) { sb.Append(os[i]); sb.Append("", ""); }; sb.Length -= 2; sb.Append("" )""); }
+        public static void MySqlAppend(this StringBuilder sb, List<int> os) { Debug.Assert(os.Count > 0); sb.Append(""( ""); for (int i = 0; i < os.Count; ++i) { sb.Append(os[i]); sb.Append("", ""); }; sb.Length -= 2; sb.Append("" )""); }
+        public static void MySqlAppend(this StringBuilder sb, List<long> os) { Debug.Assert(os.Count > 0); sb.Append(""( ""); for (int i = 0; i < os.Count; ++i) { sb.Append(os[i]); sb.Append("", ""); }; sb.Length -= 2; sb.Append("" )""); }
+        public static void MySqlAppend(this StringBuilder sb, List<double> os) { Debug.Assert(os.Count > 0); sb.Append(""( ""); for (int i = 0; i < os.Count; ++i) { sb.Append(os[i]); sb.Append("", ""); }; sb.Length -= 2; sb.Append("" )""); }
+        public static void MySqlAppend(this StringBuilder sb, List<float> os) { Debug.Assert(os.Count > 0); sb.Append(""( ""); for (int i = 0; i < os.Count; ++i) { sb.Append(os[i]); sb.Append("", ""); }; sb.Length -= 2; sb.Append("" )""); }
+        public static void MySqlAppend(this StringBuilder sb, List<bool> os) { Debug.Assert(os.Count > 0); sb.Append(""( ""); for (int i = 0; i < os.Count; ++i) { sb.Append(os[i]); sb.Append("", ""); }; sb.Length -= 2; sb.Append("" )""); }
 ");
 
         foreach (var e in ts._GetEnums())
@@ -75,7 +75,7 @@ namespace " + templateName + @"
             var etn = e._GetTypeDecl_Csharp();
             var eutn = e._GetEnumUnderlyingTypeName_Csharp();
             sb.Append(@"
-        public static void MsSqlAppend(this StringBuilder sb, List<" + etn + @"> os) { Debug.Assert(os.Count > 0); sb.Append(""( ""); for (int i = 0; i < os.Count; ++i) { sb.Append("", ""); sb.Append((" + eutn + @")os[i]); }; sb.Length -= 2; sb.Append("" )""); }");
+        public static void MySqlAppend(this StringBuilder sb, List<" + etn + @"> os) { Debug.Assert(os.Count > 0); sb.Append(""( ""); for (int i = 0; i < os.Count; ++i) { sb.Append("", ""); sb.Append((" + eutn + @")os[i]); }; sb.Length -= 2; sb.Append("" )""); }");
         }
 
         sb.Append(@"
@@ -92,8 +92,8 @@ namespace " + templateName + @"
 
 
             sb.Append(@"
-        public static void MsSqlAppend(this StringBuilder sb, List<" + ctn + @"> os, bool ignoreReadOnly = false) { Debug.Assert(os.Count > 0); for (int i = 0; i < os.Count; ++i) { sb.MsSqlAppend(os[i], ignoreReadOnly); sb.Append("", ""); }; if (os.Count > 0) sb.Length -= 2; }
-        public static void MsSqlAppend(this StringBuilder sb, " + ctn + @" o, bool ignoreReadOnly = false)
+        public static void MySqlAppend(this StringBuilder sb, List<" + ctn + @"> os, bool ignoreReadOnly = false) { Debug.Assert(os.Count > 0); for (int i = 0; i < os.Count; ++i) { sb.MySqlAppend(os[i], ignoreReadOnly); sb.Append("", ""); }; if (os.Count > 0) sb.Length -= 2; }
+        public static void MySqlAppend(this StringBuilder sb, " + ctn + @" o, bool ignoreReadOnly = false)
         {
             sb.Append(""("");");
 
@@ -119,7 +119,7 @@ namespace " + templateName + @"
                 }
                 else if (!mt._IsNumeric())
                 {
-                    fnfix = "MsSql";
+                    fnfix = "MySql";
                 }
                 sb.Append(@"
             sb." + fnfix + "Append(" + typecnv + "o." + m.Name + ");");
@@ -146,8 +146,8 @@ namespace " + templateName + @"
 
         // todo: [MySql]
 
-        // 扫带有 [MsSql] 标志的 interface , 生成相应的函数
-        var ifaces = ts._GetInterfaces<MsSql>();
+        // 扫带有 [MySql] 标志的 interface , 生成相应的函数
+        var ifaces = ts._GetInterfaces<MySql>();
         foreach (var iface in ifaces)
         {
             // namespace xxx {
@@ -162,8 +162,8 @@ namespace " + iface.Namespace + @"
             sb.Append(iface._GetDesc()._GetComment_CSharp(4) + @"
     public class " + iface.Name + @"
     {
-        public SqlConnection conn;
-        public SqlCommand cmd;
+        public MySqlConnection conn;
+        public MySqlCommand cmd;
         public StringBuilder sb = new StringBuilder();
         private List<int> recordsAffecteds = new List<int>();
 
@@ -177,7 +177,7 @@ namespace " + iface.Namespace + @"
             get { return recordsAffecteds[0]; }
         }
 
-        public " + iface.Name + @"(SqlConnection conn)
+        public " + iface.Name + @"(MySqlConnection conn)
         {
             // conn.Open();
             this.conn = conn;
@@ -230,7 +230,7 @@ namespace " + iface.Namespace + @"
                     sb.Append(@"
             , ");
                 }
-                sb.Append(@"SqlTransaction tran_ = null)
+                sb.Append(@"MySqlTransaction tran_ = null)
         {
             cmd.Transaction = tran_;");
 
@@ -264,13 +264,13 @@ namespace " + iface.Namespace + @"
                                 if (pt._IsUserClass() && p._Has<SkipReadOnly>())
                                 {
                                     sb.Append(@"
-            sb.MsSqlAppend(" + pn + @", true);");
+            sb.MySqlAppend(" + pn + @", true);");
                                 }
                                 else
                                 {
 
                                     sb.Append(@"
-            sb.MsSqlAppend(" + pn + @");");
+            sb.MySqlAppend(" + pn + @");");
                                 }
 
                             }
@@ -589,6 +589,6 @@ namespace " + iface.Namespace + @"
 }
 ");
 
-        sb._WriteToFile(Path.Combine(outDir, templateName + "_mssql.cs"));
+        sb._WriteToFile(Path.Combine(outDir, templateName + "_mysql.cs"));
     }
 }

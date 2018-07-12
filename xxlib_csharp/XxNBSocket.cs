@@ -153,7 +153,7 @@ namespace xx
                     {
                         bbRecv.Read(ref serial);
                     }
-                    var ibb = bbRecv.TryReadPackage<IBBuffer>();
+                    var ibb = bbRecv.TryReadRoot<IBBuffer>();
                     if (ibb == null)
                     {
                         Disconnect();

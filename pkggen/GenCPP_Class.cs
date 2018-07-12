@@ -216,6 +216,7 @@ namespace " + c.Namespace.Replace(".", "::") + @"
         void ToStringCore(xx::String &str) const override;
         void ToBBuffer(xx::BBuffer &bb) const override;
         int FromBBuffer(xx::BBuffer &bb) override;
+        inline static xx::Ptr<ThisType> defaultInstance;
     };");   // class }
 
             // namespace }

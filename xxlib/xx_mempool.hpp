@@ -239,8 +239,11 @@ namespace xx
 		// 在执行构造函数之前拿到指针 塞入 bb. 构造函数执行失败时从 bb 移除
 		creators[TypeId_v<T>] = [](MemPool* mp, BBuffer* bb, size_t ptrOffset) ->void*
 		{
+			// 如果把 TypeId_v<T> 直接放入 std::make_pair, 其值将永远是 0. 故先取出来.
+			auto typeId = TypeId_v<T>;
+
 			// 插入字典占位, 分配到实际指针后替换
-			auto addResult = mp->idxStore->Add(ptrOffset, std::make_pair(nullptr, TypeId_v<T>));
+			auto addResult = mp->idxStore->Add(ptrOffset, std::make_pair(nullptr, typeId));
 
 			// 拿内存
 			auto p = mp->Alloc<MemHeader_Object>(sizeof(T));
@@ -249,7 +252,7 @@ namespace xx
 			// 继续填充 header
 			auto h = (MemHeader_Object*)p - 1;
 			h->objectData = 0;
-			h->typeId = TypeId_v<T>;
+			h->typeId = typeId;
 
 			// 将字典中的 value 替换成真实指针
 			mp->idxStore->ValueAt(addResult.index).first = p;
@@ -357,7 +360,7 @@ namespace xx
 	Ptr<T>& Ptr<T>::operator=(O* const& o) noexcept
 	{
 		static_assert(std::is_base_of_v<T, O>);
-		Clear();
+		Reset();
 		pointer = o;
 		if (pointer)
 		{
@@ -436,14 +439,14 @@ namespace xx
 	void Ptr<T>::Assign(Ptr<O>&& o) noexcept
 	{
 		static_assert(std::is_base_of_v<T, O>);
-		Clear();
+		Reset();
 		pointer = o.pointer;
 		o.pointer = nullptr;
 	}
 
 
 	template<typename T>
-	void Ptr<T>::Clear()
+	void Ptr<T>::Reset()
 	{
 		if (pointer)
 		{
@@ -483,7 +486,7 @@ namespace xx
 	template<typename T>
 	Ptr<T>::~Ptr()
 	{
-		Clear();
+		Reset();
 	}
 
 
@@ -628,6 +631,23 @@ namespace xx
 			return Ptr<O>(pointer);
 		}
 		return Ptr<O>();
+	}
+
+	template<typename T>
+	template<typename O>
+	Ref<T>& Ref<T>::operator=(O* const& o) noexcept
+	{
+		static_assert(std::is_base_of_v<T, O>);
+		pointer = o;
+		versionNumber = o ? o->memHeader().versionNumber : 0;
+		return *this;
+	}
+
+	template<typename T>
+	void Ref<T>::Reset()
+	{
+		pointer = nullptr;
+		versionNumber = 0;
 	}
 
 	template<typename T>

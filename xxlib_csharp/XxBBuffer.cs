@@ -522,6 +522,18 @@ namespace xx
             }
         }
 
+        // 为方便直接返回 new T. 通常返回 null 表示解析失败.
+        public T TryReadRoot<T>() where T : IBBuffer
+        {
+            T t = default(T);
+            try
+            {
+                ReadRoot(ref t);
+            }
+            catch { }
+            return t;
+        }
+
         /// <summary>
         /// 自定义序列化函数的类型
         /// </summary>
@@ -550,32 +562,6 @@ namespace xx
 
         #endregion
 
-        #region Package
-
-        // 开始写一个包( 特指 2 字节长度头的, 保留出包头区域 )
-        public void BeginWritePackage()
-        {
-            dataLenBak = dataLen;
-            Reserve(dataLen + 2);
-            dataLen += 2;
-        }
-
-        // 结束写一个包, 返回长度是否在包头表达范围内( 如果 true 则会填充包头, false 则回滚长度 )
-        public bool EndWritePackage()
-        {
-            var pkgLen = dataLen - dataLenBak - 2;
-            if (pkgLen > ushort.MaxValue)
-            {
-                dataLen = dataLenBak;
-                return false;
-            }
-            buf[dataLenBak] = (byte)(pkgLen);
-            buf[dataLenBak + 1] = (byte)(pkgLen >> 8);
-            return true;
-        }
-
-        #endregion
-
         #region byte[]
 
         /// <summary>
@@ -596,67 +582,6 @@ namespace xx
             Reserve(dataLen + len);
             Marshal.Copy(bufPtr, buf, dataLen, len);
             dataLen += len;
-        }
-
-        #endregion
-
-        #region ToPackages
-
-        /// <summary>
-        /// 尝试一次性反序列化一到多个包, 将结果填充到 outPkgs, 返回包个数. 不需要 try. 返回 0 或负数都有问题
-        /// </summary>
-        public int ReadPackages(ref List<IBBuffer> outPkgs)
-        {
-            outPkgs.Clear();
-            while (offset < dataLen)
-            {
-                IBBuffer ibb = null;
-                try
-                {
-                    ReadRoot(ref ibb);
-                }
-                catch (Exception)
-                {
-                    return -1;
-                }
-                if (ibb == null) return -2;
-                outPkgs.Add(ibb);
-            }
-            return outPkgs.dataLen;
-        }
-
-        /// <summary>
-        /// 为方便直接返回 new List. 需要 try.
-        /// </summary>
-        public List<IBBuffer> ReadPackages()
-        {
-            var rtv = new List<IBBuffer>();
-            ReadPackages(ref rtv);
-            return rtv;
-        }
-
-        /// <summary>
-        /// 为方便直接返回 new T. 需要 try.
-        /// </summary>
-        public T ReadPackage<T>() where T : IBBuffer
-        {
-            T t = default(T);
-            ReadRoot(ref t);
-            return t;
-        }
-
-        /// <summary>
-        /// 为方便直接返回 new T. 通常返回 null 表示解析失败.
-        /// </summary>
-        public T TryReadPackage<T>() where T : IBBuffer
-        {
-            T t = default(T);
-            try
-            {
-                ReadRoot(ref t);
-            }
-            catch { }
-            return t;
         }
 
         #endregion
@@ -847,24 +772,6 @@ namespace xx
             bb.offset += len;
         }
 
-        /// <summary>
-        /// 返回非 combine 规则的多个包的序列化结果 byte[] for 广播 / 缓存
-        /// </summary>
-        public byte[] ToBytes(params xx.IBBuffer[] pkgs)
-        {
-            if (pkgs == null || pkgs.Length == 0) throw new NullReferenceException();
-            Clear();
-            var len = pkgs.Length;
-            for (int i = 0; i < len; ++i)
-            {
-                var pkg = pkgs[i];
-                BeginWritePackage();
-                WriteRoot(pkg);
-                if (!EndWritePackage()) throw new OverflowException();
-            }
-            return DumpData();
-        }
-
         #endregion
 
         #region 3bytes header misc utils
@@ -888,26 +795,6 @@ namespace xx
             buf[dataLenBak] = pkgTypeId;
             buf[dataLenBak + 1] = (byte)(pkgLen);
             buf[dataLenBak + 2] = (byte)(pkgLen >> 8);
-        }
-
-        // for 4字节长度大包, 头长度5
-        public void BeginWritePackageEx2(bool isRpc = false, uint serial = 0)
-        {
-            dataLenBak = dataLen;
-            Reserve(dataLen + 10);
-            dataLen += 5;
-            if (isRpc) Write(serial);
-        }
-
-        // for 4字节长度大包
-        public void EndWritePackageEx2(byte pkgTypeId = 0)
-        {
-            var pkgLen = dataLen - dataLenBak - 5;
-            buf[dataLenBak] = (byte)(pkgTypeId | 0x4);  // 包类型编号 第3位置 1
-            buf[dataLenBak + 1] = (byte)(pkgLen);
-            buf[dataLenBak + 2] = (byte)(pkgLen >> 8);
-            buf[dataLenBak + 3] = (byte)(pkgLen >> 16);
-            buf[dataLenBak + 4] = (byte)(pkgLen >> 24);
         }
 
         #endregion

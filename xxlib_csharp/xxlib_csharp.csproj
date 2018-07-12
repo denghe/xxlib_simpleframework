@@ -46,11 +46,11 @@
     <Compile Include="XxDict.cs" />
     <Compile Include="XxLogger.cs" />
     <Compile Include="XxMisc.cs" />
-    <Compile Include="XxRandom.cs" />
     <Compile Include="XxNBSocket.cs" />
     <Compile Include="XxQueue.cs" />
     <Compile Include="XxList.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="XxRandom.cs" />
     <Compile Include="XxUv.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
