@@ -633,7 +633,7 @@ public static class GenExtensions
 
 
     /// <summary>
-    /// 获取 C++ 的类型声明串
+    /// 获取 C++ 的安全类型声明串( Xxxxx_p ). 无法序列化的外部引用类型不加 _p
     /// </summary>
     public static string _GetSafeTypeDecl_Cpp(this Type t, string templateName, bool cutOutside_p = false)
     {
@@ -720,7 +720,7 @@ public static class GenExtensions
                 }
             }
 
-            return (t._IsExternal() ? "" : templateName) + "::" + t.FullName.Replace(".", "::") + (t.IsValueType ? "" : "_p");
+            return (t._IsExternal() ? "" : templateName) + "::" + t.FullName.Replace(".", "::") + (t.IsValueType ? "" : ((t._IsExternal() && !t._GetExternalSerializable()) ? "" : "_p"));
             //throw new Exception("unhandled data type");
         }
     }

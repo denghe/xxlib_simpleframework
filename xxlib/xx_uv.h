@@ -257,6 +257,7 @@ namespace xx
 		void SetAddress(char const* const& ipv4, int port);
 		static void OnConnectCBImpl(void* req, int status);
 		void Connect();
+		int TryConnect(char const* const& ip, int port);	// 等同于 Disconnect + SetAddress + Connect
 		void Disconnect();
 		void DisconnectImpl() override;
 		bool Disconnected() override;

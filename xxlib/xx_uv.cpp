@@ -374,7 +374,7 @@ void xx::UvTcpUdpBase::BindTimeouter(UvTimeouter* t)
 // ....X... :   0: 包头中不带地址    1: 带地址(长度由 XXXX.... 部分决定, 值需要+1)
 void xx::UvTcpUdpBase::ReceiveImpl(char const* bufPtr, int len)
 {
-	// 用版本号来检测事件过后当前类是否还健在
+	// 检测用户事件代码执行过后收包行为是否还该继续( 如果只是 client disconnect 则用 bbRecv.dataLen == 0 来检测 )
 	auto versionNumber = memHeader().versionNumber;
 
 	bbRecv.WriteBuf(bufPtr, len);					// 追加收到的数据到接收缓冲区
@@ -422,7 +422,7 @@ void xx::UvTcpUdpBase::ReceiveImpl(char const* bufPtr, int len)
 
 			bbRecv.offset = offset - headerLen;
 			if (OnReceiveRouting) OnReceiveRouting(bbRecv, pkgLen, addrOffset, addrLen);
-			if (versionNumber != memHeader().versionNumber) return;
+			if (versionNumber != memHeader().versionNumber || !bbRecv.dataLen) return;
 			if (Disconnected())
 			{
 				bbRecv.Clear();
@@ -442,7 +442,7 @@ void xx::UvTcpUdpBase::ReceiveImpl(char const* bufPtr, int len)
 		if (pkgType == 0)
 		{
 			if (OnReceivePackage) OnReceivePackage(bbRecv);
-			if (versionNumber != memHeader().versionNumber) return;
+			if (versionNumber != memHeader().versionNumber || !bbRecv.dataLen) return;
 			if (Disconnected())
 			{
 				bbRecv.Clear();
@@ -460,7 +460,7 @@ void xx::UvTcpUdpBase::ReceiveImpl(char const* bufPtr, int len)
 			if (pkgType == 1)
 			{
 				if (OnReceiveRequest) OnReceiveRequest(serial, bbRecv);
-				if (versionNumber != memHeader().versionNumber) return;
+				if (versionNumber != memHeader().versionNumber || !bbRecv.dataLen) return;
 				if (Disconnected())
 				{
 					bbRecv.Clear();
@@ -470,7 +470,7 @@ void xx::UvTcpUdpBase::ReceiveImpl(char const* bufPtr, int len)
 			else if (pkgType == 2)
 			{
 				loop.rpcMgr->Callback(serial, &bbRecv);
-				if (versionNumber != memHeader().versionNumber) return;
+				if (versionNumber != memHeader().versionNumber || !bbRecv.dataLen) return;
 				if (Disconnected())
 				{
 					bbRecv.Clear();
@@ -487,6 +487,7 @@ void xx::UvTcpUdpBase::ReceiveImpl(char const* bufPtr, int len)
 		memmove(buf, buf + offset, bbRecv.dataLen - offset);
 	}
 	bbRecv.dataLen -= offset;
+	assert(bbRecv.dataLen <= len);
 }
 
 void xx::UvTcpUdpBase::SendBytes(BBuffer& bb)
@@ -680,6 +681,7 @@ xx::UvTcpPeer::~UvTcpPeer()
 	ptr = nullptr;
 	Free(loop.mempool, addrPtr);
 	addrPtr = nullptr;
+	listener.peers[listener.peers.dataLen - 1]->index_at_container = index_at_container;
 	listener.peers.SwapRemoveAt(index_at_container);
 }
 
@@ -725,6 +727,7 @@ xx::UvTcpClient::~UvTcpClient()
 	if (OnDispose) OnDispose();
 	Free(loop.mempool, addrPtr);
 	addrPtr = nullptr;
+	loop.tcpClients[loop.tcpClients.dataLen - 1]->index_at_container = index_at_container;
 	loop.tcpClients.SwapRemoveAt(index_at_container);
 }
 
@@ -782,6 +785,21 @@ void xx::UvTcpClient::Connect()
 	state = UvTcpStates::Connecting;
 }
 
+int xx::UvTcpClient::TryConnect(char const* const& ipv4, int port)
+{
+	try
+	{
+		Disconnect();
+		SetAddress(ipv4, port);
+		Connect();
+	}
+	catch (int e)
+	{
+		return e;
+	}
+	return 0;
+}
+
 void xx::UvTcpClient::Disconnect()
 {
 	if (!addrPtr) return;
@@ -790,6 +808,8 @@ void xx::UvTcpClient::Disconnect()
 	Close((uv_handle_t*)ptr);
 	ptr = nullptr;
 	state = UvTcpStates::Disconnected;
+	bbSend.Clear();
+	bbRecv.Clear();
 }
 
 void xx::UvTcpClient::DisconnectImpl()
@@ -840,6 +860,7 @@ xx::UvTimer::~UvTimer()
 	assert(ptr);
 	Close((uv_handle_t*)ptr);
 	ptr = nullptr;
+	loop.timers[loop.timers.dataLen - 1]->index_at_container = index_at_container;
 	loop.timers.SwapRemoveAt(index_at_container);
 }
 
@@ -995,6 +1016,7 @@ xx::UvAsync::~UvAsync()
 	Close((uv_handle_t*)ptr);
 	ptr = nullptr;
 
+	loop.asyncs[loop.asyncs.dataLen - 1]->index_at_container = index_at_container;
 	loop.asyncs.SwapRemoveAt(index_at_container);
 }
 
@@ -1230,6 +1252,7 @@ xx::UvUdpListener::~UvUdpListener()
 	Free(mempool, addrPtr);
 	addrPtr = nullptr;
 
+	loop.udpListeners[loop.udpListeners.dataLen - 1]->index_at_container = index_at_container;
 	loop.udpListeners.SwapRemoveAt(index_at_container);
 	index_at_container = -1;
 }

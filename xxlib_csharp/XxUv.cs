@@ -300,6 +300,7 @@ namespace xx
                 this.Free(ref addrPtr);
                 this.Unhandle(ref handle, ref handlePtr);
 
+                loop.tcpListeners[loop.tcpListeners.dataLen - 1].index_at_container = index_at_container;
                 loop.tcpListeners.SwapRemoveAt(index_at_container);
                 loop = null;
                 disposed = true;
@@ -446,7 +447,7 @@ namespace xx
 
                     bbRecv.offset = offset;
                     if (OnReceiveRoutingPackage != null) OnReceiveRoutingPackage(bbRecv, pkgOffset, pkgLen, addrOffset, addrLen);
-                    if (disposed) return;
+                    if (disposed || bbRecv.dataLen == 0) return;
                     if (Disconnected())
                     {
                         bbRecv.Clear();
@@ -460,7 +461,7 @@ namespace xx
                     if (pkgType == 0)
                     {
                         if (OnReceivePackage != null) OnReceivePackage(bbRecv);
-                        if (disposed) return;
+                        if (disposed || bbRecv.dataLen == 0) return;
                         if (Disconnected())
                         {
                             bbRecv.Clear();
@@ -478,7 +479,7 @@ namespace xx
                         if (pkgType == 1)
                         {
                             if (OnReceiveRequest != null) OnReceiveRequest(serial, bbRecv);
-                            if (disposed) return;
+                            if (disposed || bbRecv.dataLen == 0) return;
                             if (Disconnected())
                             {
                                 bbRecv.Clear();
@@ -488,7 +489,7 @@ namespace xx
                         else if (pkgType == 2)
                         {
                             loop.rpcMgr.Callback(serial, bbRecv);
-                            if (disposed) return;
+                            if (disposed || bbRecv.dataLen == 0) return;
                             if (Disconnected())
                             {
                                 bbRecv.Clear();
@@ -781,6 +782,7 @@ namespace xx
 
                 bbSend = null;
                 bbRecv = null;
+                listener.peers[listener.peers.dataLen - 1].index_at_container = index_at_container;
                 listener.peers.SwapRemoveAt(index_at_container);
                 listener = null;
                 loop = null;
@@ -898,6 +900,8 @@ namespace xx
             UvInterop.xxuv_close_(ptr);
             ptr = IntPtr.Zero;
             state = UvTcpStates.Disconnected;
+            bbSend.Clear();
+            bbRecv.Clear();
         }
 
         protected override void DisconnectImpl()
@@ -936,6 +940,7 @@ namespace xx
 
                 bbSend = null;
                 bbRecv = null;
+                loop.tcpClients[loop.tcpClients.dataLen - 1].index_at_container = index_at_container;
                 loop.tcpClients.SwapRemoveAt(index_at_container);
                 loop = null;
                 disposed = true;
@@ -1057,6 +1062,7 @@ namespace xx
                 ptr = IntPtr.Zero;
                 this.Unhandle(ref handle, ref handlePtr);
 
+                loop.timers[loop.timers.dataLen - 1].index_at_container = index_at_container;
                 loop.timers.SwapRemoveAt(index_at_container);
                 loop = null;
                 disposed = true;
@@ -1254,6 +1260,7 @@ namespace xx
                 ptr = IntPtr.Zero;
                 this.Unhandle(ref handle, ref handlePtr);
 
+                loop.asyncs[loop.asyncs.dataLen - 1].index_at_container = index_at_container;
                 loop.asyncs.SwapRemoveAt(index_at_container);
                 loop = null;
                 disposed = true;
@@ -1596,6 +1603,7 @@ namespace xx
                 this.Free(ref addrPtr);
                 this.Unhandle(ref handle, ref handlePtr);
 
+                loop.udpListeners[loop.udpListeners.dataLen - 1].index_at_container = index_at_container;
                 loop.udpListeners.SwapRemoveAt(index_at_container);
                 loop = null;
                 disposed = true;

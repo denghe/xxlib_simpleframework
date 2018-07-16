@@ -50,9 +50,9 @@ namespace xx
 		void AddRange(T const* items, size_t count);
 
 		size_t Find(T const& v) noexcept;			// 如果找到就返回索引. 找不到将返回 size_t(-1)
-		size_t Find(std::function<bool(T&)> cond);
-		bool Exists(std::function<bool(T&)> cond);
-		bool TryFill(T& out, std::function<bool(T&)> cond);
+		size_t Find(std::function<bool(T const&)> cond);
+		bool Exists(std::function<bool(T const&)> cond);
+		bool TryFill(T& out, std::function<bool(T const&)> cond);
 
 		void ForEachRevert(std::function<void(T&)> handler);	// 倒着扫. 便于 SwapRemoveAt.
 

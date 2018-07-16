@@ -278,7 +278,7 @@ namespace TemplateLibrary
     /// 标记一个类成员是在生成的时候跳过某些readOnly字段
     /// </summary>
     [System.AttributeUsage(System.AttributeTargets.Parameter)]
-    public class Ignore : System.Attribute
+    public class SkipReadOnly : System.Attribute
     {
     }
 
