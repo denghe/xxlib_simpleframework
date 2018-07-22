@@ -8,21 +8,36 @@ void Press(HWND hWnd, char key)
 }
 int main()
 {
+	int plan = 1;
 	while (true)
 	{
 		auto hWnd = FindWindow(nullptr, L"ClickerHeroes2");
 		if (hWnd)
 		{
-			Press(hWnd, '3');
-			Press(hWnd, 'A');
-			Press(hWnd, 'S');
-			Press(hWnd, 'D');
-			Press(hWnd, 'F');
-			Press(hWnd, 'G');
-			Press(hWnd, 'H');
-			Press(hWnd, 'J');
-			Press(hWnd, 'K');
-			Press(hWnd, 'L');
+			if (plan == 1)
+			{
+				Press(hWnd, '3');
+				Press(hWnd, 'A');
+				Press(hWnd, 'S');
+				Press(hWnd, 'D');
+				Press(hWnd, 'F');
+				Press(hWnd, 'G');
+				Press(hWnd, 'H');
+				Press(hWnd, 'J');
+				Press(hWnd, 'K');
+				Press(hWnd, 'L');
+			}
+			else
+			{
+				Press(hWnd, 'A');
+				Press(hWnd, 'S');
+				Press(hWnd, 'D');
+				Press(hWnd, 'F');
+				Press(hWnd, 'G');
+				Press(hWnd, 'H');
+				Press(hWnd, 'J');
+				Press(hWnd, 'K');
+			}
 		}
 		else
 		{
