@@ -431,7 +431,7 @@ namespace xx
 	template<typename T>
 	inline void UvTcpUdpBase::Send(T const & pkg)
 	{
-		assert(pkg);
+		//assert(pkg);
 		bbSend.Clear();
 		bbSend.Reserve(5);
 		bbSend.dataLen = 5;
@@ -460,7 +460,7 @@ namespace xx
 	template<typename T>
 	inline uint32_t UvTcpUdpBase::SendRequest(T const & pkg, std::function<void(uint32_t, BBuffer*)>&& cb, int interval)
 	{
-		assert(pkg);
+		//assert(pkg);
 		if (!loop.rpcMgr) throw - 1;
 		bbSend.Clear();
 		bbSend.Reserve(5);
@@ -493,7 +493,7 @@ namespace xx
 	template<typename T>
 	inline void UvTcpUdpBase::SendResponse(uint32_t serial, T const & pkg)
 	{
-		assert(pkg);
+		//assert(pkg);
 		bbSend.Clear();
 		bbSend.Reserve(5);
 		bbSend.dataLen = 5;
@@ -524,7 +524,7 @@ namespace xx
 	template<typename T>
 	inline void UvTcpUdpBase::SendRouting(char const* serviceAddr, size_t serviceAddrLen, T const & pkg)
 	{
-		assert(pkg);
+		//assert(pkg);
 		bbSend.Clear();
 		bbSend.Reserve(5);
 		bbSend.dataLen = 5;
@@ -554,7 +554,7 @@ namespace xx
 	template<typename T>
 	inline uint32_t UvTcpUdpBase::SendRoutingRequest(char const* serviceAddr, size_t serviceAddrLen, T const & pkg, std::function<void(uint32_t, BBuffer*)>&& cb, int interval)
 	{
-		assert(pkg);
+		//assert(pkg);
 		bbSend.Clear();
 		bbSend.Reserve(5);
 		bbSend.dataLen = 5;
@@ -587,7 +587,7 @@ namespace xx
 	template<typename T>
 	inline void UvTcpUdpBase::SendRoutingResponse(char const* serviceAddr, size_t serviceAddrLen, uint32_t serial, T const & pkg)
 	{
-		assert(pkg);
+		//assert(pkg);
 		bbSend.Clear();
 		bbSend.Reserve(5);
 		bbSend.dataLen = 5;

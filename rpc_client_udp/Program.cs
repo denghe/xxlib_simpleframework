@@ -58,7 +58,7 @@ public class UnityScene
                 }
                 , (s, bb) =>                    // RPC 回调: 将结果存入上下文变量以便后续 while 中判断
                 {
-                    recv = bb.TryReadPackage<IBBuffer>();
+                    recv = bb.TryReadRoot<IBBuffer>();
                 });
         }
         catch (Exception ex)                    // 如果发生 send 失败, 有可能是网络环境切换造成. 比如当前没网了, 当前网络由 ipv4 变 ipv6 了等等
@@ -129,7 +129,7 @@ public class UnityScene
                             }
                             else
                             {
-                                var ibb = bb.TryReadPackage<IBBuffer>();
+                                var ibb = bb.TryReadRoot<IBBuffer>();
                                 if (ibb == null)
                                 {
                                     Console.WriteLine("recv bad data");

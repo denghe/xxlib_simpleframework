@@ -31,7 +31,7 @@ public class ServicePeer : UvTcpPeer
         this.OnReceivePackage = (bb) =>
         {
             // 试解包, 如果失败直接断开
-            var ibb = bb.TryReadPackage<IBBuffer>();
+            var ibb = bb.TryReadRoot<IBBuffer>();
             if (ibb == null)
             {
                 this.Dispose();
@@ -195,7 +195,7 @@ public class ServiceContext_Manage : UvContextBase
                             if (peerAlive)
                             {
                                 // 发送处理结果
-                                peer.SendBig(new RPC.DB_Manage.MsgResult
+                                peer.Send(new RPC.DB_Manage.MsgResult
                                 {
                                     txt = o.txt
                                 });

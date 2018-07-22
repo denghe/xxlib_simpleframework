@@ -85,7 +85,7 @@ namespace rpc_manage
             // 收到数据时调用收包处理函数
             OnReceivePackage = bb =>
             {
-                var ibb = bb.TryReadPackage<xx.IBBuffer>();
+                var ibb = bb.TryReadRoot<xx.IBBuffer>();
                 if (ibb != null && recvHandlers != null)
                 {
                     recvHandlers(new RecvPkg { ibb = ibb });

@@ -73,7 +73,7 @@ public static class TcpUdpPeerHandler
         peer.OnReceiveRequest = (serial_client, bb__) =>
         {
             // 试解包, 如果失败直接断开
-            var ibb__ = bb__.TryReadPackage<IBBuffer>();
+            var ibb__ = bb__.TryReadRoot<IBBuffer>();
             if (ibb__ == null)
             {
                 peer.Dispose();
@@ -115,7 +115,7 @@ public static class TcpUdpPeerHandler
                             // 将回应包解出来, 进一步处理
                             else
                             {
-                                var ibb = bb.TryReadPackage<IBBuffer>();
+                                var ibb = bb.TryReadRoot<IBBuffer>();
 
                                 // 如果 ibb 为空, 则为内部 / 内网通信错误, 或协议错误 )
                                 Debug.Assert(ibb != null);
@@ -219,7 +219,7 @@ public class DbClient : UvTcpClient
                 {
                     if (bb == null) return;
                     Console.WriteLine("recv db's pong...");
-                    var pong = bb.TryReadPackage<RPC.Generic.Pong>();
+                    var pong = bb.TryReadRoot<RPC.Generic.Pong>();
                     Debug.Assert(pong != null);
 
                     // ping 计数, 总 ping 值累加
