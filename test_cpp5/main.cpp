@@ -13,6 +13,65 @@ void Press(char key, int count = 1)
 		std::cout << key;
 	}
 }
+void TaskPress2()
+{
+	std::thread t([=]
+	{
+		while (true)
+		{
+			Press('1');
+			Sleep(200);
+			Press('2');
+			Sleep(200);
+			Press('3');
+			Sleep(500);
+			Press('2');
+			Sleep(200);
+			Press('3');
+			Sleep(500);
+			Press('2');
+			Sleep(200);
+			Press('3');
+			Sleep(500);
+			Press('2');
+			Sleep(200);
+			Press('3');
+			Sleep(500);
+			Press('2');
+			Sleep(200);
+			Press('3');
+			Sleep(500);
+			Press('2');
+			Sleep(200);
+			Press('3');
+			Sleep(500);
+			Press('2');
+			Sleep(200);
+			Press('3');
+			Sleep(500);
+		}
+	});
+	t.detach();
+}
+void TaskPress3()
+{
+	std::thread t([=]
+	{
+		while (true)
+		{
+			Press('A');			Sleep(50);
+			Press('S');			Sleep(50);
+			Press('D');			Sleep(50);
+			Press('F');			Sleep(50);
+			Press('G');			Sleep(50);
+			Press('H');			Sleep(50);
+			Press('J');			Sleep(50);
+			Press('K');			Sleep(50);
+			Press('L');			Sleep(50);
+		}
+	});
+	t.detach();
+}
 void TaskPress(int preSleep, char key, int count = 1, int cd = 0)
 {
 	Sleep(preSleep);
@@ -33,34 +92,35 @@ void TaskPress(int preSleep, char key, int count = 1, int cd = 0)
 	});
 	t.detach();
 }
-void PressPlan1()
-{
-	TaskPress(5, '1', 2, 11000);
-	TaskPress(15, '2', 2, 1600);
-	TaskPress(25, '3', 2, 1300);
-	TaskPress(35, '4', 1, 5000);
-
-	TaskPress(5, '5', 10, 110000);
-	TaskPress(55, '7', 10, 110000);
-	TaskPress(25, '8', 2, 0);
-
-	TaskPress(10, 'A', 1, 1000);
-	TaskPress(20, 'S', 1, 1000);
-	TaskPress(40, 'D', 1, 1000);
-	TaskPress(50, 'F', 1, 1000);
-	TaskPress(60, 'G', 1, 1000);
-	TaskPress(70, 'H', 1, 1000);
-	TaskPress(80, 'J', 1, 1000);
-	TaskPress(90, 'K', 1, 1000);
-	TaskPress(100, 'L', 1, 1000);
-}
 int main()
 {
 	hWnd = FindWindow(nullptr, L"ClickerHeroes2");
 	if (hWnd)
 	{
-		PressPlan1();
 		std::cout << "running...";
+
+		//TaskPress(5, '1', 2, 6000);
+		//TaskPress(15, '2', 2, 1000);
+		//TaskPress(25, '3', 2, 700);
+		//TaskPress(35, '4', 1, 4000);
+
+		TaskPress2();
+		TaskPress3();
+
+		TaskPress(5, '5', 10, 70000);
+		//TaskPress(55, '7', 10, 70000);
+		//TaskPress(25, '8', 2, 0);
+
+		//TaskPress(10, 'A', 1, 1000);
+		//TaskPress(20, 'S', 1, 1000);
+		//TaskPress(40, 'D', 1, 1000);
+		//TaskPress(50, 'F', 1, 1000);
+		//TaskPress(60, 'G', 1, 1000);
+		//TaskPress(70, 'H', 1, 1000);
+		//TaskPress(80, 'J', 1, 1000);
+		//TaskPress(90, 'K', 1, 1000);
+		//TaskPress(100, 'L', 1, 1000);
+
 		std::cin.get();
 	}
 	else
