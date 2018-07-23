@@ -1,48 +1,71 @@
 ﻿#include <windows.h>
-void Press(HWND hWnd, char key)
+#include <thread>
+#include <iostream>
+
+HWND hWnd = nullptr;
+void Press(char key, int count = 1)
 {
-	::PostMessage(hWnd, WM_KEYDOWN, key, 0);
-	Sleep(100);
-	::PostMessage(hWnd, WM_KEYUP, key, 0);
-	Sleep(10);
-}
-int main()
-{
-	int plan = 1;
-	while (true)
+	for (int i = 0; i < count; ++i)
 	{
-		auto hWnd = FindWindow(nullptr, L"ClickerHeroes2");
-		if (hWnd)
+		::PostMessage(hWnd, WM_KEYDOWN, key, 0);
+		Sleep(50);
+		::PostMessage(hWnd, WM_KEYUP, key, 0);
+		std::cout << key;
+	}
+}
+void TaskPress(int preSleep, char key, int count = 1, int cd = 0)
+{
+	Sleep(preSleep);
+	std::thread t([=]
+	{
+		while (true)
 		{
-			if (plan == 1)
+			Press(key, count);
+			if (cd)
 			{
-				Press(hWnd, '3');
-				Press(hWnd, 'A');
-				Press(hWnd, 'S');
-				Press(hWnd, 'D');
-				Press(hWnd, 'F');
-				Press(hWnd, 'G');
-				Press(hWnd, 'H');
-				Press(hWnd, 'J');
-				Press(hWnd, 'K');
-				Press(hWnd, 'L');
+				Sleep(cd);
 			}
 			else
 			{
-				Press(hWnd, 'A');
-				Press(hWnd, 'S');
-				Press(hWnd, 'D');
-				Press(hWnd, 'F');
-				Press(hWnd, 'G');
-				Press(hWnd, 'H');
-				Press(hWnd, 'J');
-				Press(hWnd, 'K');
+				break;
 			}
 		}
-		else
-		{
-			Sleep(100);
-		}
+	});
+	t.detach();
+}
+void PressPlan1()
+{
+	TaskPress(5, '1', 2, 11000);
+	TaskPress(15, '2', 2, 1600);
+	TaskPress(25, '3', 2, 1300);
+	TaskPress(35, '4', 1, 5000);
+
+	TaskPress(5, '5', 10, 110000);
+	TaskPress(55, '7', 10, 110000);
+	TaskPress(25, '8', 2, 0);
+
+	TaskPress(10, 'A', 1, 1000);
+	TaskPress(20, 'S', 1, 1000);
+	TaskPress(40, 'D', 1, 1000);
+	TaskPress(50, 'F', 1, 1000);
+	TaskPress(60, 'G', 1, 1000);
+	TaskPress(70, 'H', 1, 1000);
+	TaskPress(80, 'J', 1, 1000);
+	TaskPress(90, 'K', 1, 1000);
+	TaskPress(100, 'L', 1, 1000);
+}
+int main()
+{
+	hWnd = FindWindow(nullptr, L"ClickerHeroes2");
+	if (hWnd)
+	{
+		PressPlan1();
+		std::cout << "running...";
+		std::cin.get();
+	}
+	else
+	{
+
 	}
 }
 
