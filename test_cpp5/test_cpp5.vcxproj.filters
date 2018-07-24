@@ -14,6 +14,7 @@
     <None Include="main.bak2" />
     <None Include="main.bak3" />
     <None Include="main.bak4" />
+    <None Include="main.bak5" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="xxlib">
@@ -102,5 +103,10 @@
     <ClInclude Include="..\xxlib\xx_sqlite.h">
       <Filter>xxlib</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="..\xxlib\xx.natvis">
+      <Filter>xxlib</Filter>
+    </Natvis>
   </ItemGroup>
 </Project>

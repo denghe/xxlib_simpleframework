@@ -1,20 +1,18 @@
-<?xml version="1.0" encoding="utf-8"?> 
+﻿<?xml version="1.0" encoding="utf-8"?> 
 <AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
 
   <Type Name="xx::Ref&lt;*&gt;">
     <DisplayString Condition="pointer == 0 || versionNumber != (*((MemHeader_Object*)pointer - 1)).versionNumber">null</DisplayString>
-    <DisplayString Condition="pointer != 0 &amp;&amp; versionNumber == (*((MemHeader_Object*)pointer - 1)).versionNumber">Ref({*pointer})</DisplayString>
+    <DisplayString Condition="pointer != 0 &amp;&amp; versionNumber == (*((MemHeader_Object*)pointer - 1)).versionNumber">{*pointer}</DisplayString>
   </Type>
 
   <Type Name="xx::Ptr&lt;*&gt;">
     <DisplayString Condition="pointer == 0">null</DisplayString>
-    <DisplayString Condition="pointer != 0">Ptr({*pointer})</DisplayString>
+    <DisplayString Condition="pointer != 0">{*pointer}</DisplayString>
   </Type>
 
   <Type Name="xx::Object" Inheritable="true">
-    <Expand>
-      <Item Name="MemHeader_Object">*((MemHeader_Object*)this - 1)</Item>
-    </Expand>
+    <DisplayString>{*((MemHeader_Object*)this - 1)}</DisplayString>
   </Type>
   
   <Type Name="xx::MemHeader_Object" Inheritable="false">
@@ -27,10 +25,12 @@
   </Type>
 
   <Type Name="xx::List&lt;*&gt;">
-    <DisplayString Condition="bufLen &gt; 0 &amp;&amp; dataLen &gt; 0">dataLen = {dataLen}, bufLen = {bufLen}</DisplayString>
-    <DisplayString Condition="bufLen == 0">null</DisplayString>
-    <DisplayString Condition="bufLen &gt; 0 &amp;&amp; dataLen == 0">empty</DisplayString>
+    <DisplayString Condition="bufLen == 0">{*((MemHeader_Object*)this - 1)}, null</DisplayString>
+    <DisplayString Condition="bufLen &gt; 0 &amp;&amp; dataLen == 0">{*((MemHeader_Object*)this - 1)}, empty</DisplayString>
+    <DisplayString Condition="bufLen &gt; 0 &amp;&amp; dataLen &gt; 0">{*((MemHeader_Object*)this - 1)}, dataLen = {dataLen}</DisplayString>
     <Expand>
+      <Item Name="[dataLen]" ExcludeView="simple">dataLen</Item>
+      <Item Name="[bufLen]" ExcludeView="simple">bufLen</Item>
       <ArrayItems>
         <Size>dataLen</Size>
         <ValuePointer>buf</ValuePointer>
@@ -39,8 +39,11 @@
   </Type>
 
   <Type Name="xx::Dict&lt;*,*&gt;">
-    <DisplayString>{{itemsCount = {count - freeCount}}, bucketsLen = {bucketsLen}}</DisplayString>
+    <DisplayString>{*((MemHeader_Object*)this - 1)}, itemsCount = {count - freeCount}</DisplayString>
     <Expand>
+      <Item Name="[count]" ExcludeView="simple">count</Item>
+      <Item Name="[freeCount]" ExcludeView="simple">freeCount</Item>
+      <Item Name="[bucketsLen]" ExcludeView="simple">bucketsLen</Item>
       <CustomListItems Condition="count - freeCount != 0">
         <Variable InitialValue="0" Name="index"/>
         <Loop>
@@ -73,27 +76,28 @@
   </Type>-->
 
   <Type Name="xx::String">
-    <DisplayString Condition="bufLen == 0">null</DisplayString>
-    <DisplayString Condition="bufLen &gt; 0 &amp;&amp; dataLen == 0">empty</DisplayString>
-    <DisplayString Condition="dataLen &gt; 0">{buf,[dataLen]}</DisplayString>
-    <StringView Condition="bufLen == 0">buf,[dataLen]</StringView>
-    <StringView Condition="bufLen &gt; 0 &amp;&amp; dataLen == 0">buf,[dataLen]</StringView>
-    <StringView Condition="dataLen &gt; 0">buf,[dataLen]</StringView>
+    <DisplayString Condition="bufLen == 0">{*((MemHeader_Object*)this - 1)}, null</DisplayString>
+    <DisplayString Condition="bufLen &gt; 0 &amp;&amp; dataLen == 0">{*((MemHeader_Object*)this - 1)}, empty</DisplayString>
+    <DisplayString Condition="dataLen &gt; 0">{*((MemHeader_Object*)this - 1)}, {buf,[dataLen]}</DisplayString>
+    <StringView Condition="dataLen &gt; 0">buf,na</StringView>
     <Expand>
-      <Item Name="[size]" ExcludeView="simple">dataLen</Item>
-      <Item Name="[capacity]" ExcludeView="simple">bufLen</Item>
+      <Item Name="[dataLen]" ExcludeView="simple">dataLen</Item>
+      <Item Name="[bufLen]" ExcludeView="simple">bufLen</Item>
       <ArrayItems>
         <Size>dataLen</Size>
-        <ValuePointer>buf, m</ValuePointer>
+        <ValuePointer>buf</ValuePointer>
       </ArrayItems>
     </Expand>
   </Type>
 
   <Type Name="xx::BBuffer">
-    <DisplayString Condition="bufLen &gt; 0 &amp;&amp; dataLen &gt; 0">dataLen = {dataLen}, bufLen = {bufLen}, offset = {offset}</DisplayString>
-    <DisplayString Condition="bufLen == 0">null</DisplayString>
-    <DisplayString Condition="bufLen &gt; 0 &amp;&amp; dataLen == 0">empty</DisplayString>
+    <DisplayString Condition="bufLen == 0">{*((MemHeader_Object*)this - 1)}, null</DisplayString>
+    <DisplayString Condition="bufLen &gt; 0 &amp;&amp; dataLen == 0">{*((MemHeader_Object*)this - 1)}, empty</DisplayString>
+    <DisplayString Condition="bufLen &gt; 0 &amp;&amp; dataLen &gt; 0">{*((MemHeader_Object*)this - 1)}, dataLen = {dataLen}</DisplayString>
     <Expand>
+      <Item Name="[dataLen]" ExcludeView="simple">dataLen</Item>
+      <Item Name="[bufLen]" ExcludeView="simple">bufLen</Item>
+      <Item Name="[offset]" ExcludeView="simple">offset</Item>
       <ArrayItems>
         <Size>dataLen</Size>
         <ValuePointer>buf</ValuePointer>

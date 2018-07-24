@@ -336,18 +336,16 @@ namespace xx
 
 
 
-
-
 	template<typename T>
 	Ptr<T>::Ptr() noexcept
 		: pointer(nullptr)
-	{}
-
+	{
+	}
 
 	template<typename T>
 	template<typename O>
 	Ptr<T>::Ptr(O* const& pointer) noexcept
-		: pointer(pointer)
+		: pointer((T*)pointer)
 	{
 		static_assert(std::is_base_of_v<T, O>);
 		if (pointer)
@@ -355,13 +353,32 @@ namespace xx
 			++pointer->memHeader().refs;
 		}
 	}
+
+	template<typename T>
+	template<typename O>
+	Ptr<T>::Ptr(Ptr<O> const& o) noexcept
+		: pointer(o.pointer)
+	{
+		static_assert(std::is_base_of_v<T, O>);
+	}
+
+	template<typename T>
+	template<typename O>
+	Ptr<T>::Ptr(Ptr<O> && o) noexcept
+		: pointer(o.pointer)
+	{
+		static_assert(std::is_base_of_v<T, O>);
+		o.pointer = nullptr;
+	}
+
+
 	template<typename T>
 	template<typename O>
 	Ptr<T>& Ptr<T>::operator=(O* const& o) noexcept
 	{
 		static_assert(std::is_base_of_v<T, O>);
 		Reset();
-		pointer = o;
+		pointer = (T*)o;
 		if (pointer)
 		{
 			++pointer->memHeader().refs;
@@ -369,72 +386,31 @@ namespace xx
 		return *this;
 	}
 
-
-	template<typename T>
-	Ptr<T>::Ptr(Ptr const& o) noexcept
-		: Ptr<T>(o.pointer)
-	{
-	}
-
-	template<typename T>
-	template<typename O>
-	Ptr<T>::Ptr(Ptr<O> const& o) noexcept
-		: Ptr<T>(o.pointer)
-	{
-	}
-
-	template<typename T>
-	Ptr<T>& Ptr<T>::operator=(Ptr const& o) noexcept
-	{
-		return operator=(o.pointer);
-	}
-	template<typename T>
-	Ptr<T>& Ptr<T>::operator=(Ptr&& o) noexcept
-	{
-		Assign(std::move(o));
-		return *this;
-	}
-
-
 	template<typename T>
 	template<typename O>
 	Ptr<T>& Ptr<T>::operator=(Ptr<O> const& o) noexcept
 	{
+		static_assert(std::is_base_of_v<T, O>);
 		return operator=(o.pointer);
 	}
 
 	template<typename T>
-	Ptr<T>::Ptr(Ptr&& o) noexcept
-		: pointer(o.pointer)
-	{
-		o.pointer = nullptr;
-	}
-
-	template<typename T>
 	template<typename O>
-	Ptr<T>::Ptr(Ptr<O>&& o) noexcept
-		: pointer(o.pointer)
-	{
-		static_assert(std::is_base_of_v<T, O>);
-		o.pointer = nullptr;
-	}
-
-	template<typename T>
-	template<typename O>
-	Ptr<T>& Ptr<T>::operator=(Ptr<O>&& o) noexcept
-	{
-		Assign(std::move(o));
-		return *this;
-	}
-
-	template<typename T>
-	template<typename O>
-	void Ptr<T>::Assign(Ptr<O>&& o) noexcept
+	Ptr<T>& Ptr<T>::operator=(Ptr<O> && o) noexcept
 	{
 		static_assert(std::is_base_of_v<T, O>);
 		Reset();
 		pointer = (T*)o.pointer;
 		o.pointer = nullptr;
+		return *this;
+	}
+
+	template<typename T>
+	template<typename O>
+	Ptr<T>::operator Ptr<O>&() const noexcept
+	{
+		static_assert(std::is_base_of_v<O, T>);
+		return *(Ptr<O>*)this;
 	}
 
 

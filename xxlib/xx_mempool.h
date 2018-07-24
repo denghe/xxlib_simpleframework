@@ -223,42 +223,31 @@ namespace xx
 		typedef T ChildType;
 		T* pointer;
 
-
-
 		Ptr() noexcept;
-		Ptr(Ptr const& o) noexcept;
-		Ptr(Ptr&& o) noexcept;
-		Ptr& operator=(Ptr const& o) noexcept;
-		Ptr& operator=(Ptr&& o) noexcept;
-
-
-		template<typename O>
-		Ptr(Ptr<O> const& o) noexcept;
-
-		template<typename O>
-		Ptr(Ptr<O>&& o) noexcept;
-
-		template<typename O>
-		Ptr& operator=(Ptr<O> const& o) noexcept;
-
-		template<typename O>
-		Ptr& operator=(Ptr<O>&& o) noexcept;
-
-		
-
 
 		template<typename O>
 		Ptr(O* const& pointer) noexcept;
 
 		template<typename O>
+		Ptr(Ptr<O> const& o) noexcept;
+
+		template<typename O>
+		Ptr(Ptr<O> && o) noexcept;
+
+
+		template<typename O>
 		Ptr& operator=(O* const& o) noexcept;
 
-
-
-
-		// replace
 		template<typename O>
-		void Assign(Ptr<O>&& o) noexcept;
+		Ptr& operator=(Ptr<O> const& o) noexcept;
+
+		template<typename O>
+		Ptr& operator=(Ptr<O> && o) noexcept;
+
+
+		template<typename O>
+		operator Ptr<O>&() const noexcept;
+
 
 
 		// cleanup

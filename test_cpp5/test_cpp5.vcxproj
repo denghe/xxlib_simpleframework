@@ -97,6 +97,7 @@
     <None Include="main.bak2" />
     <None Include="main.bak3" />
     <None Include="main.bak4" />
+    <None Include="main.bak5" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\xxlib\ikcp.h" />
@@ -126,6 +127,9 @@
     <ClInclude Include="..\xxlib\xx_string.h" />
     <ClInclude Include="..\xxlib\xx_string.hpp" />
     <ClInclude Include="..\xxlib\xx_uv.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="..\xxlib\xx.natvis" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
