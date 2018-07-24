@@ -374,20 +374,13 @@ namespace xx
 	Ptr<T>::Ptr(Ptr const& o) noexcept
 		: Ptr<T>(o.pointer)
 	{
-		if (pointer)
-		{
-			++pointer->memHeader().refs;
-		}
 	}
+
 	template<typename T>
 	template<typename O>
 	Ptr<T>::Ptr(Ptr<O> const& o) noexcept
 		: Ptr<T>(o.pointer)
 	{
-		if (pointer)
-		{
-			++pointer->memHeader().refs;
-		}
 	}
 
 	template<typename T>
@@ -440,7 +433,7 @@ namespace xx
 	{
 		static_assert(std::is_base_of_v<T, O>);
 		Reset();
-		pointer = o.pointer;
+		pointer = (T*)o.pointer;
 		o.pointer = nullptr;
 	}
 
@@ -461,6 +454,14 @@ namespace xx
 	}
 
 	template<typename T>
+	decltype(MemHeader_Object::refs) Ptr<T>::GetRefs() const noexcept
+	{
+		if (pointer) return pointer->memHeader().refs;
+		else return 0;
+	}
+
+
+	template<typename T>
 	Ref<T> Ptr<T>::MakeRef() const noexcept
 	{
 		return Ref<T>(pointer);
@@ -471,15 +472,27 @@ namespace xx
 	template<typename O>
 	Ptr<O> const& Ptr<T>::As() const noexcept
 	{
-		static_assert(std::is_base_of_v<T, O>);
+		assert(Is<O>());
 		return *(Ptr<O>*)this;
 	}
 	template<typename T>
 	template<typename O>
 	Ptr<O>& Ptr<T>::As() noexcept
 	{
-		static_assert(std::is_base_of_v<T, O>);
+		assert(Is<O>());
 		return *(Ptr<O>*)this;
+	}
+
+	template<typename T>
+	template<typename O>
+	bool Ptr<T>::Is() const noexcept
+	{
+		return !this || MemPool::IsBaseOf<O>(pointer->memHeader().typeId);
+	}
+	template<typename T>
+	bool Ptr<T>::Is(uint16_t const& typeId) const noexcept
+	{
+		return !this || MemPool::IsBaseOf(typeId, pointer->memHeader().typeId);
 	}
 
 
@@ -495,6 +508,12 @@ namespace xx
 	bool Ptr<T>::operator==(Ptr<O> const& o) const noexcept
 	{
 		return pointer == o.pointer;
+	}
+	template<typename T>
+	template<typename O>
+	bool Ptr<T>::operator!=(Ptr<O> const& o) const noexcept
+	{
+		return pointer != o.pointer;
 	}
 
 

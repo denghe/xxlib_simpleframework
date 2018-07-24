@@ -261,21 +261,37 @@ namespace xx
 		void Assign(Ptr<O>&& o) noexcept;
 
 
+		// cleanup
 		void Reset();
+		
+		// 提供一个快捷读取引用计数的办法
+		decltype(MemHeader_Object::refs) GetRefs() const noexcept;
+
 
 		Ref<T> MakeRef() const noexcept;
 
-		// base type to child type convert.
+
+		// 比指针硬转科学丁点, 能防手误. 使用 assert 检测实际父子关系
 		template<typename O>
 		Ptr<O> const& As() const noexcept;
 		template<typename O>
 		Ptr<O>& As() noexcept;
 
 
+		// T can be try cast to O ?
+		template<typename O>
+		bool Is() const noexcept;
+
+		// T is typeId's parent or equals?
+		bool Is(uint16_t const& typeId) const noexcept;
+
+
 		~Ptr();
 
 		template<typename O>
 		bool operator==(Ptr<O> const& o) const noexcept;
+		template<typename O>
+		bool operator!=(Ptr<O> const& o) const noexcept;
 
 
 		operator bool() const noexcept;
