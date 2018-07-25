@@ -234,6 +234,9 @@ namespace xx
 		template<typename O>
 		Ptr(Ptr<O> && o) noexcept;
 
+		Ptr(Ptr<T> const& o) noexcept;
+		Ptr(Ptr<T> && o) noexcept;
+
 
 		template<typename O>
 		Ptr& operator=(O* const& o) noexcept;
@@ -245,16 +248,31 @@ namespace xx
 		Ptr& operator=(Ptr<O> && o) noexcept;
 
 
+		Ptr& operator=(Ptr const& o) noexcept;
+		Ptr& operator=(Ptr && o) noexcept;
+
+
+		// 提供到基类 Ptr 的隐式转换
 		template<typename O>
 		operator Ptr<O>&() const noexcept;
+
+		// 提供到基类 * 的隐式转换
+		template<typename O>
+		operator O*() const noexcept;
 
 
 
 		// cleanup
 		void Reset();
+
+		// std like
+		template<typename O>
+		void Reset(O* const& o) noexcept;
+
 		
-		// 提供一个快捷读取引用计数的办法
+		// 提供一些快捷读取 memHeader 区域的函数
 		decltype(MemHeader_Object::refs) GetRefs() const noexcept;
+		decltype(MemHeader_Object::typeId) GetTypeId() const noexcept;
 
 
 		Ref<T> MakeRef() const noexcept;
@@ -282,6 +300,11 @@ namespace xx
 		template<typename O>
 		bool operator!=(Ptr<O> const& o) const noexcept;
 
+		template<typename O>
+		bool operator==(O* const& o) const noexcept;
+		template<typename O>
+		bool operator!=(O* const& o) const noexcept;
+
 
 		operator bool() const noexcept;
 		// unsafe funcs
@@ -291,10 +314,10 @@ namespace xx
 		T const& operator*() const noexcept;
 
 
-		template<typename ...Args>
+		template<typename O = T, typename ...Args>
 		Ptr<T>& Create(MemPool* mp, Args &&... args);
 
-		template<typename ...Args>
+		template<typename O = T, typename ...Args>
 		Ptr<T>& MPCreate(MemPool* mp, Args &&... args);
 	};
 

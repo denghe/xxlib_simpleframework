@@ -337,10 +337,7 @@ namespace xx
 
 
 	template<typename T>
-	Ptr<T>::Ptr() noexcept
-		: pointer(nullptr)
-	{
-	}
+	Ptr<T>::Ptr() noexcept : pointer(nullptr) {}
 
 	template<typename T>
 	template<typename O>
@@ -353,23 +350,32 @@ namespace xx
 			++pointer->memHeader().refs;
 		}
 	}
-
 	template<typename T>
 	template<typename O>
-	Ptr<T>::Ptr(Ptr<O> const& o) noexcept
-		: pointer(o.pointer)
-	{
-		static_assert(std::is_base_of_v<T, O>);
-	}
+	Ptr<T>::Ptr(Ptr<O> const& o) noexcept : Ptr<O>(o.pointer) {}
 
 	template<typename T>
 	template<typename O>
 	Ptr<T>::Ptr(Ptr<O> && o) noexcept
-		: pointer(o.pointer)
+		: pointer((T*)o.pointer)
 	{
 		static_assert(std::is_base_of_v<T, O>);
 		o.pointer = nullptr;
 	}
+
+
+	template<typename T>
+	Ptr<T>::Ptr(Ptr<T> const& o) noexcept : Ptr<T>(o.pointer) {}
+
+	template<typename T>
+	Ptr<T>::Ptr(Ptr<T> && o) noexcept
+		: pointer(o.pointer)
+	{
+		o.pointer = nullptr;
+	}
+
+
+
 
 
 	template<typename T>
@@ -378,10 +384,10 @@ namespace xx
 	{
 		static_assert(std::is_base_of_v<T, O>);
 		Reset();
-		pointer = (T*)o;
-		if (pointer)
+		if(o)
 		{
-			++pointer->memHeader().refs;
+			pointer = (T*)o;
+			++o->memHeader().refs;
 		}
 		return *this;
 	}
@@ -391,7 +397,7 @@ namespace xx
 	Ptr<T>& Ptr<T>::operator=(Ptr<O> const& o) noexcept
 	{
 		static_assert(std::is_base_of_v<T, O>);
-		return operator=(o.pointer);
+		return operator=<O>(o.pointer);
 	}
 
 	template<typename T>
@@ -405,6 +411,22 @@ namespace xx
 		return *this;
 	}
 
+
+	template<typename T>
+	Ptr<T>& Ptr<T>::operator=(Ptr<T> const& o) noexcept
+	{
+		return operator=<T>(o.pointer);
+	}
+
+	template<typename T>
+	Ptr<T>& Ptr<T>::operator=(Ptr<T> && o) noexcept
+	{
+		return operator=<T>(std::move(o));
+	}
+
+
+
+
 	template<typename T>
 	template<typename O>
 	Ptr<T>::operator Ptr<O>&() const noexcept
@@ -412,6 +434,15 @@ namespace xx
 		static_assert(std::is_base_of_v<O, T>);
 		return *(Ptr<O>*)this;
 	}
+
+	template<typename T>
+	template<typename O>
+	Ptr<T>::operator O*() const noexcept
+	{
+		static_assert(std::is_base_of_v<O, T>);
+		return (O*)pointer;
+	}
+
 
 
 	template<typename T>
@@ -429,10 +460,31 @@ namespace xx
 		}
 	}
 
+
+	template<typename T>
+	template<typename O>
+	void Ptr<T>::Reset(O* const& o) noexcept
+	{
+		static_assert(std::is_base_of_v<T, O>);
+		Reset();
+		if (o)
+		{
+			pointer = (T*)o;
+			++o->memHeader().refs;
+		}
+	}
+
+
 	template<typename T>
 	decltype(MemHeader_Object::refs) Ptr<T>::GetRefs() const noexcept
 	{
 		if (pointer) return pointer->memHeader().refs;
+		else return 0;
+	}
+	template<typename T>
+	decltype(MemHeader_Object::typeId) Ptr<T>::GetTypeId() const noexcept
+	{
+		if (pointer) return pointer->memHeader().typeId;
 		else return 0;
 	}
 
@@ -492,6 +544,19 @@ namespace xx
 		return pointer != o.pointer;
 	}
 
+	template<typename T>
+	template<typename O>
+	bool Ptr<T>::operator==(O* const& o) const noexcept
+	{
+		return pointer == (T*)o;
+	}
+	template<typename T>
+	template<typename O>
+	bool Ptr<T>::operator!=(O* const& o) const noexcept
+	{
+		return pointer != (T*)o;
+	}
+
 
 	template<typename T>
 	T const* Ptr<T>::operator->() const noexcept
@@ -524,18 +589,21 @@ namespace xx
 	}
 
 
+
 	template<typename T>
-	template<typename ...Args>
+	template<typename O, typename ...Args>
 	Ptr<T>& Ptr<T>::Create(MemPool* mp, Args &&... args)
 	{
-		return operator=(mp->Create<T>(std::forward<Args>(args)...));
+		Reset(mp->Create<O>(std::forward<Args>(args)...));
+		return *this;
 	}
 
 	template<typename T>
-	template<typename ...Args>
+	template<typename O, typename ...Args>
 	Ptr<T>& Ptr<T>::MPCreate(MemPool* mp, Args &&... args)
 	{
-		return operator=(mp->MPCreate<T>(std::forward<Args>(args)...));
+		Reset(mp->MPCreate<O>(std::forward<Args>(args)...));
+		return *this;
 	}
 
 
