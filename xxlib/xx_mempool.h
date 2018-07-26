@@ -219,7 +219,6 @@ namespace xx
 	class Ptr
 	{
 	public:
-		//static_assert(std::is_base_of_v<Object, T>);
 		typedef T ChildType;
 		T* pointer;
 
@@ -308,10 +307,8 @@ namespace xx
 
 		operator bool() const noexcept;
 		// unsafe funcs
-		T const* operator->() const noexcept;
-		T* operator->() noexcept;
-		T& operator*() noexcept;
-		T const& operator*() const noexcept;
+		T* operator->() const noexcept;
+		T& operator*() const noexcept;
 
 
 		template<typename O = T, typename ...Args>
@@ -378,20 +375,19 @@ namespace xx
 		template<typename O>
 		Ref& operator=(Ref<O> const& o) noexcept;
 
-		template<typename O = T>
-		Ptr<O> Lock() const noexcept;
-
 		template<typename O>
 		Ref& operator=(O* const& o) noexcept;
+
+
+		Ptr<T>& Lock() const noexcept;
 
 		void Reset();
 
 		operator bool() const noexcept;
+
 		// unsafe funcs
-		T const* operator->() const noexcept;
-		T* operator->() noexcept;
-		T& operator*() noexcept;
-		T const& operator*() const noexcept;
+		T* operator->() const noexcept;
+		T& operator*() const noexcept;
 	};
 
 

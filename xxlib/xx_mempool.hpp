@@ -384,7 +384,7 @@ namespace xx
 	{
 		static_assert(std::is_base_of_v<T, O>);
 		Reset();
-		if(o)
+		if (o)
 		{
 			pointer = (T*)o;
 			++o->memHeader().refs;
@@ -559,27 +559,15 @@ namespace xx
 
 
 	template<typename T>
-	T const* Ptr<T>::operator->() const noexcept
+	T* Ptr<T>::operator->() const noexcept
 	{
-		return pointer;
+		return (T*)pointer;
 	}
 
 	template<typename T>
-	T* Ptr<T>::operator->() noexcept
+	T& Ptr<T>::operator*() const noexcept
 	{
-		return pointer;
-	}
-
-	template<typename T>
-	T& Ptr<T>::operator*() noexcept
-	{
-		return *pointer;
-	}
-
-	template<typename T>
-	T const& Ptr<T>::operator*() const noexcept
-	{
-		return *pointer;
+		return *(T*)pointer;
 	}
 
 	template<typename T>
@@ -685,15 +673,13 @@ namespace xx
 	}
 
 	template<typename T>
-	template<typename O>
-	Ptr<O> Ref<T>::Lock() const noexcept
+	Ptr<T>& Ref<T>::Lock() const noexcept
 	{
-		static_assert(std::is_base_of_v<O, T>);
-		if (pointer && pointer->memHeader().versionNumber == versionNumber)
+		if (!(pointer && pointer->memHeader().versionNumber == versionNumber))
 		{
-			return Ptr<O>(pointer);
+			((Ref<T>*)this)->Reset();
 		}
-		return Ptr<O>();
+		return *(Ptr<T>*)this;
 	}
 
 	template<typename T>
@@ -720,27 +706,15 @@ namespace xx
 	}
 
 	template<typename T>
-	T const* Ref<T>::operator->() const noexcept
+	T* Ref<T>::operator->() const noexcept
 	{
-		return pointer;
+		return (T*)pointer;
 	}
 
 	template<typename T>
-	T* Ref<T>::operator->() noexcept
+	T& Ref<T>::operator*() const noexcept
 	{
-		return pointer;
-	}
-
-	template<typename T>
-	T& Ref<T>::operator*() noexcept
-	{
-		return *pointer;
-	}
-
-	template<typename T>
-	T const& Ref<T>::operator*() const noexcept
-	{
-		return *pointer;
+		return *(T*)pointer;
 	}
 
 
