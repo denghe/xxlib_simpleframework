@@ -352,7 +352,15 @@ namespace xx
 	}
 	template<typename T>
 	template<typename O>
-	Ptr<T>::Ptr(Ptr<O> const& o) noexcept : Ptr<O>(o.pointer) {}
+	Ptr<T>::Ptr(Ptr<O> const& o) noexcept
+		: pointer((T*)o.pointer)
+	{
+		static_assert(std::is_base_of_v<T, O>);
+		if (o.pointer)
+		{
+			++o.pointer->memHeader().refs;
+		}
+	}
 
 	template<typename T>
 	template<typename O>
@@ -365,7 +373,14 @@ namespace xx
 
 
 	template<typename T>
-	Ptr<T>::Ptr(Ptr<T> const& o) noexcept : Ptr<T>(o.pointer) {}
+	Ptr<T>::Ptr(Ptr<T> const& o) noexcept
+		: pointer((T*)o.pointer)
+	{
+		if (o.pointer)
+		{
+			++o.pointer->memHeader().refs;
+		}
+	}
 
 	template<typename T>
 	Ptr<T>::Ptr(Ptr<T> && o) noexcept
@@ -434,6 +449,14 @@ namespace xx
 		static_assert(std::is_base_of_v<O, T>);
 		return *(Ptr<O>*)this;
 	}
+	//template<typename T>
+	//template<typename O>
+	//Ptr<T>::operator Ptr<O> const&() const noexcept
+	//{
+	//	static_assert(std::is_base_of_v<O, T>);
+	//	return *(Ptr<O> const*)this;
+	//}
+
 
 	template<typename T>
 	template<typename O>
@@ -441,6 +464,13 @@ namespace xx
 	{
 		static_assert(std::is_base_of_v<O, T>);
 		return (O*)pointer;
+	}
+	template<typename T>
+	template<typename O>
+	Ptr<T>::operator O const*() const noexcept
+	{
+		static_assert(std::is_base_of_v<O, T>);
+		return (O const*)pointer;
 	}
 
 

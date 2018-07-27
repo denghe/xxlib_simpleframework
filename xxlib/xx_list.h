@@ -41,8 +41,8 @@ namespace xx
 		template<typename...Args>
 		T& EmplaceAt(size_t idx, Args&&...args);	// 用参数直接构造一个到指定位置
 
-		void Add(T&& v);
-		void Add(T const& v);
+		template<typename O = T>
+		void Add(O&& v);
 
 		void InsertAt(size_t const& idx, T&& v);
 		void InsertAt(size_t const& idx, T const& v);

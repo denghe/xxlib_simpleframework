@@ -251,16 +251,12 @@ namespace xx
 
 
 	template<typename T>
-	void List<T>::Add(T&& v)
+	template<typename O>
+	void List<T>::Add(O&& v)
 	{
-		Emplace((T&&)v);
+		Emplace(std::forward<O>(v));
 	}
 
-	template<typename T>
-	void List<T>::Add(T const& v)
-	{
-		Emplace(v);
-	}
 
 	template<typename T>
 	void List<T>::InsertAt(size_t const& idx, T&& v)
