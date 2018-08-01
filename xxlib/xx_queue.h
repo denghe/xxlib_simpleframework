@@ -41,10 +41,11 @@ namespace xx
 		void Clear();
 		void Reserve(size_t const& capacity, bool afterPush = false);
 
-		template<typename...PTS>
-		T& Emplace(PTS&&...ps);							// [ tail++ ] = T( ps )
-		void Push(T const& v);
-		void Push(T&& v);
+		template<typename...Args>
+		T& Emplace(Args&&...ps);							// [ tail++ ] = T( ps )
+
+		template<typename ...TS>
+		void Push(TS && ...vs);
 
 		bool TryPop(T& outVal);
 

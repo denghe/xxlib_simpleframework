@@ -288,7 +288,7 @@ inline Router::Router(xx::UvLoop& loop)
 				auto cp = clientPeerMappings.ValueAt(idx);
 
 				// 篡改地址部分为 实际发信服务 addr 并转发
-				cp->SendRoutingEx(bb, pkgLen, addrOffset, addrLen, sc->addr.buf, sc->addr.bufLen);
+				cp->SendRoutingByRouter(bb, pkgLen, addrOffset, addrLen, sc->addr.buf, sc->addr.bufLen);
 			}
 			// 否则表示 客户端早已断开 不必理会
 		};
@@ -337,7 +337,7 @@ inline Router::Router(xx::UvLoop& loop)
 				assert(c->alive());
 
 				// 篡改地址部分为客户对端的 key 并转发
-				c->SendRoutingEx(bb, pkgLen, addrOffset, addrLen, (char*)&p->addr, sizeof(p->addr));
+				c->SendRoutingByRouter(bb, pkgLen, addrOffset, addrLen, (char*)&p->addr, sizeof(p->addr));
 			}
 			// 否则将 p 回收掉
 			else

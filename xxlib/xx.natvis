@@ -58,7 +58,29 @@
       </CustomListItems>
     </Expand>
   </Type>
-  
+
+  <Type Name="xx::HashSet&lt;*&gt;">
+    <DisplayString>{*((MemHeader_Object*)this - 1)}, itemsCount = {count - freeCount}</DisplayString>
+    <Expand>
+      <Item Name="[count]" ExcludeView="simple">count</Item>
+      <Item Name="[freeCount]" ExcludeView="simple">freeCount</Item>
+      <Item Name="[bucketsLen]" ExcludeView="simple">bucketsLen</Item>
+      <CustomListItems Condition="count - freeCount != 0">
+        <Variable InitialValue="0" Name="index"/>
+        <Loop>
+          <If Condition="index == count">
+            <Break/>
+          </If>
+          <If Condition="nodes[index].prev != -2">
+            <Item Name="[{index}]">nodes[index].key</Item>
+          </If>
+          <Exec>++index</Exec>
+        </Loop>
+      </CustomListItems>
+    </Expand>
+  </Type>
+
+
   <!--<Type Name="xx::Links&lt;*&gt;">
     <DisplayString>{{itemsCount = {count - freeCount}}, nodesLen = {nodesLen}}</DisplayString>
     <Expand>

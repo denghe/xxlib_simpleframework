@@ -251,24 +251,12 @@ namespace xx
 
 
 	template<typename T>
-	template<typename O>
-	void List<T>::Add(O&& v)
+	template<typename ...TS>
+	void List<T>::Add(TS && ...vs)
 	{
-		Emplace(std::forward<O>(v));
+		std::initializer_list<int> n{ (Emplace(std::forward<TS>(vs)), 0)... };
 	}
 
-
-	template<typename T>
-	void List<T>::InsertAt(size_t const& idx, T&& v)
-	{
-		EmplaceAt(idx, (T&&)v);
-	}
-
-	template<typename T>
-	void List<T>::InsertAt(size_t const& idx, T const& v)
-	{
-		EmplaceAt(idx, v);
-	}
 
 	template<typename T>
 	void List<T>::AddRange(T const* items, size_t count)

@@ -24,19 +24,18 @@ namespace xx
 		mempool->Free(items);
 	}
 
-
 	template <typename TK, typename TV>
 	template<typename K, typename V>
-	DictAddResult Dict<TK, TV>::AddCore(bool override, K &&key, V &&v)
+	DictAddResult Dict<TK, TV>::Add(K &&k, V &&v, bool override)
 	{
 		assert(bucketsLen);
 
 		// hash 按桶数取模 定位到具体 链表, 扫找
-		auto hashCode = HashFunc<TK>::GetHashCode(key);
+		auto hashCode = HashFunc<TK>::GetHashCode(k);
 		auto targetBucket = hashCode % bucketsLen;
 		for (int i = buckets[targetBucket]; i >= 0; i = nodes[i].next)
 		{
-			if (nodes[i].hashCode == hashCode && EqualsFunc<TK>::EqualsTo(items[i].key, key))
+			if (nodes[i].hashCode == hashCode && EqualsFunc<TK>::EqualsTo(items[i].key, k))
 			{
 				if (override)                       // 允许覆盖 value
 				{
@@ -78,7 +77,7 @@ namespace xx
 		buckets[targetBucket] = index;
 
 		// 移动复制构造写 key, value
-		new (&items[index].key) TK(std::forward<K>(key));
+		new (&items[index].key) TK(std::forward<K>(k));
 		new (&items[index].value) TV(std::forward<V>(v));
 		items[index].prev = -1;
 
@@ -142,13 +141,13 @@ namespace xx
 	}
 
 	template <typename TK, typename TV>
-	int Dict<TK, TV>::Find(TK const &key) const noexcept
+	int Dict<TK, TV>::Find(TK const &k) const noexcept
 	{
 		assert(buckets);
-		auto hashCode = HashFunc<TK>::GetHashCode(key);
+		auto hashCode = HashFunc<TK>::GetHashCode(k);
 		for (int i = buckets[hashCode % bucketsLen]; i >= 0; i = nodes[i].next)
 		{
-			if (nodes[i].hashCode == hashCode && EqualsFunc<TK>::EqualsTo(items[i].key, key))
+			if (nodes[i].hashCode == hashCode && EqualsFunc<TK>::EqualsTo(items[i].key, k))
 			{
 				return i;
 			}
@@ -203,22 +202,22 @@ namespace xx
 
 	template <typename TK, typename TV>
 	template<typename K>
-	TV& Dict<TK, TV>::operator[](K &&key)
+	TV& Dict<TK, TV>::operator[](K &&k)
 	{
 		assert(buckets);
-		int idx = Find(key);
+		int idx = Find(k);
 		if (idx < 0)
 		{
-			idx = AddCore(true, std::forward<K>(key), TV()).index;
+			idx = Add(std::forward<K>(k), TV(), true).index;
 		}
 		return items[idx].value;
 	}
 
 	template <typename TK, typename TV>
-	void Dict<TK, TV>::Remove(TK const &key) noexcept
+	void Dict<TK, TV>::Remove(TK const &k) noexcept
 	{
 		assert(buckets);
-		auto idx = Find(key);
+		auto idx = Find(k);
 		if (idx != -1)
 		{
 			RemoveAt(idx);
@@ -238,30 +237,6 @@ namespace xx
 				items[i].prev = -2;
 			}
 		}
-	}
-
-	template <typename TK, typename TV>
-	DictAddResult Dict<TK, TV>::Add(TK const &k, TV const &v, bool override)
-	{
-		return AddCore(override, k, v);
-	}
-
-	template <typename TK, typename TV>
-	DictAddResult Dict<TK, TV>::Add(TK const &k, TV &&v, bool override)
-	{
-		return AddCore(override, k, (TV&&)v);
-	}
-
-	template <typename TK, typename TV>
-	DictAddResult Dict<TK, TV>::Add(TK &&k, TV const &v, bool override)
-	{
-		return AddCore(override, (TK&&)k, v);
-	}
-
-	template <typename TK, typename TV>
-	DictAddResult Dict<TK, TV>::Add(TK &&k, TV &&v, bool override)
-	{
-		return AddCore(override, (TK&&)k, (TV&&)v);
 	}
 
 	template <typename TK, typename TV>
@@ -328,6 +303,4 @@ namespace xx
 	{
 		return idx >= 0 && idx < count && items[idx].prev != -2;
 	}
-
-
 }

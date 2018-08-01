@@ -384,6 +384,9 @@ namespace xx
         protected BBuffer bbRecv = new BBuffer();               // 复用的接收缓冲区
         protected BBuffer bbSend = new BBuffer();               // 复用
 
+        // 用来放 serial 以便断线时及时发起 Request 超时回调
+        protected System.Collections.Generic.HashSet<uint> rpcSerials;
+
         public override void BindTimeouter(UvTimeouter tm = null)
         {
             if (timeouterManager != null) throw new InvalidOperationException();
@@ -611,6 +614,41 @@ namespace xx
             }
         }
 
+
+        // 超时回调所有被跟踪 rpc 流水号并清空( 内部函数. 会自动在 OnDispose, OnDisconnect 事件前调用以触发超时回调 )
+        public void RpcTraceCallback()
+        {
+            if (rpcSerials != null)
+            {
+                foreach (var serial in rpcSerials)
+                {
+                    loop.rpcMgr.Callback(serial, null);
+                }
+                if (rpcSerials.Count > 0) throw new InvalidProgramException();
+            }
+        }
+
+        // 增强的 SendRequest 实现 断线时 立即发起相关 rpc 超时回调. 封装了解包操作. 
+        public void SendRequestEx(xx.IBBuffer pkg, Action<uint, IBBuffer> cb, int interval = 0)
+        {
+            var serial = SendRequest(pkg, (uint ser, BBuffer bb) =>
+            {
+                rpcSerials.Remove(ser);
+                xx.IBBuffer inPkg = null;   // 如果 超时或 read 异常, inPkg 会保持空值
+                if (bb != null)
+                {
+                    inPkg = bb.TryReadRoot<xx.IBBuffer>();
+                }
+                cb(ser, inPkg); // call 原始 lambda
+            }, interval);
+
+            if (rpcSerials == null)
+            {
+                rpcSerials = new System.Collections.Generic.HashSet<uint>();
+            }
+            rpcSerials.Add(serial);
+        }
+
         public abstract void Dispose();
     }
 
@@ -758,9 +796,12 @@ namespace xx
 
         #region Dispose
 
+        bool disposing = false; // 防递归
         public override void Dispose()
         {
-            if (disposed) return;
+            if (disposing || disposed) return;
+            disposing = true;
+            RpcTraceCallback();
             if (OnDispose != null) OnDispose();
             Dispose(true);
             GC.SuppressFinalize(this);
@@ -897,9 +938,11 @@ namespace xx
         {
             if (disposed) throw new ObjectDisposedException("XxUvTcpClient");
             if (state == UvTcpStates.Disconnected) return;
+            state = UvTcpStates.Disconnected;
+            RpcTraceCallback();
+            if (OnDisconnect != null) OnDisconnect();
             UvInterop.xxuv_close_(ptr);
             ptr = IntPtr.Zero;
-            state = UvTcpStates.Disconnected;
             bbSend.Clear();
             bbRecv.Clear();
         }
@@ -907,14 +950,16 @@ namespace xx
         protected override void DisconnectImpl()
         {
             Disconnect();
-            if (OnDisconnect != null) OnDisconnect();
         }
 
         #region Dispose
 
+        bool disposing = false; // 防递归
         public override void Dispose()
         {
-            if (disposed) return;
+            if (disposing || disposed) return;
+            disposing = true;
+            RpcTraceCallback();
             if (OnDispose != null) OnDispose();
             Dispose(true);
             GC.SuppressFinalize(this);
@@ -1594,7 +1639,6 @@ namespace xx
             if (!disposed)
             {
                 // if (disposing) // Free other state (managed objects).
-                if (OnDispose != null) OnDispose();
                 peers.ForEach(kv => kv.value.Dispose());
                 peers.Clear();
 
@@ -1765,9 +1809,12 @@ namespace xx
 
         #region Dispose
 
+        bool disposing = false; // 防递归
         public override void Dispose()
         {
-            if (disposed) return;
+            if (disposing || disposed) return;
+            disposing = true;
+            RpcTraceCallback();
             if (OnDispose != null) OnDispose();
             Dispose(true);
             GC.SuppressFinalize(this);
@@ -2012,9 +2059,12 @@ namespace xx
 
         #region Dispose
 
+        bool disposing = false;
         public override void Dispose()
         {
-            if (disposed) return;
+            if (disposing || disposed) return;
+            disposing = false;
+            RpcTraceCallback();
             if (OnDispose != null) OnDispose();
             Dispose(true);
             GC.SuppressFinalize(this);

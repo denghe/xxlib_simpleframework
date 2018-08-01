@@ -163,6 +163,11 @@ namespace xx
 		BBuffer bbRecv;
 		BBuffer bbSend;
 
+
+		// 用来放 serial 以便断线时及时发起 Request 超时回调
+		xx::HashSet_p<uint32_t> rpcSerials;
+
+
 		UvTcpUdpBase(UvLoop& loop);
 
 		virtual void BindTimeouter(UvTimeouter* t = nullptr);
@@ -216,7 +221,16 @@ namespace xx
 		static size_t GetRoutingAddressLength(BBuffer& bb);
 
 		// 在不解析数据的情况下直接替换地址部分转发( 路由专用 )
-		void SendRoutingEx(xx::BBuffer& bb, size_t pkgLen, size_t addrOffset, size_t addrLen, char const* senderAddr, size_t senderAddrLen);
+		void SendRoutingByRouter(xx::BBuffer& bb, size_t pkgLen, size_t addrOffset, size_t addrLen, char const* senderAddr, size_t senderAddrLen);
+
+
+
+		// 超时回调所有被跟踪 rpc 流水号并清空( 内部函数. 会自动在 OnDispose, OnDisconnect 事件前调用以触发超时回调 )
+		void RpcTraceCallback();
+
+		// 增强的 SendRequest 实现 断线时 立即发起相关 rpc 超时回调. 封装了解包操作. 
+		template<typename T>
+		void SendRequestEx(T const& pkg, std::function<void(uint32_t, xx::Object_p&)>&& cb, int interval = 0);
 	};
 
 	class UvTcpBase : public UvTcpUdpBase
@@ -614,6 +628,32 @@ namespace xx
 			SendBytes(p, (int)(dataLen + 5));
 		}
 	}
+
+
+	template<typename T>
+	inline void UvTcpUdpBase::SendRequestEx(T const& pkg, std::function<void(uint32_t, xx::Object_p&)>&& cb, int interval)
+	{
+		auto serial = SendRequest(pkg, [this, cb = std::move(cb)](uint32_t ser, BBuffer* bb)
+		{
+			rpcSerials->Remove(ser);
+			xx::Object_p inPkg;		// 如果 超时或 read 异常, inPkg 设空值
+			if (bb)
+			{
+				if (bb->ReadRoot(inPkg))
+				{
+					inPkg.Reset();
+				}
+			}
+			cb(ser, inPkg);	// call 原始 lambda
+		}, interval);
+
+		if (!rpcSerials)
+		{
+			rpcSerials.MPCreate(mempool);
+		}
+		rpcSerials->Add(serial);
+	}
+
 
 	using UvLoop_r = Ref<UvLoop>;
 	using UvListenerBase_r = Ref<UvListenerBase>;

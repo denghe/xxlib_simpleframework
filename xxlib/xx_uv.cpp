@@ -119,9 +119,9 @@ xx::UvLoop::~UvLoop()
 	udpClients.ForEachRevert([&mp = this->mempool](auto& o) { mp->Release(o); });
 	tcpListeners.ForEachRevert([&mp = this->mempool](auto& o) { mp->Release(o); });
 	tcpClients.ForEachRevert([&mp = this->mempool](auto& o) { mp->Release(o); });
-	mempool->SafeRelease(udpTimer);
-	mempool->SafeRelease(timeouter);
-	mempool->SafeRelease(rpcMgr);
+	mempool->Release(udpTimer); udpTimer = nullptr;
+	mempool->Release(timeouter); timeouter = nullptr;
+	mempool->Release(rpcMgr);  rpcMgr = nullptr;
 	timers.ForEachRevert([&mp = this->mempool](auto& o) { mp->Release(o); });
 	asyncs.ForEachRevert([&mp = this->mempool](auto& o) { mp->Release(o); });
 
@@ -514,7 +514,7 @@ size_t xx::UvTcpUdpBase::GetRoutingAddressLength(BBuffer& bb)
 }
 
 
-void xx::UvTcpUdpBase::SendRoutingEx(xx::BBuffer& bb, size_t pkgLen, size_t addrOffset, size_t addrLen, char const* senderAddr, size_t senderAddrLen)
+void xx::UvTcpUdpBase::SendRoutingByRouter(xx::BBuffer& bb, size_t pkgLen, size_t addrOffset, size_t addrLen, char const* senderAddr, size_t senderAddrLen)
 {
 	// 防止误用
 	assert(bb[bb.offset] & 8);
@@ -582,6 +582,19 @@ void xx::UvTcpUdpBase::SendRoutingEx(xx::BBuffer& bb, size_t pkgLen, size_t addr
 
 	SendBytes(p1, (int)newPkgLen);
 }
+
+ void xx::UvTcpUdpBase::RpcTraceCallback()
+{
+	if (rpcSerials)
+	{
+		for (auto& serial : *rpcSerials)
+		{
+			loop.rpcMgr->Callback(serial, nullptr);
+		}
+		assert(rpcSerials->Empty());
+	}
+}
+
 
 
 xx::UvTcpBase::UvTcpBase(UvLoop& loop)
@@ -676,6 +689,7 @@ xx::UvTcpPeer::UvTcpPeer(UvTcpListener & listener)
 xx::UvTcpPeer::~UvTcpPeer()
 {
 	assert(addrPtr);
+	RpcTraceCallback();
 	if (OnDispose) OnDispose();
 	Close((uv_handle_t*)ptr);
 	ptr = nullptr;
@@ -804,10 +818,11 @@ void xx::UvTcpClient::Disconnect()
 {
 	if (!addrPtr) return;
 	if (state == UvTcpStates::Disconnected) return;
+	state = UvTcpStates::Disconnected;
+	RpcTraceCallback();					// 有可能再次触发 Disconnect
 	if (OnDisconnect) OnDisconnect();
 	Close((uv_handle_t*)ptr);
 	ptr = nullptr;
-	state = UvTcpStates::Disconnected;
 	bbSend.Clear();
 	bbRecv.Clear();
 }
@@ -907,7 +922,7 @@ xx::UvTimeouter::UvTimeouter(UvLoop & loop, uint64_t intervalMS, int wheelLen, i
 
 xx::UvTimeouter::~UvTimeouter()
 {
-	mempool->SafeRelease(timer);
+	mempool->Release(timer); timer = nullptr;
 }
 
 void xx::UvTimeouter::Process()
@@ -1395,6 +1410,8 @@ xx::UvUdpPeer::UvUdpPeer(UvUdpListener& listener
 
 xx::UvUdpPeer::~UvUdpPeer()
 {
+	RpcTraceCallback();
+	if (OnDispose) OnDispose();
 	Free(mempool, addrPtr);
 	ikcp_release((ikcpcb*)ptr);
 	ptr = nullptr;
@@ -1504,6 +1521,9 @@ xx::UvUdpClient::UvUdpClient(UvLoop& loop)
 }
 xx::UvUdpClient::~UvUdpClient()
 {
+	RpcTraceCallback();
+	if (OnDispose) OnDispose();
+
 	Disconnect();
 
 	loop.udpClients.RemoveAt(index_at_container);

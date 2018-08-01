@@ -83,19 +83,13 @@ namespace xx
 		return buf[idx];
 	}
 
-	template <class T>
-	void Queue<T>::Push(T const& v)
+
+	template<typename T>
+	template<typename ...TS>
+	void Queue<T>::Push(TS && ...vs)
 	{
-		Emplace(v);
+		std::initializer_list<int> n{ (Emplace(std::forward<TS>(vs)), 0)... };
 	}
-
-	template <class T>
-	void Queue<T>::Push(T&& v)
-	{
-		Emplace((T&&)v);
-	}
-
-
 
 
 	template <class T>

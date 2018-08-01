@@ -59,15 +59,9 @@ namespace xx
 		// 可传入一个资源回收函数来搞事
 		void Clear(std::function<void(Data&)> killer = nullptr) noexcept;
 
-	private:
 		template<typename K, typename V>
-		DictAddResult AddCore(bool override, K &&key, V &&v);
-	public:
+		DictAddResult Add(K &&k, V &&v, bool override = false);
 
-		DictAddResult Add(TK const &k, TV const &v, bool override = false);
-		DictAddResult Add(TK const &k, TV &&v, bool override = false);
-		DictAddResult Add(TK &&k, TV const &v, bool override = false);
-		DictAddResult Add(TK &&k, TV &&v, bool override = false);
 
 		uint32_t Count() const noexcept;
 		bool Empty() noexcept;
@@ -79,6 +73,7 @@ namespace xx
 		TK const& KeyAt(int idx) const noexcept;
 		TV& ValueAt(int idx) noexcept;
 		TV const& ValueAt(int idx) const noexcept;
+
 		//Data const& DataAt(int idx) const noexcept;
 
 		bool IndexExists(int idx) const noexcept;

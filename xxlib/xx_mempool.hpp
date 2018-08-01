@@ -171,21 +171,18 @@ namespace xx
 
 
 
-
-	inline void MemPool::Release(Object* o)
+	// 从 Free 复制小改. 能防递归 Release
+	inline void MemPool::Release(Object* p)
 	{
-		if (!o) return;
-		o->~Object();
-		Free<MemHeader_Object>(o);
-	}
-
-	template<typename T, typename U>
-	inline void MemPool::SafeRelease(T*& o)
-	{
-		if (!o) return;
-		o->~T();
-		Free<MemHeader_Object>(o);
-		o = nullptr;
+		if (!p) return;
+		auto h = (MemHeader_Object*)p - 1;
+		if (!h->versionNumber) return;		// 用这个来防递归 Release
+		assert(h->mpIndex() > 0 && h->mpIndex() < headers.size());
+		auto idx = h->mpIndex();
+		h->versionNumber = 0;
+		p->~Object();
+		*(void**)h = headers[idx];
+		headers[idx] = h;
 	}
 
 

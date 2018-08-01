@@ -36,16 +36,13 @@ namespace xx
 		void Remove(T const& v) noexcept;
 
 		template<typename...Args>
-		T& Emplace(Args &&... args);
+		T& Emplace(Args &&... args);	// 用 T 的一到多个构造函数的参数来追加构造一个 v
 
 		template<typename...Args>
 		T& EmplaceAt(size_t idx, Args&&...args);	// 用参数直接构造一个到指定位置
 
-		template<typename O = T>
-		void Add(O&& v);
-
-		void InsertAt(size_t const& idx, T&& v);
-		void InsertAt(size_t const& idx, T const& v);
+		template<typename ...TS>
+		void Add(TS && ...vs);		// 与 Emplace 不同的是, 这个仅支持1个参数的构造函数, 可同时追加多个
 
 		void AddRange(T const* items, size_t count);
 
