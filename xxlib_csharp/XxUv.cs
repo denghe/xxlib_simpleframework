@@ -896,6 +896,7 @@ namespace xx
         {
             var client = (UvTcpClient)((GCHandle)UvInterop.xxuv_get_ud_from_uv_connect_t(req)).Target;
             UvInterop.xxuv_free(req);
+            if (client == null) return;
             if (status < 0)
             {
                 client.Disconnect();
@@ -932,6 +933,21 @@ namespace xx
             }
 
             state = UvTcpStates.Connecting;
+        }
+
+        public Exception TryConnect(string ipv4, int port)
+        {
+            try
+            {
+                Disconnect();
+                SetAddress(ipv4, port);
+                Connect();
+            }
+            catch (Exception e)
+            {
+                return e;
+            }
+            return null;
         }
 
         public void Disconnect()

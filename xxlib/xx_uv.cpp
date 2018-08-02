@@ -760,6 +760,7 @@ void xx::UvTcpClient::OnConnectCBImpl(void* req, int status)
 {
 	auto client = *((UvTcpClient**)req - 1);
 	Free(client->loop.mempool, req);
+	if (!client) return;
 	if (status < 0)
 	{
 		client->Disconnect();
