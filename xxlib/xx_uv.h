@@ -13,10 +13,9 @@ namespace xx
 	class UvTcpClient;
 	class UvTimer;
 	class UvTimeouterBase;
-	class UvTimeouter;
 	class UvAsync;
 	class UvRpcManager;
-	class UvTimeouter;
+	class UvTimeoutManager;
 	class UvContextBase;
 	class UvUdpListener;
 	class UvUdpBase;
@@ -48,7 +47,7 @@ namespace xx
 		List<UvUdpClient*> udpClients;
 		List<UvTimer*> timers;
 		List<UvAsync*> asyncs;
-		UvTimeouter* timeouter = nullptr;
+		UvTimeoutManager* timeouter = nullptr;
 		UvRpcManager* rpcMgr = nullptr;
 		UvTimer* udpTimer = nullptr;
 		uint32_t udpTicks = 0;
@@ -108,7 +107,7 @@ namespace xx
 	public:
 		UvTimeouterBase(MemPool* mp);
 		~UvTimeouterBase();
-		UvTimeouter* timeouter = nullptr;
+		UvTimeoutManager* timeouter = nullptr;
 		UvTimeouterBase* timeouterPrev = nullptr;
 		UvTimeouterBase* timeouterNext = nullptr;
 		int timeouterIndex = -1;
@@ -117,15 +116,8 @@ namespace xx
 		void TimeouterClear();
 		void TimeoutReset(int interval = 0);
 		void TimeouterStop();
-		virtual void BindTimeouter(UvTimeouter*) = 0;
-		/*
-		void xx::T::BindTimeouter(UvTimeouter* tm = nullptr)
-		{
-			if (timeouter) throw - 1;
-			timeouter = tm ? tm : loop.timeouter;
-		}
-		*/
-		void UnbindTimeouter();
+		virtual void BindTimeoutManager(UvTimeoutManager*);
+		void UnbindTimeoutManager();
 		bool timeouting();
 	};
 
@@ -170,7 +162,7 @@ namespace xx
 
 		UvTcpUdpBase(UvLoop& loop);
 
-		virtual void BindTimeouter(UvTimeouter* t = nullptr);
+		virtual void BindTimeoutManager(UvTimeoutManager* t = nullptr);
 
 		virtual void DisconnectImpl() = 0;
 		virtual bool Disconnected() = 0;
@@ -294,15 +286,15 @@ namespace xx
 		void Stop();
 	};
 
-	class UvTimeouter : public Object
+	class UvTimeoutManager : public Object
 	{
 	public:
 		UvTimer * timer = nullptr;
 		List<UvTimeouterBase*> timeouterss;
 		int cursor = 0;
 		int defaultInterval;
-		UvTimeouter(UvLoop& loop, uint64_t intervalMS, int wheelLen, int defaultInterval);
-		~UvTimeouter();
+		UvTimeoutManager(UvLoop& loop, uint64_t intervalMS, int wheelLen, int defaultInterval);
+		~UvTimeoutManager();
 		void Process();
 		void Clear();
 		void Add(UvTimeouterBase* t, int interval = 0);
@@ -664,10 +656,10 @@ namespace xx
 	using UvTcpClient_r = Ref<UvTcpClient>;
 	using UvTimer_r = Ref<UvTimer>;
 	using UvTimeouterBase_r = Ref<UvTimeouterBase>;
-	using UvTimeouter_r = Ref<UvTimeouter>;
+	using UvTimeouter_r = Ref<UvTimeoutManager>;
 	using UvAsync_r = Ref<UvAsync>;
 	using UvRpcManager_r = Ref<UvRpcManager>;
-	using UvTimeouter_r = Ref<UvTimeouter>;
+	using UvTimeouter_r = Ref<UvTimeoutManager>;
 	using UvContextBase_r = Ref<UvContextBase>;
 	using UvUdpListener_r = Ref<UvUdpListener>;
 	using UvUdpBase_r = Ref<UvUdpBase>;

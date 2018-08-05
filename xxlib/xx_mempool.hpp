@@ -664,6 +664,16 @@ namespace xx
 		, versionNumber(o.versionNumber)
 	{
 	}
+
+	template<typename T>
+	Ref<T>::Ref(Ref && o) noexcept
+		: pointer(o.pointer)
+		, versionNumber(o.versionNumber)
+	{
+		o.pointer = nullptr;
+		o.versionNumber = 0;
+	}
+
 	template<typename T>
 	template<typename O>
 	Ref<T>::Ref(Ref<O> const& o) noexcept

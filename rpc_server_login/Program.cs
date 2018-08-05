@@ -63,7 +63,7 @@ public static class TcpUdpPeerHandler
     public static void Bind(Service service, UvTcpUdpBase peer)
     {
         // 绑到超时管理器. 几秒内没有收到合法的包或请求就 T
-        peer.BindTimeouter(service.timeouter);
+        peer.BindTimeoutManager(service.timeoutManager);
         peer.OnTimeout = peer.Dispose;
 
         // 开始超时计算

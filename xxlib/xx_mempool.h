@@ -365,6 +365,7 @@ namespace xx
 		Ref(Ptr<O> const& o) noexcept;
 
 		Ref(Ref const& o) noexcept;
+		Ref(Ref && o) noexcept;
 
 		template<typename O>
 		Ref(Ref<O> const& o) noexcept;

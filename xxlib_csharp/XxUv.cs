@@ -32,8 +32,8 @@ namespace xx
         public List<UvUdpClient> udpClients = new List<UvUdpClient>();
         public List<UvTimer> timers = new List<UvTimer>();
         public List<UvAsync> asyncs = new List<UvAsync>();
-        public UvTimeouter timeouter;
-        public UvRpcManager rpcMgr;
+        public UvTimeoutManager timeoutManager;
+        public UvRpcManager rpcManager;
         public UvTimer udpTimer;
         public uint udpTicks;
         public byte[] udpRecvBuf = new byte[65536];
@@ -99,14 +99,14 @@ namespace xx
 
         public void InitTimeouter(ulong intervalMS = 1000, int wheelLen = 6, int defaultInterval = 5)
         {
-            if (timeouter != null) throw new InvalidOperationException();
-            timeouter = new UvTimeouter(this, intervalMS, wheelLen, defaultInterval);
+            if (timeoutManager != null) throw new InvalidOperationException();
+            timeoutManager = new UvTimeoutManager(this, intervalMS, wheelLen, defaultInterval);
         }
 
         public void InitRpcManager(ulong intervalMS = 1000, int defaultInterval = 5)
         {
-            if (rpcMgr != null) throw new InvalidOperationException();
-            rpcMgr = new UvRpcManager(this, intervalMS, defaultInterval);
+            if (rpcManager != null) throw new InvalidOperationException();
+            rpcManager = new UvRpcManager(this, intervalMS, defaultInterval);
         }
 
         public void InitKcpFlushInterval(uint interval = 10)
@@ -319,7 +319,7 @@ namespace xx
     public abstract class UvTimeouterBase
     {
         // TimerManager 于 Add 时填充下列成员
-        public UvTimeouter timeouterManager;        // 指向时间管理( 初始为空 )
+        public UvTimeoutManager timeouterManager;        // 指向时间管理( 初始为空 )
         public UvTimeouterBase timeouterPrev;       // 指向同一 ticks 下的上一 timer
         public UvTimeouterBase timeouterNext;       // 指向同一 ticks 下的下一 timer
         public int timeouterIndex = -1;             // 位于管理器 timeouterss 数组的下标
@@ -343,9 +343,13 @@ namespace xx
             if (timeouting) timeouterManager.Remove(this);
         }
 
-        public abstract void BindTimeouter(UvTimeouter tm);
+        public virtual void BindTimeoutManager(UvTimeoutManager tm)
+        {
+            if (timeouterManager != null) throw new InvalidOperationException();
+            timeouterManager = tm;
+        }
 
-        public void UnbindTimeouter()
+        public void UnbindTimeoutManager()
         {
             if (timeouting) timeouterManager.Remove(this);
             timeouterManager = null;
@@ -387,10 +391,10 @@ namespace xx
         // 用来放 serial 以便断线时及时发起 Request 超时回调
         protected System.Collections.Generic.HashSet<uint> rpcSerials;
 
-        public override void BindTimeouter(UvTimeouter tm = null)
+        public override void BindTimeoutManager(UvTimeoutManager tm = null)
         {
             if (timeouterManager != null) throw new InvalidOperationException();
-            timeouterManager = tm == null ? loop.timeouter : tm;
+            timeouterManager = tm == null ? loop.timeoutManager : tm;
         }
 
 
@@ -491,7 +495,7 @@ namespace xx
                         }
                         else if (pkgType == 2)
                         {
-                            loop.rpcMgr.Callback(serial, bbRecv);
+                            loop.rpcManager.Callback(serial, bbRecv);
                             if (disposed || bbRecv.dataLen == 0) return;
                             if (Disconnected())
                             {
@@ -555,12 +559,12 @@ namespace xx
         public uint SendRequest(xx.IBBuffer pkg, Action<uint, BBuffer> cb, int interval = 0)
         {
             if (disposed) throw new ObjectDisposedException("XxUvTcpBase");
-            if (loop.rpcMgr == null) throw new NullReferenceException("forget InitRpcManager ?");
+            if (loop.rpcManager == null) throw new NullReferenceException("forget InitRpcManager ?");
 
             bbSend.Clear();
             bbSend.Reserve(5);
             bbSend.dataLen = 5;
-            var serial = loop.rpcMgr.Register(cb, interval);                // 注册回调并得到流水号
+            var serial = loop.rpcManager.Register(cb, interval);                // 注册回调并得到流水号
             bbSend.Write(serial);                                           // 在包前写入流水号
             bbSend.WriteRoot(pkg);
             var p = bbSend.buf;
@@ -622,7 +626,7 @@ namespace xx
             {
                 foreach (var serial in rpcSerials)
                 {
-                    loop.rpcMgr.Callback(serial, null);
+                    loop.rpcManager.Callback(serial, null);
                 }
                 if (rpcSerials.Count > 0) throw new InvalidProgramException();
             }
@@ -818,7 +822,7 @@ namespace xx
                 this.Free(ref addrPtr);
                 this.Unhandle(ref handle, ref handlePtr);
 
-                UnbindTimeouter();
+                UnbindTimeoutManager();
                 OnTimeout = null;
 
                 bbSend = null;
@@ -996,7 +1000,7 @@ namespace xx
                 this.Free(ref addrPtr);
                 this.Unhandle(ref handle, ref handlePtr);
 
-                UnbindTimeouter();
+                UnbindTimeoutManager();
                 OnTimeout = null;
 
                 bbSend = null;
@@ -1139,7 +1143,7 @@ namespace xx
         #endregion
     }
 
-    public class UvTimeouter
+    public class UvTimeoutManager
     {
         UvTimer timer;
         List<UvTimeouterBase> timeouterss = new List<UvTimeouterBase>();
@@ -1147,7 +1151,7 @@ namespace xx
         int defaultInterval;
 
         // intervalMS: 帧间隔毫秒数;    wheelLen: 轮子尺寸( 需求的最大计时帧数 + 1 );    defaultInterval: 默认计时帧数
-        public UvTimeouter(UvLoop loop, ulong intervalMS, int wheelLen, int defaultInterval)
+        public UvTimeoutManager(UvLoop loop, ulong intervalMS, int wheelLen, int defaultInterval)
         {
             timer = new UvTimer(loop, 0, intervalMS, Process);
             timeouterss.Resize(wheelLen);
@@ -1848,7 +1852,7 @@ namespace xx
                 this.Unhandle(ref handle, ref handlePtr);
 
 
-                UnbindTimeouter();
+                UnbindTimeoutManager();
                 OnTimeout = null;
 
                 bbSend = null;
@@ -2095,7 +2099,7 @@ namespace xx
                 this.Free(ref addrPtr);
                 this.Unhandle(ref handle, ref handlePtr);
 
-                UnbindTimeouter();
+                UnbindTimeoutManager();
                 OnTimeout = null;
 
                 bbSend = null;
