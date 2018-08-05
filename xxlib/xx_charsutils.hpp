@@ -275,7 +275,7 @@ namespace xx
 
 	// c-style char* 转为各种长度的 有符号整数. Out 取值范围： int8~64
 	template <typename OutType>
-	void ToInt(char const * in, OutType & out) noexcept
+	void ToInt(char const* const& in, OutType& out) noexcept
 	{
 		auto in_ = in;
 		if (*in_ == '0')
@@ -298,7 +298,7 @@ namespace xx
 
 	// c-style char* (不能有减号打头) 转为各种长度的 无符号整数. Out 取值范围： uint8, uint16, uint32, uint64
 	template <typename OutType>
-	void ToUInt(char const * in, OutType & out) noexcept
+	void ToUInt(char const* const& in, OutType& out) noexcept
 	{
 		assert(in);
 		auto in_ = in;
@@ -327,7 +327,7 @@ namespace xx
 	template<typename T>
 	struct StrFunc<T, std::enable_if_t<std::is_integral<T>::value && std::is_unsigned<T>::value && sizeof(T) <= 4>>
 	{
-		static inline void WriteTo(String& s, T const &in)
+		static inline void WriteTo(String& s, T const& in)
 		{
 			s.Reserve(s.dataLen + sizeof(T) * 4);
 			s.dataLen += u32toa_branchlut(in, s.buf + s.dataLen);
@@ -338,7 +338,7 @@ namespace xx
 	template<typename T>
 	struct StrFunc<T, std::enable_if_t<std::is_integral<T>::value && !std::is_unsigned<T>::value && sizeof(T) <= 4>>
 	{
-		static inline void WriteTo(String& s, T const &in)
+		static inline void WriteTo(String& s, T const& in)
 		{
 			s.Reserve(s.dataLen + sizeof(T) * 4);
 			s.dataLen += i32toa_branchlut(in, s.buf + s.dataLen);
@@ -349,7 +349,7 @@ namespace xx
 	template<typename T>
 	struct StrFunc<T, std::enable_if_t<std::is_integral<T>::value && std::is_unsigned<T>::value && sizeof(T) == 8>>
 	{
-		static inline void WriteTo(String& s, T const &in)
+		static inline void WriteTo(String& s, T const& in)
 		{
 			s.Reserve(s.dataLen + sizeof(T) * 4);
 			s.dataLen += u64toa_branchlut(in, s.buf + s.dataLen);
@@ -360,7 +360,7 @@ namespace xx
 	template<typename T>
 	struct StrFunc<T, std::enable_if_t<std::is_integral<T>::value && !std::is_unsigned<T>::value && sizeof(T) == 8>>
 	{
-		static inline void WriteTo(String& s, T const &in)
+		static inline void WriteTo(String& s, T const& in)
 		{
 			s.Reserve(s.dataLen + sizeof(T) * 4);
 			s.dataLen += i64toa_branchlut(in, s.buf + s.dataLen);
@@ -371,7 +371,7 @@ namespace xx
 	template<typename T>
 	struct StrFunc<T, std::enable_if_t<std::is_enum<T>::value>>
 	{
-		static inline void WriteTo(String& s, T const &in)
+		static inline void WriteTo(String& s, T const& in)
 		{
 			StrFunc<std::underlying_type_t<T>>::WriteTo(s, (std::underlying_type_t<T> const&)in);
 		}
@@ -381,7 +381,7 @@ namespace xx
 	template<typename T>
 	struct StrFunc<T, std::enable_if_t<std::is_floating_point<T>::value>>
 	{
-		static inline void WriteTo(String& s, T const &in)
+		static inline void WriteTo(String& s, T const& in)
 		{
 			s.Reserve(s.dataLen + sizeof(T) * 3);
 			s.dataLen += sprintf(s.buf + s.dataLen, "%g", in);
@@ -544,7 +544,7 @@ namespace xx
 	template<typename T>
 	struct StrFunc<T, std::enable_if_t<std::is_base_of_v<Object, T>>>
 	{
-		static inline void WriteTo(String& s, T const &in)
+		static inline void WriteTo(String& s, T const& in)
 		{
 			in.ToString(s);
 		}
@@ -554,7 +554,7 @@ namespace xx
 	template<typename T>
 	struct StrFunc<T, std::enable_if_t<IsPtr_v<T>>>
 	{
-		static inline void WriteTo(String& s, T const &in)
+		static inline void WriteTo(String& s, T const& in)
 		{
 			if (in)
 			{
@@ -571,7 +571,7 @@ namespace xx
 	template<typename T>
 	struct StrFunc<T, std::enable_if_t<IsRef_v<T>>>
 	{
-		static inline void WriteTo(String& s, T const &in)
+		static inline void WriteTo(String& s, T const& in)
 		{
 			if (in)
 			{

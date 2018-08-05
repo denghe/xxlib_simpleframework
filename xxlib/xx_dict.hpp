@@ -26,7 +26,7 @@ namespace xx
 
 	template <typename TK, typename TV>
 	template<typename K, typename V>
-	DictAddResult Dict<TK, TV>::Add(K &&k, V &&v, bool override)
+	DictAddResult Dict<TK, TV>::Add(K&& k, V&& v, bool const& override)
 	{
 		assert(bucketsLen);
 
@@ -141,7 +141,7 @@ namespace xx
 	}
 
 	template <typename TK, typename TV>
-	int Dict<TK, TV>::Find(TK const &k) const noexcept
+	int Dict<TK, TV>::Find(TK const& k) const noexcept
 	{
 		assert(buckets);
 		auto hashCode = HashFunc<TK>::GetHashCode(k);
@@ -156,7 +156,7 @@ namespace xx
 	}
 
 	template <typename TK, typename TV>
-	void Dict<TK, TV>::RemoveAt(int idx) noexcept
+	void Dict<TK, TV>::RemoveAt(int const& idx) noexcept
 	{
 		assert(buckets);
 		assert(idx >= 0 && idx < count && items[idx].prev != -2);
@@ -254,7 +254,7 @@ namespace xx
 	}
 
 	template <typename TK, typename TV>
-	bool Dict<TK, TV>::TryGetValue(TK const &key, TV &outV) noexcept
+	bool Dict<TK, TV>::TryGetValue(TK const& key, TV& outV) noexcept
 	{
 		int idx = Find(key);
 		if (idx >= 0)
@@ -267,13 +267,13 @@ namespace xx
 
 	template <typename TK, typename TV>
 	template<typename K>
-	TV& Dict<TK, TV>::At(K &&key)
+	TV& Dict<TK, TV>::At(K&& key)
 	{
 		return operator[](std::forward<K>(key));
 	}
 
 	template <typename TK, typename TV>
-	TV& Dict<TK, TV>::ValueAt(int idx) noexcept
+	TV& Dict<TK, TV>::ValueAt(int const& idx) noexcept
 	{
 		assert(buckets);
 		assert(idx >= 0 && idx < count && items[idx].prev != -2);
@@ -281,13 +281,13 @@ namespace xx
 	}
 
 	template <typename TK, typename TV>
-	TK const& Dict<TK, TV>::KeyAt(int idx) const noexcept
+	TK const& Dict<TK, TV>::KeyAt(int const& idx) const noexcept
 	{
 		return const_cast<Dict*>(this)->IndexAtKey(idx);
 	}
 
 	template <typename TK, typename TV>
-	TV const& Dict<TK, TV>::ValueAt(int idx) const noexcept
+	TV const& Dict<TK, TV>::ValueAt(int const& idx) const noexcept
 	{
 		return const_cast<Dict*>(this)->IndexAtValue(idx);
 	}
@@ -299,7 +299,7 @@ namespace xx
 //	}
 
 	template <typename TK, typename TV>
-	bool Dict<TK, TV>::IndexExists(int idx) const noexcept
+	bool Dict<TK, TV>::IndexExists(int const& idx) const noexcept
 	{
 		return idx >= 0 && idx < count && items[idx].prev != -2;
 	}

@@ -45,7 +45,7 @@ namespace xx
 
 		typedef Log ThisType;
 		typedef Object BaseType;
-		Log(MemPool* mp);
+		Log(MemPool* const& mp);
 		Log(Log const&) = delete;
 		Log& operator=(Log const&) = delete;
 		virtual void ToString(String &str) const override;
@@ -55,7 +55,7 @@ namespace xx
 	using Log_r = Ref<Log>;
 
 
-	inline Log::Log(MemPool* mp)
+	inline Log::Log(MemPool* const& mp)
 		: Object(mp)
 		, machine(mp)
 		, service(mp)
@@ -65,7 +65,7 @@ namespace xx
 	{
 	}
 
-	inline void Log::ToString(String &str) const
+	inline void Log::ToString(String& str) const
 	{
 		if (memHeader().flags)
 		{
@@ -80,7 +80,7 @@ namespace xx
 
 		memHeader().flags = 0;
 	}
-	inline void Log::ToStringCore(String &str) const
+	inline void Log::ToStringCore(String& str) const
 	{
 		this->BaseType::ToStringCore(str);
 		str.Append(", \"id\" : ", this->id);

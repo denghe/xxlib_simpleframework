@@ -20,7 +20,7 @@ namespace xx
 	}
 
 	template<typename T, typename ...TS>
-	int BBuffer::ReadCore(T& v, TS &...vs)
+	int BBuffer::ReadCore(T& v, TS&...vs)
 	{
 		if (auto r = BytesFunc<T>::ReadFrom(*this, v)) return r;
 		return ReadCore(vs...);
@@ -33,7 +33,7 @@ namespace xx
 	}
 
 	template<typename ...TS>
-	int BBuffer::Read(TS &...vs)
+	int BBuffer::Read(TS&...vs)
 	{
 		return ReadCore(vs...);
 	}
@@ -64,7 +64,7 @@ namespace xx
 	}
 
 	template<typename T>
-	int BBuffer::ReadRoot(T &v)
+	int BBuffer::ReadRoot(T& v)
 	{
 		BeginRead();
 		return Read(v);
@@ -89,7 +89,7 @@ namespace xx
 	}
 
 	template<typename T>
-	int BBuffer::ReadPtr(T* &v)
+	int BBuffer::ReadPtr(T*& v)
 	{
 		// get typeid
 		uint16_t tid;
@@ -179,7 +179,7 @@ namespace xx
 	}
 
 	// 直接追加写入一段 buf ( 并不记录长度 )
-	inline void BBuffer::WriteBuf(char const* buf, size_t const& len)
+	inline void BBuffer::WriteBuf(char const* const& buf, size_t const& len)
 	{
 		this->Reserve(this->dataLen + len);
 		std::memcpy(this->buf + this->dataLen, buf, len);
@@ -204,7 +204,7 @@ namespace xx
 	}
 
 	// 在 pos 位置写入一段 buf ( 并不记录长度 ). dataLen 可能撑大.
-	inline void BBuffer::WriteBufAt(size_t const& pos, char const* buf, size_t const& len)
+	inline void BBuffer::WriteBufAt(size_t const& pos, char const* const& buf, size_t const& len)
 	{
 		assert(pos < this->dataLen);
 		auto bak = this->dataLen;		// 备份原始数据长度, 开始追加. 追加完之后, 对比原始数据长度. 如果没超出, 还要还原.
@@ -271,7 +271,7 @@ namespace xx
 
 
 
-	inline BBuffer::BBuffer(BBuffer* bb) 
+	inline BBuffer::BBuffer(BBuffer* const& bb)
 		: BaseType(bb)
 	{}
 

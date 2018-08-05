@@ -152,7 +152,7 @@ public:
 	std::function<void(char const* buf, int len)> OnRecv;
 	char buf[65100];
 
-	explicit Kcp(xx::Guid const& conv, uint32_t interval = 10, xx::MemPool* mp = nullptr)
+	explicit Kcp(xx::Guid const& conv, uint32_t interval = 10, xx::MemPool* const& mp = nullptr)
 		: interval(interval)
 	{
 		if (mp)

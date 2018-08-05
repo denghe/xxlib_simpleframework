@@ -46,7 +46,7 @@ namespace LOGDB
 
         typedef Log ThisType;
         typedef xx::Object BaseType;
-	    Log(xx::MemPool* mempool);
+	    Log(xx::MemPool* const& mempool);
 		Log(Log const&) = delete;
 		Log& operator=(Log const&) = delete;
         virtual void ToString(xx::String &s) const override;
@@ -54,7 +54,7 @@ namespace LOGDB
     };
 
 
-	inline Log::Log(xx::MemPool* mempool)
+	inline Log::Log(xx::MemPool* const& mempool)
         : xx::Object(mempool)
 	{
 	}

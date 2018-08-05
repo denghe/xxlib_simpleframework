@@ -7,17 +7,17 @@ namespace xx
 	public:
 		typedef List<char> BaseType;
 
-		explicit String(MemPool* mempool);
+		explicit String(MemPool* const& mempool);
 
-		explicit String(MemPool* mempool, char const* const& s, size_t const& len);
-		explicit String(MemPool* mempool, wchar_t const* const& ws, size_t const& len);
+		explicit String(MemPool* const& mempool, char const* const& s, size_t const& len);
+		explicit String(MemPool* const& mempool, wchar_t const* const& ws, size_t const& len);
 
 		template<typename T>
-		explicit String(MemPool* mempool, T const& in);
+		explicit String(MemPool* const& mempool, T const& in);
 
 		String(String &&o);
 		String(String const&o) = delete;
-		String& operator=(String const&o) = delete;
+		String& operator=(String const& o) = delete;
 
 		String* Assign(char const* const& s, size_t const& len);
 		String* Assign(wchar_t const* const& ws, size_t const& len);
@@ -30,22 +30,22 @@ namespace xx
 		char* c_str();
 		void AppendChars(char const& c = ' ', size_t const& num = 1);
 
-		template<typename ...TS>
-		void Append(TS const & ...vs);
+		template<typename...TS>
+		void Append(TS const&...vs);
 
 	protected:
 
 		template<typename T>
-		void AppendFormatCore(String &s, size_t &n, T const &v);
+		void AppendFormatCore(String& s, size_t& n, T const& v);
 
 		template<typename T, typename...TS>
-		void AppendFormatCore(String &s, size_t &n, T const &v, TS const &...vs);
+		void AppendFormatCore(String& s, size_t& n, T const& v, TS const&...vs);
 
 	public:
 
 		// 格式化追加, {0} {1}... 这种. 针对重复出现的参数, 是从已经追加出来的字串区域复制, 故追加自己并不会导致内容翻倍
 		template<typename...TS>
-		void AppendFormat(char const* format, TS const&...vs);
+		void AppendFormat(char const* const& format, TS const&...vs);
 
 		static unsigned char constexpr lowerchars[] =
 		{
@@ -98,10 +98,10 @@ namespace xx
 	public:
 		// 实现一些 Object 的接口
 
-		String(BBuffer* bb);
+		String(BBuffer* const& bb);
 		// WriteTo, ReadFrom 直接使用基类的
 
-		void ToString(String &s) const override;
+		void ToString(String& s) const override;
 	};
 
 

@@ -2,20 +2,20 @@
 #pragma once
 namespace xx
 {
-	inline String::String(MemPool* mempool)
+	inline String::String(MemPool* const& mempool)
 		: BaseType(mempool, 0)
 	{}
 
-	inline String::String(String &&o)
+	inline String::String(String&& o)
 		: BaseType((BaseType&&)o)
 	{}
 
-	inline String::String(MemPool* mempool, char const* const& s, size_t const& len)
+	inline String::String(MemPool* const& mempool, char const* const& s, size_t const& len)
 		: BaseType(mempool, 0)
 	{
 		if (s && len) AddRange(s, len);
 	}
-	inline String::String(MemPool* mempool, wchar_t const* const& ws, size_t const& len)
+	inline String::String(MemPool* const& mempool, wchar_t const* const& ws, size_t const& len)
 		: BaseType(mempool, 0)
 	{
 		Reserve(len * 3);
@@ -29,7 +29,7 @@ namespace xx
 	}
 
 	template<typename T>
-	inline String::String(MemPool* mempool, T const& in)
+	inline String::String(MemPool* const& mempool, T const& in)
 		: BaseType(mempool, 0)
 	{
 		StrFunc<T>::WriteTo(*this, in);
@@ -85,21 +85,21 @@ namespace xx
 		memset(buf + Resize(dataLen + num), c, num);
 	}
 
-	template<typename ...TS>
-	void String::Append(TS const & ...vs)
+	template<typename...TS>
+	void String::Append(TS const&...vs)
 	{
 		std::initializer_list<int> n{ (StrFunc<TS>::WriteTo(*this, vs), 0)... };
 		assert(dataLen <= bufLen);
 	}
 
 	template<typename T>
-	void String::AppendFormatCore(String &s, size_t &n, T const &v)
+	void String::AppendFormatCore(String& s, size_t& n, T const& v)
 	{
 		if (!n) s.Append(v);
 	}
 
 	template<typename T, typename...TS>
-	void String::AppendFormatCore(String &s, size_t &n, T const &v, TS const &...vs)
+	void String::AppendFormatCore(String& s, size_t& n, T const& v, TS const&...vs)
 	{
 		if (n-- == 0)
 		{
@@ -111,7 +111,7 @@ namespace xx
 
 	// 格式化追加, {0} {1}... 这种. 针对重复出现的参数, 是从已经追加出来的字串区域复制, 故追加自己并不会导致内容翻倍
 	template<typename...TS>
-	void String::AppendFormat(char const* format, TS const&...vs)
+	void String::AppendFormat(char const* const& format, TS const&...vs)
 	{
 		struct StringView				// 用来存放已经序列化过的参数位于输出 buf 中的下标及长度
 		{
@@ -214,7 +214,7 @@ namespace xx
 		return memcmp(buf, o, dataLen) == 0;
 	}
 
-	inline bool String::Equals(char const * const& o) const noexcept
+	inline bool String::Equals(char const* const& o) const noexcept
 	{
 		if (!o) return false;
 		auto len = strlen(o);
@@ -242,7 +242,7 @@ namespace xx
 		return false;
 	}
 
-	inline std::ostream & operator<<(std::ostream &os, String const &s)
+	inline std::ostream & operator<<(std::ostream& os, String const& s)
 	{
 		os << ((String&)s).c_str();
 		return os;
@@ -254,7 +254,7 @@ namespace xx
 
 
 
-	inline String::String(BBuffer* bb)
+	inline String::String(BBuffer* const& bb)
 		: BaseType(bb)
 	{}
 

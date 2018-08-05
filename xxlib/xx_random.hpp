@@ -3,7 +3,7 @@
 namespace xx
 {
 	// 并不清掉 o 的数据
-	inline Random::Random(Random && o)
+	inline Random::Random(Random&& o)
 		: Object(o.mempool)
 	{
 		inext = o.inext;
@@ -11,14 +11,14 @@ namespace xx
 		memcpy(SeedArray, o.SeedArray, sizeof(SeedArray));
 	}
 
-	inline Random::Random(MemPool* mp, int32_t seed)
+	inline Random::Random(MemPool* const& mp, int32_t const& seed)
 		: Object(mp)
 	{
 		memset(SeedArray, 0, sizeof(SeedArray));
 		Init(seed);
 	}
 
-	inline void Random::Init(int32_t seed)
+	inline void Random::Init(int32_t const& seed)
 	{
 		int32_t ii;
 		int32_t mj, mk;
@@ -103,7 +103,7 @@ namespace xx
 	}
 
 
-	inline int32_t Random::Next(int32_t minValue, int32_t maxValue)
+	inline int32_t Random::Next(int32_t const& minValue, int32_t const& maxValue)
 	{
 		assert(minValue <= maxValue);
 
@@ -119,7 +119,7 @@ namespace xx
 	}
 
 
-	inline int32_t Random::Next(int32_t maxValue)
+	inline int32_t Random::Next(int32_t const& maxValue)
 	{
 		assert(maxValue >= 0);
 		return (int32_t)(Sample() * maxValue);
@@ -140,7 +140,7 @@ namespace xx
 	//	}
 	//}
 
-	inline double Random::NextDouble(double minValue, double maxValue)
+	inline double Random::NextDouble(double const& minValue, double const& maxValue)
 	{
 		if (minValue == maxValue || maxValue - minValue <= 0) return minValue;
 		return minValue + (maxValue - minValue) * NextDouble();
@@ -148,14 +148,14 @@ namespace xx
 
 
 
-	inline Random::Random(BBuffer* bb)
+	inline Random::Random(BBuffer* const& bb)
 		: Object(bb)
 	{
 		if (int r = FromBBuffer(*bb)) throw r;
 	}
 
 
-	inline void Random::ToBBuffer(BBuffer &bb) const
+	inline void Random::ToBBuffer(BBuffer& bb) const
 	{
 		// data len = 2 int + int[56] = 4 * 58 = 232
 		bb.Reserve(bb.dataLen + 232);
@@ -163,7 +163,7 @@ namespace xx
 		bb.dataLen += 232;
 	}
 
-	inline int Random::FromBBuffer(BBuffer &bb)
+	inline int Random::FromBBuffer(BBuffer& bb)
 	{
 		if (bb.offset + 232 > bb.dataLen) return -1;
 		memcpy(&inext, bb.buf + bb.offset, 232);
@@ -173,7 +173,7 @@ namespace xx
 
 
 
-	inline void Random::ToString(String &s) const
+	inline void Random::ToString(String& s) const
 	{
 		s.Append("{ \"type\":\"Random\" }");
 	}

@@ -42,41 +42,41 @@ namespace xx
 
 		explicit Dict(MemPool* const& mempool, int const& capacity = 16);
 		~Dict();
-		Dict(Dict const &o) = delete;
-		Dict& operator=(Dict const &o) = delete;
+		Dict(Dict const& o) = delete;
+		Dict& operator=(Dict const& o) = delete;
 
 
 		// 只支持没数据时扩容或空间用尽扩容( 如果不这样限制, 扩容时的 遍历损耗 略大 )
 		void Reserve(int capacity = 0);
 
-		int Find(TK const &key) const noexcept;
-		void Remove(TK const &key) noexcept;
-		void RemoveAt(int idx) noexcept;
+		int Find(TK const& key) const noexcept;
+		void Remove(TK const& key) noexcept;
+		void RemoveAt(int const& idx) noexcept;
 
 		template<typename K>
-		TV& operator[](K &&key);
+		TV& operator[](K&& key);
 
 		// 可传入一个资源回收函数来搞事
 		void Clear(std::function<void(Data&)> killer = nullptr) noexcept;
 
 		template<typename K, typename V>
-		DictAddResult Add(K &&k, V &&v, bool override = false);
+		DictAddResult Add(K&& k, V&& v, bool const& override = false);
 
 
 		uint32_t Count() const noexcept;
 		bool Empty() noexcept;
-		bool TryGetValue(TK const &key, TV &outV) noexcept;
+		bool TryGetValue(TK const& key, TV& outV) noexcept;
 
 		template<typename K>
-		TV& At(K &&key);
+		TV& At(K&& key);
 
-		TK const& KeyAt(int idx) const noexcept;
-		TV& ValueAt(int idx) noexcept;
-		TV const& ValueAt(int idx) const noexcept;
+		TK const& KeyAt(int const& idx) const noexcept;
+		TV& ValueAt(int const& idx) noexcept;
+		TV const& ValueAt(int const& idx) const noexcept;
 
 		//Data const& DataAt(int idx) const noexcept;
 
-		bool IndexExists(int idx) const noexcept;
+		bool IndexExists(int const& idx) const noexcept;
 
 
 		// for( auto &c :  支持

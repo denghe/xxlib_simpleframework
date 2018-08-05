@@ -39,13 +39,13 @@ namespace xx
 		size_t Count() const;
 		bool Empty() const;
 		void Clear();
-		void Reserve(size_t const& capacity, bool afterPush = false);
+		void Reserve(size_t const& capacity, bool const& afterPush = false);
 
 		template<typename...Args>
 		T& Emplace(Args&&...ps);							// [ tail++ ] = T( ps )
 
 		template<typename ...TS>
-		void Push(TS && ...vs);
+		void Push(TS&& ...vs);
 
 		bool TryPop(T& outVal);
 

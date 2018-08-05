@@ -14,7 +14,7 @@ namespace xx
 		int32_t inextp;
 		int32_t SeedArray[56];
 
-		void Init(int32_t seed = 0);
+		void Init(int32_t const& seed = 0);
 
 		/*====================================Sample====================================
 		**Action: Return a new random number [0..1) and reSeed the Seed array.
@@ -28,8 +28,8 @@ namespace xx
 		double GetSampleForLargeRange();
 
 	public:
-		explicit Random(MemPool* mp, int32_t seed = 0);
-		Random(Random && o);
+		explicit Random(MemPool* const& mp, int32_t const& seed = 0);
+		Random(Random&& o);
 		Random(Random const&) = delete;
 		Random& operator=(Random const&) = delete;
 		/*=====================================Next=====================================
@@ -45,7 +45,7 @@ namespace xx
 		**           maxValue -- One greater than the greatest legal return value.
 		**Exceptions: None.
 		==============================================================================*/
-		inline int32_t Next(int32_t minValue, int32_t maxValue);
+		inline int32_t Next(int32_t const& minValue, int32_t const& maxValue);
 
 
 		/*=====================================Next=====================================
@@ -53,7 +53,7 @@ namespace xx
 		**Arguments: maxValue -- One more than the greatest legal return value.
 		**Exceptions: None.
 		==============================================================================*/
-		inline int32_t Next(int32_t maxValue);
+		inline int32_t Next(int32_t const& maxValue);
 
 
 		/*=====================================Next=====================================
@@ -72,15 +72,15 @@ namespace xx
 		//==============================================================================*/
 		//void NextBytes(BBuffer* buffer);
 
-		double NextDouble(double minValue, double maxValue);
+		double NextDouble(double const& minValue, double const& maxValue);
 
 
 
-		Random(BBuffer* bb);
-		void ToBBuffer(BBuffer &bb) const override;
-		int FromBBuffer(BBuffer &bb) override;
+		Random(BBuffer* const& bb);
+		void ToBBuffer(BBuffer& bb) const override;
+		int FromBBuffer(BBuffer& bb) override;
 
-		void ToString(String &s) const override;
+		void ToString(String& s) const override;
 	};
 
 	using Random_r = Ref<Random>;

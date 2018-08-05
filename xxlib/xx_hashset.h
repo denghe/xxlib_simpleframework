@@ -36,13 +36,13 @@ namespace xx
 
 		// 返回 true: 添加成功. false: 已存在相同的值
 		template<typename K>
-		bool Add(K &&k);
+		bool Add(K&& k);
 
 		// 如果存在就返回 true
-		bool Exists(TK const &k) const noexcept;
+		bool Exists(TK const& k) const noexcept;
 
 		// 如果找到就移除并返回 true. 未找到返回 false
-		bool Remove(TK const &k) noexcept;
+		bool Remove(TK const& k) noexcept;
 
 		// 移除所有数据
 		void Clear() noexcept;

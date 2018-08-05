@@ -29,23 +29,23 @@ namespace xx
 
 	// c-style char* 转为各种长度的 有符号整数. Out 取值范围： int8~64
 	template <typename OutType>
-	void ToInt(char const * in, OutType & out) noexcept;
+	void ToInt(char const* const& in, OutType& out) noexcept;
 
 	// c-style char* (不能有减号打头) 转为各种长度的 无符号整数. Out 取值范围： uint8, uint16, uint32, uint64
 	template <typename OutType>
-	void ToUInt(char const * in, OutType & out) noexcept;
+	void ToUInt(char const* const& in, OutType& out) noexcept;
 
-	inline void FromString(bool     &out, char const *in) { out = (in[0] == '1' || in[0] == 'T' || in[0] == 't'); }
-	inline void FromString(uint8_t  &out, char const *in) { ToUInt(in, out); }
-	inline void FromString(uint16_t &out, char const *in) { ToUInt(in, out); }
-	inline void FromString(uint32_t &out, char const *in) { ToUInt(in, out); }
-	inline void FromString(uint64_t &out, char const *in) { ToUInt(in, out); }
-	inline void FromString(int8_t   &out, char const *in) { ToInt(in, out); }
-	inline void FromString(int16_t  &out, char const *in) { ToInt(in, out); }
-	inline void FromString(int32_t  &out, char const *in) { ToInt(in, out); }
-	inline void FromString(int64_t  &out, char const *in) { ToInt(in, out); }
-	inline void FromString(double   &out, char const *in) { out = strtod(in, nullptr); }
-	inline void FromString(float    &out, char const *in) { out = (float)strtod(in, nullptr); }
+	inline void FromString(bool     &out, char const* const& in) { out = (in[0] == '1' || in[0] == 'T' || in[0] == 't'); }
+	inline void FromString(uint8_t  &out, char const* const& in) { ToUInt(in, out); }
+	inline void FromString(uint16_t &out, char const* const& in) { ToUInt(in, out); }
+	inline void FromString(uint32_t &out, char const* const& in) { ToUInt(in, out); }
+	inline void FromString(uint64_t &out, char const* const& in) { ToUInt(in, out); }
+	inline void FromString(int8_t   &out, char const* const& in) { ToInt(in, out); }
+	inline void FromString(int16_t  &out, char const* const& in) { ToInt(in, out); }
+	inline void FromString(int32_t  &out, char const* const& in) { ToInt(in, out); }
+	inline void FromString(int64_t  &out, char const* const& in) { ToInt(in, out); }
+	inline void FromString(double   &out, char const* const& in) { out = strtod(in, nullptr); }
+	inline void FromString(float    &out, char const* const& in) { out = (float)strtod(in, nullptr); }
 
 
 
@@ -98,7 +98,7 @@ namespace xx
 	template<typename T, typename ENABLE = void>
 	struct StrFunc
 	{
-		static void WriteTo(String& s, T const &in)
+		static void WriteTo(String& s, T const& in)
 		{
 			assert(false);
 		}

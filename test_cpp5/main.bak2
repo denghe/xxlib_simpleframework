@@ -4,7 +4,7 @@ class Service : public xx::Object
 {
 public:
 	xx::UvLoop& loop;
-	explicit Service(xx::MemPool* mp, xx::UvLoop& loop)
+	explicit Service(xx::MemPool* const& mp, xx::UvLoop& loop)
 		: Object(mp)
 		, loop(loop)
 	{

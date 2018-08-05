@@ -24,7 +24,7 @@ namespace xx
 
 	template <typename TK>
 	template<typename K>
-	bool HashSet<TK>::Add(K &&k)
+	bool HashSet<TK>::Add(K&& k)
 	{
 		assert(bucketsLen);
 
@@ -127,7 +127,7 @@ namespace xx
 	}
 
 	template <typename TK>
-	bool HashSet<TK>::Exists(TK const &k) const noexcept
+	bool HashSet<TK>::Exists(TK const& k) const noexcept
 	{
 		assert(buckets);
 		auto hashCode = HashFunc<TK>::GetHashCode(k);
@@ -142,7 +142,7 @@ namespace xx
 	}
 
 	template <typename TK>
-	bool HashSet<TK>::Remove(TK const &k) noexcept
+	bool HashSet<TK>::Remove(TK const& k) noexcept
 	{
 		assert(buckets);
 

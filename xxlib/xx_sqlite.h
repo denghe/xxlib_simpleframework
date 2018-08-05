@@ -105,7 +105,7 @@ namespace xx
 	class SQLiteBase : public Object
 	{
 	protected:
-		SQLiteBase(MemPool* mp, char const* const& fn, bool readOnly);
+		SQLiteBase(MemPool* const& mp, char const* const& fn, bool const& readOnly);
 		~SQLiteBase();
 		sqlite3* dbctx = nullptr;
 	};
@@ -137,7 +137,7 @@ namespace xx
 	public:
 
 		// fn 可以是 :memory: 以创建内存数据库
-		SQLite(MemPool* mp, char const* const& fn, bool readOnly = false);
+		SQLite(MemPool* const& mp, char const* const& fn, bool const& readOnly = false);
 
 		// 获取受影响行数
 		int GetAffectedRows();
@@ -218,24 +218,24 @@ namespace xx
 		void SetParameter(int parmIdx, int const& v);
 		void SetParameter(int parmIdx, sqlite_int64 const& v);
 		void SetParameter(int parmIdx, double const& v);
-		void SetParameter(int parmIdx, char const* const& str, int strLen = 0, bool makeCopy = false);
-		void SetParameter(int parmIdx, char const* const& buf, size_t const& len, bool makeCopy = false);
-		void SetParameter(int parmIdx, String* const& str, bool makeCopy = false);
-		void SetParameter(int parmIdx, BBuffer* const& buf, bool makeCopy = false);
-		void SetParameter(int parmIdx, String const& str, bool makeCopy = false);
-		void SetParameter(int parmIdx, BBuffer const& buf, bool makeCopy = false);
-		void SetParameter(int parmIdx, String_p const& str, bool makeCopy = false);
-		void SetParameter(int parmIdx, BBuffer_p const& buf, bool makeCopy = false);
+		void SetParameter(int parmIdx, char const* const& str, int strLen = 0, bool const& makeCopy = false);
+		void SetParameter(int parmIdx, char const* const& buf, size_t const& len, bool const& makeCopy = false);
+		void SetParameter(int parmIdx, String* const& str, bool const& makeCopy = false);
+		void SetParameter(int parmIdx, BBuffer* const& buf, bool const& makeCopy = false);
+		void SetParameter(int parmIdx, String const& str, bool const& makeCopy = false);
+		void SetParameter(int parmIdx, BBuffer const& buf, bool const& makeCopy = false);
+		void SetParameter(int parmIdx, String_p const& str, bool const& makeCopy = false);
+		void SetParameter(int parmIdx, BBuffer_p const& buf, bool const& makeCopy = false);
 		template<typename EnumType>
 		void SetParameter(int parmIdx, EnumType const& v);
 
-		template<typename ... Parameters>
-		void SetParameters(Parameters const& ... ps);
-		template<typename Parameter, typename ... Parameters>
-		void SetParametersCore(int& parmIdx, Parameter const& p, Parameters const& ... ps);
+		template<typename...Parameters>
+		void SetParameters(Parameters const&...ps);
+		template<typename Parameter, typename...Parameters>
+		void SetParametersCore(int& parmIdx, Parameter const& p, Parameters const&...ps);
 		void SetParametersCore(int& parmIdx);
 
-		void Execute(ReadFunc && rf = nullptr);
+		void Execute(ReadFunc&& rf = nullptr);
 	};
 
 
@@ -247,16 +247,16 @@ namespace xx
 	public:
 		int numCols = 0;
 
-		SQLiteReader(sqlite3_stmt* stmt);
-		SQLiteDataTypes GetColumnDataType(int colIdx);
-		char const* GetColumnName(int colIdx);
-		bool IsDBNull(int colIdx);
-		int ReadInt32(int colIdx);
-		sqlite_int64 ReadInt64(int colIdx);
-		double ReadDouble(int colIdx);
-		char const* ReadString(int colIdx);
-		std::pair<char const*, int> ReadText(int colIdx);
-		std::pair<char const*, int> ReadBlob(int colIdx);
+		SQLiteReader(sqlite3_stmt* const& stmt);
+		SQLiteDataTypes GetColumnDataType(int const& colIdx);
+		char const* GetColumnName(int const& colIdx);
+		bool IsDBNull(int const& colIdx);
+		int ReadInt32(int const& colIdx);
+		sqlite_int64 ReadInt64(int const& colIdx);
+		double ReadDouble(int const& colIdx);
+		char const* ReadString(int const& colIdx);
+		std::pair<char const*, int> ReadText(int const& colIdx);
+		std::pair<char const*, int> ReadBlob(int const& colIdx);
 	};
 
 
@@ -268,7 +268,7 @@ namespace xx
 	/******************************************************************************************************/
 
 
-	inline SQLiteBase::SQLiteBase(MemPool* mp, char const* const& fn, bool readOnly)
+	inline SQLiteBase::SQLiteBase(MemPool* const& mp, char const* const& fn, bool const& readOnly)
 		: Object(mp)
 	{
 		int r = 0;
@@ -291,7 +291,7 @@ namespace xx
 	/***************************************************************/
 	// SQLite
 
-	inline SQLite::SQLite(MemPool* mp, char const* const& fn, bool readOnly)
+	inline SQLite::SQLite(MemPool* const& mp, char const* const& fn, bool const& readOnly)
 		: SQLiteBase(mp, fn, readOnly)
 		, sqlBuilder(mp)
 	{
@@ -484,7 +484,7 @@ namespace xx
 		if (r != SQLITE_OK) owner.ThrowError(r);
 	}
 
-	inline void SQLiteQuery::SetParameter(int parmIdx, char const* const& str, int strLen, bool makeCopy)
+	inline void SQLiteQuery::SetParameter(int parmIdx, char const* const& str, int strLen, bool const& makeCopy)
 	{
 		int r = SQLITE_OK;
 		if (!str) r = sqlite3_bind_null(stmt, parmIdx);
@@ -493,7 +493,7 @@ namespace xx
 		if (r != SQLITE_OK) owner.ThrowError(r);
 	}
 
-	inline void SQLiteQuery::SetParameter(int parmIdx, char const* const& buf, size_t const& len, bool makeCopy)
+	inline void SQLiteQuery::SetParameter(int parmIdx, char const* const& buf, size_t const& len, bool const& makeCopy)
 	{
 		int r = SQLITE_OK;
 		if (!buf) r = sqlite3_bind_null(stmt, parmIdx);
@@ -502,7 +502,7 @@ namespace xx
 		if (r != SQLITE_OK) owner.ThrowError(r);
 	}
 
-	inline void SQLiteQuery::SetParameter(int parmIdx, String* const& str, bool makeCopy)
+	inline void SQLiteQuery::SetParameter(int parmIdx, String* const& str, bool const& makeCopy)
 	{
 		int r = SQLITE_OK;
 		if (!str) r = sqlite3_bind_null(stmt, parmIdx);
@@ -511,7 +511,7 @@ namespace xx
 		if (r != SQLITE_OK) owner.ThrowError(r);
 	}
 
-	inline void SQLiteQuery::SetParameter(int parmIdx, BBuffer* const& buf, bool makeCopy)
+	inline void SQLiteQuery::SetParameter(int parmIdx, BBuffer* const& buf, bool const& makeCopy)
 	{
 		int r = SQLITE_OK;
 		if (!buf) r = sqlite3_bind_null(stmt, parmIdx);
@@ -521,19 +521,19 @@ namespace xx
 
 	}
 
-	inline void SQLiteQuery::SetParameter(int parmIdx, String const& str, bool makeCopy)
+	inline void SQLiteQuery::SetParameter(int parmIdx, String const& str, bool const& makeCopy)
 	{
 		auto r = sqlite3_bind_text(stmt, parmIdx, ((String*)&str)->c_str(), (int)str.dataLen, makeCopy ? SQLITE_TRANSIENT : SQLITE_STATIC);
 		if (r != SQLITE_OK) owner.ThrowError(r);
 	}
 
-	inline void SQLiteQuery::SetParameter(int parmIdx, BBuffer const& buf, bool makeCopy)
+	inline void SQLiteQuery::SetParameter(int parmIdx, BBuffer const& buf, bool const& makeCopy)
 	{
 		auto r = sqlite3_bind_blob(stmt, parmIdx, buf.buf, (int)buf.dataLen, makeCopy ? SQLITE_TRANSIENT : SQLITE_STATIC);
 		if (r != SQLITE_OK) owner.ThrowError(r);
 	}
 
-	inline void SQLiteQuery::SetParameter(int parmIdx, String_p const& str, bool makeCopy)
+	inline void SQLiteQuery::SetParameter(int parmIdx, String_p const& str, bool const& makeCopy)
 	{
 		int r = SQLITE_OK;
 		if (!str) r = sqlite3_bind_null(stmt, parmIdx);
@@ -542,7 +542,7 @@ namespace xx
 		if (r != SQLITE_OK) owner.ThrowError(r);
 	}
 
-	inline void SQLiteQuery::SetParameter(int parmIdx, BBuffer_p const& buf, bool makeCopy)
+	inline void SQLiteQuery::SetParameter(int parmIdx, BBuffer_p const& buf, bool const& makeCopy)
 	{
 		int r = SQLITE_OK;
 		if (!buf) r = sqlite3_bind_null(stmt, parmIdx);
@@ -559,15 +559,15 @@ namespace xx
 		else SetParameter(parmIdx, (sqlite_int64)(typename std::underlying_type<EnumType>::type)v);
 	}
 
-	template<typename ... Parameters>
-	void SQLiteQuery::SetParameters(Parameters const& ... ps)
+	template<typename...Parameters>
+	void SQLiteQuery::SetParameters(Parameters const&...ps)
 	{
 		int parmIdx = 1;
 		SetParametersCore(parmIdx, ps...);
 	}
 
-	template<typename Parameter, typename ... Parameters>
-	void SQLiteQuery::SetParametersCore(int& parmIdx, Parameter const& p, Parameters const& ... ps)
+	template<typename Parameter, typename...Parameters>
+	void SQLiteQuery::SetParametersCore(int& parmIdx, Parameter const& p, Parameters const&...ps)
 	{
 		SetParameter(parmIdx, p);
 		SetParametersCore(++parmIdx, ps...);
@@ -607,52 +607,52 @@ namespace xx
 	/***************************************************************/
 	// SQLiteReader
 
-	inline SQLiteReader::SQLiteReader(sqlite3_stmt* stmt) : stmt(stmt) {}
+	inline SQLiteReader::SQLiteReader(sqlite3_stmt* const& stmt) : stmt(stmt) {}
 
-	inline SQLiteDataTypes SQLiteReader::GetColumnDataType(int colIdx)
+	inline SQLiteDataTypes SQLiteReader::GetColumnDataType(int const& colIdx)
 	{
 		assert(colIdx >= 0 && colIdx < numCols);
 		return (SQLiteDataTypes)sqlite3_column_type(stmt, colIdx);
 	}
 
-	inline char const* SQLiteReader::GetColumnName(int colIdx)
+	inline char const* SQLiteReader::GetColumnName(int const& colIdx)
 	{
 		assert(colIdx >= 0 && colIdx < numCols);
 		return sqlite3_column_name(stmt, colIdx);
 	}
 
-	inline bool SQLiteReader::IsDBNull(int colIdx)
+	inline bool SQLiteReader::IsDBNull(int const& colIdx)
 	{
 		assert(colIdx >= 0 && colIdx < numCols);
 		return GetColumnDataType(colIdx) == SQLiteDataTypes::Null;
 	}
 
-	inline char const* SQLiteReader::ReadString(int colIdx)
+	inline char const* SQLiteReader::ReadString(int const& colIdx)
 	{
 		assert(colIdx >= 0 && colIdx < numCols);
 		if (IsDBNull(colIdx)) return nullptr;
 		return (char const*)sqlite3_column_text(stmt, colIdx);
 	}
 
-	inline int SQLiteReader::ReadInt32(int colIdx)
+	inline int SQLiteReader::ReadInt32(int const& colIdx)
 	{
 		assert(colIdx >= 0 && colIdx < numCols && !IsDBNull(colIdx));
 		return sqlite3_column_int(stmt, colIdx);
 	}
 
-	inline sqlite_int64 SQLiteReader::ReadInt64(int colIdx)
+	inline sqlite_int64 SQLiteReader::ReadInt64(int const& colIdx)
 	{
 		assert(colIdx >= 0 && colIdx < numCols && !IsDBNull(colIdx));
 		return sqlite3_column_int64(stmt, colIdx);
 	}
 
-	inline double SQLiteReader::ReadDouble(int colIdx)
+	inline double SQLiteReader::ReadDouble(int const& colIdx)
 	{
 		assert(colIdx >= 0 && colIdx < numCols && !IsDBNull(colIdx));
 		return sqlite3_column_double(stmt, colIdx);
 	}
 
-	inline std::pair<char const*, int> SQLiteReader::ReadText(int colIdx)
+	inline std::pair<char const*, int> SQLiteReader::ReadText(int const& colIdx)
 	{
 		assert(colIdx >= 0 && colIdx < numCols);
 		auto ptr = (char const*)sqlite3_column_text(stmt, colIdx);
@@ -660,7 +660,7 @@ namespace xx
 		return std::make_pair(ptr, len);
 	}
 
-	inline std::pair<char const*, int> SQLiteReader::ReadBlob(int colIdx)
+	inline std::pair<char const*, int> SQLiteReader::ReadBlob(int const& colIdx)
 	{
 		assert(colIdx >= 0 && colIdx < numCols);
 		auto ptr = (char const*)sqlite3_column_blob(stmt, colIdx);
@@ -705,7 +705,7 @@ namespace xx
 	class SQLiteString : public String
 	{
 	public:
-		SQLiteString(MemPool* mp) : String(mp) {}
+		SQLiteString(MemPool* const& mp) : String(mp) {}
 
 		// 用于插入数字
 		template<typename T>

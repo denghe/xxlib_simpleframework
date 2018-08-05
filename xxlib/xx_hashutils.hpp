@@ -2,7 +2,7 @@
 namespace xx
 {
 
-	inline bool IsPrime(size_t candidate) noexcept
+	inline bool IsPrime(size_t const& candidate) noexcept
 	{
 		if ((candidate & 1) != 0)
 		{
@@ -19,7 +19,7 @@ namespace xx
 		return (candidate == 2);
 	}
 
-	inline int32_t GetPrime(int32_t capacity, int32_t dataSize) noexcept
+	inline int32_t GetPrime(int32_t const& capacity, int32_t const& dataSize) noexcept
 	{
 		auto memUsage = MemPool::Round2n(capacity * dataSize);		// 算内存实际用量
 		auto maxCapacity = memUsage / dataSize;                     // 内存实际用量下 能放多少个 data

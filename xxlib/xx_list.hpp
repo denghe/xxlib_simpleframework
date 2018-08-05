@@ -28,7 +28,7 @@ namespace xx
 	}
 
 	template<typename T>
-	List<T>::List(List<T> &&o)
+	List<T>::List(List<T>&& o)
 		: Object(o.mempool)
 		, buf(o.buf)
 		, bufLen(o.bufLen)
@@ -216,7 +216,7 @@ namespace xx
 
 	template<typename T>
 	template<typename...Args>
-	T& List<T>::Emplace(Args &&... args)
+	T& List<T>::Emplace(Args&&...args)
 	{
 		Reserve(dataLen + 1);
 		return *new (&buf[dataLen++]) T(std::forward<Args>(args)...);
@@ -224,7 +224,7 @@ namespace xx
 
 	template<typename T>
 	template<typename...Args>
-	T& List<T>::EmplaceAt(size_t idx, Args&&...args)
+	T& List<T>::EmplaceAt(size_t const& idx, Args&&...args)
 	{
 		Reserve(dataLen + 1);
 		if (idx < dataLen)
@@ -252,14 +252,14 @@ namespace xx
 
 	template<typename T>
 	template<typename ...TS>
-	void List<T>::Add(TS && ...vs)
+	void List<T>::Add(TS&& ...vs)
 	{
 		std::initializer_list<int> n{ (Emplace(std::forward<TS>(vs)), 0)... };
 	}
 
 
 	template<typename T>
-	void List<T>::AddRange(T const* items, size_t count)
+	void List<T>::AddRange(T const* const& items, size_t const& count)
 	{
 		Reserve(dataLen + count);
 		if constexpr(IsTrivial_v<T>)
@@ -326,14 +326,14 @@ namespace xx
 
 
 	template<typename T>
-	List<T>::List(BBuffer* bb)
+	List<T>::List(BBuffer* const& bb)
 		: List(bb->mempool, 0)
 	{
 		if (int r = FromBBuffer(*bb)) throw r;
 	}
 
 	template<typename T>
-	void List<T>::ToBBuffer(BBuffer &bb) const
+	void List<T>::ToBBuffer(BBuffer& bb) const
 	{
 		bb.Reserve(bb.dataLen + 5 + dataLen * sizeof(T));
 		bb.Write(dataLen);
@@ -353,7 +353,7 @@ namespace xx
 	}
 
 	template<typename T>
-	int List<T>::FromBBuffer(BBuffer &bb)
+	int List<T>::FromBBuffer(BBuffer& bb)
 	{
 		size_t len = 0;
 		if (auto rtv = bb.Read(len)) return rtv;
@@ -384,7 +384,7 @@ namespace xx
 
 
 	template<typename T>
-	void List<T>::ToString(String &s) const
+	void List<T>::ToString(String& s) const
 	{
 		if (memHeader().flags)
 		{

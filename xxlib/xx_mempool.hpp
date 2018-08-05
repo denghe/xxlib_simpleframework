@@ -60,7 +60,7 @@ namespace xx
 	}
 
 	template<typename MHType>
-	void MemPool::Free(void* p) noexcept
+	void MemPool::Free(void* const& p) noexcept
 	{
 		if (!p) return;
 		auto h = (MHType*)p - 1;
@@ -71,7 +71,7 @@ namespace xx
 		headers[idx] = h;
 	}
 
-	inline void* MemPool::Realloc(void *p, size_t newSize, size_t dataLen) noexcept
+	inline void* MemPool::Realloc(void* const& p, size_t const& newSize, size_t const& dataLen) noexcept
 	{
 		if (!newSize)
 		{
@@ -93,8 +93,8 @@ namespace xx
 
 
 
-	template<typename T, typename ...Args>
-	T* MemPool::Create(Args &&... args)
+	template<typename T, typename...Args>
+	T* MemPool::Create(Args&&...args)
 	{
 		auto p = Alloc<MemHeader_Object>(sizeof(T));
 		if (!p) return nullptr;
@@ -115,22 +115,22 @@ namespace xx
 		}
 	}
 
-	template<typename T, typename ...Args>
-	Ptr<T> MemPool::CreatePtr(Args &&... args)
+	template<typename T, typename...Args>
+	Ptr<T> MemPool::CreatePtr(Args&&...args)
 	{
 		return Ptr<T>(Create<T>(std::forward<Args>(args)...));
 	}
 
 
-	template<typename T, typename ...Args>
-	bool MemPool::CreateTo(T*& outPtr, Args &&... args)
+	template<typename T, typename...Args>
+	bool MemPool::CreateTo(T*& outPtr, Args&&...args)
 	{
 		outPtr = Create<T>(std::forward<Args>(args)...);
 		return outPtr;
 	}
 
-	template<typename T, typename ...Args>
-	bool MemPool::CreateTo(Ptr<T>& outPtr, Args &&... args)
+	template<typename T, typename...Args>
+	bool MemPool::CreateTo(Ptr<T>& outPtr, Args&&...args)
 	{
 		outPtr = CreatePtr<T>(std::forward<Args>(args)...);
 		return outPtr.pointer;
@@ -142,29 +142,39 @@ namespace xx
 
 
 
-	template<typename T, typename ...Args>
-	T* MemPool::MPCreate(Args &&... args)
+	template<typename T, typename...Args>
+	T* MemPool::MPCreate(Args&&...args)
 	{
 		return Create<T>(this, std::forward<Args>(args)...);
 	}
 
-	template<typename T, typename ...Args>
-	Ptr<T> MemPool::MPCreatePtr(Args &&... args)
+	template<typename T, typename...Args>
+	Ptr<T> MemPool::MPCreatePtr(Args&&...args)
 	{
 		return CreatePtr<T>(this, std::forward<Args>(args)...);
 	}
 
 
-	template<typename T, typename ...Args>
-	bool MemPool::MPCreateTo(T*& outPtr, Args &&... args)
+	template<typename T, typename...Args>
+	bool MemPool::MPCreateTo(T*& outPtr, Args&&...args)
 	{
 		return CreateTo(outPtr, this, std::forward<Args>(args)...);
 	}
 
-	template<typename T, typename ...Args>
-	bool MemPool::MPCreateTo(Ptr<T>& outPtr, Args &&... args)
+	template<typename T, typename...Args>
+	bool MemPool::MPCreateTo(Ptr<T>& outPtr, Args&&...args)
 	{
 		return CreateTo(outPtr, this, std::forward<Args>(args)...);
+	}
+
+
+
+
+
+	template<typename...Args>
+	Ptr<String> MemPool::Str(Args&&...args)
+	{
+		return CreatePtr<xx::String>(this, std::forward<Args>(args)...);
 	}
 
 
@@ -172,7 +182,7 @@ namespace xx
 
 
 	// 从 Free 复制小改. 能防递归 Release
-	inline void MemPool::Release(Object* p)
+	inline void MemPool::Release(Object* const& p)
 	{
 		if (!p) return;
 		auto h = (MemHeader_Object*)p - 1;
@@ -187,7 +197,7 @@ namespace xx
 
 
 
-	inline size_t MemPool::Calc2n(size_t n) noexcept
+	inline size_t MemPool::Calc2n(size_t const& n) noexcept
 	{
 		assert(n);
 #ifdef _MSC_VER
@@ -207,7 +217,7 @@ namespace xx
 #endif
 	}
 
-	inline size_t MemPool::Round2n(size_t n) noexcept
+	inline size_t MemPool::Round2n(size_t const& n) noexcept
 	{
 		auto rtv = size_t(1) << Calc2n(n);
 		if (rtv == n) return n;
@@ -234,7 +244,7 @@ namespace xx
 		pids[TypeId_v<T>] = TypeId_v<PT>;
 
 		// 在执行构造函数之前拿到指针 塞入 bb. 构造函数执行失败时从 bb 移除
-		creators[TypeId_v<T>] = [](MemPool* mp, BBuffer* bb, size_t ptrOffset) ->void*
+		creators[TypeId_v<T>] = [](MemPool* const& mp, BBuffer* const& bb, size_t const& ptrOffset) ->void*
 		{
 			// 如果把 TypeId_v<T> 直接放入 std::make_pair, 其值将永远是 0. 故先取出来.
 			auto typeId = TypeId_v<T>;
@@ -268,7 +278,7 @@ namespace xx
 		};
 	}
 
-	inline bool MemPool::IsBaseOf(uint32_t baseTypeId, uint32_t typeId) noexcept
+	inline bool MemPool::IsBaseOf(uint32_t const& baseTypeId, uint32_t typeId) noexcept
 	{
 		for (; typeId != baseTypeId; typeId = pids[typeId])
 		{
@@ -278,7 +288,7 @@ namespace xx
 	}
 
 	template<typename BT>
-	bool MemPool::IsBaseOf(uint32_t typeId) noexcept
+	bool MemPool::IsBaseOf(uint32_t const& typeId) noexcept
 	{
 		return IsBaseOf(TypeId<BT>::value, typeId);
 	}
@@ -290,7 +300,7 @@ namespace xx
 	}
 
 	template<typename T>
-	T* MemPool::TryCast(Object* p) noexcept
+	T* MemPool::TryCast(Object* const& p) noexcept
 	{
 		return IsBaseOf(TypeId<T>::value, p->memHeader().typeId) ? (T*)p : nullptr;
 	}
@@ -301,11 +311,11 @@ namespace xx
 
 
 
-	inline Object::Object(MemPool* mempool) noexcept
+	inline Object::Object(MemPool* const& mempool) noexcept
 		: mempool(mempool)
 	{}
 
-	inline Object::Object(BBuffer* bb) noexcept
+	inline Object::Object(BBuffer* const& bb) noexcept
 		: mempool(bb->mempool)
 	{
 	}
@@ -320,10 +330,10 @@ namespace xx
 	inline MemHeader_Object& Object::memHeader() noexcept { return *((MemHeader_Object*)this - 1); }
 	inline MemHeader_Object& Object::memHeader() const noexcept { return *((MemHeader_Object*)this - 1); }
 
-	inline void Object::ToString(String &s) const {}
-	inline void Object::ToStringCore(String &s) const {}
-	inline void Object::ToBBuffer(BBuffer &bb) const {}
-	inline int Object::FromBBuffer(BBuffer &bb) { return 0; }
+	inline void Object::ToString(String& s) const {}
+	inline void Object::ToStringCore(String& s) const {}
+	inline void Object::ToBBuffer(BBuffer& bb) const {}
+	inline int Object::FromBBuffer(BBuffer& bb) { return 0; }
 
 
 
@@ -361,7 +371,7 @@ namespace xx
 
 	template<typename T>
 	template<typename O>
-	Ptr<T>::Ptr(Ptr<O> && o) noexcept
+	Ptr<T>::Ptr(Ptr<O>&& o) noexcept
 		: pointer((T*)o.pointer)
 	{
 		static_assert(std::is_base_of_v<T, O>);
@@ -380,7 +390,7 @@ namespace xx
 	}
 
 	template<typename T>
-	Ptr<T>::Ptr(Ptr<T> && o) noexcept
+	Ptr<T>::Ptr(Ptr<T>&& o) noexcept
 		: pointer(o.pointer)
 	{
 		o.pointer = nullptr;
@@ -414,7 +424,7 @@ namespace xx
 
 	template<typename T>
 	template<typename O>
-	Ptr<T>& Ptr<T>::operator=(Ptr<O> && o) noexcept
+	Ptr<T>& Ptr<T>::operator=(Ptr<O>&& o) noexcept
 	{
 		static_assert(std::is_base_of_v<T, O>);
 		Reset();
@@ -431,7 +441,7 @@ namespace xx
 	}
 
 	template<typename T>
-	Ptr<T>& Ptr<T>::operator=(Ptr<T> && o) noexcept
+	Ptr<T>& Ptr<T>::operator=(Ptr<T>&& o) noexcept
 	{
 		return operator=<T>(std::move(o));
 	}
@@ -607,7 +617,7 @@ namespace xx
 
 	template<typename T>
 	template<typename O, typename ...Args>
-	Ptr<T>& Ptr<T>::Create(MemPool* mp, Args &&... args)
+	Ptr<T>& Ptr<T>::Create(MemPool* const& mp, Args&&...args)
 	{
 		Reset(mp->Create<O>(std::forward<Args>(args)...));
 		return *this;
@@ -615,7 +625,7 @@ namespace xx
 
 	template<typename T>
 	template<typename O, typename ...Args>
-	Ptr<T>& Ptr<T>::MPCreate(MemPool* mp, Args &&... args)
+	Ptr<T>& Ptr<T>::MPCreate(MemPool* const& mp, Args&&...args)
 	{
 		Reset(mp->MPCreate<O>(std::forward<Args>(args)...));
 		return *this;
@@ -666,7 +676,7 @@ namespace xx
 	}
 
 	template<typename T>
-	Ref<T>::Ref(Ref && o) noexcept
+	Ref<T>::Ref(Ref&& o) noexcept
 		: pointer(o.pointer)
 		, versionNumber(o.versionNumber)
 	{

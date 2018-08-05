@@ -86,7 +86,7 @@ namespace xx
 
 	template<typename T>
 	template<typename ...TS>
-	void Queue<T>::Push(TS && ...vs)
+	void Queue<T>::Push(TS&& ...vs)
 	{
 		std::initializer_list<int> n{ (Emplace(std::forward<TS>(vs)), 0)... };
 	}
@@ -159,7 +159,7 @@ namespace xx
 	}
 
 	template <class T>
-	void Queue<T>::Reserve(size_t const& capacity, bool afterPush)
+	void Queue<T>::Reserve(size_t const& capacity, bool const& afterPush)
 	{
 		assert(capacity > 0);
 		if (capacity <= bufLen) return;

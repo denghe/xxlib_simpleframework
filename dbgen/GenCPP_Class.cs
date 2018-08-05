@@ -208,7 +208,7 @@ namespace " + c.Namespace + @"
 
         typedef " + c.Name + @" ThisType;
         typedef " + btn + @" BaseType;
-	    " + c.Name + @"(xx::MemPool* mempool);
+	    " + c.Name + @"(xx::MemPool* const& mempool);
 		" + c.Name + @"(" + c.Name + @" const&) = delete;
 		" + c.Name + @"& operator=(" + c.Name + @" const&) = delete;
         virtual void ToString(xx::String &s) const override;
@@ -246,7 +246,7 @@ namespace " + c.Namespace + @"
             var btn = c._HasBaseType() ? bt._GetTypeDecl_Cpp(templateName).CutLast() : "xx::Object";
 
             sb.Append(@"
-	inline " + c.Name + @"::" + c.Name + @"(xx::MemPool* mempool)
+	inline " + c.Name + @"::" + c.Name + @"(xx::MemPool* const& mempool)
         : " + btn + @"(mempool)");
             sb.Append(@"
 	{

@@ -36,15 +36,15 @@ namespace xx
 		void Remove(T const& v) noexcept;
 
 		template<typename...Args>
-		T& Emplace(Args &&... args);	// 用 T 的一到多个构造函数的参数来追加构造一个 v
+		T& Emplace(Args&&...args);	// 用 T 的一到多个构造函数的参数来追加构造一个 v
 
 		template<typename...Args>
-		T& EmplaceAt(size_t idx, Args&&...args);	// 用参数直接构造一个到指定位置
+		T& EmplaceAt(size_t const& idx, Args&&...args);	// 用参数直接构造一个到指定位置
 
 		template<typename ...TS>
-		void Add(TS && ...vs);		// 与 Emplace 不同的是, 这个仅支持1个参数的构造函数, 可同时追加多个
+		void Add(TS&&...vs);		// 与 Emplace 不同的是, 这个仅支持1个参数的构造函数, 可同时追加多个
 
-		void AddRange(T const* items, size_t count);
+		void AddRange(T const* const& items, size_t const& count);
 
 		size_t Find(T const& v) noexcept;			// 如果找到就返回索引. 找不到将返回 size_t(-1)
 		size_t Find(std::function<bool(T const&)> cond);
@@ -68,11 +68,11 @@ namespace xx
 
 
 		// Object 接口支持
-		List(BBuffer* bb);
-		void ToBBuffer(BBuffer &bb) const override;
-		int FromBBuffer(BBuffer &bb) override;
+		List(BBuffer* const& bb);
+		void ToBBuffer(BBuffer& bb) const override;
+		int FromBBuffer(BBuffer& bb) override;
 
-		void ToString(String &s) const override;
+		void ToString(String& s) const override;
 	};
 
 

@@ -10,7 +10,7 @@ extern void uuid_generate(unsigned char* buf);
 
 namespace xx
 {
-    inline Guid::Guid(bool fill) noexcept
+    inline Guid::Guid(bool const& fill) noexcept
 	{
 		if (fill)
 		{
@@ -84,13 +84,13 @@ namespace xx
 	template<>
 	struct BytesFunc<Guid, void>
 	{
-		static inline void WriteTo(BBuffer& bb, Guid const &in)
+		static inline void WriteTo(BBuffer& bb, Guid const& in)
 		{
 			bb.Reserve(bb.dataLen + sizeof(Guid));
 			memcpy(bb.buf + bb.dataLen, &in, sizeof(Guid));
 			bb.dataLen += sizeof(Guid);
 		}
-		static inline int ReadFrom(BBuffer& bb, Guid &out)
+		static inline int ReadFrom(BBuffer& bb, Guid& out)
 		{
 			if (bb.offset + sizeof(Guid) > bb.dataLen) return -1;
 			memcpy(&out, bb.buf + bb.offset, sizeof(Guid));

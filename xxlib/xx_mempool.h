@@ -90,51 +90,55 @@ namespace xx
 		void* Alloc(size_t siz) noexcept;
 
 		template<typename MHType = MemHeader>
-		void Free(void* p) noexcept;
+		void Free(void* const& p) noexcept;
 
 		// 可用于创建 lua state
-		void* Realloc(void *p, size_t newSize, size_t dataLen = -1) noexcept;
+		void* Realloc(void* const& p, size_t const& newSize, size_t const& dataLen = -1) noexcept;
 
 		// 正常 create 系列
 
-		template<typename T, typename ...Args>
-		T* Create(Args &&... args);
+		template<typename T, typename...Args>
+		T* Create(Args&&...args);
 
-		template<typename T, typename ...Args>
-		Ptr<T> CreatePtr(Args &&... args);
+		template<typename T, typename...Args>
+		Ptr<T> CreatePtr(Args&&...args);
 
-		template<typename T, typename ...Args>
-		bool CreateTo(T*& outPtr, Args &&... args);
+		template<typename T, typename...Args>
+		bool CreateTo(T*& outPtr, Args&&...args);
 
-		template<typename T, typename ...Args>
-		bool CreateTo(Ptr<T>& outPtr, Args &&... args);
+		template<typename T, typename...Args>
+		bool CreateTo(Ptr<T>& outPtr, Args&&...args);
 
 
 		// 首参为 MemPool* 传 this 系列, 省一个参数
 
-		template<typename T, typename ...Args>
-		T* MPCreate(Args &&... args);
+		template<typename T, typename...Args>
+		T* MPCreate(Args&&...args);
 
-		template<typename T, typename ...Args>
-		Ptr<T> MPCreatePtr(Args &&... args);
+		template<typename T, typename...Args>
+		Ptr<T> MPCreatePtr(Args&&...args);
 
-		template<typename T, typename ...Args>
-		bool MPCreateTo(T*& outPtr, Args &&... args);
+		template<typename T, typename...Args>
+		bool MPCreateTo(T*& outPtr, Args&&...args);
 
-		template<typename T, typename ...Args>
-		bool MPCreateTo(Ptr<T>& outPtr, Args &&... args);
+		template<typename T, typename...Args>
+		bool MPCreateTo(Ptr<T>& outPtr, Args&&...args);
 
 
+		// 简化一下常用的类型创建. 相当于 mp.MPCreatePtr<xx::String>( args )
+		template<typename ...Args>
+		Ptr<String> Str(Args&&...args);
 
-		void Release(Object* o);
+
+		void Release(Object* const& o);
 
 		/***********************************************************************************/
 		// 工具函数
 
-		static size_t Calc2n(size_t n) noexcept;
+		static size_t Calc2n(size_t const& n) noexcept;
 
 		// 将长度值按 2^n 来对齐
-		static size_t Round2n(size_t n) noexcept;
+		static size_t Round2n(size_t const& n) noexcept;
 
 
 		/***********************************************************************************/
@@ -143,7 +147,7 @@ namespace xx
 		// 放置 type 对应的 parent 的 type id. 1 : Object
 		inline static std::array<uint16_t, std::numeric_limits<uint16_t>::max()> pids;
 
-		typedef void*(*Creator)(MemPool*, BBuffer*, size_t);
+		typedef void*(*Creator)(MemPool* const&, BBuffer* const&, size_t const&);
 
 		// 存 typeId 到序列化构造函数的映射
 		inline static std::array<Creator, 1 << (sizeof(uint16_t) * 8)> creators;
@@ -157,11 +161,11 @@ namespace xx
 
 
 		// 根据 typeid 判断父子关系
-		static bool IsBaseOf(uint32_t baseTypeId, uint32_t typeId) noexcept;
+		static bool IsBaseOf(uint32_t const& baseTypeId, uint32_t typeId) noexcept;
 
 		// 根据 类型 判断父子关系
 		template<typename BT>
-		static bool IsBaseOf(uint32_t typeId) noexcept;
+		static bool IsBaseOf(uint32_t const& typeId) noexcept;
 
 		// 根据 类型 判断父子关系
 		template<typename BT, typename T>
@@ -169,7 +173,7 @@ namespace xx
 
 		// 试将指针 p 转成 T* 类型. 取代 dynamic_cast
 		template<typename T>
-		static T* TryCast(Object* p) noexcept;
+		static T* TryCast(Object* const& p) noexcept;
 
 		// BBuffer 序列化 & 反序列化时会用到
 		Dict<void*, size_t>* ptrStore;
@@ -187,19 +191,19 @@ namespace xx
 	{
 	public:
 		MemPool * mempool;
-		Object(MemPool* mempool) noexcept;
-		Object(BBuffer* bb) noexcept;
+		Object(MemPool* const& mempool) noexcept;
+		Object(BBuffer* const& bb) noexcept;
 		virtual ~Object() noexcept;
 		void Release();
 
 		MemHeader_Object& memHeader() noexcept;
 		MemHeader_Object& memHeader() const noexcept;
 
-		virtual void ToString(String &s) const;
-		virtual void ToStringCore(String &s) const;
+		virtual void ToString(String& s) const;
+		virtual void ToStringCore(String& s) const;
 
-		virtual void ToBBuffer(BBuffer &bb) const;
-		virtual int FromBBuffer(BBuffer &bb);
+		virtual void ToBBuffer(BBuffer& bb) const;
+		virtual int FromBBuffer(BBuffer& bb);
 	};
 
 
@@ -228,10 +232,10 @@ namespace xx
 		Ptr(Ptr<O> const& o) noexcept;
 
 		template<typename O>
-		Ptr(Ptr<O> && o) noexcept;
+		Ptr(Ptr<O>&& o) noexcept;
 
 		Ptr(Ptr<T> const& o) noexcept;
-		Ptr(Ptr<T> && o) noexcept;
+		Ptr(Ptr<T>&& o) noexcept;
 
 
 		template<typename O>
@@ -241,11 +245,11 @@ namespace xx
 		Ptr& operator=(Ptr<O> const& o) noexcept;
 
 		template<typename O>
-		Ptr& operator=(Ptr<O> && o) noexcept;
+		Ptr& operator=(Ptr<O>&& o) noexcept;
 
 
 		Ptr& operator=(Ptr const& o) noexcept;
-		Ptr& operator=(Ptr && o) noexcept;
+		Ptr& operator=(Ptr&& o) noexcept;
 
 
 		//// 提供到基类 Ptr 的隐式转换	// todo: 已知 android 下编译报错说 List Add 混淆
@@ -313,11 +317,11 @@ namespace xx
 		T& operator*() const noexcept;
 
 
-		template<typename O = T, typename ...Args>
-		Ptr<T>& Create(MemPool* mp, Args &&... args);
+		template<typename O = T, typename...Args>
+		Ptr<T>& Create(MemPool* const& mp, Args&&...args);
 
-		template<typename O = T, typename ...Args>
-		Ptr<T>& MPCreate(MemPool* mp, Args &&... args);
+		template<typename O = T, typename...Args>
+		Ptr<T>& MPCreate(MemPool* const& mp, Args&&...args);
 	};
 
 	template<typename T>
@@ -365,7 +369,7 @@ namespace xx
 		Ref(Ptr<O> const& o) noexcept;
 
 		Ref(Ref const& o) noexcept;
-		Ref(Ref && o) noexcept;
+		Ref(Ref&& o) noexcept;
 
 		template<typename O>
 		Ref(Ref<O> const& o) noexcept;
