@@ -119,7 +119,7 @@ xx::UvLoop::~UvLoop()
 	tcpListeners.ForEachRevert([&mp = this->mempool](auto& o) { mp->Release(o); });
 	tcpClients.ForEachRevert([&mp = this->mempool](auto& o) { mp->Release(o); });
 	mempool->Release(udpTimer); udpTimer = nullptr;
-	mempool->Release(timeouter); timeouter = nullptr;
+	mempool->Release(timeoutManager); timeoutManager = nullptr;
 	mempool->Release(rpcMgr);  rpcMgr = nullptr;
 	timers.ForEachRevert([&mp = this->mempool](auto& o) { mp->Release(o); });
 	asyncs.ForEachRevert([&mp = this->mempool](auto& o) { mp->Release(o); });
@@ -133,10 +133,10 @@ xx::UvLoop::~UvLoop()
 	ptr = nullptr;
 }
 
-void xx::UvLoop::InitTimeouter(uint64_t const& intervalMS, int const& wheelLen, int const& defaultInterval)
+void xx::UvLoop::InitTimeoutManager(uint64_t const& intervalMS, int const& wheelLen, int const& defaultInterval)
 {
-	if (timeouter) throw - 1;
-	mempool->CreateTo(timeouter, *this, intervalMS, wheelLen, defaultInterval);
+	if (timeoutManager) throw - 1;
+	mempool->CreateTo(timeoutManager, *this, intervalMS, wheelLen, defaultInterval);
 }
 void xx::UvLoop::InitRpcManager(uint64_t const& rpcIntervalMS, int const& rpcDefaultInterval)
 {
@@ -322,31 +322,31 @@ void xx::UvTimeouterBase::TimeouterClear()
 
 void xx::UvTimeouterBase::TimeoutReset(int const& interval)
 {
-	if (!timeouter) throw - 1;
-	timeouter->AddOrUpdate(this, interval);
+	if (!timeoutManager) throw - 1;
+	timeoutManager->AddOrUpdate(this, interval);
 }
 
 void xx::UvTimeouterBase::TimeouterStop()
 {
-	if (!timeouter) throw - 1;
-	if (timeouting()) timeouter->Remove(this);
+	if (!timeoutManager) throw - 1;
+	if (timeouting()) timeoutManager->Remove(this);
 }
 
 void xx::UvTimeouterBase::BindTimeoutManager(UvTimeoutManager* const& t)
 {
-	if (timeouter) throw - 1;
-	timeouter = t;
+	if (timeoutManager) throw - 1;
+	timeoutManager = t;
 }
 
 void xx::UvTimeouterBase::UnbindTimeoutManager()
 {
-	if (timeouting()) timeouter->Remove(this);
-	timeouter = nullptr;
+	if (timeouting()) timeoutManager->Remove(this);
+	timeoutManager = nullptr;
 }
 
 bool xx::UvTimeouterBase::timeouting()
 {
-	return timeouter && (timeouterIndex != -1 || timeouterPrev);
+	return timeoutManager && (timeouterIndex != -1 || timeouterPrev);
 }
 
 
@@ -368,8 +368,8 @@ xx::UvTcpUdpBase::UvTcpUdpBase(UvLoop& loop)
 
 void xx::UvTcpUdpBase::BindTimeoutManager(UvTimeoutManager* const& t)
 {
-	if (timeouter) throw - 1;
-	timeouter = t ? t : loop.timeouter;
+	if (timeoutManager) throw - 1;
+	timeoutManager = t ? t : loop.timeoutManager;
 }
 
 // 包头 = 1字节掩码 + 数据长(2/4字节) + 地址(转发) + 流水号(RPC)
@@ -588,7 +588,7 @@ void xx::UvTcpUdpBase::SendRoutingByRouter(xx::BBuffer& bb, size_t const& pkgLen
 	SendBytes(p1, (int)newPkgLen);
 }
 
- void xx::UvTcpUdpBase::RpcTraceCallback()
+void xx::UvTcpUdpBase::RpcTraceCallback()
 {
 	if (rpcSerials)
 	{
@@ -599,6 +599,22 @@ void xx::UvTcpUdpBase::SendRoutingByRouter(xx::BBuffer& bb, size_t const& pkgLen
 		assert(rpcSerials->Empty());
 	}
 }
+
+void xx::UvTcpUdpBase::DelayRelease(int const& interval)
+{
+	OnReceivePackage = nullptr;
+	OnReceiveRequest = nullptr;
+	//OnReceiveRouting = nullptr;
+	OnDispose = nullptr;
+	if (!timeoutManager)
+	{
+		BindTimeoutManager();
+	}
+	OnTimeout = [this] { Release(); };
+	TimeoutReset(interval);
+}
+
+
 
 
 

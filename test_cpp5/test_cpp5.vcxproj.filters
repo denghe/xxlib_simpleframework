@@ -8,6 +8,7 @@
     <ClCompile Include="..\xxlib\ikcp.cpp">
       <Filter>xxlib</Filter>
     </ClCompile>
+    <ClCompile Include="http_parser.c" />
   </ItemGroup>
   <ItemGroup>
     <None Include="main.bak" />
@@ -109,6 +110,7 @@
     <ClInclude Include="..\xxlib\xx_hashset.hpp">
       <Filter>xxlib</Filter>
     </ClInclude>
+    <ClInclude Include="http_parser.h" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="..\xxlib\xx.natvis">

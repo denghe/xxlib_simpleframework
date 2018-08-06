@@ -266,7 +266,7 @@ public class Service : UvLoop
         try
         {
             InitRpcManager(1000, 5);                                    // 精度:1秒, 5 秒超时
-            InitTimeouter(1000, 6, 5);                                  // 精度:1秒, 最长计时 6 秒, 默认 5 秒超时
+            InitTimeoutManager(1000, 6, 5);                                  // 精度:1秒, 最长计时 6 秒, 默认 5 秒超时
 
             listener = new Listener(this, "0.0.0.0", 12345);
             dbClient = new DbClient(this, "127.0.0.1", 12346);

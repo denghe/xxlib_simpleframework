@@ -47,7 +47,7 @@ namespace xx
 		List<UvUdpClient*> udpClients;
 		List<UvTimer*> timers;
 		List<UvAsync*> asyncs;
-		UvTimeoutManager* timeouter = nullptr;
+		UvTimeoutManager* timeoutManager = nullptr;
 		UvRpcManager* rpcMgr = nullptr;
 		UvTimer* udpTimer = nullptr;
 		uint32_t udpTicks = 0;
@@ -57,7 +57,7 @@ namespace xx
 		explicit UvLoop(MemPool* const& mp);
 		~UvLoop();
 
-		void InitTimeouter(uint64_t const& intervalMS = 1000, int const& wheelLen = 6, int const& defaultInterval = 5);
+		void InitTimeoutManager(uint64_t const& intervalMS = 1000, int const& wheelLen = 6, int const& defaultInterval = 5);
 		void InitRpcManager(uint64_t const& rpcIntervalMS = 1000, int const& rpcDefaultInterval = 5);
 		void InitKcpFlushInterval(uint32_t const& interval = 10);
 
@@ -107,7 +107,7 @@ namespace xx
 	public:
 		UvTimeouterBase(MemPool* const& mp);
 		~UvTimeouterBase();
-		UvTimeoutManager* timeouter = nullptr;
+		UvTimeoutManager* timeoutManager = nullptr;
 		UvTimeouterBase* timeouterPrev = nullptr;
 		UvTimeouterBase* timeouterNext = nullptr;
 		int timeouterIndex = -1;
@@ -223,6 +223,9 @@ namespace xx
 		// 增强的 SendRequest 实现 断线时 立即发起相关 rpc 超时回调. 封装了解包操作. 
 		template<typename T>
 		void SendRequestEx(T const& pkg, std::function<void(uint32_t, xx::Object_p&)>&& cb, int const& interval = 0);
+
+		// 会清除掉 OnReceiveXxxxxx, OnDispose 的各种事件, BindTimeoutManager 并在 OnTimeout 时 Release
+		void DelayRelease(int const& interval = 0);
 	};
 
 	class UvTcpBase : public UvTcpUdpBase

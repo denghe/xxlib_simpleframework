@@ -90,6 +90,7 @@
   <ItemGroup>
     <ClCompile Include="..\xxlib\ikcp.cpp" />
     <ClCompile Include="..\xxlib\xx_uv.cpp" />
+    <ClCompile Include="http_parser.c" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -129,6 +130,7 @@
     <ClInclude Include="..\xxlib\xx_string.h" />
     <ClInclude Include="..\xxlib\xx_string.hpp" />
     <ClInclude Include="..\xxlib\xx_uv.h" />
+    <ClInclude Include="http_parser.h" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="..\xxlib\xx.natvis" />

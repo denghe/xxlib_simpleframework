@@ -104,7 +104,7 @@ namespace " + e.Namespace.Replace(".", "::") + @"
             var o = asm.CreateInstance(c.FullName);
 
             // namespace e_ns {
-            if (c.Namespace != null && (i == 0 || (i > 0 && es[i - 1].Namespace != c.Namespace))) // namespace 去重
+            if (c.Namespace != null && (i == 0 || (i > 0 && ss[i - 1].Namespace != c.Namespace))) // namespace 去重
             {
                 sb.Append(@"
 namespace " + c.Namespace.Replace(".", "::") + @"
@@ -145,7 +145,7 @@ namespace " + c.Namespace.Replace(".", "::") + @"
     };");
 
             // namespace }
-            if (c.Namespace != null && ((i < es.Count - 1 && es[i + 1].Namespace != c.Namespace) || i == es.Count - 1))
+            if (c.Namespace != null && ((i < ss.Count - 1 && ss[i + 1].Namespace != c.Namespace) || i == ss.Count - 1))
             {
                 sb.Append(@"
 }");

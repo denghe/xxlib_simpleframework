@@ -97,7 +97,7 @@ namespace xx
             }
         }
 
-        public void InitTimeouter(ulong intervalMS = 1000, int wheelLen = 6, int defaultInterval = 5)
+        public void InitTimeoutManager(ulong intervalMS = 1000, int wheelLen = 6, int defaultInterval = 5)
         {
             if (timeoutManager != null) throw new InvalidOperationException();
             timeoutManager = new UvTimeoutManager(this, intervalMS, wheelLen, defaultInterval);
@@ -652,6 +652,22 @@ namespace xx
             }
             rpcSerials.Add(serial);
         }
+
+
+        public void DelayRelease(int interval = 0)
+        {
+            OnReceivePackage = null;
+            OnReceiveRequest = null;
+            //OnReceiveRouting = null;
+            OnDispose = null;
+            if (timeouterManager == null)
+            {
+                BindTimeoutManager();
+            }
+            OnTimeout = Dispose;
+            TimeoutReset(interval);
+        }
+
 
         public abstract void Dispose();
     }

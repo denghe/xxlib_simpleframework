@@ -256,7 +256,7 @@ public class Service : UvLoop
     public Service()
     {
         InitRpcManager(1000, 5);
-        InitTimeouter(1000, 6, 5);                                          // 精度:秒, 最长计时 6 秒, 默认 5 秒超时
+        InitTimeoutManager(1000, 6, 5);                                          // 精度:秒, 最长计时 6 秒, 默认 5 秒超时
 
         svcListener = new ServiceListener(this, "0.0.0.0", 12346);
         dispatcher = new UvAsync(this);
