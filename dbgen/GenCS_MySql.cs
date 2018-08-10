@@ -261,14 +261,13 @@ namespace " + iface.Namespace + @"
                             }
                             else
                             {
-                                if (pt._IsUserClass() && p._Has<SkipReadOnly>())
+                                if (pt._IsUserClass())
                                 {
                                     sb.Append(@"
-            sb.MySqlAppend(" + pn + @", true);");
+            sb.MySqlAppend(" + pn + @", " + (p._Has<SkipReadOnly>() ? "true" : "false") + ");");
                                 }
                                 else
                                 {
-
                                     sb.Append(@"
             sb.MySqlAppend(" + pn + @");");
                                 }

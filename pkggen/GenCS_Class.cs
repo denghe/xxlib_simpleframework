@@ -216,7 +216,60 @@ namespace " + c.Namespace + @"
             }
             sb.Append(@"
         }
-");
+        public " + (c.IsValueType ? "" : (c._HasBaseType() ? "override" : "virtual")) + @" void ToString(ref System.Text.StringBuilder str)
+        {
+            if (GetToStringFlag())
+            {
+        	    str.Append(""[ \""***** recursived *****\"" ]"");
+        	    return;
+            }
+            else SetToStringFlag(true);
+
+            str.Append(""{ \""pkgTypeName\"":\""" + (string.IsNullOrEmpty(c.Namespace) ? c.Name : c.Namespace + "." + c.Name) + @"\"", \""pkgTypeId\"":"" + GetPackageId());
+            ToStringCore(ref str);
+            str.Append("" }"");
+        
+            SetToStringFlag(false);
+        }
+        public " + (c.IsValueType ? "" : (c._HasBaseType() ? "override" : "virtual")) + @" void ToStringCore(ref System.Text.StringBuilder str)
+        {" + (c._HasBaseType() ? @"
+            base.ToStringCore(ref str);" : ""));
+            foreach (var f in fs)
+            {
+                if (f.FieldType._IsExternal() && !f.FieldType._GetExternalSerializable()) continue;
+                if (f.FieldType._IsString())
+                {
+                    sb.Append(@"
+            if (" + f.Name + @" != null) str.Append("", \""" + f.Name + @"\"":\"""" + " + f.Name + @" + ""\"""");
+            else str.Append("", \""" + f.Name + @"\"":nil"");");
+                }
+                else
+                {
+                    sb.Append(@"
+            str.Append("", \""" + f.Name + @"\"":"" + " + f.Name + @");");
+                }
+            }
+            sb.Append(@"
+        }
+        public override string ToString()
+        {
+            var sb = new System.Text.StringBuilder();
+            ToString(ref sb);
+            return sb.ToString();
+        }");
+            if (!c._HasBaseType())
+            {
+                sb.Append(@"
+        bool toStringFlag;
+        public void SetToStringFlag(bool doing)
+        {
+            toStringFlag = doing;
+        }
+        public bool GetToStringFlag()
+        {
+            return toStringFlag;
+        }");
+            }
 
             // todo: ToString support
 
@@ -242,9 +295,7 @@ namespace " + c.Namespace + @"
     public static class AllTypes
     {
         public static void Register()
-        {
-            // BBuffer.Register<string>(1);
-            BBuffer.Register<BBuffer>(2);");
+        {");
 
         foreach (var kv in typeIds.types)
         {

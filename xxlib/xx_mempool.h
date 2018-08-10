@@ -306,6 +306,12 @@ namespace xx
 		bool operator!=(Ptr<O> const& o) const noexcept;
 
 		template<typename O>
+		bool operator==(Ref<O> const& o) const noexcept;
+		template<typename O>
+		bool operator!=(Ref<O> const& o) const noexcept;
+
+
+		template<typename O>
 		bool operator==(O* const& o) const noexcept;
 		template<typename O>
 		bool operator!=(O* const& o) const noexcept;
@@ -384,6 +390,22 @@ namespace xx
 
 		template<typename O>
 		Ref& operator=(O* const& o) noexcept;
+
+
+		template<typename O>
+		bool operator==(Ptr<O> const& o) const noexcept;
+		template<typename O>
+		bool operator!=(Ptr<O> const& o) const noexcept;
+
+		template<typename O>
+		bool operator==(Ref<O> const& o) const noexcept;
+		template<typename O>
+		bool operator!=(Ref<O> const& o) const noexcept;
+
+		template<typename O>
+		bool operator==(O* const& o) const noexcept;
+		template<typename O>
+		bool operator!=(O* const& o) const noexcept;
 
 
 		Ptr<T>& Lock() const noexcept;

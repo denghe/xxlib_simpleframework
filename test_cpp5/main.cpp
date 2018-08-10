@@ -14,7 +14,10 @@ namespace xx
 		UvHttpPeer(UvTcpListener& listener) : UvTcpPeer(listener) {}
 		virtual void ReceiveImpl(char const* const& bufPtr, int const& len) override
 		{
-			// todo
+			// todo: 当连续出现 \r\n\r\n 时表示 header 应该已经接收完毕, 可用 parser 来一发, 以提取出长度模式. 
+			// 如果为 Transfer-Encoding: chunked, 则按这个规则继续收包. 如果超过 xx 字节, 就停止收包并断开.
+			// 如果 \r\n\r\n 迟迟未出现, 或是在出现之前, 超过 xx 字节, 就停止收包并断开.
+
 		}
 	};
 }

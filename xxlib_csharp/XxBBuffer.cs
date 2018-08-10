@@ -690,14 +690,7 @@ namespace xx
         public override string ToString()
         {
             var s = new StringBuilder();
-            s.Append("{ \"len\" : " + dataLen + ", \"offset\" : " + offset + ", \"data\" : [");
-            for (int i = 0; i < dataLen; ++i)
-            {
-                s.Append(i > 0 ? ", " : " ");
-                s.Append(buf[i]);
-            }
-            s.Append(dataLen > 0 ? " ]" : "]");
-            s.Append(" }");
+            ToString(ref s);
             return s.ToString();
         }
 
@@ -771,6 +764,30 @@ namespace xx
             Buffer.BlockCopy(bb.buf, bb.offset, buf, 0, len);
             bb.offset += len;
         }
+
+        public void ToString(ref StringBuilder s)
+        {
+            s.Append("{ \"len\":" + dataLen + ", \"offset\":" + offset + ", \"data\":[ ");
+            for (var i = 0; i < dataLen; i++)
+            {
+                s.Append(buf[i] + ", ");
+            }
+            if (dataLen > 0) s.Length -= 2;
+            s.Append(" ] }");
+        }
+        public void ToStringCore(ref StringBuilder sb) { }
+
+
+        bool toStringFlag;
+        public void SetToStringFlag(bool doing)
+        {
+            toStringFlag = doing;
+        }
+        public bool GetToStringFlag()
+        {
+            return toStringFlag;
+        }
+
 
         #endregion
 
@@ -1142,6 +1159,11 @@ namespace xx
 
         // 序列化接口之从 bb 还原 /  填充数据( 这个需要 try )
         void FromBBuffer(BBuffer bb);
-    }
 
+        // ToString 相关
+        void ToString(ref StringBuilder sb);
+        void ToStringCore(ref StringBuilder sb);
+        void SetToStringFlag(bool doing);
+        bool GetToStringFlag();
+    }
 }

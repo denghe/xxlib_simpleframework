@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Text;
 
 namespace xx
 {
@@ -362,8 +363,9 @@ namespace xx
 
         public override string ToString()
         {
-            // todo: 考虑在这生成 json 长相的东西
-            throw new NotImplementedException();
+            var s = new StringBuilder();
+            ToString(ref s);
+            return s.ToString();
         }
 
         public ushort GetPackageId()
@@ -380,6 +382,45 @@ namespace xx
         {
             ListIBBufferImpl<T>.instance.FromBBuffer(bb, this);
         }
+
+        public void ToString(ref StringBuilder s)
+        {
+            if (GetToStringFlag())
+            {
+                s.Append("[ \"***** recursived *****\" ]");
+                return;
+            }
+            else SetToStringFlag(true);
+
+            s.Append("[ ");
+            for (var i = 0; i < dataLen; i++)
+            {
+                s.Append(buf[i] + ", ");
+            }
+            if (dataLen > 0)
+            {
+                s.Length -= 2;
+                s.Append(" ]");
+            }
+            else
+            {
+                s[s.Length - 1] = ']';
+            }
+
+            SetToStringFlag(false);
+        }
+        public void ToStringCore(ref StringBuilder s) { }
+
+        bool toStringFlag;
+        public void SetToStringFlag(bool doing)
+        {
+            toStringFlag = doing;
+        }
+        public bool GetToStringFlag()
+        {
+            return toStringFlag;
+        }
+
     }
 
     public abstract partial class ListIBBufferImpl<T>

@@ -291,6 +291,33 @@ public static class GenExtensions
         }
         return false;
     }
+    public static string _GetExternalCppDefaultValue(this Type t)
+    {
+        foreach (var a in t.GetCustomAttributes(false))
+        {
+            if (a is TemplateLibrary.External)
+                return ((TemplateLibrary.External)a).cppDefaultValue;
+        }
+        return "";
+    }
+    public static string _GetExternalCsharpDefaultValue(this Type t)
+    {
+        foreach (var a in t.GetCustomAttributes(false))
+        {
+            if (a is TemplateLibrary.External)
+                return ((TemplateLibrary.External)a).csharpDefaultValue;
+        }
+        return "";
+    }
+    public static string _GetExternalLuaDefaultValue(this Type t)
+    {
+        foreach (var a in t.GetCustomAttributes(false))
+        {
+            if (a is TemplateLibrary.External)
+                return ((TemplateLibrary.External)a).luaDefaultValue;
+        }
+        return "";
+    }
 
     /// <summary>
     /// 获取 class 的成员列表( 含 const )

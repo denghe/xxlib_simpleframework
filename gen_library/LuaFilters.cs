@@ -32,7 +32,9 @@ namespace TemplateLibrary
             // 记录　命名空间白名单　下所有类
             foreach (var t in types)
             {
-                if (nss.Contains(t.Namespace))
+                var ns = t.Namespace;
+                if (ns != null && ns.Contains('.')) ns = ns.Split('.')[0];
+                if (nss.Contains(ns))
                 {
                     depends.Add(t);
                     this.ts.Add(t);

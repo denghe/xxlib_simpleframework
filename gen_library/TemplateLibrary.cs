@@ -124,8 +124,20 @@ namespace TemplateLibrary
     [System.AttributeUsage(System.AttributeTargets.Enum | System.AttributeTargets.Class | System.AttributeTargets.Struct)]
     public class External : System.Attribute
     {
-        public External(bool serializable = true) { this.serializable = serializable; }
+        public External(bool serializable = true
+            , string cppDefaultValue = "nullptr"
+            , string csharpDefaultValue = "null"
+            , string luaDefaultValue = "null")
+        {
+            this.serializable = serializable;
+            this.cppDefaultValue = cppDefaultValue;
+            this.csharpDefaultValue = csharpDefaultValue;
+            this.luaDefaultValue = luaDefaultValue;
+        }
         public bool serializable;
+        public string cppDefaultValue;
+        public string csharpDefaultValue;
+        public string luaDefaultValue;
     }
 
     /// <summary>

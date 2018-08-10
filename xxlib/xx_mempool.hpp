@@ -583,6 +583,19 @@ namespace xx
 
 	template<typename T>
 	template<typename O>
+	bool Ptr<T>::operator==(Ref<O> const& o) const noexcept
+	{
+		return pointer == o.Lock().pointer;
+	}
+	template<typename T>
+	template<typename O>
+	bool Ptr<T>::operator!=(Ref<O> const& o) const noexcept
+	{
+		return pointer != o.Lock().pointer;
+	}
+
+	template<typename T>
+	template<typename O>
 	bool Ptr<T>::operator==(O* const& o) const noexcept
 	{
 		return pointer == (T*)o;
@@ -718,6 +731,51 @@ namespace xx
 		versionNumber = o.versionNumber;
 		return *this;
 	}
+
+
+
+
+	template<typename T>
+	template<typename O>
+	bool Ref<T>::operator==(Ptr<O> const& o) const noexcept
+	{
+		return o.pointer == Lock().pointer;
+	}
+	template<typename T>
+	template<typename O>
+	bool Ref<T>::operator!=(Ptr<O> const& o) const noexcept
+	{
+		return o.pointer != Lock().pointer;
+	}
+
+	template<typename T>
+	template<typename O>
+	bool Ref<T>::operator==(Ref<O> const& o) const noexcept
+	{
+		return Lock().pointer == o.Lock().pointer;
+	}
+	template<typename T>
+	template<typename O>
+	bool Ref<T>::operator!=(Ref<O> const& o) const noexcept
+	{
+		return Lock().pointer != o.Lock().pointer;
+	}
+
+	template<typename T>
+	template<typename O>
+	bool Ref<T>::operator==(O* const& o) const noexcept
+	{
+		return Lock().pointer == o;
+	}
+	template<typename T>
+	template<typename O>
+	bool Ref<T>::operator!=(O* const& o) const noexcept
+	{
+		return Lock().pointer != o;
+	}
+
+
+
 
 	template<typename T>
 	Ptr<T>& Ref<T>::Lock() const noexcept

@@ -296,7 +296,7 @@ namespace xx
 
 	inline void BBuffer::ToString(String &s) const
 	{
-		s.Append("{ \"len\" : ", dataLen, ", \"offset\" : ", offset, ", \"data\" : [ ");
+		s.Append("{ \"len\":", dataLen, ", \"offset\":", offset, ", \"data\":[ ");
 		for (size_t i = 0; i < dataLen; i++)
 		{
 			s.Append((int)(uint8_t)buf[i], ", ");

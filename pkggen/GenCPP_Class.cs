@@ -192,15 +192,22 @@ namespace " + c.Namespace.Replace(".", "::") + @"
                 sb.Append(f._GetDesc()._GetComment_Cpp(8) + @"
         " + (f.IsStatic ? "constexpr " : "") + ftn + " " + f.Name);
 
-                var v = f.GetValue(f.IsStatic ? null : o);
-                var dv = v._GetDefaultValueDecl_Cpp(templateName);
-                if (dv != "" && !ft._IsList() && !ft._IsUserClass() && !ft._IsString())  // 当前还无法正确处理 String 数据类型的默认值
+                if (ft._IsExternal() && !ft._GetExternalSerializable() && !string.IsNullOrEmpty(ft._GetExternalCppDefaultValue()))
                 {
-                    sb.Append(" = " + dv + ";");
+                    sb.Append(" = " + ft._GetExternalCppDefaultValue() + ";");
                 }
                 else
                 {
-                    sb.Append(";");
+                    var v = f.GetValue(f.IsStatic ? null : o);
+                    var dv = v._GetDefaultValueDecl_Cpp(templateName);
+                    if (dv != "" && !ft._IsList() && !(ft._IsUserClass()) && !ft._IsString())  // 当前还无法正确处理 String 数据类型的默认值
+                    {
+                        sb.Append(" = " + dv + ";");
+                    }
+                    else
+                    {
+                        sb.Append(";");
+                    }
                 }
             }
 
@@ -225,8 +232,88 @@ namespace " + c.Namespace.Replace(".", "::") + @"
                 sb.Append(@"
 }");
             }
+        }
+        sb.Append(@"
+}");
+
+        // 泛型接口适配
+        sb.Append(@"
+namespace xx
+{");
+        cs = ts._GetStructs();
+        foreach (var c in cs)
+        {
+            var ctn = c._GetTypeDecl_Cpp(templateName);
+            var fs = c._GetFields();
+
+            sb.Append(@"
+	template<>
+	struct BytesFunc<" + ctn + @", void>
+	{
+		static inline void WriteTo(BBuffer& bb, " + ctn + @" const &in)
+		{
+			bb.Write(");
+            foreach (var f in fs)
+            {
+                if (f._Has<TemplateLibrary.NotSerialize>())
+                {
+                    // todo: write 默认值
+                }
+                else
+                {
+                    sb.Append((f == fs.First() ? "" : @", ") + "in." + f.Name);
+                }
+            }
+            sb.Append(@");
+		}
+		static inline int ReadFrom(BBuffer& bb, " + ctn + @" &out)
+		{
+			return bb.Read(");
+            foreach (var f in fs)
+            {
+                sb.Append((f == fs.First() ? "" : @", ") + "out." + f.Name);
+            }
+            sb.Append(@");
+		}
+	};
+	template<>
+	struct StrFunc<" + ctn + @", void>
+	{
+		static inline void WriteTo(xx::String& s, " + ctn + @" const &in)
+		{
+			s.Append(""{ \""structTypeName\"":\""" + (string.IsNullOrEmpty(c.Namespace) ? c.Name : c.Namespace + "." + c.Name) + @"\""""");
+            foreach (var f in fs)
+            {
+                sb.Append(@", "", \""" + f.Name + @"\"":"", in." + f.Name);
+            }
+            sb.Append(@", "" }"");
+        }
+    };");
 
         }
+
+
+        // 遍历所有 type 及成员数据类型 生成  BBuffer.Register< T >( typeId ) 函数组. 0 不能占. String 占掉 1. BBuffer 占掉 2. ( 这两个不生成 )
+        // 在基础命名空间中造一个静态类 AllTypes 静态方法 Register
+
+        var typeIds = new TemplateLibrary.TypeIds(asm);
+        foreach (var kv in typeIds.types)
+        {
+            var ct = kv.Key;
+            if (ct._IsString() || ct._IsBBuffer() || ct._IsExternal() && !ct._GetExternalSerializable()) continue;
+            var typeId = kv.Value;
+            string ctn;
+            if (ct._IsList()) ctn = ct._GetSafeTypeDecl_Cpp(templateName, true);
+            else ctn = ct._GetTypeDecl_Cpp(templateName).CutLast();
+
+            sb.Append(@"
+	template<> struct TypeId<" + ctn + @"> { static const uint16_t value = " + typeId + @"; };");
+        }
+
+        sb.Append(@"
+}
+namespace " + templateName + @"
+{");
 
         cs = ts._GetClasss();   //._SortByInheritRelation();
         // 实现
@@ -347,7 +434,7 @@ namespace " + c.Namespace.Replace(".", "::") + @"
         }
         else memHeader().flags = 1;
 
-        str.Append(""{ \""type\"" : \""" + c.Name + @"\"""");
+        str.Append(""{ \""pkgTypeName\"":\""" + (string.IsNullOrEmpty(c.Namespace) ? c.Name : c.Namespace + "." + c.Name) + @"\"", \""pkgTypeId\"":"", xx::TypeId_v<ThisType>);
         ToStringCore(str);
         str.Append("" }"");
         
@@ -362,13 +449,13 @@ namespace " + c.Namespace.Replace(".", "::") + @"
                 if (f.FieldType._IsString())
                 {
                     sb.Append(@"
-        if (this->" + f.Name + @") str.Append("", \""" + f.Name + @"\"" : \"""", this->" + f.Name + @", ""\"""");
-        else str.Append("", \""" + f.Name + @"\"" : nil"");");
+        if (this->" + f.Name + @") str.Append("", \""" + f.Name + @"\"":\"""", this->" + f.Name + @", ""\"""");
+        else str.Append("", \""" + f.Name + @"\"":nil"");");
                 }
                 else
                 {
                     sb.Append(@"
-        str.Append("", \""" + f.Name + @"\"" : "", this->" + f.Name + @");");
+        str.Append("", \""" + f.Name + @"\"":"", this->" + f.Name + @");");
                 }
             }
             sb.Append(@"
@@ -388,83 +475,8 @@ namespace " + c.Namespace.Replace(".", "::") + @"
         sb.Append(@"
 }");
 
-        // 泛型接口适配
-        sb.Append(@"
-namespace xx
-{");
-        cs = ts._GetStructs();
-        foreach (var c in cs)
-        {
-            var ctn = c._GetTypeDecl_Cpp(templateName);
-            var fs = c._GetFields();
-
-            sb.Append(@"
-	template<>
-	struct BytesFunc<" + ctn + @", void>
-	{
-		static inline void WriteTo(BBuffer& bb, " + ctn + @" const &in)
-		{
-			bb.Write(");
-            foreach (var f in fs)
-            {
-                if (f._Has<TemplateLibrary.NotSerialize>())
-                {
-                    // todo: write 默认值
-                }
-                else
-                {
-                    sb.Append((f == fs.First() ? "" : @", ") + "in." + f.Name);
-                }
-            }
-            sb.Append(@");
-		}
-		static inline int ReadFrom(BBuffer& bb, " + ctn + @" &out)
-		{
-			return bb.Read(");
-            foreach (var f in fs)
-            {
-                sb.Append((f == fs.First() ? "" : @", ") + "out." + f.Name);
-            }
-            sb.Append(@");
-		}
-	};
-	template<>
-	struct StrFunc<" + ctn + @", void>
-	{
-		static inline void WriteTo(xx::String& s, " + ctn + @" const &in)
-		{
-			s.Append(""{ \""type\"" : \""" + c.Name + @"\""""");
-            foreach (var f in fs)
-            {
-                sb.Append(@", "", \""" + f.Name + @"\"" : "", in." + f.Name);
-            }
-            sb.Append(@", "" }"");
-        }
-    };");
-
-        }
-
-
-        // 遍历所有 type 及成员数据类型 生成  BBuffer.Register< T >( typeId ) 函数组. 0 不能占. String 占掉 1. BBuffer 占掉 2. ( 这两个不生成 )
-        // 在基础命名空间中造一个静态类 AllTypes 静态方法 Register
-
-        var typeIds = new TemplateLibrary.TypeIds(asm);
-        foreach (var kv in typeIds.types)
-        {
-            var ct = kv.Key;
-            if (ct._IsString() || ct._IsBBuffer() || ct._IsExternal() && !ct._GetExternalSerializable()) continue;
-            var typeId = kv.Value;
-            string ctn;
-            if (ct._IsList()) ctn = ct._GetSafeTypeDecl_Cpp(templateName, true);
-            else ctn = ct._GetTypeDecl_Cpp(templateName).CutLast();
-
-            sb.Append(@"
-	template<> struct TypeId<" + ctn + @"> { static const uint16_t value = " + typeId + @"; };");
-        }
-
 
         sb.Append(@"
-}
 namespace " + templateName + @"
 {
 	inline void AllTypesRegister()

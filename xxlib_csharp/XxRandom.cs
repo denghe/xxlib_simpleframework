@@ -36,6 +36,29 @@ namespace xx
             bb.offset += 58 * 4;
         }
 
+        public override string ToString()
+        {
+            var sb = new StringBuilder();
+            ToString(ref sb);
+            return sb.ToString();
+        }
+        public void ToString(ref StringBuilder s)
+        {
+            s.Append("{ \"type\":\"Random\" }");
+        }
+        public void ToStringCore(ref StringBuilder sb) { }
+
+        bool toStringFlag;
+        public void SetToStringFlag(bool doing)
+        {
+            toStringFlag = doing;
+        }
+        public bool GetToStringFlag()
+        {
+            return toStringFlag;
+        }
+
+
 
         //public string FindDiff(Random o, string rootName = "")
         //{
