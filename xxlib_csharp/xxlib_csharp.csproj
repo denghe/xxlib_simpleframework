@@ -45,6 +45,7 @@
     <Compile Include="XxBBuffer.cs" />
     <Compile Include="XxDict.cs" />
     <Compile Include="XxLogger.cs" />
+    <Compile Include="XxHttpServer.cs" />
     <Compile Include="XxMisc.cs" />
     <Compile Include="XxNBSocket.cs" />
     <Compile Include="XxQueue.cs" />
