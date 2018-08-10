@@ -128,6 +128,14 @@ namespace xx
                 outSb.AppendFormat("key:{0}, value:{1}\r\n", kv.key, kv.value);
             });
         }
+
+        public string this[string key]
+        {
+            get
+            {
+                return keyValuePairs.TryGetValue(key, out var rtv) ? rtv : null;
+            }
+        }
     }
 
 }
@@ -141,8 +149,8 @@ public static void Main(string[] args)
         hs.SetHandler(urlPath, urlArgs =>
         {
             // 参数识别
-            string arg1 = null;
-            if (!urlArgs.keyValuePairs.TryGetValue("arg1", out arg1))
+            string arg1 = urlArgs["arg1"];
+            if (arg1 == null)
             {
                 return "arg1 is not found.";
             }
