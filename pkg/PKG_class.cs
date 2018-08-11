@@ -4,7 +4,7 @@ namespace PKG
 {
     public static class PkgGenMd5
     {
-        public const string value = "73fe90a587f1d8cfc9b7aaca273a0806"; 
+        public const string value = "aced7e436a75c5ddd8aeab7abb07116a"; 
     }
 
 namespace CatchFish_Client
@@ -33,7 +33,40 @@ namespace CatchFish_Client
         {
             bb.Read(ref this.sitIndex);
         }
+        public virtual void ToString(ref System.Text.StringBuilder str)
+        {
+            if (GetToStringFlag())
+            {
+        	    str.Append("[ \"***** recursived *****\" ]");
+        	    return;
+            }
+            else SetToStringFlag(true);
 
+            str.Append("{ \"pkgTypeName\":\"CatchFish_Client.JoinSuccess\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(ref str);
+            str.Append(" }");
+        
+            SetToStringFlag(false);
+        }
+        public virtual void ToStringCore(ref System.Text.StringBuilder str)
+        {
+            str.Append(", \"sitIndex\":" + sitIndex);
+        }
+        public override string ToString()
+        {
+            var sb = new System.Text.StringBuilder();
+            ToString(ref sb);
+            return sb.ToString();
+        }
+        bool toStringFlag;
+        public void SetToStringFlag(bool doing)
+        {
+            toStringFlag = doing;
+        }
+        public bool GetToStringFlag()
+        {
+            return toStringFlag;
+        }
     }
     /// <summary>
     /// 进入失败
@@ -60,7 +93,41 @@ namespace CatchFish_Client
             bb.readLengthLimit = 0;
             bb.Read(ref this.errMsg);
         }
+        public virtual void ToString(ref System.Text.StringBuilder str)
+        {
+            if (GetToStringFlag())
+            {
+        	    str.Append("[ \"***** recursived *****\" ]");
+        	    return;
+            }
+            else SetToStringFlag(true);
 
+            str.Append("{ \"pkgTypeName\":\"CatchFish_Client.JoinFail\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(ref str);
+            str.Append(" }");
+        
+            SetToStringFlag(false);
+        }
+        public virtual void ToStringCore(ref System.Text.StringBuilder str)
+        {
+            if (errMsg != null) str.Append(", \"errMsg\":\"" + errMsg + "\"");
+            else str.Append(", \"errMsg\":nil");
+        }
+        public override string ToString()
+        {
+            var sb = new System.Text.StringBuilder();
+            ToString(ref sb);
+            return sb.ToString();
+        }
+        bool toStringFlag;
+        public void SetToStringFlag(bool doing)
+        {
+            toStringFlag = doing;
+        }
+        public bool GetToStringFlag()
+        {
+            return toStringFlag;
+        }
     }
     /// <summary>
     /// 要按成员顺序优先级依次处理
@@ -83,7 +150,40 @@ namespace CatchFish_Client
         {
             bb.Read(ref this.scene);
         }
+        public virtual void ToString(ref System.Text.StringBuilder str)
+        {
+            if (GetToStringFlag())
+            {
+        	    str.Append("[ \"***** recursived *****\" ]");
+        	    return;
+            }
+            else SetToStringFlag(true);
 
+            str.Append("{ \"pkgTypeName\":\"CatchFish_Client.FullSync\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(ref str);
+            str.Append(" }");
+        
+            SetToStringFlag(false);
+        }
+        public virtual void ToStringCore(ref System.Text.StringBuilder str)
+        {
+            str.Append(", \"scene\":" + scene);
+        }
+        public override string ToString()
+        {
+            var sb = new System.Text.StringBuilder();
+            ToString(ref sb);
+            return sb.ToString();
+        }
+        bool toStringFlag;
+        public void SetToStringFlag(bool doing)
+        {
+            toStringFlag = doing;
+        }
+        public bool GetToStringFlag()
+        {
+            return toStringFlag;
+        }
     }
     /// <summary>
     /// 要按成员顺序优先级依次处理
@@ -158,7 +258,47 @@ namespace CatchFish_Client
             bb.readLengthLimit = 0;
             bb.Read(ref this.fireChangeAngles);
         }
+        public virtual void ToString(ref System.Text.StringBuilder str)
+        {
+            if (GetToStringFlag())
+            {
+        	    str.Append("[ \"***** recursived *****\" ]");
+        	    return;
+            }
+            else SetToStringFlag(true);
 
+            str.Append("{ \"pkgTypeName\":\"CatchFish_Client.FrameEvents\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(ref str);
+            str.Append(" }");
+        
+            SetToStringFlag(false);
+        }
+        public virtual void ToStringCore(ref System.Text.StringBuilder str)
+        {
+            str.Append(", \"frameNumber\":" + frameNumber);
+            str.Append(", \"leaves\":" + leaves);
+            str.Append(", \"joins\":" + joins);
+            str.Append(", \"fishDeads\":" + fishDeads);
+            str.Append(", \"fires\":" + fires);
+            str.Append(", \"fireEnds\":" + fireEnds);
+            str.Append(", \"fireBegins\":" + fireBegins);
+            str.Append(", \"fireChangeAngles\":" + fireChangeAngles);
+        }
+        public override string ToString()
+        {
+            var sb = new System.Text.StringBuilder();
+            ToString(ref sb);
+            return sb.ToString();
+        }
+        bool toStringFlag;
+        public void SetToStringFlag(bool doing)
+        {
+            toStringFlag = doing;
+        }
+        public bool GetToStringFlag()
+        {
+            return toStringFlag;
+        }
     }
 }
 namespace Client_CatchFish
@@ -188,7 +328,41 @@ namespace Client_CatchFish
             bb.readLengthLimit = 64;
             bb.Read(ref this.username);
         }
+        public virtual void ToString(ref System.Text.StringBuilder str)
+        {
+            if (GetToStringFlag())
+            {
+        	    str.Append("[ \"***** recursived *****\" ]");
+        	    return;
+            }
+            else SetToStringFlag(true);
 
+            str.Append("{ \"pkgTypeName\":\"Client_CatchFish.Join\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(ref str);
+            str.Append(" }");
+        
+            SetToStringFlag(false);
+        }
+        public virtual void ToStringCore(ref System.Text.StringBuilder str)
+        {
+            if (username != null) str.Append(", \"username\":\"" + username + "\"");
+            else str.Append(", \"username\":nil");
+        }
+        public override string ToString()
+        {
+            var sb = new System.Text.StringBuilder();
+            ToString(ref sb);
+            return sb.ToString();
+        }
+        bool toStringFlag;
+        public void SetToStringFlag(bool doing)
+        {
+            toStringFlag = doing;
+        }
+        public bool GetToStringFlag()
+        {
+            return toStringFlag;
+        }
     }
     /// <summary>
     /// 正常离开游戏( 立即, 并非断线等待超时后清掉 )
@@ -208,7 +382,39 @@ namespace Client_CatchFish
         public virtual void FromBBuffer(BBuffer bb)
         {
         }
+        public virtual void ToString(ref System.Text.StringBuilder str)
+        {
+            if (GetToStringFlag())
+            {
+        	    str.Append("[ \"***** recursived *****\" ]");
+        	    return;
+            }
+            else SetToStringFlag(true);
 
+            str.Append("{ \"pkgTypeName\":\"Client_CatchFish.Leave\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(ref str);
+            str.Append(" }");
+        
+            SetToStringFlag(false);
+        }
+        public virtual void ToStringCore(ref System.Text.StringBuilder str)
+        {
+        }
+        public override string ToString()
+        {
+            var sb = new System.Text.StringBuilder();
+            ToString(ref sb);
+            return sb.ToString();
+        }
+        bool toStringFlag;
+        public void SetToStringFlag(bool doing)
+        {
+            toStringFlag = doing;
+        }
+        public bool GetToStringFlag()
+        {
+            return toStringFlag;
+        }
     }
     /// <summary>
     /// 开火( 单次, 或频繁单次模拟伪连发 )
@@ -252,7 +458,43 @@ namespace Client_CatchFish
             bb.Read(ref this.coin);
             ((IBBuffer)this.moveInc).FromBBuffer(bb);
         }
+        public virtual void ToString(ref System.Text.StringBuilder str)
+        {
+            if (GetToStringFlag())
+            {
+        	    str.Append("[ \"***** recursived *****\" ]");
+        	    return;
+            }
+            else SetToStringFlag(true);
 
+            str.Append("{ \"pkgTypeName\":\"Client_CatchFish.Fire\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(ref str);
+            str.Append(" }");
+        
+            SetToStringFlag(false);
+        }
+        public virtual void ToStringCore(ref System.Text.StringBuilder str)
+        {
+            str.Append(", \"frameNumber\":" + frameNumber);
+            str.Append(", \"bulletSerialNumber\":" + bulletSerialNumber);
+            str.Append(", \"coin\":" + coin);
+            str.Append(", \"moveInc\":" + moveInc);
+        }
+        public override string ToString()
+        {
+            var sb = new System.Text.StringBuilder();
+            ToString(ref sb);
+            return sb.ToString();
+        }
+        bool toStringFlag;
+        public void SetToStringFlag(bool doing)
+        {
+            toStringFlag = doing;
+        }
+        public bool GetToStringFlag()
+        {
+            return toStringFlag;
+        }
     }
     /// <summary>
     /// 当前玩家自己的子弹打中鱼
@@ -284,7 +526,41 @@ namespace Client_CatchFish
             bb.Read(ref this.bulletSerialNumber);
             bb.Read(ref this.fishSerialNumber);
         }
+        public virtual void ToString(ref System.Text.StringBuilder str)
+        {
+            if (GetToStringFlag())
+            {
+        	    str.Append("[ \"***** recursived *****\" ]");
+        	    return;
+            }
+            else SetToStringFlag(true);
 
+            str.Append("{ \"pkgTypeName\":\"Client_CatchFish.Hit\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(ref str);
+            str.Append(" }");
+        
+            SetToStringFlag(false);
+        }
+        public virtual void ToStringCore(ref System.Text.StringBuilder str)
+        {
+            str.Append(", \"bulletSerialNumber\":" + bulletSerialNumber);
+            str.Append(", \"fishSerialNumber\":" + fishSerialNumber);
+        }
+        public override string ToString()
+        {
+            var sb = new System.Text.StringBuilder();
+            ToString(ref sb);
+            return sb.ToString();
+        }
+        bool toStringFlag;
+        public void SetToStringFlag(bool doing)
+        {
+            toStringFlag = doing;
+        }
+        public bool GetToStringFlag()
+        {
+            return toStringFlag;
+        }
     }
     /// <summary>
     /// 玩家开始开火( 连发, 仅适合帧同步服务器算法 )
@@ -310,7 +586,40 @@ namespace Client_CatchFish
         {
             bb.Read(ref this.angle);
         }
+        public virtual void ToString(ref System.Text.StringBuilder str)
+        {
+            if (GetToStringFlag())
+            {
+        	    str.Append("[ \"***** recursived *****\" ]");
+        	    return;
+            }
+            else SetToStringFlag(true);
 
+            str.Append("{ \"pkgTypeName\":\"Client_CatchFish.FireBegin\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(ref str);
+            str.Append(" }");
+        
+            SetToStringFlag(false);
+        }
+        public virtual void ToStringCore(ref System.Text.StringBuilder str)
+        {
+            str.Append(", \"angle\":" + angle);
+        }
+        public override string ToString()
+        {
+            var sb = new System.Text.StringBuilder();
+            ToString(ref sb);
+            return sb.ToString();
+        }
+        bool toStringFlag;
+        public void SetToStringFlag(bool doing)
+        {
+            toStringFlag = doing;
+        }
+        public bool GetToStringFlag()
+        {
+            return toStringFlag;
+        }
     }
     /// <summary>
     /// 玩家持续开火时调整角度( 连发, 仅适合帧同步服务器算法 )
@@ -336,7 +645,40 @@ namespace Client_CatchFish
         {
             bb.Read(ref this.angle);
         }
+        public virtual void ToString(ref System.Text.StringBuilder str)
+        {
+            if (GetToStringFlag())
+            {
+        	    str.Append("[ \"***** recursived *****\" ]");
+        	    return;
+            }
+            else SetToStringFlag(true);
 
+            str.Append("{ \"pkgTypeName\":\"Client_CatchFish.FireChangeAngle\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(ref str);
+            str.Append(" }");
+        
+            SetToStringFlag(false);
+        }
+        public virtual void ToStringCore(ref System.Text.StringBuilder str)
+        {
+            str.Append(", \"angle\":" + angle);
+        }
+        public override string ToString()
+        {
+            var sb = new System.Text.StringBuilder();
+            ToString(ref sb);
+            return sb.ToString();
+        }
+        bool toStringFlag;
+        public void SetToStringFlag(bool doing)
+        {
+            toStringFlag = doing;
+        }
+        public bool GetToStringFlag()
+        {
+            return toStringFlag;
+        }
     }
     /// <summary>
     /// 玩家停止持续开火( 连发, 仅适合帧同步服务器算法 )
@@ -356,7 +698,39 @@ namespace Client_CatchFish
         public virtual void FromBBuffer(BBuffer bb)
         {
         }
+        public virtual void ToString(ref System.Text.StringBuilder str)
+        {
+            if (GetToStringFlag())
+            {
+        	    str.Append("[ \"***** recursived *****\" ]");
+        	    return;
+            }
+            else SetToStringFlag(true);
 
+            str.Append("{ \"pkgTypeName\":\"Client_CatchFish.FireEnd\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(ref str);
+            str.Append(" }");
+        
+            SetToStringFlag(false);
+        }
+        public virtual void ToStringCore(ref System.Text.StringBuilder str)
+        {
+        }
+        public override string ToString()
+        {
+            var sb = new System.Text.StringBuilder();
+            ToString(ref sb);
+            return sb.ToString();
+        }
+        bool toStringFlag;
+        public void SetToStringFlag(bool doing)
+        {
+            toStringFlag = doing;
+        }
+        public bool GetToStringFlag()
+        {
+            return toStringFlag;
+        }
     }
 }
 namespace CatchFish
@@ -398,7 +772,42 @@ namespace CatchFish
             bb.Read(ref this.offsets);
             bb.Read(ref this.radius);
         }
+        public virtual void ToString(ref System.Text.StringBuilder str)
+        {
+            if (GetToStringFlag())
+            {
+        	    str.Append("[ \"***** recursived *****\" ]");
+        	    return;
+            }
+            else SetToStringFlag(true);
 
+            str.Append("{ \"pkgTypeName\":\"CatchFish.CollisionArea\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(ref str);
+            str.Append(" }");
+        
+            SetToStringFlag(false);
+        }
+        public virtual void ToStringCore(ref System.Text.StringBuilder str)
+        {
+            str.Append(", \"offset\":" + offset);
+            str.Append(", \"offsets\":" + offsets);
+            str.Append(", \"radius\":" + radius);
+        }
+        public override string ToString()
+        {
+            var sb = new System.Text.StringBuilder();
+            ToString(ref sb);
+            return sb.ToString();
+        }
+        bool toStringFlag;
+        public void SetToStringFlag(bool doing)
+        {
+            toStringFlag = doing;
+        }
+        public bool GetToStringFlag()
+        {
+            return toStringFlag;
+        }
     }
     /// <summary>
     /// 鱼帧动画信息
@@ -432,7 +841,42 @@ namespace CatchFish
             bb.readLengthLimit = 0;
             bb.Read(ref this.collisionAreas);
         }
+        public virtual void ToString(ref System.Text.StringBuilder str)
+        {
+            if (GetToStringFlag())
+            {
+        	    str.Append("[ \"***** recursived *****\" ]");
+        	    return;
+            }
+            else SetToStringFlag(true);
 
+            str.Append("{ \"pkgTypeName\":\"CatchFish.FishSpriteFrame\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(ref str);
+            str.Append(" }");
+        
+            SetToStringFlag(false);
+        }
+        public virtual void ToStringCore(ref System.Text.StringBuilder str)
+        {
+            if (fileName != null) str.Append(", \"fileName\":\"" + fileName + "\"");
+            else str.Append(", \"fileName\":nil");
+            str.Append(", \"collisionAreas\":" + collisionAreas);
+        }
+        public override string ToString()
+        {
+            var sb = new System.Text.StringBuilder();
+            ToString(ref sb);
+            return sb.ToString();
+        }
+        bool toStringFlag;
+        public void SetToStringFlag(bool doing)
+        {
+            toStringFlag = doing;
+        }
+        public bool GetToStringFlag()
+        {
+            return toStringFlag;
+        }
     }
     /// <summary>
     /// 鱼配置信息
@@ -481,7 +925,6 @@ namespace CatchFish
             bb.Write(this.frameCount);
             bb.Write(this.collisionArea);
             bb.Write(this.frames);
-            bb.Write(this.anim);
         }
 
         public virtual void FromBBuffer(BBuffer bb)
@@ -494,9 +937,47 @@ namespace CatchFish
             bb.Read(ref this.collisionArea);
             bb.readLengthLimit = 0;
             bb.Read(ref this.frames);
-            bb.Read(ref this.anim);
         }
+        public virtual void ToString(ref System.Text.StringBuilder str)
+        {
+            if (GetToStringFlag())
+            {
+        	    str.Append("[ \"***** recursived *****\" ]");
+        	    return;
+            }
+            else SetToStringFlag(true);
 
+            str.Append("{ \"pkgTypeName\":\"CatchFish.FishConfig\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(ref str);
+            str.Append(" }");
+        
+            SetToStringFlag(false);
+        }
+        public virtual void ToStringCore(ref System.Text.StringBuilder str)
+        {
+            str.Append(", \"typeId\":" + typeId);
+            if (name != null) str.Append(", \"name\":\"" + name + "\"");
+            else str.Append(", \"name\":nil");
+            str.Append(", \"coin\":" + coin);
+            str.Append(", \"frameCount\":" + frameCount);
+            str.Append(", \"collisionArea\":" + collisionArea);
+            str.Append(", \"frames\":" + frames);
+        }
+        public override string ToString()
+        {
+            var sb = new System.Text.StringBuilder();
+            ToString(ref sb);
+            return sb.ToString();
+        }
+        bool toStringFlag;
+        public void SetToStringFlag(bool doing)
+        {
+            toStringFlag = doing;
+        }
+        public bool GetToStringFlag()
+        {
+            return toStringFlag;
+        }
     }
     /// <summary>
     /// 游戏配置信息( 配置信息并不会随着网络同步而下发, 反序列化后需要手工还原 )
@@ -535,7 +1016,42 @@ namespace CatchFish
             bb.Read(ref this.bulletRadius);
             bb.Read(ref this.playerInitCoin);
         }
+        public virtual void ToString(ref System.Text.StringBuilder str)
+        {
+            if (GetToStringFlag())
+            {
+        	    str.Append("[ \"***** recursived *****\" ]");
+        	    return;
+            }
+            else SetToStringFlag(true);
 
+            str.Append("{ \"pkgTypeName\":\"CatchFish.Config\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(ref str);
+            str.Append(" }");
+        
+            SetToStringFlag(false);
+        }
+        public virtual void ToStringCore(ref System.Text.StringBuilder str)
+        {
+            str.Append(", \"fishCfgs\":" + fishCfgs);
+            str.Append(", \"bulletRadius\":" + bulletRadius);
+            str.Append(", \"playerInitCoin\":" + playerInitCoin);
+        }
+        public override string ToString()
+        {
+            var sb = new System.Text.StringBuilder();
+            ToString(ref sb);
+            return sb.ToString();
+        }
+        bool toStringFlag;
+        public void SetToStringFlag(bool doing)
+        {
+            toStringFlag = doing;
+        }
+        public bool GetToStringFlag()
+        {
+            return toStringFlag;
+        }
     }
     /// <summary>
     /// 玩家
@@ -584,7 +1100,6 @@ namespace CatchFish
             bb.Write(this.coin);
             bb.Write(this.bulletSerialNumber);
             bb.Write(this.bullets);
-            bb.Write(this.peer);
         }
 
         public virtual void FromBBuffer(BBuffer bb)
@@ -597,9 +1112,47 @@ namespace CatchFish
             bb.Read(ref this.bulletSerialNumber);
             bb.readLengthLimit = 0;
             bb.Read(ref this.bullets);
-            bb.Read(ref this.peer);
         }
+        public virtual void ToString(ref System.Text.StringBuilder str)
+        {
+            if (GetToStringFlag())
+            {
+        	    str.Append("[ \"***** recursived *****\" ]");
+        	    return;
+            }
+            else SetToStringFlag(true);
 
+            str.Append("{ \"pkgTypeName\":\"CatchFish.Player\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(ref str);
+            str.Append(" }");
+        
+            SetToStringFlag(false);
+        }
+        public virtual void ToStringCore(ref System.Text.StringBuilder str)
+        {
+            str.Append(", \"indexAtContainer\":" + indexAtContainer);
+            if (name != null) str.Append(", \"name\":\"" + name + "\"");
+            else str.Append(", \"name\":nil");
+            str.Append(", \"sitIndex\":" + sitIndex);
+            str.Append(", \"coin\":" + coin);
+            str.Append(", \"bulletSerialNumber\":" + bulletSerialNumber);
+            str.Append(", \"bullets\":" + bullets);
+        }
+        public override string ToString()
+        {
+            var sb = new System.Text.StringBuilder();
+            ToString(ref sb);
+            return sb.ToString();
+        }
+        bool toStringFlag;
+        public void SetToStringFlag(bool doing)
+        {
+            toStringFlag = doing;
+        }
+        public bool GetToStringFlag()
+        {
+            return toStringFlag;
+        }
     }
     /// <summary>
     /// 鱼和子弹的基类
@@ -653,7 +1206,6 @@ namespace CatchFish
             ((IBBuffer)this.pos).ToBBuffer(bb);
             ((IBBuffer)this.moveInc).ToBBuffer(bb);
             bb.Write(this.angle);
-            bb.Write(this.spriteBody);
         }
 
         public virtual void FromBBuffer(BBuffer bb)
@@ -665,9 +1217,47 @@ namespace CatchFish
             ((IBBuffer)this.pos).FromBBuffer(bb);
             ((IBBuffer)this.moveInc).FromBBuffer(bb);
             bb.Read(ref this.angle);
-            bb.Read(ref this.spriteBody);
         }
+        public virtual void ToString(ref System.Text.StringBuilder str)
+        {
+            if (GetToStringFlag())
+            {
+        	    str.Append("[ \"***** recursived *****\" ]");
+        	    return;
+            }
+            else SetToStringFlag(true);
 
+            str.Append("{ \"pkgTypeName\":\"CatchFish.MoveObject\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(ref str);
+            str.Append(" }");
+        
+            SetToStringFlag(false);
+        }
+        public virtual void ToStringCore(ref System.Text.StringBuilder str)
+        {
+            str.Append(", \"indexAtContainer\":" + indexAtContainer);
+            str.Append(", \"serialNumber\":" + serialNumber);
+            str.Append(", \"bornFrameNumber\":" + bornFrameNumber);
+            str.Append(", \"bornPos\":" + bornPos);
+            str.Append(", \"pos\":" + pos);
+            str.Append(", \"moveInc\":" + moveInc);
+            str.Append(", \"angle\":" + angle);
+        }
+        public override string ToString()
+        {
+            var sb = new System.Text.StringBuilder();
+            ToString(ref sb);
+            return sb.ToString();
+        }
+        bool toStringFlag;
+        public void SetToStringFlag(bool doing)
+        {
+            toStringFlag = doing;
+        }
+        public bool GetToStringFlag()
+        {
+            return toStringFlag;
+        }
     }
     /// <summary>
     /// 子弹
@@ -695,7 +1285,32 @@ namespace CatchFish
             base.FromBBuffer(bb);
             bb.Read(ref this.coin);
         }
+        public override void ToString(ref System.Text.StringBuilder str)
+        {
+            if (GetToStringFlag())
+            {
+        	    str.Append("[ \"***** recursived *****\" ]");
+        	    return;
+            }
+            else SetToStringFlag(true);
 
+            str.Append("{ \"pkgTypeName\":\"CatchFish.Bullet\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(ref str);
+            str.Append(" }");
+        
+            SetToStringFlag(false);
+        }
+        public override void ToStringCore(ref System.Text.StringBuilder str)
+        {
+            base.ToStringCore(ref str);
+            str.Append(", \"coin\":" + coin);
+        }
+        public override string ToString()
+        {
+            var sb = new System.Text.StringBuilder();
+            ToString(ref sb);
+            return sb.ToString();
+        }
     }
     /// <summary>
     /// 鱼
@@ -753,7 +1368,37 @@ namespace CatchFish
             bb.Read(ref this.moveStep);
             bb.Read(ref this.moveStepCount);
         }
+        public override void ToString(ref System.Text.StringBuilder str)
+        {
+            if (GetToStringFlag())
+            {
+        	    str.Append("[ \"***** recursived *****\" ]");
+        	    return;
+            }
+            else SetToStringFlag(true);
 
+            str.Append("{ \"pkgTypeName\":\"CatchFish.Fish\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(ref str);
+            str.Append(" }");
+        
+            SetToStringFlag(false);
+        }
+        public override void ToStringCore(ref System.Text.StringBuilder str)
+        {
+            base.ToStringCore(ref str);
+            str.Append(", \"typeId\":" + typeId);
+            str.Append(", \"intAngle\":" + intAngle);
+            str.Append(", \"cfg\":" + cfg);
+            str.Append(", \"moveTo\":" + moveTo);
+            str.Append(", \"moveStep\":" + moveStep);
+            str.Append(", \"moveStepCount\":" + moveStepCount);
+        }
+        public override string ToString()
+        {
+            var sb = new System.Text.StringBuilder();
+            ToString(ref sb);
+            return sb.ToString();
+        }
     }
     /// <summary>
     /// 场景
@@ -811,7 +1456,45 @@ namespace CatchFish
             bb.Read(ref this.fishs);
             bb.Read(ref this.frameEvents);
         }
+        public virtual void ToString(ref System.Text.StringBuilder str)
+        {
+            if (GetToStringFlag())
+            {
+        	    str.Append("[ \"***** recursived *****\" ]");
+        	    return;
+            }
+            else SetToStringFlag(true);
 
+            str.Append("{ \"pkgTypeName\":\"CatchFish.Scene\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(ref str);
+            str.Append(" }");
+        
+            SetToStringFlag(false);
+        }
+        public virtual void ToStringCore(ref System.Text.StringBuilder str)
+        {
+            str.Append(", \"frameNumber\":" + frameNumber);
+            str.Append(", \"rnd\":" + rnd);
+            str.Append(", \"players\":" + players);
+            str.Append(", \"fishSerialNumber\":" + fishSerialNumber);
+            str.Append(", \"fishs\":" + fishs);
+            str.Append(", \"frameEvents\":" + frameEvents);
+        }
+        public override string ToString()
+        {
+            var sb = new System.Text.StringBuilder();
+            ToString(ref sb);
+            return sb.ToString();
+        }
+        bool toStringFlag;
+        public void SetToStringFlag(bool doing)
+        {
+            toStringFlag = doing;
+        }
+        public bool GetToStringFlag()
+        {
+            return toStringFlag;
+        }
     }
 }
 namespace CatchFish.Events
@@ -840,7 +1523,40 @@ namespace CatchFish.Events
         {
             bb.Read(ref this.sitIndex);
         }
+        public virtual void ToString(ref System.Text.StringBuilder str)
+        {
+            if (GetToStringFlag())
+            {
+        	    str.Append("[ \"***** recursived *****\" ]");
+        	    return;
+            }
+            else SetToStringFlag(true);
 
+            str.Append("{ \"pkgTypeName\":\"CatchFish.Events.LeavePlayer\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(ref str);
+            str.Append(" }");
+        
+            SetToStringFlag(false);
+        }
+        public virtual void ToStringCore(ref System.Text.StringBuilder str)
+        {
+            str.Append(", \"sitIndex\":" + sitIndex);
+        }
+        public override string ToString()
+        {
+            var sb = new System.Text.StringBuilder();
+            ToString(ref sb);
+            return sb.ToString();
+        }
+        bool toStringFlag;
+        public void SetToStringFlag(bool doing)
+        {
+            toStringFlag = doing;
+        }
+        public bool GetToStringFlag()
+        {
+            return toStringFlag;
+        }
     }
     /// <summary>
     /// 玩家进入
@@ -879,7 +1595,43 @@ namespace CatchFish.Events
             bb.Read(ref this.sitIndex);
             bb.Read(ref this.coin);
         }
+        public virtual void ToString(ref System.Text.StringBuilder str)
+        {
+            if (GetToStringFlag())
+            {
+        	    str.Append("[ \"***** recursived *****\" ]");
+        	    return;
+            }
+            else SetToStringFlag(true);
 
+            str.Append("{ \"pkgTypeName\":\"CatchFish.Events.JoinPlayer\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(ref str);
+            str.Append(" }");
+        
+            SetToStringFlag(false);
+        }
+        public virtual void ToStringCore(ref System.Text.StringBuilder str)
+        {
+            if (name != null) str.Append(", \"name\":\"" + name + "\"");
+            else str.Append(", \"name\":nil");
+            str.Append(", \"sitIndex\":" + sitIndex);
+            str.Append(", \"coin\":" + coin);
+        }
+        public override string ToString()
+        {
+            var sb = new System.Text.StringBuilder();
+            ToString(ref sb);
+            return sb.ToString();
+        }
+        bool toStringFlag;
+        public void SetToStringFlag(bool doing)
+        {
+            toStringFlag = doing;
+        }
+        public bool GetToStringFlag()
+        {
+            return toStringFlag;
+        }
     }
     /// <summary>
     /// 玩家开火( 单次 )
@@ -929,7 +1681,44 @@ namespace CatchFish.Events
             bb.Read(ref this.coin);
             ((IBBuffer)this.moveInc).FromBBuffer(bb);
         }
+        public virtual void ToString(ref System.Text.StringBuilder str)
+        {
+            if (GetToStringFlag())
+            {
+        	    str.Append("[ \"***** recursived *****\" ]");
+        	    return;
+            }
+            else SetToStringFlag(true);
 
+            str.Append("{ \"pkgTypeName\":\"CatchFish.Events.Fire\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(ref str);
+            str.Append(" }");
+        
+            SetToStringFlag(false);
+        }
+        public virtual void ToStringCore(ref System.Text.StringBuilder str)
+        {
+            str.Append(", \"sitIndex\":" + sitIndex);
+            str.Append(", \"frameNumber\":" + frameNumber);
+            str.Append(", \"bulletSerialNumber\":" + bulletSerialNumber);
+            str.Append(", \"coin\":" + coin);
+            str.Append(", \"moveInc\":" + moveInc);
+        }
+        public override string ToString()
+        {
+            var sb = new System.Text.StringBuilder();
+            ToString(ref sb);
+            return sb.ToString();
+        }
+        bool toStringFlag;
+        public void SetToStringFlag(bool doing)
+        {
+            toStringFlag = doing;
+        }
+        public bool GetToStringFlag()
+        {
+            return toStringFlag;
+        }
     }
     /// <summary>
     /// 玩家开始开火( 连发, 仅适合帧同步服务器算法 )
@@ -961,7 +1750,41 @@ namespace CatchFish.Events
             bb.Read(ref this.sitIndex);
             bb.Read(ref this.angle);
         }
+        public virtual void ToString(ref System.Text.StringBuilder str)
+        {
+            if (GetToStringFlag())
+            {
+        	    str.Append("[ \"***** recursived *****\" ]");
+        	    return;
+            }
+            else SetToStringFlag(true);
 
+            str.Append("{ \"pkgTypeName\":\"CatchFish.Events.FireBegin\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(ref str);
+            str.Append(" }");
+        
+            SetToStringFlag(false);
+        }
+        public virtual void ToStringCore(ref System.Text.StringBuilder str)
+        {
+            str.Append(", \"sitIndex\":" + sitIndex);
+            str.Append(", \"angle\":" + angle);
+        }
+        public override string ToString()
+        {
+            var sb = new System.Text.StringBuilder();
+            ToString(ref sb);
+            return sb.ToString();
+        }
+        bool toStringFlag;
+        public void SetToStringFlag(bool doing)
+        {
+            toStringFlag = doing;
+        }
+        public bool GetToStringFlag()
+        {
+            return toStringFlag;
+        }
     }
     /// <summary>
     /// 玩家开始开火( 连发, 仅适合帧同步服务器算法 )
@@ -993,7 +1816,41 @@ namespace CatchFish.Events
             bb.Read(ref this.sitIndex);
             bb.Read(ref this.angle);
         }
+        public virtual void ToString(ref System.Text.StringBuilder str)
+        {
+            if (GetToStringFlag())
+            {
+        	    str.Append("[ \"***** recursived *****\" ]");
+        	    return;
+            }
+            else SetToStringFlag(true);
 
+            str.Append("{ \"pkgTypeName\":\"CatchFish.Events.FireChangeAngle\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(ref str);
+            str.Append(" }");
+        
+            SetToStringFlag(false);
+        }
+        public virtual void ToStringCore(ref System.Text.StringBuilder str)
+        {
+            str.Append(", \"sitIndex\":" + sitIndex);
+            str.Append(", \"angle\":" + angle);
+        }
+        public override string ToString()
+        {
+            var sb = new System.Text.StringBuilder();
+            ToString(ref sb);
+            return sb.ToString();
+        }
+        bool toStringFlag;
+        public void SetToStringFlag(bool doing)
+        {
+            toStringFlag = doing;
+        }
+        public bool GetToStringFlag()
+        {
+            return toStringFlag;
+        }
     }
     /// <summary>
     /// 玩家停止开火( 连发, 仅适合帧同步服务器算法 )
@@ -1019,7 +1876,40 @@ namespace CatchFish.Events
         {
             bb.Read(ref this.sitIndex);
         }
+        public virtual void ToString(ref System.Text.StringBuilder str)
+        {
+            if (GetToStringFlag())
+            {
+        	    str.Append("[ \"***** recursived *****\" ]");
+        	    return;
+            }
+            else SetToStringFlag(true);
 
+            str.Append("{ \"pkgTypeName\":\"CatchFish.Events.FireEnd\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(ref str);
+            str.Append(" }");
+        
+            SetToStringFlag(false);
+        }
+        public virtual void ToStringCore(ref System.Text.StringBuilder str)
+        {
+            str.Append(", \"sitIndex\":" + sitIndex);
+        }
+        public override string ToString()
+        {
+            var sb = new System.Text.StringBuilder();
+            ToString(ref sb);
+            return sb.ToString();
+        }
+        bool toStringFlag;
+        public void SetToStringFlag(bool doing)
+        {
+            toStringFlag = doing;
+        }
+        public bool GetToStringFlag()
+        {
+            return toStringFlag;
+        }
     }
     /// <summary>
     /// 子弹命中( 与鱼死分离. 鱼死相关可能要等服务器跨线程回调送回结果才能下发 )
@@ -1051,7 +1941,41 @@ namespace CatchFish.Events
             bb.Read(ref this.sitIndex);
             bb.Read(ref this.bulletSerialNumber);
         }
+        public virtual void ToString(ref System.Text.StringBuilder str)
+        {
+            if (GetToStringFlag())
+            {
+        	    str.Append("[ \"***** recursived *****\" ]");
+        	    return;
+            }
+            else SetToStringFlag(true);
 
+            str.Append("{ \"pkgTypeName\":\"CatchFish.Events.BulletHit\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(ref str);
+            str.Append(" }");
+        
+            SetToStringFlag(false);
+        }
+        public virtual void ToStringCore(ref System.Text.StringBuilder str)
+        {
+            str.Append(", \"sitIndex\":" + sitIndex);
+            str.Append(", \"bulletSerialNumber\":" + bulletSerialNumber);
+        }
+        public override string ToString()
+        {
+            var sb = new System.Text.StringBuilder();
+            ToString(ref sb);
+            return sb.ToString();
+        }
+        bool toStringFlag;
+        public void SetToStringFlag(bool doing)
+        {
+            toStringFlag = doing;
+        }
+        public bool GetToStringFlag()
+        {
+            return toStringFlag;
+        }
     }
     /// <summary>
     /// 鱼被打死
@@ -1089,27 +2013,67 @@ namespace CatchFish.Events
             bb.Read(ref this.fishSerialNumber);
             bb.Read(ref this.coin);
         }
+        public virtual void ToString(ref System.Text.StringBuilder str)
+        {
+            if (GetToStringFlag())
+            {
+        	    str.Append("[ \"***** recursived *****\" ]");
+        	    return;
+            }
+            else SetToStringFlag(true);
 
+            str.Append("{ \"pkgTypeName\":\"CatchFish.Events.FishDead\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(ref str);
+            str.Append(" }");
+        
+            SetToStringFlag(false);
+        }
+        public virtual void ToStringCore(ref System.Text.StringBuilder str)
+        {
+            str.Append(", \"sitIndex\":" + sitIndex);
+            str.Append(", \"fishSerialNumber\":" + fishSerialNumber);
+            str.Append(", \"coin\":" + coin);
+        }
+        public override string ToString()
+        {
+            var sb = new System.Text.StringBuilder();
+            ToString(ref sb);
+            return sb.ToString();
+        }
+        bool toStringFlag;
+        public void SetToStringFlag(bool doing)
+        {
+            toStringFlag = doing;
+        }
+        public bool GetToStringFlag()
+        {
+            return toStringFlag;
+        }
     }
 }
     public static class AllTypes
     {
         public static void Register()
         {
-            // BBuffer.Register<string>(1);
-            BBuffer.Register<BBuffer>(2);
             BBuffer.Register<CatchFish_Client.JoinSuccess>(3);
             BBuffer.Register<CatchFish_Client.JoinFail>(4);
             BBuffer.Register<CatchFish_Client.FullSync>(5);
             BBuffer.Register<CatchFish.Scene>(6);
             BBuffer.Register<CatchFish_Client.FrameEvents>(7);
             BBuffer.Register<List<CatchFish.Events.LeavePlayer>>(8);
+            BBuffer.Register<CatchFish.Events.LeavePlayer>(39);
             BBuffer.Register<List<CatchFish.Events.JoinPlayer>>(9);
+            BBuffer.Register<CatchFish.Events.JoinPlayer>(40);
             BBuffer.Register<List<CatchFish.Events.FishDead>>(11);
+            BBuffer.Register<CatchFish.Events.FishDead>(46);
             BBuffer.Register<List<CatchFish.Events.Fire>>(12);
+            BBuffer.Register<CatchFish.Events.Fire>(41);
             BBuffer.Register<List<CatchFish.Events.FireEnd>>(13);
+            BBuffer.Register<CatchFish.Events.FireEnd>(44);
             BBuffer.Register<List<CatchFish.Events.FireBegin>>(14);
+            BBuffer.Register<CatchFish.Events.FireBegin>(42);
             BBuffer.Register<List<CatchFish.Events.FireChangeAngle>>(15);
+            BBuffer.Register<CatchFish.Events.FireChangeAngle>(43);
             BBuffer.Register<Client_CatchFish.Join>(16);
             BBuffer.Register<Client_CatchFish.Leave>(17);
             BBuffer.Register<Client_CatchFish.Fire>(18);
@@ -1123,27 +2087,17 @@ namespace CatchFish.Events
             BBuffer.Register<List<CatchFish.CollisionArea>>(25);
             BBuffer.Register<CatchFish.FishConfig>(26);
             BBuffer.Register<List<CatchFish.FishSpriteFrame>>(27);
-            BBuffer.Register<Animation>(49);
             BBuffer.Register<CatchFish.Config>(28);
             BBuffer.Register<List<CatchFish.FishConfig>>(29);
             BBuffer.Register<CatchFish.Player>(30);
             BBuffer.Register<List<CatchFish.Bullet>>(31);
-            BBuffer.Register<ClientPeer>(47);
-            BBuffer.Register<CatchFish.MoveObject>(33);
-            BBuffer.Register<Sprite>(48);
             BBuffer.Register<CatchFish.Bullet>(34);
+            BBuffer.Register<CatchFish.MoveObject>(33);
             BBuffer.Register<CatchFish.Fish>(35);
             BBuffer.Register<xx.Random>(36);
             BBuffer.Register<List<CatchFish.Player>>(37);
             BBuffer.Register<List<CatchFish.Fish>>(38);
-            BBuffer.Register<CatchFish.Events.LeavePlayer>(39);
-            BBuffer.Register<CatchFish.Events.JoinPlayer>(40);
-            BBuffer.Register<CatchFish.Events.Fire>(41);
-            BBuffer.Register<CatchFish.Events.FireBegin>(42);
-            BBuffer.Register<CatchFish.Events.FireChangeAngle>(43);
-            BBuffer.Register<CatchFish.Events.FireEnd>(44);
             BBuffer.Register<CatchFish.Events.BulletHit>(45);
-            BBuffer.Register<CatchFish.Events.FishDead>(46);
         }
     }
 }

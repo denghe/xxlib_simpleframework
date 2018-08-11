@@ -1,5 +1,5 @@
 ﻿
-PKG_PkgGenMd5_Value = '73fe90a587f1d8cfc9b7aaca273a0806'
+PKG_PkgGenMd5_Value = 'aced7e436a75c5ddd8aeab7abb07116a'
 
 --[[
 进入游戏成功
@@ -233,6 +233,32 @@ List_PKG_CatchFish_Events_LeavePlayer_ = {
     end
 }
 BBuffer.Register( List_PKG_CatchFish_Events_LeavePlayer_ )
+--[[
+玩家离开( 比进入的处理优先级高 )
+]]
+PKG_CatchFish_Events_LeavePlayer = {
+    typeName = "PKG_CatchFish_Events_LeavePlayer",
+    typeId = 39,
+    Create = function()
+        local o = {}
+        o.__proto = PKG_CatchFish_Events_LeavePlayer
+        o.__index = o
+        o.__newindex = o
+
+        --[[
+        座位索引( 0: 左上  1: 右上  2: 左下 3: 右下 )
+        ]]
+        o.sitIndex = 0 -- Int32
+        return o
+    end,
+    FromBBuffer = function( bb, o )
+        o.sitIndex = bb:ReadInt32()
+    end,
+    ToBBuffer = function( bb, o )
+        bb:WriteInt32( o.sitIndex )
+    end
+}
+BBuffer.Register( PKG_CatchFish_Events_LeavePlayer )
 List_PKG_CatchFish_Events_JoinPlayer_ = {
     typeName = "List_PKG_CatchFish_Events_JoinPlayer_",
     typeId = 9,
@@ -260,6 +286,44 @@ List_PKG_CatchFish_Events_JoinPlayer_ = {
     end
 }
 BBuffer.Register( List_PKG_CatchFish_Events_JoinPlayer_ )
+--[[
+玩家进入
+]]
+PKG_CatchFish_Events_JoinPlayer = {
+    typeName = "PKG_CatchFish_Events_JoinPlayer",
+    typeId = 40,
+    Create = function()
+        local o = {}
+        o.__proto = PKG_CatchFish_Events_JoinPlayer
+        o.__index = o
+        o.__newindex = o
+
+        --[[
+        玩家名字
+        ]]
+        o.name = null -- String
+        --[[
+        座位索引( 0: 左上  1: 右上  2: 左下 3: 右下 )
+        ]]
+        o.sitIndex = 0 -- Int32
+        --[[
+        进入的玩家拥有的金币数量
+        ]]
+        o.coin = 0 -- Int64
+        return o
+    end,
+    FromBBuffer = function( bb, o )
+        o.name = bb:ReadObject()
+        o.sitIndex = bb:ReadInt32()
+        o.coin = bb:ReadInt64()
+    end,
+    ToBBuffer = function( bb, o )
+        bb:WriteObject( o.name )
+        bb:WriteInt32( o.sitIndex )
+        bb:WriteInt64( o.coin )
+    end
+}
+BBuffer.Register( PKG_CatchFish_Events_JoinPlayer )
 List_PKG_CatchFish_Events_FishDead_ = {
     typeName = "List_PKG_CatchFish_Events_FishDead_",
     typeId = 11,
@@ -287,6 +351,46 @@ List_PKG_CatchFish_Events_FishDead_ = {
     end
 }
 BBuffer.Register( List_PKG_CatchFish_Events_FishDead_ )
+--[[
+鱼被打死
+]]
+PKG_CatchFish_Events_FishDead = {
+    typeName = "PKG_CatchFish_Events_FishDead",
+    typeId = 46,
+    Create = function()
+        local o = {}
+        o.__proto = PKG_CatchFish_Events_FishDead
+        o.__index = o
+        o.__newindex = o
+
+        --[[
+        座位索引( 0: 左上  1: 右上  2: 左下 3: 右下 )
+        ]]
+        o.sitIndex = 0 -- Int32
+        --[[
+        鱼流水号
+        ]]
+        o.fishSerialNumber = 0 -- Int32
+        --[[
+        金币所得
+        ]]
+        o.coin = 0 -- Int64
+        return o
+    end,
+    FromBBuffer = function( bb, o )
+        local ReadInt32 = bb.ReadInt32
+        o.sitIndex = ReadInt32( bb )
+        o.fishSerialNumber = ReadInt32( bb )
+        o.coin = bb:ReadInt64()
+    end,
+    ToBBuffer = function( bb, o )
+        local WriteInt32 = bb.WriteInt32
+        WriteInt32( bb, o.sitIndex )
+        WriteInt32( bb, o.fishSerialNumber )
+        bb:WriteInt64( o.coin )
+    end
+}
+BBuffer.Register( PKG_CatchFish_Events_FishDead )
 List_PKG_CatchFish_Events_Fire_ = {
     typeName = "List_PKG_CatchFish_Events_Fire_",
     typeId = 12,
@@ -314,6 +418,58 @@ List_PKG_CatchFish_Events_Fire_ = {
     end
 }
 BBuffer.Register( List_PKG_CatchFish_Events_Fire_ )
+--[[
+玩家开火( 单次 )
+]]
+PKG_CatchFish_Events_Fire = {
+    typeName = "PKG_CatchFish_Events_Fire",
+    typeId = 41,
+    Create = function()
+        local o = {}
+        o.__proto = PKG_CatchFish_Events_Fire
+        o.__index = o
+        o.__newindex = o
+
+        --[[
+        座位索引( 0: 左上  1: 右上  2: 左下 3: 右下 )
+        ]]
+        o.sitIndex = 0 -- Int32
+        --[[
+        起始帧编号
+        ]]
+        o.frameNumber = 0 -- Int32
+        --[[
+        子弹流水号
+        ]]
+        o.bulletSerialNumber = 0 -- Int32
+        --[[
+        金币价值( 也可理解为倍率 )
+        ]]
+        o.coin = 0 -- Int64
+        --[[
+        步进
+        ]]
+        o.moveInc = null -- _xx_Pos
+        return o
+    end,
+    FromBBuffer = function( bb, o )
+        local ReadInt32 = bb.ReadInt32
+        o.sitIndex = ReadInt32( bb )
+        o.frameNumber = ReadInt32( bb )
+        o.bulletSerialNumber = ReadInt32( bb )
+        o.coin = bb:ReadInt64()
+        o.moveInc = bb:ReadObject()
+    end,
+    ToBBuffer = function( bb, o )
+        local WriteInt32 = bb.WriteInt32
+        WriteInt32( bb, o.sitIndex )
+        WriteInt32( bb, o.frameNumber )
+        WriteInt32( bb, o.bulletSerialNumber )
+        bb:WriteInt64( o.coin )
+        bb:WriteObject( o.moveInc )
+    end
+}
+BBuffer.Register( PKG_CatchFish_Events_Fire )
 List_PKG_CatchFish_Events_FireEnd_ = {
     typeName = "List_PKG_CatchFish_Events_FireEnd_",
     typeId = 13,
@@ -341,6 +497,32 @@ List_PKG_CatchFish_Events_FireEnd_ = {
     end
 }
 BBuffer.Register( List_PKG_CatchFish_Events_FireEnd_ )
+--[[
+玩家停止开火( 连发, 仅适合帧同步服务器算法 )
+]]
+PKG_CatchFish_Events_FireEnd = {
+    typeName = "PKG_CatchFish_Events_FireEnd",
+    typeId = 44,
+    Create = function()
+        local o = {}
+        o.__proto = PKG_CatchFish_Events_FireEnd
+        o.__index = o
+        o.__newindex = o
+
+        --[[
+        座位索引( 0: 左上  1: 右上  2: 左下 3: 右下 )
+        ]]
+        o.sitIndex = 0 -- Int32
+        return o
+    end,
+    FromBBuffer = function( bb, o )
+        o.sitIndex = bb:ReadInt32()
+    end,
+    ToBBuffer = function( bb, o )
+        bb:WriteInt32( o.sitIndex )
+    end
+}
+BBuffer.Register( PKG_CatchFish_Events_FireEnd )
 List_PKG_CatchFish_Events_FireBegin_ = {
     typeName = "List_PKG_CatchFish_Events_FireBegin_",
     typeId = 14,
@@ -368,6 +550,38 @@ List_PKG_CatchFish_Events_FireBegin_ = {
     end
 }
 BBuffer.Register( List_PKG_CatchFish_Events_FireBegin_ )
+--[[
+玩家开始开火( 连发, 仅适合帧同步服务器算法 )
+]]
+PKG_CatchFish_Events_FireBegin = {
+    typeName = "PKG_CatchFish_Events_FireBegin",
+    typeId = 42,
+    Create = function()
+        local o = {}
+        o.__proto = PKG_CatchFish_Events_FireBegin
+        o.__index = o
+        o.__newindex = o
+
+        --[[
+        座位索引( 0: 左上  1: 右上  2: 左下 3: 右下 )
+        ]]
+        o.sitIndex = 0 -- Int32
+        --[[
+        射击角度( 相对于炮台自己的正方向角度 )
+        ]]
+        o.angle = 0 -- Single
+        return o
+    end,
+    FromBBuffer = function( bb, o )
+        o.sitIndex = bb:ReadInt32()
+        o.angle = bb:ReadSingle()
+    end,
+    ToBBuffer = function( bb, o )
+        bb:WriteInt32( o.sitIndex )
+        bb:WriteSingle( o.angle )
+    end
+}
+BBuffer.Register( PKG_CatchFish_Events_FireBegin )
 List_PKG_CatchFish_Events_FireChangeAngle_ = {
     typeName = "List_PKG_CatchFish_Events_FireChangeAngle_",
     typeId = 15,
@@ -395,6 +609,38 @@ List_PKG_CatchFish_Events_FireChangeAngle_ = {
     end
 }
 BBuffer.Register( List_PKG_CatchFish_Events_FireChangeAngle_ )
+--[[
+玩家开始开火( 连发, 仅适合帧同步服务器算法 )
+]]
+PKG_CatchFish_Events_FireChangeAngle = {
+    typeName = "PKG_CatchFish_Events_FireChangeAngle",
+    typeId = 43,
+    Create = function()
+        local o = {}
+        o.__proto = PKG_CatchFish_Events_FireChangeAngle
+        o.__index = o
+        o.__newindex = o
+
+        --[[
+        座位索引( 0: 左上  1: 右上  2: 左下 3: 右下 )
+        ]]
+        o.sitIndex = 0 -- Int32
+        --[[
+        射击角度( 相对于炮台自己的正方向角度 )
+        ]]
+        o.angle = 0 -- Single
+        return o
+    end,
+    FromBBuffer = function( bb, o )
+        o.sitIndex = bb:ReadInt32()
+        o.angle = bb:ReadSingle()
+    end,
+    ToBBuffer = function( bb, o )
+        bb:WriteInt32( o.sitIndex )
+        bb:WriteSingle( o.angle )
+    end
+}
+BBuffer.Register( PKG_CatchFish_Events_FireChangeAngle )
 --[[
 客户端与服务器建立连接后的首包
 ]]
@@ -989,6 +1235,37 @@ List_PKG_CatchFish_Bullet_ = {
     end
 }
 BBuffer.Register( List_PKG_CatchFish_Bullet_ )
+--[[
+子弹
+]]
+PKG_CatchFish_Bullet = {
+    typeName = "PKG_CatchFish_Bullet",
+    typeId = 34,
+    Create = function()
+        local o = {}
+        o.__proto = PKG_CatchFish_Bullet
+        o.__index = o
+        o.__newindex = o
+
+        --[[
+        金币价值( 也可理解为倍率 )
+        ]]
+        o.coin = 0 -- Int64
+        setmetatable( o, PKG_CatchFish_MoveObject.Create() )
+        return o
+    end,
+    FromBBuffer = function( bb, o )
+        local p = getmetatable( o )
+        p.__proto.FromBBuffer( bb, p )
+        o.coin = bb:ReadInt64()
+    end,
+    ToBBuffer = function( bb, o )
+        local p = getmetatable( o )
+        p.__proto.ToBBuffer( bb, p )
+        bb:WriteInt64( o.coin )
+    end
+}
+BBuffer.Register( PKG_CatchFish_Bullet )
 _ClientPeer = {
     typeName = "_ClientPeer",
     typeId = 47,
@@ -1095,37 +1372,6 @@ _Sprite = {
     end
 }
 BBuffer.Register( _Sprite )
---[[
-子弹
-]]
-PKG_CatchFish_Bullet = {
-    typeName = "PKG_CatchFish_Bullet",
-    typeId = 34,
-    Create = function()
-        local o = {}
-        o.__proto = PKG_CatchFish_Bullet
-        o.__index = o
-        o.__newindex = o
-
-        --[[
-        金币价值( 也可理解为倍率 )
-        ]]
-        o.coin = 0 -- Int64
-        setmetatable( o, PKG_CatchFish_MoveObject.Create() )
-        return o
-    end,
-    FromBBuffer = function( bb, o )
-        local p = getmetatable( o )
-        p.__proto.FromBBuffer( bb, p )
-        o.coin = bb:ReadInt64()
-    end,
-    ToBBuffer = function( bb, o )
-        local p = getmetatable( o )
-        p.__proto.ToBBuffer( bb, p )
-        bb:WriteInt64( o.coin )
-    end
-}
-BBuffer.Register( PKG_CatchFish_Bullet )
 --[[
 鱼
 ]]
@@ -1263,212 +1509,6 @@ List_PKG_CatchFish_Fish_ = {
 }
 BBuffer.Register( List_PKG_CatchFish_Fish_ )
 --[[
-玩家离开( 比进入的处理优先级高 )
-]]
-PKG_CatchFish_Events_LeavePlayer = {
-    typeName = "PKG_CatchFish_Events_LeavePlayer",
-    typeId = 39,
-    Create = function()
-        local o = {}
-        o.__proto = PKG_CatchFish_Events_LeavePlayer
-        o.__index = o
-        o.__newindex = o
-
-        --[[
-        座位索引( 0: 左上  1: 右上  2: 左下 3: 右下 )
-        ]]
-        o.sitIndex = 0 -- Int32
-        return o
-    end,
-    FromBBuffer = function( bb, o )
-        o.sitIndex = bb:ReadInt32()
-    end,
-    ToBBuffer = function( bb, o )
-        bb:WriteInt32( o.sitIndex )
-    end
-}
-BBuffer.Register( PKG_CatchFish_Events_LeavePlayer )
---[[
-玩家进入
-]]
-PKG_CatchFish_Events_JoinPlayer = {
-    typeName = "PKG_CatchFish_Events_JoinPlayer",
-    typeId = 40,
-    Create = function()
-        local o = {}
-        o.__proto = PKG_CatchFish_Events_JoinPlayer
-        o.__index = o
-        o.__newindex = o
-
-        --[[
-        玩家名字
-        ]]
-        o.name = null -- String
-        --[[
-        座位索引( 0: 左上  1: 右上  2: 左下 3: 右下 )
-        ]]
-        o.sitIndex = 0 -- Int32
-        --[[
-        进入的玩家拥有的金币数量
-        ]]
-        o.coin = 0 -- Int64
-        return o
-    end,
-    FromBBuffer = function( bb, o )
-        o.name = bb:ReadObject()
-        o.sitIndex = bb:ReadInt32()
-        o.coin = bb:ReadInt64()
-    end,
-    ToBBuffer = function( bb, o )
-        bb:WriteObject( o.name )
-        bb:WriteInt32( o.sitIndex )
-        bb:WriteInt64( o.coin )
-    end
-}
-BBuffer.Register( PKG_CatchFish_Events_JoinPlayer )
---[[
-玩家开火( 单次 )
-]]
-PKG_CatchFish_Events_Fire = {
-    typeName = "PKG_CatchFish_Events_Fire",
-    typeId = 41,
-    Create = function()
-        local o = {}
-        o.__proto = PKG_CatchFish_Events_Fire
-        o.__index = o
-        o.__newindex = o
-
-        --[[
-        座位索引( 0: 左上  1: 右上  2: 左下 3: 右下 )
-        ]]
-        o.sitIndex = 0 -- Int32
-        --[[
-        起始帧编号
-        ]]
-        o.frameNumber = 0 -- Int32
-        --[[
-        子弹流水号
-        ]]
-        o.bulletSerialNumber = 0 -- Int32
-        --[[
-        金币价值( 也可理解为倍率 )
-        ]]
-        o.coin = 0 -- Int64
-        --[[
-        步进
-        ]]
-        o.moveInc = null -- _xx_Pos
-        return o
-    end,
-    FromBBuffer = function( bb, o )
-        local ReadInt32 = bb.ReadInt32
-        o.sitIndex = ReadInt32( bb )
-        o.frameNumber = ReadInt32( bb )
-        o.bulletSerialNumber = ReadInt32( bb )
-        o.coin = bb:ReadInt64()
-        o.moveInc = bb:ReadObject()
-    end,
-    ToBBuffer = function( bb, o )
-        local WriteInt32 = bb.WriteInt32
-        WriteInt32( bb, o.sitIndex )
-        WriteInt32( bb, o.frameNumber )
-        WriteInt32( bb, o.bulletSerialNumber )
-        bb:WriteInt64( o.coin )
-        bb:WriteObject( o.moveInc )
-    end
-}
-BBuffer.Register( PKG_CatchFish_Events_Fire )
---[[
-玩家开始开火( 连发, 仅适合帧同步服务器算法 )
-]]
-PKG_CatchFish_Events_FireBegin = {
-    typeName = "PKG_CatchFish_Events_FireBegin",
-    typeId = 42,
-    Create = function()
-        local o = {}
-        o.__proto = PKG_CatchFish_Events_FireBegin
-        o.__index = o
-        o.__newindex = o
-
-        --[[
-        座位索引( 0: 左上  1: 右上  2: 左下 3: 右下 )
-        ]]
-        o.sitIndex = 0 -- Int32
-        --[[
-        射击角度( 相对于炮台自己的正方向角度 )
-        ]]
-        o.angle = 0 -- Single
-        return o
-    end,
-    FromBBuffer = function( bb, o )
-        o.sitIndex = bb:ReadInt32()
-        o.angle = bb:ReadSingle()
-    end,
-    ToBBuffer = function( bb, o )
-        bb:WriteInt32( o.sitIndex )
-        bb:WriteSingle( o.angle )
-    end
-}
-BBuffer.Register( PKG_CatchFish_Events_FireBegin )
---[[
-玩家开始开火( 连发, 仅适合帧同步服务器算法 )
-]]
-PKG_CatchFish_Events_FireChangeAngle = {
-    typeName = "PKG_CatchFish_Events_FireChangeAngle",
-    typeId = 43,
-    Create = function()
-        local o = {}
-        o.__proto = PKG_CatchFish_Events_FireChangeAngle
-        o.__index = o
-        o.__newindex = o
-
-        --[[
-        座位索引( 0: 左上  1: 右上  2: 左下 3: 右下 )
-        ]]
-        o.sitIndex = 0 -- Int32
-        --[[
-        射击角度( 相对于炮台自己的正方向角度 )
-        ]]
-        o.angle = 0 -- Single
-        return o
-    end,
-    FromBBuffer = function( bb, o )
-        o.sitIndex = bb:ReadInt32()
-        o.angle = bb:ReadSingle()
-    end,
-    ToBBuffer = function( bb, o )
-        bb:WriteInt32( o.sitIndex )
-        bb:WriteSingle( o.angle )
-    end
-}
-BBuffer.Register( PKG_CatchFish_Events_FireChangeAngle )
---[[
-玩家停止开火( 连发, 仅适合帧同步服务器算法 )
-]]
-PKG_CatchFish_Events_FireEnd = {
-    typeName = "PKG_CatchFish_Events_FireEnd",
-    typeId = 44,
-    Create = function()
-        local o = {}
-        o.__proto = PKG_CatchFish_Events_FireEnd
-        o.__index = o
-        o.__newindex = o
-
-        --[[
-        座位索引( 0: 左上  1: 右上  2: 左下 3: 右下 )
-        ]]
-        o.sitIndex = 0 -- Int32
-        return o
-    end,
-    FromBBuffer = function( bb, o )
-        o.sitIndex = bb:ReadInt32()
-    end,
-    ToBBuffer = function( bb, o )
-        bb:WriteInt32( o.sitIndex )
-    end
-}
-BBuffer.Register( PKG_CatchFish_Events_FireEnd )
---[[
 子弹命中( 与鱼死分离. 鱼死相关可能要等服务器跨线程回调送回结果才能下发 )
 ]]
 PKG_CatchFish_Events_BulletHit = {
@@ -1502,43 +1542,3 @@ PKG_CatchFish_Events_BulletHit = {
     end
 }
 BBuffer.Register( PKG_CatchFish_Events_BulletHit )
---[[
-鱼被打死
-]]
-PKG_CatchFish_Events_FishDead = {
-    typeName = "PKG_CatchFish_Events_FishDead",
-    typeId = 46,
-    Create = function()
-        local o = {}
-        o.__proto = PKG_CatchFish_Events_FishDead
-        o.__index = o
-        o.__newindex = o
-
-        --[[
-        座位索引( 0: 左上  1: 右上  2: 左下 3: 右下 )
-        ]]
-        o.sitIndex = 0 -- Int32
-        --[[
-        鱼流水号
-        ]]
-        o.fishSerialNumber = 0 -- Int32
-        --[[
-        金币所得
-        ]]
-        o.coin = 0 -- Int64
-        return o
-    end,
-    FromBBuffer = function( bb, o )
-        local ReadInt32 = bb.ReadInt32
-        o.sitIndex = ReadInt32( bb )
-        o.fishSerialNumber = ReadInt32( bb )
-        o.coin = bb:ReadInt64()
-    end,
-    ToBBuffer = function( bb, o )
-        local WriteInt32 = bb.WriteInt32
-        WriteInt32( bb, o.sitIndex )
-        WriteInt32( bb, o.fishSerialNumber )
-        bb:WriteInt64( o.coin )
-    end
-}
-BBuffer.Register( PKG_CatchFish_Events_FishDead )

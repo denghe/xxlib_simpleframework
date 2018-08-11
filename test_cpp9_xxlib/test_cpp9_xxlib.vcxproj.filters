@@ -9,6 +9,9 @@
       <Filter>xxlib</Filter>
     </ClCompile>
     <ClCompile Include="..\sqlite3\sqlite3.c" />
+    <ClCompile Include="..\xxlib\http_parser.c">
+      <Filter>xxlib</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="main.h" />
@@ -92,6 +95,9 @@
       <Filter>xxlib</Filter>
     </ClInclude>
     <ClInclude Include="..\xxlib\xx_hashset.hpp">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\xxlib\http_parser.h">
       <Filter>xxlib</Filter>
     </ClInclude>
   </ItemGroup>

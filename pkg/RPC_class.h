@@ -5,7 +5,7 @@ namespace RPC
 {
 	struct PkgGenMd5
 	{
-		static constexpr char const* value = "2e1aee30571f0f412450c108f11c989a";
+		static constexpr char const* value = "bc512c841773b5722f47c889a9a8f440";
     };
 
 namespace DB_Manage
@@ -95,7 +95,7 @@ namespace DB_Manage
 
         typedef MsgResult ThisType;
         typedef xx::Object BaseType;
-	    MsgResult(xx::MemPool* mempool);
+	    MsgResult(xx::MemPool* const& mempool);
 	    MsgResult(xx::BBuffer *bb);
 		MsgResult(MsgResult const&) = delete;
 		MsgResult& operator=(MsgResult const&) = delete;
@@ -103,6 +103,7 @@ namespace DB_Manage
         void ToStringCore(xx::String &str) const override;
         void ToBBuffer(xx::BBuffer &bb) const override;
         int FromBBuffer(xx::BBuffer &bb) override;
+        inline static xx::Ptr<ThisType> defaultInstance;
     };
 }
 namespace Manage_DB
@@ -114,7 +115,7 @@ namespace Manage_DB
 
         typedef Msg ThisType;
         typedef xx::Object BaseType;
-	    Msg(xx::MemPool* mempool);
+	    Msg(xx::MemPool* const& mempool);
 	    Msg(xx::BBuffer *bb);
 		Msg(Msg const&) = delete;
 		Msg& operator=(Msg const&) = delete;
@@ -122,6 +123,7 @@ namespace Manage_DB
         void ToStringCore(xx::String &str) const override;
         void ToBBuffer(xx::BBuffer &bb) const override;
         int FromBBuffer(xx::BBuffer &bb) override;
+        inline static xx::Ptr<ThisType> defaultInstance;
     };
 }
 namespace Login_Client
@@ -133,7 +135,7 @@ namespace Login_Client
 
         typedef LoginSuccess ThisType;
         typedef xx::Object BaseType;
-	    LoginSuccess(xx::MemPool* mempool);
+	    LoginSuccess(xx::MemPool* const& mempool);
 	    LoginSuccess(xx::BBuffer *bb);
 		LoginSuccess(LoginSuccess const&) = delete;
 		LoginSuccess& operator=(LoginSuccess const&) = delete;
@@ -141,6 +143,7 @@ namespace Login_Client
         void ToStringCore(xx::String &str) const override;
         void ToBBuffer(xx::BBuffer &bb) const override;
         int FromBBuffer(xx::BBuffer &bb) override;
+        inline static xx::Ptr<ThisType> defaultInstance;
     };
 }
 namespace Client_Login
@@ -153,7 +156,7 @@ namespace Client_Login
 
         typedef Login ThisType;
         typedef xx::Object BaseType;
-	    Login(xx::MemPool* mempool);
+	    Login(xx::MemPool* const& mempool);
 	    Login(xx::BBuffer *bb);
 		Login(Login const&) = delete;
 		Login& operator=(Login const&) = delete;
@@ -161,6 +164,7 @@ namespace Client_Login
         void ToStringCore(xx::String &str) const override;
         void ToBBuffer(xx::BBuffer &bb) const override;
         int FromBBuffer(xx::BBuffer &bb) override;
+        inline static xx::Ptr<ThisType> defaultInstance;
     };
 }
 namespace DB_Login
@@ -172,7 +176,7 @@ namespace DB_Login
 
         typedef AuthSuccess ThisType;
         typedef xx::Object BaseType;
-	    AuthSuccess(xx::MemPool* mempool);
+	    AuthSuccess(xx::MemPool* const& mempool);
 	    AuthSuccess(xx::BBuffer *bb);
 		AuthSuccess(AuthSuccess const&) = delete;
 		AuthSuccess& operator=(AuthSuccess const&) = delete;
@@ -180,6 +184,7 @@ namespace DB_Login
         void ToStringCore(xx::String &str) const override;
         void ToBBuffer(xx::BBuffer &bb) const override;
         int FromBBuffer(xx::BBuffer &bb) override;
+        inline static xx::Ptr<ThisType> defaultInstance;
     };
 }
 namespace Login_DB
@@ -192,7 +197,7 @@ namespace Login_DB
 
         typedef Auth ThisType;
         typedef xx::Object BaseType;
-	    Auth(xx::MemPool* mempool);
+	    Auth(xx::MemPool* const& mempool);
 	    Auth(xx::BBuffer *bb);
 		Auth(Auth const&) = delete;
 		Auth& operator=(Auth const&) = delete;
@@ -200,6 +205,7 @@ namespace Login_DB
         void ToStringCore(xx::String &str) const override;
         void ToBBuffer(xx::BBuffer &bb) const override;
         int FromBBuffer(xx::BBuffer &bb) override;
+        inline static xx::Ptr<ThisType> defaultInstance;
     };
 }
 namespace Generic
@@ -213,7 +219,7 @@ namespace Generic
 
         typedef ServiceInfo ThisType;
         typedef xx::Object BaseType;
-	    ServiceInfo(xx::MemPool* mempool);
+	    ServiceInfo(xx::MemPool* const& mempool);
 	    ServiceInfo(xx::BBuffer *bb);
 		ServiceInfo(ServiceInfo const&) = delete;
 		ServiceInfo& operator=(ServiceInfo const&) = delete;
@@ -221,6 +227,7 @@ namespace Generic
         void ToStringCore(xx::String &str) const override;
         void ToBBuffer(xx::BBuffer &bb) const override;
         int FromBBuffer(xx::BBuffer &bb) override;
+        inline static xx::Ptr<ThisType> defaultInstance;
     };
     // 通用错误返回
     class Error : public xx::Object
@@ -233,7 +240,7 @@ namespace Generic
 
         typedef Error ThisType;
         typedef xx::Object BaseType;
-	    Error(xx::MemPool* mempool);
+	    Error(xx::MemPool* const& mempool);
 	    Error(xx::BBuffer *bb);
 		Error(Error const&) = delete;
 		Error& operator=(Error const&) = delete;
@@ -241,6 +248,7 @@ namespace Generic
         void ToStringCore(xx::String &str) const override;
         void ToBBuffer(xx::BBuffer &bb) const override;
         int FromBBuffer(xx::BBuffer &bb) override;
+        inline static xx::Ptr<ThisType> defaultInstance;
     };
     // 心跳保持兼延迟测试 -- 请求
     class Ping : public xx::Object
@@ -250,7 +258,7 @@ namespace Generic
 
         typedef Ping ThisType;
         typedef xx::Object BaseType;
-	    Ping(xx::MemPool* mempool);
+	    Ping(xx::MemPool* const& mempool);
 	    Ping(xx::BBuffer *bb);
 		Ping(Ping const&) = delete;
 		Ping& operator=(Ping const&) = delete;
@@ -258,6 +266,7 @@ namespace Generic
         void ToStringCore(xx::String &str) const override;
         void ToBBuffer(xx::BBuffer &bb) const override;
         int FromBBuffer(xx::BBuffer &bb) override;
+        inline static xx::Ptr<ThisType> defaultInstance;
     };
     // 心跳保持兼延迟测试 -- 回应
     class Pong : public xx::Object
@@ -267,7 +276,7 @@ namespace Generic
 
         typedef Pong ThisType;
         typedef xx::Object BaseType;
-	    Pong(xx::MemPool* mempool);
+	    Pong(xx::MemPool* const& mempool);
 	    Pong(xx::BBuffer *bb);
 		Pong(Pong const&) = delete;
 		Pong& operator=(Pong const&) = delete;
@@ -275,11 +284,28 @@ namespace Generic
         void ToStringCore(xx::String &str) const override;
         void ToBBuffer(xx::BBuffer &bb) const override;
         int FromBBuffer(xx::BBuffer &bb) override;
+        inline static xx::Ptr<ThisType> defaultInstance;
     };
 }
+}
+namespace xx
+{
+	template<> struct TypeId<RPC::DB_Manage::MsgResult> { static const uint16_t value = 11; };
+	template<> struct TypeId<RPC::Manage_DB::Msg> { static const uint16_t value = 12; };
+	template<> struct TypeId<RPC::Login_Client::LoginSuccess> { static const uint16_t value = 4; };
+	template<> struct TypeId<RPC::Client_Login::Login> { static const uint16_t value = 5; };
+	template<> struct TypeId<RPC::DB_Login::AuthSuccess> { static const uint16_t value = 6; };
+	template<> struct TypeId<RPC::Login_DB::Auth> { static const uint16_t value = 7; };
+	template<> struct TypeId<RPC::Generic::ServiceInfo> { static const uint16_t value = 3; };
+	template<> struct TypeId<RPC::Generic::Error> { static const uint16_t value = 8; };
+	template<> struct TypeId<RPC::Generic::Ping> { static const uint16_t value = 9; };
+	template<> struct TypeId<RPC::Generic::Pong> { static const uint16_t value = 10; };
+}
+namespace RPC
+{
 namespace DB_Manage
 {
-	inline MsgResult::MsgResult(xx::MemPool* mempool)
+	inline MsgResult::MsgResult(xx::MemPool* const& mempool)
         : xx::Object(mempool)
 	{
 	}
@@ -296,7 +322,7 @@ namespace DB_Manage
     {
         int rtv = 0;
         bb.readLengthLimit = 0;
-        if (rtv = bb.Read(this->txt)) return rtv;
+        if ((rtv = bb.Read(this->txt))) return rtv;
         return rtv;
     }
 
@@ -309,7 +335,7 @@ namespace DB_Manage
         }
         else memHeader().flags = 1;
 
-        str.Append("{ \"type\" : \"MsgResult\"");
+        str.Append("{ \"pkgTypeName\":\"DB_Manage.MsgResult\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
         ToStringCore(str);
         str.Append(" }");
         
@@ -318,15 +344,15 @@ namespace DB_Manage
     inline void MsgResult::ToStringCore(xx::String &str) const
     {
         this->BaseType::ToStringCore(str);
-        if (this->txt) str.Append(", \"txt\" : \"", this->txt, "\"");
-        else str.Append(", \"txt\" : nil");
+        if (this->txt) str.Append(", \"txt\":\"", this->txt, "\"");
+        else str.Append(", \"txt\":nil");
     }
 
 
 }
 namespace Manage_DB
 {
-	inline Msg::Msg(xx::MemPool* mempool)
+	inline Msg::Msg(xx::MemPool* const& mempool)
         : xx::Object(mempool)
 	{
 	}
@@ -343,7 +369,7 @@ namespace Manage_DB
     {
         int rtv = 0;
         bb.readLengthLimit = 200;
-        if (rtv = bb.Read(this->txt)) return rtv;
+        if ((rtv = bb.Read(this->txt))) return rtv;
         return rtv;
     }
 
@@ -356,7 +382,7 @@ namespace Manage_DB
         }
         else memHeader().flags = 1;
 
-        str.Append("{ \"type\" : \"Msg\"");
+        str.Append("{ \"pkgTypeName\":\"Manage_DB.Msg\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
         ToStringCore(str);
         str.Append(" }");
         
@@ -365,15 +391,15 @@ namespace Manage_DB
     inline void Msg::ToStringCore(xx::String &str) const
     {
         this->BaseType::ToStringCore(str);
-        if (this->txt) str.Append(", \"txt\" : \"", this->txt, "\"");
-        else str.Append(", \"txt\" : nil");
+        if (this->txt) str.Append(", \"txt\":\"", this->txt, "\"");
+        else str.Append(", \"txt\":nil");
     }
 
 
 }
 namespace Login_Client
 {
-	inline LoginSuccess::LoginSuccess(xx::MemPool* mempool)
+	inline LoginSuccess::LoginSuccess(xx::MemPool* const& mempool)
         : xx::Object(mempool)
 	{
 	}
@@ -389,7 +415,7 @@ namespace Login_Client
     inline int LoginSuccess::FromBBuffer(xx::BBuffer &bb)
     {
         int rtv = 0;
-        if (rtv = bb.Read(this->id)) return rtv;
+        if ((rtv = bb.Read(this->id))) return rtv;
         return rtv;
     }
 
@@ -402,7 +428,7 @@ namespace Login_Client
         }
         else memHeader().flags = 1;
 
-        str.Append("{ \"type\" : \"LoginSuccess\"");
+        str.Append("{ \"pkgTypeName\":\"Login_Client.LoginSuccess\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
         ToStringCore(str);
         str.Append(" }");
         
@@ -411,14 +437,14 @@ namespace Login_Client
     inline void LoginSuccess::ToStringCore(xx::String &str) const
     {
         this->BaseType::ToStringCore(str);
-        str.Append(", \"id\" : ", this->id);
+        str.Append(", \"id\":", this->id);
     }
 
 
 }
 namespace Client_Login
 {
-	inline Login::Login(xx::MemPool* mempool)
+	inline Login::Login(xx::MemPool* const& mempool)
         : xx::Object(mempool)
 	{
 	}
@@ -436,9 +462,9 @@ namespace Client_Login
     {
         int rtv = 0;
         bb.readLengthLimit = 50;
-        if (rtv = bb.Read(this->username)) return rtv;
+        if ((rtv = bb.Read(this->username))) return rtv;
         bb.readLengthLimit = 50;
-        if (rtv = bb.Read(this->password)) return rtv;
+        if ((rtv = bb.Read(this->password))) return rtv;
         return rtv;
     }
 
@@ -451,7 +477,7 @@ namespace Client_Login
         }
         else memHeader().flags = 1;
 
-        str.Append("{ \"type\" : \"Login\"");
+        str.Append("{ \"pkgTypeName\":\"Client_Login.Login\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
         ToStringCore(str);
         str.Append(" }");
         
@@ -460,17 +486,17 @@ namespace Client_Login
     inline void Login::ToStringCore(xx::String &str) const
     {
         this->BaseType::ToStringCore(str);
-        if (this->username) str.Append(", \"username\" : \"", this->username, "\"");
-        else str.Append(", \"username\" : nil");
-        if (this->password) str.Append(", \"password\" : \"", this->password, "\"");
-        else str.Append(", \"password\" : nil");
+        if (this->username) str.Append(", \"username\":\"", this->username, "\"");
+        else str.Append(", \"username\":nil");
+        if (this->password) str.Append(", \"password\":\"", this->password, "\"");
+        else str.Append(", \"password\":nil");
     }
 
 
 }
 namespace DB_Login
 {
-	inline AuthSuccess::AuthSuccess(xx::MemPool* mempool)
+	inline AuthSuccess::AuthSuccess(xx::MemPool* const& mempool)
         : xx::Object(mempool)
 	{
 	}
@@ -486,7 +512,7 @@ namespace DB_Login
     inline int AuthSuccess::FromBBuffer(xx::BBuffer &bb)
     {
         int rtv = 0;
-        if (rtv = bb.Read(this->id)) return rtv;
+        if ((rtv = bb.Read(this->id))) return rtv;
         return rtv;
     }
 
@@ -499,7 +525,7 @@ namespace DB_Login
         }
         else memHeader().flags = 1;
 
-        str.Append("{ \"type\" : \"AuthSuccess\"");
+        str.Append("{ \"pkgTypeName\":\"DB_Login.AuthSuccess\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
         ToStringCore(str);
         str.Append(" }");
         
@@ -508,14 +534,14 @@ namespace DB_Login
     inline void AuthSuccess::ToStringCore(xx::String &str) const
     {
         this->BaseType::ToStringCore(str);
-        str.Append(", \"id\" : ", this->id);
+        str.Append(", \"id\":", this->id);
     }
 
 
 }
 namespace Login_DB
 {
-	inline Auth::Auth(xx::MemPool* mempool)
+	inline Auth::Auth(xx::MemPool* const& mempool)
         : xx::Object(mempool)
 	{
 	}
@@ -533,9 +559,9 @@ namespace Login_DB
     {
         int rtv = 0;
         bb.readLengthLimit = 0;
-        if (rtv = bb.Read(this->username)) return rtv;
+        if ((rtv = bb.Read(this->username))) return rtv;
         bb.readLengthLimit = 0;
-        if (rtv = bb.Read(this->password)) return rtv;
+        if ((rtv = bb.Read(this->password))) return rtv;
         return rtv;
     }
 
@@ -548,7 +574,7 @@ namespace Login_DB
         }
         else memHeader().flags = 1;
 
-        str.Append("{ \"type\" : \"Auth\"");
+        str.Append("{ \"pkgTypeName\":\"Login_DB.Auth\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
         ToStringCore(str);
         str.Append(" }");
         
@@ -557,17 +583,17 @@ namespace Login_DB
     inline void Auth::ToStringCore(xx::String &str) const
     {
         this->BaseType::ToStringCore(str);
-        if (this->username) str.Append(", \"username\" : \"", this->username, "\"");
-        else str.Append(", \"username\" : nil");
-        if (this->password) str.Append(", \"password\" : \"", this->password, "\"");
-        else str.Append(", \"password\" : nil");
+        if (this->username) str.Append(", \"username\":\"", this->username, "\"");
+        else str.Append(", \"username\":nil");
+        if (this->password) str.Append(", \"password\":\"", this->password, "\"");
+        else str.Append(", \"password\":nil");
     }
 
 
 }
 namespace Generic
 {
-	inline ServiceInfo::ServiceInfo(xx::MemPool* mempool)
+	inline ServiceInfo::ServiceInfo(xx::MemPool* const& mempool)
         : xx::Object(mempool)
 	{
 	}
@@ -583,7 +609,7 @@ namespace Generic
     inline int ServiceInfo::FromBBuffer(xx::BBuffer &bb)
     {
         int rtv = 0;
-        if (rtv = bb.Read(this->type)) return rtv;
+        if ((rtv = bb.Read(this->type))) return rtv;
         return rtv;
     }
 
@@ -596,7 +622,7 @@ namespace Generic
         }
         else memHeader().flags = 1;
 
-        str.Append("{ \"type\" : \"ServiceInfo\"");
+        str.Append("{ \"pkgTypeName\":\"Generic.ServiceInfo\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
         ToStringCore(str);
         str.Append(" }");
         
@@ -605,11 +631,11 @@ namespace Generic
     inline void ServiceInfo::ToStringCore(xx::String &str) const
     {
         this->BaseType::ToStringCore(str);
-        str.Append(", \"type\" : ", this->type);
+        str.Append(", \"type\":", this->type);
     }
 
 
-	inline Error::Error(xx::MemPool* mempool)
+	inline Error::Error(xx::MemPool* const& mempool)
         : xx::Object(mempool)
 	{
 	}
@@ -626,9 +652,9 @@ namespace Generic
     inline int Error::FromBBuffer(xx::BBuffer &bb)
     {
         int rtv = 0;
-        if (rtv = bb.Read(this->errNo)) return rtv;
+        if ((rtv = bb.Read(this->errNo))) return rtv;
         bb.readLengthLimit = 0;
-        if (rtv = bb.Read(this->errMsg)) return rtv;
+        if ((rtv = bb.Read(this->errMsg))) return rtv;
         return rtv;
     }
 
@@ -641,7 +667,7 @@ namespace Generic
         }
         else memHeader().flags = 1;
 
-        str.Append("{ \"type\" : \"Error\"");
+        str.Append("{ \"pkgTypeName\":\"Generic.Error\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
         ToStringCore(str);
         str.Append(" }");
         
@@ -650,13 +676,13 @@ namespace Generic
     inline void Error::ToStringCore(xx::String &str) const
     {
         this->BaseType::ToStringCore(str);
-        str.Append(", \"errNo\" : ", this->errNo);
-        if (this->errMsg) str.Append(", \"errMsg\" : \"", this->errMsg, "\"");
-        else str.Append(", \"errMsg\" : nil");
+        str.Append(", \"errNo\":", this->errNo);
+        if (this->errMsg) str.Append(", \"errMsg\":\"", this->errMsg, "\"");
+        else str.Append(", \"errMsg\":nil");
     }
 
 
-	inline Ping::Ping(xx::MemPool* mempool)
+	inline Ping::Ping(xx::MemPool* const& mempool)
         : xx::Object(mempool)
 	{
 	}
@@ -672,7 +698,7 @@ namespace Generic
     inline int Ping::FromBBuffer(xx::BBuffer &bb)
     {
         int rtv = 0;
-        if (rtv = bb.Read(this->ticks)) return rtv;
+        if ((rtv = bb.Read(this->ticks))) return rtv;
         return rtv;
     }
 
@@ -685,7 +711,7 @@ namespace Generic
         }
         else memHeader().flags = 1;
 
-        str.Append("{ \"type\" : \"Ping\"");
+        str.Append("{ \"pkgTypeName\":\"Generic.Ping\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
         ToStringCore(str);
         str.Append(" }");
         
@@ -694,11 +720,11 @@ namespace Generic
     inline void Ping::ToStringCore(xx::String &str) const
     {
         this->BaseType::ToStringCore(str);
-        str.Append(", \"ticks\" : ", this->ticks);
+        str.Append(", \"ticks\":", this->ticks);
     }
 
 
-	inline Pong::Pong(xx::MemPool* mempool)
+	inline Pong::Pong(xx::MemPool* const& mempool)
         : xx::Object(mempool)
 	{
 	}
@@ -714,7 +740,7 @@ namespace Generic
     inline int Pong::FromBBuffer(xx::BBuffer &bb)
     {
         int rtv = 0;
-        if (rtv = bb.Read(this->ticks)) return rtv;
+        if ((rtv = bb.Read(this->ticks))) return rtv;
         return rtv;
     }
 
@@ -727,7 +753,7 @@ namespace Generic
         }
         else memHeader().flags = 1;
 
-        str.Append("{ \"type\" : \"Pong\"");
+        str.Append("{ \"pkgTypeName\":\"Generic.Pong\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
         ToStringCore(str);
         str.Append(" }");
         
@@ -736,24 +762,11 @@ namespace Generic
     inline void Pong::ToStringCore(xx::String &str) const
     {
         this->BaseType::ToStringCore(str);
-        str.Append(", \"ticks\" : ", this->ticks);
+        str.Append(", \"ticks\":", this->ticks);
     }
 
 
 }
-}
-namespace xx
-{
-	template<> struct TypeId<RPC::DB_Manage::MsgResult> { static const uint16_t value = 11; };
-	template<> struct TypeId<RPC::Manage_DB::Msg> { static const uint16_t value = 12; };
-	template<> struct TypeId<RPC::Login_Client::LoginSuccess> { static const uint16_t value = 4; };
-	template<> struct TypeId<RPC::Client_Login::Login> { static const uint16_t value = 5; };
-	template<> struct TypeId<RPC::DB_Login::AuthSuccess> { static const uint16_t value = 6; };
-	template<> struct TypeId<RPC::Login_DB::Auth> { static const uint16_t value = 7; };
-	template<> struct TypeId<RPC::Generic::ServiceInfo> { static const uint16_t value = 3; };
-	template<> struct TypeId<RPC::Generic::Error> { static const uint16_t value = 8; };
-	template<> struct TypeId<RPC::Generic::Ping> { static const uint16_t value = 9; };
-	template<> struct TypeId<RPC::Generic::Pong> { static const uint16_t value = 10; };
 }
 namespace RPC
 {

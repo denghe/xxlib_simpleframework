@@ -56,7 +56,7 @@ namespace Game
 
         typedef Account ThisType;
         typedef xx::Object BaseType;
-	    Account(xx::MemPool* mempool);
+	    Account(xx::MemPool* const& mempool);
 		Account(Account const&) = delete;
 		Account& operator=(Account const&) = delete;
         virtual void ToString(xx::String &s) const override;
@@ -80,7 +80,7 @@ namespace Manage
 
         typedef Account ThisType;
         typedef xx::Object BaseType;
-	    Account(xx::MemPool* mempool);
+	    Account(xx::MemPool* const& mempool);
 		Account(Account const&) = delete;
 		Account& operator=(Account const&) = delete;
         virtual void ToString(xx::String &s) const override;
@@ -101,7 +101,7 @@ namespace Manage
 
         typedef Role ThisType;
         typedef xx::Object BaseType;
-	    Role(xx::MemPool* mempool);
+	    Role(xx::MemPool* const& mempool);
 		Role(Role const&) = delete;
 		Role& operator=(Role const&) = delete;
         virtual void ToString(xx::String &s) const override;
@@ -124,7 +124,7 @@ namespace Manage
 
         typedef Permission ThisType;
         typedef xx::Object BaseType;
-	    Permission(xx::MemPool* mempool);
+	    Permission(xx::MemPool* const& mempool);
 		Permission(Permission const&) = delete;
 		Permission& operator=(Permission const&) = delete;
         virtual void ToString(xx::String &s) const override;
@@ -143,7 +143,7 @@ namespace Manage
 
         typedef BindAccountRole ThisType;
         typedef xx::Object BaseType;
-	    BindAccountRole(xx::MemPool* mempool);
+	    BindAccountRole(xx::MemPool* const& mempool);
 		BindAccountRole(BindAccountRole const&) = delete;
 		BindAccountRole& operator=(BindAccountRole const&) = delete;
         virtual void ToString(xx::String &s) const override;
@@ -162,7 +162,7 @@ namespace Manage
 
         typedef BindRolePermission ThisType;
         typedef xx::Object BaseType;
-	    BindRolePermission(xx::MemPool* mempool);
+	    BindRolePermission(xx::MemPool* const& mempool);
 		BindRolePermission(BindRolePermission const&) = delete;
 		BindRolePermission& operator=(BindRolePermission const&) = delete;
         virtual void ToString(xx::String &s) const override;
@@ -173,7 +173,7 @@ namespace Manage
 }
 namespace Game
 {
-	inline Account::Account(xx::MemPool* mempool)
+	inline Account::Account(xx::MemPool* const& mempool)
         : xx::Object(mempool)
 	{
 	}
@@ -205,7 +205,7 @@ namespace Game
 }
 namespace Manage
 {
-	inline Account::Account(xx::MemPool* mempool)
+	inline Account::Account(xx::MemPool* const& mempool)
         : xx::Object(mempool)
 	{
 	}
@@ -234,7 +234,7 @@ namespace Manage
         if (this->password) s.Append(", \"password\" : \"", this->password, "\"");
         else s.Append(", \"password\" : nil");
     }
-	inline Role::Role(xx::MemPool* mempool)
+	inline Role::Role(xx::MemPool* const& mempool)
         : xx::Object(mempool)
 	{
 	}
@@ -263,7 +263,7 @@ namespace Manage
         if (this->desc) s.Append(", \"desc\" : \"", this->desc, "\"");
         else s.Append(", \"desc\" : nil");
     }
-	inline Permission::Permission(xx::MemPool* mempool)
+	inline Permission::Permission(xx::MemPool* const& mempool)
         : xx::Object(mempool)
 	{
 	}
@@ -294,7 +294,7 @@ namespace Manage
         if (this->desc) s.Append(", \"desc\" : \"", this->desc, "\"");
         else s.Append(", \"desc\" : nil");
     }
-	inline BindAccountRole::BindAccountRole(xx::MemPool* mempool)
+	inline BindAccountRole::BindAccountRole(xx::MemPool* const& mempool)
         : xx::Object(mempool)
 	{
 	}
@@ -320,7 +320,7 @@ namespace Manage
         s.Append(", \"account_id\" : ", this->account_id);
         s.Append(", \"role_id\" : ", this->role_id);
     }
-	inline BindRolePermission::BindRolePermission(xx::MemPool* mempool)
+	inline BindRolePermission::BindRolePermission(xx::MemPool* const& mempool)
         : xx::Object(mempool)
 	{
 	}

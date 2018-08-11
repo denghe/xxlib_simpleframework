@@ -1,120 +1,119 @@
 ﻿// todo: noexcept 狂加一波
 
-#include "http_parser.h"
-
-#include <string>
+#include "xx_uv.h"
 #include <iostream>
 
-#include "xx_uv.h"
-
-namespace xx
+inline void Host()
 {
-	class UvHttpPeer : public UvTcpPeer
+	xx::MemPool mp;
+	xx::UvLoop loop(&mp);
+	auto listener = loop.CreateTcpListener();
+	listener->OnCreatePeer = [listener]
 	{
-		UvHttpPeer(UvTcpListener& listener) : UvTcpPeer(listener) {}
-		virtual void ReceiveImpl(char const* const& bufPtr, int const& len) override
+		auto peer = listener->mempool->Create<xx::UvHttpPeer>(*listener);
+		//peer->rawData.MPCreate(peer->mempool);
+		peer->OnMessageComplete = [peer]
 		{
-			// todo: 当连续出现 \r\n\r\n 时表示 header 应该已经接收完毕, 可用 parser 来一发, 以提取出长度模式. 
-			// 如果为 Transfer-Encoding: chunked, 则按这个规则继续收包. 如果超过 xx 字节, 就停止收包并断开.
-			// 如果 \r\n\r\n 迟迟未出现, 或是在出现之前, 超过 xx 字节, 就停止收包并断开.
+			//std::cout << "host rawData = " << peer->rawData << std::endl;
 
-		}
+			xx::String s(peer->mempool);
+			s.AppendFormat("url: {0}\r\n", peer->url);
+			for (auto& kv : peer->headers)
+			{
+				s.AppendFormat("key: {0}, value: {1}\r\n", kv.key, kv.value);
+			}
+			s.Append("body: ", peer->body);
+			peer->SendHttpResponse(s.buf, s.dataLen);
+			return 0;
+		};
+		peer->OnError = [peer](uint32_t errorNumber, char const* errorMessage)
+		{
+			//std::cout << errorMessage << std::endl;
+		};
+		return peer;
 	};
+	listener->Bind("0.0.0.0", 10080);
+	listener->Listen();
+	std::cout << "Host...\r\n";
+	loop.Run();
+}
+
+inline void Test()
+{
+	xx::MemPool mp;
+	xx::UvLoop loop(&mp);
+	auto client = mp.Create<xx::UvHttpClient>(loop);
+	client->rawData.MPCreate(&mp);
+	client->OnConnect = [client](auto status)
+	{
+		if (status)
+		{
+			std::cout << "connecte failed. status = " << status << std::endl;
+			return;
+		}
+		xx::String txt(client->mempool);
+		txt = "GET /test HTTP/1.1\r\n"
+			"User-Agent: curl/7.18.0 (i486-pc-linux-gnu) libcurl/7.18.0 OpenSSL/0.9.8g zlib/1.2.3.3 libidn/1.1\r\n"
+			"Host: 0.0.0.0=5000\r\n"
+			"Accept: */*\r\n"
+			"Transfer-Encoding: chunked\r\n"
+			"\r\n"
+			"a\r\n1234567890\r\n"
+			"1e\r\n123456789012345678901234567890\r\n"
+			"0\r\n\r\n";
+		client->SendBytes(txt.buf, (int)txt.dataLen);
+	};
+	client->OnMessageComplete = [client]
+	{
+		//std::cout << "client rawData = " << client->rawData << std::endl;
+		std::cout << "client body = " << client->body << std::endl;
+		return 0;
+	};
+	client->SetAddress("127.0.0.1", 10080);
+	client->Connect();
+	std::cout << "Test...\r\n";
+	loop.Run();
 }
 
 int main()
 {
-	http_parser parser;
-	http_parser_settings parser_settings;
-	http_parser_init(&parser, HTTP_BOTH);
-	parser_settings.on_message_begin = [](http_parser* parser)->int
-	{
-		std::cout << "message begin." << std::endl;
-		return 0;
-	};
-	parser_settings.on_url = [](http_parser*, const char *at, size_t length)->int
-	{
-		std::string s(at, length);
-		std::cout << "url: " << s << std::endl;
-		return 0;
-	};
-	parser_settings.on_status = [](http_parser*, const char *at, size_t length)->int
-	{
-		std::string s(at, length);
-		std::cout << "status: " << s << std::endl;
-		return 0;
-	};
-	parser_settings.on_header_field = [](http_parser*, const char *at, size_t length)->int
-	{
-		std::string s(at, length);
-		std::cout << "key: " << s << std::endl;
-		return 0;
-	};
-	parser_settings.on_header_value = [](http_parser*, const char *at, size_t length)->int
-	{
-		std::string s(at, length);
-		std::cout << "value: " << s << std::endl;
-		return 0;
-	};
-	parser_settings.on_headers_complete = [](http_parser* parser)->int
-	{
-		std::cout << "headers complete." << std::endl;
-		return 0;
-	};
-	parser_settings.on_body = [](http_parser*, const char *at, size_t length)->int
-	{
-		std::string s(at, length);
-		std::cout << "body: " << s << std::endl;
-		return 0;
-	};
-	parser_settings.on_message_complete = [](http_parser* parser)->int
-	{
-		std::cout << "message complete." << std::endl;
-		return 0;
-	};
-	parser_settings.on_chunk_header = [](http_parser* parser)->int
-	{
-		std::cout << "on_chunk_header. content_length = " << parser->content_length << std::endl;
-		return 0;
-	};
-	parser_settings.on_chunk_complete = [](http_parser* parser)->int
-	{
-		std::cout << "on_chunk_complete." << std::endl;
-		return 0;
-	};
+	std::thread t1([] { Host(); });
+	t1.detach();
 
+	std::thread t2([] { Test(); });
+	t2.detach();
 
-
-	std::string buf;
-
-	//buf = "POST /xxxx HTTP/1.1\r\n"
- //        "Transfer-Encoding: chunked\r\n"
- //        "\r\n"
- //        "1e\r\nall your base are belong to us\r\n"
- //        "1e\r\nall your base are belong to us\r\n"
- //        "0\r\n"
-	//	"\r\n";
-
-	//buf = "GET /test HTTP/1.1\r\n"
-	////	"User-Agent: curl/7.18.0 (i486-pc-linux-gnu) libcurl/7.18.0 OpenSSL/0.9.8g zlib/1.2.3.3 libidn/1.1\r\n"
-	////	"Host: 0.0.0.0=5000\r\n"
-	////	"Accept: */*\r\n"
-	//	"\r\n";
-
-
-	//buf = "HTTP/1.1 200 OK\r\n"
-	//	//"Content-Type: text/plain\r\n"
-	//	"Content-Length: 12\r\n"
-	//	"\r\n"
-	//	"hello world\n";
-
-	buf = "POST /xxxx HTTP/";
-	auto siz = http_parser_execute(&parser, &parser_settings, buf.data(), buf.size());
-	std::cout << "parse siz = " << siz << std::endl;
-	std::cout << "http_errno = " << parser.http_errno << ", msg = " << http_errno_description((http_errno)parser.http_errno) << std::endl;
-
+	std::cin.get();
 	return 0;
 }
+
+
+//buf = "POST /xxxx HTTP/1.1\r\n"
+//        "Transfer-Encoding: chunked\r\n"
+//        "\r\n"
+//        "1e\r\nall your base are belong to us\r\n"
+//        "1e\r\nall your base are belong to us\r\n"
+//        "0\r\n"
+//	"\r\n";
+
+//buf = "GET /test HTTP/1.1\r\n"
+//	"User-Agent: curl/7.18.0 (i486-pc-linux-gnu) libcurl/7.18.0 OpenSSL/0.9.8g zlib/1.2.3.3 libidn/1.1\r\n"
+//	"Host: 0.0.0.0=5000\r\n"
+//	"Accept: */*\r\n"
+//"\r\n";
+
+
+//buf = "HTTP/1.1 200 OK\r\n"
+//	//"Content-Type: text/plain\r\n"
+//	"Content-Length: 12\r\n"
+//	"\r\n"
+//	"hello world\n";
+
+
+
+
+
+
 
 //#include "xx.h"
 //int main()

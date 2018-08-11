@@ -2,6 +2,8 @@
 #include "xx.h"
 #include <mutex>
 
+// 注意: 除了 UvLoop, 其他类型只能以指针方式 Create 出来用. 否则会出现重复 Release 的情况.
+
 namespace xx
 {
 	class UvLoop;
@@ -21,6 +23,8 @@ namespace xx
 	class UvUdpBase;
 	class UvUdpPeer;
 	class UvUdpClient;
+	class UvHttpPeer;
+	class UvHttpClient;
 
 	enum class UvTcpStates
 	{
@@ -436,6 +440,98 @@ namespace xx
 		bool Disconnected() override;
 		size_t GetSendQueueSize() override;
 	};
+
+
+	typedef struct http_parser http_parser;
+	typedef struct http_parser_settings http_parser_settings;
+
+	class UvHttpPeer : public UvTcpPeer
+	{
+	public:
+		// 来自 libuv 的转换器及配置
+		http_parser* parser;
+		http_parser_settings* parser_settings;
+
+		// 头部所有键值对
+		xx::Dict<xx::String, xx::String> headers;
+
+		// 正文
+		xx::String body;
+
+		// 原始 url 串
+		xx::String url;
+
+		// 当收到 key 时, 先往这 append. 出现 value 时再塞 headers
+		xx::String lastKey;
+
+		// 指向最后一次塞入 headers 的 value 以便 append
+		xx::String* lastValue = nullptr;
+
+		// 成功接收完一段信息时的回调.
+		std::function<int()> OnMessageComplete;
+
+		// 接收出错回调. 接着会发生 Release
+		std::function<void(uint32_t errorNumber, char const* errorMessage)> OnError;
+
+		// 原始数据( 如果不为空, 收到数据时将向它追加, 方便调试啥的 )
+		xx::String_p rawData;
+
+		UvHttpPeer(UvTcpListener& listener);
+		~UvHttpPeer();
+
+		virtual void ReceiveImpl(char const* const& bufPtr, int const& len) override;
+
+		// todo: 提供更多返回内容的简单拼接下发
+		inline static const char* responsePartialHeader_text = "HTTP/1.1 200 OK\r\n"	// 17
+			"Content-Type: text/plain\r\n"	// 26
+			"Content-Length: "	// 16
+			; // 59
+
+		void SendHttpResponse(char const* const& bufPtr, size_t const& len);
+	};
+
+	// 代码从 UvHttpPeer 复制小改
+	class UvHttpClient : public UvTcpClient
+	{
+	public:
+		// 来自 libuv 的转换器及配置
+		http_parser * parser;
+		http_parser_settings* parser_settings;
+
+		// 头部所有键值对
+		xx::Dict<xx::String, xx::String> headers;
+
+		// 正文
+		xx::String body;
+
+		// 原始 url 串
+		xx::String url;
+
+		// 当收到 key 时, 先往这 append. 出现 value 时再塞 headers
+		xx::String lastKey;
+
+		// 指向最后一次塞入 headers 的 value 以便 append
+		xx::String* lastValue = nullptr;
+
+		// 成功接收完一段信息时的回调.
+		std::function<int()> OnMessageComplete;
+
+		// 接收出错回调. 接着会发生 Release
+		std::function<void(uint32_t errorNumber, char const* errorMessage)> OnError;
+
+		// 原始数据( 如果不为空, 收到数据时将向它追加, 方便调试啥的 )
+		xx::String_p rawData;
+
+		UvHttpClient(UvLoop& loop);
+		~UvHttpClient();
+
+		virtual void ReceiveImpl(char const* const& bufPtr, int const& len) override;
+	};
+
+
+
+
+
 
 
 	template<typename T>

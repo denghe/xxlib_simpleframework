@@ -4,7 +4,7 @@ namespace RPC
 {
     public static class PkgGenMd5
     {
-        public const string value = "2e1aee30571f0f412450c108f11c989a"; 
+        public const string value = "bc512c841773b5722f47c889a9a8f440"; 
     }
 
 namespace Generic
@@ -49,7 +49,41 @@ namespace DB_Manage
             bb.readLengthLimit = 0;
             bb.Read(ref this.txt);
         }
+        public virtual void ToString(ref System.Text.StringBuilder str)
+        {
+            if (GetToStringFlag())
+            {
+        	    str.Append("[ \"***** recursived *****\" ]");
+        	    return;
+            }
+            else SetToStringFlag(true);
 
+            str.Append("{ \"pkgTypeName\":\"DB_Manage.MsgResult\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(ref str);
+            str.Append(" }");
+        
+            SetToStringFlag(false);
+        }
+        public virtual void ToStringCore(ref System.Text.StringBuilder str)
+        {
+            if (txt != null) str.Append(", \"txt\":\"" + txt + "\"");
+            else str.Append(", \"txt\":nil");
+        }
+        public override string ToString()
+        {
+            var sb = new System.Text.StringBuilder();
+            ToString(ref sb);
+            return sb.ToString();
+        }
+        bool toStringFlag;
+        public void SetToStringFlag(bool doing)
+        {
+            toStringFlag = doing;
+        }
+        public bool GetToStringFlag()
+        {
+            return toStringFlag;
+        }
     }
 }
 namespace Manage_DB
@@ -73,7 +107,41 @@ namespace Manage_DB
             bb.readLengthLimit = 200;
             bb.Read(ref this.txt);
         }
+        public virtual void ToString(ref System.Text.StringBuilder str)
+        {
+            if (GetToStringFlag())
+            {
+        	    str.Append("[ \"***** recursived *****\" ]");
+        	    return;
+            }
+            else SetToStringFlag(true);
 
+            str.Append("{ \"pkgTypeName\":\"Manage_DB.Msg\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(ref str);
+            str.Append(" }");
+        
+            SetToStringFlag(false);
+        }
+        public virtual void ToStringCore(ref System.Text.StringBuilder str)
+        {
+            if (txt != null) str.Append(", \"txt\":\"" + txt + "\"");
+            else str.Append(", \"txt\":nil");
+        }
+        public override string ToString()
+        {
+            var sb = new System.Text.StringBuilder();
+            ToString(ref sb);
+            return sb.ToString();
+        }
+        bool toStringFlag;
+        public void SetToStringFlag(bool doing)
+        {
+            toStringFlag = doing;
+        }
+        public bool GetToStringFlag()
+        {
+            return toStringFlag;
+        }
     }
 }
 namespace Login_Client
@@ -96,7 +164,40 @@ namespace Login_Client
         {
             bb.Read(ref this.id);
         }
+        public virtual void ToString(ref System.Text.StringBuilder str)
+        {
+            if (GetToStringFlag())
+            {
+        	    str.Append("[ \"***** recursived *****\" ]");
+        	    return;
+            }
+            else SetToStringFlag(true);
 
+            str.Append("{ \"pkgTypeName\":\"Login_Client.LoginSuccess\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(ref str);
+            str.Append(" }");
+        
+            SetToStringFlag(false);
+        }
+        public virtual void ToStringCore(ref System.Text.StringBuilder str)
+        {
+            str.Append(", \"id\":" + id);
+        }
+        public override string ToString()
+        {
+            var sb = new System.Text.StringBuilder();
+            ToString(ref sb);
+            return sb.ToString();
+        }
+        bool toStringFlag;
+        public void SetToStringFlag(bool doing)
+        {
+            toStringFlag = doing;
+        }
+        public bool GetToStringFlag()
+        {
+            return toStringFlag;
+        }
     }
 }
 namespace Client_Login
@@ -124,7 +225,43 @@ namespace Client_Login
             bb.readLengthLimit = 50;
             bb.Read(ref this.password);
         }
+        public virtual void ToString(ref System.Text.StringBuilder str)
+        {
+            if (GetToStringFlag())
+            {
+        	    str.Append("[ \"***** recursived *****\" ]");
+        	    return;
+            }
+            else SetToStringFlag(true);
 
+            str.Append("{ \"pkgTypeName\":\"Client_Login.Login\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(ref str);
+            str.Append(" }");
+        
+            SetToStringFlag(false);
+        }
+        public virtual void ToStringCore(ref System.Text.StringBuilder str)
+        {
+            if (username != null) str.Append(", \"username\":\"" + username + "\"");
+            else str.Append(", \"username\":nil");
+            if (password != null) str.Append(", \"password\":\"" + password + "\"");
+            else str.Append(", \"password\":nil");
+        }
+        public override string ToString()
+        {
+            var sb = new System.Text.StringBuilder();
+            ToString(ref sb);
+            return sb.ToString();
+        }
+        bool toStringFlag;
+        public void SetToStringFlag(bool doing)
+        {
+            toStringFlag = doing;
+        }
+        public bool GetToStringFlag()
+        {
+            return toStringFlag;
+        }
     }
 }
 namespace DB_Login
@@ -147,7 +284,40 @@ namespace DB_Login
         {
             bb.Read(ref this.id);
         }
+        public virtual void ToString(ref System.Text.StringBuilder str)
+        {
+            if (GetToStringFlag())
+            {
+        	    str.Append("[ \"***** recursived *****\" ]");
+        	    return;
+            }
+            else SetToStringFlag(true);
 
+            str.Append("{ \"pkgTypeName\":\"DB_Login.AuthSuccess\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(ref str);
+            str.Append(" }");
+        
+            SetToStringFlag(false);
+        }
+        public virtual void ToStringCore(ref System.Text.StringBuilder str)
+        {
+            str.Append(", \"id\":" + id);
+        }
+        public override string ToString()
+        {
+            var sb = new System.Text.StringBuilder();
+            ToString(ref sb);
+            return sb.ToString();
+        }
+        bool toStringFlag;
+        public void SetToStringFlag(bool doing)
+        {
+            toStringFlag = doing;
+        }
+        public bool GetToStringFlag()
+        {
+            return toStringFlag;
+        }
     }
 }
 namespace Login_DB
@@ -175,7 +345,43 @@ namespace Login_DB
             bb.readLengthLimit = 0;
             bb.Read(ref this.password);
         }
+        public virtual void ToString(ref System.Text.StringBuilder str)
+        {
+            if (GetToStringFlag())
+            {
+        	    str.Append("[ \"***** recursived *****\" ]");
+        	    return;
+            }
+            else SetToStringFlag(true);
 
+            str.Append("{ \"pkgTypeName\":\"Login_DB.Auth\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(ref str);
+            str.Append(" }");
+        
+            SetToStringFlag(false);
+        }
+        public virtual void ToStringCore(ref System.Text.StringBuilder str)
+        {
+            if (username != null) str.Append(", \"username\":\"" + username + "\"");
+            else str.Append(", \"username\":nil");
+            if (password != null) str.Append(", \"password\":\"" + password + "\"");
+            else str.Append(", \"password\":nil");
+        }
+        public override string ToString()
+        {
+            var sb = new System.Text.StringBuilder();
+            ToString(ref sb);
+            return sb.ToString();
+        }
+        bool toStringFlag;
+        public void SetToStringFlag(bool doing)
+        {
+            toStringFlag = doing;
+        }
+        public bool GetToStringFlag()
+        {
+            return toStringFlag;
+        }
     }
 }
 namespace Generic
@@ -208,7 +414,40 @@ namespace Generic
                 this.type = (Generic.ServiceTypes)tmp;
             }
         }
+        public virtual void ToString(ref System.Text.StringBuilder str)
+        {
+            if (GetToStringFlag())
+            {
+        	    str.Append("[ \"***** recursived *****\" ]");
+        	    return;
+            }
+            else SetToStringFlag(true);
 
+            str.Append("{ \"pkgTypeName\":\"Generic.ServiceInfo\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(ref str);
+            str.Append(" }");
+        
+            SetToStringFlag(false);
+        }
+        public virtual void ToStringCore(ref System.Text.StringBuilder str)
+        {
+            str.Append(", \"type\":" + type);
+        }
+        public override string ToString()
+        {
+            var sb = new System.Text.StringBuilder();
+            ToString(ref sb);
+            return sb.ToString();
+        }
+        bool toStringFlag;
+        public void SetToStringFlag(bool doing)
+        {
+            toStringFlag = doing;
+        }
+        public bool GetToStringFlag()
+        {
+            return toStringFlag;
+        }
     }
     /// <summary>
     /// 通用错误返回
@@ -241,7 +480,42 @@ namespace Generic
             bb.readLengthLimit = 0;
             bb.Read(ref this.errMsg);
         }
+        public virtual void ToString(ref System.Text.StringBuilder str)
+        {
+            if (GetToStringFlag())
+            {
+        	    str.Append("[ \"***** recursived *****\" ]");
+        	    return;
+            }
+            else SetToStringFlag(true);
 
+            str.Append("{ \"pkgTypeName\":\"Generic.Error\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(ref str);
+            str.Append(" }");
+        
+            SetToStringFlag(false);
+        }
+        public virtual void ToStringCore(ref System.Text.StringBuilder str)
+        {
+            str.Append(", \"errNo\":" + errNo);
+            if (errMsg != null) str.Append(", \"errMsg\":\"" + errMsg + "\"");
+            else str.Append(", \"errMsg\":nil");
+        }
+        public override string ToString()
+        {
+            var sb = new System.Text.StringBuilder();
+            ToString(ref sb);
+            return sb.ToString();
+        }
+        bool toStringFlag;
+        public void SetToStringFlag(bool doing)
+        {
+            toStringFlag = doing;
+        }
+        public bool GetToStringFlag()
+        {
+            return toStringFlag;
+        }
     }
     /// <summary>
     /// 心跳保持兼延迟测试 -- 请求
@@ -264,7 +538,40 @@ namespace Generic
         {
             bb.Read(ref this.ticks);
         }
+        public virtual void ToString(ref System.Text.StringBuilder str)
+        {
+            if (GetToStringFlag())
+            {
+        	    str.Append("[ \"***** recursived *****\" ]");
+        	    return;
+            }
+            else SetToStringFlag(true);
 
+            str.Append("{ \"pkgTypeName\":\"Generic.Ping\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(ref str);
+            str.Append(" }");
+        
+            SetToStringFlag(false);
+        }
+        public virtual void ToStringCore(ref System.Text.StringBuilder str)
+        {
+            str.Append(", \"ticks\":" + ticks);
+        }
+        public override string ToString()
+        {
+            var sb = new System.Text.StringBuilder();
+            ToString(ref sb);
+            return sb.ToString();
+        }
+        bool toStringFlag;
+        public void SetToStringFlag(bool doing)
+        {
+            toStringFlag = doing;
+        }
+        public bool GetToStringFlag()
+        {
+            return toStringFlag;
+        }
     }
     /// <summary>
     /// 心跳保持兼延迟测试 -- 回应
@@ -287,15 +594,46 @@ namespace Generic
         {
             bb.Read(ref this.ticks);
         }
+        public virtual void ToString(ref System.Text.StringBuilder str)
+        {
+            if (GetToStringFlag())
+            {
+        	    str.Append("[ \"***** recursived *****\" ]");
+        	    return;
+            }
+            else SetToStringFlag(true);
 
+            str.Append("{ \"pkgTypeName\":\"Generic.Pong\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(ref str);
+            str.Append(" }");
+        
+            SetToStringFlag(false);
+        }
+        public virtual void ToStringCore(ref System.Text.StringBuilder str)
+        {
+            str.Append(", \"ticks\":" + ticks);
+        }
+        public override string ToString()
+        {
+            var sb = new System.Text.StringBuilder();
+            ToString(ref sb);
+            return sb.ToString();
+        }
+        bool toStringFlag;
+        public void SetToStringFlag(bool doing)
+        {
+            toStringFlag = doing;
+        }
+        public bool GetToStringFlag()
+        {
+            return toStringFlag;
+        }
     }
 }
     public static class AllTypes
     {
         public static void Register()
         {
-            // BBuffer.Register<string>(1);
-            BBuffer.Register<BBuffer>(2);
             BBuffer.Register<DB_Manage.MsgResult>(11);
             BBuffer.Register<Manage_DB.Msg>(12);
             BBuffer.Register<Login_Client.LoginSuccess>(4);

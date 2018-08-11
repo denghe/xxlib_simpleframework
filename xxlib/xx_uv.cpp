@@ -1,5 +1,6 @@
 ﻿#define _CRT_SECURE_NO_WARNINGS
 #include <uv.h>
+#include "http_parser.h"
 #include "ikcp.h"
 #include "xx_uv.h"
 
@@ -1691,4 +1692,230 @@ size_t xx::UvUdpClient::GetSendQueueSize()
 	//return uv_udp_get_send_queue_size((uv_udp_t*)ptr);
 	if (!kcpPtr) return 0;
 	return ikcp_waitsnd((ikcpcb*)kcpPtr);
+}
+
+
+
+
+
+xx::UvHttpPeer::UvHttpPeer(UvTcpListener& listener)
+	: UvTcpPeer(listener)
+	, headers(listener.mempool)
+	, body(listener.mempool)
+	, url(listener.mempool)
+	, lastKey(listener.mempool)
+{
+	OnMessageComplete = [] { return 0; };
+
+	parser = (http_parser*)mempool->Alloc(sizeof(http_parser));
+	parser_settings = (http_parser_settings*)mempool->Alloc(sizeof(http_parser_settings));
+
+	parser->data = this;
+	http_parser_init(parser, HTTP_REQUEST);
+
+	parser_settings->on_message_begin = [](http_parser* parser)
+	{
+		auto self = (UvHttpPeer*)parser->data;
+		self->headers.Clear();
+		self->body.Clear();
+		self->url.Clear();
+		self->lastKey.Clear();
+		self->lastValue = nullptr;
+		return 0;
+	};
+	parser_settings->on_url = [](http_parser* parser, const char *buf, size_t length)
+	{
+		auto self = (UvHttpPeer*)parser->data;
+		self->url.AddRange(buf, length);
+		return 0;
+	};
+	parser_settings->on_status = [](http_parser* parser, const char *buf, size_t length) { return 0; };
+	parser_settings->on_header_field = [](http_parser* parser, const char *buf, size_t length)
+	{
+		auto self = (UvHttpPeer*)parser->data;
+		if (self->lastValue)
+		{
+			self->lastValue = nullptr;
+		}
+		self->lastKey.AddRange(buf, length);
+		return 0;
+	};
+	parser_settings->on_header_value = [](http_parser* parser, const char *buf, size_t length)
+	{
+		auto self = (UvHttpPeer*)parser->data;
+		if (!self->lastValue)
+		{
+			auto r = self->headers.Add(std::move(self->lastKey), xx::String(self->mempool));
+			self->lastValue = &self->headers.ValueAt(r.index);
+		}
+		self->lastValue->AddRange(buf, length);
+		return 0;
+	};
+	parser_settings->on_headers_complete = [](http_parser* parser)
+	{
+		((UvHttpPeer*)parser->data)->lastValue = nullptr;
+		return 0;
+	};
+	parser_settings->on_body = [](http_parser* parser, const char *buf, size_t length)
+	{
+		((UvHttpPeer*)parser->data)->body.AddRange(buf, length);
+		return 0;
+	};
+	parser_settings->on_message_complete = [](http_parser* parser)
+	{
+		auto self = (UvHttpPeer*)parser->data;
+		int r = self->OnMessageComplete();
+		if (self->rawData)
+		{
+			self->rawData->Clear();
+		}
+		return r;
+	};
+	parser_settings->on_chunk_header = [](http_parser* parser) { return 0; };
+	parser_settings->on_chunk_complete = [](http_parser* parser) { return 0; };
+}
+
+xx::UvHttpPeer::~UvHttpPeer()
+{
+	mempool->Free(parser_settings);
+	mempool->Free(parser);
+}
+
+void xx::UvHttpPeer::ReceiveImpl(char const* const& bufPtr, int const& len)
+{
+	if (rawData)
+	{
+		rawData->AddRange(bufPtr, len);	// 如果粘包, 尾部可能会多点东西出来, 当前不方便去除
+	}
+	auto parsed = http_parser_execute(parser, parser_settings, bufPtr, len);
+	if (parsed < len)
+	{
+		if (OnError)
+		{
+			OnError(parser->http_errno, http_errno_description((http_errno)parser->http_errno));
+		}
+		Release();
+	}
+}
+
+void xx::UvHttpPeer::SendHttpResponse(char const* const& bufPtr, size_t const& len)
+{
+	// prepare
+	bbSend.Clear();
+
+	// write prefix
+	bbSend.WriteBuf(responsePartialHeader_text, 59);
+
+	// write len\r\n\r\n
+	lastKey.Clear();
+	lastKey.Append(len);
+	bbSend.WriteBuf(lastKey.buf, lastKey.dataLen);
+	bbSend.WriteBuf("\r\n\r\n", 4);
+
+	// write body
+	bbSend.WriteBuf(bufPtr, len);
+
+	// send data
+	SendBytes(bbSend.buf, (int)bbSend.dataLen);
+}
+
+
+xx::UvHttpClient::UvHttpClient(UvLoop& loop)
+	: UvTcpClient(loop)
+	, headers(loop.mempool)
+	, body(loop.mempool)
+	, url(loop.mempool)
+	, lastKey(loop.mempool)
+{
+	OnMessageComplete = [] { return 0; };
+
+	parser = (http_parser*)mempool->Alloc(sizeof(http_parser));
+	parser_settings = (http_parser_settings*)mempool->Alloc(sizeof(http_parser_settings));
+
+	parser->data = this;
+	http_parser_init(parser, HTTP_RESPONSE);	// 这里是 response.
+
+	parser_settings->on_message_begin = [](http_parser* parser)
+	{
+		auto self = (UvHttpClient*)parser->data;
+		self->headers.Clear();
+		self->body.Clear();
+		self->url.Clear();
+		self->lastKey.Clear();
+		self->lastValue = nullptr;
+		return 0;
+	};
+	parser_settings->on_url = [](http_parser* parser, const char *buf, size_t length)
+	{
+		auto self = (UvHttpClient*)parser->data;
+		self->url.AddRange(buf, length);
+		return 0;
+	};
+	parser_settings->on_status = [](http_parser* parser, const char *buf, size_t length) { return 0; };
+	parser_settings->on_header_field = [](http_parser* parser, const char *buf, size_t length)
+	{
+		auto self = (UvHttpClient*)parser->data;
+		if (self->lastValue)
+		{
+			self->lastValue = nullptr;
+		}
+		self->lastKey.AddRange(buf, length);
+		return 0;
+	};
+	parser_settings->on_header_value = [](http_parser* parser, const char *buf, size_t length)
+	{
+		auto self = (UvHttpClient*)parser->data;
+		if (!self->lastValue)
+		{
+			auto r = self->headers.Add(std::move(self->lastKey), xx::String(self->mempool));
+			self->lastValue = &self->headers.ValueAt(r.index);
+		}
+		self->lastValue->AddRange(buf, length);
+		return 0;
+	};
+	parser_settings->on_headers_complete = [](http_parser* parser)
+	{
+		((UvHttpClient*)parser->data)->lastValue = nullptr;
+		return 0;
+	};
+	parser_settings->on_body = [](http_parser* parser, const char *buf, size_t length)
+	{
+		((UvHttpClient*)parser->data)->body.AddRange(buf, length);
+		return 0;
+	};
+	parser_settings->on_message_complete = [](http_parser* parser)
+	{
+		auto self = (UvHttpClient*)parser->data;
+		int r = self->OnMessageComplete();
+		if (self->rawData)
+		{
+			self->rawData->Clear();
+		}
+		return r;
+	};
+	parser_settings->on_chunk_header = [](http_parser* parser) { return 0; };
+	parser_settings->on_chunk_complete = [](http_parser* parser) { return 0; };
+}
+
+xx::UvHttpClient::~UvHttpClient()
+{
+	mempool->Free(parser_settings);
+	mempool->Free(parser);
+}
+
+void xx::UvHttpClient::ReceiveImpl(char const* const& bufPtr, int const& len)
+{
+	if (rawData)
+	{
+		rawData->AddRange(bufPtr, len);	// 如果粘包, 尾部可能会多点东西出来, 当前不方便去除
+	}
+	auto parsed = http_parser_execute(parser, parser_settings, bufPtr, len);
+	if (parsed < len)
+	{
+		if (OnError)
+		{
+			OnError(parser->http_errno, http_errno_description((http_errno)parser->http_errno));
+		}
+		Release();
+	}
 }

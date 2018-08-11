@@ -264,7 +264,7 @@ namespace xx
 		Reserve(dataLen + count);
 		if constexpr(IsTrivial_v<T>)
 		{
-			std::memcpy(buf, items, count * sizeof(T));
+			std::memcpy(buf + dataLen, items, count * sizeof(T));
 		}
 		else
 		{

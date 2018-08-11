@@ -5,7 +5,7 @@ namespace PKG
 {
 	struct PkgGenMd5
 	{
-		static constexpr char const* value = "73fe90a587f1d8cfc9b7aaca273a0806";
+		static constexpr char const* value = "aced7e436a75c5ddd8aeab7abb07116a";
     };
 
 namespace CatchFish_Client
@@ -181,11 +181,11 @@ namespace CatchFish
         // 逻辑角度
         float angle = 0;
         // 显示用主体精灵( 仅客户端 )
-        ::Sprite_p spriteBody;
+        ::Sprite spriteBody = nullptr;
 
         typedef MoveObject ThisType;
         typedef xx::Object BaseType;
-	    MoveObject(xx::MemPool* mempool);
+	    MoveObject(xx::MemPool* const& mempool);
 	    MoveObject(xx::BBuffer *bb);
 		MoveObject(MoveObject const&) = delete;
 		MoveObject& operator=(MoveObject const&) = delete;
@@ -193,6 +193,7 @@ namespace CatchFish
         void ToStringCore(xx::String &str) const override;
         void ToBBuffer(xx::BBuffer &bb) const override;
         int FromBBuffer(xx::BBuffer &bb) override;
+        inline static xx::Ptr<ThisType> defaultInstance;
     };
 }
 namespace CatchFish_Client
@@ -206,7 +207,7 @@ namespace CatchFish_Client
 
         typedef JoinSuccess ThisType;
         typedef xx::Object BaseType;
-	    JoinSuccess(xx::MemPool* mempool);
+	    JoinSuccess(xx::MemPool* const& mempool);
 	    JoinSuccess(xx::BBuffer *bb);
 		JoinSuccess(JoinSuccess const&) = delete;
 		JoinSuccess& operator=(JoinSuccess const&) = delete;
@@ -214,6 +215,7 @@ namespace CatchFish_Client
         void ToStringCore(xx::String &str) const override;
         void ToBBuffer(xx::BBuffer &bb) const override;
         int FromBBuffer(xx::BBuffer &bb) override;
+        inline static xx::Ptr<ThisType> defaultInstance;
     };
 }
 namespace CatchFish::Events
@@ -227,7 +229,7 @@ namespace CatchFish::Events
 
         typedef FireEnd ThisType;
         typedef xx::Object BaseType;
-	    FireEnd(xx::MemPool* mempool);
+	    FireEnd(xx::MemPool* const& mempool);
 	    FireEnd(xx::BBuffer *bb);
 		FireEnd(FireEnd const&) = delete;
 		FireEnd& operator=(FireEnd const&) = delete;
@@ -235,6 +237,7 @@ namespace CatchFish::Events
         void ToStringCore(xx::String &str) const override;
         void ToBBuffer(xx::BBuffer &bb) const override;
         int FromBBuffer(xx::BBuffer &bb) override;
+        inline static xx::Ptr<ThisType> defaultInstance;
     };
     // 玩家开始开火( 连发, 仅适合帧同步服务器算法 )
     class FireChangeAngle : public xx::Object
@@ -247,7 +250,7 @@ namespace CatchFish::Events
 
         typedef FireChangeAngle ThisType;
         typedef xx::Object BaseType;
-	    FireChangeAngle(xx::MemPool* mempool);
+	    FireChangeAngle(xx::MemPool* const& mempool);
 	    FireChangeAngle(xx::BBuffer *bb);
 		FireChangeAngle(FireChangeAngle const&) = delete;
 		FireChangeAngle& operator=(FireChangeAngle const&) = delete;
@@ -255,6 +258,7 @@ namespace CatchFish::Events
         void ToStringCore(xx::String &str) const override;
         void ToBBuffer(xx::BBuffer &bb) const override;
         int FromBBuffer(xx::BBuffer &bb) override;
+        inline static xx::Ptr<ThisType> defaultInstance;
     };
     // 玩家开始开火( 连发, 仅适合帧同步服务器算法 )
     class FireBegin : public xx::Object
@@ -267,7 +271,7 @@ namespace CatchFish::Events
 
         typedef FireBegin ThisType;
         typedef xx::Object BaseType;
-	    FireBegin(xx::MemPool* mempool);
+	    FireBegin(xx::MemPool* const& mempool);
 	    FireBegin(xx::BBuffer *bb);
 		FireBegin(FireBegin const&) = delete;
 		FireBegin& operator=(FireBegin const&) = delete;
@@ -275,6 +279,7 @@ namespace CatchFish::Events
         void ToStringCore(xx::String &str) const override;
         void ToBBuffer(xx::BBuffer &bb) const override;
         int FromBBuffer(xx::BBuffer &bb) override;
+        inline static xx::Ptr<ThisType> defaultInstance;
     };
     // 玩家开火( 单次 )
     class Fire : public xx::Object
@@ -293,7 +298,7 @@ namespace CatchFish::Events
 
         typedef Fire ThisType;
         typedef xx::Object BaseType;
-	    Fire(xx::MemPool* mempool);
+	    Fire(xx::MemPool* const& mempool);
 	    Fire(xx::BBuffer *bb);
 		Fire(Fire const&) = delete;
 		Fire& operator=(Fire const&) = delete;
@@ -301,6 +306,7 @@ namespace CatchFish::Events
         void ToStringCore(xx::String &str) const override;
         void ToBBuffer(xx::BBuffer &bb) const override;
         int FromBBuffer(xx::BBuffer &bb) override;
+        inline static xx::Ptr<ThisType> defaultInstance;
     };
     // 玩家进入
     class JoinPlayer : public xx::Object
@@ -315,7 +321,7 @@ namespace CatchFish::Events
 
         typedef JoinPlayer ThisType;
         typedef xx::Object BaseType;
-	    JoinPlayer(xx::MemPool* mempool);
+	    JoinPlayer(xx::MemPool* const& mempool);
 	    JoinPlayer(xx::BBuffer *bb);
 		JoinPlayer(JoinPlayer const&) = delete;
 		JoinPlayer& operator=(JoinPlayer const&) = delete;
@@ -323,6 +329,7 @@ namespace CatchFish::Events
         void ToStringCore(xx::String &str) const override;
         void ToBBuffer(xx::BBuffer &bb) const override;
         int FromBBuffer(xx::BBuffer &bb) override;
+        inline static xx::Ptr<ThisType> defaultInstance;
     };
     // 玩家离开( 比进入的处理优先级高 )
     class LeavePlayer : public xx::Object
@@ -333,7 +340,7 @@ namespace CatchFish::Events
 
         typedef LeavePlayer ThisType;
         typedef xx::Object BaseType;
-	    LeavePlayer(xx::MemPool* mempool);
+	    LeavePlayer(xx::MemPool* const& mempool);
 	    LeavePlayer(xx::BBuffer *bb);
 		LeavePlayer(LeavePlayer const&) = delete;
 		LeavePlayer& operator=(LeavePlayer const&) = delete;
@@ -341,6 +348,7 @@ namespace CatchFish::Events
         void ToStringCore(xx::String &str) const override;
         void ToBBuffer(xx::BBuffer &bb) const override;
         int FromBBuffer(xx::BBuffer &bb) override;
+        inline static xx::Ptr<ThisType> defaultInstance;
     };
 }
 namespace CatchFish
@@ -364,7 +372,7 @@ namespace CatchFish
 
         typedef Scene ThisType;
         typedef xx::Object BaseType;
-	    Scene(xx::MemPool* mempool);
+	    Scene(xx::MemPool* const& mempool);
 	    Scene(xx::BBuffer *bb);
 		Scene(Scene const&) = delete;
 		Scene& operator=(Scene const&) = delete;
@@ -372,6 +380,7 @@ namespace CatchFish
         void ToStringCore(xx::String &str) const override;
         void ToBBuffer(xx::BBuffer &bb) const override;
         int FromBBuffer(xx::BBuffer &bb) override;
+        inline static xx::Ptr<ThisType> defaultInstance;
     };
     // 鱼
     class Fish : public PKG::CatchFish::MoveObject
@@ -392,7 +401,7 @@ namespace CatchFish
 
         typedef Fish ThisType;
         typedef PKG::CatchFish::MoveObject BaseType;
-	    Fish(xx::MemPool* mempool);
+	    Fish(xx::MemPool* const& mempool);
 	    Fish(xx::BBuffer *bb);
 		Fish(Fish const&) = delete;
 		Fish& operator=(Fish const&) = delete;
@@ -400,6 +409,7 @@ namespace CatchFish
         void ToStringCore(xx::String &str) const override;
         void ToBBuffer(xx::BBuffer &bb) const override;
         int FromBBuffer(xx::BBuffer &bb) override;
+        inline static xx::Ptr<ThisType> defaultInstance;
     };
     // 子弹
     class Bullet : public PKG::CatchFish::MoveObject
@@ -410,7 +420,7 @@ namespace CatchFish
 
         typedef Bullet ThisType;
         typedef PKG::CatchFish::MoveObject BaseType;
-	    Bullet(xx::MemPool* mempool);
+	    Bullet(xx::MemPool* const& mempool);
 	    Bullet(xx::BBuffer *bb);
 		Bullet(Bullet const&) = delete;
 		Bullet& operator=(Bullet const&) = delete;
@@ -418,6 +428,7 @@ namespace CatchFish
         void ToStringCore(xx::String &str) const override;
         void ToBBuffer(xx::BBuffer &bb) const override;
         int FromBBuffer(xx::BBuffer &bb) override;
+        inline static xx::Ptr<ThisType> defaultInstance;
     };
     // 玩家
     class Player : public xx::Object
@@ -436,11 +447,11 @@ namespace CatchFish
         // 所有子弹
         xx::List_p<PKG::CatchFish::Bullet_p> bullets;
         // 玩家网络上下文, 不参与网络传输
-        ::ClientPeer_p peer;
+        ::ClientPeer peer = nullptr;
 
         typedef Player ThisType;
         typedef xx::Object BaseType;
-	    Player(xx::MemPool* mempool);
+	    Player(xx::MemPool* const& mempool);
 	    Player(xx::BBuffer *bb);
 		Player(Player const&) = delete;
 		Player& operator=(Player const&) = delete;
@@ -448,6 +459,7 @@ namespace CatchFish
         void ToStringCore(xx::String &str) const override;
         void ToBBuffer(xx::BBuffer &bb) const override;
         int FromBBuffer(xx::BBuffer &bb) override;
+        inline static xx::Ptr<ThisType> defaultInstance;
     };
     // 游戏配置信息( 配置信息并不会随着网络同步而下发, 反序列化后需要手工还原 )
     class Config : public xx::Object
@@ -462,7 +474,7 @@ namespace CatchFish
 
         typedef Config ThisType;
         typedef xx::Object BaseType;
-	    Config(xx::MemPool* mempool);
+	    Config(xx::MemPool* const& mempool);
 	    Config(xx::BBuffer *bb);
 		Config(Config const&) = delete;
 		Config& operator=(Config const&) = delete;
@@ -470,6 +482,7 @@ namespace CatchFish
         void ToStringCore(xx::String &str) const override;
         void ToBBuffer(xx::BBuffer &bb) const override;
         int FromBBuffer(xx::BBuffer &bb) override;
+        inline static xx::Ptr<ThisType> defaultInstance;
     };
     // 鱼配置信息
     class FishConfig : public xx::Object
@@ -488,11 +501,11 @@ namespace CatchFish
         // 鱼帧动画信息集合
         xx::List_p<PKG::CatchFish::FishSpriteFrame_p> frames;
         // 鱼动画( 仅客户端 )
-        ::Animation_p anim;
+        ::Animation anim = nullptr;
 
         typedef FishConfig ThisType;
         typedef xx::Object BaseType;
-	    FishConfig(xx::MemPool* mempool);
+	    FishConfig(xx::MemPool* const& mempool);
 	    FishConfig(xx::BBuffer *bb);
 		FishConfig(FishConfig const&) = delete;
 		FishConfig& operator=(FishConfig const&) = delete;
@@ -500,6 +513,7 @@ namespace CatchFish
         void ToStringCore(xx::String &str) const override;
         void ToBBuffer(xx::BBuffer &bb) const override;
         int FromBBuffer(xx::BBuffer &bb) override;
+        inline static xx::Ptr<ThisType> defaultInstance;
     };
     // 鱼帧动画信息
     class FishSpriteFrame : public xx::Object
@@ -512,7 +526,7 @@ namespace CatchFish
 
         typedef FishSpriteFrame ThisType;
         typedef xx::Object BaseType;
-	    FishSpriteFrame(xx::MemPool* mempool);
+	    FishSpriteFrame(xx::MemPool* const& mempool);
 	    FishSpriteFrame(xx::BBuffer *bb);
 		FishSpriteFrame(FishSpriteFrame const&) = delete;
 		FishSpriteFrame& operator=(FishSpriteFrame const&) = delete;
@@ -520,6 +534,7 @@ namespace CatchFish
         void ToStringCore(xx::String &str) const override;
         void ToBBuffer(xx::BBuffer &bb) const override;
         int FromBBuffer(xx::BBuffer &bb) override;
+        inline static xx::Ptr<ThisType> defaultInstance;
     };
     // 圆形碰撞区
     class CollisionArea : public xx::Object
@@ -534,7 +549,7 @@ namespace CatchFish
 
         typedef CollisionArea ThisType;
         typedef xx::Object BaseType;
-	    CollisionArea(xx::MemPool* mempool);
+	    CollisionArea(xx::MemPool* const& mempool);
 	    CollisionArea(xx::BBuffer *bb);
 		CollisionArea(CollisionArea const&) = delete;
 		CollisionArea& operator=(CollisionArea const&) = delete;
@@ -542,6 +557,7 @@ namespace CatchFish
         void ToStringCore(xx::String &str) const override;
         void ToBBuffer(xx::BBuffer &bb) const override;
         int FromBBuffer(xx::BBuffer &bb) override;
+        inline static xx::Ptr<ThisType> defaultInstance;
     };
 }
 namespace Client_CatchFish
@@ -553,7 +569,7 @@ namespace Client_CatchFish
 
         typedef FireEnd ThisType;
         typedef xx::Object BaseType;
-	    FireEnd(xx::MemPool* mempool);
+	    FireEnd(xx::MemPool* const& mempool);
 	    FireEnd(xx::BBuffer *bb);
 		FireEnd(FireEnd const&) = delete;
 		FireEnd& operator=(FireEnd const&) = delete;
@@ -561,6 +577,7 @@ namespace Client_CatchFish
         void ToStringCore(xx::String &str) const override;
         void ToBBuffer(xx::BBuffer &bb) const override;
         int FromBBuffer(xx::BBuffer &bb) override;
+        inline static xx::Ptr<ThisType> defaultInstance;
     };
     // 玩家持续开火时调整角度( 连发, 仅适合帧同步服务器算法 )
     class FireChangeAngle : public xx::Object
@@ -571,7 +588,7 @@ namespace Client_CatchFish
 
         typedef FireChangeAngle ThisType;
         typedef xx::Object BaseType;
-	    FireChangeAngle(xx::MemPool* mempool);
+	    FireChangeAngle(xx::MemPool* const& mempool);
 	    FireChangeAngle(xx::BBuffer *bb);
 		FireChangeAngle(FireChangeAngle const&) = delete;
 		FireChangeAngle& operator=(FireChangeAngle const&) = delete;
@@ -579,6 +596,7 @@ namespace Client_CatchFish
         void ToStringCore(xx::String &str) const override;
         void ToBBuffer(xx::BBuffer &bb) const override;
         int FromBBuffer(xx::BBuffer &bb) override;
+        inline static xx::Ptr<ThisType> defaultInstance;
     };
     // 玩家开始开火( 连发, 仅适合帧同步服务器算法 )
     class FireBegin : public xx::Object
@@ -589,7 +607,7 @@ namespace Client_CatchFish
 
         typedef FireBegin ThisType;
         typedef xx::Object BaseType;
-	    FireBegin(xx::MemPool* mempool);
+	    FireBegin(xx::MemPool* const& mempool);
 	    FireBegin(xx::BBuffer *bb);
 		FireBegin(FireBegin const&) = delete;
 		FireBegin& operator=(FireBegin const&) = delete;
@@ -597,6 +615,7 @@ namespace Client_CatchFish
         void ToStringCore(xx::String &str) const override;
         void ToBBuffer(xx::BBuffer &bb) const override;
         int FromBBuffer(xx::BBuffer &bb) override;
+        inline static xx::Ptr<ThisType> defaultInstance;
     };
     // 当前玩家自己的子弹打中鱼
     class Hit : public xx::Object
@@ -609,7 +628,7 @@ namespace Client_CatchFish
 
         typedef Hit ThisType;
         typedef xx::Object BaseType;
-	    Hit(xx::MemPool* mempool);
+	    Hit(xx::MemPool* const& mempool);
 	    Hit(xx::BBuffer *bb);
 		Hit(Hit const&) = delete;
 		Hit& operator=(Hit const&) = delete;
@@ -617,6 +636,7 @@ namespace Client_CatchFish
         void ToStringCore(xx::String &str) const override;
         void ToBBuffer(xx::BBuffer &bb) const override;
         int FromBBuffer(xx::BBuffer &bb) override;
+        inline static xx::Ptr<ThisType> defaultInstance;
     };
     // 开火( 单次, 或频繁单次模拟伪连发 )
     class Fire : public xx::Object
@@ -633,7 +653,7 @@ namespace Client_CatchFish
 
         typedef Fire ThisType;
         typedef xx::Object BaseType;
-	    Fire(xx::MemPool* mempool);
+	    Fire(xx::MemPool* const& mempool);
 	    Fire(xx::BBuffer *bb);
 		Fire(Fire const&) = delete;
 		Fire& operator=(Fire const&) = delete;
@@ -641,6 +661,7 @@ namespace Client_CatchFish
         void ToStringCore(xx::String &str) const override;
         void ToBBuffer(xx::BBuffer &bb) const override;
         int FromBBuffer(xx::BBuffer &bb) override;
+        inline static xx::Ptr<ThisType> defaultInstance;
     };
     // 正常离开游戏( 立即, 并非断线等待超时后清掉 )
     class Leave : public xx::Object
@@ -649,7 +670,7 @@ namespace Client_CatchFish
 
         typedef Leave ThisType;
         typedef xx::Object BaseType;
-	    Leave(xx::MemPool* mempool);
+	    Leave(xx::MemPool* const& mempool);
 	    Leave(xx::BBuffer *bb);
 		Leave(Leave const&) = delete;
 		Leave& operator=(Leave const&) = delete;
@@ -657,6 +678,7 @@ namespace Client_CatchFish
         void ToStringCore(xx::String &str) const override;
         void ToBBuffer(xx::BBuffer &bb) const override;
         int FromBBuffer(xx::BBuffer &bb) override;
+        inline static xx::Ptr<ThisType> defaultInstance;
     };
     // 客户端与服务器建立连接后的首包
     class Join : public xx::Object
@@ -667,7 +689,7 @@ namespace Client_CatchFish
 
         typedef Join ThisType;
         typedef xx::Object BaseType;
-	    Join(xx::MemPool* mempool);
+	    Join(xx::MemPool* const& mempool);
 	    Join(xx::BBuffer *bb);
 		Join(Join const&) = delete;
 		Join& operator=(Join const&) = delete;
@@ -675,6 +697,7 @@ namespace Client_CatchFish
         void ToStringCore(xx::String &str) const override;
         void ToBBuffer(xx::BBuffer &bb) const override;
         int FromBBuffer(xx::BBuffer &bb) override;
+        inline static xx::Ptr<ThisType> defaultInstance;
     };
 }
 namespace CatchFish_Client
@@ -702,7 +725,7 @@ namespace CatchFish_Client
 
         typedef FrameEvents ThisType;
         typedef xx::Object BaseType;
-	    FrameEvents(xx::MemPool* mempool);
+	    FrameEvents(xx::MemPool* const& mempool);
 	    FrameEvents(xx::BBuffer *bb);
 		FrameEvents(FrameEvents const&) = delete;
 		FrameEvents& operator=(FrameEvents const&) = delete;
@@ -710,6 +733,7 @@ namespace CatchFish_Client
         void ToStringCore(xx::String &str) const override;
         void ToBBuffer(xx::BBuffer &bb) const override;
         int FromBBuffer(xx::BBuffer &bb) override;
+        inline static xx::Ptr<ThisType> defaultInstance;
     };
     // 要按成员顺序优先级依次处理
     class FullSync : public xx::Object
@@ -719,7 +743,7 @@ namespace CatchFish_Client
 
         typedef FullSync ThisType;
         typedef xx::Object BaseType;
-	    FullSync(xx::MemPool* mempool);
+	    FullSync(xx::MemPool* const& mempool);
 	    FullSync(xx::BBuffer *bb);
 		FullSync(FullSync const&) = delete;
 		FullSync& operator=(FullSync const&) = delete;
@@ -727,6 +751,7 @@ namespace CatchFish_Client
         void ToStringCore(xx::String &str) const override;
         void ToBBuffer(xx::BBuffer &bb) const override;
         int FromBBuffer(xx::BBuffer &bb) override;
+        inline static xx::Ptr<ThisType> defaultInstance;
     };
     // 进入失败
     class JoinFail : public xx::Object
@@ -737,7 +762,7 @@ namespace CatchFish_Client
 
         typedef JoinFail ThisType;
         typedef xx::Object BaseType;
-	    JoinFail(xx::MemPool* mempool);
+	    JoinFail(xx::MemPool* const& mempool);
 	    JoinFail(xx::BBuffer *bb);
 		JoinFail(JoinFail const&) = delete;
 		JoinFail& operator=(JoinFail const&) = delete;
@@ -745,6 +770,7 @@ namespace CatchFish_Client
         void ToStringCore(xx::String &str) const override;
         void ToBBuffer(xx::BBuffer &bb) const override;
         int FromBBuffer(xx::BBuffer &bb) override;
+        inline static xx::Ptr<ThisType> defaultInstance;
     };
 }
 namespace CatchFish::Events
@@ -760,7 +786,7 @@ namespace CatchFish::Events
 
         typedef BulletHit ThisType;
         typedef xx::Object BaseType;
-	    BulletHit(xx::MemPool* mempool);
+	    BulletHit(xx::MemPool* const& mempool);
 	    BulletHit(xx::BBuffer *bb);
 		BulletHit(BulletHit const&) = delete;
 		BulletHit& operator=(BulletHit const&) = delete;
@@ -768,6 +794,7 @@ namespace CatchFish::Events
         void ToStringCore(xx::String &str) const override;
         void ToBBuffer(xx::BBuffer &bb) const override;
         int FromBBuffer(xx::BBuffer &bb) override;
+        inline static xx::Ptr<ThisType> defaultInstance;
     };
     // 鱼被打死
     class FishDead : public xx::Object
@@ -782,7 +809,7 @@ namespace CatchFish::Events
 
         typedef FishDead ThisType;
         typedef xx::Object BaseType;
-	    FishDead(xx::MemPool* mempool);
+	    FishDead(xx::MemPool* const& mempool);
 	    FishDead(xx::BBuffer *bb);
 		FishDead(FishDead const&) = delete;
 		FishDead& operator=(FishDead const&) = delete;
@@ -790,11 +817,61 @@ namespace CatchFish::Events
         void ToStringCore(xx::String &str) const override;
         void ToBBuffer(xx::BBuffer &bb) const override;
         int FromBBuffer(xx::BBuffer &bb) override;
+        inline static xx::Ptr<ThisType> defaultInstance;
     };
 }
+}
+namespace xx
+{
+	template<> struct TypeId<PKG::CatchFish_Client::JoinSuccess> { static const uint16_t value = 3; };
+	template<> struct TypeId<PKG::CatchFish_Client::JoinFail> { static const uint16_t value = 4; };
+	template<> struct TypeId<PKG::CatchFish_Client::FullSync> { static const uint16_t value = 5; };
+	template<> struct TypeId<PKG::CatchFish::Scene> { static const uint16_t value = 6; };
+	template<> struct TypeId<PKG::CatchFish_Client::FrameEvents> { static const uint16_t value = 7; };
+	template<> struct TypeId<xx::List<PKG::CatchFish::Events::LeavePlayer_p>> { static const uint16_t value = 8; };
+	template<> struct TypeId<PKG::CatchFish::Events::LeavePlayer> { static const uint16_t value = 39; };
+	template<> struct TypeId<xx::List<PKG::CatchFish::Events::JoinPlayer_p>> { static const uint16_t value = 9; };
+	template<> struct TypeId<PKG::CatchFish::Events::JoinPlayer> { static const uint16_t value = 40; };
+	template<> struct TypeId<xx::List<PKG::CatchFish::Events::FishDead_p>> { static const uint16_t value = 11; };
+	template<> struct TypeId<PKG::CatchFish::Events::FishDead> { static const uint16_t value = 46; };
+	template<> struct TypeId<xx::List<PKG::CatchFish::Events::Fire_p>> { static const uint16_t value = 12; };
+	template<> struct TypeId<PKG::CatchFish::Events::Fire> { static const uint16_t value = 41; };
+	template<> struct TypeId<xx::List<PKG::CatchFish::Events::FireEnd_p>> { static const uint16_t value = 13; };
+	template<> struct TypeId<PKG::CatchFish::Events::FireEnd> { static const uint16_t value = 44; };
+	template<> struct TypeId<xx::List<PKG::CatchFish::Events::FireBegin_p>> { static const uint16_t value = 14; };
+	template<> struct TypeId<PKG::CatchFish::Events::FireBegin> { static const uint16_t value = 42; };
+	template<> struct TypeId<xx::List<PKG::CatchFish::Events::FireChangeAngle_p>> { static const uint16_t value = 15; };
+	template<> struct TypeId<PKG::CatchFish::Events::FireChangeAngle> { static const uint16_t value = 43; };
+	template<> struct TypeId<PKG::Client_CatchFish::Join> { static const uint16_t value = 16; };
+	template<> struct TypeId<PKG::Client_CatchFish::Leave> { static const uint16_t value = 17; };
+	template<> struct TypeId<PKG::Client_CatchFish::Fire> { static const uint16_t value = 18; };
+	template<> struct TypeId<PKG::Client_CatchFish::Hit> { static const uint16_t value = 50; };
+	template<> struct TypeId<PKG::Client_CatchFish::FireBegin> { static const uint16_t value = 19; };
+	template<> struct TypeId<PKG::Client_CatchFish::FireChangeAngle> { static const uint16_t value = 20; };
+	template<> struct TypeId<PKG::Client_CatchFish::FireEnd> { static const uint16_t value = 21; };
+	template<> struct TypeId<PKG::CatchFish::CollisionArea> { static const uint16_t value = 22; };
+	template<> struct TypeId<xx::List<::xx::Pos>> { static const uint16_t value = 23; };
+	template<> struct TypeId<PKG::CatchFish::FishSpriteFrame> { static const uint16_t value = 24; };
+	template<> struct TypeId<xx::List<PKG::CatchFish::CollisionArea_p>> { static const uint16_t value = 25; };
+	template<> struct TypeId<PKG::CatchFish::FishConfig> { static const uint16_t value = 26; };
+	template<> struct TypeId<xx::List<PKG::CatchFish::FishSpriteFrame_p>> { static const uint16_t value = 27; };
+	template<> struct TypeId<PKG::CatchFish::Config> { static const uint16_t value = 28; };
+	template<> struct TypeId<xx::List<PKG::CatchFish::FishConfig_p>> { static const uint16_t value = 29; };
+	template<> struct TypeId<PKG::CatchFish::Player> { static const uint16_t value = 30; };
+	template<> struct TypeId<xx::List<PKG::CatchFish::Bullet_p>> { static const uint16_t value = 31; };
+	template<> struct TypeId<PKG::CatchFish::Bullet> { static const uint16_t value = 34; };
+	template<> struct TypeId<PKG::CatchFish::MoveObject> { static const uint16_t value = 33; };
+	template<> struct TypeId<PKG::CatchFish::Fish> { static const uint16_t value = 35; };
+	template<> struct TypeId<::xx::Random> { static const uint16_t value = 36; };
+	template<> struct TypeId<xx::List<PKG::CatchFish::Player_p>> { static const uint16_t value = 37; };
+	template<> struct TypeId<xx::List<PKG::CatchFish::Fish_p>> { static const uint16_t value = 38; };
+	template<> struct TypeId<PKG::CatchFish::Events::BulletHit> { static const uint16_t value = 45; };
+}
+namespace PKG
+{
 namespace CatchFish_Client
 {
-	inline JoinSuccess::JoinSuccess(xx::MemPool* mempool)
+	inline JoinSuccess::JoinSuccess(xx::MemPool* const& mempool)
         : xx::Object(mempool)
 	{
 	}
@@ -810,7 +887,7 @@ namespace CatchFish_Client
     inline int JoinSuccess::FromBBuffer(xx::BBuffer &bb)
     {
         int rtv = 0;
-        if (rtv = bb.Read(this->sitIndex)) return rtv;
+        if ((rtv = bb.Read(this->sitIndex))) return rtv;
         return rtv;
     }
 
@@ -823,7 +900,7 @@ namespace CatchFish_Client
         }
         else memHeader().flags = 1;
 
-        str.Append("{ \"type\" : \"JoinSuccess\"");
+        str.Append("{ \"pkgTypeName\":\"CatchFish_Client.JoinSuccess\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
         ToStringCore(str);
         str.Append(" }");
         
@@ -832,11 +909,11 @@ namespace CatchFish_Client
     inline void JoinSuccess::ToStringCore(xx::String &str) const
     {
         this->BaseType::ToStringCore(str);
-        str.Append(", \"sitIndex\" : ", this->sitIndex);
+        str.Append(", \"sitIndex\":", this->sitIndex);
     }
 
 
-	inline JoinFail::JoinFail(xx::MemPool* mempool)
+	inline JoinFail::JoinFail(xx::MemPool* const& mempool)
         : xx::Object(mempool)
 	{
 	}
@@ -853,7 +930,7 @@ namespace CatchFish_Client
     {
         int rtv = 0;
         bb.readLengthLimit = 0;
-        if (rtv = bb.Read(this->errMsg)) return rtv;
+        if ((rtv = bb.Read(this->errMsg))) return rtv;
         return rtv;
     }
 
@@ -866,7 +943,7 @@ namespace CatchFish_Client
         }
         else memHeader().flags = 1;
 
-        str.Append("{ \"type\" : \"JoinFail\"");
+        str.Append("{ \"pkgTypeName\":\"CatchFish_Client.JoinFail\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
         ToStringCore(str);
         str.Append(" }");
         
@@ -875,12 +952,12 @@ namespace CatchFish_Client
     inline void JoinFail::ToStringCore(xx::String &str) const
     {
         this->BaseType::ToStringCore(str);
-        if (this->errMsg) str.Append(", \"errMsg\" : \"", this->errMsg, "\"");
-        else str.Append(", \"errMsg\" : nil");
+        if (this->errMsg) str.Append(", \"errMsg\":\"", this->errMsg, "\"");
+        else str.Append(", \"errMsg\":nil");
     }
 
 
-	inline FullSync::FullSync(xx::MemPool* mempool)
+	inline FullSync::FullSync(xx::MemPool* const& mempool)
         : xx::Object(mempool)
 	{
 	}
@@ -896,7 +973,7 @@ namespace CatchFish_Client
     inline int FullSync::FromBBuffer(xx::BBuffer &bb)
     {
         int rtv = 0;
-        if (rtv = bb.Read(this->scene)) return rtv;
+        if ((rtv = bb.Read(this->scene))) return rtv;
         return rtv;
     }
 
@@ -909,7 +986,7 @@ namespace CatchFish_Client
         }
         else memHeader().flags = 1;
 
-        str.Append("{ \"type\" : \"FullSync\"");
+        str.Append("{ \"pkgTypeName\":\"CatchFish_Client.FullSync\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
         ToStringCore(str);
         str.Append(" }");
         
@@ -918,11 +995,11 @@ namespace CatchFish_Client
     inline void FullSync::ToStringCore(xx::String &str) const
     {
         this->BaseType::ToStringCore(str);
-        str.Append(", \"scene\" : ", this->scene);
+        str.Append(", \"scene\":", this->scene);
     }
 
 
-	inline FrameEvents::FrameEvents(xx::MemPool* mempool)
+	inline FrameEvents::FrameEvents(xx::MemPool* const& mempool)
         : xx::Object(mempool)
 	{
 	}
@@ -945,21 +1022,21 @@ namespace CatchFish_Client
     inline int FrameEvents::FromBBuffer(xx::BBuffer &bb)
     {
         int rtv = 0;
-        if (rtv = bb.Read(this->frameNumber)) return rtv;
+        if ((rtv = bb.Read(this->frameNumber))) return rtv;
         bb.readLengthLimit = 0;
-        if (rtv = bb.Read(this->leaves)) return rtv;
+        if ((rtv = bb.Read(this->leaves))) return rtv;
         bb.readLengthLimit = 0;
-        if (rtv = bb.Read(this->joins)) return rtv;
+        if ((rtv = bb.Read(this->joins))) return rtv;
         bb.readLengthLimit = 0;
-        if (rtv = bb.Read(this->fishDeads)) return rtv;
+        if ((rtv = bb.Read(this->fishDeads))) return rtv;
         bb.readLengthLimit = 0;
-        if (rtv = bb.Read(this->fires)) return rtv;
+        if ((rtv = bb.Read(this->fires))) return rtv;
         bb.readLengthLimit = 0;
-        if (rtv = bb.Read(this->fireEnds)) return rtv;
+        if ((rtv = bb.Read(this->fireEnds))) return rtv;
         bb.readLengthLimit = 0;
-        if (rtv = bb.Read(this->fireBegins)) return rtv;
+        if ((rtv = bb.Read(this->fireBegins))) return rtv;
         bb.readLengthLimit = 0;
-        if (rtv = bb.Read(this->fireChangeAngles)) return rtv;
+        if ((rtv = bb.Read(this->fireChangeAngles))) return rtv;
         return rtv;
     }
 
@@ -972,7 +1049,7 @@ namespace CatchFish_Client
         }
         else memHeader().flags = 1;
 
-        str.Append("{ \"type\" : \"FrameEvents\"");
+        str.Append("{ \"pkgTypeName\":\"CatchFish_Client.FrameEvents\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
         ToStringCore(str);
         str.Append(" }");
         
@@ -981,21 +1058,21 @@ namespace CatchFish_Client
     inline void FrameEvents::ToStringCore(xx::String &str) const
     {
         this->BaseType::ToStringCore(str);
-        str.Append(", \"frameNumber\" : ", this->frameNumber);
-        str.Append(", \"leaves\" : ", this->leaves);
-        str.Append(", \"joins\" : ", this->joins);
-        str.Append(", \"fishDeads\" : ", this->fishDeads);
-        str.Append(", \"fires\" : ", this->fires);
-        str.Append(", \"fireEnds\" : ", this->fireEnds);
-        str.Append(", \"fireBegins\" : ", this->fireBegins);
-        str.Append(", \"fireChangeAngles\" : ", this->fireChangeAngles);
+        str.Append(", \"frameNumber\":", this->frameNumber);
+        str.Append(", \"leaves\":", this->leaves);
+        str.Append(", \"joins\":", this->joins);
+        str.Append(", \"fishDeads\":", this->fishDeads);
+        str.Append(", \"fires\":", this->fires);
+        str.Append(", \"fireEnds\":", this->fireEnds);
+        str.Append(", \"fireBegins\":", this->fireBegins);
+        str.Append(", \"fireChangeAngles\":", this->fireChangeAngles);
     }
 
 
 }
 namespace Client_CatchFish
 {
-	inline Join::Join(xx::MemPool* mempool)
+	inline Join::Join(xx::MemPool* const& mempool)
         : xx::Object(mempool)
 	{
 	}
@@ -1012,7 +1089,7 @@ namespace Client_CatchFish
     {
         int rtv = 0;
         bb.readLengthLimit = 64;
-        if (rtv = bb.Read(this->username)) return rtv;
+        if ((rtv = bb.Read(this->username))) return rtv;
         return rtv;
     }
 
@@ -1025,7 +1102,7 @@ namespace Client_CatchFish
         }
         else memHeader().flags = 1;
 
-        str.Append("{ \"type\" : \"Join\"");
+        str.Append("{ \"pkgTypeName\":\"Client_CatchFish.Join\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
         ToStringCore(str);
         str.Append(" }");
         
@@ -1034,12 +1111,12 @@ namespace Client_CatchFish
     inline void Join::ToStringCore(xx::String &str) const
     {
         this->BaseType::ToStringCore(str);
-        if (this->username) str.Append(", \"username\" : \"", this->username, "\"");
-        else str.Append(", \"username\" : nil");
+        if (this->username) str.Append(", \"username\":\"", this->username, "\"");
+        else str.Append(", \"username\":nil");
     }
 
 
-	inline Leave::Leave(xx::MemPool* mempool)
+	inline Leave::Leave(xx::MemPool* const& mempool)
         : xx::Object(mempool)
 	{
 	}
@@ -1066,7 +1143,7 @@ namespace Client_CatchFish
         }
         else memHeader().flags = 1;
 
-        str.Append("{ \"type\" : \"Leave\"");
+        str.Append("{ \"pkgTypeName\":\"Client_CatchFish.Leave\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
         ToStringCore(str);
         str.Append(" }");
         
@@ -1078,7 +1155,7 @@ namespace Client_CatchFish
     }
 
 
-	inline Fire::Fire(xx::MemPool* mempool)
+	inline Fire::Fire(xx::MemPool* const& mempool)
         : xx::Object(mempool)
 	{
 	}
@@ -1097,10 +1174,10 @@ namespace Client_CatchFish
     inline int Fire::FromBBuffer(xx::BBuffer &bb)
     {
         int rtv = 0;
-        if (rtv = bb.Read(this->frameNumber)) return rtv;
-        if (rtv = bb.Read(this->bulletSerialNumber)) return rtv;
-        if (rtv = bb.Read(this->coin)) return rtv;
-        if (rtv = bb.Read(this->moveInc)) return rtv;
+        if ((rtv = bb.Read(this->frameNumber))) return rtv;
+        if ((rtv = bb.Read(this->bulletSerialNumber))) return rtv;
+        if ((rtv = bb.Read(this->coin))) return rtv;
+        if ((rtv = bb.Read(this->moveInc))) return rtv;
         return rtv;
     }
 
@@ -1113,7 +1190,7 @@ namespace Client_CatchFish
         }
         else memHeader().flags = 1;
 
-        str.Append("{ \"type\" : \"Fire\"");
+        str.Append("{ \"pkgTypeName\":\"Client_CatchFish.Fire\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
         ToStringCore(str);
         str.Append(" }");
         
@@ -1122,14 +1199,14 @@ namespace Client_CatchFish
     inline void Fire::ToStringCore(xx::String &str) const
     {
         this->BaseType::ToStringCore(str);
-        str.Append(", \"frameNumber\" : ", this->frameNumber);
-        str.Append(", \"bulletSerialNumber\" : ", this->bulletSerialNumber);
-        str.Append(", \"coin\" : ", this->coin);
-        str.Append(", \"moveInc\" : ", this->moveInc);
+        str.Append(", \"frameNumber\":", this->frameNumber);
+        str.Append(", \"bulletSerialNumber\":", this->bulletSerialNumber);
+        str.Append(", \"coin\":", this->coin);
+        str.Append(", \"moveInc\":", this->moveInc);
     }
 
 
-	inline Hit::Hit(xx::MemPool* mempool)
+	inline Hit::Hit(xx::MemPool* const& mempool)
         : xx::Object(mempool)
 	{
 	}
@@ -1146,8 +1223,8 @@ namespace Client_CatchFish
     inline int Hit::FromBBuffer(xx::BBuffer &bb)
     {
         int rtv = 0;
-        if (rtv = bb.Read(this->bulletSerialNumber)) return rtv;
-        if (rtv = bb.Read(this->fishSerialNumber)) return rtv;
+        if ((rtv = bb.Read(this->bulletSerialNumber))) return rtv;
+        if ((rtv = bb.Read(this->fishSerialNumber))) return rtv;
         return rtv;
     }
 
@@ -1160,7 +1237,7 @@ namespace Client_CatchFish
         }
         else memHeader().flags = 1;
 
-        str.Append("{ \"type\" : \"Hit\"");
+        str.Append("{ \"pkgTypeName\":\"Client_CatchFish.Hit\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
         ToStringCore(str);
         str.Append(" }");
         
@@ -1169,12 +1246,12 @@ namespace Client_CatchFish
     inline void Hit::ToStringCore(xx::String &str) const
     {
         this->BaseType::ToStringCore(str);
-        str.Append(", \"bulletSerialNumber\" : ", this->bulletSerialNumber);
-        str.Append(", \"fishSerialNumber\" : ", this->fishSerialNumber);
+        str.Append(", \"bulletSerialNumber\":", this->bulletSerialNumber);
+        str.Append(", \"fishSerialNumber\":", this->fishSerialNumber);
     }
 
 
-	inline FireBegin::FireBegin(xx::MemPool* mempool)
+	inline FireBegin::FireBegin(xx::MemPool* const& mempool)
         : xx::Object(mempool)
 	{
 	}
@@ -1190,7 +1267,7 @@ namespace Client_CatchFish
     inline int FireBegin::FromBBuffer(xx::BBuffer &bb)
     {
         int rtv = 0;
-        if (rtv = bb.Read(this->angle)) return rtv;
+        if ((rtv = bb.Read(this->angle))) return rtv;
         return rtv;
     }
 
@@ -1203,7 +1280,7 @@ namespace Client_CatchFish
         }
         else memHeader().flags = 1;
 
-        str.Append("{ \"type\" : \"FireBegin\"");
+        str.Append("{ \"pkgTypeName\":\"Client_CatchFish.FireBegin\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
         ToStringCore(str);
         str.Append(" }");
         
@@ -1212,11 +1289,11 @@ namespace Client_CatchFish
     inline void FireBegin::ToStringCore(xx::String &str) const
     {
         this->BaseType::ToStringCore(str);
-        str.Append(", \"angle\" : ", this->angle);
+        str.Append(", \"angle\":", this->angle);
     }
 
 
-	inline FireChangeAngle::FireChangeAngle(xx::MemPool* mempool)
+	inline FireChangeAngle::FireChangeAngle(xx::MemPool* const& mempool)
         : xx::Object(mempool)
 	{
 	}
@@ -1232,7 +1309,7 @@ namespace Client_CatchFish
     inline int FireChangeAngle::FromBBuffer(xx::BBuffer &bb)
     {
         int rtv = 0;
-        if (rtv = bb.Read(this->angle)) return rtv;
+        if ((rtv = bb.Read(this->angle))) return rtv;
         return rtv;
     }
 
@@ -1245,7 +1322,7 @@ namespace Client_CatchFish
         }
         else memHeader().flags = 1;
 
-        str.Append("{ \"type\" : \"FireChangeAngle\"");
+        str.Append("{ \"pkgTypeName\":\"Client_CatchFish.FireChangeAngle\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
         ToStringCore(str);
         str.Append(" }");
         
@@ -1254,11 +1331,11 @@ namespace Client_CatchFish
     inline void FireChangeAngle::ToStringCore(xx::String &str) const
     {
         this->BaseType::ToStringCore(str);
-        str.Append(", \"angle\" : ", this->angle);
+        str.Append(", \"angle\":", this->angle);
     }
 
 
-	inline FireEnd::FireEnd(xx::MemPool* mempool)
+	inline FireEnd::FireEnd(xx::MemPool* const& mempool)
         : xx::Object(mempool)
 	{
 	}
@@ -1285,7 +1362,7 @@ namespace Client_CatchFish
         }
         else memHeader().flags = 1;
 
-        str.Append("{ \"type\" : \"FireEnd\"");
+        str.Append("{ \"pkgTypeName\":\"Client_CatchFish.FireEnd\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
         ToStringCore(str);
         str.Append(" }");
         
@@ -1300,7 +1377,7 @@ namespace Client_CatchFish
 }
 namespace CatchFish
 {
-	inline CollisionArea::CollisionArea(xx::MemPool* mempool)
+	inline CollisionArea::CollisionArea(xx::MemPool* const& mempool)
         : xx::Object(mempool)
 	{
 	}
@@ -1318,10 +1395,10 @@ namespace CatchFish
     inline int CollisionArea::FromBBuffer(xx::BBuffer &bb)
     {
         int rtv = 0;
-        if (rtv = bb.Read(this->offset)) return rtv;
+        if ((rtv = bb.Read(this->offset))) return rtv;
         bb.readLengthLimit = 0;
-        if (rtv = bb.Read(this->offsets)) return rtv;
-        if (rtv = bb.Read(this->radius)) return rtv;
+        if ((rtv = bb.Read(this->offsets))) return rtv;
+        if ((rtv = bb.Read(this->radius))) return rtv;
         return rtv;
     }
 
@@ -1334,7 +1411,7 @@ namespace CatchFish
         }
         else memHeader().flags = 1;
 
-        str.Append("{ \"type\" : \"CollisionArea\"");
+        str.Append("{ \"pkgTypeName\":\"CatchFish.CollisionArea\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
         ToStringCore(str);
         str.Append(" }");
         
@@ -1343,13 +1420,13 @@ namespace CatchFish
     inline void CollisionArea::ToStringCore(xx::String &str) const
     {
         this->BaseType::ToStringCore(str);
-        str.Append(", \"offset\" : ", this->offset);
-        str.Append(", \"offsets\" : ", this->offsets);
-        str.Append(", \"radius\" : ", this->radius);
+        str.Append(", \"offset\":", this->offset);
+        str.Append(", \"offsets\":", this->offsets);
+        str.Append(", \"radius\":", this->radius);
     }
 
 
-	inline FishSpriteFrame::FishSpriteFrame(xx::MemPool* mempool)
+	inline FishSpriteFrame::FishSpriteFrame(xx::MemPool* const& mempool)
         : xx::Object(mempool)
 	{
 	}
@@ -1367,9 +1444,9 @@ namespace CatchFish
     {
         int rtv = 0;
         bb.readLengthLimit = 0;
-        if (rtv = bb.Read(this->fileName)) return rtv;
+        if ((rtv = bb.Read(this->fileName))) return rtv;
         bb.readLengthLimit = 0;
-        if (rtv = bb.Read(this->collisionAreas)) return rtv;
+        if ((rtv = bb.Read(this->collisionAreas))) return rtv;
         return rtv;
     }
 
@@ -1382,7 +1459,7 @@ namespace CatchFish
         }
         else memHeader().flags = 1;
 
-        str.Append("{ \"type\" : \"FishSpriteFrame\"");
+        str.Append("{ \"pkgTypeName\":\"CatchFish.FishSpriteFrame\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
         ToStringCore(str);
         str.Append(" }");
         
@@ -1391,13 +1468,13 @@ namespace CatchFish
     inline void FishSpriteFrame::ToStringCore(xx::String &str) const
     {
         this->BaseType::ToStringCore(str);
-        if (this->fileName) str.Append(", \"fileName\" : \"", this->fileName, "\"");
-        else str.Append(", \"fileName\" : nil");
-        str.Append(", \"collisionAreas\" : ", this->collisionAreas);
+        if (this->fileName) str.Append(", \"fileName\":\"", this->fileName, "\"");
+        else str.Append(", \"fileName\":nil");
+        str.Append(", \"collisionAreas\":", this->collisionAreas);
     }
 
 
-	inline FishConfig::FishConfig(xx::MemPool* mempool)
+	inline FishConfig::FishConfig(xx::MemPool* const& mempool)
         : xx::Object(mempool)
 	{
 	}
@@ -1418,14 +1495,14 @@ namespace CatchFish
     inline int FishConfig::FromBBuffer(xx::BBuffer &bb)
     {
         int rtv = 0;
-        if (rtv = bb.Read(this->typeId)) return rtv;
+        if ((rtv = bb.Read(this->typeId))) return rtv;
         bb.readLengthLimit = 0;
-        if (rtv = bb.Read(this->name)) return rtv;
-        if (rtv = bb.Read(this->coin)) return rtv;
-        if (rtv = bb.Read(this->frameCount)) return rtv;
-        if (rtv = bb.Read(this->collisionArea)) return rtv;
+        if ((rtv = bb.Read(this->name))) return rtv;
+        if ((rtv = bb.Read(this->coin))) return rtv;
+        if ((rtv = bb.Read(this->frameCount))) return rtv;
+        if ((rtv = bb.Read(this->collisionArea))) return rtv;
         bb.readLengthLimit = 0;
-        if (rtv = bb.Read(this->frames)) return rtv;
+        if ((rtv = bb.Read(this->frames))) return rtv;
         return rtv;
     }
 
@@ -1438,7 +1515,7 @@ namespace CatchFish
         }
         else memHeader().flags = 1;
 
-        str.Append("{ \"type\" : \"FishConfig\"");
+        str.Append("{ \"pkgTypeName\":\"CatchFish.FishConfig\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
         ToStringCore(str);
         str.Append(" }");
         
@@ -1447,17 +1524,17 @@ namespace CatchFish
     inline void FishConfig::ToStringCore(xx::String &str) const
     {
         this->BaseType::ToStringCore(str);
-        str.Append(", \"typeId\" : ", this->typeId);
-        if (this->name) str.Append(", \"name\" : \"", this->name, "\"");
-        else str.Append(", \"name\" : nil");
-        str.Append(", \"coin\" : ", this->coin);
-        str.Append(", \"frameCount\" : ", this->frameCount);
-        str.Append(", \"collisionArea\" : ", this->collisionArea);
-        str.Append(", \"frames\" : ", this->frames);
+        str.Append(", \"typeId\":", this->typeId);
+        if (this->name) str.Append(", \"name\":\"", this->name, "\"");
+        else str.Append(", \"name\":nil");
+        str.Append(", \"coin\":", this->coin);
+        str.Append(", \"frameCount\":", this->frameCount);
+        str.Append(", \"collisionArea\":", this->collisionArea);
+        str.Append(", \"frames\":", this->frames);
     }
 
 
-	inline Config::Config(xx::MemPool* mempool)
+	inline Config::Config(xx::MemPool* const& mempool)
         : xx::Object(mempool)
 	{
 	}
@@ -1476,9 +1553,9 @@ namespace CatchFish
     {
         int rtv = 0;
         bb.readLengthLimit = 0;
-        if (rtv = bb.Read(this->fishCfgs)) return rtv;
-        if (rtv = bb.Read(this->bulletRadius)) return rtv;
-        if (rtv = bb.Read(this->playerInitCoin)) return rtv;
+        if ((rtv = bb.Read(this->fishCfgs))) return rtv;
+        if ((rtv = bb.Read(this->bulletRadius))) return rtv;
+        if ((rtv = bb.Read(this->playerInitCoin))) return rtv;
         return rtv;
     }
 
@@ -1491,7 +1568,7 @@ namespace CatchFish
         }
         else memHeader().flags = 1;
 
-        str.Append("{ \"type\" : \"Config\"");
+        str.Append("{ \"pkgTypeName\":\"CatchFish.Config\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
         ToStringCore(str);
         str.Append(" }");
         
@@ -1500,13 +1577,13 @@ namespace CatchFish
     inline void Config::ToStringCore(xx::String &str) const
     {
         this->BaseType::ToStringCore(str);
-        str.Append(", \"fishCfgs\" : ", this->fishCfgs);
-        str.Append(", \"bulletRadius\" : ", this->bulletRadius);
-        str.Append(", \"playerInitCoin\" : ", this->playerInitCoin);
+        str.Append(", \"fishCfgs\":", this->fishCfgs);
+        str.Append(", \"bulletRadius\":", this->bulletRadius);
+        str.Append(", \"playerInitCoin\":", this->playerInitCoin);
     }
 
 
-	inline Player::Player(xx::MemPool* mempool)
+	inline Player::Player(xx::MemPool* const& mempool)
         : xx::Object(mempool)
 	{
 	}
@@ -1527,14 +1604,14 @@ namespace CatchFish
     inline int Player::FromBBuffer(xx::BBuffer &bb)
     {
         int rtv = 0;
-        if (rtv = bb.Read(this->indexAtContainer)) return rtv;
+        if ((rtv = bb.Read(this->indexAtContainer))) return rtv;
         bb.readLengthLimit = 0;
-        if (rtv = bb.Read(this->name)) return rtv;
-        if (rtv = bb.Read(this->sitIndex)) return rtv;
-        if (rtv = bb.Read(this->coin)) return rtv;
-        if (rtv = bb.Read(this->bulletSerialNumber)) return rtv;
+        if ((rtv = bb.Read(this->name))) return rtv;
+        if ((rtv = bb.Read(this->sitIndex))) return rtv;
+        if ((rtv = bb.Read(this->coin))) return rtv;
+        if ((rtv = bb.Read(this->bulletSerialNumber))) return rtv;
         bb.readLengthLimit = 0;
-        if (rtv = bb.Read(this->bullets)) return rtv;
+        if ((rtv = bb.Read(this->bullets))) return rtv;
         return rtv;
     }
 
@@ -1547,7 +1624,7 @@ namespace CatchFish
         }
         else memHeader().flags = 1;
 
-        str.Append("{ \"type\" : \"Player\"");
+        str.Append("{ \"pkgTypeName\":\"CatchFish.Player\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
         ToStringCore(str);
         str.Append(" }");
         
@@ -1556,17 +1633,17 @@ namespace CatchFish
     inline void Player::ToStringCore(xx::String &str) const
     {
         this->BaseType::ToStringCore(str);
-        str.Append(", \"indexAtContainer\" : ", this->indexAtContainer);
-        if (this->name) str.Append(", \"name\" : \"", this->name, "\"");
-        else str.Append(", \"name\" : nil");
-        str.Append(", \"sitIndex\" : ", this->sitIndex);
-        str.Append(", \"coin\" : ", this->coin);
-        str.Append(", \"bulletSerialNumber\" : ", this->bulletSerialNumber);
-        str.Append(", \"bullets\" : ", this->bullets);
+        str.Append(", \"indexAtContainer\":", this->indexAtContainer);
+        if (this->name) str.Append(", \"name\":\"", this->name, "\"");
+        else str.Append(", \"name\":nil");
+        str.Append(", \"sitIndex\":", this->sitIndex);
+        str.Append(", \"coin\":", this->coin);
+        str.Append(", \"bulletSerialNumber\":", this->bulletSerialNumber);
+        str.Append(", \"bullets\":", this->bullets);
     }
 
 
-	inline MoveObject::MoveObject(xx::MemPool* mempool)
+	inline MoveObject::MoveObject(xx::MemPool* const& mempool)
         : xx::Object(mempool)
 	{
 	}
@@ -1588,13 +1665,13 @@ namespace CatchFish
     inline int MoveObject::FromBBuffer(xx::BBuffer &bb)
     {
         int rtv = 0;
-        if (rtv = bb.Read(this->indexAtContainer)) return rtv;
-        if (rtv = bb.Read(this->serialNumber)) return rtv;
-        if (rtv = bb.Read(this->bornFrameNumber)) return rtv;
-        if (rtv = bb.Read(this->bornPos)) return rtv;
-        if (rtv = bb.Read(this->pos)) return rtv;
-        if (rtv = bb.Read(this->moveInc)) return rtv;
-        if (rtv = bb.Read(this->angle)) return rtv;
+        if ((rtv = bb.Read(this->indexAtContainer))) return rtv;
+        if ((rtv = bb.Read(this->serialNumber))) return rtv;
+        if ((rtv = bb.Read(this->bornFrameNumber))) return rtv;
+        if ((rtv = bb.Read(this->bornPos))) return rtv;
+        if ((rtv = bb.Read(this->pos))) return rtv;
+        if ((rtv = bb.Read(this->moveInc))) return rtv;
+        if ((rtv = bb.Read(this->angle))) return rtv;
         return rtv;
     }
 
@@ -1607,7 +1684,7 @@ namespace CatchFish
         }
         else memHeader().flags = 1;
 
-        str.Append("{ \"type\" : \"MoveObject\"");
+        str.Append("{ \"pkgTypeName\":\"CatchFish.MoveObject\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
         ToStringCore(str);
         str.Append(" }");
         
@@ -1616,17 +1693,17 @@ namespace CatchFish
     inline void MoveObject::ToStringCore(xx::String &str) const
     {
         this->BaseType::ToStringCore(str);
-        str.Append(", \"indexAtContainer\" : ", this->indexAtContainer);
-        str.Append(", \"serialNumber\" : ", this->serialNumber);
-        str.Append(", \"bornFrameNumber\" : ", this->bornFrameNumber);
-        str.Append(", \"bornPos\" : ", this->bornPos);
-        str.Append(", \"pos\" : ", this->pos);
-        str.Append(", \"moveInc\" : ", this->moveInc);
-        str.Append(", \"angle\" : ", this->angle);
+        str.Append(", \"indexAtContainer\":", this->indexAtContainer);
+        str.Append(", \"serialNumber\":", this->serialNumber);
+        str.Append(", \"bornFrameNumber\":", this->bornFrameNumber);
+        str.Append(", \"bornPos\":", this->bornPos);
+        str.Append(", \"pos\":", this->pos);
+        str.Append(", \"moveInc\":", this->moveInc);
+        str.Append(", \"angle\":", this->angle);
     }
 
 
-	inline Bullet::Bullet(xx::MemPool* mempool)
+	inline Bullet::Bullet(xx::MemPool* const& mempool)
         : PKG::CatchFish::MoveObject(mempool)
 	{
 	}
@@ -1643,8 +1720,8 @@ namespace CatchFish
     inline int Bullet::FromBBuffer(xx::BBuffer &bb)
     {
         int rtv = 0;
-        if (rtv = this->BaseType::FromBBuffer(bb)) return rtv;
-        if (rtv = bb.Read(this->coin)) return rtv;
+        if ((rtv = this->BaseType::FromBBuffer(bb))) return rtv;
+        if ((rtv = bb.Read(this->coin))) return rtv;
         return rtv;
     }
 
@@ -1657,7 +1734,7 @@ namespace CatchFish
         }
         else memHeader().flags = 1;
 
-        str.Append("{ \"type\" : \"Bullet\"");
+        str.Append("{ \"pkgTypeName\":\"CatchFish.Bullet\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
         ToStringCore(str);
         str.Append(" }");
         
@@ -1666,11 +1743,11 @@ namespace CatchFish
     inline void Bullet::ToStringCore(xx::String &str) const
     {
         this->BaseType::ToStringCore(str);
-        str.Append(", \"coin\" : ", this->coin);
+        str.Append(", \"coin\":", this->coin);
     }
 
 
-	inline Fish::Fish(xx::MemPool* mempool)
+	inline Fish::Fish(xx::MemPool* const& mempool)
         : PKG::CatchFish::MoveObject(mempool)
 	{
 	}
@@ -1692,13 +1769,13 @@ namespace CatchFish
     inline int Fish::FromBBuffer(xx::BBuffer &bb)
     {
         int rtv = 0;
-        if (rtv = this->BaseType::FromBBuffer(bb)) return rtv;
-        if (rtv = bb.Read(this->typeId)) return rtv;
-        if (rtv = bb.Read(this->intAngle)) return rtv;
-        if (rtv = bb.Read(this->cfg)) return rtv;
-        if (rtv = bb.Read(this->moveTo)) return rtv;
-        if (rtv = bb.Read(this->moveStep)) return rtv;
-        if (rtv = bb.Read(this->moveStepCount)) return rtv;
+        if ((rtv = this->BaseType::FromBBuffer(bb))) return rtv;
+        if ((rtv = bb.Read(this->typeId))) return rtv;
+        if ((rtv = bb.Read(this->intAngle))) return rtv;
+        if ((rtv = bb.Read(this->cfg))) return rtv;
+        if ((rtv = bb.Read(this->moveTo))) return rtv;
+        if ((rtv = bb.Read(this->moveStep))) return rtv;
+        if ((rtv = bb.Read(this->moveStepCount))) return rtv;
         return rtv;
     }
 
@@ -1711,7 +1788,7 @@ namespace CatchFish
         }
         else memHeader().flags = 1;
 
-        str.Append("{ \"type\" : \"Fish\"");
+        str.Append("{ \"pkgTypeName\":\"CatchFish.Fish\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
         ToStringCore(str);
         str.Append(" }");
         
@@ -1720,16 +1797,16 @@ namespace CatchFish
     inline void Fish::ToStringCore(xx::String &str) const
     {
         this->BaseType::ToStringCore(str);
-        str.Append(", \"typeId\" : ", this->typeId);
-        str.Append(", \"intAngle\" : ", this->intAngle);
-        str.Append(", \"cfg\" : ", this->cfg);
-        str.Append(", \"moveTo\" : ", this->moveTo);
-        str.Append(", \"moveStep\" : ", this->moveStep);
-        str.Append(", \"moveStepCount\" : ", this->moveStepCount);
+        str.Append(", \"typeId\":", this->typeId);
+        str.Append(", \"intAngle\":", this->intAngle);
+        str.Append(", \"cfg\":", this->cfg);
+        str.Append(", \"moveTo\":", this->moveTo);
+        str.Append(", \"moveStep\":", this->moveStep);
+        str.Append(", \"moveStepCount\":", this->moveStepCount);
     }
 
 
-	inline Scene::Scene(xx::MemPool* mempool)
+	inline Scene::Scene(xx::MemPool* const& mempool)
         : xx::Object(mempool)
 	{
 	}
@@ -1750,14 +1827,14 @@ namespace CatchFish
     inline int Scene::FromBBuffer(xx::BBuffer &bb)
     {
         int rtv = 0;
-        if (rtv = bb.Read(this->frameNumber)) return rtv;
-        if (rtv = bb.Read(this->rnd)) return rtv;
+        if ((rtv = bb.Read(this->frameNumber))) return rtv;
+        if ((rtv = bb.Read(this->rnd))) return rtv;
         bb.readLengthLimit = 0;
-        if (rtv = bb.Read(this->players)) return rtv;
-        if (rtv = bb.Read(this->fishSerialNumber)) return rtv;
+        if ((rtv = bb.Read(this->players))) return rtv;
+        if ((rtv = bb.Read(this->fishSerialNumber))) return rtv;
         bb.readLengthLimit = 0;
-        if (rtv = bb.Read(this->fishs)) return rtv;
-        if (rtv = bb.Read(this->frameEvents)) return rtv;
+        if ((rtv = bb.Read(this->fishs))) return rtv;
+        if ((rtv = bb.Read(this->frameEvents))) return rtv;
         return rtv;
     }
 
@@ -1770,7 +1847,7 @@ namespace CatchFish
         }
         else memHeader().flags = 1;
 
-        str.Append("{ \"type\" : \"Scene\"");
+        str.Append("{ \"pkgTypeName\":\"CatchFish.Scene\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
         ToStringCore(str);
         str.Append(" }");
         
@@ -1779,19 +1856,19 @@ namespace CatchFish
     inline void Scene::ToStringCore(xx::String &str) const
     {
         this->BaseType::ToStringCore(str);
-        str.Append(", \"frameNumber\" : ", this->frameNumber);
-        str.Append(", \"rnd\" : ", this->rnd);
-        str.Append(", \"players\" : ", this->players);
-        str.Append(", \"fishSerialNumber\" : ", this->fishSerialNumber);
-        str.Append(", \"fishs\" : ", this->fishs);
-        str.Append(", \"frameEvents\" : ", this->frameEvents);
+        str.Append(", \"frameNumber\":", this->frameNumber);
+        str.Append(", \"rnd\":", this->rnd);
+        str.Append(", \"players\":", this->players);
+        str.Append(", \"fishSerialNumber\":", this->fishSerialNumber);
+        str.Append(", \"fishs\":", this->fishs);
+        str.Append(", \"frameEvents\":", this->frameEvents);
     }
 
 
 }
 namespace CatchFish::Events
 {
-	inline LeavePlayer::LeavePlayer(xx::MemPool* mempool)
+	inline LeavePlayer::LeavePlayer(xx::MemPool* const& mempool)
         : xx::Object(mempool)
 	{
 	}
@@ -1807,7 +1884,7 @@ namespace CatchFish::Events
     inline int LeavePlayer::FromBBuffer(xx::BBuffer &bb)
     {
         int rtv = 0;
-        if (rtv = bb.Read(this->sitIndex)) return rtv;
+        if ((rtv = bb.Read(this->sitIndex))) return rtv;
         return rtv;
     }
 
@@ -1820,7 +1897,7 @@ namespace CatchFish::Events
         }
         else memHeader().flags = 1;
 
-        str.Append("{ \"type\" : \"LeavePlayer\"");
+        str.Append("{ \"pkgTypeName\":\"CatchFish.Events.LeavePlayer\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
         ToStringCore(str);
         str.Append(" }");
         
@@ -1829,11 +1906,11 @@ namespace CatchFish::Events
     inline void LeavePlayer::ToStringCore(xx::String &str) const
     {
         this->BaseType::ToStringCore(str);
-        str.Append(", \"sitIndex\" : ", this->sitIndex);
+        str.Append(", \"sitIndex\":", this->sitIndex);
     }
 
 
-	inline JoinPlayer::JoinPlayer(xx::MemPool* mempool)
+	inline JoinPlayer::JoinPlayer(xx::MemPool* const& mempool)
         : xx::Object(mempool)
 	{
 	}
@@ -1852,9 +1929,9 @@ namespace CatchFish::Events
     {
         int rtv = 0;
         bb.readLengthLimit = 0;
-        if (rtv = bb.Read(this->name)) return rtv;
-        if (rtv = bb.Read(this->sitIndex)) return rtv;
-        if (rtv = bb.Read(this->coin)) return rtv;
+        if ((rtv = bb.Read(this->name))) return rtv;
+        if ((rtv = bb.Read(this->sitIndex))) return rtv;
+        if ((rtv = bb.Read(this->coin))) return rtv;
         return rtv;
     }
 
@@ -1867,7 +1944,7 @@ namespace CatchFish::Events
         }
         else memHeader().flags = 1;
 
-        str.Append("{ \"type\" : \"JoinPlayer\"");
+        str.Append("{ \"pkgTypeName\":\"CatchFish.Events.JoinPlayer\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
         ToStringCore(str);
         str.Append(" }");
         
@@ -1876,14 +1953,14 @@ namespace CatchFish::Events
     inline void JoinPlayer::ToStringCore(xx::String &str) const
     {
         this->BaseType::ToStringCore(str);
-        if (this->name) str.Append(", \"name\" : \"", this->name, "\"");
-        else str.Append(", \"name\" : nil");
-        str.Append(", \"sitIndex\" : ", this->sitIndex);
-        str.Append(", \"coin\" : ", this->coin);
+        if (this->name) str.Append(", \"name\":\"", this->name, "\"");
+        else str.Append(", \"name\":nil");
+        str.Append(", \"sitIndex\":", this->sitIndex);
+        str.Append(", \"coin\":", this->coin);
     }
 
 
-	inline Fire::Fire(xx::MemPool* mempool)
+	inline Fire::Fire(xx::MemPool* const& mempool)
         : xx::Object(mempool)
 	{
 	}
@@ -1903,11 +1980,11 @@ namespace CatchFish::Events
     inline int Fire::FromBBuffer(xx::BBuffer &bb)
     {
         int rtv = 0;
-        if (rtv = bb.Read(this->sitIndex)) return rtv;
-        if (rtv = bb.Read(this->frameNumber)) return rtv;
-        if (rtv = bb.Read(this->bulletSerialNumber)) return rtv;
-        if (rtv = bb.Read(this->coin)) return rtv;
-        if (rtv = bb.Read(this->moveInc)) return rtv;
+        if ((rtv = bb.Read(this->sitIndex))) return rtv;
+        if ((rtv = bb.Read(this->frameNumber))) return rtv;
+        if ((rtv = bb.Read(this->bulletSerialNumber))) return rtv;
+        if ((rtv = bb.Read(this->coin))) return rtv;
+        if ((rtv = bb.Read(this->moveInc))) return rtv;
         return rtv;
     }
 
@@ -1920,7 +1997,7 @@ namespace CatchFish::Events
         }
         else memHeader().flags = 1;
 
-        str.Append("{ \"type\" : \"Fire\"");
+        str.Append("{ \"pkgTypeName\":\"CatchFish.Events.Fire\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
         ToStringCore(str);
         str.Append(" }");
         
@@ -1929,15 +2006,15 @@ namespace CatchFish::Events
     inline void Fire::ToStringCore(xx::String &str) const
     {
         this->BaseType::ToStringCore(str);
-        str.Append(", \"sitIndex\" : ", this->sitIndex);
-        str.Append(", \"frameNumber\" : ", this->frameNumber);
-        str.Append(", \"bulletSerialNumber\" : ", this->bulletSerialNumber);
-        str.Append(", \"coin\" : ", this->coin);
-        str.Append(", \"moveInc\" : ", this->moveInc);
+        str.Append(", \"sitIndex\":", this->sitIndex);
+        str.Append(", \"frameNumber\":", this->frameNumber);
+        str.Append(", \"bulletSerialNumber\":", this->bulletSerialNumber);
+        str.Append(", \"coin\":", this->coin);
+        str.Append(", \"moveInc\":", this->moveInc);
     }
 
 
-	inline FireBegin::FireBegin(xx::MemPool* mempool)
+	inline FireBegin::FireBegin(xx::MemPool* const& mempool)
         : xx::Object(mempool)
 	{
 	}
@@ -1954,8 +2031,8 @@ namespace CatchFish::Events
     inline int FireBegin::FromBBuffer(xx::BBuffer &bb)
     {
         int rtv = 0;
-        if (rtv = bb.Read(this->sitIndex)) return rtv;
-        if (rtv = bb.Read(this->angle)) return rtv;
+        if ((rtv = bb.Read(this->sitIndex))) return rtv;
+        if ((rtv = bb.Read(this->angle))) return rtv;
         return rtv;
     }
 
@@ -1968,7 +2045,7 @@ namespace CatchFish::Events
         }
         else memHeader().flags = 1;
 
-        str.Append("{ \"type\" : \"FireBegin\"");
+        str.Append("{ \"pkgTypeName\":\"CatchFish.Events.FireBegin\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
         ToStringCore(str);
         str.Append(" }");
         
@@ -1977,12 +2054,12 @@ namespace CatchFish::Events
     inline void FireBegin::ToStringCore(xx::String &str) const
     {
         this->BaseType::ToStringCore(str);
-        str.Append(", \"sitIndex\" : ", this->sitIndex);
-        str.Append(", \"angle\" : ", this->angle);
+        str.Append(", \"sitIndex\":", this->sitIndex);
+        str.Append(", \"angle\":", this->angle);
     }
 
 
-	inline FireChangeAngle::FireChangeAngle(xx::MemPool* mempool)
+	inline FireChangeAngle::FireChangeAngle(xx::MemPool* const& mempool)
         : xx::Object(mempool)
 	{
 	}
@@ -1999,8 +2076,8 @@ namespace CatchFish::Events
     inline int FireChangeAngle::FromBBuffer(xx::BBuffer &bb)
     {
         int rtv = 0;
-        if (rtv = bb.Read(this->sitIndex)) return rtv;
-        if (rtv = bb.Read(this->angle)) return rtv;
+        if ((rtv = bb.Read(this->sitIndex))) return rtv;
+        if ((rtv = bb.Read(this->angle))) return rtv;
         return rtv;
     }
 
@@ -2013,7 +2090,7 @@ namespace CatchFish::Events
         }
         else memHeader().flags = 1;
 
-        str.Append("{ \"type\" : \"FireChangeAngle\"");
+        str.Append("{ \"pkgTypeName\":\"CatchFish.Events.FireChangeAngle\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
         ToStringCore(str);
         str.Append(" }");
         
@@ -2022,12 +2099,12 @@ namespace CatchFish::Events
     inline void FireChangeAngle::ToStringCore(xx::String &str) const
     {
         this->BaseType::ToStringCore(str);
-        str.Append(", \"sitIndex\" : ", this->sitIndex);
-        str.Append(", \"angle\" : ", this->angle);
+        str.Append(", \"sitIndex\":", this->sitIndex);
+        str.Append(", \"angle\":", this->angle);
     }
 
 
-	inline FireEnd::FireEnd(xx::MemPool* mempool)
+	inline FireEnd::FireEnd(xx::MemPool* const& mempool)
         : xx::Object(mempool)
 	{
 	}
@@ -2043,7 +2120,7 @@ namespace CatchFish::Events
     inline int FireEnd::FromBBuffer(xx::BBuffer &bb)
     {
         int rtv = 0;
-        if (rtv = bb.Read(this->sitIndex)) return rtv;
+        if ((rtv = bb.Read(this->sitIndex))) return rtv;
         return rtv;
     }
 
@@ -2056,7 +2133,7 @@ namespace CatchFish::Events
         }
         else memHeader().flags = 1;
 
-        str.Append("{ \"type\" : \"FireEnd\"");
+        str.Append("{ \"pkgTypeName\":\"CatchFish.Events.FireEnd\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
         ToStringCore(str);
         str.Append(" }");
         
@@ -2065,11 +2142,11 @@ namespace CatchFish::Events
     inline void FireEnd::ToStringCore(xx::String &str) const
     {
         this->BaseType::ToStringCore(str);
-        str.Append(", \"sitIndex\" : ", this->sitIndex);
+        str.Append(", \"sitIndex\":", this->sitIndex);
     }
 
 
-	inline BulletHit::BulletHit(xx::MemPool* mempool)
+	inline BulletHit::BulletHit(xx::MemPool* const& mempool)
         : xx::Object(mempool)
 	{
 	}
@@ -2086,8 +2163,8 @@ namespace CatchFish::Events
     inline int BulletHit::FromBBuffer(xx::BBuffer &bb)
     {
         int rtv = 0;
-        if (rtv = bb.Read(this->sitIndex)) return rtv;
-        if (rtv = bb.Read(this->bulletSerialNumber)) return rtv;
+        if ((rtv = bb.Read(this->sitIndex))) return rtv;
+        if ((rtv = bb.Read(this->bulletSerialNumber))) return rtv;
         return rtv;
     }
 
@@ -2100,7 +2177,7 @@ namespace CatchFish::Events
         }
         else memHeader().flags = 1;
 
-        str.Append("{ \"type\" : \"BulletHit\"");
+        str.Append("{ \"pkgTypeName\":\"CatchFish.Events.BulletHit\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
         ToStringCore(str);
         str.Append(" }");
         
@@ -2109,12 +2186,12 @@ namespace CatchFish::Events
     inline void BulletHit::ToStringCore(xx::String &str) const
     {
         this->BaseType::ToStringCore(str);
-        str.Append(", \"sitIndex\" : ", this->sitIndex);
-        str.Append(", \"bulletSerialNumber\" : ", this->bulletSerialNumber);
+        str.Append(", \"sitIndex\":", this->sitIndex);
+        str.Append(", \"bulletSerialNumber\":", this->bulletSerialNumber);
     }
 
 
-	inline FishDead::FishDead(xx::MemPool* mempool)
+	inline FishDead::FishDead(xx::MemPool* const& mempool)
         : xx::Object(mempool)
 	{
 	}
@@ -2132,9 +2209,9 @@ namespace CatchFish::Events
     inline int FishDead::FromBBuffer(xx::BBuffer &bb)
     {
         int rtv = 0;
-        if (rtv = bb.Read(this->sitIndex)) return rtv;
-        if (rtv = bb.Read(this->fishSerialNumber)) return rtv;
-        if (rtv = bb.Read(this->coin)) return rtv;
+        if ((rtv = bb.Read(this->sitIndex))) return rtv;
+        if ((rtv = bb.Read(this->fishSerialNumber))) return rtv;
+        if ((rtv = bb.Read(this->coin))) return rtv;
         return rtv;
     }
 
@@ -2147,7 +2224,7 @@ namespace CatchFish::Events
         }
         else memHeader().flags = 1;
 
-        str.Append("{ \"type\" : \"FishDead\"");
+        str.Append("{ \"pkgTypeName\":\"CatchFish.Events.FishDead\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
         ToStringCore(str);
         str.Append(" }");
         
@@ -2156,59 +2233,13 @@ namespace CatchFish::Events
     inline void FishDead::ToStringCore(xx::String &str) const
     {
         this->BaseType::ToStringCore(str);
-        str.Append(", \"sitIndex\" : ", this->sitIndex);
-        str.Append(", \"fishSerialNumber\" : ", this->fishSerialNumber);
-        str.Append(", \"coin\" : ", this->coin);
+        str.Append(", \"sitIndex\":", this->sitIndex);
+        str.Append(", \"fishSerialNumber\":", this->fishSerialNumber);
+        str.Append(", \"coin\":", this->coin);
     }
 
 
 }
-}
-namespace xx
-{
-	template<> struct TypeId<PKG::CatchFish_Client::JoinSuccess> { static const uint16_t value = 3; };
-	template<> struct TypeId<PKG::CatchFish_Client::JoinFail> { static const uint16_t value = 4; };
-	template<> struct TypeId<PKG::CatchFish_Client::FullSync> { static const uint16_t value = 5; };
-	template<> struct TypeId<PKG::CatchFish::Scene> { static const uint16_t value = 6; };
-	template<> struct TypeId<PKG::CatchFish_Client::FrameEvents> { static const uint16_t value = 7; };
-	template<> struct TypeId<xx::List<PKG::CatchFish::Events::LeavePlayer_p>> { static const uint16_t value = 8; };
-	template<> struct TypeId<xx::List<PKG::CatchFish::Events::JoinPlayer_p>> { static const uint16_t value = 9; };
-	template<> struct TypeId<xx::List<PKG::CatchFish::Events::FishDead_p>> { static const uint16_t value = 11; };
-	template<> struct TypeId<xx::List<PKG::CatchFish::Events::Fire_p>> { static const uint16_t value = 12; };
-	template<> struct TypeId<xx::List<PKG::CatchFish::Events::FireEnd_p>> { static const uint16_t value = 13; };
-	template<> struct TypeId<xx::List<PKG::CatchFish::Events::FireBegin_p>> { static const uint16_t value = 14; };
-	template<> struct TypeId<xx::List<PKG::CatchFish::Events::FireChangeAngle_p>> { static const uint16_t value = 15; };
-	template<> struct TypeId<PKG::Client_CatchFish::Join> { static const uint16_t value = 16; };
-	template<> struct TypeId<PKG::Client_CatchFish::Leave> { static const uint16_t value = 17; };
-	template<> struct TypeId<PKG::Client_CatchFish::Fire> { static const uint16_t value = 18; };
-	template<> struct TypeId<PKG::Client_CatchFish::Hit> { static const uint16_t value = 50; };
-	template<> struct TypeId<PKG::Client_CatchFish::FireBegin> { static const uint16_t value = 19; };
-	template<> struct TypeId<PKG::Client_CatchFish::FireChangeAngle> { static const uint16_t value = 20; };
-	template<> struct TypeId<PKG::Client_CatchFish::FireEnd> { static const uint16_t value = 21; };
-	template<> struct TypeId<PKG::CatchFish::CollisionArea> { static const uint16_t value = 22; };
-	template<> struct TypeId<xx::List<::xx::Pos>> { static const uint16_t value = 23; };
-	template<> struct TypeId<PKG::CatchFish::FishSpriteFrame> { static const uint16_t value = 24; };
-	template<> struct TypeId<xx::List<PKG::CatchFish::CollisionArea_p>> { static const uint16_t value = 25; };
-	template<> struct TypeId<PKG::CatchFish::FishConfig> { static const uint16_t value = 26; };
-	template<> struct TypeId<xx::List<PKG::CatchFish::FishSpriteFrame_p>> { static const uint16_t value = 27; };
-	template<> struct TypeId<PKG::CatchFish::Config> { static const uint16_t value = 28; };
-	template<> struct TypeId<xx::List<PKG::CatchFish::FishConfig_p>> { static const uint16_t value = 29; };
-	template<> struct TypeId<PKG::CatchFish::Player> { static const uint16_t value = 30; };
-	template<> struct TypeId<xx::List<PKG::CatchFish::Bullet_p>> { static const uint16_t value = 31; };
-	template<> struct TypeId<PKG::CatchFish::MoveObject> { static const uint16_t value = 33; };
-	template<> struct TypeId<PKG::CatchFish::Bullet> { static const uint16_t value = 34; };
-	template<> struct TypeId<PKG::CatchFish::Fish> { static const uint16_t value = 35; };
-	template<> struct TypeId<::xx::Random> { static const uint16_t value = 36; };
-	template<> struct TypeId<xx::List<PKG::CatchFish::Player_p>> { static const uint16_t value = 37; };
-	template<> struct TypeId<xx::List<PKG::CatchFish::Fish_p>> { static const uint16_t value = 38; };
-	template<> struct TypeId<PKG::CatchFish::Events::LeavePlayer> { static const uint16_t value = 39; };
-	template<> struct TypeId<PKG::CatchFish::Events::JoinPlayer> { static const uint16_t value = 40; };
-	template<> struct TypeId<PKG::CatchFish::Events::Fire> { static const uint16_t value = 41; };
-	template<> struct TypeId<PKG::CatchFish::Events::FireBegin> { static const uint16_t value = 42; };
-	template<> struct TypeId<PKG::CatchFish::Events::FireChangeAngle> { static const uint16_t value = 43; };
-	template<> struct TypeId<PKG::CatchFish::Events::FireEnd> { static const uint16_t value = 44; };
-	template<> struct TypeId<PKG::CatchFish::Events::BulletHit> { static const uint16_t value = 45; };
-	template<> struct TypeId<PKG::CatchFish::Events::FishDead> { static const uint16_t value = 46; };
 }
 namespace PKG
 {
@@ -2220,12 +2251,19 @@ namespace PKG
 	    xx::MemPool::Register<PKG::CatchFish::Scene, xx::Object>();
 	    xx::MemPool::Register<PKG::CatchFish_Client::FrameEvents, xx::Object>();
 	    xx::MemPool::Register<xx::List<PKG::CatchFish::Events::LeavePlayer_p>, xx::Object>();
+	    xx::MemPool::Register<PKG::CatchFish::Events::LeavePlayer, xx::Object>();
 	    xx::MemPool::Register<xx::List<PKG::CatchFish::Events::JoinPlayer_p>, xx::Object>();
+	    xx::MemPool::Register<PKG::CatchFish::Events::JoinPlayer, xx::Object>();
 	    xx::MemPool::Register<xx::List<PKG::CatchFish::Events::FishDead_p>, xx::Object>();
+	    xx::MemPool::Register<PKG::CatchFish::Events::FishDead, xx::Object>();
 	    xx::MemPool::Register<xx::List<PKG::CatchFish::Events::Fire_p>, xx::Object>();
+	    xx::MemPool::Register<PKG::CatchFish::Events::Fire, xx::Object>();
 	    xx::MemPool::Register<xx::List<PKG::CatchFish::Events::FireEnd_p>, xx::Object>();
+	    xx::MemPool::Register<PKG::CatchFish::Events::FireEnd, xx::Object>();
 	    xx::MemPool::Register<xx::List<PKG::CatchFish::Events::FireBegin_p>, xx::Object>();
+	    xx::MemPool::Register<PKG::CatchFish::Events::FireBegin, xx::Object>();
 	    xx::MemPool::Register<xx::List<PKG::CatchFish::Events::FireChangeAngle_p>, xx::Object>();
+	    xx::MemPool::Register<PKG::CatchFish::Events::FireChangeAngle, xx::Object>();
 	    xx::MemPool::Register<PKG::Client_CatchFish::Join, xx::Object>();
 	    xx::MemPool::Register<PKG::Client_CatchFish::Leave, xx::Object>();
 	    xx::MemPool::Register<PKG::Client_CatchFish::Fire, xx::Object>();
@@ -2243,19 +2281,12 @@ namespace PKG
 	    xx::MemPool::Register<xx::List<PKG::CatchFish::FishConfig_p>, xx::Object>();
 	    xx::MemPool::Register<PKG::CatchFish::Player, xx::Object>();
 	    xx::MemPool::Register<xx::List<PKG::CatchFish::Bullet_p>, xx::Object>();
-	    xx::MemPool::Register<PKG::CatchFish::MoveObject, xx::Object>();
 	    xx::MemPool::Register<PKG::CatchFish::Bullet, PKG::CatchFish::MoveObject>();
+	    xx::MemPool::Register<PKG::CatchFish::MoveObject, xx::Object>();
 	    xx::MemPool::Register<PKG::CatchFish::Fish, PKG::CatchFish::MoveObject>();
 	    xx::MemPool::Register<::xx::Random, xx::Object>();
 	    xx::MemPool::Register<xx::List<PKG::CatchFish::Player_p>, xx::Object>();
 	    xx::MemPool::Register<xx::List<PKG::CatchFish::Fish_p>, xx::Object>();
-	    xx::MemPool::Register<PKG::CatchFish::Events::LeavePlayer, xx::Object>();
-	    xx::MemPool::Register<PKG::CatchFish::Events::JoinPlayer, xx::Object>();
-	    xx::MemPool::Register<PKG::CatchFish::Events::Fire, xx::Object>();
-	    xx::MemPool::Register<PKG::CatchFish::Events::FireBegin, xx::Object>();
-	    xx::MemPool::Register<PKG::CatchFish::Events::FireChangeAngle, xx::Object>();
-	    xx::MemPool::Register<PKG::CatchFish::Events::FireEnd, xx::Object>();
 	    xx::MemPool::Register<PKG::CatchFish::Events::BulletHit, xx::Object>();
-	    xx::MemPool::Register<PKG::CatchFish::Events::FishDead, xx::Object>();
 	}
 }
