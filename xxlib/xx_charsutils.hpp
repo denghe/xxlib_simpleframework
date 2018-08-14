@@ -584,4 +584,14 @@ namespace xx
 		}
 	};
 
+	// 适配 std::pair<char*, char*>
+	template<>
+	struct StrFunc<std::pair<char*, char*>, void>
+	{
+		static inline void WriteTo(String& s, std::pair<char*, char*> const& in)
+		{
+			s.Append("{ \"key\":\"", in.first, "\", \"value\":", in.second, "\" }");
+		}
+	};
+
 }

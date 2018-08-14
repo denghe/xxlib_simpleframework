@@ -3,32 +3,51 @@
 #include "xx_uv.h"
 #include <iostream>
 
+// 声明处理函数. 函数内如果觉得有必要断开连接, 可直接 Release peer
+typedef void(*PathHandlerFunc)(xx::UvHttpPeer*);
+
+
 inline void Host()
 {
 	xx::MemPool mp;
+	xx::Dict<char const*, PathHandlerFunc> pathHandlers(&mp);
+
+	pathHandlers["test"] = [](xx::UvHttpPeer* peer)
+	{
+		peer->status.Clear();
+		peer->status.Append("{ \"method\":\"", peer->method
+			, "\", \"path\":\"", peer->path
+			, "\", \"queries\":", peer->queries
+			, "\", \"headers\":", peer->headers
+			, "\", \"body\":\"", peer->body, "\""
+		);
+		peer->SendHttpResponse(peer->status);
+	};
+
 	xx::UvLoop loop(&mp);
 	auto listener = loop.CreateTcpListener();
-	listener->OnCreatePeer = [listener]
+	listener->OnCreatePeer = [&pathHandlers, listener]
 	{
 		auto peer = listener->mempool->Create<xx::UvHttpPeer>(*listener);
-		//peer->rawData.MPCreate(peer->mempool);
-		peer->OnMessageComplete = [peer]
+		peer->rawData.MPCreate(peer->mempool);
+		peer->OnMessageComplete = [&pathHandlers, peer]
 		{
-			//std::cout << "host rawData = " << peer->rawData << std::endl;
-
-			xx::String s(peer->mempool);
-			s.AppendFormat("url: {0}\r\n", peer->url);
-			for (auto& kv : peer->headers)
+			peer->ParseUrl();
+			auto idx = pathHandlers.Find(peer->path);
+			if (idx != -1)
 			{
-				s.AppendFormat("key: {0}, value: {1}\r\n", kv.key, kv.value);
+				// 根据 url 之 path 路由处理函数
+				pathHandlers.ValueAt(idx)(peer);
 			}
-			s.Append("body: ", peer->body);
-			peer->SendHttpResponse(s.buf, s.dataLen);
+			else
+			{
+				peer->Release();
+			}
 			return 0;
 		};
 		peer->OnError = [peer](uint32_t errorNumber, char const* errorMessage)
 		{
-			//std::cout << errorMessage << std::endl;
+			std::cout << errorMessage << std::endl;
 		};
 		return peer;
 	};
@@ -65,8 +84,7 @@ inline void Test()
 	};
 	client->OnMessageComplete = [client]
 	{
-		//std::cout << "client rawData = " << client->rawData << std::endl;
-		std::cout << "client body = " << client->body << std::endl;
+		std::cout << "client recv body = " << client->body << std::endl;
 		return 0;
 	};
 	client->SetAddress("127.0.0.1", 10080);

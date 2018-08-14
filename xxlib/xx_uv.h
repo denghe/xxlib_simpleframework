@@ -449,17 +449,31 @@ namespace xx
 	{
 	public:
 		// 来自 libuv 的转换器及配置
-		http_parser* parser;
-		http_parser_settings* parser_settings;
+		http_parser_settings * parser_settings = nullptr;
+		http_parser * parser = nullptr;
+
+		// GET / POST / ...
+		xx::String method;
 
 		// 头部所有键值对
 		xx::Dict<xx::String, xx::String> headers;
 
+		// 是否保持连接
+		bool keepAlive = false;
+
 		// 正文
 		xx::String body;
 
-		// 原始 url 串
+		// 原始 url 串( 在调用 ParseUrl 后内容将被修改 )
 		xx::String url;
+
+		// ParseUrl 后将填充下面三个属性
+		char* path = nullptr;
+		xx::List<std::pair<char*, char*>> queries;	// 键值对
+		char* fragment = nullptr;
+
+		// 原始 status 串
+		xx::String status;
 
 		// 当收到 key 时, 先往这 append. 出现 value 时再塞 headers
 		xx::String lastKey;
@@ -468,7 +482,7 @@ namespace xx
 		xx::String* lastValue = nullptr;
 
 		// 成功接收完一段信息时的回调.
-		std::function<int()> OnMessageComplete;
+		std::function<void()> OnMessageComplete;
 
 		// 接收出错回调. 接着会发生 Release
 		std::function<void(uint32_t errorNumber, char const* errorMessage)> OnError;
@@ -488,6 +502,10 @@ namespace xx
 			; // 59
 
 		void SendHttpResponse(char const* const& bufPtr, size_t const& len);
+		void SendHttpResponse(String const& txt);
+
+		// 会改变 url 属性内容 并填充 path, queries, fragment
+		void ParseUrl();
 	};
 
 	// 代码从 UvHttpPeer 复制小改
@@ -495,17 +513,23 @@ namespace xx
 	{
 	public:
 		// 来自 libuv 的转换器及配置
-		http_parser * parser;
-		http_parser_settings* parser_settings;
+		http_parser_settings* parser_settings = nullptr;
+		http_parser * parser = nullptr;
 
 		// 头部所有键值对
 		xx::Dict<xx::String, xx::String> headers;
+
+		// 是否保持连接
+		bool keepAlive = false;
 
 		// 正文
 		xx::String body;
 
 		// 原始 url 串
 		xx::String url;
+
+		// 原始 status 串
+		xx::String status;
 
 		// 当收到 key 时, 先往这 append. 出现 value 时再塞 headers
 		xx::String lastKey;
@@ -514,7 +538,7 @@ namespace xx
 		xx::String* lastValue = nullptr;
 
 		// 成功接收完一段信息时的回调.
-		std::function<int()> OnMessageComplete;
+		std::function<void()> OnMessageComplete;
 
 		// 接收出错回调. 接着会发生 Release
 		std::function<void(uint32_t errorNumber, char const* errorMessage)> OnError;

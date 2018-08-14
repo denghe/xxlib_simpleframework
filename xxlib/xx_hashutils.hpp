@@ -61,7 +61,7 @@ namespace xx
 
 	// 适配 小于4字节的 整数
 	template<typename T>
-	struct HashFunc<T, std::enable_if_t<std::is_integral_v<T> && sizeof(T) < 4>>
+	struct HashFunc < T, std::enable_if_t<std::is_integral_v<T> && sizeof(T) < 4 > >
 	{
 		static uint32_t GetHashCode(T const& in)
 		{
@@ -78,6 +78,8 @@ namespace xx
 			return ((uint32_t*)&in)[0] ^ ((uint32_t*)&in)[1];
 		}
 	};
+
+
 
 	// 适配 void* 指针
 	// 经验数据. 经测试发现 x64 下 vc new 至少是 16 的倍数, x86 至少是 8 的倍数
@@ -133,4 +135,47 @@ namespace xx
 		}
 	};
 
+	// 适配 char const* 字串
+	template<>
+	struct HashFunc<char const*, void>
+	{
+		static uint32_t GetHashCode(char const* const& in)
+		{
+			uint32_t seed = 0x811C9DC5U;
+			if (!in) return seed;
+			auto size = strlen(in);
+			if (!size) return seed;
+			const char* src = (const char*)in;
+			const uint32_t fnv_prime = 0x1000193U;
+			while (size--)
+			{
+				seed ^= ((uint32_t)(*src++));
+				seed *= fnv_prime;
+			}
+			return seed;
+
+			//auto len = strlen(in);
+			//uint32_t hash, i;
+			//for (hash = i = 0; i < len; ++i)
+			//{
+			//	hash += in[i];
+			//	hash += (hash << 10);
+			//	hash ^= (hash >> 6);
+			//}
+			//hash += (hash << 3);
+			//hash ^= (hash >> 11);
+			//hash += (hash << 15);
+			//return hash;
+
+			//return HashFunc<std::pair<char*, size_t>>::GetHashCode(std::make_pair((char*)in, strlen(in)));
+		}
+	};
+
+
+	// 比较器 适配 char const* 字串
+	template<>
+	struct EqualsFunc<char const*, void>
+	{
+		static bool EqualsTo(char const* const& a, char const* const& b) { return !strcmp(a, b); }
+	};
 }
