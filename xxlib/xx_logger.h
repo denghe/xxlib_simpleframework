@@ -128,7 +128,7 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
 
 		}
 
-		// 插入一条 log. time 传入 DateTime.Now.Ticks
+		// 插入一条 log. time 传入 NowEpoch10m
 		template<typename MachineType, typename ServiceType, typename InstanceIdType, typename TitleType, typename DescType>
 		inline void InsertLog
 		(
@@ -287,7 +287,7 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
 			o->id = 1;             // 用来标记是通过 Write 写入的
 			o->level = level;
 
-			o->time = GetDateTimeNowTicks();
+			o->time = NowEpoch10m();
 			o->title.Assign(title);
 			o->opcode = opcode;
 			o->desc.Assign(desc);

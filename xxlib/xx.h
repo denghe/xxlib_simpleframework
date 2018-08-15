@@ -20,7 +20,7 @@
 namespace std
 {
 	template<class B, class D>
-    inline constexpr bool is_base_of_v = is_base_of<B, D>::value;
+	inline constexpr bool is_base_of_v = is_base_of<B, D>::value;
 	template<class T>
 	inline constexpr bool is_arithmetic_v = is_arithmetic<T>::value;
 	template<class T>
@@ -145,11 +145,11 @@ namespace xx
 
 
 	/************************************************************************************/
-	// time_point <--> .net DateTime.Now.Ticks converts
+	// time_point <--> .net DateTime.Now.ToUniversalTime().Ticks converts
 	/************************************************************************************/
 
 	/*
-	
+
 	// some example for output:
 
 	#include <ctime>
@@ -160,7 +160,7 @@ namespace xx
 	localtime_s(&tm, &t);
 	std::cout << std::put_time(&tm, "%Y-%m-%d %X") << std::endl;
 
-	auto tp = xx::DateTimeTicksToTimePoint(636650305817699126);
+	auto tp = xx::Epoch10mToTimePoint(15xxxxxxxxxxxxxxxxxxx);
 	t = std::chrono::system_clock::to_time_t(tp);
 	localtime_s(&tm, &t);
 	std::cout << std::put_time(&tm, "%Y-%m-%d %X") << std::endl;
@@ -168,44 +168,56 @@ namespace xx
 	*/
 
 
-	inline int64_t TimeSinceEpochToDateTimeTicks(int64_t const& val)
+
+	// 时间点 转 epoch (精度为秒后 7 个 0)
+	inline int64_t TimePointToEpoch10m(std::chrono::system_clock::time_point const& val)
 	{
-		return val + 621356256000000000LL;
+		return val.time_since_epoch().count();
 	}
 
-	inline int64_t TimePointToDateTimeTicks(std::chrono::system_clock::time_point const& val)
-	{
-		return val.time_since_epoch().count() + 621356256000000000LL;
-	}
-
-	inline int64_t DateTimeTicksToTimeSinceEpoch(int64_t const& val)
-	{
-		return val - 621356256000000000LL;
-	}
-
-	inline std::chrono::system_clock::time_point TimeSinceEpochToTimePoint(int64_t const& val)
+	//  epoch (精度为秒后 7 个 0) 转 时间点
+	inline std::chrono::system_clock::time_point Epoch10mToTimePoint(int64_t const& val)
 	{
 		return std::chrono::system_clock::time_point(std::chrono::system_clock::time_point::duration(val));
 	}
 
-	inline std::chrono::system_clock::time_point DateTimeTicksToTimePoint(int64_t const& val)
-	{
-		return TimeSinceEpochToTimePoint(val - 621356256000000000LL);
-	}
 
-	inline std::chrono::system_clock::time_point GetNowTimePoint()
+	// 得到当前时间点
+	inline std::chrono::system_clock::time_point NowTimePoint()
 	{
 		return std::chrono::system_clock::now();
 	}
 
-	inline int64_t GetNowTimeSinceEpoch()
+	// 得到当前时间点的 epoch (精度为秒后 7 个 0)
+	inline int64_t NowEpoch10m()
 	{
-		return GetNowTimePoint().time_since_epoch().count();
+		return NowTimePoint().time_since_epoch().count();
 	}
 
-	inline int64_t GetDateTimeNowTicks()
+
+	// epoch (精度为秒后 7 个 0) 转为 .Net DateTime Utc Ticks
+	inline int64_t Epoch10mToUtcDateTimeTicks(int64_t const& val)
 	{
-		return GetNowTimeSinceEpoch() + 621356256000000000LL;
+		return val + 621355968000000000LL;
+	}
+
+	// .Net DateTime Utc Ticks 转为 epoch (精度为秒后 7 个 0)
+	inline int64_t UtcDateTimeTicksToEpoch10m(int64_t const& val)
+	{
+		return val - 621355968000000000LL;
+	}
+
+
+	// 时间点 转 epoch (精度为秒)
+	inline int32_t TimePointToEpoch(std::chrono::system_clock::time_point const& val)
+	{
+		return (int32_t)(val.time_since_epoch().count() / 10000000);
+	}
+
+	//  epoch (精度为秒) 转 时间点
+	inline std::chrono::system_clock::time_point EpochToTimePoint(int32_t const& val)
+	{
+		return std::chrono::system_clock::time_point(std::chrono::system_clock::time_point::duration((int64_t)val * 10000000));
 	}
 
 }
