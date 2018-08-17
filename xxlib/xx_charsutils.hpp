@@ -275,41 +275,38 @@ namespace xx
 
 	// c-style char* 转为各种长度的 有符号整数. Out 取值范围： int8~64
 	template <typename OutType>
-	void ToInt(char const* const& in, OutType& out) noexcept
+	void ToInt(char const* in, OutType& out) noexcept
 	{
-		auto in_ = in;
-		if (*in_ == '0')
+		if (!in || !*in || *in == '0')
 		{
 			out = 0;
 			return;
 		}
 		bool b;
-		if (*in_ == '-')
+		if (*in == '-')
 		{
 			b = true;
-			++in_;
+			++in;
 		}
 		else b = false;
-		OutType r = *in_ - '0';
+		OutType r = *in - '0';
 		char c;
-		while ((c = *(++in_))) r = r * 10 + (c - '0');
+		while ((c = *(++in))) r = r * 10 + (c - '0');
 		out = b ? -r : r;
 	}
 
 	// c-style char* (不能有减号打头) 转为各种长度的 无符号整数. Out 取值范围： uint8, uint16, uint32, uint64
 	template <typename OutType>
-	void ToUInt(char const* const& in, OutType& out) noexcept
+	void ToUInt(char const* in, OutType& out) noexcept
 	{
-		assert(in);
-		auto in_ = in;
-		if (*in_ == '0')
+		if (!in || !*in || *in == '0')
 		{
 			out = 0;
 			return;
 		}
-		OutType r = *(in_)-'0';
+		OutType r = *(in)-'0';
 		char c;
-		while ((c = *(++in_))) r = r * 10 + (c - '0');
+		while ((c = *(++in))) r = r * 10 + (c - '0');
 		out = r;
 	}
 
@@ -590,7 +587,7 @@ namespace xx
 	{
 		static inline void WriteTo(String& s, std::pair<char*, char*> const& in)
 		{
-			s.Append("{ \"key\":\"", in.first, "\", \"value\":", in.second, "\" }");
+			s.Append("{ \"key\":\"", in.first, "\", \"value\":\"", in.second, "\" }");
 		}
 	};
 

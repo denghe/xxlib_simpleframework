@@ -1709,6 +1709,7 @@ xx::UvHttpPeer::UvHttpPeer(UvTcpListener& listener)
 	, queries(listener.mempool)
 	, status(loop.mempool)
 	, lastKey(listener.mempool)
+	, s(listener.mempool)
 {
 	OnMessageComplete = [] { return 0; };
 
@@ -1837,11 +1838,10 @@ void xx::UvHttpPeer::SendHttpResponse(char const* const& bufPtr, size_t const& l
 	SendBytes(bbSend.buf, (int)bbSend.dataLen);
 }
 
-void xx::UvHttpPeer::SendHttpResponse(String const& txt)
+void xx::UvHttpPeer::SendHttpResponse()
 {
-	SendHttpResponse(txt.buf, txt.dataLen);
+	SendHttpResponse(s.buf, s.dataLen);
 }
-
 
 inline char* FindAndTerminate(char* s, char const& c)
 {

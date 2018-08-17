@@ -138,10 +138,10 @@ namespace xx
 		// 由于路由服务需要保持 routingAddress 为空, 在收到 Routing 包时, 可抛出 OnReceiveRouting, 以便进一步用相应的 client 转发
 		// 如果 routingAddress 非空, 在收到 Routing 包时, 可抛出 OnReceivePackage, OnReceiveRequest 或 触发 RPC 回调.
 		// 不同的是, senderAddress 将被填充返回地址. 故可根据它来判断 接收事件 属于何种数据来源.
-		xx::String routingAddress;
-		xx::String senderAddress;
+		String routingAddress;
+		String senderAddress;
 
-		// (xx::BBuffer& bb, size_t pkgOffset, size_t pkgLen, size_t addrOffset, size_t addrLen)
+		// (BBuffer& bb, size_t pkgOffset, size_t pkgLen, size_t addrOffset, size_t addrLen)
 		// 3 个 size_t 代表 含包头的总包长, 地址起始偏移, 地址长度( 方便替换地址并 memcpy )
 		// BBuffer 的 offset 停在包头起始处
 		std::function<void(BBuffer&, size_t, size_t, size_t)> OnReceiveRouting;
@@ -161,7 +161,7 @@ namespace xx
 
 
 		// 用来放 serial 以便断线时及时发起 Request 超时回调
-		xx::HashSet_p<uint32_t> rpcSerials;
+		HashSet_p<uint32_t> rpcSerials;
 
 
 		UvTcpUdpBase(UvLoop& loop);
@@ -217,7 +217,7 @@ namespace xx
 		static size_t GetRoutingAddressLength(BBuffer& bb);
 
 		// 在不解析数据的情况下直接替换地址部分转发( 路由专用 )
-		void SendRoutingByRouter(xx::BBuffer& bb, size_t const& pkgLen, size_t const& addrOffset, size_t const& addrLen, char const* const& senderAddr, size_t const& senderAddrLen);
+		void SendRoutingByRouter(BBuffer& bb, size_t const& pkgLen, size_t const& addrOffset, size_t const& addrLen, char const* const& senderAddr, size_t const& senderAddrLen);
 
 
 
@@ -226,7 +226,7 @@ namespace xx
 
 		// 增强的 SendRequest 实现 断线时 立即发起相关 rpc 超时回调. 封装了解包操作. 
 		template<typename T>
-		void SendRequestEx(T const& pkg, std::function<void(uint32_t, xx::Object_p&)>&& cb, int const& interval = 0);
+		void SendRequestEx(T const& pkg, std::function<void(uint32_t, Object_p&)>&& cb, int const& interval = 0);
 
 		// 会清除掉 OnReceiveXxxxxx, OnDispose 的各种事件, BindTimeoutManager 并在 OnTimeout 时 Release
 		void DelayRelease(int const& interval = 0);
@@ -453,33 +453,33 @@ namespace xx
 		http_parser * parser = nullptr;
 
 		// GET / POST / ...
-		xx::String method;
+		String method;
 
 		// 头部所有键值对
-		xx::Dict<xx::String, xx::String> headers;
+		Dict<String, String> headers;
 
 		// 是否保持连接
 		bool keepAlive = false;
 
 		// 正文
-		xx::String body;
+		String body;
 
-		// 原始 url 串( 在调用 ParseUrl 后内容将被修改 )
-		xx::String url;
+		// 原始 url 串( 在调用 ParseUrl 后内容将被修改, 加上一些 \0, 将无法通过扫 0 的函数输出 )
+		String url;
 
 		// ParseUrl 后将填充下面三个属性
 		char* path = nullptr;
-		xx::List<std::pair<char*, char*>> queries;	// 键值对
+		List<std::pair<char*, char*>> queries;	// 键值对
 		char* fragment = nullptr;
 
 		// 原始 status 串
-		xx::String status;
+		String status;
 
 		// 当收到 key 时, 先往这 append. 出现 value 时再塞 headers
-		xx::String lastKey;
+		String lastKey;
 
 		// 指向最后一次塞入 headers 的 value 以便 append
-		xx::String* lastValue = nullptr;
+		String* lastValue = nullptr;
 
 		// 成功接收完一段信息时的回调.
 		std::function<void()> OnMessageComplete;
@@ -488,7 +488,10 @@ namespace xx
 		std::function<void(uint32_t errorNumber, char const* errorMessage)> OnError;
 
 		// 原始数据( 如果不为空, 收到数据时将向它追加, 方便调试啥的 )
-		xx::String_p rawData;
+		String_p rawData;
+
+		// 可用于堆砌返回数据
+		String s;
 
 		UvHttpPeer(UvTcpListener& listener);
 		~UvHttpPeer();
@@ -501,8 +504,14 @@ namespace xx
 			"Content-Length: "	// 16
 			; // 59
 
+		// 发送 buf
 		void SendHttpResponse(char const* const& bufPtr, size_t const& len);
-		void SendHttpResponse(String const& txt);
+
+		// 会发送 o ToString 后的结果
+		template<typename T>
+		void SendHttpResponse(T const& o);
+
+		void SendHttpResponse();	// 会发送 s 的内容
 
 		// 会改变 url 属性内容 并填充 path, queries, fragment
 		void ParseUrl();
@@ -517,25 +526,25 @@ namespace xx
 		http_parser * parser = nullptr;
 
 		// 头部所有键值对
-		xx::Dict<xx::String, xx::String> headers;
+		Dict<String, String> headers;
 
 		// 是否保持连接
 		bool keepAlive = false;
 
 		// 正文
-		xx::String body;
+		String body;
 
 		// 原始 url 串
-		xx::String url;
+		String url;
 
 		// 原始 status 串
-		xx::String status;
+		String status;
 
 		// 当收到 key 时, 先往这 append. 出现 value 时再塞 headers
-		xx::String lastKey;
+		String lastKey;
 
 		// 指向最后一次塞入 headers 的 value 以便 append
-		xx::String* lastValue = nullptr;
+		String* lastValue = nullptr;
 
 		// 成功接收完一段信息时的回调.
 		std::function<void()> OnMessageComplete;
@@ -544,7 +553,7 @@ namespace xx
 		std::function<void(uint32_t errorNumber, char const* errorMessage)> OnError;
 
 		// 原始数据( 如果不为空, 收到数据时将向它追加, 方便调试啥的 )
-		xx::String_p rawData;
+		String_p rawData;
 
 		UvHttpClient(UvLoop& loop);
 		~UvHttpClient();
@@ -747,12 +756,12 @@ namespace xx
 
 
 	template<typename T>
-	inline void UvTcpUdpBase::SendRequestEx(T const& pkg, std::function<void(uint32_t, xx::Object_p&)>&& cb, int const& interval)
+	inline void UvTcpUdpBase::SendRequestEx(T const& pkg, std::function<void(uint32_t, Object_p&)>&& cb, int const& interval)
 	{
 		auto serial = SendRequest(pkg, [this, cb = std::move(cb)](uint32_t ser, BBuffer* bb)
 		{
 			rpcSerials->Remove(ser);
-			xx::Object_p inPkg;		// 如果 超时或 read 异常, inPkg 设空值
+			Object_p inPkg;		// 如果 超时或 read 异常, inPkg 设空值
 			if (bb)
 			{
 				if (bb->ReadRoot(inPkg))
@@ -769,6 +778,17 @@ namespace xx
 		}
 		rpcSerials->Add(serial);
 	}
+
+
+
+
+	template<typename T>
+	inline void UvHttpPeer::SendHttpResponse(T const& o)
+	{
+		s.Assign(o);
+		SendHttpResponse();
+	}
+
 
 
 	using UvLoop_r = Ref<UvLoop>;

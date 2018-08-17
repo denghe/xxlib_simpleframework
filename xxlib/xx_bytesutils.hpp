@@ -256,31 +256,31 @@ namespace xx
 			bb.Reserve(bb.dataLen + sizeof(double) + 1);
 			if (in == 0)
 			{
-				bb[bb.dataLen++] = 0;
+				bb.buf[bb.dataLen++] = 0;
 			}
 			else if (std::isnan(in))
 			{
-				bb[bb.dataLen++] = 1;
+				bb.buf[bb.dataLen++] = 1;
 			}
 			else if (in == -std::numeric_limits<double>::infinity())	// negative infinity
 			{
-				bb[bb.dataLen++] = 2;
+				bb.buf[bb.dataLen++] = 2;
 			}
 			else if (in == std::numeric_limits<double>::infinity())		// positive infinity
 			{
-				bb[bb.dataLen++] = 3;
+				bb.buf[bb.dataLen++] = 3;
 			}
 			else
 			{
 				auto i = (int32_t)in;
 				if (in == (double)i)
 				{
-					bb[bb.dataLen++] = 4;
+					bb.buf[bb.dataLen++] = 4;
 					BytesFunc<int32_t>::WriteTo(bb, i);
 				}
 				else
 				{
-					bb[bb.dataLen] = 5;
+					bb.buf[bb.dataLen] = 5;
 					memcpy(bb.buf + bb.dataLen + 1, &in, sizeof(double));
 					bb.dataLen += sizeof(double) + 1;
 				}
@@ -289,7 +289,7 @@ namespace xx
 		static inline int ReadFrom(BBuffer& bb, double &out)
 		{
 			if (bb.offset >= bb.dataLen) return -1;		// 确保还有 1 字节可读
-			switch (bb[bb.offset++])					// 跳过 1 字节
+			switch (bb.buf[bb.offset++])					// 跳过 1 字节
 			{
 			case 0:
 				out = 0;

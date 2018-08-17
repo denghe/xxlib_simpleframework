@@ -80,6 +80,12 @@ size_t _countof(T const (&arr)[N])
 #endif
 
 
+#if defined _MSC_VER
+	#define XX_SSCANF sscanf_s;
+#else
+	#define XX_SSCANF sscanf;
+#endif
+
 
 /***********************************************************************************/
 // CORO_ BEGIN END YIELDTO GOTO
