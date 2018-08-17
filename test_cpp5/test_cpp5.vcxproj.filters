@@ -18,6 +18,7 @@
     <None Include="main.bak3" />
     <None Include="main.bak4" />
     <None Include="main.bak5" />
+    <None Include="main.bak6" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="xxlib">

@@ -171,6 +171,19 @@ namespace xx
 		}
 	};
 
+	// 适配 std::string
+	template<>
+	struct HashFunc<std::string, void>
+	{
+		static uint32_t GetHashCode(std::string const& in)
+		{
+			return HashFunc<std::pair<char*, size_t>>::GetHashCode(std::make_pair((char*)in.data(), in.size()));
+		}
+	};
+
+
+
+
 
 	// 比较器 适配 char const* 字串
 	template<>
