@@ -464,8 +464,11 @@ namespace xx
 		// 正文
 		String body;
 
-		// 原始 url 串( 在调用 ParseUrl 后内容将被修改, 加上一些 \0, 将无法通过扫 0 的函数输出 )
+		// 原始 url 串( 未 urldecode 解码 )
 		String url;
+
+		// url decode 后的结果 url 串, 同时也是 url parse 后的容器, 不可以修改内容
+		String urlDecoded;
 
 		// ParseUrl 后将填充下面三个属性
 		char* path = nullptr;
@@ -499,10 +502,11 @@ namespace xx
 		virtual void ReceiveImpl(char const* const& bufPtr, int const& len) override;
 
 		// todo: 提供更多返回内容的简单拼接下发
-		inline static const char* responsePartialHeader_text = "HTTP/1.1 200 OK\r\n"	// 17
-			"Content-Type: text/plain\r\n"	// 26
-			"Content-Length: "	// 16
-			; // 59
+		inline static const std::string responsePartialHeader_text = 
+			"HTTP/1.1 200 OK\r\n"
+			"Content-Type: text/plain;charset=utf-8\r\n"		// text/json
+			"Content-Length: "
+			;
 
 		// 发送 buf
 		void SendHttpResponse(char const* const& bufPtr, size_t const& len);
@@ -513,7 +517,7 @@ namespace xx
 
 		void SendHttpResponse();	// 会发送 s 的内容
 
-		// 会改变 url 属性内容 并填充 path, queries, fragment
+		// 会 urldecode 并 填充 path, queries, fragment
 		void ParseUrl();
 	};
 

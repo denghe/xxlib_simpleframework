@@ -1706,6 +1706,7 @@ xx::UvHttpPeer::UvHttpPeer(UvTcpListener& listener)
 	, headers(listener.mempool)
 	, body(listener.mempool)
 	, url(listener.mempool)
+	, urlDecoded(listener.mempool)
 	, queries(listener.mempool)
 	, status(loop.mempool)
 	, lastKey(listener.mempool)
@@ -1727,6 +1728,7 @@ xx::UvHttpPeer::UvHttpPeer(UvTcpListener& listener)
 		self->keepAlive = false;
 		self->body.Clear();
 		self->url.Clear();
+		self->urlDecoded.Clear();
 		self->status.Clear();
 		self->lastKey.Clear();
 		self->lastValue = nullptr;
@@ -1737,10 +1739,10 @@ xx::UvHttpPeer::UvHttpPeer(UvTcpListener& listener)
 		((UvHttpPeer*)parser->data)->url.AddRange(buf, length);
 		return 0;
 	};
-	parser_settings->on_status = [](http_parser* parser, const char *buf, size_t length) 
+	parser_settings->on_status = [](http_parser* parser, const char *buf, size_t length)
 	{
 		((UvHttpPeer*)parser->data)->status.AddRange(buf, length);
-		return 0; 
+		return 0;
 	};
 	parser_settings->on_header_field = [](http_parser* parser, const char *buf, size_t length)
 	{
@@ -1823,7 +1825,7 @@ void xx::UvHttpPeer::SendHttpResponse(char const* const& bufPtr, size_t const& l
 	bbSend.Clear();
 
 	// write prefix
-	bbSend.WriteBuf(responsePartialHeader_text, 59);
+	bbSend.WriteBuf(responsePartialHeader_text.data(), responsePartialHeader_text.size());
 
 	// write len\r\n\r\n
 	lastKey.Clear();
@@ -1850,9 +1852,36 @@ inline char* FindAndTerminate(char* s, char const& c)
 	*s = '\0';
 	return s + 1;
 }
+
+
+inline uint8_t FromHex(uint8_t const& c)
+{
+	if (c >= 'A' && c <= 'Z') return c - 'A' + 10;
+	else if (c >= 'a' && c <= 'z') return c - 'a' + 10;
+	else if (c >= '0' && c <= '9') return c - '0';
+	else return 0;
+}
+
+inline void UrlDecode(xx::String& src, xx::String& dst)
+{
+	for (size_t i = 0; i < src.dataLen; i++)
+	{
+		if (src[i] == '+') dst.Append(' ');
+		else if (src[i] == '%')
+		{
+			auto high = FromHex(src[++i]);
+			auto low = FromHex(src[++i]);
+			dst.Append((char)(uint8_t)(high * 16 + low));
+		}
+		else dst.Append(src[i]);
+	}
+}
+
 void xx::UvHttpPeer::ParseUrl()
 {
-	auto u = url.c_str();
+	urlDecoded.Reserve(url.dataLen);
+	UrlDecode(url, urlDecoded);
+	auto u = urlDecoded.c_str();
 
 	// 从后往前扫
 	fragment = FindAndTerminate(u, '#');
