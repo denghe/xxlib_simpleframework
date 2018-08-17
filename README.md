@@ -61,7 +61,7 @@ test_cppxxx
 
 附: ubuntu 下的一些操作记录
 
-安装新版 gcc 并令其成为默认
+安装新版 gcc 并令其成为默认( 7.x 以上当前就够用了. ubuntu18+ 带的就是, 就可以不更新了 )
 
 sudo apt-get install software-properties-common
 sudo add-apt-repository ppa:jonathonf/gcc-8.1
@@ -73,14 +73,14 @@ sudo update-alternatives --config gcc
 gcc --version
 g++ --version
 
+libuv 编译
 
-libuv 自动 make 脚本需要的依赖
-
-sudo apt-get install autotools-dev
+./gyp_uv.py -f make
+BUILDTYPE=Release make -C out
 
 
 sudo apt-get install uuid-dev
 
 
 test_cpp5 目录下编译出执行文件:
- g++ -std=c++1z main.cpp ../xxlib/xx_uv.cpp ../xxlib/ikcp.cpp -o xx -I../xxlib -luv -luuid -static -lpthread
+g++ -std=c++1z main.cpp ../xxlib/xx_uv.cpp ../xxlib/ikcp.cpp ../xxlib/http_parser.c -o xx -I../xxlib -I../libuv/include -L../libuv/lib/linux64 -luv -luuid -lpthread -O3
