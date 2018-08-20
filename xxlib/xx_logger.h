@@ -178,7 +178,7 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
 		uint64_t writeLimit = 0;		// 当前队列写入深度如果超过这个值就不再写入( 如果设置的话 )
 		int64_t counter = 0;			// 总写入量的统计值
 		bool disposing = false;			// 通知后台线程退出的标志位
-		kapala::fixed_function<void()> OnRelease;
+		std::function<void()> OnRelease;
 
 		Logger(char const* const& fn)
 			: db(&mp, fn)

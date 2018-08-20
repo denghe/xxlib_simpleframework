@@ -102,7 +102,6 @@
     <None Include="main.bak6" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\xxlib\fixed_function.hpp" />
     <ClInclude Include="..\xxlib\http_parser.h" />
     <ClInclude Include="..\xxlib\ikcp.h" />
     <ClInclude Include="..\xxlib\xx.h" />

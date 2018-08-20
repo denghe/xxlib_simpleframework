@@ -1,25 +1,27 @@
 ﻿// todo: noexcept 狂加一波
 
-#include "../docs/fixed_function.hpp"
+#include "fixed_function.hpp"
 
-template <typename TK, typename TV>
-class Xxxxxx
+struct a
 {
-public:
-	struct Data
+	kapala::fixed_function<void(), 128> cb_;
+	inline void set_cb(kapala::fixed_function<void()>&& cb)
 	{
-		TK              key;
-		TV              value;
-	};
-	void Xxx(kapala::fixed_function<void(Data&)> f = nullptr)
+		cb_ = [this, cb = std::move(cb)]
+		{
+			cb();
+		};
+	}
+	inline void operator()()
 	{
+		if (cb_) cb_();
 	}
 };
 
 int main()
 {
-	Xxxxxx<int, int> xxx;
-	xxx.Xxx();
-
+	a A;
+	A.set_cb([] {});
+	A();
 	return 0;
 }

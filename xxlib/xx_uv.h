@@ -73,14 +73,14 @@ namespace xx
 		UvTcpClient* CreateTcpClient();
 		UvUdpListener* CreateUdpListener();
 		UvUdpClient* CreateUdpClient();
-		UvTimer* CreateTimer(uint64_t const& timeoutMS, uint64_t const& repeatIntervalMS, kapala::fixed_function<void()>&& OnFire = nullptr);
+		UvTimer* CreateTimer(uint64_t const& timeoutMS, uint64_t const& repeatIntervalMS, std::function<void()>&& OnFire = nullptr);
 		UvAsync* CreateAsync();
 	};
 
 	class UvListenerBase : public Object
 	{
 	public:
-		kapala::fixed_function<void()> OnDispose;
+		std::function<void()> OnDispose;
 
 		UvLoop& loop;
 		size_t index_at_container = -1;
@@ -94,8 +94,8 @@ namespace xx
 	class UvTcpListener : public UvListenerBase
 	{
 	public:
-		kapala::fixed_function<UvTcpPeer*()> OnCreatePeer;
-		kapala::fixed_function<void(UvTcpPeer*)> OnAccept;
+		std::function<UvTcpPeer*()> OnCreatePeer;
+		std::function<void(UvTcpPeer*)> OnAccept;
 		List<UvTcpPeer*> peers;
 
 		UvTcpListener(UvLoop& loop);
@@ -115,7 +115,7 @@ namespace xx
 		UvTimeouterBase* timeouterPrev = nullptr;
 		UvTimeouterBase* timeouterNext = nullptr;
 		int timeouterIndex = -1;
-		kapala::fixed_function<void()> OnTimeout;
+		std::function<void()> OnTimeout;
 
 		void TimeouterClear();
 		void TimeoutReset(int const& interval = 0);
@@ -128,10 +128,10 @@ namespace xx
 	class UvTcpUdpBase : public UvTimeouterBase
 	{
 	public:
-		kapala::fixed_function<void(BBuffer&)> OnReceivePackage;
+		std::function<void(BBuffer&)> OnReceivePackage;
 
 		// uint32_t: 流水号
-		kapala::fixed_function<void(uint32_t, BBuffer&)> OnReceiveRequest;
+		std::function<void(uint32_t, BBuffer&)> OnReceiveRequest;
 
 
 
@@ -144,10 +144,10 @@ namespace xx
 		// (BBuffer& bb, size_t pkgOffset, size_t pkgLen, size_t addrOffset, size_t addrLen)
 		// 3 个 size_t 代表 含包头的总包长, 地址起始偏移, 地址长度( 方便替换地址并 memcpy )
 		// BBuffer 的 offset 停在包头起始处
-		kapala::fixed_function<void(BBuffer&, size_t, size_t, size_t)> OnReceiveRouting;
+		std::function<void(BBuffer&, size_t, size_t, size_t)> OnReceiveRouting;
 
 
-		kapala::fixed_function<void()> OnDispose;
+		std::function<void()> OnDispose;
 
 
 		UvLoop& loop;
@@ -185,7 +185,7 @@ namespace xx
 		void Send(T const& pkg);
 
 		template<typename T>
-		uint32_t SendRequest(T const& pkg, kapala::fixed_function<void(uint32_t, BBuffer*)>&& cb, int const& interval = 0);
+		uint32_t SendRequest(T const& pkg, std::function<void(uint32_t, BBuffer*)>&& cb, int const& interval = 0);
 
 		template<typename T>
 		void SendResponse(uint32_t const& serial, T const& pkg);
@@ -200,7 +200,7 @@ namespace xx
 
 		// 向路由服务发请求
 		template<typename T>
-		uint32_t SendRoutingRequest(char const* const& serviceAddr, size_t const& serviceAddrLen, T const& pkg, kapala::fixed_function<void(uint32_t, BBuffer*)>&& cb, int const& interval = 0);
+		uint32_t SendRoutingRequest(char const* const& serviceAddr, size_t const& serviceAddrLen, T const& pkg, std::function<void(uint32_t, BBuffer*)>&& cb, int const& interval = 0);
 
 		// 向路由服务发回应
 		template<typename T>
@@ -226,7 +226,7 @@ namespace xx
 
 		// 增强的 SendRequest 实现 断线时 立即发起相关 rpc 超时回调. 封装了解包操作. 
 		template<typename T>
-		void SendRequestEx(T const& pkg, kapala::fixed_function<void(uint32_t, Object_p&)>&& cb, int const& interval = 0);
+		void SendRequestEx(T const& pkg, std::function<void(uint32_t, Object_p&)>&& cb, int const& interval = 0);
 
 		// 会清除掉 OnReceiveXxxxxx, OnDispose 的各种事件, BindTimeoutManager 并在 OnTimeout 时 Release
 		void DelayRelease(int const& interval = 0);
@@ -260,8 +260,8 @@ namespace xx
 	class UvTcpClient : public UvTcpBase
 	{
 	public:
-		kapala::fixed_function<void(int)> OnConnect;
-		kapala::fixed_function<void()> OnDisconnect;
+		std::function<void(int)> OnConnect;
+		std::function<void()> OnDisconnect;
 
 		UvTcpStates state = UvTcpStates::Disconnected;
 		bool alive() const;	// state == UvTcpStates::Connected, 并不能取代外部野指针检测
@@ -279,13 +279,13 @@ namespace xx
 	class UvTimer : public Object
 	{
 	public:
-		kapala::fixed_function<void()> OnFire;
-		kapala::fixed_function<void()> OnDispose;
+		std::function<void()> OnFire;
+		std::function<void()> OnDispose;
 
 		UvLoop& loop;
 		size_t index_at_container = -1;
 		void* ptr = nullptr;
-		UvTimer(UvLoop& loop, uint64_t const& timeoutMS, uint64_t const& repeatIntervalMS, kapala::fixed_function<void()>&& OnFire = nullptr);
+		UvTimer(UvLoop& loop, uint64_t const& timeoutMS, uint64_t const& repeatIntervalMS, std::function<void()>&& OnFire = nullptr);
 		~UvTimer();
 		static void OnTimerCBImpl(void* handle);
 		void SetRepeat(uint64_t const& repeatIntervalMS);
@@ -312,18 +312,18 @@ namespace xx
 	class UvAsync : public Object
 	{
 	public:
-		kapala::fixed_function<void()> OnFire;
-		kapala::fixed_function<void()> OnDispose;
+		std::function<void()> OnFire;
+		std::function<void()> OnDispose;
 
 		UvLoop& loop;
 		size_t index_at_container = -1;
 		std::mutex mtx;
-		Queue<kapala::fixed_function<void()>> actions;
+		Queue<std::function<void()>> actions;
 		void* ptr = nullptr;
 		UvAsync(UvLoop& loop);
 		~UvAsync();
 		static void OnAsyncCBImpl(void* handle);
-		void Dispatch(kapala::fixed_function<void()>&& a);
+		void Dispatch(std::function<void()>&& a);
 		void OnFireImpl();
 	};
 
@@ -332,7 +332,7 @@ namespace xx
 	public:
 		UvTimer * timer = nullptr;
 		uint32_t serial = 0;
-		Dict<uint32_t, kapala::fixed_function<void(uint32_t, BBuffer*)>> mapping;
+		Dict<uint32_t, std::function<void(uint32_t, BBuffer*)>> mapping;
 		Queue<std::pair<int, uint32_t>> serials;
 		int defaultInterval = 0;
 		int ticks = 0;
@@ -340,7 +340,7 @@ namespace xx
 		UvRpcManager(UvLoop& loop, uint64_t const& intervalMS, int const& defaultInterval);
 		~UvRpcManager();
 		void Process();
-		uint32_t Register(kapala::fixed_function<void(uint32_t, BBuffer*)>&& cb, int interval = 0);
+		uint32_t Register(std::function<void(uint32_t, BBuffer*)>&& cb, int interval = 0);
 		void Unregister(uint32_t const& serial);
 		void Callback(uint32_t const& serial, BBuffer* const& bb);
 	};
@@ -369,8 +369,8 @@ namespace xx
 	class UvUdpListener : public UvListenerBase
 	{
 	public:
-		kapala::fixed_function<UvUdpPeer*(Guid const&)> OnCreatePeer;
-		kapala::fixed_function<void(UvUdpPeer*)> OnAccept;
+		std::function<UvUdpPeer*(Guid const&)> OnCreatePeer;
+		std::function<void(UvUdpPeer*)> OnAccept;
 		Dict<Guid, UvUdpPeer*> peers;
 
 		UvUdpListener(UvLoop& loop);
@@ -485,10 +485,10 @@ namespace xx
 		String* lastValue = nullptr;
 
 		// 成功接收完一段信息时的回调.
-		kapala::fixed_function<void()> OnMessageComplete;
+		std::function<void()> OnMessageComplete;
 
 		// 接收出错回调. 接着会发生 Release
-		kapala::fixed_function<void(uint32_t errorNumber, char const* errorMessage)> OnError;
+		std::function<void(uint32_t errorNumber, char const* errorMessage)> OnError;
 
 		// 原始数据( 如果不为空, 收到数据时将向它追加, 方便调试啥的 )
 		String_p rawData;
@@ -551,10 +551,10 @@ namespace xx
 		String* lastValue = nullptr;
 
 		// 成功接收完一段信息时的回调.
-		kapala::fixed_function<void()> OnMessageComplete;
+		std::function<void()> OnMessageComplete;
 
 		// 接收出错回调. 接着会发生 Release
-		kapala::fixed_function<void(uint32_t errorNumber, char const* errorMessage)> OnError;
+		std::function<void(uint32_t errorNumber, char const* errorMessage)> OnError;
 
 		// 原始数据( 如果不为空, 收到数据时将向它追加, 方便调试啥的 )
 		String_p rawData;
@@ -601,7 +601,7 @@ namespace xx
 	}
 
 	template<typename T>
-	inline uint32_t UvTcpUdpBase::SendRequest(T const & pkg, kapala::fixed_function<void(uint32_t, BBuffer*)>&& cb, int const& interval)
+	inline uint32_t UvTcpUdpBase::SendRequest(T const & pkg, std::function<void(uint32_t, BBuffer*)>&& cb, int const& interval)
 	{
 		//assert(pkg);
 		if (!loop.rpcMgr) throw - 1;
@@ -695,7 +695,7 @@ namespace xx
 	}
 
 	template<typename T>
-	inline uint32_t UvTcpUdpBase::SendRoutingRequest(char const* const& serviceAddr, size_t const& serviceAddrLen, T const & pkg, kapala::fixed_function<void(uint32_t, BBuffer*)>&& cb, int const& interval)
+	inline uint32_t UvTcpUdpBase::SendRoutingRequest(char const* const& serviceAddr, size_t const& serviceAddrLen, T const & pkg, std::function<void(uint32_t, BBuffer*)>&& cb, int const& interval)
 	{
 		//assert(pkg);
 		bbSend.Clear();
@@ -760,7 +760,7 @@ namespace xx
 
 
 	template<typename T>
-	inline void UvTcpUdpBase::SendRequestEx(T const& pkg, kapala::fixed_function<void(uint32_t, Object_p&)>&& cb, int const& interval)
+	inline void UvTcpUdpBase::SendRequestEx(T const& pkg, std::function<void(uint32_t, Object_p&)>&& cb, int const& interval)
 	{
 		auto serial = SendRequest(pkg, [this, cb = std::move(cb)](uint32_t ser, BBuffer* bb)
 		{

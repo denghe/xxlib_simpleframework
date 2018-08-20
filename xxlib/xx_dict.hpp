@@ -184,7 +184,7 @@ namespace xx
 
 	// 可传入一个资源回收函数来搞事
 	template <typename TK, typename TV>
-	void Dict<TK, TV>::Clear(kapala::fixed_function<void(Data&)> killer) noexcept
+	void Dict<TK, TV>::Clear(std::function<void(Data&)> killer) noexcept
 	{
 		if (killer)
 		{

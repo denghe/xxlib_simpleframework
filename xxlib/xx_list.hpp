@@ -287,7 +287,7 @@ namespace xx
 	}
 
 	template<typename T>
-	size_t List<T>::Find(kapala::fixed_function<bool(T const&)> cond)
+	size_t List<T>::Find(std::function<bool(T const&)> cond)
 	{
 		for (size_t i = 0; i < dataLen; ++i)
 		{
@@ -297,13 +297,13 @@ namespace xx
 	}
 
 	template<typename T>
-	bool List<T>::Exists(kapala::fixed_function<bool(T const&)> cond)
+	bool List<T>::Exists(std::function<bool(T const&)> cond)
 	{
 		return Find(cond) != size_t(-1);
 	}
 
 	template<typename T>
-	bool List<T>::TryFill(T& out, kapala::fixed_function<bool(T const&)> cond)
+	bool List<T>::TryFill(T& out, std::function<bool(T const&)> cond)
 	{
 		auto idx = Find(cond);
 		if (idx == size_t(-1)) return false;
@@ -313,7 +313,7 @@ namespace xx
 
 
 	template<typename T>
-	void List<T>::ForEachRevert(kapala::fixed_function<void(T&)> handler)
+	void List<T>::ForEachRevert(std::function<void(T&)> handler)
 	{
 		for (size_t i = dataLen - 1; i != (size_t)-1; --i)
 		{

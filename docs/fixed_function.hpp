@@ -2,6 +2,8 @@
 // support lambda, std::functin, std::bind, std::packaged_task, function pointer
 #pragma once
 #include <type_traits>
+#include <functional>	// std::bad_function_call
+#include <cstring>		// memcpy
 
 namespace kapala
 {
@@ -55,7 +57,14 @@ namespace kapala
             alloc_ptr_ = [] (void* storage_ptr, void* object_ptr) {
                 if( object_ptr )
                 {
-                    new (storage_ptr) unref_type(std::move(*static_cast<unref_type*>(object_ptr)));
+					if constexpr (std::is_trivial_v<unref_type>)
+					{
+						memcpy(storage_ptr, object_ptr, sizeof(unref_type));
+					}
+					else
+					{
+						new (storage_ptr) unref_type(std::move(*static_cast<unref_type*>(object_ptr)));
+					}
                 }
                 else
                 {
@@ -122,7 +131,14 @@ namespace kapala
             alloc_ptr_ = [] (void* storage_ptr, void* object_ptr) {
                 if( object_ptr )
                 {
-                    new (storage_ptr) unref_type(std::move(*static_cast<unref_type*>(object_ptr)));
+					if constexpr (std::is_trivial_v<unref_type>)
+					{
+						memcpy(storage_ptr, object_ptr, sizeof(unref_type));
+					}
+					else
+					{
+						new (storage_ptr) unref_type(std::move(*static_cast<unref_type*>(object_ptr)));
+					}
                 }
                 else
                 {
@@ -145,14 +161,14 @@ namespace kapala
             return *this;
         }
         
-        R operator()(Args...args)
-        {
-            if (!method_ptr_)
-            {
-                throw std::bad_function_call();
-            }
-            return method_ptr_(&data_.storage_, data_.function_ptr_, args...);
-        }
+		R operator()(Args...args) const
+		{
+			if (!method_ptr_)
+			{
+				throw std::bad_function_call();
+			}
+			return method_ptr_((void*)&data_.storage_, data_.function_ptr_, args...);
+		}
         
         constexpr static size_t standard_layout_size()
         {

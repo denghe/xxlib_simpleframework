@@ -202,7 +202,7 @@ xx::UvUdpClient* xx::UvLoop::CreateUdpClient()
 	return mempool->Create<UvUdpClient>(*this);
 }
 
-xx::UvTimer* xx::UvLoop::CreateTimer(uint64_t const& timeoutMS, uint64_t const& repeatIntervalMS, kapala::fixed_function<void()>&& OnFire)
+xx::UvTimer* xx::UvLoop::CreateTimer(uint64_t const& timeoutMS, uint64_t const& repeatIntervalMS, std::function<void()>&& OnFire)
 {
 	return mempool->Create<UvTimer>(*this, timeoutMS, repeatIntervalMS, std::move(OnFire));
 }
@@ -868,7 +868,7 @@ bool xx::UvTcpClient::Disconnected()
 
 
 
-xx::UvTimer::UvTimer(UvLoop& loop, uint64_t const& timeoutMS, uint64_t const& repeatIntervalMS, kapala::fixed_function<void()>&& OnFire)
+xx::UvTimer::UvTimer(UvLoop& loop, uint64_t const& timeoutMS, uint64_t const& repeatIntervalMS, std::function<void()>&& OnFire)
 	: Object(loop.mempool)
 	, OnFire(std::move(OnFire))
 	, loop(loop)
@@ -1068,7 +1068,7 @@ void xx::UvAsync::OnAsyncCBImpl(void* handle)
 	self->OnFire();
 }
 
-void xx::UvAsync::Dispatch(kapala::fixed_function<void()>&& a)
+void xx::UvAsync::Dispatch(std::function<void()>&& a)
 {
 	if (!ptr) throw - 1;
 	{
@@ -1080,7 +1080,7 @@ void xx::UvAsync::Dispatch(kapala::fixed_function<void()>&& a)
 
 void xx::UvAsync::OnFireImpl()
 {
-	kapala::fixed_function<void()> a;
+	std::function<void()> a;
 	while (true)
 	{
 		{
@@ -1140,7 +1140,7 @@ void xx::UvRpcManager::Process()
 	}
 }
 
-uint32_t xx::UvRpcManager::Register(kapala::fixed_function<void(uint32_t, BBuffer*)>&& cb, int interval)
+uint32_t xx::UvRpcManager::Register(std::function<void(uint32_t, BBuffer*)>&& cb, int interval)
 {
 	if (interval == 0) interval = defaultInterval;
 	++serial;
