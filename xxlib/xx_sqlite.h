@@ -208,7 +208,7 @@ namespace xx
 		SQLite& owner;
 		sqlite3_stmt* stmt = nullptr;
 	public:
-		typedef std::function<void(SQLiteReader& sr)> ReadFunc;
+		typedef kapala::fixed_function<void(SQLiteReader& sr)> ReadFunc;
 
 		SQLiteQuery(SQLite& owner, char const* const& sql, int const& sqlLen);
 		~SQLiteQuery();

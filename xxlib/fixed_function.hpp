@@ -1,4 +1,4 @@
-// Copyright(c) 2018 zendo (734181759@qq.com) all rights reserved.
+﻿// Copyright(c) 2018 zendo (734181759@qq.com) all rights reserved.
 // support lambda, std::functin, std::bind, std::packaged_task, function pointer
 #pragma once
 #include <type_traits>
@@ -28,6 +28,10 @@ namespace kapala
         alloc_type alloc_ptr_{nullptr};
     public:
         fixed_function() = default;
+        
+        fixed_function(std::nullptr_t) noexcept
+        {
+        }
         
         fixed_function(const fixed_function& other) noexcept
         : method_ptr_(other.method_ptr_)
@@ -112,7 +116,6 @@ namespace kapala
             }
             
             method_ptr_ = [] (void* object_ptr, func_ptr_type, Args...args)->R {
-                //return static_cast<unref_type*>(object_ptr)->operator()(args...);
                 return (*static_cast<unref_type*>(object_ptr))(args...);
             };
             
@@ -155,6 +158,11 @@ namespace kapala
         {
             return sizeof(fixed_function);
         }
+
+		inline operator bool() const noexcept
+		{
+			return data_.function_ptr_ != nullptr;
+		}
         
     private:
         void move_from_other(fixed_function& other) noexcept

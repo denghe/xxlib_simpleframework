@@ -57,7 +57,7 @@ namespace xx
 		TV& operator[](K&& key);
 
 		// 可传入一个资源回收函数来搞事
-		void Clear(std::function<void(Data&)> killer = nullptr) noexcept;
+		void Clear(kapala::fixed_function<void(Data&)> killer = nullptr) noexcept;
 
 		template<typename K, typename V>
 		DictAddResult Add(K&& k, V&& v, bool const& override = false);

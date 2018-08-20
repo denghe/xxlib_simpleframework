@@ -230,6 +230,8 @@ namespace xx
 
 
 
+#include "fixed_function.hpp"
+
 #include "xx_mempool.h"
 #include "xx_list.h"
 #include "xx_queue.h"
