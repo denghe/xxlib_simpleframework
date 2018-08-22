@@ -2,7 +2,7 @@
 #include "xx.h"
 #include <mutex>
 
-// 注意: 除了 UvLoop, 其他类型只能以指针方式 Create 出来用. 否则会出现重复 Release 的情况.
+// 注意: 除了 UvLoop, 其他类型只能以指针方式 Create 出来用. 否则容易出现重复 Release 的情况. 除非自己严格控制生命周期.
 
 namespace xx
 {
@@ -61,20 +61,20 @@ namespace xx
 		explicit UvLoop(MemPool* const& mp);
 		~UvLoop();
 
-		void InitTimeoutManager(uint64_t const& intervalMS = 1000, int const& wheelLen = 6, int const& defaultInterval = 5);
-		void InitRpcManager(uint64_t const& rpcIntervalMS = 1000, int const& rpcDefaultInterval = 5);
-		void InitKcpFlushInterval(uint32_t const& interval = 10);
+		int InitTimeoutManager(uint64_t const& intervalMS = 1000, int const& wheelLen = 6, int const& defaultInterval = 5) noexcept;
+		int InitRpcManager(uint64_t const& rpcIntervalMS = 1000, int const& rpcDefaultInterval = 5) noexcept;
+		int InitKcpFlushInterval(uint32_t const& interval = 10) noexcept;
 
-		void Run(UvRunMode const& mode = UvRunMode::Default);
-		void Stop();
-		bool alive() const;
+		int Run(UvRunMode const& mode = UvRunMode::Default) noexcept;
+		void Stop() noexcept;
+		bool Alive() const noexcept;
 
-		UvTcpListener* CreateTcpListener();
-		UvTcpClient* CreateTcpClient();
-		UvUdpListener* CreateUdpListener();
-		UvUdpClient* CreateUdpClient();
-		UvTimer* CreateTimer(uint64_t const& timeoutMS, uint64_t const& repeatIntervalMS, std::function<void()>&& OnFire = nullptr);
-		UvAsync* CreateAsync();
+		UvTcpListener* CreateTcpListener() noexcept;
+		UvTcpClient* CreateTcpClient() noexcept;
+		UvUdpListener* CreateUdpListener() noexcept;
+		UvUdpClient* CreateUdpClient() noexcept;
+		UvTimer* CreateTimer(uint64_t const& timeoutMS, uint64_t const& repeatIntervalMS, std::function<void()>&& OnFire = nullptr) noexcept;
+		UvAsync* CreateAsync() noexcept;
 	};
 
 	class UvListenerBase : public Object
@@ -101,9 +101,9 @@ namespace xx
 		UvTcpListener(UvLoop& loop);
 		~UvTcpListener();
 
-		static void OnAcceptCB(void* server, int status);
-		void Bind(char const* const& ipv4, int const& port);
-		void Listen(int const& backlog = 128);
+		static void OnAcceptCB(void* server, int status) noexcept;
+		int Bind(char const* const& ipv4, int const& port) noexcept;
+		int Listen(int const& backlog = 128) noexcept;
 	};
 
 	class UvTimeouterBase : public Object
@@ -117,12 +117,12 @@ namespace xx
 		int timeouterIndex = -1;
 		std::function<void()> OnTimeout;
 
-		void TimeouterClear();
-		void TimeoutReset(int const& interval = 0);
-		void TimeouterStop();
-		virtual void BindTimeoutManager(UvTimeoutManager* const&);
-		void UnbindTimeoutManager();
-		bool timeouting();
+		void TimeouterClear() noexcept;
+		void TimeoutReset(int const& interval = 0) noexcept;
+		void TimeouterStop() noexcept;
+		virtual void BindTimeoutManager(UvTimeoutManager* const&) noexcept;
+		void UnbindTimeoutManager() noexcept;
+		bool Timeouting() noexcept;
 	};
 
 	class UvTcpUdpBase : public UvTimeouterBase
@@ -166,29 +166,29 @@ namespace xx
 
 		UvTcpUdpBase(UvLoop& loop);
 
-		virtual void BindTimeoutManager(UvTimeoutManager* const& t = nullptr);
+		virtual void BindTimeoutManager(UvTimeoutManager* const& t = nullptr) noexcept;
 
-		virtual void DisconnectImpl() = 0;
-		virtual bool Disconnected() = 0;
-		virtual size_t GetSendQueueSize() = 0;
-		virtual void SendBytes(char const* const& inBuf, int const& len = 0) = 0;
+		virtual void DisconnectImpl() noexcept = 0;
+		virtual bool Disconnected() noexcept = 0;
+		virtual size_t GetSendQueueSize() noexcept = 0;
+		virtual int SendBytes(char const* const& inBuf, int const& len = 0) noexcept = 0;
 
-		virtual void ReceiveImpl(char const* const& bufPtr, int const& len);
+		virtual void ReceiveImpl(char const* const& bufPtr, int const& len) noexcept;
 
-		void SendBytes(BBuffer& bb);
+		int SendBytes(BBuffer& bb) noexcept;
 
 
 
 		// 三种常用 Send 函数
 
 		template<typename T>
-		void Send(T const& pkg);
+		int Send(T const& pkg) noexcept;
 
 		template<typename T>
-		uint32_t SendRequest(T const& pkg, std::function<void(uint32_t, BBuffer*)>&& cb, int const& interval = 0);
+		uint32_t SendRequest(T const& pkg, std::function<void(uint32_t, BBuffer*)>&& cb, int const& interval = 0) noexcept;
 
 		template<typename T>
-		void SendResponse(uint32_t const& serial, T const& pkg);
+		int SendResponse(uint32_t const& serial, T const& pkg) noexcept;
 
 
 
@@ -196,40 +196,40 @@ namespace xx
 
 		// 向路由服务发包
 		template<typename T>
-		void SendRouting(char const* const& serviceAddr, size_t const& serviceAddrLen, T const& pkg);
+		int SendRouting(char const* const& serviceAddr, size_t const& serviceAddrLen, T const& pkg) noexcept;
 
 		// 向路由服务发请求
 		template<typename T>
-		uint32_t SendRoutingRequest(char const* const& serviceAddr, size_t const& serviceAddrLen, T const& pkg, std::function<void(uint32_t, BBuffer*)>&& cb, int const& interval = 0);
+		uint32_t SendRoutingRequest(char const* const& serviceAddr, size_t const& serviceAddrLen, T const& pkg, std::function<void(uint32_t, BBuffer*)>&& cb, int const& interval = 0) noexcept;
 
 		// 向路由服务发回应
 		template<typename T>
-		void SendRoutingResponse(char const* const& serviceAddr, size_t const& serviceAddrLen, uint32_t const& serial, T const& pkg);
+		int SendRoutingResponse(char const* const& serviceAddr, size_t const& serviceAddrLen, uint32_t const& serial, T const& pkg) noexcept;
 
 
 
 		// 下面是路由服务专用
 
 		// 纯下发地址. 
-		void SendRoutingAddress(char const* const& buf, size_t const& len);
+		int SendRoutingAddress(char const* const& buf, size_t const& len) noexcept;
 
 		// 读出上面函数下发的地址长度
-		static size_t GetRoutingAddressLength(BBuffer& bb);
+		static size_t GetRoutingAddressLength(BBuffer& bb) noexcept;
 
 		// 在不解析数据的情况下直接替换地址部分转发( 路由专用 )
-		void SendRoutingByRouter(BBuffer& bb, size_t const& pkgLen, size_t const& addrOffset, size_t const& addrLen, char const* const& senderAddr, size_t const& senderAddrLen);
+		int SendRoutingByRouter(BBuffer& bb, size_t const& pkgLen, size_t const& addrOffset, size_t const& addrLen, char const* const& senderAddr, size_t const& senderAddrLen) noexcept;
 
 
 
 		// 超时回调所有被跟踪 rpc 流水号并清空( 内部函数. 会自动在 OnDispose, OnDisconnect 事件前调用以触发超时回调 )
-		void RpcTraceCallback();
+		void RpcTraceCallback() noexcept;
 
 		// 增强的 SendRequest 实现 断线时 立即发起相关 rpc 超时回调. 封装了解包操作. 
 		template<typename T>
-		void SendRequestEx(T const& pkg, std::function<void(uint32_t, Object_p&)>&& cb, int const& interval = 0);
+		void SendRequestEx(T const& pkg, std::function<void(uint32_t, Object_p&)>&& cb, int const& interval = 0) noexcept;
 
 		// 会清除掉 OnReceiveXxxxxx, OnDispose 的各种事件, BindTimeoutManager 并在 OnTimeout 时 Release
-		void DelayRelease(int const& interval = 0);
+		void DelayRelease(int const& interval = 0) noexcept;
 	};
 
 	class UvTcpBase : public UvTcpUdpBase
@@ -237,24 +237,22 @@ namespace xx
 	public:
 		UvTcpBase(UvLoop& loop);
 
-		size_t GetSendQueueSize() override;
-		void SendBytes(char const* const& inBuf, int const& len = 0) override;
+		size_t GetSendQueueSize() noexcept override;
+		int SendBytes(char const* const& inBuf, int const& len = 0) noexcept override;
 
-		static void OnReadCBImpl(void* stream, ptrdiff_t nread, const void* buf_t);
+		static void OnReadCBImpl(void* stream, ptrdiff_t nread, const void* buf_t) noexcept;
 	};
 
 	class UvTcpPeer : public UvTcpBase
 	{
 	public:
-		// bool alive 只能外部检测野指针
-
 		UvTcpListener & listener;
 		UvTcpPeer(UvTcpListener& listener);
 		~UvTcpPeer();	// Release 取代 Dispose
-		void DisconnectImpl() override;
-		bool Disconnected() override;
+		void DisconnectImpl() noexcept override;
+		bool Disconnected() noexcept override;
 		std::array<char, 64> ipBuf;
-		const char* ip();
+		const char* Ip() noexcept;
 	};
 
 	class UvTcpClient : public UvTcpBase
@@ -264,16 +262,16 @@ namespace xx
 		std::function<void()> OnDisconnect;
 
 		UvTcpStates state = UvTcpStates::Disconnected;
-		bool alive() const;	// state == UvTcpStates::Connected, 并不能取代外部野指针检测
 		UvTcpClient(UvLoop& loop);
 		~UvTcpClient();	// Release 取代 Dispose
-		void SetAddress(char const* const& ipv4, int const& port);
-		static void OnConnectCBImpl(void* req, int status);
-		void Connect();
-		int TryConnect(char const* const& ip, int const& port);	// 等同于 Disconnect + SetAddress + Connect
-		void Disconnect();
-		void DisconnectImpl() override;
-		bool Disconnected() override;
+		bool Alive() const noexcept;	// state == UvTcpStates::Connected, 并不能取代外部野指针检测
+		int SetAddress(char const* const& ipv4, int const& port) noexcept;
+		static void OnConnectCBImpl(void* req, int status) noexcept;
+		int Connect() noexcept;
+		int ConnectEx(char const* const& Ip, int const& port) noexcept;	// 等同于 Disconnect + SetAddress + Connect
+		void Disconnect() noexcept;
+		void DisconnectImpl() noexcept override;
+		bool Disconnected() noexcept override;
 	};
 
 	class UvTimer : public Object
@@ -287,10 +285,10 @@ namespace xx
 		void* ptr = nullptr;
 		UvTimer(UvLoop& loop, uint64_t const& timeoutMS, uint64_t const& repeatIntervalMS, std::function<void()>&& OnFire = nullptr);
 		~UvTimer();
-		static void OnTimerCBImpl(void* handle);
-		void SetRepeat(uint64_t const& repeatIntervalMS);
-		void Again();
-		void Stop();
+		static void OnTimerCBImpl(void* handle) noexcept;
+		void SetRepeat(uint64_t const& repeatIntervalMS) noexcept;
+		int Again() noexcept;
+		int Stop() noexcept;
 	};
 
 	class UvTimeoutManager : public Object
@@ -302,11 +300,11 @@ namespace xx
 		int defaultInterval;
 		UvTimeoutManager(UvLoop& loop, uint64_t const& intervalMS, int const& wheelLen, int const& defaultInterval);
 		~UvTimeoutManager();
-		void Process();
-		void Clear();
-		void Add(UvTimeouterBase* const& t, int interval = 0);
-		void Remove(UvTimeouterBase* const& t);
-		void AddOrUpdate(UvTimeouterBase* const& t, int const& interval = 0);
+		void Process() noexcept;
+		void Clear() noexcept;
+		void Add(UvTimeouterBase* const& t, int interval = 0) noexcept;
+		void Remove(UvTimeouterBase* const& t) noexcept;
+		void AddOrUpdate(UvTimeouterBase* const& t, int const& interval = 0) noexcept;
 	};
 
 	class UvAsync : public Object
@@ -322,9 +320,9 @@ namespace xx
 		void* ptr = nullptr;
 		UvAsync(UvLoop& loop);
 		~UvAsync();
-		static void OnAsyncCBImpl(void* handle);
-		void Dispatch(std::function<void()>&& a);
-		void OnFireImpl();
+		static void OnAsyncCBImpl(void* handle) noexcept;
+		int Dispatch(std::function<void()>&& a) noexcept;
+		void OnFireImpl() noexcept;
 	};
 
 	class UvRpcManager : public Object
@@ -336,13 +334,13 @@ namespace xx
 		Queue<std::pair<int, uint32_t>> serials;
 		int defaultInterval = 0;
 		int ticks = 0;
-		size_t Count();
 		UvRpcManager(UvLoop& loop, uint64_t const& intervalMS, int const& defaultInterval);
 		~UvRpcManager();
-		void Process();
-		uint32_t Register(std::function<void(uint32_t, BBuffer*)>&& cb, int interval = 0);
-		void Unregister(uint32_t const& serial);
-		void Callback(uint32_t const& serial, BBuffer* const& bb);
+		void Process() noexcept;
+		uint32_t Register(std::function<void(uint32_t, BBuffer*)>&& cb, int interval = 0) noexcept;
+		void Unregister(uint32_t const& serial) noexcept;
+		void Callback(uint32_t const& serial, BBuffer* const& bb) noexcept;
+		size_t Count() noexcept;
 	};
 
 	// 暂不建议使用
@@ -353,17 +351,17 @@ namespace xx
 
 		UvContextBase(MemPool* const& mp);
 		~UvContextBase();
-		bool PeerAlive();
+		bool PeerAlive() noexcept;
 
 		// 重要!! 如果该函数执行点位于 peer 之 OnXxxxx 中, 则在 Bind 成功之时, 先前的 lambda 上下文将被 "顶掉", 所有捕获将变"野", 故该函数只能于此类函数退出前执行
-		bool BindPeer(UvTcpUdpBase* const& p);
-		void KickPeer(bool const& immediately = true);
-		void OnPeerReceiveRequest(uint32_t serial, BBuffer& bb);
-		void OnPeerReceivePackage(BBuffer& bb);
-		void OnPeerDisconnect();
-		virtual void HandleRequest(uint32_t serial, Ptr<Object>& o) = 0;
-		virtual void HandlePackage(Ptr<Object>& o) = 0;
-		virtual void HandleDisconnect() = 0;
+		bool BindPeer(UvTcpUdpBase* const& p) noexcept;
+		void KickPeer(bool const& immediately = true) noexcept;
+		void OnPeerReceiveRequest(uint32_t serial, BBuffer& bb) noexcept;
+		void OnPeerReceivePackage(BBuffer& bb) noexcept;
+		void OnPeerDisconnect() noexcept;
+		virtual void HandleRequest(uint32_t serial, Ptr<Object>& o) noexcept = 0;
+		virtual void HandlePackage(Ptr<Object>& o) noexcept = 0;
+		virtual void HandleDisconnect() noexcept = 0;
 	};
 
 	class UvUdpListener : public UvListenerBase
@@ -375,16 +373,16 @@ namespace xx
 
 		UvUdpListener(UvLoop& loop);
 		~UvUdpListener();
-		static void OnRecvCBImpl(void* udp, ptrdiff_t nread, void* buf_t, void* addr, uint32_t flags);
-		void OnReceiveImpl(char const* const& bufPtr, int const& len, void* const& addr);
+		static void OnRecvCBImpl(void* udp, ptrdiff_t nread, void* buf_t, void* addr, uint32_t flags) noexcept;
+		void OnReceiveImpl(char const* const& bufPtr, int const& len, void* const& addr) noexcept;
 
-		void Bind(char const* const& ipv4, int const& port);
-		void Listen();
-		void StopListen();
+		int Bind(char const* const& ipv4, int const& port) noexcept;
+		int Listen() noexcept;
+		int StopListen() noexcept;
 
 		UvUdpPeer* CreatePeer(Guid const& g
 			, int const& sndwnd = 128, int const& rcvwnd = 128
-			, int const& nodelay = 1/*, int const& interval = 10*/, int const& resend = 2, int const& nc = 1, int const& minrto = 100);
+			, int const& nodelay = 1/*, int const& interval = 10*/, int const& resend = 2, int const& nc = 1, int const& minrto = 100) noexcept;
 	};
 
 	class UvUdpBase : public UvTcpUdpBase
@@ -406,16 +404,16 @@ namespace xx
 			, int const& nodelay = 1/*, int const& interval = 10*/, int const& resend = 2, int const& nc = 1, int const& minrto = 100);
 		~UvUdpPeer();
 
-		static int OutputImpl(char const* buf, int len, void* kcp);
-		void Update(uint32_t const& current);
-		void Input(char const* const& data, int const& len);
-		void SendBytes(char const* const& data, int const& len = 0) override;
-		void DisconnectImpl() override;
-		size_t GetSendQueueSize() override;
-		bool Disconnected() override;
+		static int OutputImpl(char const* buf, int len, void* kcp) noexcept;
+		void Update(uint32_t const& current) noexcept;
+		int Input(char const* const& data, int const& len) noexcept;
+		int SendBytes(char const* const& data, int const& len = 0) noexcept override;
+		void DisconnectImpl() noexcept override;
+		size_t GetSendQueueSize() noexcept override;
+		bool Disconnected() noexcept override;
 
 		std::array<char, 64> ipBuf;
-		char* ip();
+		char* Ip() noexcept;
 	};
 
 	class UvUdpClient : public UvUdpBase
@@ -425,20 +423,20 @@ namespace xx
 		UvUdpClient(UvLoop& loop);
 		~UvUdpClient();
 
-		void Connect(Guid const& guid
+		int Connect(Guid const& guid
 			, int const& sndwnd = 128, int const& rcvwnd = 128
-			, int const& nodelay = 1/*, int const& interval = 10*/, int const& resend = 2, int const& nc = 1, int const& minrto = 100);
+			, int const& nodelay = 1/*, int const& interval = 10*/, int const& resend = 2, int const& nc = 1, int const& minrto = 100) noexcept;
 
-		static void OnRecvCBImpl(void* udp, ptrdiff_t nread, void* buf_t, void* addr, uint32_t flags);
-		void OnReceiveImpl(char const* const& bufPtr, int const& len, void* const& addr);
-		static int OutputImpl(char const* buf, int len, void* kcp);
-		void Update(uint32_t const& current);
-		void Disconnect();
-		void SetAddress(char const* const& ipv4, int const& port);
-		void SendBytes(char const* const& data, int const& len = 0) override;
-		void DisconnectImpl() override;
-		bool Disconnected() override;
-		size_t GetSendQueueSize() override;
+		static void OnRecvCBImpl(void* udp, ptrdiff_t nread, void* buf_t, void* addr, uint32_t flags) noexcept;
+		void OnReceiveImpl(char const* const& bufPtr, int const& len, void* const& addr) noexcept;
+		static int OutputImpl(char const* buf, int len, void* kcp) noexcept;
+		void Update(uint32_t const& current) noexcept;
+		void Disconnect() noexcept;
+		int SetAddress(char const* const& ipv4, int const& port) noexcept;
+		int SendBytes(char const* const& data, int const& len = 0) noexcept override;
+		void DisconnectImpl() noexcept override;
+		bool Disconnected() noexcept override;
+		size_t GetSendQueueSize() noexcept override;
 	};
 
 
@@ -499,7 +497,7 @@ namespace xx
 		UvHttpPeer(UvTcpListener& listener);
 		~UvHttpPeer();
 
-		virtual void ReceiveImpl(char const* const& bufPtr, int const& len) override;
+		virtual void ReceiveImpl(char const* const& bufPtr, int const& len) noexcept override;
 
 		// todo: 提供更多返回内容的简单拼接下发
 		inline static const std::string responsePartialHeader_text = 
@@ -509,16 +507,16 @@ namespace xx
 			;
 
 		// 发送 buf
-		void SendHttpResponse(char const* const& bufPtr, size_t const& len);
+		void SendHttpResponse(char const* const& bufPtr, size_t const& len) noexcept;
 
 		// 会发送 o ToString 后的结果
 		template<typename T>
-		void SendHttpResponse(T const& o);
+		void SendHttpResponse(T const& o) noexcept;
 
-		void SendHttpResponse();	// 会发送 s 的内容
+		void SendHttpResponse() noexcept;	// 会发送 s 的内容
 
 		// 会 urldecode 并 填充 path, queries, fragment
-		void ParseUrl();
+		void ParseUrl() noexcept;
 	};
 
 	// 代码从 UvHttpPeer 复制小改
@@ -562,7 +560,7 @@ namespace xx
 		UvHttpClient(UvLoop& loop);
 		~UvHttpClient();
 
-		virtual void ReceiveImpl(char const* const& bufPtr, int const& len) override;
+		virtual void ReceiveImpl(char const* const& bufPtr, int const& len) noexcept override;
 	};
 
 
@@ -572,7 +570,7 @@ namespace xx
 
 
 	template<typename T>
-	inline void UvTcpUdpBase::Send(T const & pkg)
+	inline int UvTcpUdpBase::Send(T const & pkg) noexcept
 	{
 		//assert(pkg);
 		bbSend.Clear();
@@ -586,7 +584,7 @@ namespace xx
 			p[0] = 0;
 			p[1] = (uint8_t)dataLen;
 			p[2] = (uint8_t)(dataLen >> 8);
-			SendBytes(p, (int)(dataLen + 3));
+			return SendBytes(p, (int)(dataLen + 3));
 		}
 		else
 		{
@@ -596,12 +594,12 @@ namespace xx
 			p[2] = (uint8_t)(dataLen >> 8);
 			p[3] = (uint8_t)(dataLen >> 16);
 			p[4] = (uint8_t)(dataLen >> 24);
-			SendBytes(p, (int)(dataLen + 5));
+			return SendBytes(p, (int)(dataLen + 5));
 		}
 	}
 
 	template<typename T>
-	inline uint32_t UvTcpUdpBase::SendRequest(T const & pkg, std::function<void(uint32_t, BBuffer*)>&& cb, int const& interval)
+	inline uint32_t UvTcpUdpBase::SendRequest(T const & pkg, std::function<void(uint32_t, BBuffer*)>&& cb, int const& interval) noexcept
 	{
 		//assert(pkg);
 		if (!loop.rpcMgr) throw - 1;
@@ -634,7 +632,7 @@ namespace xx
 	}
 
 	template<typename T>
-	inline void UvTcpUdpBase::SendResponse(uint32_t const& serial, T const & pkg)
+	inline int UvTcpUdpBase::SendResponse(uint32_t const& serial, T const & pkg) noexcept
 	{
 		//assert(pkg);
 		bbSend.Clear();
@@ -649,7 +647,7 @@ namespace xx
 			p[0] = 0b00000010;											// 这里标记包头为 Response 类型
 			p[1] = (uint8_t)dataLen;
 			p[2] = (uint8_t)(dataLen >> 8);
-			SendBytes(p, (int)(dataLen + 3));
+			return endBytes(p, (int)(dataLen + 3));
 		}
 		else
 		{
@@ -659,13 +657,13 @@ namespace xx
 			p[2] = (uint8_t)(dataLen >> 8);
 			p[3] = (uint8_t)(dataLen >> 16);
 			p[4] = (uint8_t)(dataLen >> 24);
-			SendBytes(p, (int)(dataLen + 5));
+			return SendBytes(p, (int)(dataLen + 5));
 		}
 	}
 
 
 	template<typename T>
-	inline void UvTcpUdpBase::SendRouting(char const* const& serviceAddr, size_t const& serviceAddrLen, T const & pkg)
+	inline int UvTcpUdpBase::SendRouting(char const* const& serviceAddr, size_t const& serviceAddrLen, T const & pkg) noexcept
 	{
 		//assert(pkg);
 		bbSend.Clear();
@@ -680,7 +678,7 @@ namespace xx
 			p[0] = (uint8_t)(0b00001000 | ((serviceAddrLen - 1) << 4));	// 拼接为 XXXX1000 的含长度信息的路由包头
 			p[1] = (uint8_t)dataLen;
 			p[2] = (uint8_t)(dataLen >> 8);
-			SendBytes(p, (int)(dataLen + 3));
+			return SendBytes(p, (int)(dataLen + 3));
 		}
 		else
 		{
@@ -690,12 +688,12 @@ namespace xx
 			p[2] = (uint8_t)(dataLen >> 8);
 			p[3] = (uint8_t)(dataLen >> 16);
 			p[4] = (uint8_t)(dataLen >> 24);
-			SendBytes(p, (int)(dataLen + 5));
+			return SendBytes(p, (int)(dataLen + 5));
 		}
 	}
 
 	template<typename T>
-	inline uint32_t UvTcpUdpBase::SendRoutingRequest(char const* const& serviceAddr, size_t const& serviceAddrLen, T const & pkg, std::function<void(uint32_t, BBuffer*)>&& cb, int const& interval)
+	inline uint32_t UvTcpUdpBase::SendRoutingRequest(char const* const& serviceAddr, size_t const& serviceAddrLen, T const & pkg, std::function<void(uint32_t, BBuffer*)>&& cb, int const& interval) noexcept
 	{
 		//assert(pkg);
 		bbSend.Clear();
@@ -728,7 +726,7 @@ namespace xx
 	}
 
 	template<typename T>
-	inline void UvTcpUdpBase::SendRoutingResponse(char const* const& serviceAddr, size_t const& serviceAddrLen, uint32_t const& serial, T const & pkg)
+	inline int UvTcpUdpBase::SendRoutingResponse(char const* const& serviceAddr, size_t const& serviceAddrLen, uint32_t const& serial, T const & pkg) noexcept
 	{
 		//assert(pkg);
 		bbSend.Clear();
@@ -744,7 +742,7 @@ namespace xx
 			p[0] = (uint8_t)(0b00001010 | ((serviceAddrLen - 1) << 4));	// 这里标记包头为 addrLen + Routing + Response 类型
 			p[1] = (uint8_t)dataLen;
 			p[2] = (uint8_t)(dataLen >> 8);
-			SendBytes(p, (int)(dataLen + 3));
+			return SendBytes(p, (int)(dataLen + 3));
 		}
 		else
 		{
@@ -754,13 +752,13 @@ namespace xx
 			p[2] = (uint8_t)(dataLen >> 8);
 			p[3] = (uint8_t)(dataLen >> 16);
 			p[4] = (uint8_t)(dataLen >> 24);
-			SendBytes(p, (int)(dataLen + 5));
+			return SendBytes(p, (int)(dataLen + 5));
 		}
 	}
 
 
 	template<typename T>
-	inline void UvTcpUdpBase::SendRequestEx(T const& pkg, std::function<void(uint32_t, Object_p&)>&& cb, int const& interval)
+	inline void UvTcpUdpBase::SendRequestEx(T const& pkg, std::function<void(uint32_t, Object_p&)>&& cb, int const& interval) noexcept
 	{
 		auto serial = SendRequest(pkg, [this, cb = std::move(cb)](uint32_t ser, BBuffer* bb)
 		{
@@ -787,7 +785,7 @@ namespace xx
 
 
 	template<typename T>
-	inline void UvHttpPeer::SendHttpResponse(T const& o)
+	inline void UvHttpPeer::SendHttpResponse(T const& o) noexcept
 	{
 		s.Assign(o);
 		SendHttpResponse();

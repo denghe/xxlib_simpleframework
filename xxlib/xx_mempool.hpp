@@ -94,7 +94,7 @@ namespace xx
 
 
 	template<typename T, typename...Args>
-	T* MemPool::Create(Args&&...args)
+	T* MemPool::Create(Args&&...args) noexcept
 	{
 		auto p = Alloc<MemHeader_Object>(sizeof(T));
 		if (!p) return nullptr;
@@ -111,26 +111,26 @@ namespace xx
 		catch (...)
 		{
 			Free<MemHeader_Object>(p);
-			throw - 1;
+			return nullptr;
 		}
 	}
 
 	template<typename T, typename...Args>
-	Ptr<T> MemPool::CreatePtr(Args&&...args)
+	Ptr<T> MemPool::CreatePtr(Args&&...args) noexcept
 	{
 		return Ptr<T>(Create<T>(std::forward<Args>(args)...));
 	}
 
 
 	template<typename T, typename...Args>
-	bool MemPool::CreateTo(T*& outPtr, Args&&...args)
+	T* MemPool::CreateTo(T*& outPtr, Args&&...args) noexcept
 	{
 		outPtr = Create<T>(std::forward<Args>(args)...);
 		return outPtr;
 	}
 
 	template<typename T, typename...Args>
-	bool MemPool::CreateTo(Ptr<T>& outPtr, Args&&...args)
+	T* MemPool::CreateTo(Ptr<T>& outPtr, Args&&...args) noexcept
 	{
 		outPtr = CreatePtr<T>(std::forward<Args>(args)...);
 		return outPtr.pointer;
@@ -143,26 +143,26 @@ namespace xx
 
 
 	template<typename T, typename...Args>
-	T* MemPool::MPCreate(Args&&...args)
+	T* MemPool::MPCreate(Args&&...args) noexcept
 	{
 		return Create<T>(this, std::forward<Args>(args)...);
 	}
 
 	template<typename T, typename...Args>
-	Ptr<T> MemPool::MPCreatePtr(Args&&...args)
+	Ptr<T> MemPool::MPCreatePtr(Args&&...args) noexcept
 	{
 		return CreatePtr<T>(this, std::forward<Args>(args)...);
 	}
 
 
 	template<typename T, typename...Args>
-	bool MemPool::MPCreateTo(T*& outPtr, Args&&...args)
+	bool MemPool::MPCreateTo(T*& outPtr, Args&&...args) noexcept
 	{
 		return CreateTo(outPtr, this, std::forward<Args>(args)...);
 	}
 
 	template<typename T, typename...Args>
-	bool MemPool::MPCreateTo(Ptr<T>& outPtr, Args&&...args)
+	bool MemPool::MPCreateTo(Ptr<T>& outPtr, Args&&...args) noexcept
 	{
 		return CreateTo(outPtr, this, std::forward<Args>(args)...);
 	}
@@ -172,7 +172,7 @@ namespace xx
 
 
 	template<typename...Args>
-	Ptr<String> MemPool::Str(Args&&...args)
+	Ptr<String> MemPool::Str(Args&&...args) noexcept
 	{
 		return CreatePtr<xx::String>(this, std::forward<Args>(args)...);
 	}
@@ -182,7 +182,7 @@ namespace xx
 
 
 	// 从 Free 复制小改. 能防递归 Release
-	inline void MemPool::Release(Object* const& p)
+	inline void MemPool::Release(Object* const& p) noexcept
 	{
 		if (!p) return;
 		auto h = (MemHeader_Object*)p - 1;

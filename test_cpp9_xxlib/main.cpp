@@ -334,7 +334,7 @@ inline Router::Router(xx::UvLoop& loop)
 			{
 				// 取出 c( 位于这个容器的 c 一定是 alive 的 )
 				auto c = serviceClientMappings.ValueAt(idx);
-				assert(c->alive());
+				assert(c->Alive());
 
 				// 篡改地址部分为客户对端的 key 并转发
 				c->SendRoutingByRouter(bb, pkgLen, addrOffset, addrLen, (char*)&p->addr, sizeof(p->addr));
@@ -393,7 +393,7 @@ inline void Client::Update()
 		routerClient.Connect();
 		//std::cout << "routerClient.Connect();" << std::endl;
 	}
-	else if (routerClient.alive())
+	else if (routerClient.Alive())
 	{
 		//std::cout << "routerClient.SendRoutingRequest" << std::endl;
 		routerClient.SendRoutingRequest("Service1", 8, xx::String(mempool, "hi"), [this](uint32_t serial, xx::BBuffer* bb)
@@ -413,7 +413,7 @@ inline void Client::Update()
 			}
 
 			// 根据收到的 服务地址, 继续发包( 前提是没断开 )
-			if (routerClient.alive())
+			if (routerClient.Alive())
 			{
 				routerClient.SendRoutingRequest(str.buf, str.dataLen, xx::String(mempool, "hi!!!"), [this](uint32_t serial, xx::BBuffer* bb)
 				{

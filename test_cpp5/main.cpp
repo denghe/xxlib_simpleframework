@@ -1,4 +1,11 @@
 ﻿// todo: 用 sg 语法改进 uv 库
+// todo: 所有回调理论上讲都应该用版本检查来探测回调后是否 this 变野
+// todo: 所有 c api 回调实现如果有 call 用户回调, 都应该 try
+// todo: cpp 版 uv 库不再用 try
+// todo: 一些 catch ... 要改成 Release Disconnect 之类?
+// todo: 一些 void 返回值要改成 int
+// todo: serial 考虑改成 int
+// todo: 将回调的 try 用宏包起来做开关
 
 // todo: noexcept 狂加一波
 

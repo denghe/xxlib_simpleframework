@@ -98,39 +98,39 @@ namespace xx
 		// 正常 create 系列
 
 		template<typename T, typename...Args>
-		T* Create(Args&&...args);
+		T* Create(Args&&...args) noexcept;
 
 		template<typename T, typename...Args>
-		Ptr<T> CreatePtr(Args&&...args);
+		Ptr<T> CreatePtr(Args&&...args) noexcept;
 
 		template<typename T, typename...Args>
-		bool CreateTo(T*& outPtr, Args&&...args);
+		T* CreateTo(T*& outPtr, Args&&...args) noexcept;
 
 		template<typename T, typename...Args>
-		bool CreateTo(Ptr<T>& outPtr, Args&&...args);
+		T* CreateTo(Ptr<T>& outPtr, Args&&...args) noexcept;
 
 
 		// 首参为 MemPool* 传 this 系列, 省一个参数
 
 		template<typename T, typename...Args>
-		T* MPCreate(Args&&...args);
+		T* MPCreate(Args&&...args) noexcept;
 
 		template<typename T, typename...Args>
-		Ptr<T> MPCreatePtr(Args&&...args);
+		Ptr<T> MPCreatePtr(Args&&...args) noexcept;
 
 		template<typename T, typename...Args>
-		bool MPCreateTo(T*& outPtr, Args&&...args);
+		bool MPCreateTo(T*& outPtr, Args&&...args) noexcept;
 
 		template<typename T, typename...Args>
-		bool MPCreateTo(Ptr<T>& outPtr, Args&&...args);
+		bool MPCreateTo(Ptr<T>& outPtr, Args&&...args) noexcept;
 
 
 		// 简化一下常用的类型创建. 相当于 mp.MPCreatePtr<xx::String>( args )
 		template<typename ...Args>
-		Ptr<String> Str(Args&&...args);
+		Ptr<String> Str(Args&&...args) noexcept;
 
 
-		void Release(Object* const& o);
+		void Release(Object* const& o) noexcept;
 
 		/***********************************************************************************/
 		// 工具函数
