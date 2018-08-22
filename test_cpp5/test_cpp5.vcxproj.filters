@@ -116,6 +116,9 @@
     <ClInclude Include="..\xxlib\http_parser.h">
       <Filter>xxlib</Filter>
     </ClInclude>
+    <ClInclude Include="..\xxlib\fixed_function.hpp">
+      <Filter>xxlib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="..\xxlib\xx.natvis">

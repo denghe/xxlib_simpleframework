@@ -14,6 +14,9 @@
 #include <iostream>
 #include <chrono>
 
+#include "fixed_function.hpp"
+
+
 // 当 IOS 最低版本兼容参数低于 11 时无法启用 C++17, 故启用 C++14 结合下面的各种造假来解决
 #ifdef __IPHONE_OS_VERSION_MIN_REQUIRED
 #if __IPHONE_OS_VERSION_MIN_REQUIRED < 110000
@@ -150,6 +153,28 @@ namespace xx
 	};
 
 
+
+	/***********************************************************************************/
+	// ScopeGuard
+	/***********************************************************************************/
+
+	struct ScopeGuard
+	{
+		template<typename T>
+		ScopeGuard(T&& f) : func(std::forward<T>(f)) {}
+		~ScopeGuard() { Run(); }
+		inline void RunAndCancel() { Run(); Cancel(); }
+		inline void Run() { if (func) func(); }
+		inline void Cancel() { func = nullptr; }
+		template<typename T>
+		inline void Set(T&& f) { func = std::forward<T>(f); }
+	private:
+		kapala::fixed_function<void()> func;
+		ScopeGuard(ScopeGuard const&) = delete;
+		ScopeGuard &operator=(ScopeGuard const&) = delete;
+	};
+
+
 	/************************************************************************************/
 	// time_point <--> .net DateTime.Now.ToUniversalTime().Ticks converts
 	/************************************************************************************/
@@ -227,7 +252,6 @@ namespace xx
 	}
 
 }
-
 
 
 #include "xx_mempool.h"

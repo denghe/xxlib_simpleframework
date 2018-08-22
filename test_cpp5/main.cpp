@@ -1,27 +1,41 @@
-﻿// todo: noexcept 狂加一波
+﻿// todo: 用 sg 语法改进 uv 库
 
-#include "fixed_function.hpp"
+// todo: noexcept 狂加一波
 
-struct a
+#include "xx.h"
+
+class Foo
 {
-	kapala::fixed_function<void(), 128> cb_;
-	inline void set_cb(kapala::fixed_function<void()>&& cb)
+public:
+	char* s1 = nullptr;
+	char* s2 = nullptr;
+	std::string str;
+	Foo()
 	{
-		cb_ = [this, cb = std::move(cb)]
-		{
-			cb();
-		};
-	}
-	inline void operator()()
-	{
-		if (cb_) cb_();
+		s1 = new char[100];
+		xx::ScopeGuard sg_s1([this] { delete[] s1; });
+
+		s2 = new char[200];
+		xx::ScopeGuard sg_s2([this] { delete[] s2; });
+
+		str.reserve(1000000000000000);	// will throw bad alloc
+
+		sg_s2.Cancel();
+		sg_s1.Cancel();
 	}
 };
 
 int main()
 {
-	a A;
-	A.set_cb([] {});
-	A();
+	for (int i = 0; i < 99; ++i)
+	{
+		try
+		{
+			Foo f;
+		}
+		catch (...)
+		{
+		}
+	}
 	return 0;
 }
