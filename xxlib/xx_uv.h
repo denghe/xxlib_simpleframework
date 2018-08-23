@@ -649,7 +649,7 @@ namespace xx
 			p[0] = 0b00000010;											// 这里标记包头为 Response 类型
 			p[1] = (uint8_t)dataLen;
 			p[2] = (uint8_t)(dataLen >> 8);
-			return endBytes(p, (int)(dataLen + 3));
+			return SendBytes(p, (int)(dataLen + 3));
 		}
 		else
 		{
