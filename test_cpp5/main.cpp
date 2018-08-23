@@ -1,13 +1,6 @@
-﻿// todo: 用 sg 语法改进 uv 库
-// todo: 所有回调理论上讲都应该用版本检查来探测回调后是否 this 变野
-// todo: 所有 c api 回调实现如果有 call 用户回调, 都应该 try
-// todo: cpp 版 uv 库不再用 try
-// todo: 一些 catch ... 要改成 Release Disconnect 之类?
-// todo: 一些 void 返回值要改成 int
-// todo: serial 考虑改成 int
-// todo: 将回调的 try 用宏包起来做开关
-
-// todo: noexcept 狂加一波
+﻿// todo: noexcept 狂加一波
+// todo: 用 sg 语法改进各种库
+// todo: xx_uv 从 c# 那边复制备注
 
 
 #include "xx_uv.h"
@@ -16,8 +9,9 @@
 inline void Host()
 {
 	xx::MemPool mp;
-	xx::Dict<char const*, std::function<void(xx::UvHttpPeer*)>> pathHandlers(&mp);
 
+	// 根据 url 之 path 路由处理函数
+	xx::Dict<char const*, std::function<void(xx::UvHttpPeer*)>> pathHandlers(&mp);
 	pathHandlers["test"] = [](xx::UvHttpPeer* peer)
 	{
 		peer->s.Append("{ \"method\":\"", peer->method
@@ -50,20 +44,18 @@ inline void Host()
 	{
 		auto peer = listener->mempool->Create<xx::UvHttpPeer>(*listener);
 		peer->rawData.MPCreate(peer->mempool);
-		peer->OnMessageComplete = [&pathHandlers, peer]
+		peer->OnReceiveHttp = [&pathHandlers, peer]
 		{
 			peer->ParseUrl();
 			auto idx = pathHandlers.Find(peer->path);
 			if (idx != -1)
 			{
-				// 根据 url 之 path 路由处理函数
 				pathHandlers.ValueAt(idx)(peer);
 			}
 			else
 			{
 				peer->Release();
 			}
-			return 0;
 		};
 		peer->OnError = [peer](uint32_t errorNumber, char const* errorMessage)
 		{
@@ -98,7 +90,7 @@ inline void Test()
 		txt.Append("GET /add_1?value=", value, " HTTP/1.1\r\n""\r\n");
 		client->SendBytes(txt.buf, (int)txt.dataLen);
 	};
-	client->OnMessageComplete = [&]
+	client->OnReceiveHttp = [&]
 	{
 		xx::FromString(value, client->body.c_str());
 		if (value == 100000)
@@ -121,11 +113,7 @@ inline void Test()
 int main()
 {
 	std::thread t1([] { Host(); });
-	t1.detach();
-
 	std::thread t2([] { Test(); });
-	t2.detach();
-
 	std::cin.get();
 	return 0;
 }

@@ -136,17 +136,21 @@ int xx::UvLoop::InitKcpFlushInterval(uint32_t const& interval) noexcept
 	kcpInterval = interval;
 	return mempool->CreateTo(udpTimer, *this, 0, interval, [this]
 	{
+		auto vn = udpTimer->memHeader().versionNumber;
 		udpTicks += kcpInterval;
-		for (auto& L : udpListeners)
+		for (int i = (int)udpListeners.dataLen - 1; i >= 0; --i)
 		{
+			auto& L = udpListeners[i];
 			for (auto& kv : L->peers)
 			{
 				kv.value->Update(udpTicks);
+				if (udpTimer->IsReleased(vn)) return 0;
 			}
 		}
 		for (int i = (int)udpClients.dataLen - 1; i >= 0; --i)
 		{
 			udpClients[i]->Update(udpTicks);
+			if (udpTimer->IsReleased(vn)) return 0;
 		}
 	}) ? 0 : -1;
 }
@@ -251,19 +255,12 @@ void xx::UvTcpListener::OnAcceptCB(void* server, int status) noexcept
 {
 	if (status != 0) return;
 	auto listener = *((UvTcpListener**)server - 1);
-	auto vn = listener->memHeader().versionNumber;
 	UvTcpPeer* peer = nullptr;
 	if (listener->OnCreatePeer)
 	{
-		try
-		{
-			peer = listener->OnCreatePeer();
-		}
-		catch (...)
-		{
-			return;
-		}
-		if (vn != listener->memHeader().versionNumber) return;
+		auto vn = listener->memHeader().versionNumber;
+		peer = listener->OnCreatePeer();
+		if(listener->IsReleased(vn)) return;
 	}
 	else
 	{
@@ -271,13 +268,7 @@ void xx::UvTcpListener::OnAcceptCB(void* server, int status) noexcept
 	}
 	if (peer && listener->OnAccept)
 	{
-		try
-		{
-			listener->OnAccept(peer);
-		}
-		catch (...)
-		{
-		}
+		listener->OnAccept(peer);
 	}
 }
 
@@ -428,16 +419,9 @@ void xx::UvTcpUdpBase::ReceiveImpl(char const* const& bufPtr, int const& len) no
 			bbRecv.offset = offset - headerLen;
 			if (OnReceiveRouting)
 			{
-				try
-				{
-					OnReceiveRouting(bbRecv, pkgLen, addrOffset, addrLen);
-				}
-				catch (...)
-				{
-					DisconnectImpl();
-				}
+				OnReceiveRouting(bbRecv, pkgLen, addrOffset, addrLen);
 			}
-			if (vn != memHeader().versionNumber || !bbRecv.dataLen) return;
+			if (IsReleased(vn) || !bbRecv.dataLen) return;
 			if (Disconnected())
 			{
 				bbRecv.Clear();
@@ -458,16 +442,9 @@ void xx::UvTcpUdpBase::ReceiveImpl(char const* const& bufPtr, int const& len) no
 		{
 			if (OnReceivePackage)
 			{
-				try
-				{
-					OnReceivePackage(bbRecv);
-				}
-				catch (...)
-				{
-					DisconnectImpl();
-				}
+				OnReceivePackage(bbRecv);
 			}
-			if (vn != memHeader().versionNumber || !bbRecv.dataLen) return;
+			if (IsReleased(vn) || !bbRecv.dataLen) return;
 			if (Disconnected())
 			{
 				bbRecv.Clear();
@@ -486,16 +463,9 @@ void xx::UvTcpUdpBase::ReceiveImpl(char const* const& bufPtr, int const& len) no
 			{
 				if (OnReceiveRequest)
 				{
-					try
-					{
-						OnReceiveRequest(serial, bbRecv);
-					}
-					catch (...)
-					{
-						DisconnectImpl();
-					}
+					OnReceiveRequest(serial, bbRecv);
 				}
-				if (vn != memHeader().versionNumber || !bbRecv.dataLen) return;
+				if (IsReleased(vn) || !bbRecv.dataLen) return;
 				if (Disconnected())
 				{
 					bbRecv.Clear();
@@ -505,7 +475,7 @@ void xx::UvTcpUdpBase::ReceiveImpl(char const* const& bufPtr, int const& len) no
 			else if (pkgType == 2)
 			{
 				loop.rpcMgr->Callback(serial, &bbRecv);
-				if (vn != memHeader().versionNumber || !bbRecv.dataLen) return;
+				if (IsReleased(vn) || !bbRecv.dataLen) return;
 				if (Disconnected())
 				{
 					bbRecv.Clear();
@@ -661,7 +631,7 @@ void xx::UvTcpBase::OnReadCBImpl(void* stream, ptrdiff_t nread, void const* buf_
 	{
 		auto vn = tcp->memHeader().versionNumber;
 		tcp->ReceiveImpl(bufPtr, len);
-		if (vn != tcp->memHeader().versionNumber)
+		if (tcp->IsReleased(vn))
 		{
 			tcp = nullptr;
 		}
@@ -725,11 +695,7 @@ xx::UvTcpPeer::~UvTcpPeer()
 	RpcTraceCallback();
 	if (OnDispose)
 	{
-		try
-		{
-			OnDispose();
-		}
-		catch (...) {}
+		OnDispose();
 	}
 	Close((uv_handle_t*)ptr);
 	ptr = nullptr;
@@ -780,11 +746,7 @@ xx::UvTcpClient::~UvTcpClient()
 	Disconnect();
 	if (OnDispose)
 	{
-		try
-		{
-			OnDispose();
-		}
-		catch (...) {}
+		OnDispose();
 	}
 	Free(loop.mempool, addrPtr);
 	addrPtr = nullptr;
@@ -810,7 +772,9 @@ void xx::UvTcpClient::OnConnectCBImpl(void* req, int status) noexcept
 	if (!client) return;
 	if (status < 0)
 	{
+		auto vn = client->memHeader().versionNumber;
 		client->Disconnect();
+		if (client->IsReleased(vn)) return;
 	}
 	else
 	{
@@ -819,11 +783,7 @@ void xx::UvTcpClient::OnConnectCBImpl(void* req, int status) noexcept
 	}
 	if (client->OnConnect)
 	{
-		try
-		{
-			client->OnConnect(status);
-		}
-		catch (...) {}
+		client->OnConnect(status);
 	}
 }
 
@@ -870,7 +830,7 @@ void xx::UvTcpClient::Disconnect() noexcept
 	{
 		auto vn = memHeader().versionNumber;
 		OnDisconnect();
-		if (vn != memHeader().versionNumber) return;
+		if (IsReleased(vn)) return;
 	}
 	Close((uv_handle_t*)ptr);
 	ptr = nullptr;
@@ -931,11 +891,7 @@ void xx::UvTimer::OnTimerCBImpl(void* handle) noexcept
 	auto timer = *((UvTimer**)handle - 1);
 	if (timer->OnFire)
 	{
-		try
-		{
-			timer->OnFire();
-		}
-		catch (...) {}
+		timer->OnFire();
 	}
 }
 
@@ -988,13 +944,9 @@ void xx::UvTimeoutManager::Process() noexcept
 		auto vn = t->memHeader().versionNumber;
 		if (t->OnTimeout)
 		{
-			try
-			{
-				t->OnTimeout();
-			}
-			catch (...) {}
+			t->OnTimeout();
 		}
-		if (vn == t->memHeader().versionNumber)	// ensure t is never Release
+		if (!t->IsReleased(vn))
 		{
 			t->TimeouterClear();
 		}
@@ -1092,11 +1044,7 @@ xx::UvAsync::~UvAsync()
 	assert(ptr);
 	if (OnDispose)
 	{
-		try
-		{
-			OnDispose();
-		}
-		catch (...) {}
+		OnDispose();
 	}
 
 	Close((uv_handle_t*)ptr);
@@ -1111,11 +1059,7 @@ void xx::UvAsync::OnAsyncCBImpl(void* handle) noexcept
 	auto self = *((UvAsync**)handle - 1);
 	if (self->OnFire)
 	{
-		try
-		{
-			self->OnFire();
-		}
-		catch (...) {}
+		self->OnFire();
 	}
 }
 
@@ -1331,11 +1275,7 @@ xx::UvUdpListener::~UvUdpListener()
 	assert(ptr);
 	if (OnDispose)
 	{
-		try
-		{
-			OnDispose();
-		}
-		catch (...) {}
+		OnDispose();
 	}
 	for (auto& kv : peers)
 	{
@@ -1360,7 +1300,7 @@ void xx::UvUdpListener::OnRecvCBImpl(void* uvudp, ptrdiff_t nread, void* buf_t, 
 	int len = (int)nread;
 	if (len > 0)
 	{
-		listener->OnReceiveImpl(bufPtr, len, addr);
+		listener->OnReceiveImpl(bufPtr, len, addr);	// 这里不需要 check listener 的死活
 	}
 	mp->Free(bufPtr);
 	//if (len < 0) return;
@@ -1375,6 +1315,9 @@ void xx::UvUdpListener::OnReceiveImpl(char const* const& bufPtr, int const& len,
 	Guid g(false);
 	g.Fill(bufPtr);
 
+	// 取出版本号备用
+	auto vn = memHeader().versionNumber;
+
 	// 去字典中找. 没有就新建.
 	int idx = peers.Find(g);
 	UvUdpPeer* p = nullptr;
@@ -1383,17 +1326,8 @@ void xx::UvUdpListener::OnReceiveImpl(char const* const& bufPtr, int const& len,
 		if (!OnCreatePeer) mempool->CreateTo(p, *this, g);
 		else
 		{
-			auto vn = memHeader().versionNumber;
-			try
-			{
-				p = OnCreatePeer(g);
-				if (!p) return;
-			}
-			catch (...)
-			{
-				return;
-			}
-			if (vn != memHeader().versionNumber) return;
+			p = OnCreatePeer(g);
+			if (IsReleased(vn) || !p) return;
 		}
 		peers.Add(g, p);
 	}
@@ -1409,13 +1343,8 @@ void xx::UvUdpListener::OnReceiveImpl(char const* const& bufPtr, int const& len,
 	{
 		if (OnAccept)
 		{
-			auto vn = memHeader().versionNumber;
-			try
-			{
-				OnAccept(p);
-			}
-			catch (...) {}
-			if (vn != memHeader().versionNumber) return;
+			OnAccept(p);
+			if (IsReleased(vn)) return;
 		}
 	}
 
@@ -1505,11 +1434,7 @@ xx::UvUdpPeer::~UvUdpPeer()
 	RpcTraceCallback();
 	if (OnDispose)
 	{
-		try
-		{
-			OnDispose();
-		}
-		catch (...) {}
+		OnDispose();
 	}
 	Free(mempool, addrPtr);
 	ikcp_release((ikcpcb*)ptr);
@@ -1550,13 +1475,13 @@ void xx::UvUdpPeer::Update(uint32_t const& current) noexcept
 	ikcp_update((ikcpcb*)ptr, current);
 	nextUpdateTicks = ikcp_check((ikcpcb*)ptr, current);
 
-	auto versionNumber = memHeader().versionNumber;
-	while (versionNumber == memHeader().versionNumber)
+	auto vn = memHeader().versionNumber;
+	do
 	{
 		int len = ikcp_recv((ikcpcb*)ptr, (char*)&loop.udpRecvBuf, (int)loop.udpRecvBuf.size());
 		if (len <= 0) break;
 		ReceiveImpl((char*)&loop.udpRecvBuf, len);
-	}
+	} while (!IsReleased(vn));
 }
 
 
@@ -1618,15 +1543,9 @@ xx::UvUdpClient::~UvUdpClient()
 	RpcTraceCallback();
 	if (OnDispose)
 	{
-		try
-		{
-			OnDispose();
-		}
-		catch (...) {}
+		OnDispose();
 	}
-
 	Disconnect();
-
 	loop.udpClients.RemoveAt(index_at_container);
 	index_at_container = (size_t)-1;
 }
@@ -1721,13 +1640,13 @@ void xx::UvUdpClient::Update(uint32_t const& current) noexcept
 	ikcp_update((ikcpcb*)kcpPtr, current);
 	nextUpdateTicks = ikcp_check((ikcpcb*)kcpPtr, current);
 
-	auto versionNumber = memHeader().versionNumber;
-	while (versionNumber == memHeader().versionNumber)
+	auto vn = memHeader().versionNumber;
+	do
 	{
 		int len = ikcp_recv((ikcpcb*)kcpPtr, (char*)&loop.udpRecvBuf, (int)loop.udpRecvBuf.size());
 		if (len <= 0) break;
 		ReceiveImpl((char*)&loop.udpRecvBuf, len);
-	}
+	} while (!IsReleased(vn));
 }
 
 void xx::UvUdpClient::Disconnect() noexcept
@@ -1786,7 +1705,7 @@ xx::UvHttpPeer::UvHttpPeer(UvTcpListener& listener)
 	, lastKey(listener.mempool)
 	, s(listener.mempool)
 {
-	OnMessageComplete = [] {};
+	OnReceiveHttp = [] {};
 
 	parser = (http_parser*)mempool->Alloc(sizeof(http_parser));
 	parser_settings = (http_parser_settings*)mempool->Alloc(sizeof(http_parser_settings));
@@ -1857,12 +1776,8 @@ xx::UvHttpPeer::UvHttpPeer(UvTcpListener& listener)
 	{
 		auto self = (UvHttpPeer*)parser->data;
 		auto vn = self->memHeader().versionNumber;
-		try
-		{
-			self->OnMessageComplete();
-		}
-		catch (...) {}
-		if (vn != self->memHeader().versionNumber) return -1;
+		self->OnReceiveHttp();
+		if (self->IsReleased(vn)) return -1;
 		if (self->rawData)
 		{
 			self->rawData->Clear();
@@ -1887,18 +1802,13 @@ void xx::UvHttpPeer::ReceiveImpl(char const* const& bufPtr, int const& len) noex
 	}
 	auto vn = memHeader().versionNumber;
 	auto parsed = http_parser_execute(parser, parser_settings, bufPtr, len);
-	if (vn != memHeader().versionNumber) return;
+	if (IsReleased(vn)) return;
 	if (parsed < len)
 	{
 		if (OnError)
 		{
-			auto vn = memHeader().versionNumber;
-			try
-			{
-				OnError(parser->http_errno, http_errno_description((http_errno)parser->http_errno));
-			}
-			catch (...) {}
-			if (vn != memHeader().versionNumber) return;
+			OnError(parser->http_errno, http_errno_description((http_errno)parser->http_errno));
+			if (IsReleased(vn)) return;
 		}
 		Release();
 	}
@@ -2012,7 +1922,7 @@ xx::UvHttpClient::UvHttpClient(UvLoop& loop)
 	, status(loop.mempool)
 	, lastKey(loop.mempool)
 {
-	OnMessageComplete = [] {};
+	OnReceiveHttp = [] {};
 
 	parser = (http_parser*)mempool->Alloc(sizeof(http_parser));
 	parser_settings = (http_parser_settings*)mempool->Alloc(sizeof(http_parser_settings));
@@ -2079,12 +1989,8 @@ xx::UvHttpClient::UvHttpClient(UvLoop& loop)
 	{
 		auto self = (UvHttpClient*)parser->data;
 		auto vn = self->memHeader().versionNumber;
-		try
-		{
-			self->OnMessageComplete();
-		}
-		catch (...) {}
-		if (vn != self->memHeader().versionNumber) return -1;
+		self->OnReceiveHttp();
+		if (self->IsReleased(vn)) return -1;
 		if (self->rawData)
 		{
 			self->rawData->Clear();
@@ -2109,18 +2015,13 @@ void xx::UvHttpClient::ReceiveImpl(char const* const& bufPtr, int const& len) no
 	}
 	auto vn = memHeader().versionNumber;
 	auto parsed = http_parser_execute(parser, parser_settings, bufPtr, len);
-	if (vn != memHeader().versionNumber) return;
+	if (IsReleased(vn)) return;
 	if (parsed < len)
 	{
 		if (OnError)
 		{
-			auto vn = memHeader().versionNumber;
-			try
-			{
-				OnError(parser->http_errno, http_errno_description((http_errno)parser->http_errno));
-			}
-			catch (...) {}
-			if (vn != memHeader().versionNumber) return;
+			OnError(parser->http_errno, http_errno_description((http_errno)parser->http_errno));
+			if (IsReleased(vn)) return;
 		}
 		Release();
 	}

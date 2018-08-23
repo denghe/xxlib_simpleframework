@@ -194,7 +194,10 @@ namespace xx
 		Object(MemPool* const& mempool) noexcept;
 		Object(BBuffer* const& bb) noexcept;
 		virtual ~Object() noexcept;
-		void Release();
+		void Release() noexcept;
+
+		// 可通过在 局部变量 备份 versionNumber 的方式, 于某函数调用后 check 目标是否已 Release
+		bool IsReleased(decltype(MemHeader_Object::versionNumber) const& vn) const noexcept;
 
 		MemHeader_Object& memHeader() noexcept;
 		MemHeader_Object& memHeader() const noexcept;

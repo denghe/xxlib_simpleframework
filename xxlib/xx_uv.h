@@ -2,7 +2,7 @@
 #include "xx.h"
 #include <mutex>
 
-// 注意: 除了 UvLoop, 其他类型只能以指针方式 Create 出来用. 否则容易出现重复 Release 的情况. 除非自己严格控制生命周期.
+// 注意: 除了 UvLoop, 其他类型只能以指针方式 Create 出来用. 否则将导致版本号检测变野失败. 所有回调都属于 noexcept, 如有异常, 需要自己 try
 
 namespace xx
 {
@@ -483,7 +483,7 @@ namespace xx
 		String* lastValue = nullptr;
 
 		// 成功接收完一段信息时的回调.
-		std::function<void()> OnMessageComplete;
+		std::function<void()> OnReceiveHttp;
 
 		// 接收出错回调. 接着会发生 Release
 		std::function<void(uint32_t errorNumber, char const* errorMessage)> OnError;
@@ -549,7 +549,7 @@ namespace xx
 		String* lastValue = nullptr;
 
 		// 成功接收完一段信息时的回调.
-		std::function<void()> OnMessageComplete;
+		std::function<void()> OnReceiveHttp;
 
 		// 接收出错回调. 接着会发生 Release
 		std::function<void(uint32_t errorNumber, char const* errorMessage)> OnError;
@@ -561,6 +561,8 @@ namespace xx
 		~UvHttpClient();
 
 		virtual void ReceiveImpl(char const* const& bufPtr, int const& len) noexcept override;
+
+		// todo: 提供更多请求串拼接函数 以便于使用
 	};
 
 

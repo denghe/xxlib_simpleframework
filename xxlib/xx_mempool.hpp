@@ -322,9 +322,13 @@ namespace xx
 
 	inline Object::~Object() noexcept {}
 
-	inline void Object::Release()
+	inline void Object::Release() noexcept
 	{
 		mempool->Release(this);
+	}
+	inline bool Object::IsReleased(decltype(MemHeader_Object::versionNumber) const& vn) const noexcept
+	{
+		return vn != memHeader().versionNumber;
 	}
 
 	inline MemHeader_Object& Object::memHeader() noexcept { return *((MemHeader_Object*)this - 1); }
