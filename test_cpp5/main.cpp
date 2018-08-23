@@ -9,40 +9,123 @@
 
 // todo: noexcept 狂加一波
 
-#include "xx.h"
 
-class Foo
+#include "xx_uv.h"
+#include <iostream>
+
+inline void Host()
 {
-public:
-	char* s1 = nullptr;
-	char* s2 = nullptr;
-	std::string str;
-	Foo()
+	xx::MemPool mp;
+	xx::Dict<char const*, std::function<void(xx::UvHttpPeer*)>> pathHandlers(&mp);
+
+	pathHandlers["test"] = [](xx::UvHttpPeer* peer)
 	{
-		s1 = new char[100];
-		xx::ScopeGuard sg_s1([this] { delete[] s1; });
+		peer->s.Append("{ \"method\":\"", peer->method
+			, "\", \"path\":\"", peer->path
+			, "\", \"queries\":", peer->queries
+			, "\", \"headers\":", peer->headers
+			, "\", \"body\":\"", peer->body, "\""
+		);
+		peer->SendHttpResponse();
+	};
+	pathHandlers["add_1"] = [](xx::UvHttpPeer* peer)
+	{
+		if (peer->queries.dataLen == 1 && strcmp(peer->queries[0].first, "value") == 0)
+		{
+			int value = 0;
+			xx::FromString(value, peer->queries[0].second);
+			++value;
+			peer->s.Append(value);
+		}
+		else
+		{
+			peer->s.Append("invalid argument.");
+		}
+		peer->SendHttpResponse();
+	};
 
-		s2 = new char[200];
-		xx::ScopeGuard sg_s2([this] { delete[] s2; });
+	xx::UvLoop loop(&mp);
+	auto listener = loop.CreateTcpListener();
+	listener->OnCreatePeer = [&pathHandlers, listener]
+	{
+		auto peer = listener->mempool->Create<xx::UvHttpPeer>(*listener);
+		peer->rawData.MPCreate(peer->mempool);
+		peer->OnMessageComplete = [&pathHandlers, peer]
+		{
+			peer->ParseUrl();
+			auto idx = pathHandlers.Find(peer->path);
+			if (idx != -1)
+			{
+				// 根据 url 之 path 路由处理函数
+				pathHandlers.ValueAt(idx)(peer);
+			}
+			else
+			{
+				peer->Release();
+			}
+			return 0;
+		};
+		peer->OnError = [peer](uint32_t errorNumber, char const* errorMessage)
+		{
+			std::cout << errorMessage << std::endl;
+		};
+		return peer;
+	};
+	listener->Bind("0.0.0.0", 10080);
+	listener->Listen();
+	std::cout << "Host...\r\n";
+	loop.Run();
+}
 
-		str.reserve(1000000000000000);	// will throw bad alloc
+inline void Test()
+{
+	xx::MemPool mp;
+	xx::UvLoop loop(&mp);
 
-		sg_s2.Cancel();
-		sg_s1.Cancel();
-	}
-};
+	xx::String txt(&mp);
+	int value = 0;
+	xx::Stopwatch sw;
+
+	auto client = mp.Create<xx::UvHttpClient>(loop);
+	client->OnConnect = [&](auto status)
+	{
+		if (status)
+		{
+			std::cout << "connecte failed. status = " << status << std::endl;
+			return;
+		}
+		txt.Clear();
+		txt.Append("GET /add_1?value=", value, " HTTP/1.1\r\n""\r\n");
+		client->SendBytes(txt.buf, (int)txt.dataLen);
+	};
+	client->OnMessageComplete = [&]
+	{
+		xx::FromString(value, client->body.c_str());
+		if (value == 100000)
+		{
+			std::cout << "elapsed ms = " << sw() << ", value = " << value << std::endl;
+		}
+		else
+		{
+			txt.Clear();
+			txt.Append("GET /add_1?value=", value, " HTTP/1.1\r\n""\r\n");
+			client->SendBytes(txt.buf, (int)txt.dataLen);
+		}
+	};
+	client->SetAddress("127.0.0.1", 10080);
+	client->Connect();
+	std::cout << "Test...\r\n";
+	loop.Run();
+}
 
 int main()
 {
-	for (int i = 0; i < 99; ++i)
-	{
-		try
-		{
-			Foo f;
-		}
-		catch (...)
-		{
-		}
-	}
+	std::thread t1([] { Host(); });
+	t1.detach();
+
+	std::thread t2([] { Test(); });
+	t2.detach();
+
+	std::cin.get();
 	return 0;
 }

@@ -829,7 +829,7 @@ void xx::UvTcpClient::OnConnectCBImpl(void* req, int status) noexcept
 
 int xx::UvTcpClient::Connect() noexcept
 {
-	assert(addrPtr && ptr);
+	assert(addrPtr && !ptr);
 	if (state != UvTcpStates::Disconnected) return -1;
 
 	ptr = Alloc(loop.mempool, sizeof(uv_tcp_t), this);
@@ -1806,6 +1806,7 @@ xx::UvHttpPeer::UvHttpPeer(UvTcpListener& listener)
 		self->status.Clear();
 		self->lastKey.Clear();
 		self->lastValue = nullptr;
+		self->s.Clear();
 		return 0;
 	};
 	parser_settings->on_url = [](http_parser* parser, const char *buf, size_t length)

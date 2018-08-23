@@ -10,14 +10,14 @@ inline void Host()
 
 	pathHandlers["test"] = [](xx::UvHttpPeer* peer)
 	{
-		peer->status.Clear();
-		peer->status.Append("{ \"method\":\"", peer->method
+		peer->s.Clear();
+		peer->s.Append("{ \"method\":\"", peer->method
 			, "\", \"path\":\"", peer->path
 			, "\", \"queries\":", peer->queries
 			, "\", \"headers\":", peer->headers
 			, "\", \"body\":\"", peer->body, "\""
 		);
-		peer->SendHttpResponse(peer->status);
+		peer->SendHttpResponse();
 	};
 
 	xx::UvLoop loop(&mp);
@@ -81,7 +81,6 @@ inline void Test()
 	client->OnMessageComplete = [client]
 	{
 		std::cout << "client recv body = " << client->body << std::endl;
-		return 0;
 	};
 	client->SetAddress("127.0.0.1", 10080);
 	client->Connect();
