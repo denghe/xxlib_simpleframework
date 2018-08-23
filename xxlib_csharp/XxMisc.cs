@@ -16,7 +16,7 @@ namespace xx
         /// </summary>
         public static long NowEpoch10m()
         {
-            return DateTime.Now.ToUniversalTime().Ticks - 621355968000000000;
+            return DateTime.UtcNow.Ticks - 621355968000000000;
         }
 
         /// <summary>

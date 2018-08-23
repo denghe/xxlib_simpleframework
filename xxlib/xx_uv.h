@@ -603,8 +603,7 @@ namespace xx
 	template<typename T>
 	inline uint32_t UvTcpUdpBase::SendRequest(T const & pkg, std::function<void(uint32_t, BBuffer*)>&& cb, int const& interval) noexcept
 	{
-		//assert(pkg);
-		if (!loop.rpcMgr) throw - 1;
+		assert(loop.rpcMgr);
 		bbSend.Clear();
 		bbSend.Reserve(5);
 		bbSend.dataLen = 5;
@@ -636,7 +635,6 @@ namespace xx
 	template<typename T>
 	inline int UvTcpUdpBase::SendResponse(uint32_t const& serial, T const & pkg) noexcept
 	{
-		//assert(pkg);
 		bbSend.Clear();
 		bbSend.Reserve(5);
 		bbSend.dataLen = 5;
@@ -667,7 +665,6 @@ namespace xx
 	template<typename T>
 	inline int UvTcpUdpBase::SendRouting(char const* const& serviceAddr, size_t const& serviceAddrLen, T const & pkg) noexcept
 	{
-		//assert(pkg);
 		bbSend.Clear();
 		bbSend.Reserve(5);
 		bbSend.dataLen = 5;
@@ -697,7 +694,6 @@ namespace xx
 	template<typename T>
 	inline uint32_t UvTcpUdpBase::SendRoutingRequest(char const* const& serviceAddr, size_t const& serviceAddrLen, T const & pkg, std::function<void(uint32_t, BBuffer*)>&& cb, int const& interval) noexcept
 	{
-		//assert(pkg);
 		bbSend.Clear();
 		bbSend.Reserve(5);
 		bbSend.dataLen = 5;
@@ -730,7 +726,6 @@ namespace xx
 	template<typename T>
 	inline int UvTcpUdpBase::SendRoutingResponse(char const* const& serviceAddr, size_t const& serviceAddrLen, uint32_t const& serial, T const & pkg) noexcept
 	{
-		//assert(pkg);
 		bbSend.Clear();
 		bbSend.Reserve(5);
 		bbSend.dataLen = 5;

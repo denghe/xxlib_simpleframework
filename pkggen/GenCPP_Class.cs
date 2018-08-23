@@ -223,6 +223,9 @@ namespace " + c.Namespace.Replace(".", "::") + @"
         void ToStringCore(xx::String &str) const override;
         void ToBBuffer(xx::BBuffer &bb) const override;
         int FromBBuffer(xx::BBuffer &bb) override;
+        void CopyTo(" + c.Name + @"* const& o) const;
+        " + c.Name + @"* MakeCopy() const;
+        " + c.Name + @"_p MakePtrCopy() const;
         inline static xx::Ptr<ThisType> defaultInstance;
     };");   // class }
 
@@ -460,7 +463,30 @@ namespace " + c.Namespace.Replace(".", "::") + @"
             }
             sb.Append(@"
     }
-
+    inline void " + c.Name + @"::CopyTo(" + c.Name + @"* const& o) const
+    {");
+            if (c._HasBaseType())
+            {
+                sb.Append(@"
+        this->BaseType::CopyTo(o);");
+            }
+            foreach (var f in fs)
+            {
+                sb.Append(@"
+        o->" + f.Name + @" = this->" + f.Name + @";");
+            }
+            sb.Append(@"
+    }
+    inline " + c.Name + @"* " + c.Name + @"::MakeCopy() const
+    {
+        auto rtv = mempool->MPCreate<" + c.Name + @">();
+        this->CopyTo(rtv);
+        return rtv;
+    }
+    inline " + c.Name + @"_p " + c.Name + @"::MakePtrCopy() const
+    {
+        return " + c.Name + @"_p(this->MakeCopy());
+    }
 ");
 
             // namespace }

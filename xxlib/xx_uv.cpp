@@ -144,13 +144,13 @@ int xx::UvLoop::InitKcpFlushInterval(uint32_t const& interval) noexcept
 			for (auto& kv : L->peers)
 			{
 				kv.value->Update(udpTicks);
-				if (udpTimer->IsReleased(vn)) return 0;
+				if (udpTimer->IsReleased(vn)) return;
 			}
 		}
 		for (int i = (int)udpClients.dataLen - 1; i >= 0; --i)
 		{
 			udpClients[i]->Update(udpTicks);
-			if (udpTimer->IsReleased(vn)) return 0;
+			if (udpTimer->IsReleased(vn)) return;
 		}
 	}) ? 0 : -1;
 }
