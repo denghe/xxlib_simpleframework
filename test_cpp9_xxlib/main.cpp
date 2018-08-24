@@ -442,7 +442,7 @@ inline Client::~Client()
 
 int main()
 {
-	xx::MemPool::RegisterInternal();
+	xx::MemPool::RegisterInternals();
 	xx::MemPool mp;
 	xx::UvLoop loop(&mp);
 	loop.InitRpcManager();

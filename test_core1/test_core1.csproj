@@ -2,15 +2,9 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
     <Platforms>x64</Platforms>
   </PropertyGroup>
-
-  <ItemGroup>
-    <None Include="..\x64\Debug\xxuvlib.dll" Link="xxuvlib.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\xxlib_csharp\xxlib_csharp.csproj" />

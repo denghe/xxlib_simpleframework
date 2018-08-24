@@ -229,7 +229,7 @@ namespace xx
 
 
 
-	inline void MemPool::RegisterInternal() noexcept
+	inline void MemPool::RegisterInternals() noexcept
 	{
 		Register<String, Object>();
 		Register<BBuffer, Object>();

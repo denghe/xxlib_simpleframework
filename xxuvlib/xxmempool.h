@@ -138,7 +138,7 @@ struct XxMemPool
 		catch (...)
 		{
 			Free(p);
-			throw -1;
+			return nullptr;
 		}
 	}
 

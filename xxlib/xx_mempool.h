@@ -153,7 +153,7 @@ namespace xx
 		inline static std::array<Creator, 1 << (sizeof(uint16_t) * 8)> creators;
 
 		// 注册 String, BBuffer 的 typeId 映射( 需要在程序最开始时执行 )
-		static void RegisterInternal() noexcept;
+		static void RegisterInternals() noexcept;
 
 		// 注册类型的父子关系. 顺便生成创建函数. Object 不需要注册. T 需要提供相应构造函数 for 反序列化
 		template<typename T, typename PT>

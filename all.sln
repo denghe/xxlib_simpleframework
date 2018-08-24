@@ -56,6 +56,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "xxloglib", "xxloglib\xxlogl
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "pkggen_template_PKG", "pkggen_template_PKG\pkggen_template_PKG.csproj", "{82112FE9-6A59-4F6D-A295-D4C7C039A977}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "test_csharp4", "test_csharp4\test_csharp4.csproj", "{787EC44F-A955-4E7C-AF59-166C676AFD5E}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "test_core1", "test_core1\test_core1.csproj", "{8E8C3082-DBC2-487D-81D4-272E72A1B5A1}"
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		pkg\pkg.projitems*{160a3ee0-261c-4ed1-9194-4c6e75dbc7cf}*SharedItemsImports = 13
@@ -148,6 +152,14 @@ Global
 		{82112FE9-6A59-4F6D-A295-D4C7C039A977}.Debug|x64.Build.0 = Debug|x64
 		{82112FE9-6A59-4F6D-A295-D4C7C039A977}.Release|x64.ActiveCfg = Release|x64
 		{82112FE9-6A59-4F6D-A295-D4C7C039A977}.Release|x64.Build.0 = Release|x64
+		{787EC44F-A955-4E7C-AF59-166C676AFD5E}.Debug|x64.ActiveCfg = Debug|x64
+		{787EC44F-A955-4E7C-AF59-166C676AFD5E}.Debug|x64.Build.0 = Debug|x64
+		{787EC44F-A955-4E7C-AF59-166C676AFD5E}.Release|x64.ActiveCfg = Release|x64
+		{787EC44F-A955-4E7C-AF59-166C676AFD5E}.Release|x64.Build.0 = Release|x64
+		{8E8C3082-DBC2-487D-81D4-272E72A1B5A1}.Debug|x64.ActiveCfg = Debug|x64
+		{8E8C3082-DBC2-487D-81D4-272E72A1B5A1}.Debug|x64.Build.0 = Debug|x64
+		{8E8C3082-DBC2-487D-81D4-272E72A1B5A1}.Release|x64.ActiveCfg = Release|x64
+		{8E8C3082-DBC2-487D-81D4-272E72A1B5A1}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
