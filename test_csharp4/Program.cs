@@ -44,7 +44,7 @@ public static class Program
         xx.BBuffer.RegisterInternals();
         var loop = new xx.UvLoop();
         var listener = new xx.UvTcpListener(loop);
-        listener.Bind("0.0.0.0", 12345);
+        listener.Bind("0.0.0.0", 12346);
         listener.OnAccept = peer =>
         {
             peer.OnReceivePackage = recvData =>
@@ -69,7 +69,7 @@ public static class Program
         {
             client.HandlePkg(recvData);
         };
-        client.TryConnect("127.0.0.1", 12345);
+        client.TryConnect("127.0.0.1", 12346);
 
         sw.Restart();
 

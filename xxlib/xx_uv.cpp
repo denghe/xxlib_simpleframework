@@ -492,7 +492,7 @@ void xx::UvTcpUdpBase::ReceiveImpl(char const* const& bufPtr, int const& len) no
 		memmove(buf, buf + offset, bbRecv.dataLen - offset);
 	}
 	bbRecv.dataLen -= offset;
-	assert(bbRecv.dataLen <= len);
+	assert((int)bbRecv.dataLen <= len);
 }
 
 int xx::UvTcpUdpBase::SendBytes(BBuffer& bb) noexcept
@@ -1124,7 +1124,8 @@ void xx::UvRpcManager::Process() noexcept
 	if (serials.Empty()) return;
 	while (!serials.Empty() && serials.Top().first <= ticks)
 	{
-		auto idx = mapping.Find(serials.Top().second);
+		auto& serial = serials.Top().second;
+		auto idx = mapping.Find(serial);
 		if (idx != -1)
 		{
 			auto a = std::move(mapping.ValueAt(idx));
@@ -1803,7 +1804,7 @@ void xx::UvHttpPeer::ReceiveImpl(char const* const& bufPtr, int const& len) noex
 	auto vn = memHeader().versionNumber;
 	auto parsed = http_parser_execute(parser, parser_settings, bufPtr, len);
 	if (IsReleased(vn)) return;
-	if (parsed < len)
+	if ((int)parsed < len)
 	{
 		if (OnError)
 		{
@@ -2016,7 +2017,7 @@ void xx::UvHttpClient::ReceiveImpl(char const* const& bufPtr, int const& len) no
 	auto vn = memHeader().versionNumber;
 	auto parsed = http_parser_execute(parser, parser_settings, bufPtr, len);
 	if (IsReleased(vn)) return;
-	if (parsed < len)
+	if ((int)parsed < len)
 	{
 		if (OnError)
 		{
