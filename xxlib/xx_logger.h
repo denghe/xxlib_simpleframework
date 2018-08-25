@@ -45,17 +45,17 @@ namespace xx
 
 		typedef Log ThisType;
 		typedef Object BaseType;
-		Log(MemPool* const& mp);
+		Log(MemPool* const& mp) noexcept;
 		Log(Log const&) = delete;
 		Log& operator=(Log const&) = delete;
-		virtual void ToString(String &str) const override;
-		virtual void ToStringCore(String &str) const override;
+		virtual void ToString(String &str) const noexcept override;
+		virtual void ToStringCore(String &str) const noexcept override;
 	};
 	using Log_p = Ptr<Log>;
 	using Log_r = Ref<Log>;
 
 
-	inline Log::Log(MemPool* const& mp)
+	inline Log::Log(MemPool* const& mp) noexcept
 		: Object(mp)
 		, machine(mp)
 		, service(mp)
@@ -65,7 +65,7 @@ namespace xx
 	{
 	}
 
-	inline void Log::ToString(String& str) const
+	inline void Log::ToString(String& str) const noexcept
 	{
 		if (memHeader().flags)
 		{
@@ -80,7 +80,7 @@ namespace xx
 
 		memHeader().flags = 0;
 	}
-	inline void Log::ToStringCore(String& str) const
+	inline void Log::ToStringCore(String& str) const noexcept
 	{
 		this->BaseType::ToStringCore(str);
 		str.Append(", \"id\" : ", this->id);
@@ -101,7 +101,7 @@ namespace xx
 		SQLite* db;
 		SQLiteQuery_p query_InsertLog;
 
-		LogFuncs(SQLite* db)
+		LogFuncs(SQLite* db) noexcept
 			: db(db)
 		{
 			if (!db->TableExists("log"))
@@ -140,7 +140,7 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
 			TitleType const& title,
 			int64_t const& opcode,
 			DescType const& desc
-		)
+		) noexcept
 		{
 			query_InsertLog->SetParameters(level, time, machine, service, instanceId, title, opcode, desc);
 			query_InsertLog->Execute();
@@ -180,7 +180,7 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
 		bool disposing = false;			// 通知后台线程退出的标志位
 		std::function<void()> OnRelease;
 
-		Logger(char const* const& fn)
+		Logger(char const* const& fn) noexcept
 			: db(&mp, fn)
 			, funcs(&db)
 			, machine(&mp, nameLenLimit)
@@ -245,7 +245,7 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
 		Logger(Logger const&) = delete;
 		Logger operator=(Logger const&) = delete;
 
-		~Logger()
+		~Logger() noexcept
 		{
 			disposing = true;
 			while (disposing) Sleep(1);
@@ -255,7 +255,7 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
 		template<typename MachineType, typename ServiceType, typename InstanceIdType, typename TitleType, typename DescType>
 		bool WriteAll(LogLevel const& level, int64_t const& time
 			, MachineType const& machine, ServiceType const& service, InstanceIdType const& instanceId
-			, TitleType const& title, int64_t const& opcode, DescType const& desc)
+			, TitleType const& title, int64_t const& opcode, DescType const& desc) noexcept
 		{
 			std::lock_guard<std::mutex> lg(mtx);
 			if (writeLimit && logMsgs->Count() > writeLimit) return false;
@@ -277,7 +277,7 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
 		}
 
 		template<typename TitleType, typename DescType>
-		bool Write(LogLevel level, TitleType const& title, int64_t const& opcode, DescType const& desc)
+		bool Write(LogLevel level, TitleType const& title, int64_t const& opcode, DescType const& desc) noexcept
 		{
 			std::lock_guard<std::mutex> lg(mtx);
 			if (writeLimit && logMsgs->Count() > writeLimit) return false;
@@ -297,7 +297,7 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
 		}
 
 		template<typename MachineType, typename ServiceType, typename InstanceIdType>
-		bool SetDefaultValue(MachineType const& machine, ServiceType const& service, InstanceIdType const& instanceId)
+		bool SetDefaultValue(MachineType const& machine, ServiceType const& service, InstanceIdType const& instanceId) noexcept
 		{
 			std::lock_guard<std::mutex> lg(mtx);
 			if (writeLimit && logMsgs->Count() > writeLimit) return false;

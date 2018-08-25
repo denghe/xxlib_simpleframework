@@ -334,10 +334,10 @@ namespace xx
 	inline MemHeader_Object& Object::memHeader() noexcept { return *((MemHeader_Object*)this - 1); }
 	inline MemHeader_Object& Object::memHeader() const noexcept { return *((MemHeader_Object*)this - 1); }
 
-	inline void Object::ToString(String& s) const {}
-	inline void Object::ToStringCore(String& s) const {}
-	inline void Object::ToBBuffer(BBuffer& bb) const {}
-	inline int Object::FromBBuffer(BBuffer& bb) { return 0; }
+	inline void Object::ToString(String& s) const noexcept {}
+	inline void Object::ToStringCore(String& s) const noexcept {}
+	inline void Object::ToBBuffer(BBuffer& bb) const noexcept {}
+	inline int Object::FromBBuffer(BBuffer& bb) noexcept { return 0; }
 
 
 
@@ -348,7 +348,9 @@ namespace xx
 
 
 	template<typename T>
-	Ptr<T>::Ptr() noexcept : pointer(nullptr) {}
+	Ptr<T>::Ptr() noexcept
+		: pointer(nullptr)
+	{}
 
 	template<typename T>
 	template<typename O>
@@ -487,7 +489,7 @@ namespace xx
 
 
 	template<typename T>
-	void Ptr<T>::Reset()
+	void Ptr<T>::Reset() noexcept
 	{
 		if (pointer)
 		{
@@ -566,7 +568,7 @@ namespace xx
 
 
 	template<typename T>
-	Ptr<T>::~Ptr()
+	Ptr<T>::~Ptr() noexcept
 	{
 		Reset();
 	}
@@ -634,7 +636,7 @@ namespace xx
 
 	template<typename T>
 	template<typename O, typename ...Args>
-	Ptr<T>& Ptr<T>::Create(MemPool* const& mp, Args&&...args)
+	Ptr<T>& Ptr<T>::Create(MemPool* const& mp, Args&&...args) noexcept
 	{
 		Reset(mp->Create<O>(std::forward<Args>(args)...));
 		return *this;
@@ -642,7 +644,7 @@ namespace xx
 
 	template<typename T>
 	template<typename O, typename ...Args>
-	Ptr<T>& Ptr<T>::MPCreate(MemPool* const& mp, Args&&...args)
+	Ptr<T>& Ptr<T>::MPCreate(MemPool* const& mp, Args&&...args) noexcept
 	{
 		Reset(mp->MPCreate<O>(std::forward<Args>(args)...));
 		return *this;
@@ -802,7 +804,7 @@ namespace xx
 	}
 
 	template<typename T>
-	void Ref<T>::Reset()
+	void Ref<T>::Reset() noexcept
 	{
 		pointer = nullptr;
 		versionNumber = 0;

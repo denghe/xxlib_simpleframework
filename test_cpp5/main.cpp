@@ -1,4 +1,4 @@
-﻿// todo: noexcept 狂加一波
+﻿// todo: noexcept 狂加一波( 部分加不了的要去掉, 该 try 还是得 try. 构造函数中的异常需要反馈给上层. Create 函数似乎不能加 noexcept )
 // todo: 用 sg 语法改进各种库
 // todo: xx_uv 从 c# 那边复制备注
 #include <xx_uv.h>

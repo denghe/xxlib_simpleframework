@@ -2,7 +2,7 @@
 namespace xx
 {
 	template <typename TK>
-	HashSet<TK>::HashSet(MemPool* const& mempool, int const& capacity)
+	HashSet<TK>::HashSet(MemPool* const& mempool, int const& capacity) noexcept
 		: Object(mempool)
 	{
 		freeList = -1;
@@ -15,7 +15,7 @@ namespace xx
 	}
 
 	template <typename TK>
-	HashSet<TK>::~HashSet()
+	HashSet<TK>::~HashSet() noexcept
 	{
 		DeleteKs();
 		mempool->Free(buckets);
@@ -24,7 +24,7 @@ namespace xx
 
 	template <typename TK>
 	template<typename K>
-	bool HashSet<TK>::Add(K&& k)
+	bool HashSet<TK>::Add(K&& k) noexcept
 	{
 		assert(bucketsLen);
 
@@ -77,7 +77,7 @@ namespace xx
 
 	// 只支持没数据时扩容或空间用尽扩容( 如果不这样限制, 扩容时的 遍历损耗 略大 )
 	template <typename TK>
-	void HashSet<TK>::Reserve(int capacity)
+	void HashSet<TK>::Reserve(int capacity) noexcept
 	{
 		assert(buckets);
 		assert(count == 0 || count == bucketsLen);          // 确保扩容函数使用情型

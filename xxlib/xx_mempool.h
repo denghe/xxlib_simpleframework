@@ -202,11 +202,11 @@ namespace xx
 		MemHeader_Object& memHeader() noexcept;
 		MemHeader_Object& memHeader() const noexcept;
 
-		virtual void ToString(String& s) const;
-		virtual void ToStringCore(String& s) const;
+		virtual void ToString(String& s) const noexcept;
+		virtual void ToStringCore(String& s) const noexcept;
 
-		virtual void ToBBuffer(BBuffer& bb) const;
-		virtual int FromBBuffer(BBuffer& bb);
+		virtual void ToBBuffer(BBuffer& bb) const noexcept;
+		virtual int FromBBuffer(BBuffer& bb) noexcept;
 	};
 
 
@@ -271,7 +271,7 @@ namespace xx
 
 
 		// cleanup
-		void Reset();
+		void Reset() noexcept;
 
 		// std like
 		template<typename O>
@@ -301,7 +301,7 @@ namespace xx
 		bool Is(uint16_t const& typeId) const noexcept;
 
 
-		~Ptr();
+		~Ptr() noexcept;
 
 		template<typename O>
 		bool operator==(Ptr<O> const& o) const noexcept;
@@ -327,10 +327,10 @@ namespace xx
 
 
 		template<typename O = T, typename...Args>
-		Ptr<T>& Create(MemPool* const& mp, Args&&...args);
+		Ptr<T>& Create(MemPool* const& mp, Args&&...args) noexcept;
 
 		template<typename O = T, typename...Args>
-		Ptr<T>& MPCreate(MemPool* const& mp, Args&&...args);
+		Ptr<T>& MPCreate(MemPool* const& mp, Args&&...args) noexcept;
 	};
 
 	template<typename T>
@@ -413,7 +413,7 @@ namespace xx
 
 		Ptr<T>& Lock() const noexcept;
 
-		void Reset();
+		void Reset() noexcept;
 
 		operator bool() const noexcept;
 

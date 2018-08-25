@@ -2,7 +2,7 @@
 namespace xx
 {
 	template<typename T>
-	List<T>::List(MemPool* const& mempool, size_t const& capacity)
+	List<T>::List(MemPool* const& mempool, size_t const& capacity) noexcept
 		: Object(mempool)
 	{
 		if (capacity == 0)
@@ -15,20 +15,20 @@ namespace xx
 			// 充分利用 2^n 空间
 			auto bufByteLen = MemPool::Round2n(capacity * sizeof(T) + sizeof(MemHeader)) - sizeof(MemHeader);
 			buf = (T*)mempool->Alloc(bufByteLen);
-			if (!buf) throw - 1;
+			assert(buf);
 			bufLen = bufByteLen / sizeof(T);
 		}
 		dataLen = 0;
 	}
 
 	template<typename T>
-	List<T>::~List()
+	List<T>::~List() noexcept
 	{
 		Clear(true);
 	}
 
 	template<typename T>
-	List<T>::List(List<T>&& o)
+	List<T>::List(List<T>&& o) noexcept
 		: Object(o.mempool)
 		, buf(o.buf)
 		, bufLen(o.bufLen)
@@ -41,13 +41,13 @@ namespace xx
 
 
 	template<typename T>
-	void List<T>::Reserve(size_t const& capacity)
+	void List<T>::Reserve(size_t const& capacity) noexcept
 	{
 		if (capacity <= bufLen) return;
 
 		auto newBufByteLen = MemPool::Round2n(capacity * sizeof(T) + sizeof(MemHeader)) - sizeof(MemHeader);
 		auto newBuf = (T*)mempool->Alloc(newBufByteLen);
-		if (!newBuf) throw - 1;
+		assert(newBuf);
 
 		if constexpr(IsTrivial_v<T>)
 		{
@@ -68,7 +68,7 @@ namespace xx
 	}
 
 	template<typename T>
-	size_t List<T>::Resize(size_t const& len)
+	size_t List<T>::Resize(size_t const& len) noexcept
 	{
 		if (len == dataLen) return len;
 		else if (len < dataLen)
@@ -191,7 +191,7 @@ namespace xx
 	}
 
 	template<typename T>
-	void List<T>::SwapRemoveAt(size_t const& idx)
+	void List<T>::SwapRemoveAt(size_t const& idx) noexcept
 	{
 		if (idx + 1 < dataLen)
 		{
@@ -216,7 +216,7 @@ namespace xx
 
 	template<typename T>
 	template<typename...Args>
-	T& List<T>::Emplace(Args&&...args)
+	T& List<T>::Emplace(Args&&...args) noexcept
 	{
 		Reserve(dataLen + 1);
 		return *new (&buf[dataLen++]) T(std::forward<Args>(args)...);
@@ -224,7 +224,7 @@ namespace xx
 
 	template<typename T>
 	template<typename...Args>
-	T& List<T>::EmplaceAt(size_t const& idx, Args&&...args)
+	T& List<T>::EmplaceAt(size_t const& idx, Args&&...args) noexcept
 	{
 		Reserve(dataLen + 1);
 		if (idx < dataLen)
@@ -252,14 +252,14 @@ namespace xx
 
 	template<typename T>
 	template<typename ...TS>
-	void List<T>::Add(TS&& ...vs)
+	void List<T>::Add(TS&& ...vs) noexcept
 	{
 		std::initializer_list<int> n{ (Emplace(std::forward<TS>(vs)), 0)... };
 	}
 
 
 	template<typename T>
-	void List<T>::AddRange(T const* const& items, size_t const& count)
+	void List<T>::AddRange(T const* const& items, size_t const& count) noexcept
 	{
 		Reserve(dataLen + count);
 		if constexpr(IsTrivial_v<T>)
@@ -287,7 +287,7 @@ namespace xx
 	}
 
 	template<typename T>
-	size_t List<T>::Find(std::function<bool(T const&)> cond)
+	size_t List<T>::Find(std::function<bool(T const&)> cond) noexcept
 	{
 		for (size_t i = 0; i < dataLen; ++i)
 		{
@@ -297,13 +297,13 @@ namespace xx
 	}
 
 	template<typename T>
-	bool List<T>::Exists(std::function<bool(T const&)> cond)
+	bool List<T>::Exists(std::function<bool(T const&)> cond) noexcept
 	{
 		return Find(cond) != size_t(-1);
 	}
 
 	template<typename T>
-	bool List<T>::TryFill(T& out, std::function<bool(T const&)> cond)
+	bool List<T>::TryFill(T& out, std::function<bool(T const&)> cond) noexcept
 	{
 		auto idx = Find(cond);
 		if (idx == size_t(-1)) return false;
@@ -313,7 +313,7 @@ namespace xx
 
 
 	template<typename T>
-	void List<T>::ForEachRevert(std::function<void(T&)> handler)
+	void List<T>::ForEachRevert(std::function<void(T&)> handler) noexcept
 	{
 		for (size_t i = dataLen - 1; i != (size_t)-1; --i)
 		{
@@ -326,14 +326,14 @@ namespace xx
 
 
 	template<typename T>
-	List<T>::List(BBuffer* const& bb)
+	List<T>::List(BBuffer* const& bb) noexcept
 		: List(bb->mempool, 0)
 	{
 		if (int r = FromBBuffer(*bb)) throw r;
 	}
 
 	template<typename T>
-	void List<T>::ToBBuffer(BBuffer& bb) const
+	void List<T>::ToBBuffer(BBuffer& bb) const noexcept
 	{
 		bb.Reserve(bb.dataLen + 5 + dataLen * sizeof(T));
 		bb.Write(dataLen);
@@ -353,7 +353,7 @@ namespace xx
 	}
 
 	template<typename T>
-	int List<T>::FromBBuffer(BBuffer& bb)
+	int List<T>::FromBBuffer(BBuffer& bb) noexcept
 	{
 		size_t len = 0;
 		if (auto rtv = bb.Read(len)) return rtv;
@@ -384,7 +384,7 @@ namespace xx
 
 
 	template<typename T>
-	void List<T>::ToString(String& s) const
+	void List<T>::ToString(String& s) const noexcept
 	{
 		if (memHeader().flags)
 		{

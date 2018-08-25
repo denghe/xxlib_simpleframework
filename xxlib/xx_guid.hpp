@@ -23,7 +23,7 @@ namespace xx
 		}
 	}
 
-	inline void Guid::Fill(char const* const& buf)
+	inline void Guid::Fill(char const* const& buf) noexcept
 	{
 		memcpy(this, buf, 16);
 	}
@@ -42,7 +42,7 @@ namespace xx
 		return part1 != o.part1 || part2 != o.part2;
 	}
 
-	inline void Guid::Fill()
+	inline void Guid::Fill() noexcept
 	{
 #ifdef _WIN32
 		CoCreateGuid((GUID*)this);
@@ -56,7 +56,7 @@ namespace xx
 	template<>
 	struct StrFunc<Guid, void>
 	{
-		static inline void WriteTo(String& s, Guid const& in)
+		static inline void WriteTo(String& s, Guid const& in) noexcept
 		{
 			s.Reserve(s.dataLen + 48);
 			s.dataLen += snprintf(
@@ -74,7 +74,7 @@ namespace xx
 	template<>
 	struct HashFunc<Guid, void>
 	{
-		static uint32_t GetHashCode(Guid const& in)
+		static uint32_t GetHashCode(Guid const& in) noexcept
 		{
 			return ((uint32_t*)&in)[0] ^ ((uint32_t*)&in)[1] ^ ((uint32_t*)&in)[2] ^ ((uint32_t*)&in)[3];
 		}
@@ -84,13 +84,13 @@ namespace xx
 	template<>
 	struct BytesFunc<Guid, void>
 	{
-		static inline void WriteTo(BBuffer& bb, Guid const& in)
+		static inline void WriteTo(BBuffer& bb, Guid const& in) noexcept
 		{
 			bb.Reserve(bb.dataLen + sizeof(Guid));
 			memcpy(bb.buf + bb.dataLen, &in, sizeof(Guid));
 			bb.dataLen += sizeof(Guid);
 		}
-		static inline int ReadFrom(BBuffer& bb, Guid& out)
+		static inline int ReadFrom(BBuffer& bb, Guid& out) noexcept
 		{
 			if (bb.offset + sizeof(Guid) > bb.dataLen) return -1;
 			memcpy(&out, bb.buf + bb.offset, sizeof(Guid));

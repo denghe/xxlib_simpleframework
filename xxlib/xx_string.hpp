@@ -258,7 +258,7 @@ namespace xx
 		: BaseType(bb)
 	{}
 
-	inline void String::ToString(String& s) const
+	inline void String::ToString(String& s) const noexcept
 	{
 		s.Reserve(s.dataLen + dataLen);
 		memcpy(s.buf + s.dataLen, buf, dataLen);

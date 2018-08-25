@@ -324,7 +324,7 @@ namespace xx
 	template<typename T>
 	struct StrFunc<T, std::enable_if_t<std::is_integral<T>::value && std::is_unsigned<T>::value && sizeof(T) <= 4>>
 	{
-		static inline void WriteTo(String& s, T const& in)
+		static inline void WriteTo(String& s, T const& in) noexcept
 		{
 			s.Reserve(s.dataLen + sizeof(T) * 4);
 			s.dataLen += u32toa_branchlut(in, s.buf + s.dataLen);
@@ -335,7 +335,7 @@ namespace xx
 	template<typename T>
 	struct StrFunc<T, std::enable_if_t<std::is_integral<T>::value && !std::is_unsigned<T>::value && sizeof(T) <= 4>>
 	{
-		static inline void WriteTo(String& s, T const& in)
+		static inline void WriteTo(String& s, T const& in) noexcept
 		{
 			s.Reserve(s.dataLen + sizeof(T) * 4);
 			s.dataLen += i32toa_branchlut(in, s.buf + s.dataLen);
@@ -346,7 +346,7 @@ namespace xx
 	template<typename T>
 	struct StrFunc<T, std::enable_if_t<std::is_integral<T>::value && std::is_unsigned<T>::value && sizeof(T) == 8>>
 	{
-		static inline void WriteTo(String& s, T const& in)
+		static inline void WriteTo(String& s, T const& in) noexcept
 		{
 			s.Reserve(s.dataLen + sizeof(T) * 4);
 			s.dataLen += u64toa_branchlut(in, s.buf + s.dataLen);
@@ -357,7 +357,7 @@ namespace xx
 	template<typename T>
 	struct StrFunc<T, std::enable_if_t<std::is_integral<T>::value && !std::is_unsigned<T>::value && sizeof(T) == 8>>
 	{
-		static inline void WriteTo(String& s, T const& in)
+		static inline void WriteTo(String& s, T const& in) noexcept
 		{
 			s.Reserve(s.dataLen + sizeof(T) * 4);
 			s.dataLen += i64toa_branchlut(in, s.buf + s.dataLen);
@@ -368,7 +368,7 @@ namespace xx
 	template<typename T>
 	struct StrFunc<T, std::enable_if_t<std::is_enum<T>::value>>
 	{
-		static inline void WriteTo(String& s, T const& in)
+		static inline void WriteTo(String& s, T const& in) noexcept
 		{
 			StrFunc<std::underlying_type_t<T>>::WriteTo(s, (std::underlying_type_t<T> const&)in);
 		}
@@ -378,7 +378,7 @@ namespace xx
 	template<typename T>
 	struct StrFunc<T, std::enable_if_t<std::is_floating_point<T>::value>>
 	{
-		static inline void WriteTo(String& s, T const& in)
+		static inline void WriteTo(String& s, T const& in) noexcept
 		{
 			s.Reserve(s.dataLen + sizeof(T) * 3);
 			s.dataLen += sprintf(s.buf + s.dataLen, "%g", in);
@@ -389,7 +389,7 @@ namespace xx
 	template<>
 	struct StrFunc<bool, void>
 	{
-		static inline void WriteTo(String& s, bool const &in)
+		static inline void WriteTo(String& s, bool const &in) noexcept
 		{
 			s.Reserve(s.dataLen + 5);
 			if (in)
@@ -409,7 +409,7 @@ namespace xx
 	template<>
 	struct StrFunc<char, void>
 	{
-		static inline void WriteTo(String& s, char const& in)
+		static inline void WriteTo(String& s, char const& in) noexcept
 		{
 			s.Reserve(s.dataLen + 1);
 			s.buf[s.dataLen++] = in;
@@ -420,7 +420,7 @@ namespace xx
 	template<>
 	struct StrFunc<char*, void>
 	{
-		static inline void WriteTo(String& s, char* const& in)
+		static inline void WriteTo(String& s, char* const& in) noexcept
 		{
 			if (in)
 			{
@@ -436,7 +436,7 @@ namespace xx
 	template<>
 	struct StrFunc<char const*, void>
 	{
-		static inline void WriteTo(String& s, char const* const& in)
+		static inline void WriteTo(String& s, char const* const& in) noexcept
 		{
 			if (in)
 			{
@@ -453,7 +453,7 @@ namespace xx
 	template<size_t len>
 	struct StrFunc<char[len], void>
 	{
-		static inline void WriteTo(String& s, char const(&in)[len])
+		static inline void WriteTo(String& s, char const(&in)[len]) noexcept
 		{
 			s.Reserve(s.dataLen + len - 1);
 			memcpy(s.buf + s.dataLen, in, len - 1);
@@ -468,7 +468,7 @@ namespace xx
 	template<>
 	struct StrFunc<wchar_t, void>
 	{
-		static inline void WriteTo(String& s, wchar_t const &in)
+		static inline void WriteTo(String& s, wchar_t const &in) noexcept
 		{
 			s.Reserve(s.dataLen + 3);
 			s.dataLen += ToUtf8(s.buf + s.dataLen, in);
@@ -479,7 +479,7 @@ namespace xx
 	template<>
 	struct StrFunc<wchar_t const*, void>
 	{
-		static inline void WriteTo(String& s, wchar_t const* const &in)
+		static inline void WriteTo(String& s, wchar_t const* const &in) noexcept
 		{
 			if (in)
 			{
@@ -496,7 +496,7 @@ namespace xx
 	template<>
 	struct StrFunc<wchar_t*, void>
 	{
-		static inline void WriteTo(String& s, wchar_t* const& in)
+		static inline void WriteTo(String& s, wchar_t* const& in) noexcept
 		{
 			if (in)
 			{
@@ -513,7 +513,7 @@ namespace xx
 	template<size_t len>
 	struct StrFunc<wchar_t[len], void>
 	{
-		static inline void WriteTo(String& s, wchar_t const(&in)[len])
+		static inline void WriteTo(String& s, wchar_t const(&in)[len]) noexcept
 		{
 			s.Reserve(s.dataLen + (len - 1) * 3);
 			for (size_t i = 0; i < len - 1; ++i)
@@ -528,7 +528,7 @@ namespace xx
 	template<>
 	struct StrFunc<std::string, void>
 	{
-		static inline void WriteTo(String& s, std::string const& in)
+		static inline void WriteTo(String& s, std::string const& in) noexcept
 		{
 			s.Reserve(s.dataLen + in.size());
 			memcpy(s.buf + s.dataLen, in.data(), in.size());
@@ -541,7 +541,7 @@ namespace xx
 	template<typename T>
 	struct StrFunc<T, std::enable_if_t<std::is_base_of_v<Object, T>>>
 	{
-		static inline void WriteTo(String& s, T const& in)
+		static inline void WriteTo(String& s, T const& in) noexcept
 		{
 			in.ToString(s);
 		}
@@ -551,7 +551,7 @@ namespace xx
 	template<typename T>
 	struct StrFunc<T, std::enable_if_t<IsPtr_v<T>>>
 	{
-		static inline void WriteTo(String& s, T const& in)
+		static inline void WriteTo(String& s, T const& in) noexcept
 		{
 			if (in)
 			{
@@ -568,7 +568,7 @@ namespace xx
 	template<typename T>
 	struct StrFunc<T, std::enable_if_t<IsRef_v<T>>>
 	{
-		static inline void WriteTo(String& s, T const& in)
+		static inline void WriteTo(String& s, T const& in) noexcept
 		{
 			if (in)
 			{
@@ -585,7 +585,7 @@ namespace xx
 	template<>
 	struct StrFunc<std::pair<char*, char*>, void>
 	{
-		static inline void WriteTo(String& s, std::pair<char*, char*> const& in)
+		static inline void WriteTo(String& s, std::pair<char*, char*> const& in) noexcept
 		{
 			s.Append("{ \"key\":\"", in.first, "\", \"value\":\"", in.second, "\" }");
 		}

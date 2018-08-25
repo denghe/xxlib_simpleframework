@@ -34,11 +34,11 @@ namespace xx
 	template<typename T, typename ENABLE = void>
 	struct BytesFunc
 	{
-		static void WriteTo(BBuffer& bb, T const &in)
+		static void WriteTo(BBuffer& bb, T const &in) noexcept
 		{
 			assert(false);
 		}
-		static int ReadFrom(BBuffer& bb, T &out)
+		static int ReadFrom(BBuffer& bb, T &out) noexcept
 		{
 			assert(false);
 			return 0;

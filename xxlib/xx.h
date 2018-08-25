@@ -135,14 +135,14 @@ namespace xx
 	struct Stopwatch
 	{
 		Stopwatch() { Reset(); }
-		inline void Reset() { beginTime = std::chrono::high_resolution_clock::now(); }
-		inline int64_t operator()()
+		inline void Reset() noexcept { beginTime = std::chrono::high_resolution_clock::now(); }
+		inline int64_t operator()() noexcept
 		{
 			auto bak = beginTime;
 			Reset();
 			return std::chrono::duration_cast<std::chrono::milliseconds>(beginTime - bak).count();
 		}
-		inline int64_t micros()
+		inline int64_t micros() noexcept
 		{
 			auto bak = beginTime;
 			Reset();
@@ -163,11 +163,11 @@ namespace xx
 		template<typename T>
 		ScopeGuard(T&& f) : func(std::forward<T>(f)) {}
 		~ScopeGuard() { Run(); }
-		inline void RunAndCancel() { Run(); Cancel(); }
-		inline void Run() { if (func) func(); }
-		inline void Cancel() { func = nullptr; }
+		inline void RunAndCancel() noexcept { Run(); Cancel(); }
+		inline void Run() noexcept { if (func) func(); }
+		inline void Cancel() noexcept { func = nullptr; }
 		template<typename T>
-		inline void Set(T&& f) { func = std::forward<T>(f); }
+		inline void Set(T&& f) noexcept { func = std::forward<T>(f); }
 	private:
 		kapala::fixed_function<void()> func;
 		ScopeGuard(ScopeGuard const&) = delete;
@@ -201,52 +201,52 @@ namespace xx
 
 
 	// 时间点 转 epoch (精度为秒后 7 个 0)
-	inline int64_t TimePointToEpoch10m(std::chrono::system_clock::time_point const& val)
+	inline int64_t TimePointToEpoch10m(std::chrono::system_clock::time_point const& val) noexcept
 	{
 		return val.time_since_epoch().count();
 	}
 
 	//  epoch (精度为秒后 7 个 0) 转 时间点
-	inline std::chrono::system_clock::time_point Epoch10mToTimePoint(int64_t const& val)
+	inline std::chrono::system_clock::time_point Epoch10mToTimePoint(int64_t const& val) noexcept
 	{
 		return std::chrono::system_clock::time_point(std::chrono::system_clock::time_point::duration(val));
 	}
 
 
 	// 得到当前时间点
-	inline std::chrono::system_clock::time_point NowTimePoint()
+	inline std::chrono::system_clock::time_point NowTimePoint() noexcept
 	{
 		return std::chrono::system_clock::now();
 	}
 
 	// 得到当前时间点的 epoch (精度为秒后 7 个 0)
-	inline int64_t NowEpoch10m()
+	inline int64_t NowEpoch10m() noexcept
 	{
 		return NowTimePoint().time_since_epoch().count();
 	}
 
 
 	// epoch (精度为秒后 7 个 0) 转为 .Net DateTime Utc Ticks
-	inline int64_t Epoch10mToUtcDateTimeTicks(int64_t const& val)
+	inline int64_t Epoch10mToUtcDateTimeTicks(int64_t const& val) noexcept
 	{
 		return val + 621355968000000000LL;
 	}
 
 	// .Net DateTime Utc Ticks 转为 epoch (精度为秒后 7 个 0)
-	inline int64_t UtcDateTimeTicksToEpoch10m(int64_t const& val)
+	inline int64_t UtcDateTimeTicksToEpoch10m(int64_t const& val) noexcept
 	{
 		return val - 621355968000000000LL;
 	}
 
 
 	// 时间点 转 epoch (精度为秒)
-	inline int32_t TimePointToEpoch(std::chrono::system_clock::time_point const& val)
+	inline int32_t TimePointToEpoch(std::chrono::system_clock::time_point const& val) noexcept
 	{
 		return (int32_t)(val.time_since_epoch().count() / 10000000);
 	}
 
 	//  epoch (精度为秒) 转 时间点
-	inline std::chrono::system_clock::time_point EpochToTimePoint(int32_t const& val)
+	inline std::chrono::system_clock::time_point EpochToTimePoint(int32_t const& val) noexcept
 	{
 		return std::chrono::system_clock::time_point(std::chrono::system_clock::time_point::duration((int64_t)val * 10000000));
 	}

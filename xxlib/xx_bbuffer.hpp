@@ -1,11 +1,11 @@
 ﻿#pragma once
 namespace xx
 {
-	inline BBuffer::BBuffer(MemPool* const& mempool, size_t const& capacity)
+	inline BBuffer::BBuffer(MemPool* const& mempool, size_t const& capacity) noexcept
 		: BaseType(mempool, capacity)
 	{}
 
-	inline BBuffer::BBuffer(MemPool* const& mempool, std::pair<char const*, size_t> const& buff)
+	inline BBuffer::BBuffer(MemPool* const& mempool, std::pair<char const*, size_t> const& buff) noexcept
 		: BaseType(mempool, buff.second)
 	{
 		memcpy(buf, buff.first, buff.second);
@@ -13,27 +13,27 @@ namespace xx
 	}
 
 	template<typename ...TS>
-	void BBuffer::Write(TS const & ...vs)
+	void BBuffer::Write(TS const & ...vs) noexcept
 	{
 		std::initializer_list<int> n{ (BytesFunc<TS>::WriteTo(*this, vs), 0)... };
 		assert(this->dataLen <= this->bufLen);
 	}
 
 	template<typename T, typename ...TS>
-	int BBuffer::ReadCore(T& v, TS&...vs)
+	int BBuffer::ReadCore(T& v, TS&...vs) noexcept
 	{
 		if (auto r = BytesFunc<T>::ReadFrom(*this, v)) return r;
 		return ReadCore(vs...);
 	}
 
 	template<typename T>
-	int BBuffer::ReadCore(T& v)
+	int BBuffer::ReadCore(T& v) noexcept
 	{
 		return BytesFunc<T>::ReadFrom(*this, v);
 	}
 
 	template<typename ...TS>
-	int BBuffer::Read(TS&...vs)
+	int BBuffer::Read(TS&...vs) noexcept
 	{
 		return ReadCore(vs...);
 	}
@@ -44,34 +44,34 @@ namespace xx
 	/*************************************************************************/
 
 
-	inline void BBuffer::BeginWrite()
+	inline void BBuffer::BeginWrite() noexcept
 	{
 		mempool->ptrStore->Clear();
 		offsetRoot = dataLen;
 	}
 
-	inline void BBuffer::BeginRead()
+	inline void BBuffer::BeginRead() noexcept
 	{
 		mempool->idxStore->Clear();
 		offsetRoot = offset;
 	}
 
 	template<typename T>
-	void BBuffer::WriteRoot(T const& v)
+	void BBuffer::WriteRoot(T const& v) noexcept
 	{
 		BeginWrite();
 		Write(v);
 	}
 
 	template<typename T>
-	int BBuffer::ReadRoot(T& v)
+	int BBuffer::ReadRoot(T& v) noexcept
 	{
 		BeginRead();
 		return Read(v);
 	}
 
 	template<typename T>
-	void BBuffer::WritePtr(T* const& v)
+	void BBuffer::WritePtr(T* const& v) noexcept
 	{
 		if (!v)
 		{
@@ -89,7 +89,7 @@ namespace xx
 	}
 
 	template<typename T>
-	int BBuffer::ReadPtr(T*& v)
+	int BBuffer::ReadPtr(T*& v) noexcept
 	{
 		// get typeid
 		uint16_t tid;
@@ -142,7 +142,7 @@ namespace xx
 	//  其他工具函数
 	/*************************************************************************/
 
-	inline void BBuffer::Clear()
+	inline void BBuffer::Clear() noexcept
 	{
 		BaseType::Clear();
 		offset = 0;
@@ -150,14 +150,14 @@ namespace xx
 
 	// 根据数据类型往当前位置写入默认值
 	template<typename T>
-	void BBuffer::WriteDefaultValue()
+	void BBuffer::WriteDefaultValue() noexcept
 	{
 		Write(T());
 	}
 
 	// 读指定位置的数据( 不影响 offset )
 	template<typename ...TS>
-	int BBuffer::ReadAt(size_t const& pos, TS&...vs)
+	int BBuffer::ReadAt(size_t const& pos, TS&...vs) noexcept
 	{
 		if (pos >= dataLen) return -1;
 		auto bak = offset;
@@ -169,7 +169,7 @@ namespace xx
 
 	// 从当前位置读数据但事后 offset 偏移指定长度
 	template<typename ...TS>
-	int BBuffer::ReadJump(size_t const& len, TS&...vs)
+	int BBuffer::ReadJump(size_t const& len, TS&...vs) noexcept
 	{
 		if (offset + len > dataLen) return -1;
 		auto bak = offset;
@@ -179,23 +179,23 @@ namespace xx
 	}
 
 	// 直接追加写入一段 buf ( 并不记录长度 )
-	inline void BBuffer::WriteBuf(char const* const& buf, size_t const& len)
+	inline void BBuffer::WriteBuf(char const* const& buf, size_t const& len) noexcept
 	{
 		this->Reserve(this->dataLen + len);
 		std::memcpy(this->buf + this->dataLen, buf, len);
 		this->dataLen += len;
 	}
-	inline void BBuffer::WriteBuf(BBuffer const& bb)
+	inline void BBuffer::WriteBuf(BBuffer const& bb) noexcept
 	{
 		WriteBuf(bb.buf, bb.dataLen);
 	}
-	inline void BBuffer::WriteBuf(BBuffer const* const& bb)
+	inline void BBuffer::WriteBuf(BBuffer const* const& bb) noexcept
 	{
 		WriteBuf(bb->buf, bb->dataLen);
 	}
 
 	// 追加一个指定长度的空间, 返回当前 dataLen
-	inline size_t BBuffer::WriteSpace(size_t const& len)
+	inline size_t BBuffer::WriteSpace(size_t const& len) noexcept
 	{
 		auto rtv = this->dataLen;
 		this->Reserve(this->dataLen + len);
@@ -204,7 +204,7 @@ namespace xx
 	}
 
 	// 在 pos 位置写入一段 buf ( 并不记录长度 ). dataLen 可能撑大.
-	inline void BBuffer::WriteBufAt(size_t const& pos, char const* const& buf, size_t const& len)
+	inline void BBuffer::WriteBufAt(size_t const& pos, char const* const& buf, size_t const& len) noexcept
 	{
 		assert(pos < this->dataLen);
 		auto bak = this->dataLen;		// 备份原始数据长度, 开始追加. 追加完之后, 对比原始数据长度. 如果没超出, 还要还原.
@@ -215,7 +215,7 @@ namespace xx
 
 	// 在 pos 位置做 Write 操作. dataLen 可能撑大.
 	template<typename ...TS>
-	void BBuffer::WriteAt(size_t const& pos, TS const&...vs)
+	void BBuffer::WriteAt(size_t const& pos, TS const&...vs) noexcept
 	{
 		assert(pos < this->dataLen);
 		auto bak = this->dataLen;
@@ -225,63 +225,18 @@ namespace xx
 	}
 
 
-	/*************************************************************************/
-	//  包相关( 不含包头的处理 )
-	/*************************************************************************/
 
-	// 尝试一次性反序列化一到多个包, 将结果填充到 outPkgs, 返回 0 或 错误码
-	// 注意: 注意其元素的 引用计数, 通通为 1( 即便是递归互引 )
-	// 注意: 即便返回错误码, outPkgs 中也可能存在残留数据
-	inline int BBuffer::ReadPackages(List<Object_p>& outPkgs)
-	{
-		outPkgs.Clear();
-		while (offset < dataLen)
-		{
-			Object_p ibb;
-			if (auto rtv = ReadRoot(ibb)) return rtv;
-			if (!ibb) return -2;
-			outPkgs.Add(std::move(ibb));
-		}
-		return 0;
-	}
-
-	// 队列版并不清除原有数据, 乃是追加. 如果出错, 也不会回滚.
-	inline int BBuffer::ReadPackages(Queue<Object_p>& outPkgs)
-	{
-		while (offset < dataLen)
-		{
-			Object_p ibb;
-			if (auto rtv = ReadRoot(ibb)) return rtv;
-			if (!ibb) return -2;
-			outPkgs.Emplace(std::move(ibb));
-		}
-		return 0;
-	}
-
-
-	template<typename T>
-	int BBuffer::ReadPackage(T& outPkg)
-	{
-		return ReadRoot<T>(outPkg);
-	}
-
-
-
-
-
-
-
-	inline BBuffer::BBuffer(BBuffer* const& bb)
+	inline BBuffer::BBuffer(BBuffer* const& bb) noexcept
 		: BaseType(bb)
 	{}
 
-	inline void BBuffer::ToBBuffer(BBuffer &bb) const
+	inline void BBuffer::ToBBuffer(BBuffer &bb) const noexcept
 	{
 		bb.Write(dataLen);
 		bb.WriteBuf(*this);
 	}
 
-	inline int BBuffer::FromBBuffer(BBuffer &bb) 
+	inline int BBuffer::FromBBuffer(BBuffer &bb) noexcept
 	{
 		uint32_t len = 0;
 		if (auto rtv = bb.Read(len)) return rtv;
@@ -294,7 +249,7 @@ namespace xx
 		return 0;
 	}
 
-	inline void BBuffer::ToString(String &s) const
+	inline void BBuffer::ToString(String &s) const noexcept
 	{
 		s.Append("{ \"len\":", dataLen, ", \"offset\":", offset, ", \"data\":[ ");
 		for (size_t i = 0; i < dataLen; i++)

@@ -178,13 +178,13 @@ namespace xx
 	template<typename T>
 	struct BytesFunc<T, std::enable_if_t< (std::is_arithmetic_v<T> && sizeof(T) == 1) || (std::is_floating_point_v<T> && sizeof(T) == 4) >>
 	{
-		static inline void WriteTo(BBuffer& bb, T const &in)
+		static inline void WriteTo(BBuffer& bb, T const &in) noexcept
 		{
 			bb.Reserve(bb.dataLen + sizeof(T));
 			memcpy(bb.buf + bb.dataLen, &in, sizeof(T));
 			bb.dataLen += sizeof(T);
 		}
-		static inline int ReadFrom(BBuffer& bb, T &out)
+		static inline int ReadFrom(BBuffer& bb, T &out) noexcept
 		{
 			if (bb.offset + sizeof(T) > bb.dataLen) return -1;
 			memcpy(&out, bb.buf + bb.offset, sizeof(T));
@@ -197,7 +197,7 @@ namespace xx
 	template<typename T>
 	struct BytesFunc<T, std::enable_if_t<std::is_integral_v<T> && sizeof(T) >= 2 && std::is_unsigned_v<T>>>
 	{
-		static inline void WriteTo(BBuffer& bb, T const &in)
+		static inline void WriteTo(BBuffer& bb, T const &in) noexcept
 		{
 			bb.Reserve(bb.dataLen + sizeof(T) + 1);
 			//bb.dataLen += VarWrite7(bb.buf + bb.dataLen, in);   // ios compile error
@@ -205,7 +205,7 @@ namespace xx
 			if constexpr (sizeof(T) == 4) bb.dataLen += VarWrite7(bb.buf + bb.dataLen, *(uint32_t const*)&in);
 			if constexpr (sizeof(T) == 8) bb.dataLen += VarWrite7(bb.buf + bb.dataLen, *(uint64_t const*)&in);
 		}
-		static inline int ReadFrom(BBuffer& bb, T &out)
+		static inline int ReadFrom(BBuffer& bb, T &out) noexcept
 		{
 			//return VarRead7(bb.buf, bb.dataLen, bb.offset, out);   // ios compile error
 			if constexpr (sizeof(T) == 2) return VarRead7(bb.buf, bb.dataLen, bb.offset, *(uint16_t*)&out);
@@ -218,12 +218,12 @@ namespace xx
 	template<typename T>
 	struct BytesFunc<T, std::enable_if_t<std::is_integral_v<T> && sizeof(T) >= 2 && !std::is_unsigned_v<T>>>
 	{
-		static inline void WriteTo(BBuffer& bb, T const &in)
+		static inline void WriteTo(BBuffer& bb, T const &in) noexcept
 		{
 			bb.Reserve(bb.dataLen + sizeof(T) + 1);
 			bb.dataLen += VarWrite7(bb.buf + bb.dataLen, ZigZagEncode(in));
 		}
-		static inline int ReadFrom(BBuffer& bb, T &out)
+		static inline int ReadFrom(BBuffer& bb, T &out) noexcept
 		{
 			std::make_unsigned_t<T> i = 0;
 			auto rtv = VarRead7(bb.buf, bb.dataLen, bb.offset, i);
@@ -237,11 +237,11 @@ namespace xx
 	struct BytesFunc<T, std::enable_if_t<std::is_enum_v<T>>>
 	{
 		typedef std::underlying_type_t<T> UT;
-		static inline void WriteTo(BBuffer& bb, T const &in)
+		static inline void WriteTo(BBuffer& bb, T const &in) noexcept
 		{
 			BytesFunc<UT>::WriteTo(bb, (UT const&)in);
 		}
-		static inline int ReadFrom(BBuffer& bb, T &out)
+		static inline int ReadFrom(BBuffer& bb, T &out) noexcept
 		{
 			return BytesFunc<UT>::ReadFrom(bb, (UT&)out);
 		}
@@ -251,7 +251,7 @@ namespace xx
 	template<>
 	struct BytesFunc<double, void>
 	{
-		static inline void WriteTo(BBuffer& bb, double const &in)
+		static inline void WriteTo(BBuffer& bb, double const &in) noexcept
 		{
 			bb.Reserve(bb.dataLen + sizeof(double) + 1);
 			if (in == 0)
@@ -286,7 +286,7 @@ namespace xx
 				}
 			}
 		}
-		static inline int ReadFrom(BBuffer& bb, double &out)
+		static inline int ReadFrom(BBuffer& bb, double &out) noexcept
 		{
 			if (bb.offset >= bb.dataLen) return -1;		// 确保还有 1 字节可读
 			switch (bb.buf[bb.offset++])					// 跳过 1 字节
@@ -328,16 +328,12 @@ namespace xx
 	struct BytesFunc<char[len], void>
 	{
 		typedef char(T)[len];
-		static inline size_t Calc(T const &in)
-		{
-			return len - 1 + 9;
-		}
-		static inline void WriteTo(BBuffer& bb, T const &in)
+		static inline void WriteTo(BBuffer& bb, T const &in) noexcept
 		{
 			bb.Reserve(bb.dataLen + len - 1 + 9);
 			bb.Write(String(bb.mempool, in));
 		}
-		static inline int ReadFrom(BBuffer& bb, T &out)
+		static inline int ReadFrom(BBuffer& bb, T &out) noexcept
 		{
 			assert(false);
 			return 0;
@@ -353,11 +349,11 @@ namespace xx
 	template<typename T>
 	struct BytesFunc<T, std::enable_if_t<std::is_base_of_v<Object, T>>>
 	{
-		static inline void WriteTo(BBuffer& bb, T const &in)
+		static inline void WriteTo(BBuffer& bb, T const &in) noexcept
 		{
 			in.ToBBuffer(bb);
 		}
-		static inline int ReadFrom(BBuffer& bb, T &out)
+		static inline int ReadFrom(BBuffer& bb, T &out) noexcept
 		{
 			return out.FromBBuffer(bb);
 		}
@@ -369,11 +365,11 @@ namespace xx
 	struct BytesFunc<T, std::enable_if_t<IsPtr_v<T>>>
 	{
 		typedef typename T::ChildType CT;
-		static inline void WriteTo(BBuffer& bb, T const &in)
+		static inline void WriteTo(BBuffer& bb, T const &in) noexcept
 		{
 			bb.WritePtr(in.pointer);
 		}
-		static inline int ReadFrom(BBuffer& bb, T &out)
+		static inline int ReadFrom(BBuffer& bb, T &out) noexcept
 		{
 			CT* t = nullptr;
 			auto rtv = bb.ReadPtr(t);

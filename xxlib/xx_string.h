@@ -101,7 +101,7 @@ namespace xx
 		String(BBuffer* const& bb);
 		// WriteTo, ReadFrom 直接使用基类的
 
-		void ToString(String& s) const override;
+		void ToString(String& s) const noexcept override;
 	};
 
 

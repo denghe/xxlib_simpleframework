@@ -26,17 +26,17 @@ namespace xx
 		Node               *nodes;                  // 节点数组
 	public:
 
-		explicit HashSet(MemPool* const& mempool, int const& capacity = 16);
-		~HashSet();
+		explicit HashSet(MemPool* const& mempool, int const& capacity = 16) noexcept;
+		~HashSet() noexcept;
 		HashSet(HashSet const &o) = delete;
 		HashSet& operator=(HashSet const &o) = delete;
 
 		// 只支持没数据时扩容或空间用尽扩容( 如果不这样限制, 扩容时的 遍历损耗 略大 )
-		void Reserve(int capacity = 0);
+		void Reserve(int capacity = 0) noexcept;
 
 		// 返回 true: 添加成功. false: 已存在相同的值
 		template<typename K>
-		bool Add(K&& k);
+		bool Add(K&& k) noexcept;
 
 		// 如果存在就返回 true
 		bool Exists(TK const& k) const noexcept;
@@ -58,8 +58,8 @@ namespace xx
 		{
 			HashSet* self;
 			int i;
-			bool operator!=(Iter const& other) { return i != other.i; }
-			Iter& operator++()
+			bool operator!=(Iter const& other) noexcept { return i != other.i; }
+			Iter& operator++() noexcept
 			{
 				while (++i < self->count)
 				{
@@ -67,9 +67,9 @@ namespace xx
 				}
 				return *this;
 			}
-			TK& operator*() { return self->nodes[i].key; }
+			TK& operator*() noexcept { return self->nodes[i].key; }
 		};
-		Iter begin()
+		Iter begin() noexcept
 		{
 			if (count != freeCount)
 			{
@@ -80,7 +80,7 @@ namespace xx
 			}
 			return end();
 		}
-		Iter end() { return Iter{ this, count }; }
+		Iter end() noexcept { return Iter{ this, count }; }
 
 	protected:
 		// 用于 析构, Clear

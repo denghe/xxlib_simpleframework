@@ -53,7 +53,7 @@ namespace xx
 	template<typename T>
 	struct HashFunc<T, std::enable_if_t<(std::is_integral_v<T> || std::is_floating_point_v<T>) && sizeof(T) == 4>>
 	{
-		static uint32_t GetHashCode(T const& in)
+		static uint32_t GetHashCode(T const& in) noexcept
 		{
 			return *(uint32_t*)&in;
 		}
@@ -63,7 +63,7 @@ namespace xx
 	template<typename T>
 	struct HashFunc < T, std::enable_if_t<std::is_integral_v<T> && sizeof(T) < 4 > >
 	{
-		static uint32_t GetHashCode(T const& in)
+		static uint32_t GetHashCode(T const& in) noexcept
 		{
 			return (uint32_t)(std::make_unsigned_t<T>)in;
 		}
@@ -73,7 +73,7 @@ namespace xx
 	template<typename T>
 	struct HashFunc<T, std::enable_if_t<(std::is_integral_v<T> || std::is_floating_point_v<T>) && sizeof(T) == 8>>
 	{
-		static uint32_t GetHashCode(T const& in)
+		static uint32_t GetHashCode(T const& in) noexcept
 		{
 			return ((uint32_t*)&in)[0] ^ ((uint32_t*)&in)[1];
 		}
@@ -86,7 +86,7 @@ namespace xx
 	template<>
 	struct HashFunc<void*, void>
 	{
-		static uint32_t GetHashCode(void* const& in)
+		static uint32_t GetHashCode(void* const& in) noexcept
 		{
 			if constexpr(sizeof(in) == 4)
 			{
@@ -105,7 +105,7 @@ namespace xx
 	{
 		// 抄自微软 .net 源代码
 		// todo: 未来考虑是不是换成什么 xxhash 开源项目之类
-		static uint32_t GetHashCode(std::pair<char*, size_t> const& in)
+		static uint32_t GetHashCode(std::pair<char*, size_t> const& in) noexcept
 		{
 			auto& buf = in.first;
 			auto& len = in.second;
@@ -139,8 +139,9 @@ namespace xx
 	template<>
 	struct HashFunc<char const*, void>
 	{
-		static uint32_t GetHashCode(char const* const& in)
+		static uint32_t GetHashCode(char const* const& in) noexcept
 		{
+			// come from zeno
 			uint32_t seed = 0x811C9DC5U;
 			if (!in) return seed;
 			auto size = strlen(in);
@@ -175,7 +176,7 @@ namespace xx
 	template<>
 	struct HashFunc<std::string, void>
 	{
-		static uint32_t GetHashCode(std::string const& in)
+		static uint32_t GetHashCode(std::string const& in) noexcept
 		{
 			return HashFunc<std::pair<char*, size_t>>::GetHashCode(std::make_pair((char*)in.data(), in.size()));
 		}
@@ -189,6 +190,9 @@ namespace xx
 	template<>
 	struct EqualsFunc<char const*, void>
 	{
-		static bool EqualsTo(char const* const& a, char const* const& b) { return !strcmp(a, b); }
+		static bool EqualsTo(char const* const& a, char const* const& b) noexcept
+		{
+			return !strcmp(a, b);
+		}
 	};
 }

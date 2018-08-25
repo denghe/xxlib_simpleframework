@@ -47,20 +47,20 @@ namespace xx
 
 
 		// 只支持没数据时扩容或空间用尽扩容( 如果不这样限制, 扩容时的 遍历损耗 略大 )
-		void Reserve(int capacity = 0);
+		void Reserve(int capacity = 0) noexcept;
 
 		int Find(TK const& key) const noexcept;
 		void Remove(TK const& key) noexcept;
 		void RemoveAt(int const& idx) noexcept;
 
 		template<typename K>
-		TV& operator[](K&& key);
+		TV& operator[](K&& key) noexcept;
 
 		// 可传入一个资源回收函数来搞事
 		void Clear(std::function<void(Data&)> killer = nullptr) noexcept;
 
 		template<typename K, typename V>
-		DictAddResult Add(K&& k, V&& v, bool const& override = false);
+		DictAddResult Add(K&& k, V&& v, bool const& override = false) noexcept;
 
 
 		uint32_t Count() const noexcept;
@@ -68,7 +68,7 @@ namespace xx
 		bool TryGetValue(TK const& key, TV& outV) noexcept;
 
 		template<typename K>
-		TV& At(K&& key);
+		TV& At(K&& key) noexcept;
 
 		TK const& KeyAt(int const& idx) const noexcept;
 		TV& ValueAt(int const& idx) noexcept;
@@ -84,8 +84,8 @@ namespace xx
 		{
 			Dict& hs;
 			int i;
-			bool operator!=(Iter const& other) { return i != other.i; }
-			Iter& operator++()
+			bool operator!=(Iter const& other) noexcept { return i != other.i; }
+			Iter& operator++() noexcept
 			{
 				while (++i < hs.count)
 				{
@@ -95,7 +95,7 @@ namespace xx
 			}
 			Data& operator*() { return hs.items[i]; }
 		};
-		Iter begin()
+		Iter begin() noexcept
 		{
 			if (Empty()) return end();
 			for (int i = 0; i < count; ++i)
@@ -104,7 +104,7 @@ namespace xx
 			}
 			return end();
 		}
-		Iter end() { return Iter{ *this, count }; }
+		Iter end() noexcept { return Iter{ *this, count }; }
 
 	protected:
 		// 用于 析构, Clear

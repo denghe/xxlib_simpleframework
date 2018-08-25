@@ -27,8 +27,8 @@ namespace xx
 		bool operator==(Guid const& o) const noexcept;
 		bool operator!=(Guid const& o) const noexcept;
 
-		void Fill();
-		void Fill(char const* const& buf);
+		void Fill() noexcept;
+		void Fill(char const* const& buf) noexcept;
 
 		bool IsZero() noexcept;
 	};

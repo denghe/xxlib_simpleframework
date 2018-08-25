@@ -18,20 +18,20 @@ namespace xx
 		BBuffer(BBuffer const& o) = delete;
 		BBuffer& operator=(BBuffer const& o) = delete;
 
-		explicit BBuffer(MemPool* const& mempool, size_t const& capacity = 0);
-		BBuffer(MemPool* const& mempool, std::pair<char const*, size_t> const& buff);
+		explicit BBuffer(MemPool* const& mempool, size_t const& capacity = 0) noexcept;
+		BBuffer(MemPool* const& mempool, std::pair<char const*, size_t> const& buff) noexcept;
 
 
 		template<typename ...TS>
-		void Write(TS const& ...vs);
+		void Write(TS const& ...vs) noexcept;
 
 		template<typename ...TS>
-		int Read(TS&...vs);
+		int Read(TS&...vs) noexcept;
 
 		template<typename T, typename ...TS>
-		int ReadCore(T& v, TS&...vs);
+		int ReadCore(T& v, TS&...vs) noexcept;
 		template<typename T>
-		int ReadCore(T& v);
+		int ReadCore(T& v) noexcept;
 
 
 		/*************************************************************************/
@@ -39,31 +39,31 @@ namespace xx
 		/*************************************************************************/
 
 
-		void BeginWrite();
-		void BeginRead();
+		void BeginWrite() noexcept;
+		void BeginRead() noexcept;
 
 		template<typename T>
-		void WriteRoot(T const& v);
+		void WriteRoot(T const& v) noexcept;
 
 		template<typename T>
-		int ReadRoot(T& v);
+		int ReadRoot(T& v) noexcept;
 
 		template<typename T>
-		void WritePtr(T* const& v);
+		void WritePtr(T* const& v) noexcept;
 
 		template<typename T>
-		int ReadPtr(T*& v);
+		int ReadPtr(T*& v) noexcept;
 
 
 		/*************************************************************************/
 		//  其他工具函数
 		/*************************************************************************/
 
-		void Clear();
+		void Clear() noexcept;
 
 		// 根据数据类型往当前位置写入默认值
 		template<typename T>
-		void WriteDefaultValue();
+		void WriteDefaultValue() noexcept;
 
 		// 自定义 Write 函数
 		std::function<void(BBuffer& bb, void* owner, size_t fieldOffset)> CustomWrite;
@@ -71,52 +71,36 @@ namespace xx
 
 		// 读指定位置的数据( 不影响 offset )
 		template<typename ...TS>
-		int ReadAt(size_t const& pos, TS&...vs);
+		int ReadAt(size_t const& pos, TS&...vs) noexcept;
 
 		// 从当前位置读数据但事后 offset 偏移指定长度
 		template<typename ...TS>
-		int ReadJump(size_t const& len, TS&...vs);
+		int ReadJump(size_t const& len, TS&...vs) noexcept;
 
 		// 直接追加写入一段 buf ( 并不记录长度 )
-		void WriteBuf(char const* const& buf, size_t const& len);
-		void WriteBuf(BBuffer const& bb);
-		void WriteBuf(BBuffer const* const& bb);
+		void WriteBuf(char const* const& buf, size_t const& len) noexcept;
+		void WriteBuf(BBuffer const& bb) noexcept;
+		void WriteBuf(BBuffer const* const& bb) noexcept;
 
 		// 追加一个指定长度的空间, 返回当前 dataLen
-		size_t WriteSpace(size_t const& len);
+		size_t WriteSpace(size_t const& len) noexcept;
 
 		// 在 pos 位置写入一段 buf ( 并不记录长度 ). dataLen 可能撑大.
-		void WriteBufAt(size_t const& pos, char const* const& buf, size_t const& len);
+		void WriteBufAt(size_t const& pos, char const* const& buf, size_t const& len) noexcept;
 
 		// 在 pos 位置做 Write 操作. dataLen 可能撑大.
 		template<typename ...TS>
-		void WriteAt(size_t const& pos, TS const&...vs);
+		void WriteAt(size_t const& pos, TS const&...vs) noexcept;
 
-
-		/*************************************************************************/
-		//  包相关
-		/*************************************************************************/
-
-		// 尝试一次性反序列化一到多个包, 将结果填充到 outPkgs, 返回 0 或 错误码
-		// 注意: 注意其元素的 引用计数, 通通为 1( 即便是递归互引 )
-		// 注意: 即便返回错误码, outPkgs 中也可能存在残留数据
-		int ReadPackages(List<Object_p>& outPkgs);
-
-		// 队列版并不清除原有数据, 乃是追加. 如果出错, 也不会回滚.
-		int ReadPackages(Queue<Object_p>& outPkgs);
-
-		// 试读出单个包( 等同于 ReadRoot )
-		template<typename T>
-		int ReadPackage(T& outPkg);
 
 
 		// Object 接口实现
 
-		BBuffer(BBuffer* const& bb);
-		void ToBBuffer(BBuffer& bb) const override;
-		int FromBBuffer(BBuffer& bb) override;
+		BBuffer(BBuffer* const& bb) noexcept;
+		void ToBBuffer(BBuffer& bb) const noexcept override;
+		int FromBBuffer(BBuffer& bb) noexcept override;
 
-		void ToString(String& s) const override;
+		void ToString(String& s) const noexcept override;
 	};
 
 

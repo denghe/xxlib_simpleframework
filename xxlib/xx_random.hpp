@@ -18,7 +18,7 @@ namespace xx
 		Init(seed);
 	}
 
-	inline void Random::Init(int32_t const& seed)
+	inline void Random::Init(int32_t const& seed) noexcept
 	{
 		int32_t ii;
 		int32_t mj, mk;
@@ -49,14 +49,14 @@ namespace xx
 		inextp = 21;
 	}
 
-	inline double Random::Sample()
+	inline double Random::Sample() noexcept
 	{
 		//Including this division at the end gives us significantly improved
 		//random number distribution.
 		return (InternalSample() * (1.0 / MBIG));
 	}
 
-	inline int32_t Random::InternalSample()
+	inline int32_t Random::InternalSample() noexcept
 	{
 		int32_t retVal;
 		int32_t locINext = inext;
@@ -77,12 +77,12 @@ namespace xx
 
 		return retVal;
 	}
-	inline int32_t Random::Next()
+	inline int32_t Random::Next() noexcept
 	{
 		return InternalSample();
 	}
 
-	inline double Random::GetSampleForLargeRange()
+	inline double Random::GetSampleForLargeRange() noexcept
 	{
 		// The distribution of double value returned by Sample 
 		// is not distributed well enough for a large range.
@@ -103,7 +103,7 @@ namespace xx
 	}
 
 
-	inline int32_t Random::Next(int32_t const& minValue, int32_t const& maxValue)
+	inline int32_t Random::Next(int32_t const& minValue, int32_t const& maxValue) noexcept
 	{
 		assert(minValue <= maxValue);
 
@@ -119,14 +119,14 @@ namespace xx
 	}
 
 
-	inline int32_t Random::Next(int32_t const& maxValue)
+	inline int32_t Random::Next(int32_t const& maxValue) noexcept
 	{
 		assert(maxValue >= 0);
 		return (int32_t)(Sample() * maxValue);
 	}
 
 
-	inline double Random::NextDouble()
+	inline double Random::NextDouble() noexcept
 	{
 		return Sample();
 	}
@@ -140,7 +140,7 @@ namespace xx
 	//	}
 	//}
 
-	inline double Random::NextDouble(double const& minValue, double const& maxValue)
+	inline double Random::NextDouble(double const& minValue, double const& maxValue) noexcept
 	{
 		if (minValue == maxValue || maxValue - minValue <= 0) return minValue;
 		return minValue + (maxValue - minValue) * NextDouble();
@@ -155,7 +155,7 @@ namespace xx
 	}
 
 
-	inline void Random::ToBBuffer(BBuffer& bb) const
+	inline void Random::ToBBuffer(BBuffer& bb) const noexcept
 	{
 		// data len = 2 int + int[56] = 4 * 58 = 232
 		bb.Reserve(bb.dataLen + 232);
@@ -163,7 +163,7 @@ namespace xx
 		bb.dataLen += 232;
 	}
 
-	inline int Random::FromBBuffer(BBuffer& bb)
+	inline int Random::FromBBuffer(BBuffer& bb) noexcept
 	{
 		if (bb.offset + 232 > bb.dataLen) return -1;
 		memcpy(&inext, bb.buf + bb.offset, 232);
@@ -173,7 +173,7 @@ namespace xx
 
 
 
-	inline void Random::ToString(String& s) const
+	inline void Random::ToString(String& s) const noexcept
 	{
 		s.Append("{ \"type\":\"Random\" }");
 	}

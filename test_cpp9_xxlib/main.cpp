@@ -406,7 +406,7 @@ inline void Client::Update()
 			//std::cout << "recv " << routerClient.senderAddress << "'s response: " << str << std::endl;
 
 			// 试解包( 应该是收到地址 Service2 )
-			if (int r = bb->ReadPackage(str))
+			if (int r = bb->ReadRoot(str))
 			{
 				// 解包失败, 忽略
 				return;

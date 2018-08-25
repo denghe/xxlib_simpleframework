@@ -26,7 +26,7 @@ namespace xx
 
 	template <typename TK, typename TV>
 	template<typename K, typename V>
-	DictAddResult Dict<TK, TV>::Add(K&& k, V&& v, bool const& override)
+	DictAddResult Dict<TK, TV>::Add(K&& k, V&& v, bool const& override) noexcept
 	{
 		assert(bucketsLen);
 
@@ -86,7 +86,7 @@ namespace xx
 
 	// 只支持没数据时扩容或空间用尽扩容( 如果不这样限制, 扩容时的 遍历损耗 略大 )
 	template <typename TK, typename TV>
-	void Dict<TK, TV>::Reserve(int capacity)
+	void Dict<TK, TV>::Reserve(int capacity) noexcept
 	{
 		assert(buckets);
 		assert(count == 0 || count == bucketsLen);          // 确保扩容函数使用情型
@@ -202,7 +202,7 @@ namespace xx
 
 	template <typename TK, typename TV>
 	template<typename K>
-	TV& Dict<TK, TV>::operator[](K &&k)
+	TV& Dict<TK, TV>::operator[](K &&k) noexcept
 	{
 		assert(buckets);
 		int idx = Find(k);
@@ -267,7 +267,7 @@ namespace xx
 
 	template <typename TK, typename TV>
 	template<typename K>
-	TV& Dict<TK, TV>::At(K&& key)
+	TV& Dict<TK, TV>::At(K&& key) noexcept
 	{
 		return operator[](std::forward<K>(key));
 	}

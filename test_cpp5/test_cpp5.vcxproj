@@ -133,6 +133,7 @@
     <ClInclude Include="..\xxlib\xx_string.h" />
     <ClInclude Include="..\xxlib\xx_string.hpp" />
     <ClInclude Include="..\xxlib\xx_uv.h" />
+    <ClInclude Include="..\xxlib\xx_uv.hpp" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="..\xxlib\xx.natvis" />

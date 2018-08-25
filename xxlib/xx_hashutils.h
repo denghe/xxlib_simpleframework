@@ -33,7 +33,7 @@ namespace xx
 	template<typename T, typename ENABLE = void>
 	struct HashFunc
 	{
-		static uint32_t GetHashCode(T const& in)
+		static uint32_t GetHashCode(T const& in) noexcept
 		{
 			assert(false);
 			return 0;
@@ -45,7 +45,7 @@ namespace xx
 	template<typename T, typename ENABLE = void>
 	struct EqualsFunc
 	{
-		static bool EqualsTo(T const& a, T const& b) { return a == b; }
+		static bool EqualsTo(T const& a, T const& b) noexcept { return a == b; }
 	};
 
 

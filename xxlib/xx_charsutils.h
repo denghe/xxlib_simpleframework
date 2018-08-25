@@ -35,17 +35,17 @@ namespace xx
 	template <typename OutType>
 	void ToUInt(char const* in, OutType& out) noexcept;
 
-	inline void FromString(bool     &out, char const* const& in) { out = (in[0] == '1' || in[0] == 'T' || in[0] == 't'); }
-	inline void FromString(uint8_t  &out, char const* const& in) { ToUInt(in, out); }
-	inline void FromString(uint16_t &out, char const* const& in) { ToUInt(in, out); }
-	inline void FromString(uint32_t &out, char const* const& in) { ToUInt(in, out); }
-	inline void FromString(uint64_t &out, char const* const& in) { ToUInt(in, out); }
-	inline void FromString(int8_t   &out, char const* const& in) { ToInt(in, out); }
-	inline void FromString(int16_t  &out, char const* const& in) { ToInt(in, out); }
-	inline void FromString(int32_t  &out, char const* const& in) { ToInt(in, out); }
-	inline void FromString(int64_t  &out, char const* const& in) { ToInt(in, out); }
-	inline void FromString(double   &out, char const* const& in) { if (!in || !*in) out = 0; else out = strtod(in, nullptr); }
-	inline void FromString(float    &out, char const* const& in) { if (!in || !*in) out = 0; else out = (float)strtod(in, nullptr); }
+	inline void FromString(bool     &out, char const* const& in) noexcept { out = (in[0] == '1' || in[0] == 'T' || in[0] == 't'); }
+	inline void FromString(uint8_t  &out, char const* const& in) noexcept { ToUInt(in, out); }
+	inline void FromString(uint16_t &out, char const* const& in) noexcept { ToUInt(in, out); }
+	inline void FromString(uint32_t &out, char const* const& in) noexcept { ToUInt(in, out); }
+	inline void FromString(uint64_t &out, char const* const& in) noexcept { ToUInt(in, out); }
+	inline void FromString(int8_t   &out, char const* const& in) noexcept { ToInt(in, out); }
+	inline void FromString(int16_t  &out, char const* const& in) noexcept { ToInt(in, out); }
+	inline void FromString(int32_t  &out, char const* const& in) noexcept { ToInt(in, out); }
+	inline void FromString(int64_t  &out, char const* const& in) noexcept { ToInt(in, out); }
+	inline void FromString(double   &out, char const* const& in) noexcept { if (!in || !*in) out = 0; else out = strtod(in, nullptr); }
+	inline void FromString(float    &out, char const* const& in) noexcept { if (!in || !*in) out = 0; else out = (float)strtod(in, nullptr); }
 
 
 
@@ -98,7 +98,7 @@ namespace xx
 	template<typename T, typename ENABLE = void>
 	struct StrFunc
 	{
-		static void WriteTo(String& s, T const& in)
+		static void WriteTo(String& s, T const& in) noexcept
 		{
 			assert(false);
 		}
