@@ -68,7 +68,7 @@ namespace xx
 
 
 		// Object 接口支持
-		List(BBuffer* const& bb) noexcept;
+		List(BBuffer* const& bb);
 		void ToBBuffer(BBuffer& bb) const noexcept override;
 		int FromBBuffer(BBuffer& bb) noexcept override;
 

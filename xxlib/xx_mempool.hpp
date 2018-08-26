@@ -244,7 +244,7 @@ namespace xx
 		pids[TypeId_v<T>] = TypeId_v<PT>;
 
 		// 在执行构造函数之前拿到指针 塞入 bb. 构造函数执行失败时从 bb 移除
-		creators[TypeId_v<T>] = [](MemPool* const& mp, BBuffer* const& bb, size_t const& ptrOffset) ->void*
+		creators[TypeId_v<T>] = [](MemPool* const& mp, BBuffer* const& bb, size_t const& ptrOffset) noexcept ->void*
 		{
 			// 如果把 TypeId_v<T> 直接放入 std::make_pair, 其值将永远是 0. 故先取出来.
 			auto typeId = TypeId_v<T>;

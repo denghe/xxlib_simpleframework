@@ -16,47 +16,39 @@ namespace xx
 		size_t		bufLen;
 		size_t		head = 0, tail = 0;					// FR..............................
 
-		explicit Queue(MemPool* const& mempool, size_t capacity = 8);
-		~Queue();
+		explicit Queue(MemPool* const& mempool, size_t capacity = 8) noexcept;
+		Queue(Queue && o) noexcept;
+		~Queue() noexcept;
 
 		Queue(Queue const& o) = delete;
-		Queue(Queue && o)
-			: buf(o.buf)
-			, bufLen(o.bufLen)
-			, head(o.head)
-			, tail(o.tail)
-		{
-			o.buf = nullptr;
-			o.bufLen = o.head = o.tail = 0;
-		}
 		Queue& operator=(Queue const& o) = delete;
 
-		T const& operator[](size_t const& idx) const;	// [0] = [ head ]
-		T& operator[](size_t const& idx);
-		T const& At(size_t const& idx) const;			// []
-		T& At(size_t const& idx);
+		T const& operator[](size_t const& idx) const noexcept;	// [0] = [ head ]
+		T& operator[](size_t const& idx) noexcept;
+		T const& At(size_t const& idx) const noexcept;			// []
+		T& At(size_t const& idx) noexcept;
 
-		size_t Count() const;
-		bool Empty() const;
-		void Clear();
-		void Reserve(size_t const& capacity, bool const& afterPush = false);
+		size_t Count() const noexcept;
+		bool Empty() const noexcept;
+		void Clear() noexcept;
+		void Reserve(size_t const& capacity, bool const& afterPush = false) noexcept;
 
 		template<typename...Args>
-		T& Emplace(Args&&...ps);							// [ tail++ ] = T( ps )
+		T& Emplace(Args&&...ps) noexcept;						// [ tail++ ] = T( ps )
 
 		template<typename ...TS>
-		void Push(TS&& ...vs);
+		void Push(TS&& ...vs) noexcept;
 
-		bool TryPop(T& outVal);
+		bool TryPop(T& outVal) noexcept;
 
-		T const& Top() const;							// [ head ]
-		T& Top();
-		void Pop();										// ++head
-		size_t PopMulti(size_t const& count);			// head += count
+		T const& Top() const noexcept;							// [ head ]
+		T& Top() noexcept;
+		void Pop() noexcept;									// ++head
+		size_t PopMulti(size_t const& count) noexcept;			// head += count
 
-		T const& Last() const;							// [ tail-1 ]
-		T& Last();
-		void PopLast();									// --tail
+		T const& Last() const noexcept;							// [ tail-1 ]
+		T& Last() noexcept;
+		void PopLast() noexcept;								// --tail
 	};
 
 

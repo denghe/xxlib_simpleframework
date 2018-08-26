@@ -3,7 +3,7 @@ namespace xx
 {
 
 	template <class T>
-	Queue<T>::Queue(MemPool* const& mempool, size_t capacity)
+	Queue<T>::Queue(MemPool* const& mempool, size_t capacity) noexcept
 		: Object(mempool)
 	{
 		if (capacity < 8)
@@ -12,11 +12,23 @@ namespace xx
 		}
 		auto bufByteLen = MemPool::Round2n(capacity * sizeof(T) + sizeof(MemHeader)) - sizeof(MemHeader);
 		buf = (T*)mempool->Alloc((size_t)bufByteLen);
+		assert(buf);
 		bufLen = size_t(bufByteLen / sizeof(T));
 	}
 
 	template <class T>
-	Queue<T>::~Queue()
+	Queue<T>::Queue(Queue && o) noexcept
+		: buf(o.buf)
+		, bufLen(o.bufLen)
+		, head(o.head)
+		, tail(o.tail)
+	{
+		o.buf = nullptr;
+		o.bufLen = o.head = o.tail = 0;
+	}
+
+	template <class T>
+	Queue<T>::~Queue() noexcept
 	{
 		if (buf)
 		{
@@ -27,7 +39,7 @@ namespace xx
 	}
 
 	template <class T>
-	size_t Queue<T>::Count() const
+	size_t Queue<T>::Count() const noexcept
 	{
 		//......Head+++++++++++Tail.......
 		//...............FR...............
@@ -37,13 +49,13 @@ namespace xx
 	}
 
 	template <class T>
-	bool Queue<T>::Empty() const
+	bool Queue<T>::Empty() const noexcept
 	{
 		return head == tail;
 	}
 
 	template <class T>
-	void Queue<T>::Pop()
+	void Queue<T>::Pop() noexcept
 	{
 		assert(head != tail);
 		buf[head++].~T();
@@ -54,7 +66,7 @@ namespace xx
 	}
 
 	template <class T>
-	void Queue<T>::PopLast()
+	void Queue<T>::PopLast() noexcept
 	{
 		assert(head != tail);
 		buf[tail--].~T();
@@ -67,7 +79,7 @@ namespace xx
 
 	template <class T>
 	template<typename...Args>
-	T& Queue<T>::Emplace(Args&&...args)
+	T& Queue<T>::Emplace(Args&&...args) noexcept
 	{
 		auto idx = tail;
 		new (buf + tail++) T(std::forward<Args>(args)...);
@@ -86,14 +98,14 @@ namespace xx
 
 	template<typename T>
 	template<typename ...TS>
-	void Queue<T>::Push(TS&& ...vs)
+	void Queue<T>::Push(TS&& ...vs) noexcept
 	{
 		std::initializer_list<int> n{ (Emplace(std::forward<TS>(vs)), 0)... };
 	}
 
 
 	template <class T>
-	void Queue<T>::Clear()
+	void Queue<T>::Clear() noexcept
 	{
 		//........HT......................
 		if (head == tail) return;
@@ -114,7 +126,7 @@ namespace xx
 	}
 
 	template <typename T>
-	size_t Queue<T>::PopMulti(size_t const& count)
+	size_t Queue<T>::PopMulti(size_t const& count) noexcept
 	{
 		if (count <= 0) return 0;
 
@@ -159,13 +171,14 @@ namespace xx
 	}
 
 	template <class T>
-	void Queue<T>::Reserve(size_t const& capacity, bool const& afterPush)
+	void Queue<T>::Reserve(size_t const& capacity, bool const& afterPush) noexcept
 	{
 		assert(capacity > 0);
 		if (capacity <= bufLen) return;
 
 		auto newBufByteLen = MemPool::Round2n(capacity * sizeof(T) + sizeof(MemHeader)) - sizeof(MemHeader);
 		auto newBuf = (T*)mempool->Alloc((size_t)newBufByteLen);
+		assert(newBuf);
 		auto newBufLen = size_t(newBufByteLen / sizeof(T));
 
 		// afterPush: ++++++++++++++TH++++++++++++++++
@@ -232,31 +245,31 @@ namespace xx
 
 
 	template<typename T>
-	T const& Queue<T>::operator[](size_t const& idx) const
+	T const& Queue<T>::operator[](size_t const& idx) const noexcept
 	{
 		return At(idx);
 	}
 
 	template<typename T>
-	T& Queue<T>::operator[](size_t const& idx)
+	T& Queue<T>::operator[](size_t const& idx) noexcept
 	{
 		return At(idx);
 	}
 
 	template<typename T>
-	T const& Queue<T>::At(size_t const& idx) const
+	T const& Queue<T>::At(size_t const& idx) const noexcept
 	{
 		return const_cast<Queue<T>*>(this)->At(idx);
 	}
 
 	template<typename T>
-	T const& Queue<T>::Top() const
+	T const& Queue<T>::Top() const noexcept
 	{
 		assert(head != tail);
 		return buf[head];
 	}
 	template<typename T>
-	T& Queue<T>::Top()
+	T& Queue<T>::Top() noexcept
 	{
 		assert(head != tail);
 		return buf[head];
@@ -264,7 +277,7 @@ namespace xx
 
 
 	template<typename T>
-	T& Queue<T>::At(size_t const& idx)
+	T& Queue<T>::At(size_t const& idx) noexcept
 	{
 		assert(idx < Count());
 		if (head + idx < bufLen)
@@ -279,13 +292,13 @@ namespace xx
 
 
 	template<typename T>
-	T const& Queue<T>::Last() const
+	T const& Queue<T>::Last() const noexcept
 	{
 		assert(head != tail);
 		return buf[tail - 1 == (size_t)-1 ? bufLen - 1 : tail - 1];
 	}
 	template<typename T>
-	T& Queue<T>::Last()
+	T& Queue<T>::Last() noexcept
 	{
 		assert(head != tail);
 		return buf[tail - 1 == (size_t)-1 ? bufLen - 1 : tail - 1];
@@ -293,7 +306,7 @@ namespace xx
 
 
 	template <typename T>
-	bool Queue<T>::TryPop(T& outVal)
+	bool Queue<T>::TryPop(T& outVal) noexcept
 	{
 		if (head == tail)
 		{

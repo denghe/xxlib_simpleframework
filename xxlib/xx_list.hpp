@@ -326,7 +326,7 @@ namespace xx
 
 
 	template<typename T>
-	List<T>::List(BBuffer* const& bb) noexcept
+	List<T>::List(BBuffer* const& bb)
 		: List(bb->mempool, 0)
 	{
 		if (int r = FromBBuffer(*bb)) throw r;

@@ -7,45 +7,45 @@ namespace xx
 	public:
 		typedef List<char> BaseType;
 
-		explicit String(MemPool* const& mempool);
+		explicit String(MemPool* const& mempool) noexcept;
 
-		explicit String(MemPool* const& mempool, char const* const& s, size_t const& len);
-		explicit String(MemPool* const& mempool, wchar_t const* const& ws, size_t const& len);
+		explicit String(MemPool* const& mempool, char const* const& s, size_t const& len) noexcept;
+		explicit String(MemPool* const& mempool, wchar_t const* const& ws, size_t const& len) noexcept;
 
 		template<typename T>
-		explicit String(MemPool* const& mempool, T const& in);
+		explicit String(MemPool* const& mempool, T const& in) noexcept;
 
-		String(String &&o);
+		String(String &&o) noexcept;
 		String(String const&o) = delete;
 		String& operator=(String const& o) = delete;
 
-		String* Assign(char const* const& s, size_t const& len);
-		String* Assign(wchar_t const* const& ws, size_t const& len);
+		String* Assign(char const* const& s, size_t const& len) noexcept;
+		String* Assign(wchar_t const* const& ws, size_t const& len) noexcept;
 
 		template<typename T>
-		String* Assign(T const& in);
+		String* Assign(T const& in) noexcept;
 
-		String& operator=(char const * const& buf);
+		String& operator=(char const * const& buf) noexcept;
 
-		char* c_str();
-		void AppendChars(char const& c = ' ', size_t const& num = 1);
+		char* c_str() noexcept;
+		void AppendChars(char const& c = ' ', size_t const& num = 1) noexcept;
 
 		template<typename...TS>
-		void Append(TS const&...vs);
+		void Append(TS const&...vs) noexcept;
 
 	protected:
 
 		template<typename T>
-		void AppendFormatCore(String& s, size_t& n, T const& v);
+		void AppendFormatCore(String& s, size_t& n, T const& v) noexcept;
 
 		template<typename T, typename...TS>
-		void AppendFormatCore(String& s, size_t& n, T const& v, TS const&...vs);
+		void AppendFormatCore(String& s, size_t& n, T const& v, TS const&...vs) noexcept;
 
 	public:
 
 		// 格式化追加, {0} {1}... 这种. 针对重复出现的参数, 是从已经追加出来的字串区域复制, 故追加自己并不会导致内容翻倍
 		template<typename...TS>
-		void AppendFormat(char const* const& format, TS const&...vs);
+		void AppendFormat(char const* const& format, TS const&...vs) noexcept;
 
 		static unsigned char constexpr lowerchars[] =
 		{
@@ -92,13 +92,13 @@ namespace xx
 		static bool Equals(Ptr<String> const& a, Ptr<String> const& b) noexcept;
 
 	private:
-		friend std::ostream& operator<<(std::ostream&, const String&);
+		friend std::ostream& operator<<(std::ostream&, const String&) noexcept;
 
 
 	public:
 		// 实现一些 Object 的接口
 
-		String(BBuffer* const& bb);
+		String(BBuffer* const& bb) noexcept;
 		// WriteTo, ReadFrom 直接使用基类的
 
 		void ToString(String& s) const noexcept override;

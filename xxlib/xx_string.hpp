@@ -2,20 +2,20 @@
 #pragma once
 namespace xx
 {
-	inline String::String(MemPool* const& mempool)
+	inline String::String(MemPool* const& mempool) noexcept
 		: BaseType(mempool, 0)
 	{}
 
-	inline String::String(String&& o)
+	inline String::String(String&& o) noexcept
 		: BaseType((BaseType&&)o)
 	{}
 
-	inline String::String(MemPool* const& mempool, char const* const& s, size_t const& len)
+	inline String::String(MemPool* const& mempool, char const* const& s, size_t const& len) noexcept
 		: BaseType(mempool, 0)
 	{
 		if (s && len) AddRange(s, len);
 	}
-	inline String::String(MemPool* const& mempool, wchar_t const* const& ws, size_t const& len)
+	inline String::String(MemPool* const& mempool, wchar_t const* const& ws, size_t const& len) noexcept
 		: BaseType(mempool, 0)
 	{
 		Reserve(len * 3);
@@ -29,7 +29,7 @@ namespace xx
 	}
 
 	template<typename T>
-	inline String::String(MemPool* const& mempool, T const& in)
+	inline String::String(MemPool* const& mempool, T const& in) noexcept
 		: BaseType(mempool, 0)
 	{
 		StrFunc<T>::WriteTo(*this, in);
@@ -37,14 +37,14 @@ namespace xx
 	}
 
 
-	inline String* String::Assign(char const* const& s, size_t const& len)
+	inline String* String::Assign(char const* const& s, size_t const& len) noexcept
 	{
 		Clear();
 		if (s && len) AddRange(s, len);
 		return this;
 	}
 
-	inline String* String::Assign(wchar_t const* const& ws, size_t const& len)
+	inline String* String::Assign(wchar_t const* const& ws, size_t const& len) noexcept
 	{
 		Clear();
 		Reserve(len * 3);
@@ -59,7 +59,7 @@ namespace xx
 	}
 
 	template<typename T>
-	inline String* String::Assign(T const& in)
+	inline String* String::Assign(T const& in) noexcept
 	{
 		Clear();
 		StrFunc<T>::WriteTo(*this, in);
@@ -67,39 +67,39 @@ namespace xx
 		return this;
 	}
 
-	inline String& String::operator=(char const* const& buf)
+	inline String& String::operator=(char const* const& buf) noexcept
 	{
 		Assign(buf);
 		return *this;
 	}
 
-	inline char* String::c_str()
+	inline char* String::c_str() noexcept
 	{
 		Reserve(dataLen + 1);
 		buf[dataLen] = '\0';
 		return buf;
 	}
 
-	inline void String::AppendChars(char const& c, size_t const& num)
+	inline void String::AppendChars(char const& c, size_t const& num) noexcept
 	{
 		memset(buf + Resize(dataLen + num), c, num);
 	}
 
 	template<typename...TS>
-	void String::Append(TS const&...vs)
+	void String::Append(TS const&...vs) noexcept
 	{
 		std::initializer_list<int> n{ (StrFunc<TS>::WriteTo(*this, vs), 0)... };
 		assert(dataLen <= bufLen);
 	}
 
 	template<typename T>
-	void String::AppendFormatCore(String& s, size_t& n, T const& v)
+	void String::AppendFormatCore(String& s, size_t& n, T const& v) noexcept
 	{
 		if (!n) s.Append(v);
 	}
 
 	template<typename T, typename...TS>
-	void String::AppendFormatCore(String& s, size_t& n, T const& v, TS const&...vs)
+	void String::AppendFormatCore(String& s, size_t& n, T const& v, TS const&...vs) noexcept
 	{
 		if (n-- == 0)
 		{
@@ -111,7 +111,7 @@ namespace xx
 
 	// 格式化追加, {0} {1}... 这种. 针对重复出现的参数, 是从已经追加出来的字串区域复制, 故追加自己并不会导致内容翻倍
 	template<typename...TS>
-	void String::AppendFormat(char const* const& format, TS const&...vs)
+	void String::AppendFormat(char const* const& format, TS const&...vs) noexcept
 	{
 		struct StringView				// 用来存放已经序列化过的参数位于输出 buf 中的下标及长度
 		{
@@ -242,7 +242,7 @@ namespace xx
 		return false;
 	}
 
-	inline std::ostream & operator<<(std::ostream& os, String const& s)
+	inline std::ostream & operator<<(std::ostream& os, String const& s) noexcept
 	{
 		os << ((String&)s).c_str();
 		return os;
@@ -254,7 +254,7 @@ namespace xx
 
 
 
-	inline String::String(BBuffer* const& bb)
+	inline String::String(BBuffer* const& bb) noexcept
 		: BaseType(bb)
 	{}
 
@@ -273,7 +273,7 @@ namespace xx
 	template<>
 	struct HashFunc<String, void>
 	{
-		static uint32_t GetHashCode(String const& in)
+		static uint32_t GetHashCode(String const& in) noexcept
 		{
 			return in.dataLen == 0 ? 0 : HashFunc<std::pair<char*, size_t>>::GetHashCode(std::make_pair(in.buf, in.dataLen));
 		}
@@ -282,7 +282,7 @@ namespace xx
 	template<>
 	struct HashFunc<String_p, void>
 	{
-		static uint32_t GetHashCode(String_p const& in)
+		static uint32_t GetHashCode(String_p const& in) noexcept
 		{
 			return in ? HashFunc<String>::GetHashCode(*in) : 0;
 		}
@@ -291,7 +291,7 @@ namespace xx
 	template<>
 	struct HashFunc<String*, void>
 	{
-		static uint32_t GetHashCode(String* const& in)
+		static uint32_t GetHashCode(String* const& in) noexcept
 		{
 			return in ? HashFunc<String>::GetHashCode(*in) : 0;
 		}
@@ -300,7 +300,7 @@ namespace xx
 	template<>
 	struct HashFunc<String const*, void>
 	{
-		static uint32_t GetHashCode(String const* const& in)
+		static uint32_t GetHashCode(String const* const& in) noexcept
 		{
 			return in ? HashFunc<String>::GetHashCode(*in) : 0;
 		}
@@ -309,7 +309,7 @@ namespace xx
 	template<>
 	struct HashFunc<String_r, void>
 	{
-		static uint32_t GetHashCode(String_r const& in)
+		static uint32_t GetHashCode(String_r const& in) noexcept
 		{
 			return in ? HashFunc<String const*>::GetHashCode(in.pointer) : 0;
 		}
@@ -322,7 +322,7 @@ namespace xx
 	template<>
 	struct EqualsFunc<String, void>
 	{
-		static bool EqualsTo(String const& a, String const& b)
+		static bool EqualsTo(String const& a, String const& b) noexcept
 		{
 			return a.Equals(b);
 		}
@@ -331,7 +331,7 @@ namespace xx
 	template<>
 	struct EqualsFunc<String_p, void>
 	{
-		static bool EqualsTo(String_p const& a, String_p const& b)
+		static bool EqualsTo(String_p const& a, String_p const& b) noexcept
 		{
 			if (a.pointer == b.pointer) return true;
 			if (a && b) return a->Equals(*b);
@@ -342,7 +342,7 @@ namespace xx
 	template<>
 	struct EqualsFunc<String_r, void>
 	{
-		static bool EqualsTo(String_r const& a, String_r const& b)
+		static bool EqualsTo(String_r const& a, String_r const& b) noexcept
 		{
 			if (a.pointer == b.pointer) return true;
 			if (a && b) return a->Equals(*b);
@@ -353,7 +353,7 @@ namespace xx
 	template<>
 	struct EqualsFunc<String const*, void>
 	{
-		static bool EqualsTo(String const* const& a, String const* const& b)
+		static bool EqualsTo(String const* const& a, String const* const& b) noexcept
 		{
 			if (a == b) return true;
 			if (a && b) return a->Equals(*b);
@@ -364,7 +364,7 @@ namespace xx
 	template<>
 	struct EqualsFunc<String*, void>
 	{
-		static bool EqualsTo(String* const& a, String* const& b)
+		static bool EqualsTo(String* const& a, String* const& b) noexcept
 		{
 			if (a == b) return true;
 			if (a && b) return a->Equals(*b);
