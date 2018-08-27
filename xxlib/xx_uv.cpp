@@ -96,7 +96,7 @@ xx::UvLoop::UvLoop(MemPool* const& mp)
 	sg_ptr.Cancel();
 }
 
-xx::UvLoop::~UvLoop()
+xx::UvLoop::~UvLoop() noexcept
 {
 	assert(ptr);
 	udpListeners.ForEachRevert([mp = this->mempool](auto& o) { mp->Release(o); });
@@ -240,7 +240,7 @@ xx::UvTcpListener::UvTcpListener(UvLoop& loop)
 	sg_ptr.Cancel();
 }
 
-xx::UvTcpListener::~UvTcpListener()
+xx::UvTcpListener::~UvTcpListener() noexcept
 {
 	assert(ptr);
 
@@ -298,7 +298,7 @@ xx::UvTimeouterBase::UvTimeouterBase(MemPool* const& mp)
 {
 }
 
-xx::UvTimeouterBase::~UvTimeouterBase()
+xx::UvTimeouterBase::~UvTimeouterBase() noexcept
 {
 	UnbindTimeoutManager();
 	OnTimeout = nullptr;
@@ -689,7 +689,7 @@ xx::UvTcpPeer::UvTcpPeer(UvTcpListener & listener)
 	sg_ptr.Cancel();
 }
 
-xx::UvTcpPeer::~UvTcpPeer()
+xx::UvTcpPeer::~UvTcpPeer() noexcept
 {
 	assert(addrPtr);
 	RpcTraceCallback();
@@ -741,7 +741,7 @@ xx::UvTcpClient::UvTcpClient(UvLoop& loop)
 	loop.tcpClients.Add(this);
 }
 
-xx::UvTcpClient::~UvTcpClient()
+xx::UvTcpClient::~UvTcpClient() noexcept
 {
 	Disconnect();
 	if (OnDispose)
@@ -877,7 +877,7 @@ xx::UvTimer::UvTimer(UvLoop& loop, uint64_t const& timeoutMS, uint64_t const& re
 	sg_ptr.Cancel();
 }
 
-xx::UvTimer::~UvTimer()
+xx::UvTimer::~UvTimer() noexcept
 {
 	assert(ptr);
 	Close((uv_handle_t*)ptr);
@@ -930,7 +930,7 @@ xx::UvTimeoutManager::UvTimeoutManager(UvLoop& loop, uint64_t const& intervalMS,
 	this->defaultInterval = defaultInterval;
 }
 
-xx::UvTimeoutManager::~UvTimeoutManager()
+xx::UvTimeoutManager::~UvTimeoutManager() noexcept
 {
 	mempool->Release(timer); timer = nullptr;
 }
@@ -1039,7 +1039,7 @@ xx::UvAsync::UvAsync(UvLoop& loop)
 	sg_ptr.Cancel();
 }
 
-xx::UvAsync::~UvAsync()
+xx::UvAsync::~UvAsync() noexcept
 {
 	assert(ptr);
 	if (OnDispose)
@@ -1109,7 +1109,7 @@ xx::UvRpcManager::UvRpcManager(UvLoop& loop, uint64_t const& intervalMS, int con
 	timer = loop.CreateTimer(0, intervalMS, [this] { Process(); });
 }
 
-xx::UvRpcManager::~UvRpcManager()
+xx::UvRpcManager::~UvRpcManager() noexcept
 {
 	if (timer)
 	{
@@ -1178,7 +1178,7 @@ xx::UvContextBase::UvContextBase(MemPool* const& mp)
 {
 }
 
-xx::UvContextBase::~UvContextBase()
+xx::UvContextBase::~UvContextBase() noexcept
 {
 	KickPeer();
 }
@@ -1271,7 +1271,7 @@ xx::UvUdpListener::UvUdpListener(UvLoop& loop)
 	sg_ptr.Cancel();
 }
 
-xx::UvUdpListener::~UvUdpListener()
+xx::UvUdpListener::~UvUdpListener() noexcept
 {
 	assert(ptr);
 	if (OnDispose)
@@ -1430,7 +1430,7 @@ xx::UvUdpPeer::UvUdpPeer(UvUdpListener& listener
 	sg_ptr.Cancel();
 }
 
-xx::UvUdpPeer::~UvUdpPeer()
+xx::UvUdpPeer::~UvUdpPeer() noexcept
 {
 	RpcTraceCallback();
 	if (OnDispose)
@@ -1539,7 +1539,7 @@ xx::UvUdpClient::UvUdpClient(UvLoop& loop)
 	loop.udpClients.Add(this);
 }
 
-xx::UvUdpClient::~UvUdpClient()
+xx::UvUdpClient::~UvUdpClient() noexcept
 {
 	RpcTraceCallback();
 	if (OnDispose)
@@ -1789,7 +1789,7 @@ xx::UvHttpPeer::UvHttpPeer(UvTcpListener& listener)
 	parser_settings->on_chunk_complete = [](http_parser* parser) { return 0; };
 }
 
-xx::UvHttpPeer::~UvHttpPeer()
+xx::UvHttpPeer::~UvHttpPeer() noexcept
 {
 	mempool->Free(parser_settings);
 	mempool->Free(parser);
@@ -2002,7 +2002,7 @@ xx::UvHttpClient::UvHttpClient(UvLoop& loop)
 	parser_settings->on_chunk_complete = [](http_parser* parser) { return 0; };
 }
 
-xx::UvHttpClient::~UvHttpClient()
+xx::UvHttpClient::~UvHttpClient() noexcept
 {
 	mempool->Free(parser_settings);
 	mempool->Free(parser);

@@ -255,12 +255,10 @@ namespace xx
 		Ptr& operator=(Ptr&& o) noexcept;
 
 
-		//// 提供到基类 Ptr 的隐式转换	// todo: 已知 android 下编译报错说 List Add 混淆
+		// 提供到基类 Ptr 的隐式转换
 		template<typename O>
 		operator Ptr<O>&() const noexcept;
 
-		//template<typename O>
-		//operator Ptr<O> const&() const noexcept;
 
 		// 提供到基类 * 的隐式转换
 		template<typename O>

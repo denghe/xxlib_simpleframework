@@ -254,7 +254,7 @@ namespace xx
 
 
 
-	inline String::String(BBuffer* const& bb) noexcept
+	inline String::String(BBuffer* const& bb)
 		: BaseType(bb)
 	{}
 

@@ -226,7 +226,7 @@ namespace xx
 
 
 
-	inline BBuffer::BBuffer(BBuffer* const& bb) noexcept
+	inline BBuffer::BBuffer(BBuffer* const& bb)
 		: BaseType(bb)
 	{}
 

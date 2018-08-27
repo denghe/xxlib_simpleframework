@@ -59,7 +59,7 @@ namespace xx
 		uint32_t kcpInterval = 0;
 
 		explicit UvLoop(MemPool* const& mp);
-		~UvLoop();
+		~UvLoop() noexcept;
 
 		int InitTimeoutManager(uint64_t const& intervalMS = 1000, int const& wheelLen = 6, int const& defaultInterval = 5) noexcept;
 		int InitRpcManager(uint64_t const& rpcIntervalMS = 1000, int const& rpcDefaultInterval = 5) noexcept;
@@ -99,7 +99,7 @@ namespace xx
 		List<UvTcpPeer*> peers;
 
 		UvTcpListener(UvLoop& loop);
-		~UvTcpListener();
+		~UvTcpListener() noexcept;
 
 		static void OnAcceptCB(void* server, int status) noexcept;
 		int Bind(char const* const& ipv4, int const& port) noexcept;
@@ -110,7 +110,7 @@ namespace xx
 	{
 	public:
 		UvTimeouterBase(MemPool* const& mp);
-		~UvTimeouterBase();
+		~UvTimeouterBase() noexcept;
 		UvTimeoutManager* timeoutManager = nullptr;
 		UvTimeouterBase* timeouterPrev = nullptr;
 		UvTimeouterBase* timeouterNext = nullptr;
@@ -248,7 +248,7 @@ namespace xx
 	public:
 		UvTcpListener & listener;
 		UvTcpPeer(UvTcpListener& listener);
-		~UvTcpPeer();	// Release 取代 Dispose
+		~UvTcpPeer() noexcept;
 		void DisconnectImpl() noexcept override;
 		bool Disconnected() noexcept override;
 		std::array<char, 64> ipBuf;
@@ -263,7 +263,7 @@ namespace xx
 
 		UvTcpStates state = UvTcpStates::Disconnected;
 		UvTcpClient(UvLoop& loop);
-		~UvTcpClient();	// Release 取代 Dispose
+		~UvTcpClient() noexcept;
 		bool Alive() const noexcept;	// state == UvTcpStates::Connected, 并不能取代外部野指针检测
 		int SetAddress(char const* const& ipv4, int const& port) noexcept;
 		static void OnConnectCBImpl(void* req, int status) noexcept;
@@ -284,7 +284,7 @@ namespace xx
 		size_t index_at_container = -1;
 		void* ptr = nullptr;
 		UvTimer(UvLoop& loop, uint64_t const& timeoutMS, uint64_t const& repeatIntervalMS, std::function<void()>&& OnFire = nullptr);
-		~UvTimer();
+		~UvTimer() noexcept;
 		static void OnTimerCBImpl(void* handle) noexcept;
 		void SetRepeat(uint64_t const& repeatIntervalMS) noexcept;
 		int Again() noexcept;
@@ -299,7 +299,7 @@ namespace xx
 		int cursor = 0;
 		int defaultInterval;
 		UvTimeoutManager(UvLoop& loop, uint64_t const& intervalMS, int const& wheelLen, int const& defaultInterval);
-		~UvTimeoutManager();
+		~UvTimeoutManager() noexcept;
 		void Process() noexcept;
 		void Clear() noexcept;
 		void Add(UvTimeouterBase* const& t, int interval = 0) noexcept;
@@ -319,7 +319,7 @@ namespace xx
 		Queue<std::function<void()>> actions;
 		void* ptr = nullptr;
 		UvAsync(UvLoop& loop);
-		~UvAsync();
+		~UvAsync() noexcept;
 		static void OnAsyncCBImpl(void* handle) noexcept;
 		int Dispatch(std::function<void()>&& a) noexcept;
 		void OnFireImpl() noexcept;
@@ -335,7 +335,7 @@ namespace xx
 		int defaultInterval = 0;
 		int ticks = 0;
 		UvRpcManager(UvLoop& loop, uint64_t const& intervalMS, int const& defaultInterval);
-		~UvRpcManager();
+		~UvRpcManager() noexcept;
 		void Process() noexcept;
 		uint32_t Register(std::function<void(uint32_t, BBuffer*)>&& cb, int interval = 0) noexcept;
 		void Unregister(uint32_t const& serial) noexcept;
@@ -350,7 +350,7 @@ namespace xx
 		UvTcpUdpBase * peer = nullptr;
 
 		UvContextBase(MemPool* const& mp);
-		~UvContextBase();
+		~UvContextBase() noexcept;
 		bool PeerAlive() noexcept;
 
 		// 重要!! 如果该函数执行点位于 peer 之 OnXxxxx 中, 则在 Bind 成功之时, 先前的 lambda 上下文将被 "顶掉", 所有捕获将变"野", 故该函数只能于此类函数退出前执行
@@ -372,7 +372,7 @@ namespace xx
 		Dict<Guid, UvUdpPeer*> peers;
 
 		UvUdpListener(UvLoop& loop);
-		~UvUdpListener();
+		~UvUdpListener() noexcept;
 		static void OnRecvCBImpl(void* udp, ptrdiff_t nread, void* buf_t, void* addr, uint32_t flags) noexcept;
 		void OnReceiveImpl(char const* const& bufPtr, int const& len, void* const& addr) noexcept;
 
@@ -402,7 +402,7 @@ namespace xx
 			, Guid const& g = Guid()
 			, int const& sndwnd = 128, int const& rcvwnd = 128
 			, int const& nodelay = 1/*, int const& interval = 10*/, int const& resend = 2, int const& nc = 1, int const& minrto = 100);
-		~UvUdpPeer();
+		~UvUdpPeer() noexcept;
 
 		static int OutputImpl(char const* buf, int len, void* kcp) noexcept;
 		void Update(uint32_t const& current) noexcept;
@@ -421,7 +421,7 @@ namespace xx
 	public:
 		void* kcpPtr = nullptr;
 		UvUdpClient(UvLoop& loop);
-		~UvUdpClient();
+		~UvUdpClient() noexcept;
 
 		int Connect(Guid const& guid
 			, int const& sndwnd = 128, int const& rcvwnd = 128
@@ -495,7 +495,7 @@ namespace xx
 		String s;
 
 		UvHttpPeer(UvTcpListener& listener);
-		~UvHttpPeer();
+		~UvHttpPeer() noexcept;
 
 		virtual void ReceiveImpl(char const* const& bufPtr, int const& len) noexcept override;
 
@@ -558,7 +558,7 @@ namespace xx
 		String_p rawData;
 
 		UvHttpClient(UvLoop& loop);
-		~UvHttpClient();
+		~UvHttpClient() noexcept;
 
 		virtual void ReceiveImpl(char const* const& bufPtr, int const& len) noexcept override;
 

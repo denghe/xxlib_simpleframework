@@ -439,7 +439,6 @@ namespace xx
 		return *this;
 	}
 
-
 	template<typename T>
 	Ptr<T>& Ptr<T>::operator=(Ptr<T> const& o) noexcept
 	{
@@ -452,9 +451,6 @@ namespace xx
 		return operator=<T>(std::move(o));
 	}
 
-
-
-
 	template<typename T>
 	template<typename O>
 	Ptr<T>::operator Ptr<O>&() const noexcept
@@ -462,14 +458,6 @@ namespace xx
 		static_assert(std::is_base_of_v<O, T>);
 		return *(Ptr<O>*)this;
 	}
-	//template<typename T>
-	//template<typename O>
-	//Ptr<T>::operator Ptr<O> const&() const noexcept
-	//{
-	//	static_assert(std::is_base_of_v<O, T>);
-	//	return *(Ptr<O> const*)this;
-	//}
-
 
 	template<typename T>
 	template<typename O>

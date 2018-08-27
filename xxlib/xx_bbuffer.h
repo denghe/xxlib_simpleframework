@@ -96,7 +96,7 @@ namespace xx
 
 		// Object 接口实现
 
-		BBuffer(BBuffer* const& bb) noexcept;
+		BBuffer(BBuffer* const& bb);
 		void ToBBuffer(BBuffer& bb) const noexcept override;
 		int FromBBuffer(BBuffer& bb) noexcept override;
 

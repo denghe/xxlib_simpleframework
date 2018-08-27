@@ -98,7 +98,7 @@ namespace xx
 	public:
 		// 实现一些 Object 的接口
 
-		String(BBuffer* const& bb) noexcept;
+		String(BBuffer* const& bb);
 		// WriteTo, ReadFrom 直接使用基类的
 
 		void ToString(String& s) const noexcept override;
