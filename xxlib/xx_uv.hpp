@@ -40,13 +40,14 @@
 		bbSend.Write(serial);											// 在包前写入流水号
 		bbSend.WriteRoot(pkg);
 		auto dataLen = bbSend.dataLen - 5;
+		auto r = 0;
 		if (dataLen <= std::numeric_limits<uint16_t>::max())
 		{
 			auto p = bbSend.buf + 2;
 			p[0] = 0b00000001;											// 这里标记包头为 Request 类型
 			p[1] = (uint8_t)dataLen;
 			p[2] = (uint8_t)(dataLen >> 8);
-			SendBytes(p, (int)(dataLen + 3));
+			r = SendBytes(p, (int)(dataLen + 3));
 		}
 		else
 		{
@@ -56,7 +57,12 @@
 			p[2] = (uint8_t)(dataLen >> 8);
 			p[3] = (uint8_t)(dataLen >> 16);
 			p[4] = (uint8_t)(dataLen >> 24);
-			SendBytes(p, (int)(dataLen + 5));
+			r = SendBytes(p, (int)(dataLen + 5));
+		}
+		if (r)	// 发送失败立即发起超时回调
+		{
+			cb(serial, nullptr);
+			return 0;
 		}
 		return serial;													// 返回流水号
 	}
@@ -131,13 +137,14 @@
 		bbSend.Write(serial);											// 在包前写入流水号
 		bbSend.WriteRoot(pkg);
 		auto dataLen = bbSend.dataLen - 5;
+		auto r = 0;
 		if (dataLen <= std::numeric_limits<uint16_t>::max())
 		{
 			auto p = bbSend.buf + 2;
 			p[0] = (uint8_t)(0b00001001 | ((serviceAddrLen - 1) << 4));	// 这里标记包头为 addrLen + Routing + Request 类型
 			p[1] = (uint8_t)dataLen;
 			p[2] = (uint8_t)(dataLen >> 8);
-			SendBytes(p, (int)(dataLen + 3));
+			r = SendBytes(p, (int)(dataLen + 3));
 		}
 		else
 		{
@@ -147,7 +154,12 @@
 			p[2] = (uint8_t)(dataLen >> 8);
 			p[3] = (uint8_t)(dataLen >> 16);
 			p[4] = (uint8_t)(dataLen >> 24);
-			SendBytes(p, (int)(dataLen + 5));
+			r = SendBytes(p, (int)(dataLen + 5));
+		}
+		if (r)	// 发送失败立即发起超时回调
+		{
+			cb(serial, nullptr);
+			return 0;
 		}
 		return serial;													// 返回流水号
 	}
@@ -182,7 +194,6 @@
 		}
 	}
 
-
 	template<typename T>
 	inline void UvTcpUdpBase::SendRequestEx(T const& pkg, std::function<void(uint32_t, Object_p&)>&& cb, int const& interval) noexcept
 	{
@@ -200,11 +211,14 @@
 			cb(ser, inPkg);	// call 原始 lambda
 		}, interval);
 
-		if (!rpcSerials)
+		if (serial)
 		{
-			rpcSerials.MPCreate(mempool);
+			if (!rpcSerials)
+			{
+				rpcSerials.MPCreate(mempool);
+			}
+			rpcSerials->Add(serial);
 		}
-		rpcSerials->Add(serial);
 	}
 
 	template<typename T>

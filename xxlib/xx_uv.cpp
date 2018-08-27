@@ -20,7 +20,7 @@ static void Free(xx::MemPool* const& mp, void* const& p) noexcept
 static void Close(uv_handle_t* const& p) noexcept
 {
 	if (uv_is_closing(p)) return;
-	uv_close(p, [](uv_handle_t* h)
+	uv_close(p, [](uv_handle_t* h) noexcept
 	{
 		Free((xx::MemPool*)h->loop->data, h);
 	});
@@ -46,7 +46,7 @@ static int TcpWrite(void* stream, char* inBuf, uint32_t len) noexcept
 	auto buf = (char*)mp->Alloc(len);
 	memcpy(buf, inBuf, len);
 	req->buf = uv_buf_init(buf, (uint32_t)len);
-	return uv_write((uv_write_t*)req, (uv_stream_t*)stream, &req->buf, 1, [](uv_write_t *req, int status)
+	return uv_write((uv_write_t*)req, (uv_stream_t*)stream, &req->buf, 1, [](uv_write_t *req, int status) noexcept
 	{
 		//if (status) fprintf(stderr, "Write error: %s\n", uv_strerror(status));
 		auto *wr = (write_req_t*)req;
@@ -87,7 +87,7 @@ xx::UvLoop::UvLoop(MemPool* const& mp)
 {
 	ptr = Alloc(mp, sizeof(uv_loop_t), this);
 	if (!ptr) throw - 1;
-	xx::ScopeGuard sg_ptr([&] { Free(mempool, ptr); ptr = nullptr; });
+	xx::ScopeGuard sg_ptr([&]() noexcept { Free(mempool, ptr); ptr = nullptr; });
 
 	if (int r = uv_loop_init((uv_loop_t*)ptr)) throw r;
 
@@ -99,15 +99,15 @@ xx::UvLoop::UvLoop(MemPool* const& mp)
 xx::UvLoop::~UvLoop() noexcept
 {
 	assert(ptr);
-	udpListeners.ForEachRevert([mp = this->mempool](auto& o) { mp->Release(o); });
-	udpClients.ForEachRevert([&mp = this->mempool](auto& o) { mp->Release(o); });
-	tcpListeners.ForEachRevert([&mp = this->mempool](auto& o) { mp->Release(o); });
-	tcpClients.ForEachRevert([&mp = this->mempool](auto& o) { mp->Release(o); });
+	udpListeners.ForEachRevert([mp = this->mempool](auto& o) noexcept { mp->Release(o); });
+	udpClients.ForEachRevert([&mp = this->mempool](auto& o) noexcept { mp->Release(o); });
+	tcpListeners.ForEachRevert([&mp = this->mempool](auto& o) noexcept { mp->Release(o); });
+	tcpClients.ForEachRevert([&mp = this->mempool](auto& o) noexcept { mp->Release(o); });
 	mempool->Release(udpTimer); udpTimer = nullptr;
 	mempool->Release(timeoutManager); timeoutManager = nullptr;
 	mempool->Release(rpcMgr);  rpcMgr = nullptr;
-	timers.ForEachRevert([&mp = this->mempool](auto& o) { mp->Release(o); });
-	asyncs.ForEachRevert([&mp = this->mempool](auto& o) { mp->Release(o); });
+	timers.ForEachRevert([&mp = this->mempool](auto& o) noexcept { mp->Release(o); });
+	asyncs.ForEachRevert([&mp = this->mempool](auto& o) noexcept { mp->Release(o); });
 
 	if (uv_loop_close((uv_loop_t*)ptr))
 	{
@@ -134,7 +134,7 @@ int xx::UvLoop::InitKcpFlushInterval(uint32_t const& interval) noexcept
 {
 	assert(!udpTimer);
 	kcpInterval = interval;
-	return mempool->CreateTo(udpTimer, *this, 0, interval, [this]
+	return mempool->CreateTo(udpTimer, *this, 0, interval, [this]() noexcept
 	{
 		auto vn = udpTimer->memHeader().versionNumber;
 		udpTicks += kcpInterval;
@@ -225,10 +225,10 @@ xx::UvTcpListener::UvTcpListener(UvLoop& loop)
 {
 	ptr = Alloc(mempool, sizeof(uv_tcp_t), this);
 	if (!ptr) throw - 1;
-	xx::ScopeGuard sg_ptr([&] { Free(mempool, ptr); ptr = nullptr; });
+	xx::ScopeGuard sg_ptr([&]() noexcept { Free(mempool, ptr); ptr = nullptr; });
 
 	if (int r = uv_tcp_init((uv_loop_t*)loop.ptr, (uv_tcp_t*)ptr)) throw r;
-	xx::ScopeGuard sg_ptr_init([&] { Close((uv_handle_t*)ptr); });
+	xx::ScopeGuard sg_ptr_init([&]() noexcept { Close((uv_handle_t*)ptr); });
 
 	addrPtr = Alloc(mempool, sizeof(sockaddr_in));
 	if (!addrPtr) throw - 2;
@@ -244,7 +244,7 @@ xx::UvTcpListener::~UvTcpListener() noexcept
 {
 	assert(ptr);
 
-	peers.ForEachRevert([mp = mempool](auto& o) { mp->Release(o); });
+	peers.ForEachRevert([mp = mempool](auto& o) noexcept { mp->Release(o); });
 	Close((uv_handle_t*)ptr);
 	ptr = nullptr;
 	Free(mempool, addrPtr);
@@ -608,7 +608,7 @@ void xx::UvTcpUdpBase::DelayRelease(int const& interval) noexcept
 	{
 		BindTimeoutManager();
 	}
-	OnTimeout = [this] { Release(); };
+	OnTimeout = [this]() noexcept { Release(); };
 	TimeoutReset(interval);
 }
 
@@ -671,10 +671,10 @@ xx::UvTcpPeer::UvTcpPeer(UvTcpListener & listener)
 
 	ptr = Alloc(loop.mempool, sizeof(uv_tcp_t), this);
 	if (!ptr) throw - 1;
-	xx::ScopeGuard sg_ptr([&] { Free(mempool, ptr); ptr = nullptr; });
+	xx::ScopeGuard sg_ptr([&]() noexcept { Free(mempool, ptr); ptr = nullptr; });
 
 	if (int r = uv_tcp_init((uv_loop_t*)loop.ptr, (uv_tcp_t*)ptr)) throw r;
-	xx::ScopeGuard sg_ptr_init([&] { Close((uv_handle_t*)ptr); });
+	xx::ScopeGuard sg_ptr_init([&]() noexcept { Close((uv_handle_t*)ptr); });
 
 	if (int r = uv_accept((uv_stream_t*)listener.ptr, (uv_stream_t*)ptr)) throw r;
 	if (int r = uv_read_start((uv_stream_t*)ptr, AllocCB, (uv_read_cb)OnReadCBImpl)) throw r;
@@ -794,13 +794,13 @@ int xx::UvTcpClient::Connect() noexcept
 
 	ptr = Alloc(loop.mempool, sizeof(uv_tcp_t), this);
 	if (!ptr) return -2;
-	xx::ScopeGuard sg_ptr([&] { Free(mempool, ptr); ptr = nullptr; });
+	xx::ScopeGuard sg_ptr([&]() noexcept { Free(mempool, ptr); ptr = nullptr; });
 
 	if (int r = uv_tcp_init((uv_loop_t*)loop.ptr, (uv_tcp_t*)ptr)) return r;
-	xx::ScopeGuard sg_ptr_init([&] { Close((uv_handle_t*)ptr); });
+	xx::ScopeGuard sg_ptr_init([&]() noexcept { Close((uv_handle_t*)ptr); });
 
 	auto req = (uv_connect_t*)Alloc(loop.mempool, sizeof(uv_connect_t), this);
-	xx::ScopeGuard sg_req([&] { Free(mempool, req); req = nullptr; });
+	xx::ScopeGuard sg_req([&]() noexcept { Free(mempool, req); req = nullptr; });
 
 	if (int r = uv_tcp_connect((uv_connect_t*)req, (uv_tcp_t*)ptr, (sockaddr*)addrPtr, (uv_connect_cb)OnConnectCBImpl)) return r;
 
@@ -863,10 +863,10 @@ xx::UvTimer::UvTimer(UvLoop& loop, uint64_t const& timeoutMS, uint64_t const& re
 {
 	ptr = Alloc(loop.mempool, sizeof(uv_timer_t), this);
 	if (!ptr) throw - 1;
-	xx::ScopeGuard sg_ptr([&] { Free(mempool, ptr); ptr = nullptr; });
+	xx::ScopeGuard sg_ptr([&]() noexcept { Free(mempool, ptr); ptr = nullptr; });
 
 	if (int r = uv_timer_init((uv_loop_t*)loop.ptr, (uv_timer_t*)ptr)) throw r;
-	xx::ScopeGuard sg_ptr_init([&] { Close((uv_handle_t*)ptr); });
+	xx::ScopeGuard sg_ptr_init([&]() noexcept { Close((uv_handle_t*)ptr); });
 
 	if (int r = uv_timer_start((uv_timer_t*)ptr, (uv_timer_cb)OnTimerCBImpl, timeoutMS, repeatIntervalMS)) throw r;
 
@@ -925,7 +925,7 @@ xx::UvTimeoutManager::UvTimeoutManager(UvLoop& loop, uint64_t const& intervalMS,
 	: Object(loop.mempool)
 	, timeouterss(loop.mempool)
 {
-	mempool->CreateTo(timer, loop, 0, intervalMS, [this] { Process(); });
+	mempool->CreateTo(timer, loop, 0, intervalMS, [this]() noexcept { Process(); });
 	timeouterss.Resize(wheelLen);
 	this->defaultInterval = defaultInterval;
 }
@@ -1025,10 +1025,10 @@ xx::UvAsync::UvAsync(UvLoop& loop)
 {
 	ptr = Alloc(loop.mempool, sizeof(uv_async_t), this);
 	if (!ptr) throw - 1;
-	xx::ScopeGuard sg_ptr([&] { Free(mempool, ptr); ptr = nullptr; });
+	xx::ScopeGuard sg_ptr([&]() noexcept { Free(mempool, ptr); ptr = nullptr; });
 
 	if (int r = uv_async_init((uv_loop_t*)loop.ptr, (uv_async_t*)ptr, (uv_async_cb)OnAsyncCBImpl)) throw r;
-	xx::ScopeGuard sg_ptr_init([&] { Close((uv_handle_t*)ptr); });
+	xx::ScopeGuard sg_ptr_init([&]() noexcept { Close((uv_handle_t*)ptr); });
 
 	OnFire = std::bind(&UvAsync::OnFireImpl, this);
 
@@ -1106,7 +1106,7 @@ xx::UvRpcManager::UvRpcManager(UvLoop& loop, uint64_t const& intervalMS, int con
 	, ticks(0)
 {
 	if (defaultInterval <= 0) throw - 1;
-	timer = loop.CreateTimer(0, intervalMS, [this] { Process(); });
+	timer = loop.CreateTimer(0, intervalMS, [this]() noexcept { Process(); });
 }
 
 xx::UvRpcManager::~UvRpcManager() noexcept
@@ -1156,7 +1156,7 @@ void xx::UvRpcManager::Callback(uint32_t const& serial, BBuffer* const& bb) noex
 	if (idx == -1) return;
 	auto a = std::move(mapping.ValueAt(idx));
 	mapping.RemoveAt(idx);
-	if (a) a(serial, bb);
+	a(serial, bb);
 }
 
 size_t xx::UvRpcManager::Count() noexcept
@@ -1256,10 +1256,10 @@ xx::UvUdpListener::UvUdpListener(UvLoop& loop)
 {
 	ptr = Alloc(mempool, sizeof(uv_udp_t), this);
 	if (!ptr) throw - 1;
-	xx::ScopeGuard sg_ptr([&] { Free(mempool, ptr); ptr = nullptr; });
+	xx::ScopeGuard sg_ptr([&]() noexcept { Free(mempool, ptr); ptr = nullptr; });
 
 	if (int r = uv_udp_init((uv_loop_t*)loop.ptr, (uv_udp_t*)ptr)) throw r;
-	xx::ScopeGuard sg_ptr_init([&] { Close((uv_handle_t*)ptr); });
+	xx::ScopeGuard sg_ptr_init([&]() noexcept { Close((uv_handle_t*)ptr); });
 
 	addrPtr = Alloc(mempool, sizeof(sockaddr_in));
 	if (!addrPtr) throw - 2;
@@ -1413,7 +1413,7 @@ xx::UvUdpPeer::UvUdpPeer(UvUdpListener& listener
 
 	ptr = ikcp_create(&g, this, mempool);
 	if (!ptr) throw - 2;
-	xx::ScopeGuard sg_ptr([&] { ikcp_release((ikcpcb*)ptr); ptr = nullptr; });
+	xx::ScopeGuard sg_ptr([&]() noexcept { ikcp_release((ikcpcb*)ptr); ptr = nullptr; });
 
 	int r = 0;
 	if ((r = ikcp_wndsize((ikcpcb*)ptr, sndwnd, rcvwnd))
@@ -1460,7 +1460,7 @@ int xx::UvUdpPeer::OutputImpl(char const* inBuf, int len, void* kcpPtr) noexcept
 	auto buf = (char*)mp->Alloc(len);
 	memcpy(buf, inBuf, len);
 	req->buf = uv_buf_init(buf, (uint32_t)len);
-	return uv_udp_send((uv_udp_send_t*)req, (uv_udp_t*)peer->listener.ptr, &req->buf, 1, (sockaddr*)peer->addrPtr, [](uv_udp_send_t* req, int status)
+	return uv_udp_send((uv_udp_send_t*)req, (uv_udp_t*)peer->listener.ptr, &req->buf, 1, (sockaddr*)peer->addrPtr, [](uv_udp_send_t* req, int status) noexcept
 	{
 		//if (status) fprintf(stderr, "Write error: %s\n", uv_strerror(status));
 		auto *wr = (uv_udp_send_t_ex*)req;
@@ -1561,18 +1561,18 @@ int xx::UvUdpClient::Connect(xx::Guid const& g
 
 	ptr = Alloc(mempool, sizeof(uv_udp_t), this);
 	if (!ptr) return -3;
-	xx::ScopeGuard sg_ptr([&] { Free(mempool, ptr); ptr = nullptr; });
+	xx::ScopeGuard sg_ptr([&]() noexcept { Free(mempool, ptr); ptr = nullptr; });
 
 	int r = 0;
 	if ((r = uv_udp_init((uv_loop_t*)loop.ptr, (uv_udp_t*)ptr))) return r;
-	xx::ScopeGuard sg_ptr_init([&] { Close((uv_handle_t*)ptr); });
+	xx::ScopeGuard sg_ptr_init([&]() noexcept { Close((uv_handle_t*)ptr); });
 
 	if ((r = uv_udp_recv_start((uv_udp_t*)ptr, AllocCB, (uv_udp_recv_cb)OnRecvCBImpl))) return r;
 
 	this->guid = g;
 	kcpPtr = ikcp_create(&g, this, mempool);
 	if (!kcpPtr) return -4;
-	xx::ScopeGuard sg_kcpPtr([&] { ikcp_release((ikcpcb*)kcpPtr); kcpPtr = nullptr; });
+	xx::ScopeGuard sg_kcpPtr([&]() noexcept { ikcp_release((ikcpcb*)kcpPtr); kcpPtr = nullptr; });
 
 
 	if ((r = ikcp_wndsize((ikcpcb*)kcpPtr, sndwnd, rcvwnd))
@@ -1626,7 +1626,7 @@ int xx::UvUdpClient::OutputImpl(char const* inBuf, int len, void* kcpPtr) noexce
 	auto buf = (char*)mp->Alloc(len);
 	memcpy(buf, inBuf, len);
 	req->buf = uv_buf_init(buf, (uint32_t)len);
-	return uv_udp_send((uv_udp_send_t*)req, (uv_udp_t*)client->ptr, &req->buf, 1, (sockaddr*)client->addrPtr, [](uv_udp_send_t* req, int status)
+	return uv_udp_send((uv_udp_send_t*)req, (uv_udp_t*)client->ptr, &req->buf, 1, (sockaddr*)client->addrPtr, [](uv_udp_send_t* req, int status) noexcept
 	{
 		//if (status) fprintf(stderr, "Write error: %s\n", uv_strerror(status));
 		auto *wr = (uv_udp_send_t_ex*)req;
@@ -1706,7 +1706,7 @@ xx::UvHttpPeer::UvHttpPeer(UvTcpListener& listener)
 	, lastKey(listener.mempool)
 	, s(listener.mempool)
 {
-	OnReceiveHttp = [] {};
+	OnReceiveHttp = []() noexcept {};
 
 	parser = (http_parser*)mempool->Alloc(sizeof(http_parser));
 	parser_settings = (http_parser_settings*)mempool->Alloc(sizeof(http_parser_settings));
@@ -1714,7 +1714,7 @@ xx::UvHttpPeer::UvHttpPeer(UvTcpListener& listener)
 	parser->data = this;
 	http_parser_init(parser, HTTP_REQUEST);
 
-	parser_settings->on_message_begin = [](http_parser* parser)
+	parser_settings->on_message_begin = [](http_parser* parser) noexcept
 	{
 		auto self = (UvHttpPeer*)parser->data;
 		self->method.Clear();
@@ -1729,17 +1729,17 @@ xx::UvHttpPeer::UvHttpPeer(UvTcpListener& listener)
 		self->s.Clear();
 		return 0;
 	};
-	parser_settings->on_url = [](http_parser* parser, const char *buf, size_t length)
+	parser_settings->on_url = [](http_parser* parser, const char *buf, size_t length) noexcept
 	{
 		((UvHttpPeer*)parser->data)->url.AddRange(buf, length);
 		return 0;
 	};
-	parser_settings->on_status = [](http_parser* parser, const char *buf, size_t length)
+	parser_settings->on_status = [](http_parser* parser, const char *buf, size_t length) noexcept
 	{
 		((UvHttpPeer*)parser->data)->status.AddRange(buf, length);
 		return 0;
 	};
-	parser_settings->on_header_field = [](http_parser* parser, const char *buf, size_t length)
+	parser_settings->on_header_field = [](http_parser* parser, const char *buf, size_t length) noexcept
 	{
 		auto self = (UvHttpPeer*)parser->data;
 		if (self->lastValue)
@@ -1749,7 +1749,7 @@ xx::UvHttpPeer::UvHttpPeer(UvTcpListener& listener)
 		self->lastKey.AddRange(buf, length);
 		return 0;
 	};
-	parser_settings->on_header_value = [](http_parser* parser, const char *buf, size_t length)
+	parser_settings->on_header_value = [](http_parser* parser, const char *buf, size_t length) noexcept
 	{
 		auto self = (UvHttpPeer*)parser->data;
 		if (!self->lastValue)
@@ -1760,7 +1760,7 @@ xx::UvHttpPeer::UvHttpPeer(UvTcpListener& listener)
 		self->lastValue->AddRange(buf, length);
 		return 0;
 	};
-	parser_settings->on_headers_complete = [](http_parser* parser)
+	parser_settings->on_headers_complete = [](http_parser* parser) noexcept
 	{
 		auto self = (UvHttpPeer*)parser->data;
 		self->lastValue = nullptr;
@@ -1768,12 +1768,12 @@ xx::UvHttpPeer::UvHttpPeer(UvTcpListener& listener)
 		self->keepAlive = http_should_keep_alive(parser);
 		return 0;
 	};
-	parser_settings->on_body = [](http_parser* parser, const char *buf, size_t length)
+	parser_settings->on_body = [](http_parser* parser, const char *buf, size_t length) noexcept
 	{
 		((UvHttpPeer*)parser->data)->body.AddRange(buf, length);
 		return 0;
 	};
-	parser_settings->on_message_complete = [](http_parser* parser)
+	parser_settings->on_message_complete = [](http_parser* parser) noexcept
 	{
 		auto self = (UvHttpPeer*)parser->data;
 		auto vn = self->memHeader().versionNumber;
@@ -1785,8 +1785,8 @@ xx::UvHttpPeer::UvHttpPeer(UvTcpListener& listener)
 		}
 		return 0;
 	};
-	parser_settings->on_chunk_header = [](http_parser* parser) { return 0; };
-	parser_settings->on_chunk_complete = [](http_parser* parser) { return 0; };
+	parser_settings->on_chunk_header = [](http_parser* parser) noexcept { return 0; };
+	parser_settings->on_chunk_complete = [](http_parser* parser) noexcept { return 0; };
 }
 
 xx::UvHttpPeer::~UvHttpPeer() noexcept
@@ -1923,7 +1923,7 @@ xx::UvHttpClient::UvHttpClient(UvLoop& loop)
 	, status(loop.mempool)
 	, lastKey(loop.mempool)
 {
-	OnReceiveHttp = [] {};
+	OnReceiveHttp = []() noexcept {};
 
 	parser = (http_parser*)mempool->Alloc(sizeof(http_parser));
 	parser_settings = (http_parser_settings*)mempool->Alloc(sizeof(http_parser_settings));
@@ -1931,7 +1931,7 @@ xx::UvHttpClient::UvHttpClient(UvLoop& loop)
 	parser->data = this;
 	http_parser_init(parser, HTTP_RESPONSE);	// 这里是 response.
 
-	parser_settings->on_message_begin = [](http_parser* parser)
+	parser_settings->on_message_begin = [](http_parser* parser) noexcept
 	{
 		auto self = (UvHttpClient*)parser->data;
 		self->headers.Clear();
@@ -1943,17 +1943,17 @@ xx::UvHttpClient::UvHttpClient(UvLoop& loop)
 		self->lastValue = nullptr;
 		return 0;
 	};
-	parser_settings->on_url = [](http_parser* parser, const char *buf, size_t length)
+	parser_settings->on_url = [](http_parser* parser, const char *buf, size_t length) noexcept
 	{
 		((UvHttpClient*)parser->data)->url.AddRange(buf, length);
 		return 0;
 	};
-	parser_settings->on_status = [](http_parser* parser, const char *buf, size_t length)
+	parser_settings->on_status = [](http_parser* parser, const char *buf, size_t length) noexcept
 	{
 		((UvHttpClient*)parser->data)->status.AddRange(buf, length);
 		return 0;
 	};
-	parser_settings->on_header_field = [](http_parser* parser, const char *buf, size_t length)
+	parser_settings->on_header_field = [](http_parser* parser, const char *buf, size_t length) noexcept
 	{
 		auto self = (UvHttpClient*)parser->data;
 		if (self->lastValue)
@@ -1963,7 +1963,7 @@ xx::UvHttpClient::UvHttpClient(UvLoop& loop)
 		self->lastKey.AddRange(buf, length);
 		return 0;
 	};
-	parser_settings->on_header_value = [](http_parser* parser, const char *buf, size_t length)
+	parser_settings->on_header_value = [](http_parser* parser, const char *buf, size_t length) noexcept
 	{
 		auto self = (UvHttpClient*)parser->data;
 		if (!self->lastValue)
@@ -1974,19 +1974,19 @@ xx::UvHttpClient::UvHttpClient(UvLoop& loop)
 		self->lastValue->AddRange(buf, length);
 		return 0;
 	};
-	parser_settings->on_headers_complete = [](http_parser* parser)
+	parser_settings->on_headers_complete = [](http_parser* parser) noexcept
 	{
 		auto self = (UvHttpClient*)parser->data;
 		self->lastValue = nullptr;
 		self->keepAlive = http_should_keep_alive(parser);
 		return 0;
 	};
-	parser_settings->on_body = [](http_parser* parser, const char *buf, size_t length)
+	parser_settings->on_body = [](http_parser* parser, const char *buf, size_t length) noexcept
 	{
 		((UvHttpClient*)parser->data)->body.AddRange(buf, length);
 		return 0;
 	};
-	parser_settings->on_message_complete = [](http_parser* parser)
+	parser_settings->on_message_complete = [](http_parser* parser) noexcept
 	{
 		auto self = (UvHttpClient*)parser->data;
 		auto vn = self->memHeader().versionNumber;
@@ -1998,8 +1998,8 @@ xx::UvHttpClient::UvHttpClient(UvLoop& loop)
 		}
 		return 0;
 	};
-	parser_settings->on_chunk_header = [](http_parser* parser) { return 0; };
-	parser_settings->on_chunk_complete = [](http_parser* parser) { return 0; };
+	parser_settings->on_chunk_header = [](http_parser* parser) noexcept { return 0; };
+	parser_settings->on_chunk_complete = [](http_parser* parser) noexcept { return 0; };
 }
 
 xx::UvHttpClient::~UvHttpClient() noexcept

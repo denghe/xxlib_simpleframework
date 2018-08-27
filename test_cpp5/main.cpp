@@ -1,36 +1,8 @@
-﻿// todo: noexcept 嵌套狂去一波( 编译器无法编译期查出问题, 会直接crash ). 内存不足先用 assert 来解决. 不抛异常
+﻿// todo: SendRequest 返回值改为返回 std::pair<int, uint>
+
+// todo: noexcept 嵌套狂去一波( 编译器无法编译期查出问题, 会直接crash ). 内存不足先用 assert 来解决. 不抛异常
 // todo: 用 sg 语法改进各种库
 // todo: xx_uv 从 c# 那边复制备注
-
-//#include <xx.h>
-//#include "../pkg/RPC_class.h"
-//
-//class A : xx::Object
-//{
-//public:
-//	A(xx::MemPool* mp)
-//		: xx::Object(mp)
-//	{
-//		throw 1;
-//	}
-//};
-//class B : public A
-//{
-//public:
-//	B(xx::MemPool* mp)
-//		: A(mp)
-//	{
-//	}
-//};
-//
-//int main()
-//{
-//	xx::MemPool mp;
-//	auto b = mp.MPCreate<B>();
-//
-//	return 0;
-//}
-//
 
 
 #include <xx_uv.h>
