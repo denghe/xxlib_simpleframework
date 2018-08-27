@@ -381,7 +381,11 @@ namespace xx
 		static inline void WriteTo(String& s, T const& in) noexcept
 		{
 			s.Reserve(s.dataLen + sizeof(T) * 3);
+#ifdef _MSC_VER
+			s.dataLen += sprintf_s(s.buf + s.dataLen, s.bufLen - s.dataLen, "%g", in);
+#else
 			s.dataLen += sprintf(s.buf + s.dataLen, "%g", in);
+#endif
 		}
 	};
 

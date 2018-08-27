@@ -81,7 +81,6 @@
     <ClInclude Include="..\xxlib\xx_list.h">
       <Filter>xxlib</Filter>
     </ClInclude>
-    <ClInclude Include="RPC_class.h" />
     <ClInclude Include="..\xxlib\xx_guid.hpp">
       <Filter>xxlib</Filter>
     </ClInclude>

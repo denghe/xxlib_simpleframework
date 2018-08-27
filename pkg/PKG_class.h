@@ -1,11 +1,11 @@
-﻿
+﻿#pragma once
 #include "xx.h"
 
 namespace PKG
 {
 	struct PkgGenMd5
 	{
-		static constexpr char const* value = "aced7e436a75c5ddd8aeab7abb07116a";
+		static constexpr char const* value = "95ec433e381c309ee7fcee42f439d390";
     };
 
 namespace CatchFish_Client
@@ -185,14 +185,17 @@ namespace CatchFish
 
         typedef MoveObject ThisType;
         typedef xx::Object BaseType;
-	    MoveObject(xx::MemPool* const& mempool);
+	    MoveObject(xx::MemPool* const& mempool) noexcept;
 	    MoveObject(xx::BBuffer *bb);
 		MoveObject(MoveObject const&) = delete;
 		MoveObject& operator=(MoveObject const&) = delete;
-        void ToString(xx::String &str) const override;
-        void ToStringCore(xx::String &str) const override;
-        void ToBBuffer(xx::BBuffer &bb) const override;
-        int FromBBuffer(xx::BBuffer &bb) override;
+        void ToString(xx::String &str) const noexcept override;
+        void ToStringCore(xx::String &str) const noexcept override;
+        void ToBBuffer(xx::BBuffer &bb) const noexcept override;
+        int FromBBuffer(xx::BBuffer &bb) noexcept override;
+        void CopyTo(MoveObject* const& o) const noexcept;
+        MoveObject* MakeCopy() const noexcept;
+        MoveObject_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
 }
@@ -207,14 +210,17 @@ namespace CatchFish_Client
 
         typedef JoinSuccess ThisType;
         typedef xx::Object BaseType;
-	    JoinSuccess(xx::MemPool* const& mempool);
+	    JoinSuccess(xx::MemPool* const& mempool) noexcept;
 	    JoinSuccess(xx::BBuffer *bb);
 		JoinSuccess(JoinSuccess const&) = delete;
 		JoinSuccess& operator=(JoinSuccess const&) = delete;
-        void ToString(xx::String &str) const override;
-        void ToStringCore(xx::String &str) const override;
-        void ToBBuffer(xx::BBuffer &bb) const override;
-        int FromBBuffer(xx::BBuffer &bb) override;
+        void ToString(xx::String &str) const noexcept override;
+        void ToStringCore(xx::String &str) const noexcept override;
+        void ToBBuffer(xx::BBuffer &bb) const noexcept override;
+        int FromBBuffer(xx::BBuffer &bb) noexcept override;
+        void CopyTo(JoinSuccess* const& o) const noexcept;
+        JoinSuccess* MakeCopy() const noexcept;
+        JoinSuccess_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
 }
@@ -229,14 +235,17 @@ namespace CatchFish::Events
 
         typedef FireEnd ThisType;
         typedef xx::Object BaseType;
-	    FireEnd(xx::MemPool* const& mempool);
+	    FireEnd(xx::MemPool* const& mempool) noexcept;
 	    FireEnd(xx::BBuffer *bb);
 		FireEnd(FireEnd const&) = delete;
 		FireEnd& operator=(FireEnd const&) = delete;
-        void ToString(xx::String &str) const override;
-        void ToStringCore(xx::String &str) const override;
-        void ToBBuffer(xx::BBuffer &bb) const override;
-        int FromBBuffer(xx::BBuffer &bb) override;
+        void ToString(xx::String &str) const noexcept override;
+        void ToStringCore(xx::String &str) const noexcept override;
+        void ToBBuffer(xx::BBuffer &bb) const noexcept override;
+        int FromBBuffer(xx::BBuffer &bb) noexcept override;
+        void CopyTo(FireEnd* const& o) const noexcept;
+        FireEnd* MakeCopy() const noexcept;
+        FireEnd_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
     // 玩家开始开火( 连发, 仅适合帧同步服务器算法 )
@@ -250,14 +259,17 @@ namespace CatchFish::Events
 
         typedef FireChangeAngle ThisType;
         typedef xx::Object BaseType;
-	    FireChangeAngle(xx::MemPool* const& mempool);
+	    FireChangeAngle(xx::MemPool* const& mempool) noexcept;
 	    FireChangeAngle(xx::BBuffer *bb);
 		FireChangeAngle(FireChangeAngle const&) = delete;
 		FireChangeAngle& operator=(FireChangeAngle const&) = delete;
-        void ToString(xx::String &str) const override;
-        void ToStringCore(xx::String &str) const override;
-        void ToBBuffer(xx::BBuffer &bb) const override;
-        int FromBBuffer(xx::BBuffer &bb) override;
+        void ToString(xx::String &str) const noexcept override;
+        void ToStringCore(xx::String &str) const noexcept override;
+        void ToBBuffer(xx::BBuffer &bb) const noexcept override;
+        int FromBBuffer(xx::BBuffer &bb) noexcept override;
+        void CopyTo(FireChangeAngle* const& o) const noexcept;
+        FireChangeAngle* MakeCopy() const noexcept;
+        FireChangeAngle_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
     // 玩家开始开火( 连发, 仅适合帧同步服务器算法 )
@@ -271,14 +283,17 @@ namespace CatchFish::Events
 
         typedef FireBegin ThisType;
         typedef xx::Object BaseType;
-	    FireBegin(xx::MemPool* const& mempool);
+	    FireBegin(xx::MemPool* const& mempool) noexcept;
 	    FireBegin(xx::BBuffer *bb);
 		FireBegin(FireBegin const&) = delete;
 		FireBegin& operator=(FireBegin const&) = delete;
-        void ToString(xx::String &str) const override;
-        void ToStringCore(xx::String &str) const override;
-        void ToBBuffer(xx::BBuffer &bb) const override;
-        int FromBBuffer(xx::BBuffer &bb) override;
+        void ToString(xx::String &str) const noexcept override;
+        void ToStringCore(xx::String &str) const noexcept override;
+        void ToBBuffer(xx::BBuffer &bb) const noexcept override;
+        int FromBBuffer(xx::BBuffer &bb) noexcept override;
+        void CopyTo(FireBegin* const& o) const noexcept;
+        FireBegin* MakeCopy() const noexcept;
+        FireBegin_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
     // 玩家开火( 单次 )
@@ -298,14 +313,17 @@ namespace CatchFish::Events
 
         typedef Fire ThisType;
         typedef xx::Object BaseType;
-	    Fire(xx::MemPool* const& mempool);
+	    Fire(xx::MemPool* const& mempool) noexcept;
 	    Fire(xx::BBuffer *bb);
 		Fire(Fire const&) = delete;
 		Fire& operator=(Fire const&) = delete;
-        void ToString(xx::String &str) const override;
-        void ToStringCore(xx::String &str) const override;
-        void ToBBuffer(xx::BBuffer &bb) const override;
-        int FromBBuffer(xx::BBuffer &bb) override;
+        void ToString(xx::String &str) const noexcept override;
+        void ToStringCore(xx::String &str) const noexcept override;
+        void ToBBuffer(xx::BBuffer &bb) const noexcept override;
+        int FromBBuffer(xx::BBuffer &bb) noexcept override;
+        void CopyTo(Fire* const& o) const noexcept;
+        Fire* MakeCopy() const noexcept;
+        Fire_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
     // 玩家进入
@@ -321,14 +339,17 @@ namespace CatchFish::Events
 
         typedef JoinPlayer ThisType;
         typedef xx::Object BaseType;
-	    JoinPlayer(xx::MemPool* const& mempool);
+	    JoinPlayer(xx::MemPool* const& mempool) noexcept;
 	    JoinPlayer(xx::BBuffer *bb);
 		JoinPlayer(JoinPlayer const&) = delete;
 		JoinPlayer& operator=(JoinPlayer const&) = delete;
-        void ToString(xx::String &str) const override;
-        void ToStringCore(xx::String &str) const override;
-        void ToBBuffer(xx::BBuffer &bb) const override;
-        int FromBBuffer(xx::BBuffer &bb) override;
+        void ToString(xx::String &str) const noexcept override;
+        void ToStringCore(xx::String &str) const noexcept override;
+        void ToBBuffer(xx::BBuffer &bb) const noexcept override;
+        int FromBBuffer(xx::BBuffer &bb) noexcept override;
+        void CopyTo(JoinPlayer* const& o) const noexcept;
+        JoinPlayer* MakeCopy() const noexcept;
+        JoinPlayer_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
     // 玩家离开( 比进入的处理优先级高 )
@@ -340,14 +361,17 @@ namespace CatchFish::Events
 
         typedef LeavePlayer ThisType;
         typedef xx::Object BaseType;
-	    LeavePlayer(xx::MemPool* const& mempool);
+	    LeavePlayer(xx::MemPool* const& mempool) noexcept;
 	    LeavePlayer(xx::BBuffer *bb);
 		LeavePlayer(LeavePlayer const&) = delete;
 		LeavePlayer& operator=(LeavePlayer const&) = delete;
-        void ToString(xx::String &str) const override;
-        void ToStringCore(xx::String &str) const override;
-        void ToBBuffer(xx::BBuffer &bb) const override;
-        int FromBBuffer(xx::BBuffer &bb) override;
+        void ToString(xx::String &str) const noexcept override;
+        void ToStringCore(xx::String &str) const noexcept override;
+        void ToBBuffer(xx::BBuffer &bb) const noexcept override;
+        int FromBBuffer(xx::BBuffer &bb) noexcept override;
+        void CopyTo(LeavePlayer* const& o) const noexcept;
+        LeavePlayer* MakeCopy() const noexcept;
+        LeavePlayer_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
 }
@@ -372,14 +396,17 @@ namespace CatchFish
 
         typedef Scene ThisType;
         typedef xx::Object BaseType;
-	    Scene(xx::MemPool* const& mempool);
+	    Scene(xx::MemPool* const& mempool) noexcept;
 	    Scene(xx::BBuffer *bb);
 		Scene(Scene const&) = delete;
 		Scene& operator=(Scene const&) = delete;
-        void ToString(xx::String &str) const override;
-        void ToStringCore(xx::String &str) const override;
-        void ToBBuffer(xx::BBuffer &bb) const override;
-        int FromBBuffer(xx::BBuffer &bb) override;
+        void ToString(xx::String &str) const noexcept override;
+        void ToStringCore(xx::String &str) const noexcept override;
+        void ToBBuffer(xx::BBuffer &bb) const noexcept override;
+        int FromBBuffer(xx::BBuffer &bb) noexcept override;
+        void CopyTo(Scene* const& o) const noexcept;
+        Scene* MakeCopy() const noexcept;
+        Scene_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
     // 鱼
@@ -401,14 +428,17 @@ namespace CatchFish
 
         typedef Fish ThisType;
         typedef PKG::CatchFish::MoveObject BaseType;
-	    Fish(xx::MemPool* const& mempool);
+	    Fish(xx::MemPool* const& mempool) noexcept;
 	    Fish(xx::BBuffer *bb);
 		Fish(Fish const&) = delete;
 		Fish& operator=(Fish const&) = delete;
-        void ToString(xx::String &str) const override;
-        void ToStringCore(xx::String &str) const override;
-        void ToBBuffer(xx::BBuffer &bb) const override;
-        int FromBBuffer(xx::BBuffer &bb) override;
+        void ToString(xx::String &str) const noexcept override;
+        void ToStringCore(xx::String &str) const noexcept override;
+        void ToBBuffer(xx::BBuffer &bb) const noexcept override;
+        int FromBBuffer(xx::BBuffer &bb) noexcept override;
+        void CopyTo(Fish* const& o) const noexcept;
+        Fish* MakeCopy() const noexcept;
+        Fish_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
     // 子弹
@@ -420,14 +450,17 @@ namespace CatchFish
 
         typedef Bullet ThisType;
         typedef PKG::CatchFish::MoveObject BaseType;
-	    Bullet(xx::MemPool* const& mempool);
+	    Bullet(xx::MemPool* const& mempool) noexcept;
 	    Bullet(xx::BBuffer *bb);
 		Bullet(Bullet const&) = delete;
 		Bullet& operator=(Bullet const&) = delete;
-        void ToString(xx::String &str) const override;
-        void ToStringCore(xx::String &str) const override;
-        void ToBBuffer(xx::BBuffer &bb) const override;
-        int FromBBuffer(xx::BBuffer &bb) override;
+        void ToString(xx::String &str) const noexcept override;
+        void ToStringCore(xx::String &str) const noexcept override;
+        void ToBBuffer(xx::BBuffer &bb) const noexcept override;
+        int FromBBuffer(xx::BBuffer &bb) noexcept override;
+        void CopyTo(Bullet* const& o) const noexcept;
+        Bullet* MakeCopy() const noexcept;
+        Bullet_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
     // 玩家
@@ -451,14 +484,17 @@ namespace CatchFish
 
         typedef Player ThisType;
         typedef xx::Object BaseType;
-	    Player(xx::MemPool* const& mempool);
+	    Player(xx::MemPool* const& mempool) noexcept;
 	    Player(xx::BBuffer *bb);
 		Player(Player const&) = delete;
 		Player& operator=(Player const&) = delete;
-        void ToString(xx::String &str) const override;
-        void ToStringCore(xx::String &str) const override;
-        void ToBBuffer(xx::BBuffer &bb) const override;
-        int FromBBuffer(xx::BBuffer &bb) override;
+        void ToString(xx::String &str) const noexcept override;
+        void ToStringCore(xx::String &str) const noexcept override;
+        void ToBBuffer(xx::BBuffer &bb) const noexcept override;
+        int FromBBuffer(xx::BBuffer &bb) noexcept override;
+        void CopyTo(Player* const& o) const noexcept;
+        Player* MakeCopy() const noexcept;
+        Player_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
     // 游戏配置信息( 配置信息并不会随着网络同步而下发, 反序列化后需要手工还原 )
@@ -474,14 +510,17 @@ namespace CatchFish
 
         typedef Config ThisType;
         typedef xx::Object BaseType;
-	    Config(xx::MemPool* const& mempool);
+	    Config(xx::MemPool* const& mempool) noexcept;
 	    Config(xx::BBuffer *bb);
 		Config(Config const&) = delete;
 		Config& operator=(Config const&) = delete;
-        void ToString(xx::String &str) const override;
-        void ToStringCore(xx::String &str) const override;
-        void ToBBuffer(xx::BBuffer &bb) const override;
-        int FromBBuffer(xx::BBuffer &bb) override;
+        void ToString(xx::String &str) const noexcept override;
+        void ToStringCore(xx::String &str) const noexcept override;
+        void ToBBuffer(xx::BBuffer &bb) const noexcept override;
+        int FromBBuffer(xx::BBuffer &bb) noexcept override;
+        void CopyTo(Config* const& o) const noexcept;
+        Config* MakeCopy() const noexcept;
+        Config_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
     // 鱼配置信息
@@ -505,14 +544,17 @@ namespace CatchFish
 
         typedef FishConfig ThisType;
         typedef xx::Object BaseType;
-	    FishConfig(xx::MemPool* const& mempool);
+	    FishConfig(xx::MemPool* const& mempool) noexcept;
 	    FishConfig(xx::BBuffer *bb);
 		FishConfig(FishConfig const&) = delete;
 		FishConfig& operator=(FishConfig const&) = delete;
-        void ToString(xx::String &str) const override;
-        void ToStringCore(xx::String &str) const override;
-        void ToBBuffer(xx::BBuffer &bb) const override;
-        int FromBBuffer(xx::BBuffer &bb) override;
+        void ToString(xx::String &str) const noexcept override;
+        void ToStringCore(xx::String &str) const noexcept override;
+        void ToBBuffer(xx::BBuffer &bb) const noexcept override;
+        int FromBBuffer(xx::BBuffer &bb) noexcept override;
+        void CopyTo(FishConfig* const& o) const noexcept;
+        FishConfig* MakeCopy() const noexcept;
+        FishConfig_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
     // 鱼帧动画信息
@@ -526,14 +568,17 @@ namespace CatchFish
 
         typedef FishSpriteFrame ThisType;
         typedef xx::Object BaseType;
-	    FishSpriteFrame(xx::MemPool* const& mempool);
+	    FishSpriteFrame(xx::MemPool* const& mempool) noexcept;
 	    FishSpriteFrame(xx::BBuffer *bb);
 		FishSpriteFrame(FishSpriteFrame const&) = delete;
 		FishSpriteFrame& operator=(FishSpriteFrame const&) = delete;
-        void ToString(xx::String &str) const override;
-        void ToStringCore(xx::String &str) const override;
-        void ToBBuffer(xx::BBuffer &bb) const override;
-        int FromBBuffer(xx::BBuffer &bb) override;
+        void ToString(xx::String &str) const noexcept override;
+        void ToStringCore(xx::String &str) const noexcept override;
+        void ToBBuffer(xx::BBuffer &bb) const noexcept override;
+        int FromBBuffer(xx::BBuffer &bb) noexcept override;
+        void CopyTo(FishSpriteFrame* const& o) const noexcept;
+        FishSpriteFrame* MakeCopy() const noexcept;
+        FishSpriteFrame_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
     // 圆形碰撞区
@@ -549,14 +594,17 @@ namespace CatchFish
 
         typedef CollisionArea ThisType;
         typedef xx::Object BaseType;
-	    CollisionArea(xx::MemPool* const& mempool);
+	    CollisionArea(xx::MemPool* const& mempool) noexcept;
 	    CollisionArea(xx::BBuffer *bb);
 		CollisionArea(CollisionArea const&) = delete;
 		CollisionArea& operator=(CollisionArea const&) = delete;
-        void ToString(xx::String &str) const override;
-        void ToStringCore(xx::String &str) const override;
-        void ToBBuffer(xx::BBuffer &bb) const override;
-        int FromBBuffer(xx::BBuffer &bb) override;
+        void ToString(xx::String &str) const noexcept override;
+        void ToStringCore(xx::String &str) const noexcept override;
+        void ToBBuffer(xx::BBuffer &bb) const noexcept override;
+        int FromBBuffer(xx::BBuffer &bb) noexcept override;
+        void CopyTo(CollisionArea* const& o) const noexcept;
+        CollisionArea* MakeCopy() const noexcept;
+        CollisionArea_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
 }
@@ -569,14 +617,17 @@ namespace Client_CatchFish
 
         typedef FireEnd ThisType;
         typedef xx::Object BaseType;
-	    FireEnd(xx::MemPool* const& mempool);
+	    FireEnd(xx::MemPool* const& mempool) noexcept;
 	    FireEnd(xx::BBuffer *bb);
 		FireEnd(FireEnd const&) = delete;
 		FireEnd& operator=(FireEnd const&) = delete;
-        void ToString(xx::String &str) const override;
-        void ToStringCore(xx::String &str) const override;
-        void ToBBuffer(xx::BBuffer &bb) const override;
-        int FromBBuffer(xx::BBuffer &bb) override;
+        void ToString(xx::String &str) const noexcept override;
+        void ToStringCore(xx::String &str) const noexcept override;
+        void ToBBuffer(xx::BBuffer &bb) const noexcept override;
+        int FromBBuffer(xx::BBuffer &bb) noexcept override;
+        void CopyTo(FireEnd* const& o) const noexcept;
+        FireEnd* MakeCopy() const noexcept;
+        FireEnd_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
     // 玩家持续开火时调整角度( 连发, 仅适合帧同步服务器算法 )
@@ -588,14 +639,17 @@ namespace Client_CatchFish
 
         typedef FireChangeAngle ThisType;
         typedef xx::Object BaseType;
-	    FireChangeAngle(xx::MemPool* const& mempool);
+	    FireChangeAngle(xx::MemPool* const& mempool) noexcept;
 	    FireChangeAngle(xx::BBuffer *bb);
 		FireChangeAngle(FireChangeAngle const&) = delete;
 		FireChangeAngle& operator=(FireChangeAngle const&) = delete;
-        void ToString(xx::String &str) const override;
-        void ToStringCore(xx::String &str) const override;
-        void ToBBuffer(xx::BBuffer &bb) const override;
-        int FromBBuffer(xx::BBuffer &bb) override;
+        void ToString(xx::String &str) const noexcept override;
+        void ToStringCore(xx::String &str) const noexcept override;
+        void ToBBuffer(xx::BBuffer &bb) const noexcept override;
+        int FromBBuffer(xx::BBuffer &bb) noexcept override;
+        void CopyTo(FireChangeAngle* const& o) const noexcept;
+        FireChangeAngle* MakeCopy() const noexcept;
+        FireChangeAngle_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
     // 玩家开始开火( 连发, 仅适合帧同步服务器算法 )
@@ -607,14 +661,17 @@ namespace Client_CatchFish
 
         typedef FireBegin ThisType;
         typedef xx::Object BaseType;
-	    FireBegin(xx::MemPool* const& mempool);
+	    FireBegin(xx::MemPool* const& mempool) noexcept;
 	    FireBegin(xx::BBuffer *bb);
 		FireBegin(FireBegin const&) = delete;
 		FireBegin& operator=(FireBegin const&) = delete;
-        void ToString(xx::String &str) const override;
-        void ToStringCore(xx::String &str) const override;
-        void ToBBuffer(xx::BBuffer &bb) const override;
-        int FromBBuffer(xx::BBuffer &bb) override;
+        void ToString(xx::String &str) const noexcept override;
+        void ToStringCore(xx::String &str) const noexcept override;
+        void ToBBuffer(xx::BBuffer &bb) const noexcept override;
+        int FromBBuffer(xx::BBuffer &bb) noexcept override;
+        void CopyTo(FireBegin* const& o) const noexcept;
+        FireBegin* MakeCopy() const noexcept;
+        FireBegin_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
     // 当前玩家自己的子弹打中鱼
@@ -628,14 +685,17 @@ namespace Client_CatchFish
 
         typedef Hit ThisType;
         typedef xx::Object BaseType;
-	    Hit(xx::MemPool* const& mempool);
+	    Hit(xx::MemPool* const& mempool) noexcept;
 	    Hit(xx::BBuffer *bb);
 		Hit(Hit const&) = delete;
 		Hit& operator=(Hit const&) = delete;
-        void ToString(xx::String &str) const override;
-        void ToStringCore(xx::String &str) const override;
-        void ToBBuffer(xx::BBuffer &bb) const override;
-        int FromBBuffer(xx::BBuffer &bb) override;
+        void ToString(xx::String &str) const noexcept override;
+        void ToStringCore(xx::String &str) const noexcept override;
+        void ToBBuffer(xx::BBuffer &bb) const noexcept override;
+        int FromBBuffer(xx::BBuffer &bb) noexcept override;
+        void CopyTo(Hit* const& o) const noexcept;
+        Hit* MakeCopy() const noexcept;
+        Hit_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
     // 开火( 单次, 或频繁单次模拟伪连发 )
@@ -653,14 +713,17 @@ namespace Client_CatchFish
 
         typedef Fire ThisType;
         typedef xx::Object BaseType;
-	    Fire(xx::MemPool* const& mempool);
+	    Fire(xx::MemPool* const& mempool) noexcept;
 	    Fire(xx::BBuffer *bb);
 		Fire(Fire const&) = delete;
 		Fire& operator=(Fire const&) = delete;
-        void ToString(xx::String &str) const override;
-        void ToStringCore(xx::String &str) const override;
-        void ToBBuffer(xx::BBuffer &bb) const override;
-        int FromBBuffer(xx::BBuffer &bb) override;
+        void ToString(xx::String &str) const noexcept override;
+        void ToStringCore(xx::String &str) const noexcept override;
+        void ToBBuffer(xx::BBuffer &bb) const noexcept override;
+        int FromBBuffer(xx::BBuffer &bb) noexcept override;
+        void CopyTo(Fire* const& o) const noexcept;
+        Fire* MakeCopy() const noexcept;
+        Fire_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
     // 正常离开游戏( 立即, 并非断线等待超时后清掉 )
@@ -670,14 +733,17 @@ namespace Client_CatchFish
 
         typedef Leave ThisType;
         typedef xx::Object BaseType;
-	    Leave(xx::MemPool* const& mempool);
+	    Leave(xx::MemPool* const& mempool) noexcept;
 	    Leave(xx::BBuffer *bb);
 		Leave(Leave const&) = delete;
 		Leave& operator=(Leave const&) = delete;
-        void ToString(xx::String &str) const override;
-        void ToStringCore(xx::String &str) const override;
-        void ToBBuffer(xx::BBuffer &bb) const override;
-        int FromBBuffer(xx::BBuffer &bb) override;
+        void ToString(xx::String &str) const noexcept override;
+        void ToStringCore(xx::String &str) const noexcept override;
+        void ToBBuffer(xx::BBuffer &bb) const noexcept override;
+        int FromBBuffer(xx::BBuffer &bb) noexcept override;
+        void CopyTo(Leave* const& o) const noexcept;
+        Leave* MakeCopy() const noexcept;
+        Leave_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
     // 客户端与服务器建立连接后的首包
@@ -689,14 +755,17 @@ namespace Client_CatchFish
 
         typedef Join ThisType;
         typedef xx::Object BaseType;
-	    Join(xx::MemPool* const& mempool);
+	    Join(xx::MemPool* const& mempool) noexcept;
 	    Join(xx::BBuffer *bb);
 		Join(Join const&) = delete;
 		Join& operator=(Join const&) = delete;
-        void ToString(xx::String &str) const override;
-        void ToStringCore(xx::String &str) const override;
-        void ToBBuffer(xx::BBuffer &bb) const override;
-        int FromBBuffer(xx::BBuffer &bb) override;
+        void ToString(xx::String &str) const noexcept override;
+        void ToStringCore(xx::String &str) const noexcept override;
+        void ToBBuffer(xx::BBuffer &bb) const noexcept override;
+        int FromBBuffer(xx::BBuffer &bb) noexcept override;
+        void CopyTo(Join* const& o) const noexcept;
+        Join* MakeCopy() const noexcept;
+        Join_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
 }
@@ -725,14 +794,17 @@ namespace CatchFish_Client
 
         typedef FrameEvents ThisType;
         typedef xx::Object BaseType;
-	    FrameEvents(xx::MemPool* const& mempool);
+	    FrameEvents(xx::MemPool* const& mempool) noexcept;
 	    FrameEvents(xx::BBuffer *bb);
 		FrameEvents(FrameEvents const&) = delete;
 		FrameEvents& operator=(FrameEvents const&) = delete;
-        void ToString(xx::String &str) const override;
-        void ToStringCore(xx::String &str) const override;
-        void ToBBuffer(xx::BBuffer &bb) const override;
-        int FromBBuffer(xx::BBuffer &bb) override;
+        void ToString(xx::String &str) const noexcept override;
+        void ToStringCore(xx::String &str) const noexcept override;
+        void ToBBuffer(xx::BBuffer &bb) const noexcept override;
+        int FromBBuffer(xx::BBuffer &bb) noexcept override;
+        void CopyTo(FrameEvents* const& o) const noexcept;
+        FrameEvents* MakeCopy() const noexcept;
+        FrameEvents_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
     // 要按成员顺序优先级依次处理
@@ -743,14 +815,17 @@ namespace CatchFish_Client
 
         typedef FullSync ThisType;
         typedef xx::Object BaseType;
-	    FullSync(xx::MemPool* const& mempool);
+	    FullSync(xx::MemPool* const& mempool) noexcept;
 	    FullSync(xx::BBuffer *bb);
 		FullSync(FullSync const&) = delete;
 		FullSync& operator=(FullSync const&) = delete;
-        void ToString(xx::String &str) const override;
-        void ToStringCore(xx::String &str) const override;
-        void ToBBuffer(xx::BBuffer &bb) const override;
-        int FromBBuffer(xx::BBuffer &bb) override;
+        void ToString(xx::String &str) const noexcept override;
+        void ToStringCore(xx::String &str) const noexcept override;
+        void ToBBuffer(xx::BBuffer &bb) const noexcept override;
+        int FromBBuffer(xx::BBuffer &bb) noexcept override;
+        void CopyTo(FullSync* const& o) const noexcept;
+        FullSync* MakeCopy() const noexcept;
+        FullSync_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
     // 进入失败
@@ -762,14 +837,17 @@ namespace CatchFish_Client
 
         typedef JoinFail ThisType;
         typedef xx::Object BaseType;
-	    JoinFail(xx::MemPool* const& mempool);
+	    JoinFail(xx::MemPool* const& mempool) noexcept;
 	    JoinFail(xx::BBuffer *bb);
 		JoinFail(JoinFail const&) = delete;
 		JoinFail& operator=(JoinFail const&) = delete;
-        void ToString(xx::String &str) const override;
-        void ToStringCore(xx::String &str) const override;
-        void ToBBuffer(xx::BBuffer &bb) const override;
-        int FromBBuffer(xx::BBuffer &bb) override;
+        void ToString(xx::String &str) const noexcept override;
+        void ToStringCore(xx::String &str) const noexcept override;
+        void ToBBuffer(xx::BBuffer &bb) const noexcept override;
+        int FromBBuffer(xx::BBuffer &bb) noexcept override;
+        void CopyTo(JoinFail* const& o) const noexcept;
+        JoinFail* MakeCopy() const noexcept;
+        JoinFail_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
 }
@@ -786,14 +864,17 @@ namespace CatchFish::Events
 
         typedef BulletHit ThisType;
         typedef xx::Object BaseType;
-	    BulletHit(xx::MemPool* const& mempool);
+	    BulletHit(xx::MemPool* const& mempool) noexcept;
 	    BulletHit(xx::BBuffer *bb);
 		BulletHit(BulletHit const&) = delete;
 		BulletHit& operator=(BulletHit const&) = delete;
-        void ToString(xx::String &str) const override;
-        void ToStringCore(xx::String &str) const override;
-        void ToBBuffer(xx::BBuffer &bb) const override;
-        int FromBBuffer(xx::BBuffer &bb) override;
+        void ToString(xx::String &str) const noexcept override;
+        void ToStringCore(xx::String &str) const noexcept override;
+        void ToBBuffer(xx::BBuffer &bb) const noexcept override;
+        int FromBBuffer(xx::BBuffer &bb) noexcept override;
+        void CopyTo(BulletHit* const& o) const noexcept;
+        BulletHit* MakeCopy() const noexcept;
+        BulletHit_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
     // 鱼被打死
@@ -809,14 +890,17 @@ namespace CatchFish::Events
 
         typedef FishDead ThisType;
         typedef xx::Object BaseType;
-	    FishDead(xx::MemPool* const& mempool);
+	    FishDead(xx::MemPool* const& mempool) noexcept;
 	    FishDead(xx::BBuffer *bb);
 		FishDead(FishDead const&) = delete;
 		FishDead& operator=(FishDead const&) = delete;
-        void ToString(xx::String &str) const override;
-        void ToStringCore(xx::String &str) const override;
-        void ToBBuffer(xx::BBuffer &bb) const override;
-        int FromBBuffer(xx::BBuffer &bb) override;
+        void ToString(xx::String &str) const noexcept override;
+        void ToStringCore(xx::String &str) const noexcept override;
+        void ToBBuffer(xx::BBuffer &bb) const noexcept override;
+        int FromBBuffer(xx::BBuffer &bb) noexcept override;
+        void CopyTo(FishDead* const& o) const noexcept;
+        FishDead* MakeCopy() const noexcept;
+        FishDead_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
 }
@@ -871,7 +955,7 @@ namespace PKG
 {
 namespace CatchFish_Client
 {
-	inline JoinSuccess::JoinSuccess(xx::MemPool* const& mempool)
+	inline JoinSuccess::JoinSuccess(xx::MemPool* const& mempool) noexcept
         : xx::Object(mempool)
 	{
 	}
@@ -880,18 +964,18 @@ namespace CatchFish_Client
 	{
         if (int rtv = FromBBuffer(*bb)) throw rtv;
 	}
-    inline void JoinSuccess::ToBBuffer(xx::BBuffer &bb) const
+    inline void JoinSuccess::ToBBuffer(xx::BBuffer &bb) const noexcept
     {
         bb.Write(this->sitIndex);
     }
-    inline int JoinSuccess::FromBBuffer(xx::BBuffer &bb)
+    inline int JoinSuccess::FromBBuffer(xx::BBuffer &bb) noexcept
     {
         int rtv = 0;
         if ((rtv = bb.Read(this->sitIndex))) return rtv;
         return rtv;
     }
 
-    inline void JoinSuccess::ToString(xx::String &str) const
+    inline void JoinSuccess::ToString(xx::String &str) const noexcept
     {
         if (memHeader().flags)
         {
@@ -906,14 +990,27 @@ namespace CatchFish_Client
         
         memHeader().flags = 0;
     }
-    inline void JoinSuccess::ToStringCore(xx::String &str) const
+    inline void JoinSuccess::ToStringCore(xx::String &str) const noexcept
     {
         this->BaseType::ToStringCore(str);
         str.Append(", \"sitIndex\":", this->sitIndex);
     }
+    inline void JoinSuccess::CopyTo(JoinSuccess* const& o) const noexcept
+    {
+        o->sitIndex = this->sitIndex;
+    }
+    inline JoinSuccess* JoinSuccess::MakeCopy() const noexcept
+    {
+        auto rtv = mempool->MPCreate<JoinSuccess>();
+        this->CopyTo(rtv);
+        return rtv;
+    }
+    inline JoinSuccess_p JoinSuccess::MakePtrCopy() const noexcept
+    {
+        return JoinSuccess_p(this->MakeCopy());
+    }
 
-
-	inline JoinFail::JoinFail(xx::MemPool* const& mempool)
+	inline JoinFail::JoinFail(xx::MemPool* const& mempool) noexcept
         : xx::Object(mempool)
 	{
 	}
@@ -922,11 +1019,11 @@ namespace CatchFish_Client
 	{
         if (int rtv = FromBBuffer(*bb)) throw rtv;
 	}
-    inline void JoinFail::ToBBuffer(xx::BBuffer &bb) const
+    inline void JoinFail::ToBBuffer(xx::BBuffer &bb) const noexcept
     {
         bb.Write(this->errMsg);
     }
-    inline int JoinFail::FromBBuffer(xx::BBuffer &bb)
+    inline int JoinFail::FromBBuffer(xx::BBuffer &bb) noexcept
     {
         int rtv = 0;
         bb.readLengthLimit = 0;
@@ -934,7 +1031,7 @@ namespace CatchFish_Client
         return rtv;
     }
 
-    inline void JoinFail::ToString(xx::String &str) const
+    inline void JoinFail::ToString(xx::String &str) const noexcept
     {
         if (memHeader().flags)
         {
@@ -949,15 +1046,28 @@ namespace CatchFish_Client
         
         memHeader().flags = 0;
     }
-    inline void JoinFail::ToStringCore(xx::String &str) const
+    inline void JoinFail::ToStringCore(xx::String &str) const noexcept
     {
         this->BaseType::ToStringCore(str);
         if (this->errMsg) str.Append(", \"errMsg\":\"", this->errMsg, "\"");
         else str.Append(", \"errMsg\":nil");
     }
+    inline void JoinFail::CopyTo(JoinFail* const& o) const noexcept
+    {
+        o->errMsg = this->errMsg;
+    }
+    inline JoinFail* JoinFail::MakeCopy() const noexcept
+    {
+        auto rtv = mempool->MPCreate<JoinFail>();
+        this->CopyTo(rtv);
+        return rtv;
+    }
+    inline JoinFail_p JoinFail::MakePtrCopy() const noexcept
+    {
+        return JoinFail_p(this->MakeCopy());
+    }
 
-
-	inline FullSync::FullSync(xx::MemPool* const& mempool)
+	inline FullSync::FullSync(xx::MemPool* const& mempool) noexcept
         : xx::Object(mempool)
 	{
 	}
@@ -966,18 +1076,18 @@ namespace CatchFish_Client
 	{
         if (int rtv = FromBBuffer(*bb)) throw rtv;
 	}
-    inline void FullSync::ToBBuffer(xx::BBuffer &bb) const
+    inline void FullSync::ToBBuffer(xx::BBuffer &bb) const noexcept
     {
         bb.Write(this->scene);
     }
-    inline int FullSync::FromBBuffer(xx::BBuffer &bb)
+    inline int FullSync::FromBBuffer(xx::BBuffer &bb) noexcept
     {
         int rtv = 0;
         if ((rtv = bb.Read(this->scene))) return rtv;
         return rtv;
     }
 
-    inline void FullSync::ToString(xx::String &str) const
+    inline void FullSync::ToString(xx::String &str) const noexcept
     {
         if (memHeader().flags)
         {
@@ -992,14 +1102,27 @@ namespace CatchFish_Client
         
         memHeader().flags = 0;
     }
-    inline void FullSync::ToStringCore(xx::String &str) const
+    inline void FullSync::ToStringCore(xx::String &str) const noexcept
     {
         this->BaseType::ToStringCore(str);
         str.Append(", \"scene\":", this->scene);
     }
+    inline void FullSync::CopyTo(FullSync* const& o) const noexcept
+    {
+        o->scene = this->scene;
+    }
+    inline FullSync* FullSync::MakeCopy() const noexcept
+    {
+        auto rtv = mempool->MPCreate<FullSync>();
+        this->CopyTo(rtv);
+        return rtv;
+    }
+    inline FullSync_p FullSync::MakePtrCopy() const noexcept
+    {
+        return FullSync_p(this->MakeCopy());
+    }
 
-
-	inline FrameEvents::FrameEvents(xx::MemPool* const& mempool)
+	inline FrameEvents::FrameEvents(xx::MemPool* const& mempool) noexcept
         : xx::Object(mempool)
 	{
 	}
@@ -1008,7 +1131,7 @@ namespace CatchFish_Client
 	{
         if (int rtv = FromBBuffer(*bb)) throw rtv;
 	}
-    inline void FrameEvents::ToBBuffer(xx::BBuffer &bb) const
+    inline void FrameEvents::ToBBuffer(xx::BBuffer &bb) const noexcept
     {
         bb.Write(this->frameNumber);
         bb.Write(this->leaves);
@@ -1019,7 +1142,7 @@ namespace CatchFish_Client
         bb.Write(this->fireBegins);
         bb.Write(this->fireChangeAngles);
     }
-    inline int FrameEvents::FromBBuffer(xx::BBuffer &bb)
+    inline int FrameEvents::FromBBuffer(xx::BBuffer &bb) noexcept
     {
         int rtv = 0;
         if ((rtv = bb.Read(this->frameNumber))) return rtv;
@@ -1040,7 +1163,7 @@ namespace CatchFish_Client
         return rtv;
     }
 
-    inline void FrameEvents::ToString(xx::String &str) const
+    inline void FrameEvents::ToString(xx::String &str) const noexcept
     {
         if (memHeader().flags)
         {
@@ -1055,7 +1178,7 @@ namespace CatchFish_Client
         
         memHeader().flags = 0;
     }
-    inline void FrameEvents::ToStringCore(xx::String &str) const
+    inline void FrameEvents::ToStringCore(xx::String &str) const noexcept
     {
         this->BaseType::ToStringCore(str);
         str.Append(", \"frameNumber\":", this->frameNumber);
@@ -1067,12 +1190,32 @@ namespace CatchFish_Client
         str.Append(", \"fireBegins\":", this->fireBegins);
         str.Append(", \"fireChangeAngles\":", this->fireChangeAngles);
     }
-
+    inline void FrameEvents::CopyTo(FrameEvents* const& o) const noexcept
+    {
+        o->frameNumber = this->frameNumber;
+        o->leaves = this->leaves;
+        o->joins = this->joins;
+        o->fishDeads = this->fishDeads;
+        o->fires = this->fires;
+        o->fireEnds = this->fireEnds;
+        o->fireBegins = this->fireBegins;
+        o->fireChangeAngles = this->fireChangeAngles;
+    }
+    inline FrameEvents* FrameEvents::MakeCopy() const noexcept
+    {
+        auto rtv = mempool->MPCreate<FrameEvents>();
+        this->CopyTo(rtv);
+        return rtv;
+    }
+    inline FrameEvents_p FrameEvents::MakePtrCopy() const noexcept
+    {
+        return FrameEvents_p(this->MakeCopy());
+    }
 
 }
 namespace Client_CatchFish
 {
-	inline Join::Join(xx::MemPool* const& mempool)
+	inline Join::Join(xx::MemPool* const& mempool) noexcept
         : xx::Object(mempool)
 	{
 	}
@@ -1081,11 +1224,11 @@ namespace Client_CatchFish
 	{
         if (int rtv = FromBBuffer(*bb)) throw rtv;
 	}
-    inline void Join::ToBBuffer(xx::BBuffer &bb) const
+    inline void Join::ToBBuffer(xx::BBuffer &bb) const noexcept
     {
         bb.Write(this->username);
     }
-    inline int Join::FromBBuffer(xx::BBuffer &bb)
+    inline int Join::FromBBuffer(xx::BBuffer &bb) noexcept
     {
         int rtv = 0;
         bb.readLengthLimit = 64;
@@ -1093,7 +1236,7 @@ namespace Client_CatchFish
         return rtv;
     }
 
-    inline void Join::ToString(xx::String &str) const
+    inline void Join::ToString(xx::String &str) const noexcept
     {
         if (memHeader().flags)
         {
@@ -1108,15 +1251,28 @@ namespace Client_CatchFish
         
         memHeader().flags = 0;
     }
-    inline void Join::ToStringCore(xx::String &str) const
+    inline void Join::ToStringCore(xx::String &str) const noexcept
     {
         this->BaseType::ToStringCore(str);
         if (this->username) str.Append(", \"username\":\"", this->username, "\"");
         else str.Append(", \"username\":nil");
     }
+    inline void Join::CopyTo(Join* const& o) const noexcept
+    {
+        o->username = this->username;
+    }
+    inline Join* Join::MakeCopy() const noexcept
+    {
+        auto rtv = mempool->MPCreate<Join>();
+        this->CopyTo(rtv);
+        return rtv;
+    }
+    inline Join_p Join::MakePtrCopy() const noexcept
+    {
+        return Join_p(this->MakeCopy());
+    }
 
-
-	inline Leave::Leave(xx::MemPool* const& mempool)
+	inline Leave::Leave(xx::MemPool* const& mempool) noexcept
         : xx::Object(mempool)
 	{
 	}
@@ -1125,16 +1281,16 @@ namespace Client_CatchFish
 	{
         if (int rtv = FromBBuffer(*bb)) throw rtv;
 	}
-    inline void Leave::ToBBuffer(xx::BBuffer &bb) const
+    inline void Leave::ToBBuffer(xx::BBuffer &bb) const noexcept
     {
     }
-    inline int Leave::FromBBuffer(xx::BBuffer &bb)
+    inline int Leave::FromBBuffer(xx::BBuffer &bb) noexcept
     {
         int rtv = 0;
         return rtv;
     }
 
-    inline void Leave::ToString(xx::String &str) const
+    inline void Leave::ToString(xx::String &str) const noexcept
     {
         if (memHeader().flags)
         {
@@ -1149,13 +1305,25 @@ namespace Client_CatchFish
         
         memHeader().flags = 0;
     }
-    inline void Leave::ToStringCore(xx::String &str) const
+    inline void Leave::ToStringCore(xx::String &str) const noexcept
     {
         this->BaseType::ToStringCore(str);
     }
+    inline void Leave::CopyTo(Leave* const& o) const noexcept
+    {
+    }
+    inline Leave* Leave::MakeCopy() const noexcept
+    {
+        auto rtv = mempool->MPCreate<Leave>();
+        this->CopyTo(rtv);
+        return rtv;
+    }
+    inline Leave_p Leave::MakePtrCopy() const noexcept
+    {
+        return Leave_p(this->MakeCopy());
+    }
 
-
-	inline Fire::Fire(xx::MemPool* const& mempool)
+	inline Fire::Fire(xx::MemPool* const& mempool) noexcept
         : xx::Object(mempool)
 	{
 	}
@@ -1164,14 +1332,14 @@ namespace Client_CatchFish
 	{
         if (int rtv = FromBBuffer(*bb)) throw rtv;
 	}
-    inline void Fire::ToBBuffer(xx::BBuffer &bb) const
+    inline void Fire::ToBBuffer(xx::BBuffer &bb) const noexcept
     {
         bb.Write(this->frameNumber);
         bb.Write(this->bulletSerialNumber);
         bb.Write(this->coin);
         bb.Write(this->moveInc);
     }
-    inline int Fire::FromBBuffer(xx::BBuffer &bb)
+    inline int Fire::FromBBuffer(xx::BBuffer &bb) noexcept
     {
         int rtv = 0;
         if ((rtv = bb.Read(this->frameNumber))) return rtv;
@@ -1181,7 +1349,7 @@ namespace Client_CatchFish
         return rtv;
     }
 
-    inline void Fire::ToString(xx::String &str) const
+    inline void Fire::ToString(xx::String &str) const noexcept
     {
         if (memHeader().flags)
         {
@@ -1196,7 +1364,7 @@ namespace Client_CatchFish
         
         memHeader().flags = 0;
     }
-    inline void Fire::ToStringCore(xx::String &str) const
+    inline void Fire::ToStringCore(xx::String &str) const noexcept
     {
         this->BaseType::ToStringCore(str);
         str.Append(", \"frameNumber\":", this->frameNumber);
@@ -1204,9 +1372,25 @@ namespace Client_CatchFish
         str.Append(", \"coin\":", this->coin);
         str.Append(", \"moveInc\":", this->moveInc);
     }
+    inline void Fire::CopyTo(Fire* const& o) const noexcept
+    {
+        o->frameNumber = this->frameNumber;
+        o->bulletSerialNumber = this->bulletSerialNumber;
+        o->coin = this->coin;
+        o->moveInc = this->moveInc;
+    }
+    inline Fire* Fire::MakeCopy() const noexcept
+    {
+        auto rtv = mempool->MPCreate<Fire>();
+        this->CopyTo(rtv);
+        return rtv;
+    }
+    inline Fire_p Fire::MakePtrCopy() const noexcept
+    {
+        return Fire_p(this->MakeCopy());
+    }
 
-
-	inline Hit::Hit(xx::MemPool* const& mempool)
+	inline Hit::Hit(xx::MemPool* const& mempool) noexcept
         : xx::Object(mempool)
 	{
 	}
@@ -1215,12 +1399,12 @@ namespace Client_CatchFish
 	{
         if (int rtv = FromBBuffer(*bb)) throw rtv;
 	}
-    inline void Hit::ToBBuffer(xx::BBuffer &bb) const
+    inline void Hit::ToBBuffer(xx::BBuffer &bb) const noexcept
     {
         bb.Write(this->bulletSerialNumber);
         bb.Write(this->fishSerialNumber);
     }
-    inline int Hit::FromBBuffer(xx::BBuffer &bb)
+    inline int Hit::FromBBuffer(xx::BBuffer &bb) noexcept
     {
         int rtv = 0;
         if ((rtv = bb.Read(this->bulletSerialNumber))) return rtv;
@@ -1228,7 +1412,7 @@ namespace Client_CatchFish
         return rtv;
     }
 
-    inline void Hit::ToString(xx::String &str) const
+    inline void Hit::ToString(xx::String &str) const noexcept
     {
         if (memHeader().flags)
         {
@@ -1243,15 +1427,29 @@ namespace Client_CatchFish
         
         memHeader().flags = 0;
     }
-    inline void Hit::ToStringCore(xx::String &str) const
+    inline void Hit::ToStringCore(xx::String &str) const noexcept
     {
         this->BaseType::ToStringCore(str);
         str.Append(", \"bulletSerialNumber\":", this->bulletSerialNumber);
         str.Append(", \"fishSerialNumber\":", this->fishSerialNumber);
     }
+    inline void Hit::CopyTo(Hit* const& o) const noexcept
+    {
+        o->bulletSerialNumber = this->bulletSerialNumber;
+        o->fishSerialNumber = this->fishSerialNumber;
+    }
+    inline Hit* Hit::MakeCopy() const noexcept
+    {
+        auto rtv = mempool->MPCreate<Hit>();
+        this->CopyTo(rtv);
+        return rtv;
+    }
+    inline Hit_p Hit::MakePtrCopy() const noexcept
+    {
+        return Hit_p(this->MakeCopy());
+    }
 
-
-	inline FireBegin::FireBegin(xx::MemPool* const& mempool)
+	inline FireBegin::FireBegin(xx::MemPool* const& mempool) noexcept
         : xx::Object(mempool)
 	{
 	}
@@ -1260,18 +1458,18 @@ namespace Client_CatchFish
 	{
         if (int rtv = FromBBuffer(*bb)) throw rtv;
 	}
-    inline void FireBegin::ToBBuffer(xx::BBuffer &bb) const
+    inline void FireBegin::ToBBuffer(xx::BBuffer &bb) const noexcept
     {
         bb.Write(this->angle);
     }
-    inline int FireBegin::FromBBuffer(xx::BBuffer &bb)
+    inline int FireBegin::FromBBuffer(xx::BBuffer &bb) noexcept
     {
         int rtv = 0;
         if ((rtv = bb.Read(this->angle))) return rtv;
         return rtv;
     }
 
-    inline void FireBegin::ToString(xx::String &str) const
+    inline void FireBegin::ToString(xx::String &str) const noexcept
     {
         if (memHeader().flags)
         {
@@ -1286,14 +1484,27 @@ namespace Client_CatchFish
         
         memHeader().flags = 0;
     }
-    inline void FireBegin::ToStringCore(xx::String &str) const
+    inline void FireBegin::ToStringCore(xx::String &str) const noexcept
     {
         this->BaseType::ToStringCore(str);
         str.Append(", \"angle\":", this->angle);
     }
+    inline void FireBegin::CopyTo(FireBegin* const& o) const noexcept
+    {
+        o->angle = this->angle;
+    }
+    inline FireBegin* FireBegin::MakeCopy() const noexcept
+    {
+        auto rtv = mempool->MPCreate<FireBegin>();
+        this->CopyTo(rtv);
+        return rtv;
+    }
+    inline FireBegin_p FireBegin::MakePtrCopy() const noexcept
+    {
+        return FireBegin_p(this->MakeCopy());
+    }
 
-
-	inline FireChangeAngle::FireChangeAngle(xx::MemPool* const& mempool)
+	inline FireChangeAngle::FireChangeAngle(xx::MemPool* const& mempool) noexcept
         : xx::Object(mempool)
 	{
 	}
@@ -1302,18 +1513,18 @@ namespace Client_CatchFish
 	{
         if (int rtv = FromBBuffer(*bb)) throw rtv;
 	}
-    inline void FireChangeAngle::ToBBuffer(xx::BBuffer &bb) const
+    inline void FireChangeAngle::ToBBuffer(xx::BBuffer &bb) const noexcept
     {
         bb.Write(this->angle);
     }
-    inline int FireChangeAngle::FromBBuffer(xx::BBuffer &bb)
+    inline int FireChangeAngle::FromBBuffer(xx::BBuffer &bb) noexcept
     {
         int rtv = 0;
         if ((rtv = bb.Read(this->angle))) return rtv;
         return rtv;
     }
 
-    inline void FireChangeAngle::ToString(xx::String &str) const
+    inline void FireChangeAngle::ToString(xx::String &str) const noexcept
     {
         if (memHeader().flags)
         {
@@ -1328,14 +1539,27 @@ namespace Client_CatchFish
         
         memHeader().flags = 0;
     }
-    inline void FireChangeAngle::ToStringCore(xx::String &str) const
+    inline void FireChangeAngle::ToStringCore(xx::String &str) const noexcept
     {
         this->BaseType::ToStringCore(str);
         str.Append(", \"angle\":", this->angle);
     }
+    inline void FireChangeAngle::CopyTo(FireChangeAngle* const& o) const noexcept
+    {
+        o->angle = this->angle;
+    }
+    inline FireChangeAngle* FireChangeAngle::MakeCopy() const noexcept
+    {
+        auto rtv = mempool->MPCreate<FireChangeAngle>();
+        this->CopyTo(rtv);
+        return rtv;
+    }
+    inline FireChangeAngle_p FireChangeAngle::MakePtrCopy() const noexcept
+    {
+        return FireChangeAngle_p(this->MakeCopy());
+    }
 
-
-	inline FireEnd::FireEnd(xx::MemPool* const& mempool)
+	inline FireEnd::FireEnd(xx::MemPool* const& mempool) noexcept
         : xx::Object(mempool)
 	{
 	}
@@ -1344,16 +1568,16 @@ namespace Client_CatchFish
 	{
         if (int rtv = FromBBuffer(*bb)) throw rtv;
 	}
-    inline void FireEnd::ToBBuffer(xx::BBuffer &bb) const
+    inline void FireEnd::ToBBuffer(xx::BBuffer &bb) const noexcept
     {
     }
-    inline int FireEnd::FromBBuffer(xx::BBuffer &bb)
+    inline int FireEnd::FromBBuffer(xx::BBuffer &bb) noexcept
     {
         int rtv = 0;
         return rtv;
     }
 
-    inline void FireEnd::ToString(xx::String &str) const
+    inline void FireEnd::ToString(xx::String &str) const noexcept
     {
         if (memHeader().flags)
         {
@@ -1368,16 +1592,28 @@ namespace Client_CatchFish
         
         memHeader().flags = 0;
     }
-    inline void FireEnd::ToStringCore(xx::String &str) const
+    inline void FireEnd::ToStringCore(xx::String &str) const noexcept
     {
         this->BaseType::ToStringCore(str);
     }
-
+    inline void FireEnd::CopyTo(FireEnd* const& o) const noexcept
+    {
+    }
+    inline FireEnd* FireEnd::MakeCopy() const noexcept
+    {
+        auto rtv = mempool->MPCreate<FireEnd>();
+        this->CopyTo(rtv);
+        return rtv;
+    }
+    inline FireEnd_p FireEnd::MakePtrCopy() const noexcept
+    {
+        return FireEnd_p(this->MakeCopy());
+    }
 
 }
 namespace CatchFish
 {
-	inline CollisionArea::CollisionArea(xx::MemPool* const& mempool)
+	inline CollisionArea::CollisionArea(xx::MemPool* const& mempool) noexcept
         : xx::Object(mempool)
 	{
 	}
@@ -1386,13 +1622,13 @@ namespace CatchFish
 	{
         if (int rtv = FromBBuffer(*bb)) throw rtv;
 	}
-    inline void CollisionArea::ToBBuffer(xx::BBuffer &bb) const
+    inline void CollisionArea::ToBBuffer(xx::BBuffer &bb) const noexcept
     {
         bb.Write(this->offset);
         bb.Write(this->offsets);
         bb.Write(this->radius);
     }
-    inline int CollisionArea::FromBBuffer(xx::BBuffer &bb)
+    inline int CollisionArea::FromBBuffer(xx::BBuffer &bb) noexcept
     {
         int rtv = 0;
         if ((rtv = bb.Read(this->offset))) return rtv;
@@ -1402,7 +1638,7 @@ namespace CatchFish
         return rtv;
     }
 
-    inline void CollisionArea::ToString(xx::String &str) const
+    inline void CollisionArea::ToString(xx::String &str) const noexcept
     {
         if (memHeader().flags)
         {
@@ -1417,16 +1653,31 @@ namespace CatchFish
         
         memHeader().flags = 0;
     }
-    inline void CollisionArea::ToStringCore(xx::String &str) const
+    inline void CollisionArea::ToStringCore(xx::String &str) const noexcept
     {
         this->BaseType::ToStringCore(str);
         str.Append(", \"offset\":", this->offset);
         str.Append(", \"offsets\":", this->offsets);
         str.Append(", \"radius\":", this->radius);
     }
+    inline void CollisionArea::CopyTo(CollisionArea* const& o) const noexcept
+    {
+        o->offset = this->offset;
+        o->offsets = this->offsets;
+        o->radius = this->radius;
+    }
+    inline CollisionArea* CollisionArea::MakeCopy() const noexcept
+    {
+        auto rtv = mempool->MPCreate<CollisionArea>();
+        this->CopyTo(rtv);
+        return rtv;
+    }
+    inline CollisionArea_p CollisionArea::MakePtrCopy() const noexcept
+    {
+        return CollisionArea_p(this->MakeCopy());
+    }
 
-
-	inline FishSpriteFrame::FishSpriteFrame(xx::MemPool* const& mempool)
+	inline FishSpriteFrame::FishSpriteFrame(xx::MemPool* const& mempool) noexcept
         : xx::Object(mempool)
 	{
 	}
@@ -1435,12 +1686,12 @@ namespace CatchFish
 	{
         if (int rtv = FromBBuffer(*bb)) throw rtv;
 	}
-    inline void FishSpriteFrame::ToBBuffer(xx::BBuffer &bb) const
+    inline void FishSpriteFrame::ToBBuffer(xx::BBuffer &bb) const noexcept
     {
         bb.Write(this->fileName);
         bb.Write(this->collisionAreas);
     }
-    inline int FishSpriteFrame::FromBBuffer(xx::BBuffer &bb)
+    inline int FishSpriteFrame::FromBBuffer(xx::BBuffer &bb) noexcept
     {
         int rtv = 0;
         bb.readLengthLimit = 0;
@@ -1450,7 +1701,7 @@ namespace CatchFish
         return rtv;
     }
 
-    inline void FishSpriteFrame::ToString(xx::String &str) const
+    inline void FishSpriteFrame::ToString(xx::String &str) const noexcept
     {
         if (memHeader().flags)
         {
@@ -1465,16 +1716,30 @@ namespace CatchFish
         
         memHeader().flags = 0;
     }
-    inline void FishSpriteFrame::ToStringCore(xx::String &str) const
+    inline void FishSpriteFrame::ToStringCore(xx::String &str) const noexcept
     {
         this->BaseType::ToStringCore(str);
         if (this->fileName) str.Append(", \"fileName\":\"", this->fileName, "\"");
         else str.Append(", \"fileName\":nil");
         str.Append(", \"collisionAreas\":", this->collisionAreas);
     }
+    inline void FishSpriteFrame::CopyTo(FishSpriteFrame* const& o) const noexcept
+    {
+        o->fileName = this->fileName;
+        o->collisionAreas = this->collisionAreas;
+    }
+    inline FishSpriteFrame* FishSpriteFrame::MakeCopy() const noexcept
+    {
+        auto rtv = mempool->MPCreate<FishSpriteFrame>();
+        this->CopyTo(rtv);
+        return rtv;
+    }
+    inline FishSpriteFrame_p FishSpriteFrame::MakePtrCopy() const noexcept
+    {
+        return FishSpriteFrame_p(this->MakeCopy());
+    }
 
-
-	inline FishConfig::FishConfig(xx::MemPool* const& mempool)
+	inline FishConfig::FishConfig(xx::MemPool* const& mempool) noexcept
         : xx::Object(mempool)
 	{
 	}
@@ -1483,7 +1748,7 @@ namespace CatchFish
 	{
         if (int rtv = FromBBuffer(*bb)) throw rtv;
 	}
-    inline void FishConfig::ToBBuffer(xx::BBuffer &bb) const
+    inline void FishConfig::ToBBuffer(xx::BBuffer &bb) const noexcept
     {
         bb.Write(this->typeId);
         bb.Write(this->name);
@@ -1492,7 +1757,7 @@ namespace CatchFish
         bb.Write(this->collisionArea);
         bb.Write(this->frames);
     }
-    inline int FishConfig::FromBBuffer(xx::BBuffer &bb)
+    inline int FishConfig::FromBBuffer(xx::BBuffer &bb) noexcept
     {
         int rtv = 0;
         if ((rtv = bb.Read(this->typeId))) return rtv;
@@ -1506,7 +1771,7 @@ namespace CatchFish
         return rtv;
     }
 
-    inline void FishConfig::ToString(xx::String &str) const
+    inline void FishConfig::ToString(xx::String &str) const noexcept
     {
         if (memHeader().flags)
         {
@@ -1521,7 +1786,7 @@ namespace CatchFish
         
         memHeader().flags = 0;
     }
-    inline void FishConfig::ToStringCore(xx::String &str) const
+    inline void FishConfig::ToStringCore(xx::String &str) const noexcept
     {
         this->BaseType::ToStringCore(str);
         str.Append(", \"typeId\":", this->typeId);
@@ -1532,9 +1797,28 @@ namespace CatchFish
         str.Append(", \"collisionArea\":", this->collisionArea);
         str.Append(", \"frames\":", this->frames);
     }
+    inline void FishConfig::CopyTo(FishConfig* const& o) const noexcept
+    {
+        o->typeId = this->typeId;
+        o->name = this->name;
+        o->coin = this->coin;
+        o->frameCount = this->frameCount;
+        o->collisionArea = this->collisionArea;
+        o->frames = this->frames;
+        o->anim = this->anim;
+    }
+    inline FishConfig* FishConfig::MakeCopy() const noexcept
+    {
+        auto rtv = mempool->MPCreate<FishConfig>();
+        this->CopyTo(rtv);
+        return rtv;
+    }
+    inline FishConfig_p FishConfig::MakePtrCopy() const noexcept
+    {
+        return FishConfig_p(this->MakeCopy());
+    }
 
-
-	inline Config::Config(xx::MemPool* const& mempool)
+	inline Config::Config(xx::MemPool* const& mempool) noexcept
         : xx::Object(mempool)
 	{
 	}
@@ -1543,13 +1827,13 @@ namespace CatchFish
 	{
         if (int rtv = FromBBuffer(*bb)) throw rtv;
 	}
-    inline void Config::ToBBuffer(xx::BBuffer &bb) const
+    inline void Config::ToBBuffer(xx::BBuffer &bb) const noexcept
     {
         bb.Write(this->fishCfgs);
         bb.Write(this->bulletRadius);
         bb.Write(this->playerInitCoin);
     }
-    inline int Config::FromBBuffer(xx::BBuffer &bb)
+    inline int Config::FromBBuffer(xx::BBuffer &bb) noexcept
     {
         int rtv = 0;
         bb.readLengthLimit = 0;
@@ -1559,7 +1843,7 @@ namespace CatchFish
         return rtv;
     }
 
-    inline void Config::ToString(xx::String &str) const
+    inline void Config::ToString(xx::String &str) const noexcept
     {
         if (memHeader().flags)
         {
@@ -1574,16 +1858,31 @@ namespace CatchFish
         
         memHeader().flags = 0;
     }
-    inline void Config::ToStringCore(xx::String &str) const
+    inline void Config::ToStringCore(xx::String &str) const noexcept
     {
         this->BaseType::ToStringCore(str);
         str.Append(", \"fishCfgs\":", this->fishCfgs);
         str.Append(", \"bulletRadius\":", this->bulletRadius);
         str.Append(", \"playerInitCoin\":", this->playerInitCoin);
     }
+    inline void Config::CopyTo(Config* const& o) const noexcept
+    {
+        o->fishCfgs = this->fishCfgs;
+        o->bulletRadius = this->bulletRadius;
+        o->playerInitCoin = this->playerInitCoin;
+    }
+    inline Config* Config::MakeCopy() const noexcept
+    {
+        auto rtv = mempool->MPCreate<Config>();
+        this->CopyTo(rtv);
+        return rtv;
+    }
+    inline Config_p Config::MakePtrCopy() const noexcept
+    {
+        return Config_p(this->MakeCopy());
+    }
 
-
-	inline Player::Player(xx::MemPool* const& mempool)
+	inline Player::Player(xx::MemPool* const& mempool) noexcept
         : xx::Object(mempool)
 	{
 	}
@@ -1592,7 +1891,7 @@ namespace CatchFish
 	{
         if (int rtv = FromBBuffer(*bb)) throw rtv;
 	}
-    inline void Player::ToBBuffer(xx::BBuffer &bb) const
+    inline void Player::ToBBuffer(xx::BBuffer &bb) const noexcept
     {
         bb.Write(this->indexAtContainer);
         bb.Write(this->name);
@@ -1601,7 +1900,7 @@ namespace CatchFish
         bb.Write(this->bulletSerialNumber);
         bb.Write(this->bullets);
     }
-    inline int Player::FromBBuffer(xx::BBuffer &bb)
+    inline int Player::FromBBuffer(xx::BBuffer &bb) noexcept
     {
         int rtv = 0;
         if ((rtv = bb.Read(this->indexAtContainer))) return rtv;
@@ -1615,7 +1914,7 @@ namespace CatchFish
         return rtv;
     }
 
-    inline void Player::ToString(xx::String &str) const
+    inline void Player::ToString(xx::String &str) const noexcept
     {
         if (memHeader().flags)
         {
@@ -1630,7 +1929,7 @@ namespace CatchFish
         
         memHeader().flags = 0;
     }
-    inline void Player::ToStringCore(xx::String &str) const
+    inline void Player::ToStringCore(xx::String &str) const noexcept
     {
         this->BaseType::ToStringCore(str);
         str.Append(", \"indexAtContainer\":", this->indexAtContainer);
@@ -1641,9 +1940,28 @@ namespace CatchFish
         str.Append(", \"bulletSerialNumber\":", this->bulletSerialNumber);
         str.Append(", \"bullets\":", this->bullets);
     }
+    inline void Player::CopyTo(Player* const& o) const noexcept
+    {
+        o->indexAtContainer = this->indexAtContainer;
+        o->name = this->name;
+        o->sitIndex = this->sitIndex;
+        o->coin = this->coin;
+        o->bulletSerialNumber = this->bulletSerialNumber;
+        o->bullets = this->bullets;
+        o->peer = this->peer;
+    }
+    inline Player* Player::MakeCopy() const noexcept
+    {
+        auto rtv = mempool->MPCreate<Player>();
+        this->CopyTo(rtv);
+        return rtv;
+    }
+    inline Player_p Player::MakePtrCopy() const noexcept
+    {
+        return Player_p(this->MakeCopy());
+    }
 
-
-	inline MoveObject::MoveObject(xx::MemPool* const& mempool)
+	inline MoveObject::MoveObject(xx::MemPool* const& mempool) noexcept
         : xx::Object(mempool)
 	{
 	}
@@ -1652,7 +1970,7 @@ namespace CatchFish
 	{
         if (int rtv = FromBBuffer(*bb)) throw rtv;
 	}
-    inline void MoveObject::ToBBuffer(xx::BBuffer &bb) const
+    inline void MoveObject::ToBBuffer(xx::BBuffer &bb) const noexcept
     {
         bb.Write(this->indexAtContainer);
         bb.Write(this->serialNumber);
@@ -1662,7 +1980,7 @@ namespace CatchFish
         bb.Write(this->moveInc);
         bb.Write(this->angle);
     }
-    inline int MoveObject::FromBBuffer(xx::BBuffer &bb)
+    inline int MoveObject::FromBBuffer(xx::BBuffer &bb) noexcept
     {
         int rtv = 0;
         if ((rtv = bb.Read(this->indexAtContainer))) return rtv;
@@ -1675,7 +1993,7 @@ namespace CatchFish
         return rtv;
     }
 
-    inline void MoveObject::ToString(xx::String &str) const
+    inline void MoveObject::ToString(xx::String &str) const noexcept
     {
         if (memHeader().flags)
         {
@@ -1690,7 +2008,7 @@ namespace CatchFish
         
         memHeader().flags = 0;
     }
-    inline void MoveObject::ToStringCore(xx::String &str) const
+    inline void MoveObject::ToStringCore(xx::String &str) const noexcept
     {
         this->BaseType::ToStringCore(str);
         str.Append(", \"indexAtContainer\":", this->indexAtContainer);
@@ -1701,9 +2019,29 @@ namespace CatchFish
         str.Append(", \"moveInc\":", this->moveInc);
         str.Append(", \"angle\":", this->angle);
     }
+    inline void MoveObject::CopyTo(MoveObject* const& o) const noexcept
+    {
+        o->indexAtContainer = this->indexAtContainer;
+        o->serialNumber = this->serialNumber;
+        o->bornFrameNumber = this->bornFrameNumber;
+        o->bornPos = this->bornPos;
+        o->pos = this->pos;
+        o->moveInc = this->moveInc;
+        o->angle = this->angle;
+        o->spriteBody = this->spriteBody;
+    }
+    inline MoveObject* MoveObject::MakeCopy() const noexcept
+    {
+        auto rtv = mempool->MPCreate<MoveObject>();
+        this->CopyTo(rtv);
+        return rtv;
+    }
+    inline MoveObject_p MoveObject::MakePtrCopy() const noexcept
+    {
+        return MoveObject_p(this->MakeCopy());
+    }
 
-
-	inline Bullet::Bullet(xx::MemPool* const& mempool)
+	inline Bullet::Bullet(xx::MemPool* const& mempool) noexcept
         : PKG::CatchFish::MoveObject(mempool)
 	{
 	}
@@ -1712,12 +2050,12 @@ namespace CatchFish
 	{
         if (int rtv = FromBBuffer(*bb)) throw rtv;
 	}
-    inline void Bullet::ToBBuffer(xx::BBuffer &bb) const
+    inline void Bullet::ToBBuffer(xx::BBuffer &bb) const noexcept
     {
         this->BaseType::ToBBuffer(bb);
         bb.Write(this->coin);
     }
-    inline int Bullet::FromBBuffer(xx::BBuffer &bb)
+    inline int Bullet::FromBBuffer(xx::BBuffer &bb) noexcept
     {
         int rtv = 0;
         if ((rtv = this->BaseType::FromBBuffer(bb))) return rtv;
@@ -1725,7 +2063,7 @@ namespace CatchFish
         return rtv;
     }
 
-    inline void Bullet::ToString(xx::String &str) const
+    inline void Bullet::ToString(xx::String &str) const noexcept
     {
         if (memHeader().flags)
         {
@@ -1740,14 +2078,28 @@ namespace CatchFish
         
         memHeader().flags = 0;
     }
-    inline void Bullet::ToStringCore(xx::String &str) const
+    inline void Bullet::ToStringCore(xx::String &str) const noexcept
     {
         this->BaseType::ToStringCore(str);
         str.Append(", \"coin\":", this->coin);
     }
+    inline void Bullet::CopyTo(Bullet* const& o) const noexcept
+    {
+        this->BaseType::CopyTo(o);
+        o->coin = this->coin;
+    }
+    inline Bullet* Bullet::MakeCopy() const noexcept
+    {
+        auto rtv = mempool->MPCreate<Bullet>();
+        this->CopyTo(rtv);
+        return rtv;
+    }
+    inline Bullet_p Bullet::MakePtrCopy() const noexcept
+    {
+        return Bullet_p(this->MakeCopy());
+    }
 
-
-	inline Fish::Fish(xx::MemPool* const& mempool)
+	inline Fish::Fish(xx::MemPool* const& mempool) noexcept
         : PKG::CatchFish::MoveObject(mempool)
 	{
 	}
@@ -1756,7 +2108,7 @@ namespace CatchFish
 	{
         if (int rtv = FromBBuffer(*bb)) throw rtv;
 	}
-    inline void Fish::ToBBuffer(xx::BBuffer &bb) const
+    inline void Fish::ToBBuffer(xx::BBuffer &bb) const noexcept
     {
         this->BaseType::ToBBuffer(bb);
         bb.Write(this->typeId);
@@ -1766,7 +2118,7 @@ namespace CatchFish
         bb.Write(this->moveStep);
         bb.Write(this->moveStepCount);
     }
-    inline int Fish::FromBBuffer(xx::BBuffer &bb)
+    inline int Fish::FromBBuffer(xx::BBuffer &bb) noexcept
     {
         int rtv = 0;
         if ((rtv = this->BaseType::FromBBuffer(bb))) return rtv;
@@ -1779,7 +2131,7 @@ namespace CatchFish
         return rtv;
     }
 
-    inline void Fish::ToString(xx::String &str) const
+    inline void Fish::ToString(xx::String &str) const noexcept
     {
         if (memHeader().flags)
         {
@@ -1794,7 +2146,7 @@ namespace CatchFish
         
         memHeader().flags = 0;
     }
-    inline void Fish::ToStringCore(xx::String &str) const
+    inline void Fish::ToStringCore(xx::String &str) const noexcept
     {
         this->BaseType::ToStringCore(str);
         str.Append(", \"typeId\":", this->typeId);
@@ -1804,9 +2156,28 @@ namespace CatchFish
         str.Append(", \"moveStep\":", this->moveStep);
         str.Append(", \"moveStepCount\":", this->moveStepCount);
     }
+    inline void Fish::CopyTo(Fish* const& o) const noexcept
+    {
+        this->BaseType::CopyTo(o);
+        o->typeId = this->typeId;
+        o->intAngle = this->intAngle;
+        o->cfg = this->cfg;
+        o->moveTo = this->moveTo;
+        o->moveStep = this->moveStep;
+        o->moveStepCount = this->moveStepCount;
+    }
+    inline Fish* Fish::MakeCopy() const noexcept
+    {
+        auto rtv = mempool->MPCreate<Fish>();
+        this->CopyTo(rtv);
+        return rtv;
+    }
+    inline Fish_p Fish::MakePtrCopy() const noexcept
+    {
+        return Fish_p(this->MakeCopy());
+    }
 
-
-	inline Scene::Scene(xx::MemPool* const& mempool)
+	inline Scene::Scene(xx::MemPool* const& mempool) noexcept
         : xx::Object(mempool)
 	{
 	}
@@ -1815,7 +2186,7 @@ namespace CatchFish
 	{
         if (int rtv = FromBBuffer(*bb)) throw rtv;
 	}
-    inline void Scene::ToBBuffer(xx::BBuffer &bb) const
+    inline void Scene::ToBBuffer(xx::BBuffer &bb) const noexcept
     {
         bb.Write(this->frameNumber);
         bb.Write(this->rnd);
@@ -1824,7 +2195,7 @@ namespace CatchFish
         bb.Write(this->fishs);
         bb.WriteDefaultValue<PKG::CatchFish_Client::FrameEvents_p>();
     }
-    inline int Scene::FromBBuffer(xx::BBuffer &bb)
+    inline int Scene::FromBBuffer(xx::BBuffer &bb) noexcept
     {
         int rtv = 0;
         if ((rtv = bb.Read(this->frameNumber))) return rtv;
@@ -1838,7 +2209,7 @@ namespace CatchFish
         return rtv;
     }
 
-    inline void Scene::ToString(xx::String &str) const
+    inline void Scene::ToString(xx::String &str) const noexcept
     {
         if (memHeader().flags)
         {
@@ -1853,7 +2224,7 @@ namespace CatchFish
         
         memHeader().flags = 0;
     }
-    inline void Scene::ToStringCore(xx::String &str) const
+    inline void Scene::ToStringCore(xx::String &str) const noexcept
     {
         this->BaseType::ToStringCore(str);
         str.Append(", \"frameNumber\":", this->frameNumber);
@@ -1863,12 +2234,30 @@ namespace CatchFish
         str.Append(", \"fishs\":", this->fishs);
         str.Append(", \"frameEvents\":", this->frameEvents);
     }
-
+    inline void Scene::CopyTo(Scene* const& o) const noexcept
+    {
+        o->frameNumber = this->frameNumber;
+        o->rnd = this->rnd;
+        o->players = this->players;
+        o->fishSerialNumber = this->fishSerialNumber;
+        o->fishs = this->fishs;
+        o->frameEvents = this->frameEvents;
+    }
+    inline Scene* Scene::MakeCopy() const noexcept
+    {
+        auto rtv = mempool->MPCreate<Scene>();
+        this->CopyTo(rtv);
+        return rtv;
+    }
+    inline Scene_p Scene::MakePtrCopy() const noexcept
+    {
+        return Scene_p(this->MakeCopy());
+    }
 
 }
 namespace CatchFish::Events
 {
-	inline LeavePlayer::LeavePlayer(xx::MemPool* const& mempool)
+	inline LeavePlayer::LeavePlayer(xx::MemPool* const& mempool) noexcept
         : xx::Object(mempool)
 	{
 	}
@@ -1877,18 +2266,18 @@ namespace CatchFish::Events
 	{
         if (int rtv = FromBBuffer(*bb)) throw rtv;
 	}
-    inline void LeavePlayer::ToBBuffer(xx::BBuffer &bb) const
+    inline void LeavePlayer::ToBBuffer(xx::BBuffer &bb) const noexcept
     {
         bb.Write(this->sitIndex);
     }
-    inline int LeavePlayer::FromBBuffer(xx::BBuffer &bb)
+    inline int LeavePlayer::FromBBuffer(xx::BBuffer &bb) noexcept
     {
         int rtv = 0;
         if ((rtv = bb.Read(this->sitIndex))) return rtv;
         return rtv;
     }
 
-    inline void LeavePlayer::ToString(xx::String &str) const
+    inline void LeavePlayer::ToString(xx::String &str) const noexcept
     {
         if (memHeader().flags)
         {
@@ -1903,14 +2292,27 @@ namespace CatchFish::Events
         
         memHeader().flags = 0;
     }
-    inline void LeavePlayer::ToStringCore(xx::String &str) const
+    inline void LeavePlayer::ToStringCore(xx::String &str) const noexcept
     {
         this->BaseType::ToStringCore(str);
         str.Append(", \"sitIndex\":", this->sitIndex);
     }
+    inline void LeavePlayer::CopyTo(LeavePlayer* const& o) const noexcept
+    {
+        o->sitIndex = this->sitIndex;
+    }
+    inline LeavePlayer* LeavePlayer::MakeCopy() const noexcept
+    {
+        auto rtv = mempool->MPCreate<LeavePlayer>();
+        this->CopyTo(rtv);
+        return rtv;
+    }
+    inline LeavePlayer_p LeavePlayer::MakePtrCopy() const noexcept
+    {
+        return LeavePlayer_p(this->MakeCopy());
+    }
 
-
-	inline JoinPlayer::JoinPlayer(xx::MemPool* const& mempool)
+	inline JoinPlayer::JoinPlayer(xx::MemPool* const& mempool) noexcept
         : xx::Object(mempool)
 	{
 	}
@@ -1919,13 +2321,13 @@ namespace CatchFish::Events
 	{
         if (int rtv = FromBBuffer(*bb)) throw rtv;
 	}
-    inline void JoinPlayer::ToBBuffer(xx::BBuffer &bb) const
+    inline void JoinPlayer::ToBBuffer(xx::BBuffer &bb) const noexcept
     {
         bb.Write(this->name);
         bb.Write(this->sitIndex);
         bb.Write(this->coin);
     }
-    inline int JoinPlayer::FromBBuffer(xx::BBuffer &bb)
+    inline int JoinPlayer::FromBBuffer(xx::BBuffer &bb) noexcept
     {
         int rtv = 0;
         bb.readLengthLimit = 0;
@@ -1935,7 +2337,7 @@ namespace CatchFish::Events
         return rtv;
     }
 
-    inline void JoinPlayer::ToString(xx::String &str) const
+    inline void JoinPlayer::ToString(xx::String &str) const noexcept
     {
         if (memHeader().flags)
         {
@@ -1950,7 +2352,7 @@ namespace CatchFish::Events
         
         memHeader().flags = 0;
     }
-    inline void JoinPlayer::ToStringCore(xx::String &str) const
+    inline void JoinPlayer::ToStringCore(xx::String &str) const noexcept
     {
         this->BaseType::ToStringCore(str);
         if (this->name) str.Append(", \"name\":\"", this->name, "\"");
@@ -1958,9 +2360,24 @@ namespace CatchFish::Events
         str.Append(", \"sitIndex\":", this->sitIndex);
         str.Append(", \"coin\":", this->coin);
     }
+    inline void JoinPlayer::CopyTo(JoinPlayer* const& o) const noexcept
+    {
+        o->name = this->name;
+        o->sitIndex = this->sitIndex;
+        o->coin = this->coin;
+    }
+    inline JoinPlayer* JoinPlayer::MakeCopy() const noexcept
+    {
+        auto rtv = mempool->MPCreate<JoinPlayer>();
+        this->CopyTo(rtv);
+        return rtv;
+    }
+    inline JoinPlayer_p JoinPlayer::MakePtrCopy() const noexcept
+    {
+        return JoinPlayer_p(this->MakeCopy());
+    }
 
-
-	inline Fire::Fire(xx::MemPool* const& mempool)
+	inline Fire::Fire(xx::MemPool* const& mempool) noexcept
         : xx::Object(mempool)
 	{
 	}
@@ -1969,7 +2386,7 @@ namespace CatchFish::Events
 	{
         if (int rtv = FromBBuffer(*bb)) throw rtv;
 	}
-    inline void Fire::ToBBuffer(xx::BBuffer &bb) const
+    inline void Fire::ToBBuffer(xx::BBuffer &bb) const noexcept
     {
         bb.Write(this->sitIndex);
         bb.Write(this->frameNumber);
@@ -1977,7 +2394,7 @@ namespace CatchFish::Events
         bb.Write(this->coin);
         bb.Write(this->moveInc);
     }
-    inline int Fire::FromBBuffer(xx::BBuffer &bb)
+    inline int Fire::FromBBuffer(xx::BBuffer &bb) noexcept
     {
         int rtv = 0;
         if ((rtv = bb.Read(this->sitIndex))) return rtv;
@@ -1988,7 +2405,7 @@ namespace CatchFish::Events
         return rtv;
     }
 
-    inline void Fire::ToString(xx::String &str) const
+    inline void Fire::ToString(xx::String &str) const noexcept
     {
         if (memHeader().flags)
         {
@@ -2003,7 +2420,7 @@ namespace CatchFish::Events
         
         memHeader().flags = 0;
     }
-    inline void Fire::ToStringCore(xx::String &str) const
+    inline void Fire::ToStringCore(xx::String &str) const noexcept
     {
         this->BaseType::ToStringCore(str);
         str.Append(", \"sitIndex\":", this->sitIndex);
@@ -2012,9 +2429,26 @@ namespace CatchFish::Events
         str.Append(", \"coin\":", this->coin);
         str.Append(", \"moveInc\":", this->moveInc);
     }
+    inline void Fire::CopyTo(Fire* const& o) const noexcept
+    {
+        o->sitIndex = this->sitIndex;
+        o->frameNumber = this->frameNumber;
+        o->bulletSerialNumber = this->bulletSerialNumber;
+        o->coin = this->coin;
+        o->moveInc = this->moveInc;
+    }
+    inline Fire* Fire::MakeCopy() const noexcept
+    {
+        auto rtv = mempool->MPCreate<Fire>();
+        this->CopyTo(rtv);
+        return rtv;
+    }
+    inline Fire_p Fire::MakePtrCopy() const noexcept
+    {
+        return Fire_p(this->MakeCopy());
+    }
 
-
-	inline FireBegin::FireBegin(xx::MemPool* const& mempool)
+	inline FireBegin::FireBegin(xx::MemPool* const& mempool) noexcept
         : xx::Object(mempool)
 	{
 	}
@@ -2023,12 +2457,12 @@ namespace CatchFish::Events
 	{
         if (int rtv = FromBBuffer(*bb)) throw rtv;
 	}
-    inline void FireBegin::ToBBuffer(xx::BBuffer &bb) const
+    inline void FireBegin::ToBBuffer(xx::BBuffer &bb) const noexcept
     {
         bb.Write(this->sitIndex);
         bb.Write(this->angle);
     }
-    inline int FireBegin::FromBBuffer(xx::BBuffer &bb)
+    inline int FireBegin::FromBBuffer(xx::BBuffer &bb) noexcept
     {
         int rtv = 0;
         if ((rtv = bb.Read(this->sitIndex))) return rtv;
@@ -2036,7 +2470,7 @@ namespace CatchFish::Events
         return rtv;
     }
 
-    inline void FireBegin::ToString(xx::String &str) const
+    inline void FireBegin::ToString(xx::String &str) const noexcept
     {
         if (memHeader().flags)
         {
@@ -2051,15 +2485,29 @@ namespace CatchFish::Events
         
         memHeader().flags = 0;
     }
-    inline void FireBegin::ToStringCore(xx::String &str) const
+    inline void FireBegin::ToStringCore(xx::String &str) const noexcept
     {
         this->BaseType::ToStringCore(str);
         str.Append(", \"sitIndex\":", this->sitIndex);
         str.Append(", \"angle\":", this->angle);
     }
+    inline void FireBegin::CopyTo(FireBegin* const& o) const noexcept
+    {
+        o->sitIndex = this->sitIndex;
+        o->angle = this->angle;
+    }
+    inline FireBegin* FireBegin::MakeCopy() const noexcept
+    {
+        auto rtv = mempool->MPCreate<FireBegin>();
+        this->CopyTo(rtv);
+        return rtv;
+    }
+    inline FireBegin_p FireBegin::MakePtrCopy() const noexcept
+    {
+        return FireBegin_p(this->MakeCopy());
+    }
 
-
-	inline FireChangeAngle::FireChangeAngle(xx::MemPool* const& mempool)
+	inline FireChangeAngle::FireChangeAngle(xx::MemPool* const& mempool) noexcept
         : xx::Object(mempool)
 	{
 	}
@@ -2068,12 +2516,12 @@ namespace CatchFish::Events
 	{
         if (int rtv = FromBBuffer(*bb)) throw rtv;
 	}
-    inline void FireChangeAngle::ToBBuffer(xx::BBuffer &bb) const
+    inline void FireChangeAngle::ToBBuffer(xx::BBuffer &bb) const noexcept
     {
         bb.Write(this->sitIndex);
         bb.Write(this->angle);
     }
-    inline int FireChangeAngle::FromBBuffer(xx::BBuffer &bb)
+    inline int FireChangeAngle::FromBBuffer(xx::BBuffer &bb) noexcept
     {
         int rtv = 0;
         if ((rtv = bb.Read(this->sitIndex))) return rtv;
@@ -2081,7 +2529,7 @@ namespace CatchFish::Events
         return rtv;
     }
 
-    inline void FireChangeAngle::ToString(xx::String &str) const
+    inline void FireChangeAngle::ToString(xx::String &str) const noexcept
     {
         if (memHeader().flags)
         {
@@ -2096,15 +2544,29 @@ namespace CatchFish::Events
         
         memHeader().flags = 0;
     }
-    inline void FireChangeAngle::ToStringCore(xx::String &str) const
+    inline void FireChangeAngle::ToStringCore(xx::String &str) const noexcept
     {
         this->BaseType::ToStringCore(str);
         str.Append(", \"sitIndex\":", this->sitIndex);
         str.Append(", \"angle\":", this->angle);
     }
+    inline void FireChangeAngle::CopyTo(FireChangeAngle* const& o) const noexcept
+    {
+        o->sitIndex = this->sitIndex;
+        o->angle = this->angle;
+    }
+    inline FireChangeAngle* FireChangeAngle::MakeCopy() const noexcept
+    {
+        auto rtv = mempool->MPCreate<FireChangeAngle>();
+        this->CopyTo(rtv);
+        return rtv;
+    }
+    inline FireChangeAngle_p FireChangeAngle::MakePtrCopy() const noexcept
+    {
+        return FireChangeAngle_p(this->MakeCopy());
+    }
 
-
-	inline FireEnd::FireEnd(xx::MemPool* const& mempool)
+	inline FireEnd::FireEnd(xx::MemPool* const& mempool) noexcept
         : xx::Object(mempool)
 	{
 	}
@@ -2113,18 +2575,18 @@ namespace CatchFish::Events
 	{
         if (int rtv = FromBBuffer(*bb)) throw rtv;
 	}
-    inline void FireEnd::ToBBuffer(xx::BBuffer &bb) const
+    inline void FireEnd::ToBBuffer(xx::BBuffer &bb) const noexcept
     {
         bb.Write(this->sitIndex);
     }
-    inline int FireEnd::FromBBuffer(xx::BBuffer &bb)
+    inline int FireEnd::FromBBuffer(xx::BBuffer &bb) noexcept
     {
         int rtv = 0;
         if ((rtv = bb.Read(this->sitIndex))) return rtv;
         return rtv;
     }
 
-    inline void FireEnd::ToString(xx::String &str) const
+    inline void FireEnd::ToString(xx::String &str) const noexcept
     {
         if (memHeader().flags)
         {
@@ -2139,14 +2601,27 @@ namespace CatchFish::Events
         
         memHeader().flags = 0;
     }
-    inline void FireEnd::ToStringCore(xx::String &str) const
+    inline void FireEnd::ToStringCore(xx::String &str) const noexcept
     {
         this->BaseType::ToStringCore(str);
         str.Append(", \"sitIndex\":", this->sitIndex);
     }
+    inline void FireEnd::CopyTo(FireEnd* const& o) const noexcept
+    {
+        o->sitIndex = this->sitIndex;
+    }
+    inline FireEnd* FireEnd::MakeCopy() const noexcept
+    {
+        auto rtv = mempool->MPCreate<FireEnd>();
+        this->CopyTo(rtv);
+        return rtv;
+    }
+    inline FireEnd_p FireEnd::MakePtrCopy() const noexcept
+    {
+        return FireEnd_p(this->MakeCopy());
+    }
 
-
-	inline BulletHit::BulletHit(xx::MemPool* const& mempool)
+	inline BulletHit::BulletHit(xx::MemPool* const& mempool) noexcept
         : xx::Object(mempool)
 	{
 	}
@@ -2155,12 +2630,12 @@ namespace CatchFish::Events
 	{
         if (int rtv = FromBBuffer(*bb)) throw rtv;
 	}
-    inline void BulletHit::ToBBuffer(xx::BBuffer &bb) const
+    inline void BulletHit::ToBBuffer(xx::BBuffer &bb) const noexcept
     {
         bb.Write(this->sitIndex);
         bb.Write(this->bulletSerialNumber);
     }
-    inline int BulletHit::FromBBuffer(xx::BBuffer &bb)
+    inline int BulletHit::FromBBuffer(xx::BBuffer &bb) noexcept
     {
         int rtv = 0;
         if ((rtv = bb.Read(this->sitIndex))) return rtv;
@@ -2168,7 +2643,7 @@ namespace CatchFish::Events
         return rtv;
     }
 
-    inline void BulletHit::ToString(xx::String &str) const
+    inline void BulletHit::ToString(xx::String &str) const noexcept
     {
         if (memHeader().flags)
         {
@@ -2183,15 +2658,29 @@ namespace CatchFish::Events
         
         memHeader().flags = 0;
     }
-    inline void BulletHit::ToStringCore(xx::String &str) const
+    inline void BulletHit::ToStringCore(xx::String &str) const noexcept
     {
         this->BaseType::ToStringCore(str);
         str.Append(", \"sitIndex\":", this->sitIndex);
         str.Append(", \"bulletSerialNumber\":", this->bulletSerialNumber);
     }
+    inline void BulletHit::CopyTo(BulletHit* const& o) const noexcept
+    {
+        o->sitIndex = this->sitIndex;
+        o->bulletSerialNumber = this->bulletSerialNumber;
+    }
+    inline BulletHit* BulletHit::MakeCopy() const noexcept
+    {
+        auto rtv = mempool->MPCreate<BulletHit>();
+        this->CopyTo(rtv);
+        return rtv;
+    }
+    inline BulletHit_p BulletHit::MakePtrCopy() const noexcept
+    {
+        return BulletHit_p(this->MakeCopy());
+    }
 
-
-	inline FishDead::FishDead(xx::MemPool* const& mempool)
+	inline FishDead::FishDead(xx::MemPool* const& mempool) noexcept
         : xx::Object(mempool)
 	{
 	}
@@ -2200,13 +2689,13 @@ namespace CatchFish::Events
 	{
         if (int rtv = FromBBuffer(*bb)) throw rtv;
 	}
-    inline void FishDead::ToBBuffer(xx::BBuffer &bb) const
+    inline void FishDead::ToBBuffer(xx::BBuffer &bb) const noexcept
     {
         bb.Write(this->sitIndex);
         bb.Write(this->fishSerialNumber);
         bb.Write(this->coin);
     }
-    inline int FishDead::FromBBuffer(xx::BBuffer &bb)
+    inline int FishDead::FromBBuffer(xx::BBuffer &bb) noexcept
     {
         int rtv = 0;
         if ((rtv = bb.Read(this->sitIndex))) return rtv;
@@ -2215,7 +2704,7 @@ namespace CatchFish::Events
         return rtv;
     }
 
-    inline void FishDead::ToString(xx::String &str) const
+    inline void FishDead::ToString(xx::String &str) const noexcept
     {
         if (memHeader().flags)
         {
@@ -2230,20 +2719,35 @@ namespace CatchFish::Events
         
         memHeader().flags = 0;
     }
-    inline void FishDead::ToStringCore(xx::String &str) const
+    inline void FishDead::ToStringCore(xx::String &str) const noexcept
     {
         this->BaseType::ToStringCore(str);
         str.Append(", \"sitIndex\":", this->sitIndex);
         str.Append(", \"fishSerialNumber\":", this->fishSerialNumber);
         str.Append(", \"coin\":", this->coin);
     }
-
+    inline void FishDead::CopyTo(FishDead* const& o) const noexcept
+    {
+        o->sitIndex = this->sitIndex;
+        o->fishSerialNumber = this->fishSerialNumber;
+        o->coin = this->coin;
+    }
+    inline FishDead* FishDead::MakeCopy() const noexcept
+    {
+        auto rtv = mempool->MPCreate<FishDead>();
+        this->CopyTo(rtv);
+        return rtv;
+    }
+    inline FishDead_p FishDead::MakePtrCopy() const noexcept
+    {
+        return FishDead_p(this->MakeCopy());
+    }
 
 }
 }
 namespace PKG
 {
-	inline void AllTypesRegister()
+	inline void AllTypesRegister() noexcept
 	{
 	    xx::MemPool::Register<PKG::CatchFish_Client::JoinSuccess, xx::Object>();
 	    xx::MemPool::Register<PKG::CatchFish_Client::JoinFail, xx::Object>();

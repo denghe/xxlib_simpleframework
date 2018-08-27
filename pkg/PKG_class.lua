@@ -1,5 +1,5 @@
 ﻿
-PKG_PkgGenMd5_Value = 'aced7e436a75c5ddd8aeab7abb07116a'
+PKG_PkgGenMd5_Value = '95ec433e381c309ee7fcee42f439d390'
 
 --[[
 进入游戏成功

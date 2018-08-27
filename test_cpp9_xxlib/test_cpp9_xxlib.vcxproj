@@ -116,7 +116,6 @@
     <ClInclude Include="..\xxlib\xx_string.hpp" />
     <ClInclude Include="..\xxlib\xx_uv.h" />
     <ClInclude Include="main.h" />
-    <ClInclude Include="RPC_class.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\sqlite3\sqlite3.c" />
