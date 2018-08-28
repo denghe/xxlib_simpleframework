@@ -2,20 +2,20 @@
 // todo: C# BBuffer 需要增加对 Nullable 的重载
 // todo: C# LUA 的生成物需要同步修改
 
-namespace xx{ struct Pos {}; }
+namespace xx { struct Pos {}; }
 using Sprite = void*;
 using Animation = void*;
 using ClientPeer = void*;
 #include <xx.h>
 #include "../pkg/PKG_class.h"
 
-xx::MemPool mp_, *mp = &mp_;
 #define var decltype(auto)
 int main()
 {
 	xx::MemPool::RegisterInternals();
 	PKG::AllTypesRegister();
-	
+	xx::MemPool mp_, *mp = &mp_;
+
 	var f = mp->MPCreatePtr<PKG::Foo>();
 	std::cout << f << std::endl;
 
