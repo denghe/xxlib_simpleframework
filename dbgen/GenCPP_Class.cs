@@ -14,7 +14,6 @@ public static class GenCPP_Class
         // usings
         sb.Append(@"#pragma once
 #include ""xx.h""
-#include <optional>
 
 ");
 
@@ -172,7 +171,7 @@ namespace " + c.Namespace + @"
 
             // 定位到基类
             var bt = c.BaseType;
-            var btn = c._HasBaseType() ? bt._GetTypeDecl_Cpp(templateName).CutLast() : "xx::Object";
+            var btn = c._HasBaseType() ? bt._GetTypeDecl_Cpp(templateName).CutLastStar() : "xx::Object";
 
             // desc
             // T xxxxxxxxx = defaultValue
@@ -243,7 +242,7 @@ namespace " + c.Namespace + @"
 
             // 定位到基类
             var bt = c.BaseType;
-            var btn = c._HasBaseType() ? bt._GetTypeDecl_Cpp(templateName).CutLast() : "xx::Object";
+            var btn = c._HasBaseType() ? bt._GetTypeDecl_Cpp(templateName).CutLastStar() : "xx::Object";
 
             sb.Append(@"
 	inline " + c.Name + @"::" + c.Name + @"(xx::MemPool* const& mempool)

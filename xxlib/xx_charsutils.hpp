@@ -595,4 +595,22 @@ namespace xx
 		}
 	};
 
+
+	// 适配 std::optional<T>
+	template<typename T>
+	struct StrFunc<std::optional<T>, void>
+	{
+		static inline void WriteTo(String& s, std::optional<T> const& in) noexcept
+		{
+			if (in)
+			{
+				s.Append(*in);
+			}
+			else
+			{
+				s.Append("nil");
+			}
+		}
+	};
+
 }

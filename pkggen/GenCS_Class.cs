@@ -159,7 +159,7 @@ namespace " + c.Namespace + @"
                     sb.Append(@"
             bb.Write((" + ft._GetEnumUnderlyingTypeName_Csharp() + ")this." + f.Name + ");");
                 }
-                else if (ft.IsValueType && !ft.IsPrimitive)
+                else if (!ft._IsNullable() && ft.IsValueType && !ft.IsPrimitive)
                 {
                     sb.Append(@"
             ((IBBuffer)this." + f.Name + ").ToBBuffer(bb);");
@@ -198,7 +198,7 @@ namespace " + c.Namespace + @"
                 this." + f.Name + @" = (" + ftn + @")tmp;
             }");
                 }
-                else if (ft.IsValueType && !ft.IsPrimitive)
+                else if (!ft._IsNullable() && ft.IsValueType && !ft.IsPrimitive)
                 {
                     sb.Append(@"
             ((IBBuffer)this." + f.Name + ").FromBBuffer(bb);");
@@ -236,12 +236,23 @@ namespace " + c.Namespace + @"
             base.ToStringCore(ref str);" : ""));
             foreach (var f in fs)
             {
-                if (f.FieldType._IsExternal() && !f.FieldType._GetExternalSerializable()) continue;
-                if (f.FieldType._IsString())
+                var ft = f.FieldType;
+                if (ft._IsExternal() && !ft._GetExternalSerializable()) continue;
+                if (ft._IsString())
                 {
                     sb.Append(@"
             if (" + f.Name + @" != null) str.Append("", \""" + f.Name + @"\"":\"""" + " + f.Name + @" + ""\"""");
             else str.Append("", \""" + f.Name + @"\"":nil"");");
+                }
+                else if (ft._IsNullable())
+                {
+                    sb.Append(@"
+            str.Append("", \""" + f.Name + @"\"":"" + (" + f.Name + @".HasValue ? " + f.Name + @".Value.ToString() : ""nil""));");
+                }
+                else if (ft._IsUserClass() || ft._IsString() || ft._IsList())  // todo: 进一步判断所有可能为空的
+                {
+                    sb.Append(@"
+            str.Append("", \""" + f.Name + @"\"":"" + (" + f.Name + @" == null ? ""nil"" : " + f.Name + @".ToString()));");
                 }
                 else
                 {
@@ -301,7 +312,7 @@ namespace " + c.Namespace + @"
         {
             var ct = kv.Key;
             if (ct._IsString() || ct._IsBBuffer() || ct._IsExternal() && !ct._GetExternalSerializable()) continue;
-            var ctn = ct._GetTypeDecl_Cpp(templateName).CutLast();
+            var ctn = ct._GetTypeDecl_Cpp(templateName).CutLastStar();
             var typeId = kv.Value;
 
             sb.Append(@"

@@ -78,6 +78,7 @@ namespace xx
 			Write((uint8_t)0);
 			return;
 		}
+		assert(v->memHeader().typeId);	// forget Register TypeId ? 
 		Write(v->memHeader().typeId);
 
 		auto rtv = mempool->ptrStore->Add((void*)v, dataLen - offsetRoot);

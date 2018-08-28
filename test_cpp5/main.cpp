@@ -1,87 +1,38 @@
-﻿// todo: SendRequest 返回值改为返回 std::pair<int, uint>
+﻿// todo: std::optional 用起来以支持数据库可空字段, 进而统一 db & pkg 生成器
+// todo: C# BBuffer 需要增加对 Nullable 的重载
+// todo: C# LUA 的生成物需要同步修改
 
-// todo: noexcept 嵌套狂去一波( 编译器无法编译期查出问题, 会直接crash ). 内存不足先用 assert 来解决. 不抛异常
-// todo: 用 sg 语法改进各种库
-// todo: xx_uv 从 c# 那边复制备注
+namespace xx{ struct Pos {}; }
+using Sprite = void*;
+using Animation = void*;
+using ClientPeer = void*;
+#include <xx.h>
+#include "../pkg/PKG_class.h"
 
-
-#include <xx_uv.h>
-
-inline xx::MemPool mp;
-inline xx::BBuffer_p bbSend(mp.MPCreate<xx::BBuffer>());
-inline xx::Stopwatch sw;
-
-inline void HandlePkg(xx::UvTcpUdpBase* peer, xx::BBuffer& recvData)
-{
-	xx::Object_p pkg;
-	if (recvData.ReadRoot(pkg) || !pkg)
-	{
-		peer->DisconnectImpl();
-		return;
-	}
-	switch (pkg.GetTypeId())
-	{
-		case xx::TypeId_v<xx::BBuffer>:
-		{
-			auto& bb = pkg.As<xx::BBuffer>();
-			int v = 0;
-			if (bb->Read(v))
-			{
-				peer->DisconnectImpl();
-				return;
-			}
-			v++;
-			if (v >= 100000)
-			{
-				std::cout << sw() << std::endl;
-				return;
-			}
-			bbSend->Clear();
-			bbSend->Write(v);
-			peer->Send(bbSend);
-		}
-		break;
-		default:
-			break;
-	}
-}
-
-
-
+xx::MemPool mp_, *mp = &mp_;
+#define var decltype(auto)
 int main()
 {
 	xx::MemPool::RegisterInternals();
-	xx::UvLoop loop(&mp);
-	auto listener = loop.CreateTcpListener();
-	listener->Bind("0.0.0.0", 12345);
-	listener->OnAccept = [](auto peer)
-	{
-		peer->OnReceivePackage = [peer](auto& recvData)
-		{
-			HandlePkg(peer, recvData);
-		};
-	};
-	listener->Listen();
+	PKG::AllTypesRegister();
+	
+	var f = mp->MPCreatePtr<PKG::Foo>();
+	std::cout << f << std::endl;
 
-	xx::UvTcpClient client(loop);
-	client.OnConnect = [&](auto state)
-	{
-		if (client.Alive())
-		{
-			int v = 0;
-			bbSend->Clear();
-			bbSend->Write(v);
-			client.Send(bbSend);
-		}
-	};
-	client.OnReceivePackage = [&client](auto& recvData)
-	{
-		HandlePkg(&client, recvData);
-	};
-	client.ConnectEx("127.0.0.1", 12345);
+	f->id = 1;
+	f->age = 123;
+	f->floats.MPCreate(mp);
+	f->floats->Add(1.2f);
+	f->floats->Emplace();
+	f->floats->Add(3.4f);
 
-	sw.Reset();
+	var bb = mp->MPCreatePtr<xx::BBuffer>();
+	bb->WriteRoot(f);
+	std::cout << bb << std::endl;
 
-	return loop.Run();
+	decltype(f) f2;
+	int r = bb->ReadRoot(f2);
+	assert(!r);
+	std::cout << f2 << std::endl;
+	return 0;
 }
-

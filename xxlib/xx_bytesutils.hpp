@@ -378,4 +378,37 @@ namespace xx
 		}
 	};
 
+	// 适配 std::optional<T>
+	template<typename T>
+	struct BytesFunc<std::optional<T>, void>
+	{
+		static inline void WriteTo(BBuffer& bb, std::optional<T> const &in) noexcept
+		{
+			if (in)
+			{
+				bb.Write((uint8_t)1);
+				bb.Write(*in);
+			}
+			else
+			{
+				bb.Write((uint8_t)0);
+			}
+		}
+		static inline int ReadFrom(BBuffer& bb, std::optional<T> &out) noexcept
+		{
+			uint8_t hasValue = 0;
+			if (auto r = bb.Read(hasValue)) return r;
+			if (hasValue)
+			{
+				T v;
+				if (auto r = bb.Read(v)) return r;
+				out.emplace(std::move(v));
+			}
+			else
+			{
+				out.reset();
+			}
+			return 0;
+		}
+	};
 }

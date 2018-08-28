@@ -211,7 +211,7 @@ namespace " + iface.Namespace + @"
                     throw new NotSupportedException();
                 }
                 // 单结果集
-                else if (rt.IsGenericType && rt.Name == "List`1")
+                else if (rt._IsList())
                 {
                     var ct = rt.GenericTypeArguments[0];
                     var ctn = ct._GetTypeDecl_Cpp(templateName);

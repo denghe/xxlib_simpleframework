@@ -395,7 +395,7 @@ namespace xx
             s.Append("[ ");
             for (var i = 0; i < dataLen; i++)
             {
-                s.Append(buf[i] + ", ");
+                s.Append(ListIBBufferImpl<T>.instance.ToStringCore(this, i) + ", ");
             }
             if (dataLen > 0)
             {
@@ -428,13 +428,68 @@ namespace xx
         public abstract void ToBBuffer(BBuffer bb, List<T> vs);
         public abstract void FromBBuffer(BBuffer bb, List<T> vs);
 
+        public virtual string ToStringCore(List<T> vs, int idx)
+        {
+            return vs[idx].ToString();
+        }
+
         public static ListIBBufferImpl<T> instance;
 
         static ListIBBufferImpl()
         {
-            if (typeof(T).IsEnum)
+            var t = typeof(T);
+            if (t.IsGenericType && t.IsValueType)   // Nullable<T>
             {
-                var et = Enum.GetUnderlyingType(typeof(T));
+                switch (Type.GetTypeCode(t.GetGenericArguments()[0]))
+                {
+                    //case TypeCode.Empty:
+                    //case TypeCode.Object:
+                    //case TypeCode.DBNull:
+                    //case TypeCode.Char:
+                    //case TypeCode.Decimal:
+                    //case TypeCode.DateTime:
+                    //case TypeCode.String:
+
+                    case TypeCode.Boolean:
+                        instance = new ListIBBufferImpl_NullableBoolean() as ListIBBufferImpl<T>;
+                        break;
+                    case TypeCode.SByte:
+                        instance = new ListIBBufferImpl_NullableSByte() as ListIBBufferImpl<T>;
+                        break;
+                    case TypeCode.Byte:
+                        instance = new ListIBBufferImpl_NullableByte() as ListIBBufferImpl<T>;
+                        break;
+                    case TypeCode.Int16:
+                        instance = new ListIBBufferImpl_NullableInt16() as ListIBBufferImpl<T>;
+                        break;
+                    case TypeCode.UInt16:
+                        instance = new ListIBBufferImpl_NullableUInt16() as ListIBBufferImpl<T>;
+                        break;
+                    case TypeCode.Int32:
+                        instance = new ListIBBufferImpl_NullableInt32() as ListIBBufferImpl<T>;
+                        break;
+                    case TypeCode.UInt32:
+                        instance = new ListIBBufferImpl_NullableUInt32() as ListIBBufferImpl<T>;
+                        break;
+                    case TypeCode.Int64:
+                        instance = new ListIBBufferImpl_NullableInt64() as ListIBBufferImpl<T>;
+                        break;
+                    case TypeCode.UInt64:
+                        instance = new ListIBBufferImpl_NullableUInt64() as ListIBBufferImpl<T>;
+                        break;
+                    case TypeCode.Single:
+                        instance = new ListIBBufferImpl_NullableSingle() as ListIBBufferImpl<T>;
+                        break;
+                    case TypeCode.Double:
+                        instance = new ListIBBufferImpl_NullableDouble() as ListIBBufferImpl<T>;
+                        break;
+                    default:
+                        break;// throw new NotSupportedException();
+                }
+            }
+            else if (t.IsEnum)
+            {
+                var et = Enum.GetUnderlyingType(t);
                 if (et == typeof(byte)) instance = new ListIBBufferImpl_Enum_Byte<T>() as ListIBBufferImpl<T>;
                 else if (et == typeof(sbyte)) instance = new ListIBBufferImpl_Enum_SByte<T>() as ListIBBufferImpl<T>;
                 else if (et == typeof(ushort)) instance = new ListIBBufferImpl_Enum_UInt16<T>() as ListIBBufferImpl<T>;
@@ -443,62 +498,63 @@ namespace xx
                 else if (et == typeof(int)) instance = new ListIBBufferImpl_Enum_Int32<T>() as ListIBBufferImpl<T>;
                 else if (et == typeof(ulong)) instance = new ListIBBufferImpl_Enum_UInt64<T>() as ListIBBufferImpl<T>;
                 else if (et == typeof(long)) instance = new ListIBBufferImpl_Enum_Int64<T>() as ListIBBufferImpl<T>;
-                return;
             }
-            if (typeof(IBBuffer).IsAssignableFrom(typeof(T)))
+            else if (typeof(IBBuffer).IsAssignableFrom(t))
             {
                 instance = new ListIBBufferImpl_IBBuffer<T>() as ListIBBufferImpl<T>;
-                return;
             }
-            switch (Type.GetTypeCode(typeof(T)))
+            else
             {
-                //case TypeCode.Empty:
-                //case TypeCode.Object:
-                //case TypeCode.DBNull:
-                //case TypeCode.Char:
-                //case TypeCode.Decimal:
+                switch (Type.GetTypeCode(t))
+                {
+                    //case TypeCode.Empty:
+                    //case TypeCode.Object:
+                    //case TypeCode.DBNull:
+                    //case TypeCode.Char:
+                    //case TypeCode.Decimal:
 
-                case TypeCode.Boolean:
-                    instance = new ListIBBufferImpl_Boolean() as ListIBBufferImpl<T>;
-                    break;
-                case TypeCode.SByte:
-                    instance = new ListIBBufferImpl_SByte() as ListIBBufferImpl<T>;
-                    break;
-                case TypeCode.Byte:
-                    instance = new ListIBBufferImpl_Byte() as ListIBBufferImpl<T>;
-                    break;
-                case TypeCode.Int16:
-                    instance = new ListIBBufferImpl_Int16() as ListIBBufferImpl<T>;
-                    break;
-                case TypeCode.UInt16:
-                    instance = new ListIBBufferImpl_UInt16() as ListIBBufferImpl<T>;
-                    break;
-                case TypeCode.Int32:
-                    instance = new ListIBBufferImpl_Int32() as ListIBBufferImpl<T>;
-                    break;
-                case TypeCode.UInt32:
-                    instance = new ListIBBufferImpl_UInt32() as ListIBBufferImpl<T>;
-                    break;
-                case TypeCode.Int64:
-                    instance = new ListIBBufferImpl_Int64() as ListIBBufferImpl<T>;
-                    break;
-                case TypeCode.UInt64:
-                    instance = new ListIBBufferImpl_UInt64() as ListIBBufferImpl<T>;
-                    break;
-                case TypeCode.Single:
-                    instance = new ListIBBufferImpl_Single() as ListIBBufferImpl<T>;
-                    break;
-                case TypeCode.Double:
-                    instance = new ListIBBufferImpl_Double() as ListIBBufferImpl<T>;
-                    break;
-                case TypeCode.DateTime:
-                    instance = new ListIBBufferImpl_DateTime() as ListIBBufferImpl<T>;
-                    break;
-                case TypeCode.String:
-                    instance = new ListIBBufferImpl_String() as ListIBBufferImpl<T>;
-                    break;
-                default:
-                    break;// throw new NotSupportedException(); // 似乎可以在运行时手工初始化 instance 以实现 xx.List< enum type > 的支持
+                    case TypeCode.Boolean:
+                        instance = new ListIBBufferImpl_Boolean() as ListIBBufferImpl<T>;
+                        break;
+                    case TypeCode.SByte:
+                        instance = new ListIBBufferImpl_SByte() as ListIBBufferImpl<T>;
+                        break;
+                    case TypeCode.Byte:
+                        instance = new ListIBBufferImpl_Byte() as ListIBBufferImpl<T>;
+                        break;
+                    case TypeCode.Int16:
+                        instance = new ListIBBufferImpl_Int16() as ListIBBufferImpl<T>;
+                        break;
+                    case TypeCode.UInt16:
+                        instance = new ListIBBufferImpl_UInt16() as ListIBBufferImpl<T>;
+                        break;
+                    case TypeCode.Int32:
+                        instance = new ListIBBufferImpl_Int32() as ListIBBufferImpl<T>;
+                        break;
+                    case TypeCode.UInt32:
+                        instance = new ListIBBufferImpl_UInt32() as ListIBBufferImpl<T>;
+                        break;
+                    case TypeCode.Int64:
+                        instance = new ListIBBufferImpl_Int64() as ListIBBufferImpl<T>;
+                        break;
+                    case TypeCode.UInt64:
+                        instance = new ListIBBufferImpl_UInt64() as ListIBBufferImpl<T>;
+                        break;
+                    case TypeCode.Single:
+                        instance = new ListIBBufferImpl_Single() as ListIBBufferImpl<T>;
+                        break;
+                    case TypeCode.Double:
+                        instance = new ListIBBufferImpl_Double() as ListIBBufferImpl<T>;
+                        break;
+                    case TypeCode.DateTime:
+                        instance = new ListIBBufferImpl_DateTime() as ListIBBufferImpl<T>;
+                        break;
+                    case TypeCode.String:
+                        instance = new ListIBBufferImpl_String() as ListIBBufferImpl<T>;
+                        break;
+                    default:
+                        break;// throw new NotSupportedException(); // 似乎可以在运行时手工初始化 instance 以实现 xx.List< enum type > 的支持
+                }
             }
         }
     }
@@ -536,6 +592,10 @@ namespace xx
             }
             bb.offset += len;
         }
+        public override string ToStringCore(List<T> vs, int idx)
+        {
+            return ((byte)(object)vs[idx]).ToString();
+        }
     }
     public partial class ListIBBufferImpl_Enum_SByte<T> : ListIBBufferImpl<T>
     {
@@ -570,6 +630,10 @@ namespace xx
             }
             bb.offset += len;
         }
+        public override string ToStringCore(List<T> vs, int idx)
+        {
+            return ((sbyte)(object)vs[idx]).ToString();
+        }
     }
     public partial class ListIBBufferImpl_Enum_UInt16<T> : ListIBBufferImpl<T>
     {
@@ -601,6 +665,10 @@ namespace xx
                 bb.Read(ref tmp);
                 vsBuf[i] = (T)(object)tmp;
             }
+        }
+        public override string ToStringCore(List<T> vs, int idx)
+        {
+            return ((ushort)(object)vs[idx]).ToString();
         }
     }
     public partial class ListIBBufferImpl_Enum_Int16<T> : ListIBBufferImpl<T>
@@ -634,6 +702,10 @@ namespace xx
                 vsBuf[i] = (T)(object)tmp;
             }
         }
+        public override string ToStringCore(List<T> vs, int idx)
+        {
+            return ((short)(object)vs[idx]).ToString();
+        }
     }
     public partial class ListIBBufferImpl_Enum_UInt32<T> : ListIBBufferImpl<T>
     {
@@ -665,6 +737,10 @@ namespace xx
                 bb.Read(ref tmp);
                 vsBuf[i] = (T)(object)tmp;
             }
+        }
+        public override string ToStringCore(List<T> vs, int idx)
+        {
+            return ((uint)(object)vs[idx]).ToString();
         }
     }
     public partial class ListIBBufferImpl_Enum_Int32<T> : ListIBBufferImpl<T>
@@ -698,6 +774,10 @@ namespace xx
                 vsBuf[i] = (T)(object)tmp;
             }
         }
+        public override string ToStringCore(List<T> vs, int idx)
+        {
+            return ((int)(object)vs[idx]).ToString();
+        }
     }
     public partial class ListIBBufferImpl_Enum_UInt64<T> : ListIBBufferImpl<T>
     {
@@ -730,6 +810,10 @@ namespace xx
                 vsBuf[i] = (T)(object)tmp;
             }
         }
+        public override string ToStringCore(List<T> vs, int idx)
+        {
+            return ((ulong)(object)vs[idx]).ToString();
+        }
     }
     public partial class ListIBBufferImpl_Enum_Int64<T> : ListIBBufferImpl<T>
     {
@@ -761,6 +845,10 @@ namespace xx
                 bb.Read(ref tmp);
                 vsBuf[i] = (T)(object)tmp;
             }
+        }
+        public override string ToStringCore(List<T> vs, int idx)
+        {
+            return ((long)(object)vs[idx]).ToString();
         }
     }
 
@@ -820,85 +908,116 @@ namespace xx
     {
         public override void ToBBuffer(BBuffer bb, List<bool> vs)
         {
-            var bits = vs.dataLen;
-            bb.WriteLength(bits);
-            if (bits == 0) return;
+            var vsDataLen = vs.dataLen;
+            bb.WriteLength(vsDataLen);
+            if (vsDataLen == 0) return;
 
-            var bytes = (bits + 7) >> 3;
-            bb.Reserve(bb.dataLen + bytes);
-            var bbBuf = bb.buf;
-
-            var mod = bits % 8;
-            if (mod > 0)
+            bb.Reserve(bb.dataLen + vsDataLen);
+            var vsBuf = vs.buf;
+            for (int i = 0; i < vsDataLen; i++)
             {
-                --bytes;
-            }
-            byte n = 0;
-            for (var i = 0; i < bytes; ++i)
-            {
-                var p = i << 3;
-                if (vs[p + 0]) n |= 1;
-                if (vs[p + 1]) n |= 2;
-                if (vs[p + 2]) n |= 4;
-                if (vs[p + 3]) n |= 8;
-                if (vs[p + 4]) n |= 16;
-                if (vs[p + 5]) n |= 32;
-                if (vs[p + 6]) n |= 64;
-                if (vs[p + 7]) n |= 128;
-                bbBuf[bb.dataLen++] = n;
-            }
-            if (mod > 0)
-            {
-                n = 0;
-                var offset = bytes << 3;
-                for (var i = 0; i < mod; ++i)
-                {
-                    if (vs[offset + i])
-                    {
-                        n |= (byte)(1 << i);
-                    }
-                }
-                bbBuf[bb.dataLen++] = n;
+                bb.Write(vsBuf[i]);     // 先用着这个不优化的方案
             }
         }
         public override void FromBBuffer(BBuffer bb, List<bool> vs)
         {
             int len = bb.ReadLength();
             if (bb.readLengthLimit != 0 && len > bb.readLengthLimit) throw new Exception("overflow of limit");
-            var bytes = (len + 7) >> 3;
             vs.Resize(len);
             if (len == 0) return;
 
-            var bbOffset = bb.offset;
-            var bbBuf = bb.buf;
-
-            var mod = len % 8;
-            if (mod > 0)
+            bool tmp = false;
+            var vsBuf = vs.buf;
+            for (int i = 0; i < len; i++)
             {
-                --bytes;
+                bb.Read(ref tmp);
+                vsBuf[i] = tmp;
             }
-            for (var i = 0; i < bytes; ++i)
-            {
-                var n = bbBuf[bbOffset + i];
-                vs.Add((n & 1) > 0);
-                vs.Add((n & 2) > 0);
-                vs.Add((n & 4) > 0);
-                vs.Add((n & 8) > 0);
-                vs.Add((n & 16) > 0);
-                vs.Add((n & 32) > 0);
-                vs.Add((n & 64) > 0);
-                vs.Add((n & 128) > 0);
-            }
-            if (mod > 0)
-            {
-                var n = bbBuf[bbOffset + bytes];
-                for (var i = 0; i < mod; ++i)
-                {
-                    vs.Add((n & (1 << i)) > 0);
-                }
-            }
-            bb.offset += bytes;
         }
+
+        // 先禁用 bool 数组的压缩序列化以保持与 cpp 端一致
+        //public override void ToBBuffer(BBuffer bb, List<bool> vs)
+        //{
+        //    var bits = vs.dataLen;
+        //    bb.WriteLength(bits);
+        //    if (bits == 0) return;
+
+        //    var bytes = (bits + 7) >> 3;
+        //    bb.Reserve(bb.dataLen + bytes);
+        //    var bbBuf = bb.buf;
+
+        //    var mod = bits % 8;
+        //    if (mod > 0)
+        //    {
+        //        --bytes;
+        //    }
+        //    byte n = 0;
+        //    for (var i = 0; i < bytes; ++i)
+        //    {
+        //        var p = i << 3;
+        //        if (vs[p + 0]) n |= 1;
+        //        if (vs[p + 1]) n |= 2;
+        //        if (vs[p + 2]) n |= 4;
+        //        if (vs[p + 3]) n |= 8;
+        //        if (vs[p + 4]) n |= 16;
+        //        if (vs[p + 5]) n |= 32;
+        //        if (vs[p + 6]) n |= 64;
+        //        if (vs[p + 7]) n |= 128;
+        //        bbBuf[bb.dataLen++] = n;
+        //    }
+        //    if (mod > 0)
+        //    {
+        //        n = 0;
+        //        var offset = bytes << 3;
+        //        for (var i = 0; i < mod; ++i)
+        //        {
+        //            if (vs[offset + i])
+        //            {
+        //                n |= (byte)(1 << i);
+        //            }
+        //        }
+        //        bbBuf[bb.dataLen++] = n;
+        //    }
+        //}
+
+        //public override void FromBBuffer(BBuffer bb, List<bool> vs)
+        //{
+        //    int len = bb.ReadLength();
+        //    if (bb.readLengthLimit != 0 && len > bb.readLengthLimit) throw new Exception("overflow of limit");
+        //    var bytes = (len + 7) >> 3;
+        //    vs.Resize(len);
+        //    if (len == 0) return;
+
+        //    var bbOffset = bb.offset;
+        //    var bbBuf = bb.buf;
+
+        //    var mod = len % 8;
+        //    if (mod > 0)
+        //    {
+        //        --bytes;
+        //    }
+        //    for (var i = 0; i < bytes; ++i)
+        //    {
+        //        var n = bbBuf[bbOffset + i];
+        //        vs.Add((n & 1) > 0);
+        //        vs.Add((n & 2) > 0);
+        //        vs.Add((n & 4) > 0);
+        //        vs.Add((n & 8) > 0);
+        //        vs.Add((n & 16) > 0);
+        //        vs.Add((n & 32) > 0);
+        //        vs.Add((n & 64) > 0);
+        //        vs.Add((n & 128) > 0);
+        //    }
+        //    if (mod > 0)
+        //    {
+        //        var n = bbBuf[bbOffset + bytes];
+        //        for (var i = 0; i < mod; ++i)
+        //        {
+        //            vs.Add((n & (1 << i)) > 0);
+        //        }
+        //    }
+        //    bb.offset += bytes;
+        //}
     }
     public partial class ListIBBufferImpl_SByte : ListIBBufferImpl<sbyte>
     {
@@ -1248,6 +1367,398 @@ namespace xx
                 bb.Read(ref tmp);
                 vsBuf[i] = tmp;
             }
+        }
+        public override string ToStringCore(List<string> vs, int idx)
+        {
+            return "\"" + vs[idx] + "\"";
+        }
+    }
+
+
+
+    public partial class ListIBBufferImpl_NullableBoolean : ListIBBufferImpl<bool?>
+    {
+        public override void ToBBuffer(BBuffer bb, List<bool?> vs)
+        {
+            var vsDataLen = vs.dataLen;
+            bb.WriteLength(vsDataLen);
+            if (vsDataLen == 0) return;
+
+            bb.Reserve(bb.dataLen + vsDataLen * 2);
+            var vsBuf = vs.buf;
+            for (int i = 0; i < vsDataLen; i++)
+            {
+                bb.Write(vsBuf[i]);
+            }
+        }
+        public override void FromBBuffer(BBuffer bb, List<bool?> vs)
+        {
+            int len = bb.ReadLength();
+            if (bb.readLengthLimit != 0 && len > bb.readLengthLimit) throw new Exception("overflow of limit");
+            vs.Resize(len);
+            if (len == 0) return;
+
+            bool? tmp = null;
+            var vsBuf = vs.buf;
+            for (int i = 0; i < len; i++)
+            {
+                bb.Read(ref tmp);
+                vsBuf[i] = tmp;
+            }
+        }
+        public override string ToStringCore(List<bool?> vs, int idx)
+        {
+            return vs[idx].HasValue ? vs[idx].Value.ToString() : "nil";
+        }
+    }
+    public partial class ListIBBufferImpl_NullableSByte : ListIBBufferImpl<sbyte?>
+    {
+        public override void ToBBuffer(BBuffer bb, List<sbyte?> vs)
+        {
+            var vsDataLen = vs.dataLen;
+            bb.WriteLength(vsDataLen);
+            if (vsDataLen == 0) return;
+
+            bb.Reserve(bb.dataLen + vsDataLen * 2);
+            var vsBuf = vs.buf;
+            for (int i = 0; i < vsDataLen; i++)
+            {
+                bb.Write(vsBuf[i]);
+            }
+        }
+        public override void FromBBuffer(BBuffer bb, List<sbyte?> vs)
+        {
+            int len = bb.ReadLength();
+            if (bb.readLengthLimit != 0 && len > bb.readLengthLimit) throw new Exception("overflow of limit");
+            vs.Resize(len);
+            if (len == 0) return;
+
+            sbyte? tmp = null;
+            var vsBuf = vs.buf;
+            for (int i = 0; i < len; i++)
+            {
+                bb.Read(ref tmp);
+                vsBuf[i] = tmp;
+            }
+        }
+        public override string ToStringCore(List<sbyte?> vs, int idx)
+        {
+            return vs[idx].HasValue ? vs[idx].Value.ToString() : "nil";
+        }
+    }
+    public partial class ListIBBufferImpl_NullableByte : ListIBBufferImpl<byte?>
+    {
+        public override void ToBBuffer(BBuffer bb, List<byte?> vs)
+        {
+            var vsDataLen = vs.dataLen;
+            bb.WriteLength(vsDataLen);
+            if (vsDataLen == 0) return;
+
+            bb.Reserve(bb.dataLen + vsDataLen * 2);
+            var vsBuf = vs.buf;
+            for (int i = 0; i < vsDataLen; i++)
+            {
+                bb.Write(vsBuf[i]);
+            }
+        }
+        public override void FromBBuffer(BBuffer bb, List<byte?> vs)
+        {
+            int len = bb.ReadLength();
+            if (bb.readLengthLimit != 0 && len > bb.readLengthLimit) throw new Exception("overflow of limit");
+            vs.Resize(len);
+            if (len == 0) return;
+
+            byte? tmp = null;
+            var vsBuf = vs.buf;
+            for (int i = 0; i < len; i++)
+            {
+                bb.Read(ref tmp);
+                vsBuf[i] = tmp;
+            }
+        }
+        public override string ToStringCore(List<byte?> vs, int idx)
+        {
+            return vs[idx].HasValue ? vs[idx].Value.ToString() : "nil";
+        }
+    }
+    public partial class ListIBBufferImpl_NullableInt16 : ListIBBufferImpl<short?>
+    {
+        public override void ToBBuffer(BBuffer bb, List<short?> vs)
+        {
+            var vsDataLen = vs.dataLen;
+            bb.WriteLength(vsDataLen);
+            if (vsDataLen == 0) return;
+
+            bb.Reserve(bb.dataLen + vsDataLen * 4);
+            var vsBuf = vs.buf;
+            for (int i = 0; i < vsDataLen; i++)
+            {
+                bb.Write(vsBuf[i]);
+            }
+        }
+        public override void FromBBuffer(BBuffer bb, List<short?> vs)
+        {
+            int len = bb.ReadLength();
+            if (bb.readLengthLimit != 0 && len > bb.readLengthLimit) throw new Exception("overflow of limit");
+            vs.Resize(len);
+            if (len == 0) return;
+
+            short? tmp = null;
+            var vsBuf = vs.buf;
+            for (int i = 0; i < len; i++)
+            {
+                bb.Read(ref tmp);
+                vsBuf[i] = tmp;
+            }
+        }
+        public override string ToStringCore(List<short?> vs, int idx)
+        {
+            return vs[idx].HasValue ? vs[idx].Value.ToString() : "nil";
+        }
+    }
+    public partial class ListIBBufferImpl_NullableUInt16 : ListIBBufferImpl<ushort?>
+    {
+        public override void ToBBuffer(BBuffer bb, List<ushort?> vs)
+        {
+            var vsDataLen = vs.dataLen;
+            bb.WriteLength(vsDataLen);
+            if (vsDataLen == 0) return;
+
+            bb.Reserve(bb.dataLen + vsDataLen * 4);
+            var vsBuf = vs.buf;
+            for (int i = 0; i < vsDataLen; i++)
+            {
+                bb.Write(vsBuf[i]);
+            }
+        }
+        public override void FromBBuffer(BBuffer bb, List<ushort?> vs)
+        {
+            int len = bb.ReadLength();
+            if (bb.readLengthLimit != 0 && len > bb.readLengthLimit) throw new Exception("overflow of limit");
+            vs.Resize(len);
+            if (len == 0) return;
+
+            ushort? tmp = null;
+            var vsBuf = vs.buf;
+            for (int i = 0; i < len; i++)
+            {
+                bb.Read(ref tmp);
+                vsBuf[i] = tmp;
+            }
+        }
+        public override string ToStringCore(List<ushort?> vs, int idx)
+        {
+            return vs[idx].HasValue ? vs[idx].Value.ToString() : "nil";
+        }
+    }
+    public partial class ListIBBufferImpl_NullableInt32 : ListIBBufferImpl<int?>
+    {
+        public override void ToBBuffer(BBuffer bb, List<int?> vs)
+        {
+            var vsDataLen = vs.dataLen;
+            bb.WriteLength(vsDataLen);
+            if (vsDataLen == 0) return;
+
+            bb.Reserve(bb.dataLen + vsDataLen * 6);
+            var vsBuf = vs.buf;
+            for (int i = 0; i < vsDataLen; i++)
+            {
+                bb.Write(vsBuf[i]);
+            }
+        }
+        public override void FromBBuffer(BBuffer bb, List<int?> vs)
+        {
+            int len = bb.ReadLength();
+            if (bb.readLengthLimit != 0 && len > bb.readLengthLimit) throw new Exception("overflow of limit");
+            vs.Resize(len);
+            if (len == 0) return;
+
+            int? tmp = null;
+            var vsBuf = vs.buf;
+            for (int i = 0; i < len; i++)
+            {
+                bb.Read(ref tmp);
+                vsBuf[i] = tmp;
+            }
+        }
+        public override string ToStringCore(List<int?> vs, int idx)
+        {
+            return vs[idx].HasValue ? vs[idx].Value.ToString() : "nil";
+        }
+    }
+    public partial class ListIBBufferImpl_NullableUInt32 : ListIBBufferImpl<uint?>
+    {
+        public override void ToBBuffer(BBuffer bb, List<uint?> vs)
+        {
+            var vsDataLen = vs.dataLen;
+            bb.WriteLength(vsDataLen);
+            if (vsDataLen == 0) return;
+
+            bb.Reserve(bb.dataLen + vsDataLen * 6);
+            var vsBuf = vs.buf;
+            for (int i = 0; i < vsDataLen; i++)
+            {
+                bb.Write(vsBuf[i]);
+            }
+        }
+        public override void FromBBuffer(BBuffer bb, List<uint?> vs)
+        {
+            int len = bb.ReadLength();
+            if (bb.readLengthLimit != 0 && len > bb.readLengthLimit) throw new Exception("overflow of limit");
+            vs.Resize(len);
+            if (len == 0) return;
+
+            uint? tmp = null;
+            var vsBuf = vs.buf;
+            for (int i = 0; i < len; i++)
+            {
+                bb.Read(ref tmp);
+                vsBuf[i] = tmp;
+            }
+        }
+        public override string ToStringCore(List<uint?> vs, int idx)
+        {
+            return vs[idx].HasValue ? vs[idx].Value.ToString() : "nil";
+        }
+    }
+    public partial class ListIBBufferImpl_NullableInt64 : ListIBBufferImpl<long?>
+    {
+        public override void ToBBuffer(BBuffer bb, List<long?> vs)
+        {
+            var vsDataLen = vs.dataLen;
+            bb.WriteLength(vsDataLen);
+            if (vsDataLen == 0) return;
+
+            bb.Reserve(bb.dataLen + vsDataLen * 10);
+            var vsBuf = vs.buf;
+            for (int i = 0; i < vsDataLen; i++)
+            {
+                bb.Write(vsBuf[i]);
+            }
+        }
+        public override void FromBBuffer(BBuffer bb, List<long?> vs)
+        {
+            int len = bb.ReadLength();
+            if (bb.readLengthLimit != 0 && len > bb.readLengthLimit) throw new Exception("overflow of limit");
+            vs.Resize(len);
+            if (len == 0) return;
+
+            long? tmp = null;
+            var vsBuf = vs.buf;
+            for (int i = 0; i < len; i++)
+            {
+                bb.Read(ref tmp);
+                vsBuf[i] = tmp;
+            }
+        }
+        public override string ToStringCore(List<long?> vs, int idx)
+        {
+            return vs[idx].HasValue ? vs[idx].Value.ToString() : "nil";
+        }
+    }
+    public partial class ListIBBufferImpl_NullableUInt64 : ListIBBufferImpl<ulong?>
+    {
+        public override void ToBBuffer(BBuffer bb, List<ulong?> vs)
+        {
+            var vsDataLen = vs.dataLen;
+            bb.WriteLength(vsDataLen);
+            if (vsDataLen == 0) return;
+
+            bb.Reserve(bb.dataLen + vsDataLen * 10);
+            var vsBuf = vs.buf;
+            for (int i = 0; i < vsDataLen; i++)
+            {
+                bb.Write(vsBuf[i]);
+            }
+        }
+        public override void FromBBuffer(BBuffer bb, List<ulong?> vs)
+        {
+            int len = bb.ReadLength();
+            if (bb.readLengthLimit != 0 && len > bb.readLengthLimit) throw new Exception("overflow of limit");
+            vs.Resize(len);
+            if (len == 0) return;
+
+            ulong? tmp = null;
+            var vsBuf = vs.buf;
+            for (int i = 0; i < len; i++)
+            {
+                bb.Read(ref tmp);
+                vsBuf[i] = tmp;
+            }
+        }
+        public override string ToStringCore(List<ulong?> vs, int idx)
+        {
+            return vs[idx].HasValue ? vs[idx].Value.ToString() : "nil";
+        }
+    }
+    public partial class ListIBBufferImpl_NullableSingle : ListIBBufferImpl<float?>
+    {
+        public override void ToBBuffer(BBuffer bb, List<float?> vs)
+        {
+            var vsDataLen = vs.dataLen;
+            bb.WriteLength(vsDataLen);
+            if (vsDataLen == 0) return;
+
+            bb.Reserve(bb.dataLen + vsDataLen * 10);
+            var vsBuf = vs.buf;
+            for (int i = 0; i < vsDataLen; i++)
+            {
+                bb.Write(vsBuf[i]);
+            }
+        }
+        public override void FromBBuffer(BBuffer bb, List<float?> vs)
+        {
+            int len = bb.ReadLength();
+            if (bb.readLengthLimit != 0 && len > bb.readLengthLimit) throw new Exception("overflow of limit");
+            vs.Resize(len);
+            if (len == 0) return;
+
+            float? tmp = null;
+            var vsBuf = vs.buf;
+            for (int i = 0; i < len; i++)
+            {
+                bb.Read(ref tmp);
+                vsBuf[i] = tmp;
+            }
+        }
+        public override string ToStringCore(List<float?> vs, int idx)
+        {
+            return vs[idx].HasValue ? vs[idx].Value.ToString() : "nil";
+        }
+    }
+    public partial class ListIBBufferImpl_NullableDouble : ListIBBufferImpl<double?>
+    {
+        public override void ToBBuffer(BBuffer bb, List<double?> vs)
+        {
+            var vsDataLen = vs.dataLen;
+            bb.WriteLength(vsDataLen);
+            if (vsDataLen == 0) return;
+
+            bb.Reserve(bb.dataLen + vsDataLen * 10);
+            var vsBuf = vs.buf;
+            for (int i = 0; i < vsDataLen; i++)
+            {
+                bb.Write(vsBuf[i]);
+            }
+        }
+        public override void FromBBuffer(BBuffer bb, List<double?> vs)
+        {
+            int len = bb.ReadLength();
+            if (bb.readLengthLimit != 0 && len > bb.readLengthLimit) throw new Exception("overflow of limit");
+            vs.Resize(len);
+            if (len == 0) return;
+
+            double? tmp = null;
+            var vsBuf = vs.buf;
+            for (int i = 0; i < len; i++)
+            {
+                bb.Read(ref tmp);
+                vsBuf[i] = tmp;
+            }
+        }
+        public override string ToStringCore(List<double?> vs, int idx)
+        {
+            return vs[idx].HasValue ? vs[idx].Value.ToString() : "nil";
         }
     }
 }

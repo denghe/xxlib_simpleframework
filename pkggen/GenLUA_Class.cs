@@ -69,18 +69,26 @@ public static class GenLUA_Class
             foreach (var f in fs)
             {
                 var ft = f.FieldType;
-                var v = f.GetValue(f.IsStatic ? null : o);
-                var dv = v._GetDefaultValueDecl_Lua(templateName);
-                sb.Append(f._GetDesc()._GetComment_Lua(8));
-                if (dv != "")
-                {
-                    sb.Append(@"
-        o." + f.Name + @" = " + dv);
-                }
-                else
+                if (o == null)
                 {
                     sb.Append(@"
         o." + f.Name + " = null");
+                }
+                else
+                {
+                    var v = f.GetValue(f.IsStatic ? null : o);
+                    var dv = v._GetDefaultValueDecl_Lua(templateName);
+                    sb.Append(f._GetDesc()._GetComment_Lua(8));
+                    if (dv != "")
+                    {
+                        sb.Append(@"
+        o." + f.Name + @" = " + dv);
+                    }
+                    else
+                    {
+                        sb.Append(@"
+        o." + f.Name + " = null");
+                    }
                 }
                 sb.Append(" -- " + ft._GetTypeDecl_Lua(templateName));
             }

@@ -1,25 +1,80 @@
-﻿#include "xx_uv.h"
+﻿#include <xx_uv.h>
 
-class Service : public xx::Object
+inline xx::MemPool mp;
+inline xx::BBuffer_p bbSend(mp.MPCreate<xx::BBuffer>());
+inline xx::Stopwatch sw;
+
+inline void HandlePkg(xx::UvTcpUdpBase* peer, xx::BBuffer& recvData)
 {
-public:
-	xx::UvLoop& loop;
-	explicit Service(xx::MemPool* const& mp, xx::UvLoop& loop)
-		: Object(mp)
-		, loop(loop)
+	xx::Object_p pkg;
+	if (recvData.ReadRoot(pkg) || !pkg)
 	{
+		peer->DisconnectImpl();
+		return;
 	}
-	void Run()
+	switch (pkg.GetTypeId())
 	{
-		loop.Run();
+		case xx::TypeId_v<xx::BBuffer>:
+		{
+			auto& bb = pkg.As<xx::BBuffer>();
+			int v = 0;
+			if (bb->Read(v))
+			{
+				peer->DisconnectImpl();
+				return;
+			}
+			v++;
+			if (v >= 100000)
+			{
+				std::cout << sw() << std::endl;
+				return;
+			}
+			bbSend->Clear();
+			bbSend->Write(v);
+			peer->Send(bbSend);
+		}
+		break;
+		default:
+			break;
 	}
-};
+}
+
+
 
 int main()
 {
-	xx::MemPool mp;
+	xx::MemPool::RegisterInternals();
 	xx::UvLoop loop(&mp);
-	auto service = mp.Create<Service>(loop);
-	service->Run();
-	return 0;
+	auto listener = loop.CreateTcpListener();
+	listener->Bind("0.0.0.0", 12345);
+	listener->OnAccept = [](auto peer)
+	{
+		peer->OnReceivePackage = [peer](auto& recvData)
+		{
+			HandlePkg(peer, recvData);
+		};
+	};
+	listener->Listen();
+
+	xx::UvTcpClient client(loop);
+	client.OnConnect = [&](auto state)
+	{
+		if (client.Alive())
+		{
+			int v = 0;
+			bbSend->Clear();
+			bbSend->Write(v);
+			client.Send(bbSend);
+		}
+	};
+	client.OnReceivePackage = [&client](auto& recvData)
+	{
+		HandlePkg(&client, recvData);
+	};
+	client.ConnectEx("127.0.0.1", 12345);
+
+	sw.Reset();
+
+	return loop.Run();
 }
+

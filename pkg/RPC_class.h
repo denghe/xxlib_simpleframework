@@ -5,7 +5,7 @@ namespace RPC
 {
 	struct PkgGenMd5
 	{
-		static constexpr char const* value = "55c2d5109559f38b3b980c8aeea10ab1";
+		static constexpr char const* value = "cd307743ab2277f8eab9d2b905390c7a";
     };
 
 namespace DB_Manage
@@ -96,13 +96,14 @@ namespace DB_Manage
         typedef MsgResult ThisType;
         typedef xx::Object BaseType;
 	    MsgResult(xx::MemPool* const& mempool) noexcept;
-	    MsgResult(xx::BBuffer *bb);
+	    MsgResult(xx::BBuffer* const& bb);
 		MsgResult(MsgResult const&) = delete;
 		MsgResult& operator=(MsgResult const&) = delete;
-        void ToString(xx::String &str) const noexcept override;
-        void ToStringCore(xx::String &str) const noexcept override;
-        void ToBBuffer(xx::BBuffer &bb) const noexcept override;
-        int FromBBuffer(xx::BBuffer &bb) noexcept override;
+        void ToString(xx::String& s) const noexcept override;
+        void ToStringCore(xx::String& s) const noexcept override;
+        void ToBBuffer(xx::BBuffer& bb) const noexcept override;
+        int FromBBuffer(xx::BBuffer& bb) noexcept override;
+        int FromBBufferCore(xx::BBuffer& bb) noexcept;
         void CopyTo(MsgResult* const& o) const noexcept;
         MsgResult* MakeCopy() const noexcept;
         MsgResult_p MakePtrCopy() const noexcept;
@@ -119,13 +120,14 @@ namespace Manage_DB
         typedef Msg ThisType;
         typedef xx::Object BaseType;
 	    Msg(xx::MemPool* const& mempool) noexcept;
-	    Msg(xx::BBuffer *bb);
+	    Msg(xx::BBuffer* const& bb);
 		Msg(Msg const&) = delete;
 		Msg& operator=(Msg const&) = delete;
-        void ToString(xx::String &str) const noexcept override;
-        void ToStringCore(xx::String &str) const noexcept override;
-        void ToBBuffer(xx::BBuffer &bb) const noexcept override;
-        int FromBBuffer(xx::BBuffer &bb) noexcept override;
+        void ToString(xx::String& s) const noexcept override;
+        void ToStringCore(xx::String& s) const noexcept override;
+        void ToBBuffer(xx::BBuffer& bb) const noexcept override;
+        int FromBBuffer(xx::BBuffer& bb) noexcept override;
+        int FromBBufferCore(xx::BBuffer& bb) noexcept;
         void CopyTo(Msg* const& o) const noexcept;
         Msg* MakeCopy() const noexcept;
         Msg_p MakePtrCopy() const noexcept;
@@ -142,13 +144,14 @@ namespace Login_Client
         typedef LoginSuccess ThisType;
         typedef xx::Object BaseType;
 	    LoginSuccess(xx::MemPool* const& mempool) noexcept;
-	    LoginSuccess(xx::BBuffer *bb);
+	    LoginSuccess(xx::BBuffer* const& bb);
 		LoginSuccess(LoginSuccess const&) = delete;
 		LoginSuccess& operator=(LoginSuccess const&) = delete;
-        void ToString(xx::String &str) const noexcept override;
-        void ToStringCore(xx::String &str) const noexcept override;
-        void ToBBuffer(xx::BBuffer &bb) const noexcept override;
-        int FromBBuffer(xx::BBuffer &bb) noexcept override;
+        void ToString(xx::String& s) const noexcept override;
+        void ToStringCore(xx::String& s) const noexcept override;
+        void ToBBuffer(xx::BBuffer& bb) const noexcept override;
+        int FromBBuffer(xx::BBuffer& bb) noexcept override;
+        int FromBBufferCore(xx::BBuffer& bb) noexcept;
         void CopyTo(LoginSuccess* const& o) const noexcept;
         LoginSuccess* MakeCopy() const noexcept;
         LoginSuccess_p MakePtrCopy() const noexcept;
@@ -166,13 +169,14 @@ namespace Client_Login
         typedef Login ThisType;
         typedef xx::Object BaseType;
 	    Login(xx::MemPool* const& mempool) noexcept;
-	    Login(xx::BBuffer *bb);
+	    Login(xx::BBuffer* const& bb);
 		Login(Login const&) = delete;
 		Login& operator=(Login const&) = delete;
-        void ToString(xx::String &str) const noexcept override;
-        void ToStringCore(xx::String &str) const noexcept override;
-        void ToBBuffer(xx::BBuffer &bb) const noexcept override;
-        int FromBBuffer(xx::BBuffer &bb) noexcept override;
+        void ToString(xx::String& s) const noexcept override;
+        void ToStringCore(xx::String& s) const noexcept override;
+        void ToBBuffer(xx::BBuffer& bb) const noexcept override;
+        int FromBBuffer(xx::BBuffer& bb) noexcept override;
+        int FromBBufferCore(xx::BBuffer& bb) noexcept;
         void CopyTo(Login* const& o) const noexcept;
         Login* MakeCopy() const noexcept;
         Login_p MakePtrCopy() const noexcept;
@@ -189,13 +193,14 @@ namespace DB_Login
         typedef AuthSuccess ThisType;
         typedef xx::Object BaseType;
 	    AuthSuccess(xx::MemPool* const& mempool) noexcept;
-	    AuthSuccess(xx::BBuffer *bb);
+	    AuthSuccess(xx::BBuffer* const& bb);
 		AuthSuccess(AuthSuccess const&) = delete;
 		AuthSuccess& operator=(AuthSuccess const&) = delete;
-        void ToString(xx::String &str) const noexcept override;
-        void ToStringCore(xx::String &str) const noexcept override;
-        void ToBBuffer(xx::BBuffer &bb) const noexcept override;
-        int FromBBuffer(xx::BBuffer &bb) noexcept override;
+        void ToString(xx::String& s) const noexcept override;
+        void ToStringCore(xx::String& s) const noexcept override;
+        void ToBBuffer(xx::BBuffer& bb) const noexcept override;
+        int FromBBuffer(xx::BBuffer& bb) noexcept override;
+        int FromBBufferCore(xx::BBuffer& bb) noexcept;
         void CopyTo(AuthSuccess* const& o) const noexcept;
         AuthSuccess* MakeCopy() const noexcept;
         AuthSuccess_p MakePtrCopy() const noexcept;
@@ -213,13 +218,14 @@ namespace Login_DB
         typedef Auth ThisType;
         typedef xx::Object BaseType;
 	    Auth(xx::MemPool* const& mempool) noexcept;
-	    Auth(xx::BBuffer *bb);
+	    Auth(xx::BBuffer* const& bb);
 		Auth(Auth const&) = delete;
 		Auth& operator=(Auth const&) = delete;
-        void ToString(xx::String &str) const noexcept override;
-        void ToStringCore(xx::String &str) const noexcept override;
-        void ToBBuffer(xx::BBuffer &bb) const noexcept override;
-        int FromBBuffer(xx::BBuffer &bb) noexcept override;
+        void ToString(xx::String& s) const noexcept override;
+        void ToStringCore(xx::String& s) const noexcept override;
+        void ToBBuffer(xx::BBuffer& bb) const noexcept override;
+        int FromBBuffer(xx::BBuffer& bb) noexcept override;
+        int FromBBufferCore(xx::BBuffer& bb) noexcept;
         void CopyTo(Auth* const& o) const noexcept;
         Auth* MakeCopy() const noexcept;
         Auth_p MakePtrCopy() const noexcept;
@@ -238,13 +244,14 @@ namespace Generic
         typedef ServiceInfo ThisType;
         typedef xx::Object BaseType;
 	    ServiceInfo(xx::MemPool* const& mempool) noexcept;
-	    ServiceInfo(xx::BBuffer *bb);
+	    ServiceInfo(xx::BBuffer* const& bb);
 		ServiceInfo(ServiceInfo const&) = delete;
 		ServiceInfo& operator=(ServiceInfo const&) = delete;
-        void ToString(xx::String &str) const noexcept override;
-        void ToStringCore(xx::String &str) const noexcept override;
-        void ToBBuffer(xx::BBuffer &bb) const noexcept override;
-        int FromBBuffer(xx::BBuffer &bb) noexcept override;
+        void ToString(xx::String& s) const noexcept override;
+        void ToStringCore(xx::String& s) const noexcept override;
+        void ToBBuffer(xx::BBuffer& bb) const noexcept override;
+        int FromBBuffer(xx::BBuffer& bb) noexcept override;
+        int FromBBufferCore(xx::BBuffer& bb) noexcept;
         void CopyTo(ServiceInfo* const& o) const noexcept;
         ServiceInfo* MakeCopy() const noexcept;
         ServiceInfo_p MakePtrCopy() const noexcept;
@@ -262,13 +269,14 @@ namespace Generic
         typedef Error ThisType;
         typedef xx::Object BaseType;
 	    Error(xx::MemPool* const& mempool) noexcept;
-	    Error(xx::BBuffer *bb);
+	    Error(xx::BBuffer* const& bb);
 		Error(Error const&) = delete;
 		Error& operator=(Error const&) = delete;
-        void ToString(xx::String &str) const noexcept override;
-        void ToStringCore(xx::String &str) const noexcept override;
-        void ToBBuffer(xx::BBuffer &bb) const noexcept override;
-        int FromBBuffer(xx::BBuffer &bb) noexcept override;
+        void ToString(xx::String& s) const noexcept override;
+        void ToStringCore(xx::String& s) const noexcept override;
+        void ToBBuffer(xx::BBuffer& bb) const noexcept override;
+        int FromBBuffer(xx::BBuffer& bb) noexcept override;
+        int FromBBufferCore(xx::BBuffer& bb) noexcept;
         void CopyTo(Error* const& o) const noexcept;
         Error* MakeCopy() const noexcept;
         Error_p MakePtrCopy() const noexcept;
@@ -283,13 +291,14 @@ namespace Generic
         typedef Ping ThisType;
         typedef xx::Object BaseType;
 	    Ping(xx::MemPool* const& mempool) noexcept;
-	    Ping(xx::BBuffer *bb);
+	    Ping(xx::BBuffer* const& bb);
 		Ping(Ping const&) = delete;
 		Ping& operator=(Ping const&) = delete;
-        void ToString(xx::String &str) const noexcept override;
-        void ToStringCore(xx::String &str) const noexcept override;
-        void ToBBuffer(xx::BBuffer &bb) const noexcept override;
-        int FromBBuffer(xx::BBuffer &bb) noexcept override;
+        void ToString(xx::String& s) const noexcept override;
+        void ToStringCore(xx::String& s) const noexcept override;
+        void ToBBuffer(xx::BBuffer& bb) const noexcept override;
+        int FromBBuffer(xx::BBuffer& bb) noexcept override;
+        int FromBBufferCore(xx::BBuffer& bb) noexcept;
         void CopyTo(Ping* const& o) const noexcept;
         Ping* MakeCopy() const noexcept;
         Ping_p MakePtrCopy() const noexcept;
@@ -304,13 +313,14 @@ namespace Generic
         typedef Pong ThisType;
         typedef xx::Object BaseType;
 	    Pong(xx::MemPool* const& mempool) noexcept;
-	    Pong(xx::BBuffer *bb);
+	    Pong(xx::BBuffer* const& bb);
 		Pong(Pong const&) = delete;
 		Pong& operator=(Pong const&) = delete;
-        void ToString(xx::String &str) const noexcept override;
-        void ToStringCore(xx::String &str) const noexcept override;
-        void ToBBuffer(xx::BBuffer &bb) const noexcept override;
-        int FromBBuffer(xx::BBuffer &bb) noexcept override;
+        void ToString(xx::String& s) const noexcept override;
+        void ToStringCore(xx::String& s) const noexcept override;
+        void ToBBuffer(xx::BBuffer& bb) const noexcept override;
+        int FromBBuffer(xx::BBuffer& bb) noexcept override;
+        int FromBBufferCore(xx::BBuffer& bb) noexcept;
         void CopyTo(Pong* const& o) const noexcept;
         Pong* MakeCopy() const noexcept;
         Pong_p MakePtrCopy() const noexcept;
@@ -339,43 +349,46 @@ namespace DB_Manage
         : xx::Object(mempool)
 	{
 	}
-	inline MsgResult::MsgResult(xx::BBuffer *bb)
-        : xx::Object(bb->mempool)
+	inline MsgResult::MsgResult(xx::BBuffer* const& bb)
+        : xx::Object(bb)
 	{
-        if (int rtv = FromBBuffer(*bb)) throw rtv;
+        if (int r = FromBBufferCore(*bb)) throw r;
 	}
-    inline void MsgResult::ToBBuffer(xx::BBuffer &bb) const noexcept
+    inline void MsgResult::ToBBuffer(xx::BBuffer& bb) const noexcept
     {
         bb.Write(this->txt);
     }
-    inline int MsgResult::FromBBuffer(xx::BBuffer &bb) noexcept
+    inline int MsgResult::FromBBuffer(xx::BBuffer& bb) noexcept
     {
-        int rtv = 0;
+        return this->FromBBufferCore(bb);
+    }
+    inline int MsgResult::FromBBufferCore(xx::BBuffer& bb) noexcept
+    {
         bb.readLengthLimit = 0;
-        if ((rtv = bb.Read(this->txt))) return rtv;
-        return rtv;
+        if (int r = bb.Read(this->txt)) return r;
+        return 0;
     }
 
-    inline void MsgResult::ToString(xx::String &str) const noexcept
+    inline void MsgResult::ToString(xx::String& s) const noexcept
     {
-        if (memHeader().flags)
+        if (this->memHeader().flags)
         {
-        	str.Append("[ \"***** recursived *****\" ]");
+        	s.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else memHeader().flags = 1;
+        else this->memHeader().flags = 1;
 
-        str.Append("{ \"pkgTypeName\":\"DB_Manage.MsgResult\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
-        ToStringCore(str);
-        str.Append(" }");
+        s.Append("{ \"pkgTypeName\":\"DB_Manage.MsgResult\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
+        ToStringCore(s);
+        s.Append(" }");
         
-        memHeader().flags = 0;
+        this->memHeader().flags = 0;
     }
-    inline void MsgResult::ToStringCore(xx::String &str) const noexcept
+    inline void MsgResult::ToStringCore(xx::String& s) const noexcept
     {
-        this->BaseType::ToStringCore(str);
-        if (this->txt) str.Append(", \"txt\":\"", this->txt, "\"");
-        else str.Append(", \"txt\":nil");
+        this->BaseType::ToStringCore(s);
+        if (this->txt) s.Append(", \"txt\":\"", this->txt, "\"");
+        else s.Append(", \"txt\":nil");
     }
     inline void MsgResult::CopyTo(MsgResult* const& o) const noexcept
     {
@@ -383,9 +396,9 @@ namespace DB_Manage
     }
     inline MsgResult* MsgResult::MakeCopy() const noexcept
     {
-        auto rtv = mempool->MPCreate<MsgResult>();
-        this->CopyTo(rtv);
-        return rtv;
+        auto o = mempool->MPCreate<MsgResult>();
+        this->CopyTo(o);
+        return o;
     }
     inline MsgResult_p MsgResult::MakePtrCopy() const noexcept
     {
@@ -399,43 +412,46 @@ namespace Manage_DB
         : xx::Object(mempool)
 	{
 	}
-	inline Msg::Msg(xx::BBuffer *bb)
-        : xx::Object(bb->mempool)
+	inline Msg::Msg(xx::BBuffer* const& bb)
+        : xx::Object(bb)
 	{
-        if (int rtv = FromBBuffer(*bb)) throw rtv;
+        if (int r = FromBBufferCore(*bb)) throw r;
 	}
-    inline void Msg::ToBBuffer(xx::BBuffer &bb) const noexcept
+    inline void Msg::ToBBuffer(xx::BBuffer& bb) const noexcept
     {
         bb.Write(this->txt);
     }
-    inline int Msg::FromBBuffer(xx::BBuffer &bb) noexcept
+    inline int Msg::FromBBuffer(xx::BBuffer& bb) noexcept
     {
-        int rtv = 0;
+        return this->FromBBufferCore(bb);
+    }
+    inline int Msg::FromBBufferCore(xx::BBuffer& bb) noexcept
+    {
         bb.readLengthLimit = 200;
-        if ((rtv = bb.Read(this->txt))) return rtv;
-        return rtv;
+        if (int r = bb.Read(this->txt)) return r;
+        return 0;
     }
 
-    inline void Msg::ToString(xx::String &str) const noexcept
+    inline void Msg::ToString(xx::String& s) const noexcept
     {
-        if (memHeader().flags)
+        if (this->memHeader().flags)
         {
-        	str.Append("[ \"***** recursived *****\" ]");
+        	s.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else memHeader().flags = 1;
+        else this->memHeader().flags = 1;
 
-        str.Append("{ \"pkgTypeName\":\"Manage_DB.Msg\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
-        ToStringCore(str);
-        str.Append(" }");
+        s.Append("{ \"pkgTypeName\":\"Manage_DB.Msg\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
+        ToStringCore(s);
+        s.Append(" }");
         
-        memHeader().flags = 0;
+        this->memHeader().flags = 0;
     }
-    inline void Msg::ToStringCore(xx::String &str) const noexcept
+    inline void Msg::ToStringCore(xx::String& s) const noexcept
     {
-        this->BaseType::ToStringCore(str);
-        if (this->txt) str.Append(", \"txt\":\"", this->txt, "\"");
-        else str.Append(", \"txt\":nil");
+        this->BaseType::ToStringCore(s);
+        if (this->txt) s.Append(", \"txt\":\"", this->txt, "\"");
+        else s.Append(", \"txt\":nil");
     }
     inline void Msg::CopyTo(Msg* const& o) const noexcept
     {
@@ -443,9 +459,9 @@ namespace Manage_DB
     }
     inline Msg* Msg::MakeCopy() const noexcept
     {
-        auto rtv = mempool->MPCreate<Msg>();
-        this->CopyTo(rtv);
-        return rtv;
+        auto o = mempool->MPCreate<Msg>();
+        this->CopyTo(o);
+        return o;
     }
     inline Msg_p Msg::MakePtrCopy() const noexcept
     {
@@ -459,41 +475,44 @@ namespace Login_Client
         : xx::Object(mempool)
 	{
 	}
-	inline LoginSuccess::LoginSuccess(xx::BBuffer *bb)
-        : xx::Object(bb->mempool)
+	inline LoginSuccess::LoginSuccess(xx::BBuffer* const& bb)
+        : xx::Object(bb)
 	{
-        if (int rtv = FromBBuffer(*bb)) throw rtv;
+        if (int r = FromBBufferCore(*bb)) throw r;
 	}
-    inline void LoginSuccess::ToBBuffer(xx::BBuffer &bb) const noexcept
+    inline void LoginSuccess::ToBBuffer(xx::BBuffer& bb) const noexcept
     {
         bb.Write(this->id);
     }
-    inline int LoginSuccess::FromBBuffer(xx::BBuffer &bb) noexcept
+    inline int LoginSuccess::FromBBuffer(xx::BBuffer& bb) noexcept
     {
-        int rtv = 0;
-        if ((rtv = bb.Read(this->id))) return rtv;
-        return rtv;
+        return this->FromBBufferCore(bb);
+    }
+    inline int LoginSuccess::FromBBufferCore(xx::BBuffer& bb) noexcept
+    {
+        if (int r = bb.Read(this->id)) return r;
+        return 0;
     }
 
-    inline void LoginSuccess::ToString(xx::String &str) const noexcept
+    inline void LoginSuccess::ToString(xx::String& s) const noexcept
     {
-        if (memHeader().flags)
+        if (this->memHeader().flags)
         {
-        	str.Append("[ \"***** recursived *****\" ]");
+        	s.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else memHeader().flags = 1;
+        else this->memHeader().flags = 1;
 
-        str.Append("{ \"pkgTypeName\":\"Login_Client.LoginSuccess\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
-        ToStringCore(str);
-        str.Append(" }");
+        s.Append("{ \"pkgTypeName\":\"Login_Client.LoginSuccess\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
+        ToStringCore(s);
+        s.Append(" }");
         
-        memHeader().flags = 0;
+        this->memHeader().flags = 0;
     }
-    inline void LoginSuccess::ToStringCore(xx::String &str) const noexcept
+    inline void LoginSuccess::ToStringCore(xx::String& s) const noexcept
     {
-        this->BaseType::ToStringCore(str);
-        str.Append(", \"id\":", this->id);
+        this->BaseType::ToStringCore(s);
+        s.Append(", \"id\":", this->id);
     }
     inline void LoginSuccess::CopyTo(LoginSuccess* const& o) const noexcept
     {
@@ -501,9 +520,9 @@ namespace Login_Client
     }
     inline LoginSuccess* LoginSuccess::MakeCopy() const noexcept
     {
-        auto rtv = mempool->MPCreate<LoginSuccess>();
-        this->CopyTo(rtv);
-        return rtv;
+        auto o = mempool->MPCreate<LoginSuccess>();
+        this->CopyTo(o);
+        return o;
     }
     inline LoginSuccess_p LoginSuccess::MakePtrCopy() const noexcept
     {
@@ -517,48 +536,51 @@ namespace Client_Login
         : xx::Object(mempool)
 	{
 	}
-	inline Login::Login(xx::BBuffer *bb)
-        : xx::Object(bb->mempool)
+	inline Login::Login(xx::BBuffer* const& bb)
+        : xx::Object(bb)
 	{
-        if (int rtv = FromBBuffer(*bb)) throw rtv;
+        if (int r = FromBBufferCore(*bb)) throw r;
 	}
-    inline void Login::ToBBuffer(xx::BBuffer &bb) const noexcept
+    inline void Login::ToBBuffer(xx::BBuffer& bb) const noexcept
     {
         bb.Write(this->username);
         bb.Write(this->password);
     }
-    inline int Login::FromBBuffer(xx::BBuffer &bb) noexcept
+    inline int Login::FromBBuffer(xx::BBuffer& bb) noexcept
     {
-        int rtv = 0;
+        return this->FromBBufferCore(bb);
+    }
+    inline int Login::FromBBufferCore(xx::BBuffer& bb) noexcept
+    {
         bb.readLengthLimit = 50;
-        if ((rtv = bb.Read(this->username))) return rtv;
+        if (int r = bb.Read(this->username)) return r;
         bb.readLengthLimit = 50;
-        if ((rtv = bb.Read(this->password))) return rtv;
-        return rtv;
+        if (int r = bb.Read(this->password)) return r;
+        return 0;
     }
 
-    inline void Login::ToString(xx::String &str) const noexcept
+    inline void Login::ToString(xx::String& s) const noexcept
     {
-        if (memHeader().flags)
+        if (this->memHeader().flags)
         {
-        	str.Append("[ \"***** recursived *****\" ]");
+        	s.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else memHeader().flags = 1;
+        else this->memHeader().flags = 1;
 
-        str.Append("{ \"pkgTypeName\":\"Client_Login.Login\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
-        ToStringCore(str);
-        str.Append(" }");
+        s.Append("{ \"pkgTypeName\":\"Client_Login.Login\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
+        ToStringCore(s);
+        s.Append(" }");
         
-        memHeader().flags = 0;
+        this->memHeader().flags = 0;
     }
-    inline void Login::ToStringCore(xx::String &str) const noexcept
+    inline void Login::ToStringCore(xx::String& s) const noexcept
     {
-        this->BaseType::ToStringCore(str);
-        if (this->username) str.Append(", \"username\":\"", this->username, "\"");
-        else str.Append(", \"username\":nil");
-        if (this->password) str.Append(", \"password\":\"", this->password, "\"");
-        else str.Append(", \"password\":nil");
+        this->BaseType::ToStringCore(s);
+        if (this->username) s.Append(", \"username\":\"", this->username, "\"");
+        else s.Append(", \"username\":nil");
+        if (this->password) s.Append(", \"password\":\"", this->password, "\"");
+        else s.Append(", \"password\":nil");
     }
     inline void Login::CopyTo(Login* const& o) const noexcept
     {
@@ -567,9 +589,9 @@ namespace Client_Login
     }
     inline Login* Login::MakeCopy() const noexcept
     {
-        auto rtv = mempool->MPCreate<Login>();
-        this->CopyTo(rtv);
-        return rtv;
+        auto o = mempool->MPCreate<Login>();
+        this->CopyTo(o);
+        return o;
     }
     inline Login_p Login::MakePtrCopy() const noexcept
     {
@@ -583,41 +605,44 @@ namespace DB_Login
         : xx::Object(mempool)
 	{
 	}
-	inline AuthSuccess::AuthSuccess(xx::BBuffer *bb)
-        : xx::Object(bb->mempool)
+	inline AuthSuccess::AuthSuccess(xx::BBuffer* const& bb)
+        : xx::Object(bb)
 	{
-        if (int rtv = FromBBuffer(*bb)) throw rtv;
+        if (int r = FromBBufferCore(*bb)) throw r;
 	}
-    inline void AuthSuccess::ToBBuffer(xx::BBuffer &bb) const noexcept
+    inline void AuthSuccess::ToBBuffer(xx::BBuffer& bb) const noexcept
     {
         bb.Write(this->id);
     }
-    inline int AuthSuccess::FromBBuffer(xx::BBuffer &bb) noexcept
+    inline int AuthSuccess::FromBBuffer(xx::BBuffer& bb) noexcept
     {
-        int rtv = 0;
-        if ((rtv = bb.Read(this->id))) return rtv;
-        return rtv;
+        return this->FromBBufferCore(bb);
+    }
+    inline int AuthSuccess::FromBBufferCore(xx::BBuffer& bb) noexcept
+    {
+        if (int r = bb.Read(this->id)) return r;
+        return 0;
     }
 
-    inline void AuthSuccess::ToString(xx::String &str) const noexcept
+    inline void AuthSuccess::ToString(xx::String& s) const noexcept
     {
-        if (memHeader().flags)
+        if (this->memHeader().flags)
         {
-        	str.Append("[ \"***** recursived *****\" ]");
+        	s.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else memHeader().flags = 1;
+        else this->memHeader().flags = 1;
 
-        str.Append("{ \"pkgTypeName\":\"DB_Login.AuthSuccess\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
-        ToStringCore(str);
-        str.Append(" }");
+        s.Append("{ \"pkgTypeName\":\"DB_Login.AuthSuccess\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
+        ToStringCore(s);
+        s.Append(" }");
         
-        memHeader().flags = 0;
+        this->memHeader().flags = 0;
     }
-    inline void AuthSuccess::ToStringCore(xx::String &str) const noexcept
+    inline void AuthSuccess::ToStringCore(xx::String& s) const noexcept
     {
-        this->BaseType::ToStringCore(str);
-        str.Append(", \"id\":", this->id);
+        this->BaseType::ToStringCore(s);
+        s.Append(", \"id\":", this->id);
     }
     inline void AuthSuccess::CopyTo(AuthSuccess* const& o) const noexcept
     {
@@ -625,9 +650,9 @@ namespace DB_Login
     }
     inline AuthSuccess* AuthSuccess::MakeCopy() const noexcept
     {
-        auto rtv = mempool->MPCreate<AuthSuccess>();
-        this->CopyTo(rtv);
-        return rtv;
+        auto o = mempool->MPCreate<AuthSuccess>();
+        this->CopyTo(o);
+        return o;
     }
     inline AuthSuccess_p AuthSuccess::MakePtrCopy() const noexcept
     {
@@ -641,48 +666,51 @@ namespace Login_DB
         : xx::Object(mempool)
 	{
 	}
-	inline Auth::Auth(xx::BBuffer *bb)
-        : xx::Object(bb->mempool)
+	inline Auth::Auth(xx::BBuffer* const& bb)
+        : xx::Object(bb)
 	{
-        if (int rtv = FromBBuffer(*bb)) throw rtv;
+        if (int r = FromBBufferCore(*bb)) throw r;
 	}
-    inline void Auth::ToBBuffer(xx::BBuffer &bb) const noexcept
+    inline void Auth::ToBBuffer(xx::BBuffer& bb) const noexcept
     {
         bb.Write(this->username);
         bb.Write(this->password);
     }
-    inline int Auth::FromBBuffer(xx::BBuffer &bb) noexcept
+    inline int Auth::FromBBuffer(xx::BBuffer& bb) noexcept
     {
-        int rtv = 0;
+        return this->FromBBufferCore(bb);
+    }
+    inline int Auth::FromBBufferCore(xx::BBuffer& bb) noexcept
+    {
         bb.readLengthLimit = 0;
-        if ((rtv = bb.Read(this->username))) return rtv;
+        if (int r = bb.Read(this->username)) return r;
         bb.readLengthLimit = 0;
-        if ((rtv = bb.Read(this->password))) return rtv;
-        return rtv;
+        if (int r = bb.Read(this->password)) return r;
+        return 0;
     }
 
-    inline void Auth::ToString(xx::String &str) const noexcept
+    inline void Auth::ToString(xx::String& s) const noexcept
     {
-        if (memHeader().flags)
+        if (this->memHeader().flags)
         {
-        	str.Append("[ \"***** recursived *****\" ]");
+        	s.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else memHeader().flags = 1;
+        else this->memHeader().flags = 1;
 
-        str.Append("{ \"pkgTypeName\":\"Login_DB.Auth\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
-        ToStringCore(str);
-        str.Append(" }");
+        s.Append("{ \"pkgTypeName\":\"Login_DB.Auth\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
+        ToStringCore(s);
+        s.Append(" }");
         
-        memHeader().flags = 0;
+        this->memHeader().flags = 0;
     }
-    inline void Auth::ToStringCore(xx::String &str) const noexcept
+    inline void Auth::ToStringCore(xx::String& s) const noexcept
     {
-        this->BaseType::ToStringCore(str);
-        if (this->username) str.Append(", \"username\":\"", this->username, "\"");
-        else str.Append(", \"username\":nil");
-        if (this->password) str.Append(", \"password\":\"", this->password, "\"");
-        else str.Append(", \"password\":nil");
+        this->BaseType::ToStringCore(s);
+        if (this->username) s.Append(", \"username\":\"", this->username, "\"");
+        else s.Append(", \"username\":nil");
+        if (this->password) s.Append(", \"password\":\"", this->password, "\"");
+        else s.Append(", \"password\":nil");
     }
     inline void Auth::CopyTo(Auth* const& o) const noexcept
     {
@@ -691,9 +719,9 @@ namespace Login_DB
     }
     inline Auth* Auth::MakeCopy() const noexcept
     {
-        auto rtv = mempool->MPCreate<Auth>();
-        this->CopyTo(rtv);
-        return rtv;
+        auto o = mempool->MPCreate<Auth>();
+        this->CopyTo(o);
+        return o;
     }
     inline Auth_p Auth::MakePtrCopy() const noexcept
     {
@@ -707,41 +735,44 @@ namespace Generic
         : xx::Object(mempool)
 	{
 	}
-	inline ServiceInfo::ServiceInfo(xx::BBuffer *bb)
-        : xx::Object(bb->mempool)
+	inline ServiceInfo::ServiceInfo(xx::BBuffer* const& bb)
+        : xx::Object(bb)
 	{
-        if (int rtv = FromBBuffer(*bb)) throw rtv;
+        if (int r = FromBBufferCore(*bb)) throw r;
 	}
-    inline void ServiceInfo::ToBBuffer(xx::BBuffer &bb) const noexcept
+    inline void ServiceInfo::ToBBuffer(xx::BBuffer& bb) const noexcept
     {
         bb.Write(this->type);
     }
-    inline int ServiceInfo::FromBBuffer(xx::BBuffer &bb) noexcept
+    inline int ServiceInfo::FromBBuffer(xx::BBuffer& bb) noexcept
     {
-        int rtv = 0;
-        if ((rtv = bb.Read(this->type))) return rtv;
-        return rtv;
+        return this->FromBBufferCore(bb);
+    }
+    inline int ServiceInfo::FromBBufferCore(xx::BBuffer& bb) noexcept
+    {
+        if (int r = bb.Read(this->type)) return r;
+        return 0;
     }
 
-    inline void ServiceInfo::ToString(xx::String &str) const noexcept
+    inline void ServiceInfo::ToString(xx::String& s) const noexcept
     {
-        if (memHeader().flags)
+        if (this->memHeader().flags)
         {
-        	str.Append("[ \"***** recursived *****\" ]");
+        	s.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else memHeader().flags = 1;
+        else this->memHeader().flags = 1;
 
-        str.Append("{ \"pkgTypeName\":\"Generic.ServiceInfo\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
-        ToStringCore(str);
-        str.Append(" }");
+        s.Append("{ \"pkgTypeName\":\"Generic.ServiceInfo\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
+        ToStringCore(s);
+        s.Append(" }");
         
-        memHeader().flags = 0;
+        this->memHeader().flags = 0;
     }
-    inline void ServiceInfo::ToStringCore(xx::String &str) const noexcept
+    inline void ServiceInfo::ToStringCore(xx::String& s) const noexcept
     {
-        this->BaseType::ToStringCore(str);
-        str.Append(", \"type\":", this->type);
+        this->BaseType::ToStringCore(s);
+        s.Append(", \"type\":", this->type);
     }
     inline void ServiceInfo::CopyTo(ServiceInfo* const& o) const noexcept
     {
@@ -749,9 +780,9 @@ namespace Generic
     }
     inline ServiceInfo* ServiceInfo::MakeCopy() const noexcept
     {
-        auto rtv = mempool->MPCreate<ServiceInfo>();
-        this->CopyTo(rtv);
-        return rtv;
+        auto o = mempool->MPCreate<ServiceInfo>();
+        this->CopyTo(o);
+        return o;
     }
     inline ServiceInfo_p ServiceInfo::MakePtrCopy() const noexcept
     {
@@ -762,46 +793,49 @@ namespace Generic
         : xx::Object(mempool)
 	{
 	}
-	inline Error::Error(xx::BBuffer *bb)
-        : xx::Object(bb->mempool)
+	inline Error::Error(xx::BBuffer* const& bb)
+        : xx::Object(bb)
 	{
-        if (int rtv = FromBBuffer(*bb)) throw rtv;
+        if (int r = FromBBufferCore(*bb)) throw r;
 	}
-    inline void Error::ToBBuffer(xx::BBuffer &bb) const noexcept
+    inline void Error::ToBBuffer(xx::BBuffer& bb) const noexcept
     {
         bb.Write(this->errNo);
         bb.Write(this->errMsg);
     }
-    inline int Error::FromBBuffer(xx::BBuffer &bb) noexcept
+    inline int Error::FromBBuffer(xx::BBuffer& bb) noexcept
     {
-        int rtv = 0;
-        if ((rtv = bb.Read(this->errNo))) return rtv;
+        return this->FromBBufferCore(bb);
+    }
+    inline int Error::FromBBufferCore(xx::BBuffer& bb) noexcept
+    {
+        if (int r = bb.Read(this->errNo)) return r;
         bb.readLengthLimit = 0;
-        if ((rtv = bb.Read(this->errMsg))) return rtv;
-        return rtv;
+        if (int r = bb.Read(this->errMsg)) return r;
+        return 0;
     }
 
-    inline void Error::ToString(xx::String &str) const noexcept
+    inline void Error::ToString(xx::String& s) const noexcept
     {
-        if (memHeader().flags)
+        if (this->memHeader().flags)
         {
-        	str.Append("[ \"***** recursived *****\" ]");
+        	s.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else memHeader().flags = 1;
+        else this->memHeader().flags = 1;
 
-        str.Append("{ \"pkgTypeName\":\"Generic.Error\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
-        ToStringCore(str);
-        str.Append(" }");
+        s.Append("{ \"pkgTypeName\":\"Generic.Error\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
+        ToStringCore(s);
+        s.Append(" }");
         
-        memHeader().flags = 0;
+        this->memHeader().flags = 0;
     }
-    inline void Error::ToStringCore(xx::String &str) const noexcept
+    inline void Error::ToStringCore(xx::String& s) const noexcept
     {
-        this->BaseType::ToStringCore(str);
-        str.Append(", \"errNo\":", this->errNo);
-        if (this->errMsg) str.Append(", \"errMsg\":\"", this->errMsg, "\"");
-        else str.Append(", \"errMsg\":nil");
+        this->BaseType::ToStringCore(s);
+        s.Append(", \"errNo\":", this->errNo);
+        if (this->errMsg) s.Append(", \"errMsg\":\"", this->errMsg, "\"");
+        else s.Append(", \"errMsg\":nil");
     }
     inline void Error::CopyTo(Error* const& o) const noexcept
     {
@@ -810,9 +844,9 @@ namespace Generic
     }
     inline Error* Error::MakeCopy() const noexcept
     {
-        auto rtv = mempool->MPCreate<Error>();
-        this->CopyTo(rtv);
-        return rtv;
+        auto o = mempool->MPCreate<Error>();
+        this->CopyTo(o);
+        return o;
     }
     inline Error_p Error::MakePtrCopy() const noexcept
     {
@@ -823,41 +857,44 @@ namespace Generic
         : xx::Object(mempool)
 	{
 	}
-	inline Ping::Ping(xx::BBuffer *bb)
-        : xx::Object(bb->mempool)
+	inline Ping::Ping(xx::BBuffer* const& bb)
+        : xx::Object(bb)
 	{
-        if (int rtv = FromBBuffer(*bb)) throw rtv;
+        if (int r = FromBBufferCore(*bb)) throw r;
 	}
-    inline void Ping::ToBBuffer(xx::BBuffer &bb) const noexcept
+    inline void Ping::ToBBuffer(xx::BBuffer& bb) const noexcept
     {
         bb.Write(this->ticks);
     }
-    inline int Ping::FromBBuffer(xx::BBuffer &bb) noexcept
+    inline int Ping::FromBBuffer(xx::BBuffer& bb) noexcept
     {
-        int rtv = 0;
-        if ((rtv = bb.Read(this->ticks))) return rtv;
-        return rtv;
+        return this->FromBBufferCore(bb);
+    }
+    inline int Ping::FromBBufferCore(xx::BBuffer& bb) noexcept
+    {
+        if (int r = bb.Read(this->ticks)) return r;
+        return 0;
     }
 
-    inline void Ping::ToString(xx::String &str) const noexcept
+    inline void Ping::ToString(xx::String& s) const noexcept
     {
-        if (memHeader().flags)
+        if (this->memHeader().flags)
         {
-        	str.Append("[ \"***** recursived *****\" ]");
+        	s.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else memHeader().flags = 1;
+        else this->memHeader().flags = 1;
 
-        str.Append("{ \"pkgTypeName\":\"Generic.Ping\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
-        ToStringCore(str);
-        str.Append(" }");
+        s.Append("{ \"pkgTypeName\":\"Generic.Ping\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
+        ToStringCore(s);
+        s.Append(" }");
         
-        memHeader().flags = 0;
+        this->memHeader().flags = 0;
     }
-    inline void Ping::ToStringCore(xx::String &str) const noexcept
+    inline void Ping::ToStringCore(xx::String& s) const noexcept
     {
-        this->BaseType::ToStringCore(str);
-        str.Append(", \"ticks\":", this->ticks);
+        this->BaseType::ToStringCore(s);
+        s.Append(", \"ticks\":", this->ticks);
     }
     inline void Ping::CopyTo(Ping* const& o) const noexcept
     {
@@ -865,9 +902,9 @@ namespace Generic
     }
     inline Ping* Ping::MakeCopy() const noexcept
     {
-        auto rtv = mempool->MPCreate<Ping>();
-        this->CopyTo(rtv);
-        return rtv;
+        auto o = mempool->MPCreate<Ping>();
+        this->CopyTo(o);
+        return o;
     }
     inline Ping_p Ping::MakePtrCopy() const noexcept
     {
@@ -878,41 +915,44 @@ namespace Generic
         : xx::Object(mempool)
 	{
 	}
-	inline Pong::Pong(xx::BBuffer *bb)
-        : xx::Object(bb->mempool)
+	inline Pong::Pong(xx::BBuffer* const& bb)
+        : xx::Object(bb)
 	{
-        if (int rtv = FromBBuffer(*bb)) throw rtv;
+        if (int r = FromBBufferCore(*bb)) throw r;
 	}
-    inline void Pong::ToBBuffer(xx::BBuffer &bb) const noexcept
+    inline void Pong::ToBBuffer(xx::BBuffer& bb) const noexcept
     {
         bb.Write(this->ticks);
     }
-    inline int Pong::FromBBuffer(xx::BBuffer &bb) noexcept
+    inline int Pong::FromBBuffer(xx::BBuffer& bb) noexcept
     {
-        int rtv = 0;
-        if ((rtv = bb.Read(this->ticks))) return rtv;
-        return rtv;
+        return this->FromBBufferCore(bb);
+    }
+    inline int Pong::FromBBufferCore(xx::BBuffer& bb) noexcept
+    {
+        if (int r = bb.Read(this->ticks)) return r;
+        return 0;
     }
 
-    inline void Pong::ToString(xx::String &str) const noexcept
+    inline void Pong::ToString(xx::String& s) const noexcept
     {
-        if (memHeader().flags)
+        if (this->memHeader().flags)
         {
-        	str.Append("[ \"***** recursived *****\" ]");
+        	s.Append("[ \"***** recursived *****\" ]");
         	return;
         }
-        else memHeader().flags = 1;
+        else this->memHeader().flags = 1;
 
-        str.Append("{ \"pkgTypeName\":\"Generic.Pong\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
-        ToStringCore(str);
-        str.Append(" }");
+        s.Append("{ \"pkgTypeName\":\"Generic.Pong\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
+        ToStringCore(s);
+        s.Append(" }");
         
-        memHeader().flags = 0;
+        this->memHeader().flags = 0;
     }
-    inline void Pong::ToStringCore(xx::String &str) const noexcept
+    inline void Pong::ToStringCore(xx::String& s) const noexcept
     {
-        this->BaseType::ToStringCore(str);
-        str.Append(", \"ticks\":", this->ticks);
+        this->BaseType::ToStringCore(s);
+        s.Append(", \"ticks\":", this->ticks);
     }
     inline void Pong::CopyTo(Pong* const& o) const noexcept
     {
@@ -920,9 +960,9 @@ namespace Generic
     }
     inline Pong* Pong::MakeCopy() const noexcept
     {
-        auto rtv = mempool->MPCreate<Pong>();
-        this->CopyTo(rtv);
-        return rtv;
+        auto o = mempool->MPCreate<Pong>();
+        this->CopyTo(o);
+        return o;
     }
     inline Pong_p Pong::MakePtrCopy() const noexcept
     {

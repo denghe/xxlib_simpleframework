@@ -651,9 +651,11 @@ public static class GenExtensions
         }
     }
 
-    public static string CutLast(this string s, int n = 1)
+    public static string CutLastStar(this string s)
     {
-        return s.Substring(0, s.Length - n);
+        if (string.IsNullOrEmpty(s)) return s;
+        if (s[s.Length - 1] != '*') return s;
+        return s.Substring(0, s.Length - 1);
     }
 
 
@@ -758,7 +760,7 @@ public static class GenExtensions
     /// </summary>
     public static string _GetTypeDecl_Lua(this Type t, string templateName)
     {
-        if (t.IsGenericType)
+        if (t._IsList())
         {
             string rtv = t.Name.Substring(0, t.Name.IndexOf('`')) + "_";
             for (int i = 0; i < t.GenericTypeArguments.Length; ++i)

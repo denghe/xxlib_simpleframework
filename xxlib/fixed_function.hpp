@@ -57,7 +57,7 @@ namespace kapala
             alloc_ptr_ = [] (void* storage_ptr, void* object_ptr) {
                 if( object_ptr )
                 {
-					if constexpr (std::is_trivial_v<unref_type>)
+					if constexpr (std::is_trivial<unref_type>::value)
 					{
 						memcpy(storage_ptr, object_ptr, sizeof(unref_type));
 					}
@@ -131,7 +131,7 @@ namespace kapala
             alloc_ptr_ = [] (void* storage_ptr, void* object_ptr) {
                 if( object_ptr )
                 {
-					if constexpr (std::is_trivial_v<unref_type>)
+					if constexpr (std::is_trivial<unref_type>::value)
 					{
 						memcpy(storage_ptr, object_ptr, sizeof(unref_type));
 					}

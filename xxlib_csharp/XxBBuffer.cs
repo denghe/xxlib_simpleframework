@@ -4,7 +4,6 @@ using System.Text;
 
 namespace xx
 {
-
     /// <summary>
     /// ByteBuffer 序列化类. Stream 的替代品. 带各种 Write Read 函数.
     /// </summary>
@@ -34,6 +33,34 @@ namespace xx
         {
             v = buf[offset++];
         }
+
+        public void Write(byte? v)
+        {
+            if(v.HasValue)
+            {
+                Write((byte)1);
+                Write(v.Value);
+            }
+            else
+            {
+                Write((byte)0);
+            }
+        }
+        public void Read(ref byte? v)
+        {
+            byte hasValue = 0;
+            Read(ref hasValue);
+            if (hasValue == 1)
+            {
+                var tmp = default(byte);
+                Read(ref tmp);
+                v = tmp;
+            }
+            else
+            {
+                v = null;
+            }
+        }
         #endregion
 
         #region sbyte
@@ -44,6 +71,33 @@ namespace xx
         public void Read(ref sbyte v)
         {
             v = (sbyte)buf[offset++];
+        }
+        public void Write(sbyte? v)
+        {
+            if (v.HasValue)
+            {
+                Write((byte)1);
+                Write(v.Value);
+            }
+            else
+            {
+                Write((byte)0);
+            }
+        }
+        public void Read(ref sbyte? v)
+        {
+            byte hasValue = 0;
+            Read(ref hasValue);
+            if (hasValue == 1)
+            {
+                var tmp = default(sbyte);
+                Read(ref tmp);
+                v = tmp;
+            }
+            else
+            {
+                v = null;
+            }
         }
         #endregion
 
@@ -59,6 +113,33 @@ namespace xx
         public void Read(ref ushort v)
         {
             Bit7Read(ref v, buf, ref offset, dataLen);
+        }
+        public void Write(ushort? v)
+        {
+            if (v.HasValue)
+            {
+                Write((byte)1);
+                Write(v.Value);
+            }
+            else
+            {
+                Write((byte)0);
+            }
+        }
+        public void Read(ref ushort? v)
+        {
+            byte hasValue = 0;
+            Read(ref hasValue);
+            if (hasValue == 1)
+            {
+                var tmp = default(ushort);
+                Read(ref tmp);
+                v = tmp;
+            }
+            else
+            {
+                v = null;
+            }
         }
         #endregion
 
@@ -76,6 +157,33 @@ namespace xx
             ushort tmp = 0;
             Bit7Read(ref tmp, buf, ref offset, dataLen);
             v = ZigZagDecode(tmp);
+        }
+        public void Write(short? v)
+        {
+            if (v.HasValue)
+            {
+                Write((byte)1);
+                Write(v.Value);
+            }
+            else
+            {
+                Write((byte)0);
+            }
+        }
+        public void Read(ref short? v)
+        {
+            byte hasValue = 0;
+            Read(ref hasValue);
+            if (hasValue == 1)
+            {
+                var tmp = default(short);
+                Read(ref tmp);
+                v = tmp;
+            }
+            else
+            {
+                v = null;
+            }
         }
         #endregion
 
@@ -96,6 +204,33 @@ namespace xx
         {
             return Bit7TryRead(ref v, buf, ref offset, dataLen);
         }
+        public void Write(uint? v)
+        {
+            if (v.HasValue)
+            {
+                Write((byte)1);
+                Write(v.Value);
+            }
+            else
+            {
+                Write((byte)0);
+            }
+        }
+        public void Read(ref uint? v)
+        {
+            byte hasValue = 0;
+            Read(ref hasValue);
+            if (hasValue == 1)
+            {
+                var tmp = default(uint);
+                Read(ref tmp);
+                v = tmp;
+            }
+            else
+            {
+                v = null;
+            }
+        }
         #endregion
 
         #region int
@@ -113,6 +248,33 @@ namespace xx
             Bit7Read(ref tmp, buf, ref offset, dataLen);
             v = ZigZagDecode(tmp);
         }
+        public void Write(int? v)
+        {
+            if (v.HasValue)
+            {
+                Write((byte)1);
+                Write(v.Value);
+            }
+            else
+            {
+                Write((byte)0);
+            }
+        }
+        public void Read(ref int? v)
+        {
+            byte hasValue = 0;
+            Read(ref hasValue);
+            if (hasValue == 1)
+            {
+                var tmp = default(int);
+                Read(ref tmp);
+                v = tmp;
+            }
+            else
+            {
+                v = null;
+            }
+        }
         #endregion
 
         #region ulong
@@ -127,6 +289,33 @@ namespace xx
         public void Read(ref ulong v)
         {
             Bit7Read(ref v, buf, ref offset, dataLen);
+        }
+        public void Write(ulong? v)
+        {
+            if (v.HasValue)
+            {
+                Write((byte)1);
+                Write(v.Value);
+            }
+            else
+            {
+                Write((byte)0);
+            }
+        }
+        public void Read(ref ulong? v)
+        {
+            byte hasValue = 0;
+            Read(ref hasValue);
+            if (hasValue == 1)
+            {
+                var tmp = default(ulong);
+                Read(ref tmp);
+                v = tmp;
+            }
+            else
+            {
+                v = null;
+            }
         }
         #endregion
 
@@ -144,6 +333,33 @@ namespace xx
             ulong tmp = 0;
             Bit7Read(ref tmp, buf, ref offset, dataLen);
             v = ZigZagDecode(tmp);
+        }
+        public void Write(long? v)
+        {
+            if (v.HasValue)
+            {
+                Write((byte)1);
+                Write(v.Value);
+            }
+            else
+            {
+                Write((byte)0);
+            }
+        }
+        public void Read(ref long? v)
+        {
+            byte hasValue = 0;
+            Read(ref hasValue);
+            if (hasValue == 1)
+            {
+                var tmp = default(long);
+                Read(ref tmp);
+                v = tmp;
+            }
+            else
+            {
+                v = null;
+            }
         }
         #endregion
 
@@ -176,6 +392,33 @@ namespace xx
             };
             v = fu.f;
             offset += 4;
+        }
+        public void Write(float? v)
+        {
+            if (v.HasValue)
+            {
+                Write((byte)1);
+                Write(v.Value);
+            }
+            else
+            {
+                Write((byte)0);
+            }
+        }
+        public void Read(ref float? v)
+        {
+            byte hasValue = 0;
+            Read(ref hasValue);
+            if (hasValue == 1)
+            {
+                var tmp = default(float);
+                Read(ref tmp);
+                v = tmp;
+            }
+            else
+            {
+                v = null;
+            }
         }
         #endregion
 
@@ -273,6 +516,33 @@ namespace xx
                     throw new NotSupportedException();
             }
         }
+        public void Write(double? v)
+        {
+            if (v.HasValue)
+            {
+                Write((byte)1);
+                Write(v.Value);
+            }
+            else
+            {
+                Write((byte)0);
+            }
+        }
+        public void Read(ref double? v)
+        {
+            byte hasValue = 0;
+            Read(ref hasValue);
+            if (hasValue == 1)
+            {
+                var tmp = default(double);
+                Read(ref tmp);
+                v = tmp;
+            }
+            else
+            {
+                v = null;
+            }
+        }
         #endregion
 
         #region bool
@@ -283,6 +553,33 @@ namespace xx
         public void Read(ref bool v)
         {
             v = buf[offset++] == 1;
+        }
+        public void Write(bool? v)
+        {
+            if (v.HasValue)
+            {
+                Write((byte)1);
+                Write(v.Value);
+            }
+            else
+            {
+                Write((byte)0);
+            }
+        }
+        public void Read(ref bool? v)
+        {
+            byte hasValue = 0;
+            Read(ref hasValue);
+            if (hasValue == 1)
+            {
+                var tmp = default(bool);
+                Read(ref tmp);
+                v = tmp;
+            }
+            else
+            {
+                v = null;
+            }
         }
         #endregion
 
