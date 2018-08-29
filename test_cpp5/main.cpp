@@ -1,38 +1,47 @@
-﻿// todo: std::optional 用起来以支持数据库可空字段, 进而统一 db & pkg 生成器
-// todo: C# BBuffer 需要增加对 Nullable 的重载
-// todo: C# LUA 的生成物需要同步修改
-
-namespace xx { struct Pos {}; }
-using Sprite = void*;
-using Animation = void*;
-using ClientPeer = void*;
-#include <xx.h>
-#include "../pkg/PKG_class.h"
-
-#define var decltype(auto)
+﻿#include "../pkg/PKG_class.h"
 int main()
 {
-	xx::MemPool::RegisterInternals();
 	PKG::AllTypesRegister();
 	xx::MemPool mp_, *mp = &mp_;
 
-	var f = mp->MPCreatePtr<PKG::Foo>();
-	std::cout << f << std::endl;
+	PKG::DataSet_p ds;
+	ds.MPCreate(mp);
+	ds->tables.MPCreate(mp);
 
-	f->id = 1;
-	f->age = 123;
-	f->floats.MPCreate(mp);
-	f->floats->Add(1.2f);
-	f->floats->Emplace();
-	f->floats->Add(3.4f);
+	PKG::Table_p t;
+	t.MPCreate(mp);
+	t->parent = ds;
+	t->columns.MPCreate(mp);
+	t->rows.MPCreate(mp);
+	t->name.MPCreate(mp, "table_1");
+	ds->tables->Add(t);
 
-	var bb = mp->MPCreatePtr<xx::BBuffer>();
-	bb->WriteRoot(f);
+	PKG::TableColumn_p tc;
+	tc.MPCreate(mp);
+	tc->name.MPCreate(mp, "column_1");
+	t->columns->Add(tc);
+
+	PKG::TableRow_p tr;
+	tr.MPCreate(mp);
+	tr->values.MPCreate(mp);
+	t->rows->Add(tr);
+
+	PKG::TableRowValue_NullableInt_p trv1;
+	trv1.MPCreate(mp);
+	trv1->value = 123;
+	tr->values->Add(trv1);
+	PKG::TableRowValue_NullableInt_p trv2;
+	trv1.MPCreate(mp);
+	trv1->value.reset();	// null
+	tr->values->Add(trv1);
+
+	std::cout << ds << std::endl;
+
+	xx::BBuffer_p bb;
+	bb.MPCreate(mp);
+	bb->WriteRoot(ds);
+
 	std::cout << bb << std::endl;
 
-	decltype(f) f2;
-	int r = bb->ReadRoot(f2);
-	assert(!r);
-	std::cout << f2 << std::endl;
 	return 0;
 }

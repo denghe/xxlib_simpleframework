@@ -975,6 +975,7 @@ namespace RPC
 {
 	inline void AllTypesRegister() noexcept
 	{
+        xx::MemPool::RegisterInternals();
 	    xx::MemPool::Register<RPC::DB_Manage::MsgResult, xx::Object>();
 	    xx::MemPool::Register<RPC::Manage_DB::Msg, xx::Object>();
 	    xx::MemPool::Register<RPC::Login_Client::LoginSuccess, xx::Object>();

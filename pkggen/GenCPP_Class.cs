@@ -488,7 +488,8 @@ namespace " + c.Namespace.Replace(".", "::") + @"
 namespace " + templateName + @"
 {
 	inline void AllTypesRegister() noexcept
-	{");
+	{
+        xx::MemPool::RegisterInternals();");
         foreach (var kv in typeIds.types)
         {
             var ct = kv.Key;

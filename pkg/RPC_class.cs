@@ -634,6 +634,7 @@ namespace Generic
     {
         public static void Register()
         {
+            xx.BBuffer.RegisterInternals();
             BBuffer.Register<DB_Manage.MsgResult>(11);
             BBuffer.Register<Manage_DB.Msg>(12);
             BBuffer.Register<Login_Client.LoginSuccess>(4);

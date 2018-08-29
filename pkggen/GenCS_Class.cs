@@ -306,7 +306,8 @@ namespace " + c.Namespace + @"
     public static class AllTypes
     {
         public static void Register()
-        {");
+        {
+            xx.BBuffer.RegisterInternals();");
 
         foreach (var kv in typeIds.types)
         {

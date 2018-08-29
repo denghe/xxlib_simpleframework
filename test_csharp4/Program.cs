@@ -10,12 +10,12 @@ public static class Program
         var f = new PKG.Foo();
         Console.WriteLine(f);
 
-        f.id = 1;
-        f.age = 123;
-        f.floats = new xx.List<float?>();
-        f.floats.Add(1.2f);
-        f.floats.Add(null);
-        f.floats.Add(3.4f);
+        //f.id = 1;
+        //f.age = 123;
+        //f.floats = new xx.List<float?>();
+        //f.floats.Add(1.2f);
+        //f.floats.Add(null);
+        //f.floats.Add(3.4f);
 
         var bb = new xx.BBuffer();
         bb.WriteRoot(f);
