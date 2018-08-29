@@ -50,6 +50,7 @@
     <Compile Include="GenCS_MsSql.cs" />
     <Compile Include="GenCS_Class.cs" />
     <Compile Include="GenCS_MultiKeyDict.cs" />
+    <Compile Include="GenCS_MySql.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

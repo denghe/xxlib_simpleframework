@@ -43,6 +43,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Foos.cs" />
+    <Compile Include="Funcs.cs" />
     <Compile Include="PKG_TypeIdMappings.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

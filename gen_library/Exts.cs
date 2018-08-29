@@ -353,7 +353,11 @@ public static class GenExtensions
     {
         if (v == null) return "";
         var t = v.GetType();
-        if (t.IsValueType)
+        if (t._IsNullable())
+        {
+            return "";
+        }
+        else if (t.IsValueType)
         {
             if (t.IsEnum)
             {
@@ -394,7 +398,11 @@ public static class GenExtensions
     {
         if (v == null) return "nullptr";
         var t = v.GetType();
-        if (t.IsValueType)
+        if (t._IsNullable())
+        {
+            return "";
+        }
+        else if (t.IsValueType)
         {
             if (t.IsEnum)
             {
@@ -433,7 +441,11 @@ public static class GenExtensions
     {
         if (v == null) return "null";
         var t = v.GetType();
-        if (t.IsValueType)
+        if (t._IsNullable())
+        {
+            return "";
+        }
+        else if (t.IsValueType)
         {
             if (t.IsEnum)
             {
@@ -760,7 +772,11 @@ public static class GenExtensions
     /// </summary>
     public static string _GetTypeDecl_Lua(this Type t, string templateName)
     {
-        if (t._IsList())
+        if (t._IsNullable())
+        {
+            return "Nullable" + _GetTypeDecl_Lua(t.GenericTypeArguments[0], templateName);
+        }
+        else if (t._IsList())
         {
             string rtv = t.Name.Substring(0, t.Name.IndexOf('`')) + "_";
             for (int i = 0; i < t.GenericTypeArguments.Length; ++i)

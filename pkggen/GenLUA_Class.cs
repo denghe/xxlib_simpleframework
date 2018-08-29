@@ -116,6 +116,7 @@ public static class GenLUA_Class
                 var ft = f.FieldType;
                 var ftn = ft.IsEnum ? ft.GetEnumUnderlyingType().Name : ft._IsNumeric() ? ft.Name : "Object";
                 if (ft._IsBBuffer() || ft._IsString()) ftn = "Object";
+                if (ftn != "Object" && ft._IsNullable()) ftn = "Nullable" + ftn;
                 if (ftns.ContainsKey(ftn)) ftns[ftn]++;
                 else ftns.Add(ftn, 1);
             }
@@ -132,6 +133,7 @@ public static class GenLUA_Class
                 var ft = f.FieldType;
                 var ftn = ft.IsEnum ? ft.GetEnumUnderlyingType().Name : ft._IsNumeric() ? ft.Name : "Object";
                 if (ft._IsBBuffer() || ft._IsString()) ftn = "Object";
+                if (ftn != "Object" && ft._IsNullable()) ftn = "Nullable" + ftn;
                 if (ftns[ftn] > 1)
                 {
                     sb.Append(@"
@@ -156,8 +158,14 @@ public static class GenLUA_Class
                     }
                     else
                     {
-                        var ctn = ct.Name;
-                        fn = "Read" + ctn;
+                        if (ct._IsNullable())
+                        {
+                            fn = "ReadNullable" + ct.GetGenericArguments()[0].Name;
+                        }
+                        else
+                        {
+                            fn = "Read" + ct.Name;
+                        }
                     }
                 }
                 sb.Append(@"
@@ -190,6 +198,7 @@ public static class GenLUA_Class
                 var ft = f.FieldType;
                 var ftn = ft.IsEnum ? ft.GetEnumUnderlyingType().Name : ft._IsNumeric() ? ft.Name : "Object";
                 if (ft._IsBBuffer() || ft._IsString()) ftn = "Object";
+                if (ftn != "Object" && ft._IsNullable()) ftn = "Nullable" + ftn;
                 if (ftns[ftn] > 1)
                 {
                     sb.Append(@"

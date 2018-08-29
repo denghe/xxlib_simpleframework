@@ -2,65 +2,38 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading;
-using xx;
+using MySql.Data.MySqlClient;
 
 public static class Program
 {
+    /// <summary>
+    /// 快速执行 sql 的简易封装( 针对 MySqlFuncs ). 返回异常.
+    /// </summary>
+    public static Exception CallMySqlFuncs(Action<PKG.MySqlFuncs> a)
+    {
+        try
+        {
+            using (var conn = new MySqlConnection($"server={"127.0.0.1"};user id={"root"};password={"1"};database={"catch_fish"};port={3306};charset=utf8;sslmode=none"))
+            {
+                conn.Open();
+                var fs = new PKG.MySqlFuncs(conn);
+                a(fs);
+            }
+        }
+        catch (Exception ex)
+        {
+            return ex;
+        }
+        return null;
+    }
+
+
     static void Main(string[] args)
     {
-        BBuffer.RegisterInternals();
-
-        using (var loop = new UvLoop())
+        var e = CallMySqlFuncs(fs =>
         {
-            var tcpListener = new UvTcpListener(loop);
-            tcpListener.OnAccept = p =>
-            {
-                Console.WriteLine(p.ip + " Accepted.");
-                p.OnReceivePackage = pkg =>
-                {
-                    Console.WriteLine("listener recv " + p.ip + "'s pkg: " + pkg);
-
-                    // echo
-                    p.SendBytes(pkg);
-                };
-                p.OnDispose = () =>
-                {
-                    Console.WriteLine(p.ip + " Disconnected.");
-                };
-            };
-            tcpListener.OnDispose = () =>
-            {
-                Console.WriteLine("listener disposed.");
-            };
-            tcpListener.Bind("::", 12345);
-            //tcpListener.Bind("0.0.0.0", 12345);
-            tcpListener.Listen();
-
-
-
-            //var tcpClient = new xx.UvTcpClient(loop);
-            //int counter = 0;
-            //tcpClient.OnReceivePackage = pkg =>
-            //{
-            //    ++counter;
-            //    tcpClient.SendBytes(pkg);
-            //};
-            //tcpClient.OnConnect = status => 
-            //{
-            //    Console.WriteLine("status = " + status);
-            //    if (!tcpClient.alive) return;
-            //    // make some data for send
-            //    var bb = new xx.BBuffer();
-            //    bb.Write((byte)1);
-            //    bb.Write((byte)2);
-
-            //    tcpClient.Send(bb);
-            //};
-            //tcpClient.SetAddress("192.168.1.111", 12345);
-            //tcpClient.Connect();
-
-            Console.WriteLine("loo.Running...");
-            loop.Run();
-        }
+            var r = fs.TestSql(123);
+            Console.WriteLine(r);
+        });
     }
 }

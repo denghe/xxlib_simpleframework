@@ -71,11 +71,14 @@ namespace std
 #endif
 
 #ifndef _countof
+#ifndef _countof_IMPL
+#define _countof_IMPL
 template<typename T, size_t N>
 size_t _countof(T const (&arr)[N])
 {
 	return N;
 }
+#endif
 #endif
 
 #ifndef _offsetof
