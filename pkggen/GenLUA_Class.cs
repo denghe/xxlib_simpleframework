@@ -160,7 +160,7 @@ public static class GenLUA_Class
                     {
                         if (ct._IsNullable())
                         {
-                            fn = "ReadNullable" + ct.GetGenericArguments()[0].Name;
+                            fn = "ReadNullable" + ct.GenericTypeArguments[0].Name;
                         }
                         else
                         {
