@@ -4,7 +4,7 @@ namespace PKG
 {
     public static class PkgGenMd5
     {
-        public const string value = "9286d07d09b765b3be15a9708b6e8256"; 
+        public const string value = "5004aa29c60e22c1ff56b491076eb11a"; 
     }
 
     public partial class Foo : IBBuffer
