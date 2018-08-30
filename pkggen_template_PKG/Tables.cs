@@ -15,6 +15,11 @@ class Foo
     List<Foo> childs;
 }
 
+class FooEx : Foo
+{
+}
+
+
 class DataSet
 {
     List<Table> tables;

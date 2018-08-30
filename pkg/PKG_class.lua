@@ -1,5 +1,5 @@
 ﻿
-PKG_PkgGenMd5_Value = '5004aa29c60e22c1ff56b491076eb11a'
+PKG_PkgGenMd5_Value = '20524cbd1888bdf9d75b2cb2ff3b2731'
 
 PKG_Foo = {
     typeName = "PKG_Foo",
@@ -59,6 +59,28 @@ List_PKG_Foo_ = {
     end
 }
 BBuffer.Register( List_PKG_Foo_ )
+PKG_FooEx = {
+    typeName = "PKG_FooEx",
+    typeId = 18,
+    Create = function()
+        local o = {}
+        o.__proto = PKG_FooEx
+        o.__index = o
+        o.__newindex = o
+
+        setmetatable( o, PKG_Foo.Create() )
+        return o
+    end,
+    FromBBuffer = function( bb, o )
+        local p = getmetatable( o )
+        p.__proto.FromBBuffer( bb, p )
+    end,
+    ToBBuffer = function( bb, o )
+        local p = getmetatable( o )
+        p.__proto.ToBBuffer( bb, p )
+    end
+}
+BBuffer.Register( PKG_FooEx )
 PKG_DataSet = {
     typeName = "PKG_DataSet",
     typeId = 6,

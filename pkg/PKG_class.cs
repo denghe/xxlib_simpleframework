@@ -4,7 +4,7 @@ namespace PKG
 {
     public static class PkgGenMd5
     {
-        public const string value = "5004aa29c60e22c1ff56b491076eb11a"; 
+        public const string value = "20524cbd1888bdf9d75b2cb2ff3b2731"; 
     }
 
     public partial class Foo : IBBuffer
@@ -73,6 +73,49 @@ namespace PKG
         public bool GetToStringFlag()
         {
             return toStringFlag;
+        }
+    }
+    public partial class FooEx : Foo
+    {
+
+        public override ushort GetPackageId()
+        {
+            return TypeIdMaps<FooEx>.typeId;
+        }
+
+        public override void ToBBuffer(BBuffer bb)
+        {
+            base.ToBBuffer(bb);
+        }
+
+        public override void FromBBuffer(BBuffer bb)
+        {
+            base.FromBBuffer(bb);
+        }
+        public override void ToString(ref System.Text.StringBuilder str)
+        {
+            if (GetToStringFlag())
+            {
+        	    str.Append("[ \"***** recursived *****\" ]");
+        	    return;
+            }
+            else SetToStringFlag(true);
+
+            str.Append("{ \"pkgTypeName\":\"FooEx\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(ref str);
+            str.Append(" }");
+        
+            SetToStringFlag(false);
+        }
+        public override void ToStringCore(ref System.Text.StringBuilder str)
+        {
+            base.ToStringCore(ref str);
+        }
+        public override string ToString()
+        {
+            var sb = new System.Text.StringBuilder();
+            ToString(ref sb);
+            return sb.ToString();
         }
     }
     public partial class DataSet : IBBuffer
@@ -506,6 +549,7 @@ namespace PKG
             xx.BBuffer.RegisterInternals();
             BBuffer.Register<Foo>(3);
             BBuffer.Register<List<Foo>>(5);
+            BBuffer.Register<FooEx>(18);
             BBuffer.Register<DataSet>(6);
             BBuffer.Register<List<Table>>(7);
             BBuffer.Register<Table>(8);

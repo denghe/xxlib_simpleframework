@@ -105,7 +105,7 @@ namespace PKG
             }
         }
 
-        public Tuple<T0, int, List<T2>, int?> SelectFooFoo<T0, T2>
+        public Tuple <T0, int, List<T2>, int?> SelectFooFoo<T0, T2>
         (
             int id,
             int? age,
@@ -179,7 +179,7 @@ select ");
                 {
                     rtv4 = r.IsDBNull(0) ? null : (int?)r.GetInt32(0);
                 }
-                return new Tuple<T0, int, List<T2>, int?>(rtv1, rtv2, rtv3, rtv4);
+                return new Tuple <T0, int, List<T2>, int?>(rtv1, rtv2, rtv3, rtv4);
             }
         }
     }

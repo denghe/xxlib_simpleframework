@@ -174,13 +174,51 @@ namespace " + iface.Namespace + @"
                 var w = "";
                 var w2 = "";
 
-                // todo: 改造为泛型版查询函数. 需要提前对 rt 进行结构分析. 先从下面的代码提取出对返回值的判断
 
-                // Tuple<List<T0>, Foo, List<T2>>
+                // todo: 实现一个非泛型版以方便使用
+//                sb.Append(@"
+//" + f._GetDesc()._GetComment_CSharp(8) + @"
+//        " + "public " + rtn + " " + f.Name + w2);
+
+//                if (ps.Length > 0)
+//                {
+//                    sb.Append(@"
+//        ");
+//                }
+
+//                sb.Append(@"(");
+//                foreach (var p in ps)
+//                {
+//                    if (p != ps[0])
+//                    {
+//                        sb.Append(",");
+//                    }
+
+//                    sb.Append(p._GetDesc()._GetComment_CSharp(12) + @"
+//            " + p.ParameterType._GetTypeDecl_Csharp() + " " + p.Name);
+
+//                    if (p.HasDefaultValue)
+//                    {
+//                        sb.Append(" = " + p._GetDefaultValueDecl_Csharp());
+//                    }
+//                }
+
+//                if (ps.Length > 0)
+//                {
+//                    sb.Append(@"
+//            , ");
+//                }
+//                sb.Append(@"MySql.Data.MySqlClient.MySqlTransaction tran_ = null)
+//            {
+//                " + (rtn == "void" ? "return " : "") + @" " + f.Name + @"_<>();
+//            }");
+
+
+                // 生成泛型版返回值
                 // 多结果集
                 if (rt._IsTuple())
                 {
-                    rtn = "Tuple<";
+                    rtn = "Tuple <";
                     for (int i = 0; i < rt.GenericTypeArguments.Length; ++i)
                     {
                         var crt = rt.GenericTypeArguments[i];

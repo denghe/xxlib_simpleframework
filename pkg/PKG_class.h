@@ -5,12 +5,16 @@ namespace PKG
 {
 	struct PkgGenMd5
 	{
-		static constexpr char const* value = "5004aa29c60e22c1ff56b491076eb11a";
+		static constexpr char const* value = "20524cbd1888bdf9d75b2cb2ff3b2731";
     };
 
     class Foo;
     using Foo_p = xx::Ptr<Foo>;
     using Foo_r = xx::Ref<Foo>;
+
+    class FooEx;
+    using FooEx_p = xx::Ptr<FooEx>;
+    using FooEx_r = xx::Ref<FooEx>;
 
     class DataSet;
     using DataSet_p = xx::Ptr<DataSet>;
@@ -86,6 +90,26 @@ namespace PKG
         void CopyTo(Foo* const& o) const noexcept;
         Foo* MakeCopy() const noexcept;
         Foo_p MakePtrCopy() const noexcept;
+        inline static xx::Ptr<ThisType> defaultInstance;
+    };
+    class FooEx : public PKG::Foo
+    {
+    public:
+
+        typedef FooEx ThisType;
+        typedef PKG::Foo BaseType;
+	    FooEx(xx::MemPool* const& mempool) noexcept;
+	    FooEx(xx::BBuffer* const& bb);
+		FooEx(FooEx const&) = delete;
+		FooEx& operator=(FooEx const&) = delete;
+        void ToString(xx::String& s) const noexcept override;
+        void ToStringCore(xx::String& s) const noexcept override;
+        void ToBBuffer(xx::BBuffer& bb) const noexcept override;
+        int FromBBuffer(xx::BBuffer& bb) noexcept override;
+        int FromBBufferCore(xx::BBuffer& bb) noexcept;
+        void CopyTo(FooEx* const& o) const noexcept;
+        FooEx* MakeCopy() const noexcept;
+        FooEx_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
     class DataSet : public xx::Object
@@ -243,6 +267,7 @@ namespace xx
 {
 	template<> struct TypeId<PKG::Foo> { static const uint16_t value = 3; };
 	template<> struct TypeId<xx::List<PKG::Foo_p>> { static const uint16_t value = 5; };
+	template<> struct TypeId<PKG::FooEx> { static const uint16_t value = 18; };
 	template<> struct TypeId<PKG::DataSet> { static const uint16_t value = 6; };
 	template<> struct TypeId<xx::List<PKG::Table_p>> { static const uint16_t value = 7; };
 	template<> struct TypeId<PKG::Table> { static const uint16_t value = 8; };
@@ -329,6 +354,63 @@ namespace PKG
     inline Foo_p Foo::MakePtrCopy() const noexcept
     {
         return Foo_p(this->MakeCopy());
+    }
+
+	inline FooEx::FooEx(xx::MemPool* const& mempool) noexcept
+        : PKG::Foo(mempool)
+	{
+	}
+	inline FooEx::FooEx(xx::BBuffer* const& bb)
+        : PKG::Foo(bb)
+	{
+        if (int r = FromBBufferCore(*bb)) throw r;
+	}
+    inline void FooEx::ToBBuffer(xx::BBuffer& bb) const noexcept
+    {
+        this->BaseType::ToBBuffer(bb);
+    }
+    inline int FooEx::FromBBuffer(xx::BBuffer& bb) noexcept
+    {
+        if (int r = this->BaseType::FromBBuffer(bb)) return r;
+        return this->FromBBufferCore(bb);
+    }
+    inline int FooEx::FromBBufferCore(xx::BBuffer& bb) noexcept
+    {
+        return 0;
+    }
+
+    inline void FooEx::ToString(xx::String& s) const noexcept
+    {
+        if (this->memHeader().flags)
+        {
+        	s.Append("[ \"***** recursived *****\" ]");
+        	return;
+        }
+        else this->memHeader().flags = 1;
+
+        s.Append("{ \"pkgTypeName\":\"FooEx\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
+        ToStringCore(s);
+        s.Append(" }");
+        
+        this->memHeader().flags = 0;
+    }
+    inline void FooEx::ToStringCore(xx::String& s) const noexcept
+    {
+        this->BaseType::ToStringCore(s);
+    }
+    inline void FooEx::CopyTo(FooEx* const& o) const noexcept
+    {
+        this->BaseType::CopyTo(o);
+    }
+    inline FooEx* FooEx::MakeCopy() const noexcept
+    {
+        auto o = mempool->MPCreate<FooEx>();
+        this->CopyTo(o);
+        return o;
+    }
+    inline FooEx_p FooEx::MakePtrCopy() const noexcept
+    {
+        return FooEx_p(this->MakeCopy());
     }
 
 	inline DataSet::DataSet(xx::MemPool* const& mempool) noexcept
@@ -830,6 +912,7 @@ namespace PKG
         xx::MemPool::RegisterInternals();
 	    xx::MemPool::Register<PKG::Foo, xx::Object>();
 	    xx::MemPool::Register<xx::List<PKG::Foo_p>, xx::Object>();
+	    xx::MemPool::Register<PKG::FooEx, PKG::Foo>();
 	    xx::MemPool::Register<PKG::DataSet, xx::Object>();
 	    xx::MemPool::Register<xx::List<PKG::Table_p>, xx::Object>();
 	    xx::MemPool::Register<PKG::Table, xx::Object>();

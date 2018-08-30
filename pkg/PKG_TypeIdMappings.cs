@@ -8,6 +8,8 @@ interface ITypeIdMappings
 
     List<Foo> _5 { get; }
 
+    FooEx _18 { get; }
+
     DataSet _6 { get; }
 
     List<Table> _7 { get; }
