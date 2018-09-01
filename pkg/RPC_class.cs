@@ -4,7 +4,7 @@ namespace RPC
 {
     public static class PkgGenMd5
     {
-        public const string value = "f6ec3028c4121d1882507f4aa8bc270d"; 
+        public const string value = "708cd685a341a9289d4c935347621aed"; 
     }
 
 namespace Generic

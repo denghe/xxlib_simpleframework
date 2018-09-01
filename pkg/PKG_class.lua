@@ -1,5 +1,5 @@
 ﻿
-PKG_PkgGenMd5_Value = '20524cbd1888bdf9d75b2cb2ff3b2731'
+PKG_PkgGenMd5_Value = '298a87354d53748eb9492f4b9f7feb3c'
 
 PKG_Foo = {
     typeName = "PKG_Foo",
@@ -81,6 +81,86 @@ PKG_FooEx = {
     end
 }
 BBuffer.Register( PKG_FooEx )
+PKG_Node = {
+    typeName = "PKG_Node",
+    typeId = 19,
+    Create = function()
+        local o = {}
+        o.__proto = PKG_Node
+        o.__index = o
+        o.__newindex = o
+
+        o.parent = null -- PKG_Node
+        o.childs = null -- List_PKG_Node_
+        setmetatable( o, PKG_Tables_node.Create() )
+        return o
+    end,
+    FromBBuffer = function( bb, o )
+        local p = getmetatable( o )
+        p.__proto.FromBBuffer( bb, p )
+        local ReadObject = bb.ReadObject
+        o.parent = ReadObject( bb )
+        o.childs = ReadObject( bb )
+    end,
+    ToBBuffer = function( bb, o )
+        local p = getmetatable( o )
+        p.__proto.ToBBuffer( bb, p )
+        local WriteObject = bb.WriteObject
+        WriteObject( bb, o.parent )
+        WriteObject( bb, o.childs )
+    end
+}
+BBuffer.Register( PKG_Node )
+PKG_Tables_node = {
+    typeName = "PKG_Tables_node",
+    typeId = 20,
+    Create = function()
+        local o = {}
+        o.__proto = PKG_Tables_node
+        o.__index = o
+        o.__newindex = o
+
+        o.id = 0 -- Int32
+        o.pid = null -- NullableInt32
+        return o
+    end,
+    FromBBuffer = function( bb, o )
+        o.id = bb:ReadInt32()
+        o.pid = bb:ReadObject()
+    end,
+    ToBBuffer = function( bb, o )
+        bb:WriteInt32( o.id )
+        bb:WriteObject( o.pid )
+    end
+}
+BBuffer.Register( PKG_Tables_node )
+List_PKG_Node_ = {
+    typeName = "List_PKG_Node_",
+    typeId = 21,
+    Create = function()
+        local o = {}
+        o.__proto = List_PKG_Node_
+        o.__index = o
+        o.__newindex = o
+        return o
+    end,
+    FromBBuffer = function( bb, o )
+		local len = bb:ReadUInt32()
+        local f = BBuffer.ReadObject
+		for i = 1, len do
+			o[ i ] = f( bb )
+		end
+    end,
+    ToBBuffer = function( bb, o )
+        local len = #o
+		bb:WriteUInt32( len )
+        local f = BBuffer.WriteObject
+        for i = 1, len do
+			f( bb, o[ i ] )
+		end
+    end
+}
+BBuffer.Register( List_PKG_Node_ )
 PKG_DataSet = {
     typeName = "PKG_DataSet",
     typeId = 6,

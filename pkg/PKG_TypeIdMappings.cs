@@ -10,6 +10,12 @@ interface ITypeIdMappings
 
     FooEx _18 { get; }
 
+    Node _19 { get; }
+
+    Tables.node _20 { get; }
+
+    List<Node> _21 { get; }
+
     DataSet _6 { get; }
 
     List<Table> _7 { get; }

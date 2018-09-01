@@ -1,5 +1,5 @@
 ﻿
-RPC_PkgGenMd5_Value = 'f6ec3028c4121d1882507f4aa8bc270d'
+RPC_PkgGenMd5_Value = '708cd685a341a9289d4c935347621aed'
 
 --[[
 服务类型列表

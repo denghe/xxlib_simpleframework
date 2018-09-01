@@ -286,7 +286,7 @@ namespace " + iface.Namespace + @"
                     if (ct._IsUserClass())
                     {
                         rtn = "List<T>";
-                        w = $" where T : " + rt._GetTypeDecl_Csharp() + ", new()";
+                        w = $" where T : " + ct._GetTypeDecl_Csharp() + ", new()";
                         w2 = "<T>";
                     }
                 }

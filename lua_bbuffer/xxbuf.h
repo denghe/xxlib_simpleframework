@@ -11,6 +11,18 @@
 #include <cmath>
 #include <limits>
 
+#ifndef _countof
+#ifndef _countof_IMPL
+#define _countof_IMPL
+template<typename T, size_t N>
+size_t _countof(T const (&arr)[N])
+{
+	return N;
+}
+#endif
+#endif
+
+
 // 含有最基础的数据序列化功能, 针对 c#, c++, lua 需要各自扩展相应的 引用 继承 部分
 struct XxBuf
 {
@@ -328,7 +340,7 @@ struct XxBuf
 	template<typename T>
 	static uint32_t CalcWriteLen() noexcept
 	{
-		if constexpr(sizeof(T) == 1 || std::is_same_v<float, T>) return sizeof(T);
+		if constexpr(sizeof(T) == 1 || std::is_same<float, T>::value) return sizeof(T);
 		else return sizeof(T) + 1;
 	}
 
@@ -336,19 +348,19 @@ struct XxBuf
 	template<typename T>
 	static uint32_t WriteTo(char *dstBuf, T const &in) noexcept
 	{
-		if constexpr(std::is_same_v<bool, T>)
+		if constexpr(std::is_same<bool, T>::value)
 		{
 			*dstBuf = in ? 1 : 0;
 			return 1;
 		}
-		else if constexpr(sizeof(T) == 1 || std::is_same_v<float, T>)
+		else if constexpr(sizeof(T) == 1 || std::is_same<float, T>::value)
 		{
 			memcpy(dstBuf, &in, sizeof(T));
 			return sizeof(T);
 		}
-		else if constexpr(std::is_integral_v<T>)
+		else if constexpr(std::is_integral<T>::value)
 		{
-			if constexpr(std::is_unsigned_v<T>) return VarWrite7(dstBuf, in);
+			if constexpr(std::is_unsigned<T>::value) return VarWrite7(dstBuf, in);
 			else return VarWrite7(dstBuf, ZigZagEncode(in));
 		}
 		else // should be double
@@ -395,22 +407,22 @@ struct XxBuf
 	template<typename T>
 	static int ReadFrom(char const *srcBuf, uint32_t const &dataLen, uint32_t &offset, T &out) noexcept
 	{
-		if constexpr(std::is_same_v<bool, T>)
+		if constexpr(std::is_same<bool, T>::value)
 		{
 			out = srcBuf[offset] != 0;
 			offset += 1;
 			return 0;
 		}
-		else if constexpr(sizeof(T) == 1 || std::is_same_v<float, T>)
+		else if constexpr(sizeof(T) == 1 || std::is_same<float, T>::value)
 		{
 			if (offset + sizeof(T) > dataLen) return 1;
 			memcpy(&out, srcBuf + offset, sizeof(T));
 			offset += sizeof(T);
 			return 0;
 		}
-		else if constexpr(std::is_integral_v<T>)
+		else if constexpr(std::is_integral<T>::value)
 		{
-			if constexpr(std::is_unsigned_v<T>)
+			if constexpr(std::is_unsigned<T>::value)
 			{
 				return VarRead7(srcBuf, dataLen, offset, out);
 			}

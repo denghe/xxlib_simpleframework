@@ -5,7 +5,7 @@ namespace PKG
 {
 	struct PkgGenMd5
 	{
-		static constexpr char const* value = "20524cbd1888bdf9d75b2cb2ff3b2731";
+		static constexpr char const* value = "298a87354d53748eb9492f4b9f7feb3c";
     };
 
     class Foo;
@@ -15,6 +15,10 @@ namespace PKG
     class FooEx;
     using FooEx_p = xx::Ptr<FooEx>;
     using FooEx_r = xx::Ref<FooEx>;
+
+    class Node;
+    using Node_p = xx::Ptr<Node>;
+    using Node_r = xx::Ref<Node>;
 
     class DataSet;
     using DataSet_p = xx::Ptr<DataSet>;
@@ -48,6 +52,13 @@ namespace PKG
     using TableRowValue_String_p = xx::Ptr<TableRowValue_String>;
     using TableRowValue_String_r = xx::Ref<TableRowValue_String>;
 
+namespace Tables
+{
+    class node;
+    using node_p = xx::Ptr<node>;
+    using node_r = xx::Ref<node>;
+
+}
     class TableRowValue : public xx::Object
     {
     public:
@@ -92,6 +103,31 @@ namespace PKG
         Foo_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
+namespace Tables
+{
+    class node : public xx::Object
+    {
+    public:
+        int32_t id = 0;
+        std::optional<int32_t> pid;
+
+        typedef node ThisType;
+        typedef xx::Object BaseType;
+	    node(xx::MemPool* const& mempool) noexcept;
+	    node(xx::BBuffer* const& bb);
+		node(node const&) = delete;
+		node& operator=(node const&) = delete;
+        void ToString(xx::String& s) const noexcept override;
+        void ToStringCore(xx::String& s) const noexcept override;
+        void ToBBuffer(xx::BBuffer& bb) const noexcept override;
+        int FromBBuffer(xx::BBuffer& bb) noexcept override;
+        int FromBBufferCore(xx::BBuffer& bb) noexcept;
+        void CopyTo(node* const& o) const noexcept;
+        node* MakeCopy() const noexcept;
+        node_p MakePtrCopy() const noexcept;
+        inline static xx::Ptr<ThisType> defaultInstance;
+    };
+}
     class FooEx : public PKG::Foo
     {
     public:
@@ -110,6 +146,28 @@ namespace PKG
         void CopyTo(FooEx* const& o) const noexcept;
         FooEx* MakeCopy() const noexcept;
         FooEx_p MakePtrCopy() const noexcept;
+        inline static xx::Ptr<ThisType> defaultInstance;
+    };
+    class Node : public PKG::Tables::node
+    {
+    public:
+        PKG::Node_p parent;
+        xx::List_p<PKG::Node_p> childs;
+
+        typedef Node ThisType;
+        typedef PKG::Tables::node BaseType;
+	    Node(xx::MemPool* const& mempool) noexcept;
+	    Node(xx::BBuffer* const& bb);
+		Node(Node const&) = delete;
+		Node& operator=(Node const&) = delete;
+        void ToString(xx::String& s) const noexcept override;
+        void ToStringCore(xx::String& s) const noexcept override;
+        void ToBBuffer(xx::BBuffer& bb) const noexcept override;
+        int FromBBuffer(xx::BBuffer& bb) noexcept override;
+        int FromBBufferCore(xx::BBuffer& bb) noexcept;
+        void CopyTo(Node* const& o) const noexcept;
+        Node* MakeCopy() const noexcept;
+        Node_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
     class DataSet : public xx::Object
@@ -268,6 +326,9 @@ namespace xx
 	template<> struct TypeId<PKG::Foo> { static const uint16_t value = 3; };
 	template<> struct TypeId<xx::List<PKG::Foo_p>> { static const uint16_t value = 5; };
 	template<> struct TypeId<PKG::FooEx> { static const uint16_t value = 18; };
+	template<> struct TypeId<PKG::Node> { static const uint16_t value = 19; };
+	template<> struct TypeId<PKG::Tables::node> { static const uint16_t value = 20; };
+	template<> struct TypeId<xx::List<PKG::Node_p>> { static const uint16_t value = 21; };
 	template<> struct TypeId<PKG::DataSet> { static const uint16_t value = 6; };
 	template<> struct TypeId<xx::List<PKG::Table_p>> { static const uint16_t value = 7; };
 	template<> struct TypeId<PKG::Table> { static const uint16_t value = 8; };
@@ -411,6 +472,72 @@ namespace PKG
     inline FooEx_p FooEx::MakePtrCopy() const noexcept
     {
         return FooEx_p(this->MakeCopy());
+    }
+
+	inline Node::Node(xx::MemPool* const& mempool) noexcept
+        : PKG::Tables::node(mempool)
+	{
+	}
+	inline Node::Node(xx::BBuffer* const& bb)
+        : PKG::Tables::node(bb)
+	{
+        if (int r = FromBBufferCore(*bb)) throw r;
+	}
+    inline void Node::ToBBuffer(xx::BBuffer& bb) const noexcept
+    {
+        this->BaseType::ToBBuffer(bb);
+        bb.Write(this->parent);
+        bb.Write(this->childs);
+    }
+    inline int Node::FromBBuffer(xx::BBuffer& bb) noexcept
+    {
+        if (int r = this->BaseType::FromBBuffer(bb)) return r;
+        return this->FromBBufferCore(bb);
+    }
+    inline int Node::FromBBufferCore(xx::BBuffer& bb) noexcept
+    {
+        if (int r = bb.Read(this->parent)) return r;
+        bb.readLengthLimit = 0;
+        if (int r = bb.Read(this->childs)) return r;
+        return 0;
+    }
+
+    inline void Node::ToString(xx::String& s) const noexcept
+    {
+        if (this->memHeader().flags)
+        {
+        	s.Append("[ \"***** recursived *****\" ]");
+        	return;
+        }
+        else this->memHeader().flags = 1;
+
+        s.Append("{ \"pkgTypeName\":\"Node\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
+        ToStringCore(s);
+        s.Append(" }");
+        
+        this->memHeader().flags = 0;
+    }
+    inline void Node::ToStringCore(xx::String& s) const noexcept
+    {
+        this->BaseType::ToStringCore(s);
+        s.Append(", \"parent\":", this->parent);
+        s.Append(", \"childs\":", this->childs);
+    }
+    inline void Node::CopyTo(Node* const& o) const noexcept
+    {
+        this->BaseType::CopyTo(o);
+        o->parent = this->parent;
+        o->childs = this->childs;
+    }
+    inline Node* Node::MakeCopy() const noexcept
+    {
+        auto o = mempool->MPCreate<Node>();
+        this->CopyTo(o);
+        return o;
+    }
+    inline Node_p Node::MakePtrCopy() const noexcept
+    {
+        return Node_p(this->MakeCopy());
     }
 
 	inline DataSet::DataSet(xx::MemPool* const& mempool) noexcept
@@ -904,6 +1031,71 @@ namespace PKG
         return TableRowValue_String_p(this->MakeCopy());
     }
 
+namespace Tables
+{
+	inline node::node(xx::MemPool* const& mempool) noexcept
+        : xx::Object(mempool)
+	{
+	}
+	inline node::node(xx::BBuffer* const& bb)
+        : xx::Object(bb)
+	{
+        if (int r = FromBBufferCore(*bb)) throw r;
+	}
+    inline void node::ToBBuffer(xx::BBuffer& bb) const noexcept
+    {
+        bb.Write(this->id);
+        bb.Write(this->pid);
+    }
+    inline int node::FromBBuffer(xx::BBuffer& bb) noexcept
+    {
+        return this->FromBBufferCore(bb);
+    }
+    inline int node::FromBBufferCore(xx::BBuffer& bb) noexcept
+    {
+        if (int r = bb.Read(this->id)) return r;
+        if (int r = bb.Read(this->pid)) return r;
+        return 0;
+    }
+
+    inline void node::ToString(xx::String& s) const noexcept
+    {
+        if (this->memHeader().flags)
+        {
+        	s.Append("[ \"***** recursived *****\" ]");
+        	return;
+        }
+        else this->memHeader().flags = 1;
+
+        s.Append("{ \"pkgTypeName\":\"Tables.node\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
+        ToStringCore(s);
+        s.Append(" }");
+        
+        this->memHeader().flags = 0;
+    }
+    inline void node::ToStringCore(xx::String& s) const noexcept
+    {
+        this->BaseType::ToStringCore(s);
+        s.Append(", \"id\":", this->id);
+        s.Append(", \"pid\":", this->pid);
+    }
+    inline void node::CopyTo(node* const& o) const noexcept
+    {
+        o->id = this->id;
+        o->pid = this->pid;
+    }
+    inline node* node::MakeCopy() const noexcept
+    {
+        auto o = mempool->MPCreate<node>();
+        this->CopyTo(o);
+        return o;
+    }
+    inline node_p node::MakePtrCopy() const noexcept
+    {
+        return node_p(this->MakeCopy());
+    }
+
+}
 }
 namespace PKG
 {
@@ -913,6 +1105,9 @@ namespace PKG
 	    xx::MemPool::Register<PKG::Foo, xx::Object>();
 	    xx::MemPool::Register<xx::List<PKG::Foo_p>, xx::Object>();
 	    xx::MemPool::Register<PKG::FooEx, PKG::Foo>();
+	    xx::MemPool::Register<PKG::Node, PKG::Tables::node>();
+	    xx::MemPool::Register<PKG::Tables::node, xx::Object>();
+	    xx::MemPool::Register<xx::List<PKG::Node_p>, xx::Object>();
 	    xx::MemPool::Register<PKG::DataSet, xx::Object>();
 	    xx::MemPool::Register<xx::List<PKG::Table_p>, xx::Object>();
 	    xx::MemPool::Register<PKG::Table, xx::Object>();

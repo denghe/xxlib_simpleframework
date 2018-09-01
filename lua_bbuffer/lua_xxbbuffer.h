@@ -248,7 +248,7 @@ struct Lua_XxBBuffer : XxBuf
 	template<typename T>
 	inline void WriteNum_(lua_State* L, int i)
 	{
-		if constexpr (std::is_same_v<T, bool>)
+		if constexpr (std::is_same<T, bool>::value)
 		{
 			if (!lua_isboolean(L, i))
 			{
@@ -256,7 +256,7 @@ struct Lua_XxBBuffer : XxBuf
 			}
 			Write(lua_toboolean(L, i) != 0);
 		}
-		else if constexpr (std::is_floating_point_v<T>)
+		else if constexpr (std::is_floating_point<T>::value)
 		{
 			T v;
 			v = (T)lua_tonumber(L, i);
@@ -273,7 +273,7 @@ struct Lua_XxBBuffer : XxBuf
 	template<typename T>
 	inline static int WriteNum(lua_State* L)
 	{
-		static_assert(std::is_arithmetic_v<T>);
+		static_assert(std::is_arithmetic<T>::value);
 		auto& self = GetSelf(L, 2);
 		auto top = lua_gettop(L);
 		for (int i = 2; i <= top; ++i)
@@ -310,7 +310,7 @@ struct Lua_XxBBuffer : XxBuf
 	template<typename T>
 	inline static int WriteNullableNum(lua_State* L)
 	{
-		static_assert(std::is_arithmetic_v<T>);
+		static_assert(std::is_arithmetic<T>::value);
 		auto& self = GetSelf(L, 2);
 		auto top = lua_gettop(L);
 		for (int i = 2; i <= top; ++i)
@@ -356,11 +356,11 @@ struct Lua_XxBBuffer : XxBuf
 	{
 		T v;
 		Read(L, v);
-		if constexpr (std::is_same_v<T, bool>)			// bool
+		if constexpr (std::is_same<T, bool>::value)			// bool
 		{
 			lua_pushboolean(L, v);
 		}
-		else if constexpr (std::is_floating_point_v<T>)	// float or double
+		else if constexpr (std::is_floating_point<T>::value)	// float or double
 		{
 			lua_pushnumber(L, (lua_Number)v);
 		}
@@ -373,7 +373,7 @@ struct Lua_XxBBuffer : XxBuf
 	template<typename T>
 	static int ReadNum(lua_State* L)
 	{
-		static_assert(std::is_arithmetic_v<T>);
+		static_assert(std::is_arithmetic<T>::value);
 		auto& self = GetSelf(L, 1);
 		auto top = lua_gettop(L);
 		int readCount = 1;
@@ -421,7 +421,7 @@ struct Lua_XxBBuffer : XxBuf
 	template<typename T>
 	static int ReadNullableNum(lua_State* L)
 	{
-		static_assert(std::is_arithmetic_v<T>);
+		static_assert(std::is_arithmetic<T>::value);
 		auto& self = GetSelf(L, 1);
 		auto top = lua_gettop(L);
 		int readCount = 1;

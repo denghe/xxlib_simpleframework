@@ -39,6 +39,16 @@ namespace PKG
             sb.Length -= 2;
             sb.Append(")");
         }
+        public static void MySqlAppend(this System.Text.StringBuilder sb, Tables.node o, bool ignoreReadOnly = false)
+        {
+            sb.Append("(");
+            sb.Append(o.id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.pid);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+        }
         #endregion
     }
 
@@ -181,6 +191,34 @@ select ");
                 }
                 return new Tuple <T0, int, List<T2>, int?>(rtv1, rtv2, rtv3, rtv4);
             }
+        }
+
+        public List<T> SelectNodes<T>(MySql.Data.MySqlClient.MySqlTransaction tran_ = null) where T : Tables.node, new()
+        {
+            cmd.Transaction = tran_;
+            cmd.CommandText = @"
+select 1, null
+union all
+select 2, 1
+union all
+select 3, 1
+union all
+select 4, 2;
+";
+            var rtv = new List<T>();
+            using (var r = cmd.ExecuteReader())
+            {
+                recordsAffecteds.Add(r.RecordsAffected);
+                while (r.Read())
+                {
+                    rtv.Add(new T
+                    {
+                        id = r.GetInt32(0),
+                        pid = r.IsDBNull(1) ? null : (int?)r.GetInt32(1)
+                    });
+                }
+            }
+            return rtv;
         }
     }
 }

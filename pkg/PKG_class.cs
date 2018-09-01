@@ -4,7 +4,7 @@ namespace PKG
 {
     public static class PkgGenMd5
     {
-        public const string value = "20524cbd1888bdf9d75b2cb2ff3b2731"; 
+        public const string value = "298a87354d53748eb9492f4b9f7feb3c"; 
     }
 
     public partial class Foo : IBBuffer
@@ -110,6 +110,58 @@ namespace PKG
         public override void ToStringCore(ref System.Text.StringBuilder str)
         {
             base.ToStringCore(ref str);
+        }
+        public override string ToString()
+        {
+            var sb = new System.Text.StringBuilder();
+            ToString(ref sb);
+            return sb.ToString();
+        }
+    }
+    public partial class Node : Tables.node
+    {
+        public Node parent;
+        public List<Node> childs;
+
+        public override ushort GetPackageId()
+        {
+            return TypeIdMaps<Node>.typeId;
+        }
+
+        public override void ToBBuffer(BBuffer bb)
+        {
+            base.ToBBuffer(bb);
+            bb.Write(this.parent);
+            bb.Write(this.childs);
+        }
+
+        public override void FromBBuffer(BBuffer bb)
+        {
+            base.FromBBuffer(bb);
+            bb.Read(ref this.parent);
+            bb.readLengthLimit = 0;
+            bb.Read(ref this.childs);
+        }
+        public override void ToString(ref System.Text.StringBuilder str)
+        {
+            if (GetToStringFlag())
+            {
+        	    str.Append("[ \"***** recursived *****\" ]");
+        	    return;
+            }
+            else SetToStringFlag(true);
+
+            str.Append("{ \"pkgTypeName\":\"Node\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(ref str);
+            str.Append(" }");
+        
+            SetToStringFlag(false);
+        }
+        public override void ToStringCore(ref System.Text.StringBuilder str)
+        {
+            base.ToStringCore(ref str);
+            str.Append(", \"parent\":" + (parent == null ? "nil" : parent.ToString()));
+            str.Append(", \"childs\":" + (childs == null ? "nil" : childs.ToString()));
         }
         public override string ToString()
         {
@@ -542,6 +594,67 @@ namespace PKG
             return sb.ToString();
         }
     }
+namespace Tables
+{
+    public partial class node : IBBuffer
+    {
+        public int id;
+        public int? pid;
+
+        public virtual ushort GetPackageId()
+        {
+            return TypeIdMaps<node>.typeId;
+        }
+
+        public virtual void ToBBuffer(BBuffer bb)
+        {
+            bb.Write(this.id);
+            bb.Write(this.pid);
+        }
+
+        public virtual void FromBBuffer(BBuffer bb)
+        {
+            bb.Read(ref this.id);
+            bb.Read(ref this.pid);
+        }
+        public virtual void ToString(ref System.Text.StringBuilder str)
+        {
+            if (GetToStringFlag())
+            {
+        	    str.Append("[ \"***** recursived *****\" ]");
+        	    return;
+            }
+            else SetToStringFlag(true);
+
+            //str.Append("{ \"pkgTypeName\":\"Tables.node\", \"pkgTypeId\":" + GetPackageId());
+            str.Append("{ ");
+            ToStringCore(ref str);
+            str.Append(" }");
+        
+            SetToStringFlag(false);
+        }
+        public virtual void ToStringCore(ref System.Text.StringBuilder str)
+        {
+            str.Append("\"id\":" + id);
+            str.Append(", \"pid\":" + (pid.HasValue ? pid.Value.ToString() : "nil"));
+        }
+        public override string ToString()
+        {
+            var sb = new System.Text.StringBuilder();
+            ToString(ref sb);
+            return sb.ToString();
+        }
+        bool toStringFlag;
+        public void SetToStringFlag(bool doing)
+        {
+            toStringFlag = doing;
+        }
+        public bool GetToStringFlag()
+        {
+            return toStringFlag;
+        }
+    }
+}
     public static class AllTypes
     {
         public static void Register()
@@ -550,6 +663,9 @@ namespace PKG
             BBuffer.Register<Foo>(3);
             BBuffer.Register<List<Foo>>(5);
             BBuffer.Register<FooEx>(18);
+            BBuffer.Register<Node>(19);
+            BBuffer.Register<Tables.node>(20);
+            BBuffer.Register<List<Node>>(21);
             BBuffer.Register<DataSet>(6);
             BBuffer.Register<List<Table>>(7);
             BBuffer.Register<Table>(8);
