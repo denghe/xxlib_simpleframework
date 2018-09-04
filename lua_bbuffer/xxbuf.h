@@ -391,7 +391,7 @@ struct XxBuf
 				if (in == (double)i)
 				{
 					dstBuf[0] = 4;
-					return 1 + VarWrite7(dstBuf, ZigZagEncode(i));
+					return 1 + VarWrite7(dstBuf + 1, ZigZagEncode(i));
 				}
 				else
 				{
