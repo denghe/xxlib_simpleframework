@@ -59,7 +59,7 @@ namespace " + templateName + @"
 
         // todo: blob( BBuffer )
 
-        // todo: 找出内含 [Column] 成员的类来生成. 不含的跳过
+        // 找出内含 [Column] 成员的类来生成. 不含的跳过
 
         foreach (var c in ts._GetClasss().Where(a => a._GetFields().Any(b => b._Has<TemplateLibrary.Column>())))
         {

@@ -71,14 +71,12 @@ namespace std
 #endif
 
 #ifndef _countof
-#ifndef _countof_IMPL
-#define _countof_IMPL
 template<typename T, size_t N>
-size_t _countof(T const (&arr)[N])
+size_t _countof_helper(T const (&arr)[N])
 {
 	return N;
 }
-#endif
+#define _countof(_Array) _countof_helper(_Array)
 #endif
 
 #ifndef _offsetof
@@ -208,18 +206,19 @@ namespace xx
 
 	*/
 
-
+	// 经历时间精度: 秒后 7 个 0( 这是 windows 下最高精度. android/ios 会低1个0的精度 )
+	typedef std::chrono::duration<long long, std::ratio<1LL, 10000000LL>> duration_10m;
 
 	// 时间点 转 epoch (精度为秒后 7 个 0)
 	inline int64_t TimePointToEpoch10m(std::chrono::system_clock::time_point const& val) noexcept
 	{
-		return val.time_since_epoch().count();
+		return std::chrono::duration_cast<duration_10m>(val.time_since_epoch()).count();
 	}
 
 	//  epoch (精度为秒后 7 个 0) 转 时间点
 	inline std::chrono::system_clock::time_point Epoch10mToTimePoint(int64_t const& val) noexcept
 	{
-		return std::chrono::system_clock::time_point(std::chrono::system_clock::time_point::duration(val));
+		return std::chrono::system_clock::time_point(std::chrono::duration_cast<std::chrono::system_clock::duration>(duration_10m(val)));
 	}
 
 
@@ -232,7 +231,7 @@ namespace xx
 	// 得到当前时间点的 epoch (精度为秒后 7 个 0)
 	inline int64_t NowEpoch10m() noexcept
 	{
-		return NowTimePoint().time_since_epoch().count();
+		return TimePointToEpoch10m(NowTimePoint());
 	}
 
 
