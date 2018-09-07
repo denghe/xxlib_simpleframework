@@ -6,6 +6,8 @@
 
 namespace xx
 {
+	// class Logger 主体类的代码位于 Log & LogFuncs 代码段的下方
+
 	// 对应 log 日志表
 	class Log;
 	// 日志级别
@@ -151,7 +153,24 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
 
 
 
+	/*
+	// 日志写入器主体类. 示例:
 
+	inline xx::Logger* logger = nullptr;
+int main(int argc, char const* const* argv)
+{
+	logger = new xx::Logger(argv[0], true);
+	logger->SetDefaultValue("", "test_cpp5", "0");
+
+	...
+
+	logger->Write.............
+
+
+	time 字段转 DateTime:
+	select *, datetime(`time`/10000000,'unixepoch') as `dt` from log
+
+	*/
 	class Logger
 	{
 	public:
@@ -180,8 +199,9 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
 		bool disposing = false;			// 通知后台线程退出的标志位
 		std::function<void()> OnRelease;
 
-		Logger(char const* const& fn) noexcept
-			: db(&mp, fn)
+		// 可传入完整路径文件名, 或前缀 argv[0], true 以便将日志创建到和 exe 所在位置相同. 
+		Logger(std::string fn, bool fnIsPrefix = false) noexcept
+			: db(&mp, !fnIsPrefix ? fn.c_str() : (fn + ".log.db3").c_str())
 			, funcs(&db)
 			, machine(&mp, nameLenLimit)
 			, service(&mp, nameLenLimit)
@@ -252,6 +272,8 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
 			if (OnRelease) OnRelease();
 		}
 
+
+		// 完整写入所有参数. 返回 false 表示写入失败
 		template<typename MachineType, typename ServiceType, typename InstanceIdType, typename TitleType, typename DescType>
 		bool WriteAll(LogLevel const& level, int64_t const& time
 			, MachineType const& machine, ServiceType const& service, InstanceIdType const& instanceId
@@ -276,6 +298,26 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
 			return true;
 		}
 
+		// 设置部分写入参数的默认值, 进一步可以使用下面的简化形态函数. 返回 false 表示设置失败
+		template<typename MachineType, typename ServiceType, typename InstanceIdType>
+		bool SetDefaultValue(MachineType const& machine, ServiceType const& service, InstanceIdType const& instanceId) noexcept
+		{
+			std::lock_guard<std::mutex> lg(mtx);
+			if (writeLimit && logMsgs->Count() > writeLimit) return false;
+
+			auto o = logMsgs->mempool->MPCreatePtr<Log>();
+
+			o->id = 0;				// 用来标记是通过 SetDefaultValue 写入的
+			o->machine.Assign(machine);
+			o->service.Assign(service);
+			o->instanceId.Assign(instanceId);
+
+			logMsgs->Emplace(std::move(o));
+			return true;
+		}
+
+		// 下面的 write 需要先 SetDefaultValue 才能用
+
 		template<typename TitleType, typename DescType>
 		bool Write(LogLevel level, TitleType const& title, int64_t const& opcode, DescType const& desc) noexcept
 		{
@@ -296,21 +338,42 @@ values (?, ?, ?, ?, ?, ?, ?, ?))=-=");
 			return true;
 		}
 
-		template<typename MachineType, typename ServiceType, typename InstanceIdType>
-		bool SetDefaultValue(MachineType const& machine, ServiceType const& service, InstanceIdType const& instanceId) noexcept
+		template<typename TitleType, typename DescType>
+		bool WriteInfo(TitleType const& title, int64_t const& opcode, DescType const& desc) noexcept
 		{
-			std::lock_guard<std::mutex> lg(mtx);
-			if (writeLimit && logMsgs->Count() > writeLimit) return false;
+			return Write(LogLevel::Info, title, opcode, desc);
+		}
 
-			auto o = logMsgs->mempool->MPCreatePtr<Log>();
+		template<typename TitleType, typename DescType>
+		bool WriteError(TitleType const& title, int64_t const& opcode, DescType const& desc) noexcept
+		{
+			return Write(LogLevel::Error, title, opcode, desc);
+		}
 
-			o->id = 0;				// 用来标记是通过 SetDefaultValue 写入的
-			o->machine.Assign(machine);
-			o->service.Assign(service);
-			o->instanceId.Assign(instanceId);
+		template<typename DescType>
+		bool WriteInfo(DescType const& desc) noexcept
+		{
+			return Write(LogLevel::Info, "", 0, desc);
+		}
 
-			logMsgs->Emplace(std::move(o));
-			return true;
+		template<typename DescType>
+		bool WriteError(DescType const& desc) noexcept
+		{
+			return Write(LogLevel::Error, "", 0, desc);
+		}
+
+		template<typename DescType>
+		bool Write(DescType const& desc) noexcept
+		{
+			return Write(LogLevel::Info, "", 0, desc);
+		}
+
+		template<typename...TS>
+		bool WriteFormat(char const* const& format, TS const&...vs) noexcept
+		{
+			String s(&mp);
+			s.AppendFormat(format, vs...);
+			return Write(LogLevel::Info, "", 0, s);
 		}
 	};
 }
