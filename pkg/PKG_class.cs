@@ -4,7 +4,7 @@ namespace PKG
 {
     public static class PkgGenMd5
     {
-        public const string value = "298a87354d53748eb9492f4b9f7feb3c"; 
+        public const string value = "7e77975541d51662292ec0fd85309c8a"; 
     }
 
     public partial class Foo : IBBuffer
@@ -626,8 +626,7 @@ namespace Tables
             }
             else SetToStringFlag(true);
 
-            //str.Append("{ \"pkgTypeName\":\"Tables.node\", \"pkgTypeId\":" + GetPackageId());
-            str.Append("{ ");
+            str.Append("{ \"pkgTypeName\":\"Tables.node\", \"pkgTypeId\":" + GetPackageId());
             ToStringCore(ref str);
             str.Append(" }");
         
@@ -635,7 +634,7 @@ namespace Tables
         }
         public virtual void ToStringCore(ref System.Text.StringBuilder str)
         {
-            str.Append("\"id\":" + id);
+            str.Append(", \"id\":" + id);
             str.Append(", \"pid\":" + (pid.HasValue ? pid.Value.ToString() : "nil"));
         }
         public override string ToString()

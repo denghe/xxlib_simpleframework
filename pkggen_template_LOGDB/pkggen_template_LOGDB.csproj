@@ -4,13 +4,13 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{6F49DE2C-1F92-47C8-B03D-D3D5C66D3CBC}</ProjectGuid>
-    <OutputType>Exe</OutputType>
-    <RootNamespace>pkggen</RootNamespace>
-    <AssemblyName>pkggen</AssemblyName>
+    <ProjectGuid>{5B2E7DB8-88AE-4B5D-9456-440EB0788E0E}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>pkggen_template_LOGDB</RootNamespace>
+    <AssemblyName>pkggen_template_LOGDB</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
@@ -21,7 +21,6 @@
     <PlatformTarget>x64</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
-    <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
     <OutputPath>bin\x64\Release\</OutputPath>
@@ -31,12 +30,10 @@
     <PlatformTarget>x64</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
-    <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -45,34 +42,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="GenCPP_Class.cs" />
-    <Compile Include="GenCPP_SQLite.cs" />
-    <Compile Include="GenCS_Class.cs" />
-    <Compile Include="GenCS_MySql.cs" />
-    <Compile Include="GenLUA_Class.cs" />
-    <Compile Include="GenTypeId.cs" />
-    <Compile Include="Program.cs" />
+    <Compile Include="Funcs.cs" />
+    <Compile Include="LOGDB_TypeIdMappings.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="App.config" />
+    <Compile Include="Classs.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\gen_library\gen_library.csproj">
       <Project>{7f62e40f-e079-46d2-85e9-661fce50168c}</Project>
       <Name>gen_library</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\pkggen_template_LOGDB\pkggen_template_LOGDB.csproj">
-      <Project>{5b2e7db8-88ae-4b5d-9456-440eb0788e0e}</Project>
-      <Name>pkggen_template_LOGDB</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\pkggen_template_PKG\pkggen_template_PKG.csproj">
-      <Project>{82112fe9-6a59-4f6d-a295-d4c7c039a977}</Project>
-      <Name>pkggen_template_PKG</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\pkggen_template_RPC\pkggen_template_RPC.csproj">
-      <Project>{081fd731-af90-4ec5-8cac-603fc9d3a4cb}</Project>
-      <Name>pkggen_template_RPC</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

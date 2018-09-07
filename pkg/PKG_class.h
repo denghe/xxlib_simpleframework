@@ -5,7 +5,7 @@ namespace PKG
 {
 	struct PkgGenMd5
 	{
-		static constexpr char const* value = "298a87354d53748eb9492f4b9f7feb3c";
+		static constexpr char const* value = "7e77975541d51662292ec0fd85309c8a";
     };
 
     class Foo;

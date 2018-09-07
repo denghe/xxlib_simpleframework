@@ -1,47 +1,15 @@
-﻿#include "../pkg/PKG_class.h"
-int main()
+﻿#pragma execution_character_set("utf-8")
+#include "xx_logger.h"
+
+inline xx::Logger* logger = nullptr;
+int main(int argc, char const* const* argv)
 {
-	PKG::AllTypesRegister();
-	xx::MemPool mp_, *mp = &mp_;
-
-	PKG::DataSet_p ds;
-	ds.MPCreate(mp);
-	ds->tables.MPCreate(mp);
-
-	PKG::Table_p t;
-	t.MPCreate(mp);
-	t->parent = ds;
-	t->columns.MPCreate(mp);
-	t->rows.MPCreate(mp);
-	t->name.MPCreate(mp, "table_1");
-	ds->tables->Add(t);
-
-	PKG::TableColumn_p tc;
-	tc.MPCreate(mp);
-	tc->name.MPCreate(mp, "column_1");
-	t->columns->Add(tc);
-
-	PKG::TableRow_p tr;
-	tr.MPCreate(mp);
-	tr->values.MPCreate(mp);
-	t->rows->Add(tr);
-
-	PKG::TableRowValue_NullableInt_p trv1;
-	trv1.MPCreate(mp);
-	trv1->value = 123;
-	tr->values->Add(trv1);
-	PKG::TableRowValue_NullableInt_p trv2;
-	trv1.MPCreate(mp);
-	trv1->value.reset();	// null
-	tr->values->Add(trv1);
-
-	std::cout << ds << std::endl;
-
-	xx::BBuffer_p bb;
-	bb.MPCreate(mp);
-	bb->WriteRoot(ds);
-
-	std::cout << bb << std::endl;
-
+	// 以当前 exe 文件名为前缀，拼接 ".log.db3" 扩展名为库名写入, 表数据总行数限制为 10 条
+	logger = new xx::Logger(argv[0], true, 0, 10);
+	for (int i = 0; i < 20; ++i)
+	{
+		logger->Write(i);
+	}
+	delete logger;
 	return 0;
 }

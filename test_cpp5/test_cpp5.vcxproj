@@ -88,6 +88,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\sqlite3\sqlite3.c" />
     <ClCompile Include="..\xxlib\http_parser.c" />
     <ClCompile Include="..\xxlib\ikcp.cpp" />
     <ClCompile Include="..\xxlib\xx_uv.cpp" />
@@ -102,6 +103,8 @@
     <None Include="main.bak6" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\sqlite3\sqlite3.h" />
+    <ClInclude Include="..\sqlite3\sqlite3ext.h" />
     <ClInclude Include="..\xxlib\fixed_function.hpp" />
     <ClInclude Include="..\xxlib\http_parser.h" />
     <ClInclude Include="..\xxlib\ikcp.h" />
