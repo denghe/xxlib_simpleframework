@@ -6,38 +6,40 @@ interface ITypeIdMappings
 {
     Foo _3 { get; }
 
-    List<Foo> _5 { get; }
+    List<Foo> _4 { get; }
 
-    FooEx _18 { get; }
+    List<object> _5 { get; }
 
-    Node _19 { get; }
+    FooEx _6 { get; }
 
-    Tables.node _20 { get; }
+    Node _7 { get; }
 
-    List<Node> _21 { get; }
+    Tables.node _8 { get; }
 
-    DataSet _6 { get; }
+    List<Node> _9 { get; }
 
-    List<Table> _7 { get; }
+    DataSet _10 { get; }
 
-    Table _8 { get; }
+    List<Table> _11 { get; }
 
-    List<TableColumn> _9 { get; }
+    Table _12 { get; }
 
-    TableColumn _10 { get; }
+    List<TableColumn> _13 { get; }
 
-    List<TableRow> _11 { get; }
+    TableColumn _14 { get; }
 
-    TableRow _12 { get; }
+    List<TableRow> _15 { get; }
 
-    List<TableRowValue> _13 { get; }
+    TableRow _16 { get; }
 
-    TableRowValue _14 { get; }
+    List<TableRowValue> _17 { get; }
 
-    TableRowValue_Int _15 { get; }
+    TableRowValue _18 { get; }
 
-    TableRowValue_NullableInt _16 { get; }
+    TableRowValue_Int _19 { get; }
 
-    TableRowValue_String _17 { get; }
+    TableRowValue_NullableInt _20 { get; }
+
+    TableRowValue_String _21 { get; }
 
 }

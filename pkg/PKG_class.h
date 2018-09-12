@@ -5,7 +5,7 @@ namespace PKG
 {
 	struct PkgGenMd5
 	{
-		static constexpr char const* value = "7e77975541d51662292ec0fd85309c8a";
+		static constexpr char const* value = "bd83cd63ba80d8ea0f7f8fb9501ab20c";
     };
 
     class Foo;
@@ -86,6 +86,8 @@ namespace Tables
         std::optional<int32_t> age;
         xx::String_p info;
         xx::List_p<PKG::Foo_p> childs;
+        xx::Object_p o = nullptr;
+        xx::List_p<xx::Object_p> os;
 
         typedef Foo ThisType;
         typedef xx::Object BaseType;
@@ -324,23 +326,24 @@ namespace Tables
 namespace xx
 {
 	template<> struct TypeId<PKG::Foo> { static const uint16_t value = 3; };
-	template<> struct TypeId<xx::List<PKG::Foo_p>> { static const uint16_t value = 5; };
-	template<> struct TypeId<PKG::FooEx> { static const uint16_t value = 18; };
-	template<> struct TypeId<PKG::Node> { static const uint16_t value = 19; };
-	template<> struct TypeId<PKG::Tables::node> { static const uint16_t value = 20; };
-	template<> struct TypeId<xx::List<PKG::Node_p>> { static const uint16_t value = 21; };
-	template<> struct TypeId<PKG::DataSet> { static const uint16_t value = 6; };
-	template<> struct TypeId<xx::List<PKG::Table_p>> { static const uint16_t value = 7; };
-	template<> struct TypeId<PKG::Table> { static const uint16_t value = 8; };
-	template<> struct TypeId<xx::List<PKG::TableColumn_p>> { static const uint16_t value = 9; };
-	template<> struct TypeId<PKG::TableColumn> { static const uint16_t value = 10; };
-	template<> struct TypeId<xx::List<PKG::TableRow_p>> { static const uint16_t value = 11; };
-	template<> struct TypeId<PKG::TableRow> { static const uint16_t value = 12; };
-	template<> struct TypeId<xx::List<PKG::TableRowValue_p>> { static const uint16_t value = 13; };
-	template<> struct TypeId<PKG::TableRowValue> { static const uint16_t value = 14; };
-	template<> struct TypeId<PKG::TableRowValue_Int> { static const uint16_t value = 15; };
-	template<> struct TypeId<PKG::TableRowValue_NullableInt> { static const uint16_t value = 16; };
-	template<> struct TypeId<PKG::TableRowValue_String> { static const uint16_t value = 17; };
+	template<> struct TypeId<xx::List<PKG::Foo_p>> { static const uint16_t value = 4; };
+	template<> struct TypeId<xx::List<xx::Object_p>> { static const uint16_t value = 5; };
+	template<> struct TypeId<PKG::FooEx> { static const uint16_t value = 6; };
+	template<> struct TypeId<PKG::Node> { static const uint16_t value = 7; };
+	template<> struct TypeId<PKG::Tables::node> { static const uint16_t value = 8; };
+	template<> struct TypeId<xx::List<PKG::Node_p>> { static const uint16_t value = 9; };
+	template<> struct TypeId<PKG::DataSet> { static const uint16_t value = 10; };
+	template<> struct TypeId<xx::List<PKG::Table_p>> { static const uint16_t value = 11; };
+	template<> struct TypeId<PKG::Table> { static const uint16_t value = 12; };
+	template<> struct TypeId<xx::List<PKG::TableColumn_p>> { static const uint16_t value = 13; };
+	template<> struct TypeId<PKG::TableColumn> { static const uint16_t value = 14; };
+	template<> struct TypeId<xx::List<PKG::TableRow_p>> { static const uint16_t value = 15; };
+	template<> struct TypeId<PKG::TableRow> { static const uint16_t value = 16; };
+	template<> struct TypeId<xx::List<PKG::TableRowValue_p>> { static const uint16_t value = 17; };
+	template<> struct TypeId<PKG::TableRowValue> { static const uint16_t value = 18; };
+	template<> struct TypeId<PKG::TableRowValue_Int> { static const uint16_t value = 19; };
+	template<> struct TypeId<PKG::TableRowValue_NullableInt> { static const uint16_t value = 20; };
+	template<> struct TypeId<PKG::TableRowValue_String> { static const uint16_t value = 21; };
 }
 namespace PKG
 {
@@ -359,6 +362,8 @@ namespace PKG
         bb.Write(this->age);
         bb.Write(this->info);
         bb.Write(this->childs);
+        bb.Write(this->o);
+        bb.Write(this->os);
     }
     inline int Foo::FromBBuffer(xx::BBuffer& bb) noexcept
     {
@@ -372,6 +377,9 @@ namespace PKG
         if (int r = bb.Read(this->info)) return r;
         bb.readLengthLimit = 0;
         if (int r = bb.Read(this->childs)) return r;
+        if (int r = bb.Read(this->o)) return r;
+        bb.readLengthLimit = 0;
+        if (int r = bb.Read(this->os)) return r;
         return 0;
     }
 
@@ -398,6 +406,8 @@ namespace PKG
         if (this->info) s.Append(", \"info\":\"", this->info, "\"");
         else s.Append(", \"info\":nil");
         s.Append(", \"childs\":", this->childs);
+        s.Append(", \"o\":", this->o);
+        s.Append(", \"os\":", this->os);
     }
     inline void Foo::CopyTo(Foo* const& o) const noexcept
     {
@@ -405,6 +415,8 @@ namespace PKG
         o->age = this->age;
         o->info = this->info;
         o->childs = this->childs;
+        o->o = this->o;
+        o->os = this->os;
     }
     inline Foo* Foo::MakeCopy() const noexcept
     {
@@ -1104,6 +1116,7 @@ namespace PKG
         xx::MemPool::RegisterInternals();
 	    xx::MemPool::Register<PKG::Foo, xx::Object>();
 	    xx::MemPool::Register<xx::List<PKG::Foo_p>, xx::Object>();
+	    xx::MemPool::Register<xx::List<xx::Object_p>, xx::Object>();
 	    xx::MemPool::Register<PKG::FooEx, PKG::Foo>();
 	    xx::MemPool::Register<PKG::Node, PKG::Tables::node>();
 	    xx::MemPool::Register<PKG::Tables::node, xx::Object>();

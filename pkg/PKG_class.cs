@@ -4,7 +4,7 @@ namespace PKG
 {
     public static class PkgGenMd5
     {
-        public const string value = "7e77975541d51662292ec0fd85309c8a"; 
+        public const string value = "bd83cd63ba80d8ea0f7f8fb9501ab20c"; 
     }
 
     public partial class Foo : IBBuffer
@@ -13,6 +13,8 @@ namespace PKG
         public int? age;
         public string info;
         public List<Foo> childs;
+        public IBBuffer o;
+        public List<IBBuffer> os;
 
         public virtual ushort GetPackageId()
         {
@@ -25,6 +27,8 @@ namespace PKG
             bb.Write(this.age);
             bb.Write(this.info);
             bb.Write(this.childs);
+            bb.Write(this.o);
+            bb.Write(this.os);
         }
 
         public virtual void FromBBuffer(BBuffer bb)
@@ -35,6 +39,9 @@ namespace PKG
             bb.Read(ref this.info);
             bb.readLengthLimit = 0;
             bb.Read(ref this.childs);
+            bb.Read(ref this.o);
+            bb.readLengthLimit = 0;
+            bb.Read(ref this.os);
         }
         public virtual void ToString(ref System.Text.StringBuilder str)
         {
@@ -58,6 +65,8 @@ namespace PKG
             if (info != null) str.Append(", \"info\":\"" + info + "\"");
             else str.Append(", \"info\":nil");
             str.Append(", \"childs\":" + (childs == null ? "nil" : childs.ToString()));
+            str.Append(", \"o\":" + o);
+            str.Append(", \"os\":" + (os == null ? "nil" : os.ToString()));
         }
         public override string ToString()
         {
@@ -660,23 +669,24 @@ namespace Tables
         {
             xx.BBuffer.RegisterInternals();
             BBuffer.Register<Foo>(3);
-            BBuffer.Register<List<Foo>>(5);
-            BBuffer.Register<FooEx>(18);
-            BBuffer.Register<Node>(19);
-            BBuffer.Register<Tables.node>(20);
-            BBuffer.Register<List<Node>>(21);
-            BBuffer.Register<DataSet>(6);
-            BBuffer.Register<List<Table>>(7);
-            BBuffer.Register<Table>(8);
-            BBuffer.Register<List<TableColumn>>(9);
-            BBuffer.Register<TableColumn>(10);
-            BBuffer.Register<List<TableRow>>(11);
-            BBuffer.Register<TableRow>(12);
-            BBuffer.Register<List<TableRowValue>>(13);
-            BBuffer.Register<TableRowValue>(14);
-            BBuffer.Register<TableRowValue_Int>(15);
-            BBuffer.Register<TableRowValue_NullableInt>(16);
-            BBuffer.Register<TableRowValue_String>(17);
+            BBuffer.Register<List<Foo>>(4);
+            BBuffer.Register<List<IBBuffer>>(5);
+            BBuffer.Register<FooEx>(6);
+            BBuffer.Register<Node>(7);
+            BBuffer.Register<Tables.node>(8);
+            BBuffer.Register<List<Node>>(9);
+            BBuffer.Register<DataSet>(10);
+            BBuffer.Register<List<Table>>(11);
+            BBuffer.Register<Table>(12);
+            BBuffer.Register<List<TableColumn>>(13);
+            BBuffer.Register<TableColumn>(14);
+            BBuffer.Register<List<TableRow>>(15);
+            BBuffer.Register<TableRow>(16);
+            BBuffer.Register<List<TableRowValue>>(17);
+            BBuffer.Register<TableRowValue>(18);
+            BBuffer.Register<TableRowValue_Int>(19);
+            BBuffer.Register<TableRowValue_NullableInt>(20);
+            BBuffer.Register<TableRowValue_String>(21);
         }
     }
 }

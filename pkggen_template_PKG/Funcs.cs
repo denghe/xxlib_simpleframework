@@ -14,6 +14,10 @@ class Foo
     string info;
 
     List<Foo> childs;
+
+    object o;
+
+    List<object> os;
 }
 
 class FooEx : Foo

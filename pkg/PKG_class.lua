@@ -1,5 +1,5 @@
 ﻿
-PKG_PkgGenMd5_Value = '7e77975541d51662292ec0fd85309c8a'
+PKG_PkgGenMd5_Value = 'bd83cd63ba80d8ea0f7f8fb9501ab20c'
 
 PKG_Foo = {
     typeName = "PKG_Foo",
@@ -14,6 +14,8 @@ PKG_Foo = {
         o.age = null -- NullableInt32
         o.info = null -- String
         o.childs = null -- List_PKG_Foo_
+        o.o = null -- Object
+        o.os = null -- List_Object_
         return o
     end,
     FromBBuffer = function( bb, o )
@@ -22,6 +24,8 @@ PKG_Foo = {
         o.age = ReadObject( bb )
         o.info = ReadObject( bb )
         o.childs = ReadObject( bb )
+        o.o = ReadObject( bb )
+        o.os = ReadObject( bb )
     end,
     ToBBuffer = function( bb, o )
         local WriteObject = bb.WriteObject
@@ -29,12 +33,14 @@ PKG_Foo = {
         WriteObject( bb, o.age )
         WriteObject( bb, o.info )
         WriteObject( bb, o.childs )
+        WriteObject( bb, o.o )
+        WriteObject( bb, o.os )
     end
 }
 BBuffer.Register( PKG_Foo )
 List_PKG_Foo_ = {
     typeName = "List_PKG_Foo_",
-    typeId = 5,
+    typeId = 4,
     Create = function()
         local o = {}
         o.__proto = List_PKG_Foo_
@@ -59,9 +65,36 @@ List_PKG_Foo_ = {
     end
 }
 BBuffer.Register( List_PKG_Foo_ )
+List_Object_ = {
+    typeName = "List_Object_",
+    typeId = 5,
+    Create = function()
+        local o = {}
+        o.__proto = List_Object_
+        o.__index = o
+        o.__newindex = o
+        return o
+    end,
+    FromBBuffer = function( bb, o )
+		local len = bb:ReadUInt32()
+        local f = BBuffer.ReadObject
+		for i = 1, len do
+			o[ i ] = f( bb )
+		end
+    end,
+    ToBBuffer = function( bb, o )
+        local len = #o
+		bb:WriteUInt32( len )
+        local f = BBuffer.WriteObject
+        for i = 1, len do
+			f( bb, o[ i ] )
+		end
+    end
+}
+BBuffer.Register( List_Object_ )
 PKG_FooEx = {
     typeName = "PKG_FooEx",
-    typeId = 18,
+    typeId = 6,
     Create = function()
         local o = {}
         o.__proto = PKG_FooEx
@@ -83,7 +116,7 @@ PKG_FooEx = {
 BBuffer.Register( PKG_FooEx )
 PKG_Node = {
     typeName = "PKG_Node",
-    typeId = 19,
+    typeId = 7,
     Create = function()
         local o = {}
         o.__proto = PKG_Node
@@ -113,7 +146,7 @@ PKG_Node = {
 BBuffer.Register( PKG_Node )
 PKG_Tables_node = {
     typeName = "PKG_Tables_node",
-    typeId = 20,
+    typeId = 8,
     Create = function()
         local o = {}
         o.__proto = PKG_Tables_node
@@ -136,7 +169,7 @@ PKG_Tables_node = {
 BBuffer.Register( PKG_Tables_node )
 List_PKG_Node_ = {
     typeName = "List_PKG_Node_",
-    typeId = 21,
+    typeId = 9,
     Create = function()
         local o = {}
         o.__proto = List_PKG_Node_
@@ -163,7 +196,7 @@ List_PKG_Node_ = {
 BBuffer.Register( List_PKG_Node_ )
 PKG_DataSet = {
     typeName = "PKG_DataSet",
-    typeId = 6,
+    typeId = 10,
     Create = function()
         local o = {}
         o.__proto = PKG_DataSet
@@ -183,7 +216,7 @@ PKG_DataSet = {
 BBuffer.Register( PKG_DataSet )
 List_PKG_Table_ = {
     typeName = "List_PKG_Table_",
-    typeId = 7,
+    typeId = 11,
     Create = function()
         local o = {}
         o.__proto = List_PKG_Table_
@@ -210,7 +243,7 @@ List_PKG_Table_ = {
 BBuffer.Register( List_PKG_Table_ )
 PKG_Table = {
     typeName = "PKG_Table",
-    typeId = 8,
+    typeId = 12,
     Create = function()
         local o = {}
         o.__proto = PKG_Table
@@ -241,7 +274,7 @@ PKG_Table = {
 BBuffer.Register( PKG_Table )
 List_PKG_TableColumn_ = {
     typeName = "List_PKG_TableColumn_",
-    typeId = 9,
+    typeId = 13,
     Create = function()
         local o = {}
         o.__proto = List_PKG_TableColumn_
@@ -268,7 +301,7 @@ List_PKG_TableColumn_ = {
 BBuffer.Register( List_PKG_TableColumn_ )
 PKG_TableColumn = {
     typeName = "PKG_TableColumn",
-    typeId = 10,
+    typeId = 14,
     Create = function()
         local o = {}
         o.__proto = PKG_TableColumn
@@ -288,7 +321,7 @@ PKG_TableColumn = {
 BBuffer.Register( PKG_TableColumn )
 List_PKG_TableRow_ = {
     typeName = "List_PKG_TableRow_",
-    typeId = 11,
+    typeId = 15,
     Create = function()
         local o = {}
         o.__proto = List_PKG_TableRow_
@@ -315,7 +348,7 @@ List_PKG_TableRow_ = {
 BBuffer.Register( List_PKG_TableRow_ )
 PKG_TableRow = {
     typeName = "PKG_TableRow",
-    typeId = 12,
+    typeId = 16,
     Create = function()
         local o = {}
         o.__proto = PKG_TableRow
@@ -335,7 +368,7 @@ PKG_TableRow = {
 BBuffer.Register( PKG_TableRow )
 List_PKG_TableRowValue_ = {
     typeName = "List_PKG_TableRowValue_",
-    typeId = 13,
+    typeId = 17,
     Create = function()
         local o = {}
         o.__proto = List_PKG_TableRowValue_
@@ -362,7 +395,7 @@ List_PKG_TableRowValue_ = {
 BBuffer.Register( List_PKG_TableRowValue_ )
 PKG_TableRowValue = {
     typeName = "PKG_TableRowValue",
-    typeId = 14,
+    typeId = 18,
     Create = function()
         local o = {}
         o.__proto = PKG_TableRowValue
@@ -379,7 +412,7 @@ PKG_TableRowValue = {
 BBuffer.Register( PKG_TableRowValue )
 PKG_TableRowValue_Int = {
     typeName = "PKG_TableRowValue_Int",
-    typeId = 15,
+    typeId = 19,
     Create = function()
         local o = {}
         o.__proto = PKG_TableRowValue_Int
@@ -404,7 +437,7 @@ PKG_TableRowValue_Int = {
 BBuffer.Register( PKG_TableRowValue_Int )
 PKG_TableRowValue_NullableInt = {
     typeName = "PKG_TableRowValue_NullableInt",
-    typeId = 16,
+    typeId = 20,
     Create = function()
         local o = {}
         o.__proto = PKG_TableRowValue_NullableInt
@@ -429,7 +462,7 @@ PKG_TableRowValue_NullableInt = {
 BBuffer.Register( PKG_TableRowValue_NullableInt )
 PKG_TableRowValue_String = {
     typeName = "PKG_TableRowValue_String",
-    typeId = 17,
+    typeId = 21,
     Create = function()
         local o = {}
         o.__proto = PKG_TableRowValue_String

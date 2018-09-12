@@ -478,6 +478,101 @@ public static class GenExtensions
 
 
     /// <summary>
+    /// 获取 C# 模板 的类型声明串
+    /// </summary>
+    public static string _GetTypeDecl_Template(this Type t)
+    {
+        if (t._IsNullable())
+        {
+            return t.GenericTypeArguments[0]._GetTypeDecl_Template() + "?";
+        }
+        if (t.IsArray)
+        {
+            throw new NotSupportedException();
+            //return _GetCSharpTypeDecl(t.GetElementType()) + "[]";
+        }
+        else if (t._IsTuple())
+        {
+            string rtv = "Tuple<";
+            for (int i = 0; i < t.GenericTypeArguments.Length; ++i)
+            {
+                if (i > 0)
+                    rtv += ", ";
+                rtv += _GetTypeDecl_Template(t.GenericTypeArguments[i]);
+            }
+            rtv += ">";
+            return rtv;
+        }
+        else if (t.IsEnum)
+        {
+            return t.FullName;
+        }
+        else
+        {
+            if (t.Namespace == nameof(TemplateLibrary))
+            {
+                if (t.Name == "List`1")
+                {
+                    return "List<" + _GetTypeDecl_Template(t.GenericTypeArguments[0]) + ">";
+                }
+                else if (t.Name == "DateTime")
+                {
+                    return "DateTime";
+                }
+                else if (t.Name == "BBuffer")
+                {
+                    return "BBuffer";
+                }
+            }
+            else if (t.Namespace == nameof(System))
+            {
+                switch (t.Name)
+                {
+                    case "Object":
+                        return "object";
+                    case "Void":
+                        return "void";
+                    case "Byte":
+                        return "byte";
+                    case "UInt8":
+                        return "byte";
+                    case "UInt16":
+                        return "ushort";
+                    case "UInt32":
+                        return "uint";
+                    case "UInt64":
+                        return "ulong";
+                    case "SByte":
+                        return "sbyte";
+                    case "Int8":
+                        return "sbyte";
+                    case "Int16":
+                        return "short";
+                    case "Int32":
+                        return "int";
+                    case "Int64":
+                        return "long";
+                    case "Double":
+                        return "double";
+                    case "Float":
+                        return "float";
+                    case "Single":
+                        return "float";
+                    case "Boolean":
+                        return "bool";
+                    case "Bool":
+                        return "bool";
+                    case "String":
+                        return "string";
+                }
+            }
+
+            return t.FullName;
+            //throw new Exception("unhandled data type");
+        }
+    }
+
+    /// <summary>
     /// 获取 C# 的类型声明串
     /// </summary>
     public static string _GetTypeDecl_Csharp(this Type t)
@@ -528,6 +623,8 @@ public static class GenExtensions
             {
                 switch (t.Name)
                 {
+                    case "Object":
+                        return "IBBuffer";
                     case "Void":
                         return "void";
                     case "Byte":
@@ -569,6 +666,7 @@ public static class GenExtensions
             //throw new Exception("unhandled data type");
         }
     }
+
 
     /// <summary>
     /// 获取 C++ 的类型声明串
@@ -621,6 +719,8 @@ public static class GenExtensions
             {
                 switch (t.Name)
                 {
+                    case "Object":
+                        return "xx::Object*";
                     case "Void":
                         return "void";
                     case "Byte":
@@ -724,6 +824,8 @@ public static class GenExtensions
             {
                 switch (t.Name)
                 {
+                    case "Object":
+                        return "xx::Object_p";
                     case "Void":
                         return "void";
                     case "Byte":

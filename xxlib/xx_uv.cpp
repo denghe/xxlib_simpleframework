@@ -17,7 +17,7 @@ static void Free(xx::MemPool* const& mp, void* const& p) noexcept
 	mp->Free((void**)p - 1);
 }
 
-static void Close(uv_handle_t* const& p) noexcept
+static void CloseAndFree(uv_handle_t* const& p) noexcept
 {
 	if (uv_is_closing(p)) return;
 	uv_close(p, [](uv_handle_t* h) noexcept
@@ -40,6 +40,7 @@ static int TcpWrite(void* stream, char* inBuf, uint32_t len) noexcept
 		uv_write_t req;
 		uv_buf_t buf;
 	};
+	assert(stream);
 	auto mp = (xx::MemPool*)((uv_stream_t*)stream)->loop->data;
 	auto req = (write_req_t*)mp->Alloc(sizeof(write_req_t));
 	req->mp = mp;
@@ -228,7 +229,7 @@ xx::UvTcpListener::UvTcpListener(UvLoop& loop)
 	xx::ScopeGuard sg_ptr([&]() noexcept { Free(mempool, ptr); ptr = nullptr; });
 
 	if (int r = uv_tcp_init((uv_loop_t*)loop.ptr, (uv_tcp_t*)ptr)) throw r;
-	xx::ScopeGuard sg_ptr_init([&]() noexcept { Close((uv_handle_t*)ptr); });
+	xx::ScopeGuard sg_ptr_init([&]() noexcept { CloseAndFree((uv_handle_t*)ptr); ptr = nullptr; sg_ptr.Cancel(); });
 
 	addrPtr = Alloc(mempool, sizeof(sockaddr_in));
 	if (!addrPtr) throw - 2;
@@ -245,7 +246,7 @@ xx::UvTcpListener::~UvTcpListener() noexcept
 	assert(ptr);
 
 	peers.ForEachRevert([mp = mempool](auto& o) noexcept { mp->Release(o); });
-	Close((uv_handle_t*)ptr);
+	CloseAndFree((uv_handle_t*)ptr);
 	ptr = nullptr;
 	Free(mempool, addrPtr);
 	addrPtr = nullptr;
@@ -674,7 +675,7 @@ xx::UvTcpPeer::UvTcpPeer(UvTcpListener & listener)
 	xx::ScopeGuard sg_ptr([&]() noexcept { Free(mempool, ptr); ptr = nullptr; });
 
 	if (int r = uv_tcp_init((uv_loop_t*)loop.ptr, (uv_tcp_t*)ptr)) throw r;
-	xx::ScopeGuard sg_ptr_init([&]() noexcept { Close((uv_handle_t*)ptr); });
+	xx::ScopeGuard sg_ptr_init([&]() noexcept { CloseAndFree((uv_handle_t*)ptr); ptr = nullptr; sg_ptr.Cancel(); });
 
 	if (int r = uv_accept((uv_stream_t*)listener.ptr, (uv_stream_t*)ptr)) throw r;
 	if (int r = uv_read_start((uv_stream_t*)ptr, AllocCB, (uv_read_cb)OnReadCBImpl)) throw r;
@@ -697,7 +698,7 @@ xx::UvTcpPeer::~UvTcpPeer() noexcept
 	{
 		OnDispose();
 	}
-	Close((uv_handle_t*)ptr);
+	CloseAndFree((uv_handle_t*)ptr);
 	ptr = nullptr;
 	Free(loop.mempool, addrPtr);
 	addrPtr = nullptr;
@@ -797,7 +798,7 @@ int xx::UvTcpClient::Connect() noexcept
 	xx::ScopeGuard sg_ptr([&]() noexcept { Free(mempool, ptr); ptr = nullptr; });
 
 	if (int r = uv_tcp_init((uv_loop_t*)loop.ptr, (uv_tcp_t*)ptr)) return r;
-	xx::ScopeGuard sg_ptr_init([&]() noexcept { Close((uv_handle_t*)ptr); });
+	xx::ScopeGuard sg_ptr_init([&]() noexcept { CloseAndFree((uv_handle_t*)ptr); ptr = nullptr; sg_ptr.Cancel(); });
 
 	auto req = (uv_connect_t*)Alloc(loop.mempool, sizeof(uv_connect_t), this);
 	xx::ScopeGuard sg_req([&]() noexcept { Free(mempool, req); req = nullptr; });
@@ -832,7 +833,7 @@ void xx::UvTcpClient::Disconnect() noexcept
 		OnDisconnect();
 		if (IsReleased(vn)) return;
 	}
-	Close((uv_handle_t*)ptr);
+	CloseAndFree((uv_handle_t*)ptr);
 	ptr = nullptr;
 	bbSend.Clear();
 	bbRecv.Clear();
@@ -866,7 +867,7 @@ xx::UvTimer::UvTimer(UvLoop& loop, uint64_t const& timeoutMS, uint64_t const& re
 	xx::ScopeGuard sg_ptr([&]() noexcept { Free(mempool, ptr); ptr = nullptr; });
 
 	if (int r = uv_timer_init((uv_loop_t*)loop.ptr, (uv_timer_t*)ptr)) throw r;
-	xx::ScopeGuard sg_ptr_init([&]() noexcept { Close((uv_handle_t*)ptr); });
+	xx::ScopeGuard sg_ptr_init([&]() noexcept { CloseAndFree((uv_handle_t*)ptr); ptr = nullptr; sg_ptr.Cancel(); });
 
 	if (int r = uv_timer_start((uv_timer_t*)ptr, (uv_timer_cb)OnTimerCBImpl, timeoutMS, repeatIntervalMS)) throw r;
 
@@ -880,7 +881,7 @@ xx::UvTimer::UvTimer(UvLoop& loop, uint64_t const& timeoutMS, uint64_t const& re
 xx::UvTimer::~UvTimer() noexcept
 {
 	assert(ptr);
-	Close((uv_handle_t*)ptr);
+	CloseAndFree((uv_handle_t*)ptr);
 	ptr = nullptr;
 	loop.timers[loop.timers.dataLen - 1]->index_at_container = index_at_container;
 	loop.timers.SwapRemoveAt(index_at_container);
@@ -1028,7 +1029,7 @@ xx::UvAsync::UvAsync(UvLoop& loop)
 	xx::ScopeGuard sg_ptr([&]() noexcept { Free(mempool, ptr); ptr = nullptr; });
 
 	if (int r = uv_async_init((uv_loop_t*)loop.ptr, (uv_async_t*)ptr, (uv_async_cb)OnAsyncCBImpl)) throw r;
-	xx::ScopeGuard sg_ptr_init([&]() noexcept { Close((uv_handle_t*)ptr); });
+	xx::ScopeGuard sg_ptr_init([&]() noexcept { CloseAndFree((uv_handle_t*)ptr); ptr = nullptr; sg_ptr.Cancel(); });
 
 	OnFire = std::bind(&UvAsync::OnFireImpl, this);
 
@@ -1047,7 +1048,7 @@ xx::UvAsync::~UvAsync() noexcept
 		OnDispose();
 	}
 
-	Close((uv_handle_t*)ptr);
+	CloseAndFree((uv_handle_t*)ptr);
 	ptr = nullptr;
 
 	loop.asyncs[loop.asyncs.dataLen - 1]->index_at_container = index_at_container;
@@ -1259,7 +1260,7 @@ xx::UvUdpListener::UvUdpListener(UvLoop& loop)
 	xx::ScopeGuard sg_ptr([&]() noexcept { Free(mempool, ptr); ptr = nullptr; });
 
 	if (int r = uv_udp_init((uv_loop_t*)loop.ptr, (uv_udp_t*)ptr)) throw r;
-	xx::ScopeGuard sg_ptr_init([&]() noexcept { Close((uv_handle_t*)ptr); });
+	xx::ScopeGuard sg_ptr_init([&]() noexcept { CloseAndFree((uv_handle_t*)ptr); ptr = nullptr; sg_ptr.Cancel(); });
 
 	addrPtr = Alloc(mempool, sizeof(sockaddr_in));
 	if (!addrPtr) throw - 2;
@@ -1283,7 +1284,7 @@ xx::UvUdpListener::~UvUdpListener() noexcept
 		kv.value->Release();
 	}
 	peers.Clear();
-	Close((uv_handle_t*)ptr);
+	CloseAndFree((uv_handle_t*)ptr);
 	ptr = nullptr;
 	Free(mempool, addrPtr);
 	addrPtr = nullptr;
@@ -1565,7 +1566,7 @@ int xx::UvUdpClient::Connect(xx::Guid const& g
 
 	int r = 0;
 	if ((r = uv_udp_init((uv_loop_t*)loop.ptr, (uv_udp_t*)ptr))) return r;
-	xx::ScopeGuard sg_ptr_init([&]() noexcept { Close((uv_handle_t*)ptr); });
+	xx::ScopeGuard sg_ptr_init([&]() noexcept { CloseAndFree((uv_handle_t*)ptr); ptr = nullptr; sg_ptr.Cancel(); });
 
 	if ((r = uv_udp_recv_start((uv_udp_t*)ptr, AllocCB, (uv_udp_recv_cb)OnRecvCBImpl))) return r;
 
@@ -1654,7 +1655,7 @@ void xx::UvUdpClient::Disconnect() noexcept
 {
 	if (!ptr) return;
 
-	Close((uv_handle_t*)ptr);
+	CloseAndFree((uv_handle_t*)ptr);
 	ptr = nullptr;
 
 	ikcp_release((ikcpcb*)kcpPtr);
