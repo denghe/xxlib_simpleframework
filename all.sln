@@ -64,6 +64,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "test_csharp3", "test_csharp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "pkggen_template_LOGDB", "pkggen_template_LOGDB\pkggen_template_LOGDB.csproj", "{5B2E7DB8-88AE-4B5D-9456-440EB0788E0E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "pkggen_template_MYSQLGEN", "pkggen_template_MYSQLGEN\pkggen_template_MYSQLGEN.csproj", "{630421AF-33E7-4514-9437-5FCD83EBAD2E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "mysql_tmp_gen", "mysql_tmp_gen\mysql_tmp_gen.csproj", "{FEABEB03-E98F-4265-8A7E-FE2E18CCC25E}"
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		pkg\pkg.projitems*{160a3ee0-261c-4ed1-9194-4c6e75dbc7cf}*SharedItemsImports = 13
@@ -173,6 +177,14 @@ Global
 		{5B2E7DB8-88AE-4B5D-9456-440EB0788E0E}.Debug|x64.Build.0 = Debug|x64
 		{5B2E7DB8-88AE-4B5D-9456-440EB0788E0E}.Release|x64.ActiveCfg = Release|x64
 		{5B2E7DB8-88AE-4B5D-9456-440EB0788E0E}.Release|x64.Build.0 = Release|x64
+		{630421AF-33E7-4514-9437-5FCD83EBAD2E}.Debug|x64.ActiveCfg = Debug|x64
+		{630421AF-33E7-4514-9437-5FCD83EBAD2E}.Debug|x64.Build.0 = Debug|x64
+		{630421AF-33E7-4514-9437-5FCD83EBAD2E}.Release|x64.ActiveCfg = Release|x64
+		{630421AF-33E7-4514-9437-5FCD83EBAD2E}.Release|x64.Build.0 = Release|x64
+		{FEABEB03-E98F-4265-8A7E-FE2E18CCC25E}.Debug|x64.ActiveCfg = Debug|x64
+		{FEABEB03-E98F-4265-8A7E-FE2E18CCC25E}.Debug|x64.Build.0 = Debug|x64
+		{FEABEB03-E98F-4265-8A7E-FE2E18CCC25E}.Release|x64.ActiveCfg = Release|x64
+		{FEABEB03-E98F-4265-8A7E-FE2E18CCC25E}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

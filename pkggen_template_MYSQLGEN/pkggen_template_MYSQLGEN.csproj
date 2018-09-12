@@ -7,9 +7,9 @@
     <ProjectGuid>{630421AF-33E7-4514-9437-5FCD83EBAD2E}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>pkggen_template_PKG2</RootNamespace>
-    <AssemblyName>pkggen_template_PKG2</AssemblyName>
-    <TargetFrameworkVersion>v4.7.1</TargetFrameworkVersion>
+    <RootNamespace>pkggen_template_MYSQLGEN</RootNamespace>
+    <AssemblyName>pkggen_template_MYSQLGEN</AssemblyName>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
   </PropertyGroup>
@@ -42,8 +42,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Classs.cs" />
-    <Compile Include="PKG2_TypeIdMappings.cs" />
+    <Compile Include="ClassFuncs.cs" />
+    <Compile Include="MYSQLGEN_TypeIdMappings.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

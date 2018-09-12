@@ -66,6 +66,10 @@
       <Project>{5b2e7db8-88ae-4b5d-9456-440eb0788e0e}</Project>
       <Name>pkggen_template_LOGDB</Name>
     </ProjectReference>
+    <ProjectReference Include="..\pkggen_template_MYSQLGEN\pkggen_template_MYSQLGEN.csproj">
+      <Project>{630421af-33e7-4514-9437-5fcd83ebad2e}</Project>
+      <Name>pkggen_template_MYSQLGEN</Name>
+    </ProjectReference>
     <ProjectReference Include="..\pkggen_template_PKG\pkggen_template_PKG.csproj">
       <Project>{82112fe9-6a59-4f6d-a295-d4c7c039a977}</Project>
       <Name>pkggen_template_PKG</Name>

@@ -39,6 +39,584 @@ namespace PKG
             sb.Length -= 2;
             sb.Append(")");
         }
+        public static void MySqlAppend(this System.Text.StringBuilder sb, Tables.account o, bool ignoreReadOnly = false)
+        {
+            sb.Append("(");
+            sb.MySqlAppend(o.id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.username);
+            sb.Append(", ");
+            sb.MySqlAppend(o.nickname);
+            sb.Append(", ");
+            sb.MySqlAppend(o.avatar_id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.phone);
+            sb.Append(", ");
+            sb.MySqlAppend(o.password);
+            sb.Append(", ");
+            sb.MySqlAppend(o.money);
+            sb.Append(", ");
+            sb.MySqlAppend(o.money_safe);
+            sb.Append(", ");
+            sb.MySqlAppend(o.total_recharge);
+            sb.Append(", ");
+            sb.MySqlAppend(o.total_consume);
+            sb.Append(", ");
+            sb.MySqlAppend(o.total_withdraw);
+            sb.Append(", ");
+            sb.MySqlAppend(o.create_time);
+            sb.Append(", ");
+            sb.MySqlAppend(o.enabled);
+            sb.Append(", ");
+            sb.MySqlAppend(o.enter_lobby_time);
+            sb.Append(", ");
+            sb.MySqlAppend(o.log_game_id);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+        }
+        public static void MySqlAppend(this System.Text.StringBuilder sb, Tables.chat o, bool ignoreReadOnly = false)
+        {
+            sb.Append("(");
+            sb.MySqlAppend(o.id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.content);
+            sb.Append(", ");
+            sb.MySqlAppend(o.account_id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.create_time);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+        }
+        public static void MySqlAppend(this System.Text.StringBuilder sb, Tables.config o, bool ignoreReadOnly = false)
+        {
+            sb.Append("(");
+            sb.MySqlAppend(o.key);
+            sb.Append(", ");
+            sb.MySqlAppend(o.datatype_name);
+            sb.Append(", ");
+            sb.MySqlAppend(o.title);
+            sb.Append(", ");
+            sb.MySqlAppend(o.desc);
+            sb.Append(", ");
+            sb.MySqlAppend(o.create_time);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+        }
+        public static void MySqlAppend(this System.Text.StringBuilder sb, Tables.config_value o, bool ignoreReadOnly = false)
+        {
+            sb.Append("(");
+            sb.MySqlAppend(o.key);
+            sb.Append(", ");
+            sb.MySqlAppend(o.value_bigint);
+            sb.Append(", ");
+            sb.MySqlAppend(o.value_double);
+            sb.Append(", ");
+            sb.MySqlAppend(o.value_varchar);
+            sb.Append(", ");
+            sb.MySqlAppend(o.create_time);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+        }
+        public static void MySqlAppend(this System.Text.StringBuilder sb, Tables.datatype o, bool ignoreReadOnly = false)
+        {
+            sb.Append("(");
+            sb.MySqlAppend(o.name);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+        }
+        public static void MySqlAppend(this System.Text.StringBuilder sb, Tables.fish o, bool ignoreReadOnly = false)
+        {
+            sb.Append("(");
+            sb.MySqlAppend(o.id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.name);
+            sb.Append(", ");
+            sb.MySqlAppend(o.minCoin);
+            sb.Append(", ");
+            sb.MySqlAppend(o.maxCoin);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+        }
+        public static void MySqlAppend(this System.Text.StringBuilder sb, Tables.game o, bool ignoreReadOnly = false)
+        {
+            sb.Append("(");
+            sb.MySqlAppend(o.id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.name);
+            sb.Append(", ");
+            sb.MySqlAppend(o.type_name);
+            sb.Append(", ");
+            sb.MySqlAppend(o.enabled);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+        }
+        public static void MySqlAppend(this System.Text.StringBuilder sb, Tables.game_catchfish o, bool ignoreReadOnly = false)
+        {
+            sb.Append("(");
+            sb.MySqlAppend(o.id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.exchange_coin_ratio);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+        }
+        public static void MySqlAppend(this System.Text.StringBuilder sb, Tables.game_catchfish_account o, bool ignoreReadOnly = false)
+        {
+            sb.Append("(");
+            sb.MySqlAppend(o.account_id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.game_id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.level_id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.last_bet);
+            sb.Append(", ");
+            sb.MySqlAppend(o.last_cannon_id);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+        }
+        public static void MySqlAppend(this System.Text.StringBuilder sb, Tables.game_catchfish_cannon o, bool ignoreReadOnly = false)
+        {
+            sb.Append("(");
+            sb.MySqlAppend(o.id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.vip_id);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+        }
+        public static void MySqlAppend(this System.Text.StringBuilder sb, Tables.game_catchfish_level o, bool ignoreReadOnly = false)
+        {
+            sb.Append("(");
+            sb.MySqlAppend(o.game_id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.level_id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.min_bet);
+            sb.Append(", ");
+            sb.MySqlAppend(o.max_bet);
+            sb.Append(", ");
+            sb.MySqlAppend(o.min_money);
+            sb.Append(", ");
+            sb.MySqlAppend(o.enabled);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+        }
+        public static void MySqlAppend(this System.Text.StringBuilder sb, Tables.game_catchfish_level_room o, bool ignoreReadOnly = false)
+        {
+            sb.Append("(");
+            sb.MySqlAppend(o.game_id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.level_id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.room_id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.enabled);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+        }
+        public static void MySqlAppend(this System.Text.StringBuilder sb, Tables.log_account_avatar o, bool ignoreReadOnly = false)
+        {
+            sb.Append("(");
+            sb.MySqlAppend(o.id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.account_id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.avatar_id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.create_time);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+        }
+        public static void MySqlAppend(this System.Text.StringBuilder sb, Tables.log_account_enabled o, bool ignoreReadOnly = false)
+        {
+            sb.Append("(");
+            sb.MySqlAppend(o.id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.account_id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.enabled);
+            sb.Append(", ");
+            sb.MySqlAppend(o.memo);
+            sb.Append(", ");
+            sb.MySqlAppend(o.create_time);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+        }
+        public static void MySqlAppend(this System.Text.StringBuilder sb, Tables.log_account_money_safe o, bool ignoreReadOnly = false)
+        {
+            sb.Append("(");
+            sb.MySqlAppend(o.id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.account_id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.value);
+            sb.Append(", ");
+            sb.MySqlAppend(o.create_time);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+        }
+        public static void MySqlAppend(this System.Text.StringBuilder sb, Tables.log_account_nickname o, bool ignoreReadOnly = false)
+        {
+            sb.Append("(");
+            sb.MySqlAppend(o.id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.account_id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.nickname);
+            sb.Append(", ");
+            sb.MySqlAppend(o.create_time);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+        }
+        public static void MySqlAppend(this System.Text.StringBuilder sb, Tables.log_account_password o, bool ignoreReadOnly = false)
+        {
+            sb.Append("(");
+            sb.MySqlAppend(o.id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.account_id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.password);
+            sb.Append(", ");
+            sb.MySqlAppend(o.create_time);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+        }
+        public static void MySqlAppend(this System.Text.StringBuilder sb, Tables.log_account_phone o, bool ignoreReadOnly = false)
+        {
+            sb.Append("(");
+            sb.MySqlAppend(o.id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.account_id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.phone);
+            sb.Append(", ");
+            sb.MySqlAppend(o.create_time);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+        }
+        public static void MySqlAppend(this System.Text.StringBuilder sb, Tables.log_account_recharge o, bool ignoreReadOnly = false)
+        {
+            sb.Append("(");
+            sb.MySqlAppend(o.token);
+            sb.Append(", ");
+            sb.MySqlAppend(o.account_id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.money);
+            sb.Append(", ");
+            sb.MySqlAppend(o.memo);
+            sb.Append(", ");
+            sb.MySqlAppend(o.create_time);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+        }
+        public static void MySqlAppend(this System.Text.StringBuilder sb, Tables.log_game o, bool ignoreReadOnly = false)
+        {
+            sb.Append("(");
+            sb.MySqlAppend(o.id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.game_id);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+        }
+        public static void MySqlAppend(this System.Text.StringBuilder sb, Tables.log_game_catchfish o, bool ignoreReadOnly = false)
+        {
+            sb.Append("(");
+            sb.MySqlAppend(o.id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.level_id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.room_id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.account_id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.enter_time);
+            sb.Append(", ");
+            sb.MySqlAppend(o.enter_money);
+            sb.Append(", ");
+            sb.MySqlAppend(o.leave_time);
+            sb.Append(", ");
+            sb.MySqlAppend(o.leave_money);
+            sb.Append(", ");
+            sb.MySqlAppend(o.consume);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+        }
+        public static void MySqlAppend(this System.Text.StringBuilder sb, Tables.log_game_catchfish_event o, bool ignoreReadOnly = false)
+        {
+            sb.Append("(");
+            sb.MySqlAppend(o.id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.log_game_catchfish_id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.event_type_id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.frame_number);
+            sb.Append(", ");
+            sb.MySqlAppend(o.create_time);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+        }
+        public static void MySqlAppend(this System.Text.StringBuilder sb, Tables.log_game_catchfish_event_bulletdie o, bool ignoreReadOnly = false)
+        {
+            sb.Append("(");
+            sb.MySqlAppend(o.id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.log_game_catchfish_id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.type_id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.bullet_id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.coin);
+            sb.Append(", ");
+            sb.MySqlAppend(o.money);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+        }
+        public static void MySqlAppend(this System.Text.StringBuilder sb, Tables.log_game_catchfish_event_bulletmiss o, bool ignoreReadOnly = false)
+        {
+            sb.Append("(");
+            sb.MySqlAppend(o.id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.log_game_catchfish_id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.type_id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.bullet_id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.coin);
+            sb.Append(", ");
+            sb.MySqlAppend(o.money);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+        }
+        public static void MySqlAppend(this System.Text.StringBuilder sb, Tables.log_game_catchfish_event_fire o, bool ignoreReadOnly = false)
+        {
+            sb.Append("(");
+            sb.MySqlAppend(o.id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.log_game_catchfish_id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.type_id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.bullet_id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.coin);
+            sb.Append(", ");
+            sb.MySqlAppend(o.money);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+        }
+        public static void MySqlAppend(this System.Text.StringBuilder sb, Tables.log_game_catchfish_event_fishdie o, bool ignoreReadOnly = false)
+        {
+            sb.Append("(");
+            sb.MySqlAppend(o.id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.log_game_catchfish_id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.fish_type_id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.fish_id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.fish_ratio);
+            sb.Append(", ");
+            sb.MySqlAppend(o.bullet_coin);
+            sb.Append(", ");
+            sb.MySqlAppend(o.coin);
+            sb.Append(", ");
+            sb.MySqlAppend(o.money);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+        }
+        public static void MySqlAppend(this System.Text.StringBuilder sb, Tables.log_login_out o, bool ignoreReadOnly = false)
+        {
+            sb.Append("(");
+            sb.MySqlAppend(o.id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.account_id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.type_id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.ip);
+            sb.Append(", ");
+            sb.MySqlAppend(o.create_time);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+        }
+        public static void MySqlAppend(this System.Text.StringBuilder sb, Tables.log_withdrawals o, bool ignoreReadOnly = false)
+        {
+            sb.Append("(");
+            sb.MySqlAppend(o.id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.withdrawals_id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.person_in_charge);
+            sb.Append(", ");
+            sb.MySqlAppend(o.state_id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.description);
+            sb.Append(", ");
+            sb.MySqlAppend(o.create_time);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+        }
+        public static void MySqlAppend(this System.Text.StringBuilder sb, Tables.mail o, bool ignoreReadOnly = false)
+        {
+            sb.Append("(");
+            sb.MySqlAppend(o.id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.content);
+            sb.Append(", ");
+            sb.MySqlAppend(o.account_id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.sender);
+            sb.Append(", ");
+            sb.MySqlAppend(o.create_time);
+            sb.Append(", ");
+            sb.MySqlAppend(o.is_read);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+        }
+        public static void MySqlAppend(this System.Text.StringBuilder sb, Tables.marquee o, bool ignoreReadOnly = false)
+        {
+            sb.Append("(");
+            sb.MySqlAppend(o.id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.content);
+            sb.Append(", ");
+            sb.MySqlAppend(o.frequency);
+            sb.Append(", ");
+            sb.MySqlAppend(o.update_time);
+            sb.Append(", ");
+            sb.MySqlAppend(o.create_time);
+            sb.Append(", ");
+            sb.MySqlAppend(o.enable);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+        }
+        public static void MySqlAppend(this System.Text.StringBuilder sb, Tables.notice o, bool ignoreReadOnly = false)
+        {
+            sb.Append("(");
+            sb.MySqlAppend(o.id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.content);
+            sb.Append(", ");
+            sb.MySqlAppend(o.notice_type_id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.start_time);
+            sb.Append(", ");
+            sb.MySqlAppend(o.end_time);
+            sb.Append(", ");
+            sb.MySqlAppend(o.create_time);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+        }
+        public static void MySqlAppend(this System.Text.StringBuilder sb, Tables.notice_read o, bool ignoreReadOnly = false)
+        {
+            sb.Append("(");
+            sb.MySqlAppend(o.notice_id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.account_id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.create_time);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+        }
+        public static void MySqlAppend(this System.Text.StringBuilder sb, Tables.notice_type o, bool ignoreReadOnly = false)
+        {
+            sb.Append("(");
+            sb.MySqlAppend(o.id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.name);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+        }
+        public static void MySqlAppend(this System.Text.StringBuilder sb, Tables.verify_code o, bool ignoreReadOnly = false)
+        {
+            sb.Append("(");
+            sb.MySqlAppend(o.phone);
+            sb.Append(", ");
+            sb.MySqlAppend(o.content);
+            sb.Append(", ");
+            sb.MySqlAppend(o.create_time);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+        }
+        public static void MySqlAppend(this System.Text.StringBuilder sb, Tables.vip o, bool ignoreReadOnly = false)
+        {
+            sb.Append("(");
+            sb.MySqlAppend(o.id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.total_recharge);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+        }
+        public static void MySqlAppend(this System.Text.StringBuilder sb, Tables.withdrawals o, bool ignoreReadOnly = false)
+        {
+            sb.Append("(");
+            sb.MySqlAppend(o.withdrawals_id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.account_id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.money);
+            sb.Append(", ");
+            sb.MySqlAppend(o.requirement);
+            sb.Append(", ");
+            sb.MySqlAppend(o.state_id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.description);
+            sb.Append(", ");
+            sb.MySqlAppend(o.create_time);
+            sb.Append(", ");
+            sb.MySqlAppend(o.last_create_time);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+        }
+        public static void MySqlAppend(this System.Text.StringBuilder sb, Tables.withdrawals_state o, bool ignoreReadOnly = false)
+        {
+            sb.Append("(");
+            sb.MySqlAppend(o.id);
+            sb.Append(", ");
+            sb.MySqlAppend(o.name);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+        }
         public static void MySqlAppend(this System.Text.StringBuilder sb, Tables.node o, bool ignoreReadOnly = false)
         {
             sb.Append("(");

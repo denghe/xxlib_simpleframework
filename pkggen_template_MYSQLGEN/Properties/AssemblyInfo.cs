@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("pkggen_template_PKG2")]
+[assembly: AssemblyTitle("pkggen_template_MYSQLGEN")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("pkggen_template_PKG2")]
+[assembly: AssemblyProduct("pkggen_template_MYSQLGEN")]
 [assembly: AssemblyCopyright("Copyright ©  2017")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("AFAFA035-202B-458A-8714-5524FFB3F059")]
+[assembly: Guid("630421AF-33E7-4514-9437-5FCD83EBAD2E")]
 
 // Version information for an assembly consists of the following four values:
 //
