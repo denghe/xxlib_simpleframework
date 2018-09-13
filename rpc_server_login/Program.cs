@@ -73,7 +73,7 @@ public static class TcpUdpPeerHandler
         peer.OnReceiveRequest = (serial_client, bb__) =>
         {
             // 试解包, 如果失败直接断开
-            var ibb__ = bb__.TryReadRoot<IBBuffer>();
+            var ibb__ = bb__.TryReadRoot<IObject>();
             if (ibb__ == null)
             {
                 peer.Dispose();
@@ -115,14 +115,14 @@ public static class TcpUdpPeerHandler
                             // 将回应包解出来, 进一步处理
                             else
                             {
-                                var ibb = bb.TryReadRoot<IBBuffer>();
+                                var obj = bb.TryReadRoot<IObject>();
 
                                 // 如果 ibb 为空, 则为内部 / 内网通信错误, 或协议错误 )
-                                Debug.Assert(ibb != null);
+                                Debug.Assert(obj != null);
 
                                 // ... 其他处理
 
-                                switch (ibb)
+                                switch (obj)
                                 {
                                     case RPC.DB_Login.AuthSuccess authSuccess:
                                         if (!peer.disposed)

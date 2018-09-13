@@ -7,7 +7,7 @@ namespace xx
 {
     // 抄自 MS 代码并删除小改加料( 支持多级序列化 )
 
-    public class List<T> : IBBuffer
+    public class List<T> : IObject
     {
         public T[] buf;
         public int bufLen { get { return buf.Length; } }
@@ -421,6 +421,12 @@ namespace xx
             return toStringFlag;
         }
 
+        public void MySqlAppend(ref StringBuilder sb, bool ignoreReadOnly)
+        {
+            if (dataLen == 0) throw new Exception("List no data ??");
+            ListIBBufferImpl<T>.instance.MySqlAppend(ref sb, ignoreReadOnly, this);
+            sb.Length -= 2;
+        }
     }
 
     public abstract partial class ListIBBufferImpl<T>
@@ -432,6 +438,17 @@ namespace xx
         {
             return vs[idx].ToString();
         }
+
+        public virtual void MySqlAppend(ref StringBuilder sb, bool ignoreReadOnly, List<T> vs)
+        {
+            var vsBuf = vs.buf;
+            for (int i = 0; i < vs.dataLen; i++)
+            {
+                sb.Append(vsBuf[i]);
+                sb.Append(", ");
+            }
+        }
+
 
         public static ListIBBufferImpl<T> instance;
 
@@ -499,7 +516,7 @@ namespace xx
                 else if (et == typeof(ulong)) instance = new ListIBBufferImpl_Enum_UInt64<T>() as ListIBBufferImpl<T>;
                 else if (et == typeof(long)) instance = new ListIBBufferImpl_Enum_Int64<T>() as ListIBBufferImpl<T>;
             }
-            else if (typeof(IBBuffer).IsAssignableFrom(t))
+            else if (typeof(IObject).IsAssignableFrom(t))
             {
                 instance = new ListIBBufferImpl_IBBuffer<T>() as ListIBBufferImpl<T>;
             }
@@ -864,14 +881,14 @@ namespace xx
             {
                 for (int i = 0; i < vsDataLen; i++)
                 {
-                    ((IBBuffer)vs[i]).ToBBuffer(bb);
+                    ((IObject)vs[i]).ToBBuffer(bb);
                 }
             }
             else
             {
                 for (int i = 0; i < vsDataLen; i++)
                 {
-                    bb.Write((IBBuffer)vs[i]);
+                    bb.Write((IObject)vs[i]);
                 }
             }
         }
@@ -887,7 +904,7 @@ namespace xx
             {
                 for (int i = 0; i < len; i++)
                 {
-                    var tmp = (IBBuffer)default(T);
+                    var tmp = (IObject)default(T);
                     tmp.FromBBuffer(bb);
                     vs[i] = (T)tmp;
                 }
@@ -896,10 +913,20 @@ namespace xx
             {
                 for (int i = 0; i < len; i++)
                 {
-                    IBBuffer tmp = null;
+                    IObject tmp = null;
                     bb.Read(ref tmp);
                     vs[i] = (T)tmp;
                 }
+            }
+        }
+
+        public override void MySqlAppend(ref StringBuilder sb, bool ignoreReadOnly, List<T> vs)
+        {
+            var vsBuf = vs.buf;
+            for (int i = 0; i < vs.dataLen; i++)
+            {
+                ((IObject)vs[i]).MySqlAppend(ref sb, ignoreReadOnly);
+                sb.Append(", ");
             }
         }
     }
@@ -1370,7 +1397,19 @@ namespace xx
         }
         public override string ToStringCore(List<string> vs, int idx)
         {
-            return "\"" + vs[idx] + "\"";
+            var s = vs[idx];
+            return s == null ? "nil" : ("\"" + s + "\"");   // todo: 对内容做 json 转义?
+        }
+
+        public override void MySqlAppend(ref StringBuilder sb, bool ignoreReadOnly, List<string> vs)
+        {
+            var vsBuf = vs.buf;
+            for (int i = 0; i < vs.dataLen; i++)
+            {
+                sb.Append("'");
+                sb.Append(vsBuf[i].Replace("'","''"));
+                sb.Append("', ");
+            }
         }
     }
 

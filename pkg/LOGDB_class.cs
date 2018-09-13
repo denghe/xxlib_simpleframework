@@ -4,7 +4,7 @@ namespace LOGDB
 {
     public static class PkgGenMd5
     {
-        public const string value = "bbad325298f516a3dd7bd166e713f90d"; 
+        public const string value = "fc66591b1d743ab8a0c7b6e5e6196f14"; 
     }
 
     /// <summary>
@@ -23,7 +23,7 @@ namespace LOGDB
     /// <summary>
     /// 对应 log 日志表
     /// </summary>
-    public partial class Log : IBBuffer
+    public partial class Log : IObject
     {
         /// <summary>
         /// 自增主键
@@ -147,6 +147,9 @@ namespace LOGDB
         public bool GetToStringFlag()
         {
             return toStringFlag;
+        }
+        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
         }
     }
     public static class AllTypes

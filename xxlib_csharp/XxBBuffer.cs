@@ -7,7 +7,7 @@ namespace xx
     /// <summary>
     /// ByteBuffer 序列化类. Stream 的替代品. 带各种 Write Read 函数.
     /// </summary>
-    public class BBuffer : IBBuffer
+    public class BBuffer : IObject
     {
         public byte[] buf;
         public int offset, dataLen;     // 读偏移, 数据长
@@ -704,7 +704,7 @@ namespace xx
         }
         #endregion
 
-        #region T : IBBuffer
+        #region T : IObject
 
         // 不带引用的类编码规则: 类型编号 + 类数据
         // 类型编号兼 null 表达, 0 代表 null
@@ -744,7 +744,7 @@ namespace xx
         }
 
         // 一波流, 写入一套引用类的根
-        public void WriteRoot<T>(T v) where T : IBBuffer
+        public void WriteRoot<T>(T v) where T : IObject
         {
             BeginWrite();
             Write(v);
@@ -752,14 +752,14 @@ namespace xx
         }
 
         // 一波流, 读出一套引用类
-        public void ReadRoot<T>(ref T v) where T : IBBuffer
+        public void ReadRoot<T>(ref T v) where T : IObject
         {
             BeginRead();
             Read(ref v);
             EndRead();
         }
 
-        public void Write<T>(T v) where T : IBBuffer
+        public void Write<T>(T v) where T : IObject
         {
             if (v == null)
             {
@@ -779,7 +779,7 @@ namespace xx
             }
         }
 
-        public void Read<T>(ref T v) where T : IBBuffer
+        public void Read<T>(ref T v) where T : IObject
         {
             var typeId = (ushort)0;
             Read(ref typeId);
@@ -820,7 +820,7 @@ namespace xx
         }
 
         // 为方便直接返回 new T. 通常返回 null 表示解析失败.
-        public T TryReadRoot<T>() where T : IBBuffer
+        public T TryReadRoot<T>() where T : IObject
         {
             T t = default(T);
             try
@@ -846,11 +846,11 @@ namespace xx
 
 
         // 对于结构体来讲, 无法提供这样的函数. Write 会造成复制, Read 在结构体转换后 只能填充到临时变量. 只能靠生成器识别并生成直接调其成员函数的代码.
-        //public void WriteStruct<T>(T v) where T : /*struct, */IBBuffer
+        //public void WriteStruct<T>(T v) where T : /*struct, */IObject
         //{
         //    v.ToBBuffer(this);
         //}
-        //public void ReadStruct<T>(ref T v)// where T : /*struct, */IBBuffer
+        //public void ReadStruct<T>(ref T v)// where T : /*struct, */IObject
         //{
         //    ((IBBuffer)v).FromBBuffer(this);
         //}
@@ -1389,11 +1389,11 @@ namespace xx
 
         #region type id creator mappings
 
-        public delegate IBBuffer TypeIdCreatorFunc();
+        public delegate IObject TypeIdCreatorFunc();
         public static TypeIdCreatorFunc[] typeIdCreatorMappings = new TypeIdCreatorFunc[ushort.MaxValue + 1];
         public static Dict<Type, ushort> typeTypeIdMappings = new Dict<Type, ushort>();
 
-        public static void Register<T>(ushort typeId) where T : IBBuffer, new()
+        public static void Register<T>(ushort typeId) where T : IObject, new()
         {
             var r = typeTypeIdMappings.Add(typeof(T), typeId);
             System.Diagnostics.Debug.Assert(r.success || typeTypeIdMappings.ValueAt(r.index) == typeId);
@@ -1405,62 +1405,18 @@ namespace xx
             Register<BBuffer>(2);
         }
 
-        public static IBBuffer CreateByTypeId(ushort typeId)
+        public static IObject CreateByTypeId(ushort typeId)
         {
             var f = typeIdCreatorMappings[typeId];
             if (f != null) return f();
             return null;
         }
 
+        public void MySqlAppend(ref StringBuilder sb, bool ignoreReadOnly)
+        {
+            throw new NotImplementedException();
+        }
+
         #endregion
-    }
-
-    /// <summary>
-    /// 用于浮点到各长度整型的快速转换 
-    /// </summary>
-    [StructLayout(LayoutKind.Explicit, Size = 8, CharSet = CharSet.Ansi)]
-    public struct FloatingInteger
-    {
-        [FieldOffset(0)] public double d;
-        [FieldOffset(0)] public ulong ul;
-        [FieldOffset(0)] public float f;
-        [FieldOffset(0)] public uint u;
-        [FieldOffset(0)] public byte b0;
-        [FieldOffset(1)] public byte b1;
-        [FieldOffset(2)] public byte b2;
-        [FieldOffset(3)] public byte b3;
-        [FieldOffset(4)] public byte b4;
-        [FieldOffset(5)] public byte b5;
-        [FieldOffset(6)] public byte b6;
-        [FieldOffset(7)] public byte b7;
-    }
-
-    /// <summary>
-    /// 存放类型到 typeid 的映射 for 序列化
-    /// </summary>
-    public sealed class TypeIdMaps<T>
-    {
-        public static ushort typeId = 0xFFFF;
-    }
-
-    /// <summary>
-    /// 所有可序列化类均需要实现该接口, 包括 BBuffer 本身
-    /// </summary>
-    public interface IBBuffer
-    {
-        // 获取包编号( 不能用 get, 无法虚覆盖 )
-        ushort GetPackageId();
-
-        // 序列化接口之序列化数据到 bb
-        void ToBBuffer(BBuffer bb);
-
-        // 序列化接口之从 bb 还原 /  填充数据( 这个需要 try )
-        void FromBBuffer(BBuffer bb);
-
-        // ToString 相关
-        void ToString(ref StringBuilder sb);
-        void ToStringCore(ref StringBuilder sb);
-        void SetToStringFlag(bool doing);
-        bool GetToStringFlag();
     }
 }

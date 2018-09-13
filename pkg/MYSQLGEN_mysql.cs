@@ -3,139 +3,6 @@ using xx;
 
 namespace MYSQLGEN
 {
-    public static class MySqlAppendExt
-    {
-        #region MySqlAppends
-        #region Orginal
-        public static void MySqlAppend<T>(this System.Text.StringBuilder sb, List<T> os, bool ignoreReadOnly = false) { if (os == null || os.dataLen == 0) throw new ArgumentNullException(); for (int i = 0; i < os.dataLen; ++i) { sb.MySqlAppend(os[i], ignoreReadOnly); sb.Append(", "); }; sb.Length -= 2; }
-
-        public static void MySqlAppend<T>(this System.Text.StringBuilder sb, T v, bool ignoreReadOnly = false) { sb.Append(v); }
-        public static void MySqlAppend<T>(this System.Text.StringBuilder sb, T? o, bool ignoreReadOnly = false) where T : struct { if (o.HasValue) { sb.MySqlAppend(o.Value); } else { sb.Append("null"); } }
-        public static void MySqlAppend(this System.Text.StringBuilder sb, string v, bool ignoreReadOnly = false) { sb.Append("'" + v.Replace("'", "''") + "'"); }
-        public static void MySqlAppend(this System.Text.StringBuilder sb, DateTime o, bool ignoreReadOnly = false) { sb.Append("'" + o.ToString("yyyy-MM-dd HH:mm:ss") + "'"); }
-        public static void MySqlAppend(this System.Text.StringBuilder sb, List<DateTime> os, bool ignoreReadOnly = false) { if (os == null || os.dataLen == 0) throw new ArgumentNullException(); sb.Append("( "); for (int i = 0; i < os.dataLen; ++i) { sb.MySqlAppend(os[i]); sb.Append(", "); }; sb.Length -= 2; sb.Append(" )"); }
-        public static void MySqlAppend(this System.Text.StringBuilder sb, List<byte> os, bool ignoreReadOnly = false) { if (os == null || os.dataLen == 0) throw new ArgumentNullException(); sb.Append("( "); for (int i = 0; i < os.dataLen; ++i) { sb.Append(os[i]); sb.Append(", "); }; sb.Length -= 2; sb.Append(" )"); }
-        public static void MySqlAppend(this System.Text.StringBuilder sb, List<ushort> os, bool ignoreReadOnly = false) { if (os == null || os.dataLen == 0) throw new ArgumentNullException(); sb.Append("( "); for (int i = 0; i < os.dataLen; ++i) { sb.Append(os[i]); sb.Append(", "); }; sb.Length -= 2; sb.Append(" )"); }
-        public static void MySqlAppend(this System.Text.StringBuilder sb, List<uint> os, bool ignoreReadOnly = false) { if (os == null || os.dataLen == 0) throw new ArgumentNullException(); sb.Append("( "); for (int i = 0; i < os.dataLen; ++i) { sb.Append(os[i]); sb.Append(", "); }; sb.Length -= 2; sb.Append(" )"); }
-        public static void MySqlAppend(this System.Text.StringBuilder sb, List<ulong> os, bool ignoreReadOnly = false) { if (os == null || os.dataLen == 0) throw new ArgumentNullException(); sb.Append("( "); for (int i = 0; i < os.dataLen; ++i) { sb.Append(os[i]); sb.Append(", "); }; sb.Length -= 2; sb.Append(" )"); }
-        public static void MySqlAppend(this System.Text.StringBuilder sb, List<sbyte> os, bool ignoreReadOnly = false) { if (os == null || os.dataLen == 0) throw new ArgumentNullException(); sb.Append("( "); for (int i = 0; i < os.dataLen; ++i) { sb.Append(os[i]); sb.Append(", "); }; sb.Length -= 2; sb.Append(" )"); }
-        public static void MySqlAppend(this System.Text.StringBuilder sb, List<short> os, bool ignoreReadOnly = false) { if (os == null || os.dataLen == 0) throw new ArgumentNullException(); sb.Append("( "); for (int i = 0; i < os.dataLen; ++i) { sb.Append(os[i]); sb.Append(", "); }; sb.Length -= 2; sb.Append(" )"); }
-        public static void MySqlAppend(this System.Text.StringBuilder sb, List<int> os, bool ignoreReadOnly = false) { if (os == null || os.dataLen == 0) throw new ArgumentNullException(); sb.Append("( "); for (int i = 0; i < os.dataLen; ++i) { sb.Append(os[i]); sb.Append(", "); }; sb.Length -= 2; sb.Append(" )"); }
-        public static void MySqlAppend(this System.Text.StringBuilder sb, List<long> os, bool ignoreReadOnly = false) { if (os == null || os.dataLen == 0) throw new ArgumentNullException(); sb.Append("( "); for (int i = 0; i < os.dataLen; ++i) { sb.Append(os[i]); sb.Append(", "); }; sb.Length -= 2; sb.Append(" )"); }
-        public static void MySqlAppend(this System.Text.StringBuilder sb, List<double> os, bool ignoreReadOnly = false) { if (os == null || os.dataLen == 0) throw new ArgumentNullException(); sb.Append("( "); for (int i = 0; i < os.dataLen; ++i) { sb.Append(os[i]); sb.Append(", "); }; sb.Length -= 2; sb.Append(" )"); }
-        public static void MySqlAppend(this System.Text.StringBuilder sb, List<float> os, bool ignoreReadOnly = false) { if (os == null || os.dataLen == 0) throw new ArgumentNullException(); sb.Append("( "); for (int i = 0; i < os.dataLen; ++i) { sb.Append(os[i]); sb.Append(", "); }; sb.Length -= 2; sb.Append(" )"); }
-        public static void MySqlAppend(this System.Text.StringBuilder sb, List<bool> os, bool ignoreReadOnly = false) { if (os == null || os.dataLen == 0) throw new ArgumentNullException(); sb.Append("( "); for (int i = 0; i < os.dataLen; ++i) { sb.Append(os[i]); sb.Append(", "); }; sb.Length -= 2; sb.Append(" )"); }
-        #endregion
-
-        public static void MySqlAppend(this System.Text.StringBuilder sb, Tables.TABLES o, bool ignoreReadOnly = false)
-        {
-            sb.Append("(");
-            sb.MySqlAppend(o.TABLE_CATALOG);
-            sb.Append(", ");
-            sb.MySqlAppend(o.TABLE_SCHEMA);
-            sb.Append(", ");
-            sb.MySqlAppend(o.TABLE_NAME);
-            sb.Append(", ");
-            sb.MySqlAppend(o.TABLE_TYPE);
-            sb.Append(", ");
-            sb.MySqlAppend(o.ENGINE);
-            sb.Append(", ");
-            sb.MySqlAppend(o.VERSION);
-            sb.Append(", ");
-            sb.MySqlAppend(o.ROW_FORMAT);
-            sb.Append(", ");
-            sb.MySqlAppend(o.TABLE_ROWS);
-            sb.Append(", ");
-            sb.MySqlAppend(o.AVG_ROW_LENGTH);
-            sb.Append(", ");
-            sb.MySqlAppend(o.DATA_LENGTH);
-            sb.Append(", ");
-            sb.MySqlAppend(o.MAX_DATA_LENGTH);
-            sb.Append(", ");
-            sb.MySqlAppend(o.INDEX_LENGTH);
-            sb.Append(", ");
-            sb.MySqlAppend(o.DATA_FREE);
-            sb.Append(", ");
-            sb.MySqlAppend(o.AUTO_INCREMENT);
-            sb.Append(", ");
-            sb.MySqlAppend(o.CREATE_TIME);
-            sb.Append(", ");
-            sb.MySqlAppend(o.UPDATE_TIME);
-            sb.Append(", ");
-            sb.MySqlAppend(o.CHECK_TIME);
-            sb.Append(", ");
-            sb.MySqlAppend(o.TABLE_COLLATION);
-            sb.Append(", ");
-            sb.MySqlAppend(o.CHECKSUM);
-            sb.Append(", ");
-            sb.MySqlAppend(o.CREATE_OPTIONS);
-            sb.Append(", ");
-            sb.MySqlAppend(o.TABLE_COMMENT);
-            sb.Append(", ");
-            sb.Length -= 2;
-            sb.Append(")");
-        }
-        public static void MySqlAppend(this System.Text.StringBuilder sb, Tables.COLUMNS o, bool ignoreReadOnly = false)
-        {
-            sb.Append("(");
-            sb.MySqlAppend(o.TABLE_CATALOG);
-            sb.Append(", ");
-            sb.MySqlAppend(o.TABLE_SCHEMA);
-            sb.Append(", ");
-            sb.MySqlAppend(o.TABLE_NAME);
-            sb.Append(", ");
-            sb.MySqlAppend(o.COLUMN_NAME);
-            sb.Append(", ");
-            sb.Append(o.ORDINAL_POSITION);
-            sb.Append(", ");
-            sb.MySqlAppend(o.COLUMN_DEFAULT);
-            sb.Append(", ");
-            sb.MySqlAppend(o.IS_NULLABLE);
-            sb.Append(", ");
-            sb.MySqlAppend(o.DATA_TYPE);
-            sb.Append(", ");
-            sb.MySqlAppend(o.CHARACTER_MAXIMUM_LENGTH);
-            sb.Append(", ");
-            sb.MySqlAppend(o.CHARACTER_OCTET_LENGTH);
-            sb.Append(", ");
-            sb.MySqlAppend(o.NUMERIC_PRECISION);
-            sb.Append(", ");
-            sb.MySqlAppend(o.NUMERIC_SCALE);
-            sb.Append(", ");
-            sb.MySqlAppend(o.DATETIME_PRECISION);
-            sb.Append(", ");
-            sb.MySqlAppend(o.CHARACTER_SET_NAME);
-            sb.Append(", ");
-            sb.MySqlAppend(o.COLLATION_NAME);
-            sb.Append(", ");
-            sb.MySqlAppend(o.COLUMN_TYPE);
-            sb.Append(", ");
-            sb.MySqlAppend(o.COLUMN_KEY);
-            sb.Append(", ");
-            sb.MySqlAppend(o.EXTRA);
-            sb.Append(", ");
-            sb.MySqlAppend(o.PRIVILEGES);
-            sb.Append(", ");
-            sb.MySqlAppend(o.COLUMN_COMMENT);
-            sb.Append(", ");
-            sb.MySqlAppend(o.GENERATION_EXPRESSION);
-            sb.Append(", ");
-            sb.Length -= 2;
-            sb.Append(")");
-        }
-        public static void MySqlAppend(this System.Text.StringBuilder sb, Tables.show_create_table o, bool ignoreReadOnly = false)
-        {
-            sb.Append("(");
-            sb.MySqlAppend(o.Table);
-            sb.Append(", ");
-            sb.MySqlAppend(o.CreateTable);
-            sb.Append(", ");
-            sb.Length -= 2;
-            sb.Append(")");
-        }
-        #endregion
-    }
-
     public class MySqlFuncs
     {
         #region conn, cmd, sb, recordsAffecteds
@@ -176,7 +43,7 @@ namespace MYSQLGEN
             sb.Append(@"
 select * from information_schema.TABLES
  where TABLE_SCHEMA = ");
-            sb.MySqlAppend(dbDatabase);
+            sb.Append(dbDatabase == null ? "null" : ("'" + dbDatabase.Replace("'", "''") + "'"));
             sb.Append(@";
 ");
             cmd.CommandText = sb.ToString();
@@ -231,10 +98,10 @@ select * from information_schema.TABLES
             sb.Append(@"
 select * from information_schema.COLUMNS
  where TABLE_SCHEMA = ");
-            sb.MySqlAppend(dbDatabase);
+            sb.Append(dbDatabase == null ? "null" : ("'" + dbDatabase.Replace("'", "''") + "'"));
             sb.Append(@"
    and TABLE_NAME = ");
-            sb.MySqlAppend(tableName);
+            sb.Append(tableName == null ? "null" : ("'" + tableName.Replace("'", "''") + "'"));
             sb.Append(@";
 ");
             cmd.CommandText = sb.ToString();

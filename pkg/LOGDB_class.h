@@ -5,7 +5,7 @@ namespace LOGDB
 {
 	struct PkgGenMd5
 	{
-		static constexpr char const* value = "bbad325298f516a3dd7bd166e713f90d";
+		static constexpr char const* value = "fc66591b1d743ab8a0c7b6e5e6196f14";
     };
 
     // 对应 log 日志表

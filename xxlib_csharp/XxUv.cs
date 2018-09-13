@@ -526,7 +526,7 @@ namespace xx
 
 
         // 每个类一个包, 返回总字节数
-        public void Send(xx.IBBuffer pkg)
+        public void Send(xx.IObject pkg)
         {
             if (disposed) throw new ObjectDisposedException("XxUvTcpBase");
 
@@ -556,7 +556,7 @@ namespace xx
 
 
         // 发送 RPC 的请求包, 返回流水号
-        public uint SendRequest(xx.IBBuffer pkg, Action<uint, BBuffer> cb, int interval = 0)
+        public uint SendRequest(xx.IObject pkg, Action<uint, BBuffer> cb, int interval = 0)
         {
             if (disposed) throw new ObjectDisposedException("XxUvTcpBase");
             if (loop.rpcManager == null) throw new NullReferenceException("forget InitRpcManager ?");
@@ -589,7 +589,7 @@ namespace xx
         }
 
         // 发送 RPC 的应答包
-        public void SendResponse(uint serial, xx.IBBuffer pkg)
+        public void SendResponse(uint serial, xx.IObject pkg)
         {
             if (disposed) throw new ObjectDisposedException("XxUvTcpBase");
 
@@ -633,15 +633,15 @@ namespace xx
         }
 
         // 增强的 SendRequest 实现 断线时 立即发起相关 rpc 超时回调. 封装了解包操作. 
-        public void SendRequestEx(xx.IBBuffer pkg, Action<uint, IBBuffer> cb, int interval = 0)
+        public void SendRequestEx(xx.IObject pkg, Action<uint, IObject> cb, int interval = 0)
         {
             var serial = SendRequest(pkg, (uint ser, BBuffer bb) =>
             {
-                rpcSerials.Remove(ser);
-                xx.IBBuffer inPkg = null;   // 如果 超时或 read 异常, inPkg 会保持空值
+                if (rpcSerials != null) rpcSerials.Remove(ser);
+                xx.IObject inPkg = null;   // 如果 超时或 read 异常, inPkg 会保持空值
                 if (bb != null)
                 {
-                    inPkg = bb.TryReadRoot<xx.IBBuffer>();
+                    inPkg = bb.TryReadRoot<xx.IObject>();
                 }
                 cb(ser, inPkg); // call 原始 lambda
             }, interval);
@@ -1474,7 +1474,7 @@ namespace xx
         // RPC 请求解包, 调处理函数
         public void OnPeerReceiveRequest(uint serial, BBuffer bb)
         {
-            var ibb = bb.TryReadRoot<IBBuffer>();
+            var ibb = bb.TryReadRoot<IObject>();
             if (ibb == null)
             {
                 KickPeer();
@@ -1487,7 +1487,7 @@ namespace xx
         // 普通 解包, 调处理函数
         public void OnPeerReceivePackage(BBuffer bb)
         {
-            var ibb = bb.TryReadRoot<IBBuffer>();
+            var ibb = bb.TryReadRoot<IObject>();
             if (ibb == null)
             {
                 KickPeer();
@@ -1504,8 +1504,8 @@ namespace xx
 
 
         // 需要实现的函数些
-        public abstract void HandleRequest(uint serial, IBBuffer ibb);
-        public abstract void HandlePackage(IBBuffer ibb);
+        public abstract void HandleRequest(uint serial, IObject ibb);
+        public abstract void HandlePackage(IObject ibb);
         public abstract void HandleDisconnect();
     }
 

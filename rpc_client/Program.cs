@@ -68,14 +68,14 @@ public class UnityScene
         yield return null;
 
         Console.WriteLine("request login");
-        IBBuffer recv = BBuffer.instance;       // 用于请求回调中修改以便在 while 中扫描
+        IObject recv = BBuffer.instance;       // 用于请求回调中修改以便在 while 中扫描
         var serial = nbs.SendRequest(           // 发登录请求
             new RPC.Client_Login.Login          // 构造一个登录包( 也可以用个静态的临时改值 )
             {
                 username = "a",                 // 模拟读取用户输入
                 password = (nbs.ticks < 100) ? "asdf" : "11111"     // 一定机率输对密码
             }
-            , (s, ibb) => { recv = ibb; });     // RPC 回调: 将结果存入上下文变量以便后续 while 中判断
+            , (s, obj) => { recv = obj; });     // RPC 回调: 将结果存入上下文变量以便后续 while 中判断
 
         Console.WriteLine("wait login response");
         while (recv == BBuffer.instance)        // 如果回调没发生就一直等
@@ -136,15 +136,15 @@ public class UnityScene
                     {
                         ticks = DateTime.Now.Ticks
                     }
-                    , (s, ibb) =>
+                    , (s, obj) =>
                     {
-                        if (ibb == null)        // 超时: 就当 ping lost. 如果是断线, 外围 while 能处理
+                        if (obj == null)        // 超时: 就当 ping lost. 如果是断线, 外围 while 能处理
                         {
                             Console.WriteLine("ping timeout");
                         }
                         else
                         {
-                            Console.WriteLine("ping " + ((double)(DateTime.Now.Ticks - ((RPC.Generic.Pong)ibb).ticks) / 10000) + " ms");
+                            Console.WriteLine("ping " + ((double)(DateTime.Now.Ticks - ((RPC.Generic.Pong)obj).ticks) / 10000) + " ms");
                         }
                     });
             }

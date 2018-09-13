@@ -27,6 +27,10 @@ namespace " + templateName + @"
 ");
 
         var ts = asm._GetTypes();
+
+        // 找出所有成员含 Column 标记的类
+        var sqlcs = ts._GetClasss().Where(a => a._GetFields().Any(b => b._Has<TemplateLibrary.Column>())).ToList();
+
         var es = ts._GetEnums();
         for (int i = 0; i < es.Count; ++i)
         {
@@ -89,13 +93,13 @@ namespace " + c.Namespace + @"
             if (c.IsValueType)
             {
                 sb.Append(c._GetDesc()._GetComment_CSharp(4) + @"
-    public partial struct " + c.Name + @" : IBBuffer
+    public partial struct " + c.Name + @" : IObject
     {");
             }
             else
             {
                 sb.Append(c._GetDesc()._GetComment_CSharp(4) + @"
-    public partial class " + c.Name + @" : " + (c._HasBaseType() ? c.BaseType._GetTypeDecl_Csharp() : "IBBuffer") + @"
+    public partial class " + c.Name + @" : " + (c._HasBaseType() ? c.BaseType._GetTypeDecl_Csharp() : "IObject") + @"
     {");
             }
 
@@ -126,12 +130,12 @@ namespace " + c.Namespace + @"
 
             sb.Append(@"
 
-        public " + (c.IsValueType ? "" : (c._HasBaseType() ? "override " : "virtual ")) + @"ushort GetPackageId()
+        public" + (c.IsValueType ? "" : (c._HasBaseType() ? " override" : " virtual")) + @" ushort GetPackageId()
         {
             return TypeIdMaps<" + c.Name + @">.typeId;
         }
 
-        public " + (c.IsValueType ? "" : (c._HasBaseType() ? "override" : "virtual")) + @" void ToBBuffer(BBuffer bb)
+        public" + (c.IsValueType ? "" : (c._HasBaseType() ? " override" : " virtual")) + @" void ToBBuffer(BBuffer bb)
         {");
 
             if (!c.IsValueType && c._HasBaseType())
@@ -162,7 +166,7 @@ namespace " + c.Namespace + @"
                 else if (!ft._IsNullable() && ft.IsValueType && !ft.IsPrimitive)
                 {
                     sb.Append(@"
-            ((IBBuffer)this." + f.Name + ").ToBBuffer(bb);");
+            ((IObject)this." + f.Name + ").ToBBuffer(bb);");
                 }
                 else
                 {
@@ -174,7 +178,7 @@ namespace " + c.Namespace + @"
             sb.Append(@"
         }
 
-        public " + (c.IsValueType ? "" : (c._HasBaseType() ? "override" : "virtual")) + @" void FromBBuffer(BBuffer bb)
+        public" + (c.IsValueType ? "" : (c._HasBaseType() ? " override" : " virtual")) + @" void FromBBuffer(BBuffer bb)
         {");
             if (!c.IsValueType && c._HasBaseType())
             {
@@ -201,7 +205,7 @@ namespace " + c.Namespace + @"
                 else if (!ft._IsNullable() && ft.IsValueType && !ft.IsPrimitive)
                 {
                     sb.Append(@"
-            ((IBBuffer)this." + f.Name + ").FromBBuffer(bb);");
+            ((IObject)this." + f.Name + ").FromBBuffer(bb);");
                 }
                 else
                 {
@@ -216,7 +220,7 @@ namespace " + c.Namespace + @"
             }
             sb.Append(@"
         }
-        public " + (c.IsValueType ? "" : (c._HasBaseType() ? "override" : "virtual")) + @" void ToString(ref System.Text.StringBuilder str)
+        public" + (c.IsValueType ? "" : (c._HasBaseType() ? " override" : " virtual")) + @" void ToString(ref System.Text.StringBuilder str)
         {
             if (GetToStringFlag())
             {
@@ -231,7 +235,7 @@ namespace " + c.Namespace + @"
         
             SetToStringFlag(false);
         }
-        public " + (c.IsValueType ? "" : (c._HasBaseType() ? "override" : "virtual")) + @" void ToStringCore(ref System.Text.StringBuilder str)
+        public" + (c.IsValueType ? "" : (c._HasBaseType() ? " override" : " virtual")) + @" void ToStringCore(ref System.Text.StringBuilder str)
         {" + (c._HasBaseType() ? @"
             base.ToStringCore(ref str);" : ""));
             foreach (var f in fs)
@@ -268,6 +272,7 @@ namespace " + c.Namespace + @"
             ToString(ref sb);
             return sb.ToString();
         }");
+
             if (!c._HasBaseType())
             {
                 sb.Append(@"
@@ -281,6 +286,77 @@ namespace " + c.Namespace + @"
             return toStringFlag;
         }");
             }
+
+            sb.Append(@"
+        public" + (c.IsValueType ? "" : (c._HasBaseType() ? " override" : " virtual")) + @" void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {");
+            if (sqlcs.Contains(c))
+            {
+                sb.Append(@"
+            sb.Append(""("");");
+
+                foreach (var m in fs)
+                {
+                    if (!m._Has<TemplateLibrary.Column>()) continue;
+                    if (m._IsReadOnly())
+                    {
+                        sb.Append(@"
+            if (!ignoreReadOnly)
+            {");
+                    }
+
+                    var mt = m.FieldType;
+                    var mtn = mt._GetTypeDecl_Csharp();
+
+                    if (mt._IsUserClass())
+                    {
+                        throw new Exception("column is Object, unsupported now.");
+                    }
+                    else if (mt._IsString())
+                    {
+                        sb.Append(@"
+            sb.Append(this." + m.Name + @" == null ? ""null"" : (""'"" + this." + m.Name + @".Replace(""'"", ""''"") + ""'""));");
+                    }
+                    else if (mt.IsEnum)
+                    {
+                        sb.Append(@"
+            sb.Append(" + "(" + mt._GetEnumUnderlyingTypeName_Csharp() + ")this." + m.Name + @");");
+                    }
+                    else if (mt._IsNullable())
+                    {
+                        sb.Append(@"
+            sb.Append(this." + m.Name + @".HasValue ? this." + m.Name + @".Value.ToString() : ""null"");");
+                    }
+                    else
+                    {
+                        sb.Append(@"
+            sb.Append(this." + m.Name + @");");
+                    }
+
+                    sb.Append(@"
+            sb.Append("", "");");
+
+                    if (m._IsReadOnly())
+                    {
+                        sb.Append(@"
+            }");
+                    }
+                }
+                sb.Append(@"
+            sb.Length -= 2;
+            sb.Append("")"");
+");
+            }
+            else
+            {
+                if (c._HasBaseType())
+                {
+                    sb.Append(@"
+            base.MySqlAppend(ref sb, ignoreReadOnly);");
+                }
+            }
+            sb.Append(@"
+        }");
 
             // todo: ToString support
 

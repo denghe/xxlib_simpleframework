@@ -22,102 +22,7 @@ using xx;
         // template namespace
         sb.Append(@"
 namespace " + templateName + @"
-{
-    public static class MySqlAppendExt
-    {
-        #region MySqlAppends
-        #region Orginal
-        public static void MySqlAppend<T>(this System.Text.StringBuilder sb, List<T> os, bool ignoreReadOnly = false) { if (os == null || os.dataLen == 0) throw new ArgumentNullException(); for (int i = 0; i < os.dataLen; ++i) { sb.MySqlAppend(os[i], ignoreReadOnly); sb.Append("", ""); }; sb.Length -= 2; }
-
-        public static void MySqlAppend<T>(this System.Text.StringBuilder sb, T v, bool ignoreReadOnly = false) { sb.Append(v); }
-        public static void MySqlAppend<T>(this System.Text.StringBuilder sb, T? o, bool ignoreReadOnly = false) where T : struct { if (o.HasValue) { sb.MySqlAppend(o.Value); } else { sb.Append(""null""); } }
-        public static void MySqlAppend(this System.Text.StringBuilder sb, string v, bool ignoreReadOnly = false) { sb.Append(""'"" + v.Replace(""'"", ""''"") + ""'""); }
-        public static void MySqlAppend(this System.Text.StringBuilder sb, DateTime o, bool ignoreReadOnly = false) { sb.Append(""'"" + o.ToString(""yyyy-MM-dd HH:mm:ss"") + ""'""); }
-        public static void MySqlAppend(this System.Text.StringBuilder sb, List<DateTime> os, bool ignoreReadOnly = false) { if (os == null || os.dataLen == 0) throw new ArgumentNullException(); sb.Append(""( ""); for (int i = 0; i < os.dataLen; ++i) { sb.MySqlAppend(os[i]); sb.Append("", ""); }; sb.Length -= 2; sb.Append("" )""); }
-        public static void MySqlAppend(this System.Text.StringBuilder sb, List<byte> os, bool ignoreReadOnly = false) { if (os == null || os.dataLen == 0) throw new ArgumentNullException(); sb.Append(""( ""); for (int i = 0; i < os.dataLen; ++i) { sb.Append(os[i]); sb.Append("", ""); }; sb.Length -= 2; sb.Append("" )""); }
-        public static void MySqlAppend(this System.Text.StringBuilder sb, List<ushort> os, bool ignoreReadOnly = false) { if (os == null || os.dataLen == 0) throw new ArgumentNullException(); sb.Append(""( ""); for (int i = 0; i < os.dataLen; ++i) { sb.Append(os[i]); sb.Append("", ""); }; sb.Length -= 2; sb.Append("" )""); }
-        public static void MySqlAppend(this System.Text.StringBuilder sb, List<uint> os, bool ignoreReadOnly = false) { if (os == null || os.dataLen == 0) throw new ArgumentNullException(); sb.Append(""( ""); for (int i = 0; i < os.dataLen; ++i) { sb.Append(os[i]); sb.Append("", ""); }; sb.Length -= 2; sb.Append("" )""); }
-        public static void MySqlAppend(this System.Text.StringBuilder sb, List<ulong> os, bool ignoreReadOnly = false) { if (os == null || os.dataLen == 0) throw new ArgumentNullException(); sb.Append(""( ""); for (int i = 0; i < os.dataLen; ++i) { sb.Append(os[i]); sb.Append("", ""); }; sb.Length -= 2; sb.Append("" )""); }
-        public static void MySqlAppend(this System.Text.StringBuilder sb, List<sbyte> os, bool ignoreReadOnly = false) { if (os == null || os.dataLen == 0) throw new ArgumentNullException(); sb.Append(""( ""); for (int i = 0; i < os.dataLen; ++i) { sb.Append(os[i]); sb.Append("", ""); }; sb.Length -= 2; sb.Append("" )""); }
-        public static void MySqlAppend(this System.Text.StringBuilder sb, List<short> os, bool ignoreReadOnly = false) { if (os == null || os.dataLen == 0) throw new ArgumentNullException(); sb.Append(""( ""); for (int i = 0; i < os.dataLen; ++i) { sb.Append(os[i]); sb.Append("", ""); }; sb.Length -= 2; sb.Append("" )""); }
-        public static void MySqlAppend(this System.Text.StringBuilder sb, List<int> os, bool ignoreReadOnly = false) { if (os == null || os.dataLen == 0) throw new ArgumentNullException(); sb.Append(""( ""); for (int i = 0; i < os.dataLen; ++i) { sb.Append(os[i]); sb.Append("", ""); }; sb.Length -= 2; sb.Append("" )""); }
-        public static void MySqlAppend(this System.Text.StringBuilder sb, List<long> os, bool ignoreReadOnly = false) { if (os == null || os.dataLen == 0) throw new ArgumentNullException(); sb.Append(""( ""); for (int i = 0; i < os.dataLen; ++i) { sb.Append(os[i]); sb.Append("", ""); }; sb.Length -= 2; sb.Append("" )""); }
-        public static void MySqlAppend(this System.Text.StringBuilder sb, List<double> os, bool ignoreReadOnly = false) { if (os == null || os.dataLen == 0) throw new ArgumentNullException(); sb.Append(""( ""); for (int i = 0; i < os.dataLen; ++i) { sb.Append(os[i]); sb.Append("", ""); }; sb.Length -= 2; sb.Append("" )""); }
-        public static void MySqlAppend(this System.Text.StringBuilder sb, List<float> os, bool ignoreReadOnly = false) { if (os == null || os.dataLen == 0) throw new ArgumentNullException(); sb.Append(""( ""); for (int i = 0; i < os.dataLen; ++i) { sb.Append(os[i]); sb.Append("", ""); }; sb.Length -= 2; sb.Append("" )""); }
-        public static void MySqlAppend(this System.Text.StringBuilder sb, List<bool> os, bool ignoreReadOnly = false) { if (os == null || os.dataLen == 0) throw new ArgumentNullException(); sb.Append(""( ""); for (int i = 0; i < os.dataLen; ++i) { sb.Append(os[i]); sb.Append("", ""); }; sb.Length -= 2; sb.Append("" )""); }
-        #endregion
-");
-
-
-        // todo: 找出被 Func 引用到过的 enums 来生成. 其他不管
-
-        foreach (var e in ts._GetEnums())
-        {
-            var etn = e._GetTypeDecl_Csharp();
-            var eutn = e._GetEnumUnderlyingTypeName_Csharp();
-        }
-
-        // todo: blob( BBuffer )
-
-        // 找出内含 [Column] 成员的类来生成. 不含的跳过
-
-        foreach (var c in ts._GetClasss().Where(a => a._GetFields().Any(b => b._Has<TemplateLibrary.Column>())))
-        {
-            var ctn = c._GetTypeDecl_Csharp();
-
-            var fs = c._GetFields<Column>();
-
-            sb.Append(@"
-        public static void MySqlAppend(this System.Text.StringBuilder sb, " + ctn + @" o, bool ignoreReadOnly = false)
-        {
-            sb.Append(""("");");
-
-
-            foreach (var m in fs)
-            {
-
-                if (m._IsReadOnly())
-                {
-                    sb.Append(@"
-            if (!ignoreReadOnly)
-            {");
-                }
-
-                var mt = m.FieldType;
-                var mtn = mt._GetTypeDecl_Csharp();
-
-                string fnfix = "", typecnv = "";
-                if (mt.IsEnum)
-                {
-                    typecnv = "(" + mt._GetEnumUnderlyingTypeName_Csharp() + ")";
-                }
-                else if (!mt._IsNumeric())
-                {
-                    fnfix = "MySql";
-                }
-                sb.Append(@"
-            sb." + fnfix + "Append(" + typecnv + "o." + m.Name + ");");
-
-                sb.Append(@"
-            sb.Append("", "");");
-                if (m._IsReadOnly())
-                {
-                    sb.Append(@"
-            }");
-                }
-            }
-
-
-            sb.Append(@"
-            sb.Length -= 2;
-            sb.Append("")"");
-        }");
-        }
-        sb.Append(@"
-        #endregion
-    }
-");
-
+{");
 
         // 扫带有 [MySql] 标志的 interface , 生成相应的函数
         var ifaces = ts._GetInterfaces<MySql>();
@@ -176,42 +81,42 @@ namespace " + iface.Namespace + @"
 
 
                 // todo: 实现一个非泛型版以方便使用
-//                sb.Append(@"
-//" + f._GetDesc()._GetComment_CSharp(8) + @"
-//        " + "public " + rtn + " " + f.Name + w2);
+                //                sb.Append(@"
+                //" + f._GetDesc()._GetComment_CSharp(8) + @"
+                //        " + "public " + rtn + " " + f.Name + w2);
 
-//                if (ps.Length > 0)
-//                {
-//                    sb.Append(@"
-//        ");
-//                }
+                //                if (ps.Length > 0)
+                //                {
+                //                    sb.Append(@"
+                //        ");
+                //                }
 
-//                sb.Append(@"(");
-//                foreach (var p in ps)
-//                {
-//                    if (p != ps[0])
-//                    {
-//                        sb.Append(",");
-//                    }
+                //                sb.Append(@"(");
+                //                foreach (var p in ps)
+                //                {
+                //                    if (p != ps[0])
+                //                    {
+                //                        sb.Append(",");
+                //                    }
 
-//                    sb.Append(p._GetDesc()._GetComment_CSharp(12) + @"
-//            " + p.ParameterType._GetTypeDecl_Csharp() + " " + p.Name);
+                //                    sb.Append(p._GetDesc()._GetComment_CSharp(12) + @"
+                //            " + p.ParameterType._GetTypeDecl_Csharp() + " " + p.Name);
 
-//                    if (p.HasDefaultValue)
-//                    {
-//                        sb.Append(" = " + p._GetDefaultValueDecl_Csharp());
-//                    }
-//                }
+                //                    if (p.HasDefaultValue)
+                //                    {
+                //                        sb.Append(" = " + p._GetDefaultValueDecl_Csharp());
+                //                    }
+                //                }
 
-//                if (ps.Length > 0)
-//                {
-//                    sb.Append(@"
-//            , ");
-//                }
-//                sb.Append(@"MySql.Data.MySqlClient.MySqlTransaction tran_ = null)
-//            {
-//                " + (rtn == "void" ? "return " : "") + @" " + f.Name + @"_<>();
-//            }");
+                //                if (ps.Length > 0)
+                //                {
+                //                    sb.Append(@"
+                //            , ");
+                //                }
+                //                sb.Append(@"MySql.Data.MySqlClient.MySqlTransaction tran_ = null)
+                //            {
+                //                " + (rtn == "void" ? "return " : "") + @" " + f.Name + @"_<>();
+                //            }");
 
 
                 // 生成泛型版返回值
@@ -366,15 +271,25 @@ namespace " + iface.Namespace + @"
                             }
                             else
                             {
-                                if (pt._IsUserClass())
+                                if (pt._IsList() || pt._IsUserClass())
                                 {
                                     sb.Append(@"
-            sb.MySqlAppend(" + pn + @", " + (p._Has<SkipReadOnly>() ? "true" : "false") + ");");
+            " + pn + @".MySqlAppend(ref sb, " + (p._Has<SkipReadOnly>() ? "true" : "false") + ");");
+                                }
+                                else if (pt._IsString())
+                                {
+                                    sb.Append(@"
+            sb.Append(" + pn + @" == null ? ""null"" : (""'"" + " + pn + @".Replace(""'"", ""''"") + ""'""));");
+                                }
+                                else if (pt.IsEnum)
+                                {
+                                    sb.Append(@"
+            sb.Append(" + "(" + pt._GetEnumUnderlyingTypeName_Csharp() + ")" + pn + @");");
                                 }
                                 else
                                 {
                                     sb.Append(@"
-            sb.MySqlAppend(" + pn + @");");
+            sb.Append(" + pn + @");");
                                 }
 
                             }

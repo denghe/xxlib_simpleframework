@@ -31,15 +31,15 @@ public class ServicePeer : UvTcpPeer
         this.OnReceivePackage = (bb) =>
         {
             // 试解包, 如果失败直接断开
-            var ibb = bb.TryReadRoot<IBBuffer>();
-            if (ibb == null)
+            var obj = bb.TryReadRoot<IObject>();
+            if (obj == null)
             {
                 this.Dispose();
                 return;
             }
 
             // 首包判断
-            switch (ibb)
+            switch (obj)
             {
                 case RPC.Generic.ServiceInfo o:
                     {
@@ -87,15 +87,15 @@ public class ServiceContext_Login : UvContextBase
         this.service = service;
     }
 
-    public override void HandlePackage(IBBuffer ibb)
+    public override void HandlePackage(IObject obj)
     {
-        Console.WriteLine("recv package: " + ibb.ToString());
+        Console.WriteLine("recv package: " + obj.ToString());
     }
 
-    public override void HandleRequest(uint serial, IBBuffer ibb)
+    public override void HandleRequest(uint serial, IObject obj)
     {
-        Console.WriteLine("recv request: " + ibb.ToString());
-        switch (ibb)
+        Console.WriteLine("recv request: " + obj.ToString());
+        switch (obj)
         {
             case RPC.Login_DB.Auth o:
                 {
@@ -175,10 +175,10 @@ public class ServiceContext_Manage : UvContextBase
     }
 
     // 处理一般推送
-    public override void HandlePackage(IBBuffer ibb)
+    public override void HandlePackage(IObject obj)
     {
-        Console.WriteLine("recv package: " + ibb.ToString());
-        switch (ibb)
+        Console.WriteLine("recv package: " + obj.ToString());
+        switch (obj)
         {
             case RPC.Manage_DB.Msg o:
                 {
@@ -214,10 +214,10 @@ public class ServiceContext_Manage : UvContextBase
     }
 
     // 处理回调请求
-    public override void HandleRequest(uint serial, IBBuffer ibb)
+    public override void HandleRequest(uint serial, IObject obj)
     {
-        Console.WriteLine("recv request: " + ibb.ToString());
-        switch (ibb)
+        Console.WriteLine("recv request: " + obj.ToString());
+        switch (obj)
         {
             case RPC.Generic.Ping o:
                 {

@@ -624,7 +624,7 @@ public static class GenExtensions
                 switch (t.Name)
                 {
                     case "Object":
-                        return "IBBuffer";
+                        return "IObject";
                     case "Void":
                         return "void";
                     case "Byte":

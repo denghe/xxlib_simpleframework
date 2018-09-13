@@ -29,7 +29,7 @@ namespace rpc_manage
         private void DbClient_recvHandlers(RecvPkg rp)
         {
             if (rp.handled) return;
-            switch (rp.ibb)
+            switch (rp.obj)
             {
                 case RPC.DB_Manage.MsgResult o:
                     Debug.Print("Window1 recv RPC.DB_Manage.MsgResult, txt = " + o.txt);
@@ -38,7 +38,7 @@ namespace rpc_manage
                     break;
                 // todo: more case here
                 default:
-                    throw new Exception("收到未经处理的包: " + rp.ibb.ToString());
+                    throw new Exception("收到未经处理的包: " + rp.obj.ToString());
             }
         }
 

@@ -7,7 +7,7 @@ namespace xx
     /// <summary>
     /// 这是从 System.Random 复制的源代码. 并加上了序列化功能( 与 C++ 那边保持一致 )
     /// </summary>
-    public class Random : IBBuffer
+    public class Random : IObject
     {
         public ushort GetPackageId()
         {
@@ -283,5 +283,9 @@ namespace xx
             }
         }
 
+        public void MySqlAppend(ref StringBuilder sb, bool ignoreReadOnly)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

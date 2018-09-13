@@ -4,7 +4,7 @@ namespace RPC
 {
     public static class PkgGenMd5
     {
-        public const string value = "7ddec167eb0b12aad51b11b6a6362027"; 
+        public const string value = "a8df3826880afe5c5deac8dd5041b1eb"; 
     }
 
 namespace Generic
@@ -30,7 +30,7 @@ namespace Generic
 }
 namespace DB_Manage
 {
-    public partial class MsgResult : IBBuffer
+    public partial class MsgResult : IObject
     {
         public string txt;
 
@@ -84,11 +84,14 @@ namespace DB_Manage
         {
             return toStringFlag;
         }
+        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+        }
     }
 }
 namespace Manage_DB
 {
-    public partial class Msg : IBBuffer
+    public partial class Msg : IObject
     {
         public string txt;
 
@@ -142,11 +145,14 @@ namespace Manage_DB
         {
             return toStringFlag;
         }
+        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+        }
     }
 }
 namespace Login_Client
 {
-    public partial class LoginSuccess : IBBuffer
+    public partial class LoginSuccess : IObject
     {
         public int id;
 
@@ -198,11 +204,14 @@ namespace Login_Client
         {
             return toStringFlag;
         }
+        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+        }
     }
 }
 namespace Client_Login
 {
-    public partial class Login : IBBuffer
+    public partial class Login : IObject
     {
         public string username;
         public string password;
@@ -262,11 +271,14 @@ namespace Client_Login
         {
             return toStringFlag;
         }
+        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+        }
     }
 }
 namespace DB_Login
 {
-    public partial class AuthSuccess : IBBuffer
+    public partial class AuthSuccess : IObject
     {
         public int id;
 
@@ -318,11 +330,14 @@ namespace DB_Login
         {
             return toStringFlag;
         }
+        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+        }
     }
 }
 namespace Login_DB
 {
-    public partial class Auth : IBBuffer
+    public partial class Auth : IObject
     {
         public string username;
         public string password;
@@ -382,6 +397,9 @@ namespace Login_DB
         {
             return toStringFlag;
         }
+        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+        }
     }
 }
 namespace Generic
@@ -389,7 +407,7 @@ namespace Generic
     /// <summary>
     /// 服务间创建连接, 刚连上时, 首包需要发这个来说明自己是谁
     /// </summary>
-    public partial class ServiceInfo : IBBuffer
+    public partial class ServiceInfo : IObject
     {
         /// <summary>
         /// 服务类型
@@ -448,11 +466,14 @@ namespace Generic
         {
             return toStringFlag;
         }
+        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+        }
     }
     /// <summary>
     /// 通用错误返回
     /// </summary>
-    public partial class Error : IBBuffer
+    public partial class Error : IObject
     {
         /// <summary>
         /// 错误码
@@ -516,11 +537,14 @@ namespace Generic
         {
             return toStringFlag;
         }
+        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+        }
     }
     /// <summary>
     /// 心跳保持兼延迟测试 -- 请求
     /// </summary>
-    public partial class Ping : IBBuffer
+    public partial class Ping : IObject
     {
         public double ticks;
 
@@ -572,11 +596,14 @@ namespace Generic
         {
             return toStringFlag;
         }
+        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+        }
     }
     /// <summary>
     /// 心跳保持兼延迟测试 -- 回应
     /// </summary>
-    public partial class Pong : IBBuffer
+    public partial class Pong : IObject
     {
         public double ticks;
 
@@ -627,6 +654,9 @@ namespace Generic
         public bool GetToStringFlag()
         {
             return toStringFlag;
+        }
+        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
         }
     }
 }

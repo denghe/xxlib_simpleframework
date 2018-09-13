@@ -5,7 +5,7 @@ namespace MYSQLGEN
 {
 	struct PkgGenMd5
 	{
-		static constexpr char const* value = "fc89e0204eff3d70f7ad98e684542acb";
+		static constexpr char const* value = "41c5b94fbf19fef604ff7d44dbc53067";
     };
 
     class DbTable;

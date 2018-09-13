@@ -4,17 +4,17 @@ namespace PKG
 {
     public static class PkgGenMd5
     {
-        public const string value = "a6a6b3c8d511000a913006017240448c"; 
+        public const string value = "dde27285e5784277142135589ddf9e51"; 
     }
 
-    public partial class Foo : IBBuffer
+    public partial class Foo : IObject
     {
         public int id;
         public int? age;
         public string info;
         public List<Foo> childs;
-        public IBBuffer o;
-        public List<IBBuffer> os;
+        public IObject o;
+        public List<IObject> os;
 
         public virtual ushort GetPackageId()
         {
@@ -83,6 +83,19 @@ namespace PKG
         {
             return toStringFlag;
         }
+        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+            sb.Append("(");
+            sb.Append(this.id);
+            sb.Append(", ");
+            sb.Append(this.age.HasValue ? this.age.Value.ToString() : "null");
+            sb.Append(", ");
+            sb.Append(this.info == null ? "null" : ("'" + this.info.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+
+        }
     }
     public partial class FooEx : Foo
     {
@@ -125,6 +138,10 @@ namespace PKG
             var sb = new System.Text.StringBuilder();
             ToString(ref sb);
             return sb.ToString();
+        }
+        public override void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+            base.MySqlAppend(ref sb, ignoreReadOnly);
         }
     }
     public partial class Node : Tables.node
@@ -178,8 +195,12 @@ namespace PKG
             ToString(ref sb);
             return sb.ToString();
         }
+        public override void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+            base.MySqlAppend(ref sb, ignoreReadOnly);
+        }
     }
-    public partial class DataSet : IBBuffer
+    public partial class DataSet : IObject
     {
         public List<Table> tables;
 
@@ -232,8 +253,11 @@ namespace PKG
         {
             return toStringFlag;
         }
+        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+        }
     }
-    public partial class Table : IBBuffer
+    public partial class Table : IObject
     {
         public DataSet parent;
         public string name;
@@ -301,8 +325,11 @@ namespace PKG
         {
             return toStringFlag;
         }
+        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+        }
     }
-    public partial class TableColumn : IBBuffer
+    public partial class TableColumn : IObject
     {
         public string name;
 
@@ -356,8 +383,11 @@ namespace PKG
         {
             return toStringFlag;
         }
+        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+        }
     }
-    public partial class TableRow : IBBuffer
+    public partial class TableRow : IObject
     {
         public List<TableRowValue> values;
 
@@ -410,8 +440,11 @@ namespace PKG
         {
             return toStringFlag;
         }
+        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+        }
     }
-    public partial class TableRowValue : IBBuffer
+    public partial class TableRowValue : IObject
     {
 
         public virtual ushort GetPackageId()
@@ -458,6 +491,9 @@ namespace PKG
         public bool GetToStringFlag()
         {
             return toStringFlag;
+        }
+        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
         }
     }
     public partial class TableRowValue_Int : TableRowValue
@@ -506,6 +542,10 @@ namespace PKG
             ToString(ref sb);
             return sb.ToString();
         }
+        public override void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+            base.MySqlAppend(ref sb, ignoreReadOnly);
+        }
     }
     public partial class TableRowValue_NullableInt : TableRowValue
     {
@@ -552,6 +592,10 @@ namespace PKG
             var sb = new System.Text.StringBuilder();
             ToString(ref sb);
             return sb.ToString();
+        }
+        public override void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+            base.MySqlAppend(ref sb, ignoreReadOnly);
         }
     }
     public partial class TableRowValue_String : TableRowValue
@@ -602,26 +646,78 @@ namespace PKG
             ToString(ref sb);
             return sb.ToString();
         }
+        public override void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+            base.MySqlAppend(ref sb, ignoreReadOnly);
+        }
     }
 namespace Tables
 {
-    public partial class account : IBBuffer
+    /// <summary>
+    /// 玩家账号表( 基表 )
+    /// </summary>
+    public partial class account : IObject
     {
-        public string id;
+        /// <summary>
+        /// 用户Id ( 随机 8 位整数 )
+        /// </summary>
+        public int id;
+        /// <summary>
+        /// 原始用户名 唯一( GUID )
+        /// </summary>
         public string username;
+        /// <summary>
+        /// 昵称 唯一( 默认用某种规则生成 )
+        /// </summary>
         public string nickname;
-        public string avatar_id;
+        /// <summary>
+        /// 头像
+        /// </summary>
+        public int avatar_id;
+        /// <summary>
+        /// 电话号码 唯一( 默认填充 username GUID )
+        /// </summary>
         public string phone;
+        /// <summary>
+        /// 密码( 默认为空 )
+        /// </summary>
         public string password;
-        public string money;
-        public string money_safe;
-        public string total_recharge;
-        public string total_consume;
-        public string total_withdraw;
-        public string create_time;
-        public string enabled;
-        public string enter_lobby_time;
-        public string log_game_id;
+        /// <summary>
+        /// 账户余额( 保留4位小数位, 进部分游戏时会被清0, 结束时会兑换返还 )
+        /// </summary>
+        public double money;
+        /// <summary>
+        /// 保险箱( 玩家可在账户余额间搬运数据 )
+        /// </summary>
+        public double money_safe;
+        /// <summary>
+        /// 累计充值金额
+        /// </summary>
+        public double total_recharge;
+        /// <summary>
+        /// 累计消费金额( 比如在鱼里一共打了多少钱的炮 )
+        /// </summary>
+        public double total_consume;
+        /// <summary>
+        /// 累计提现金额
+        /// </summary>
+        public double total_withdraw;
+        /// <summary>
+        /// 创建时间. epoch 10m 精度. 所有表的这个字段都是这个格式
+        /// </summary>
+        public long create_time;
+        /// <summary>
+        /// 启用标记( 1 : 启用 )
+        /// </summary>
+        public int enabled;
+        /// <summary>
+        /// 玩家进入大厅时间(为空 则离开大厅)
+        /// </summary>
+        public long? enter_lobby_time;
+        /// <summary>
+        /// 正在游戏中的玩家日志id(为空 则离开游戏)
+        /// </summary>
+        public int? log_game_id;
 
         public virtual ushort GetPackageId()
         {
@@ -649,35 +745,24 @@ namespace Tables
 
         public virtual void FromBBuffer(BBuffer bb)
         {
-            bb.readLengthLimit = 0;
             bb.Read(ref this.id);
             bb.readLengthLimit = 0;
             bb.Read(ref this.username);
             bb.readLengthLimit = 0;
             bb.Read(ref this.nickname);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.avatar_id);
             bb.readLengthLimit = 0;
             bb.Read(ref this.phone);
             bb.readLengthLimit = 0;
             bb.Read(ref this.password);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.money);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.money_safe);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.total_recharge);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.total_consume);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.total_withdraw);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.create_time);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.enabled);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.enter_lobby_time);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.log_game_id);
         }
         public virtual void ToString(ref System.Text.StringBuilder str)
@@ -697,36 +782,25 @@ namespace Tables
         }
         public virtual void ToStringCore(ref System.Text.StringBuilder str)
         {
-            if (id != null) str.Append(", \"id\":\"" + id + "\"");
-            else str.Append(", \"id\":nil");
+            str.Append(", \"id\":" + id);
             if (username != null) str.Append(", \"username\":\"" + username + "\"");
             else str.Append(", \"username\":nil");
             if (nickname != null) str.Append(", \"nickname\":\"" + nickname + "\"");
             else str.Append(", \"nickname\":nil");
-            if (avatar_id != null) str.Append(", \"avatar_id\":\"" + avatar_id + "\"");
-            else str.Append(", \"avatar_id\":nil");
+            str.Append(", \"avatar_id\":" + avatar_id);
             if (phone != null) str.Append(", \"phone\":\"" + phone + "\"");
             else str.Append(", \"phone\":nil");
             if (password != null) str.Append(", \"password\":\"" + password + "\"");
             else str.Append(", \"password\":nil");
-            if (money != null) str.Append(", \"money\":\"" + money + "\"");
-            else str.Append(", \"money\":nil");
-            if (money_safe != null) str.Append(", \"money_safe\":\"" + money_safe + "\"");
-            else str.Append(", \"money_safe\":nil");
-            if (total_recharge != null) str.Append(", \"total_recharge\":\"" + total_recharge + "\"");
-            else str.Append(", \"total_recharge\":nil");
-            if (total_consume != null) str.Append(", \"total_consume\":\"" + total_consume + "\"");
-            else str.Append(", \"total_consume\":nil");
-            if (total_withdraw != null) str.Append(", \"total_withdraw\":\"" + total_withdraw + "\"");
-            else str.Append(", \"total_withdraw\":nil");
-            if (create_time != null) str.Append(", \"create_time\":\"" + create_time + "\"");
-            else str.Append(", \"create_time\":nil");
-            if (enabled != null) str.Append(", \"enabled\":\"" + enabled + "\"");
-            else str.Append(", \"enabled\":nil");
-            if (enter_lobby_time != null) str.Append(", \"enter_lobby_time\":\"" + enter_lobby_time + "\"");
-            else str.Append(", \"enter_lobby_time\":nil");
-            if (log_game_id != null) str.Append(", \"log_game_id\":\"" + log_game_id + "\"");
-            else str.Append(", \"log_game_id\":nil");
+            str.Append(", \"money\":" + money);
+            str.Append(", \"money_safe\":" + money_safe);
+            str.Append(", \"total_recharge\":" + total_recharge);
+            str.Append(", \"total_consume\":" + total_consume);
+            str.Append(", \"total_withdraw\":" + total_withdraw);
+            str.Append(", \"create_time\":" + create_time);
+            str.Append(", \"enabled\":" + enabled);
+            str.Append(", \"enter_lobby_time\":" + (enter_lobby_time.HasValue ? enter_lobby_time.Value.ToString() : "nil"));
+            str.Append(", \"log_game_id\":" + (log_game_id.HasValue ? log_game_id.Value.ToString() : "nil"));
         }
         public override string ToString()
         {
@@ -743,13 +817,62 @@ namespace Tables
         {
             return toStringFlag;
         }
+        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+            sb.Append("(");
+            sb.Append(this.id);
+            sb.Append(", ");
+            sb.Append(this.username == null ? "null" : ("'" + this.username.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Append(this.nickname == null ? "null" : ("'" + this.nickname.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Append(this.avatar_id);
+            sb.Append(", ");
+            sb.Append(this.phone == null ? "null" : ("'" + this.phone.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Append(this.password == null ? "null" : ("'" + this.password.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Append(this.money);
+            sb.Append(", ");
+            sb.Append(this.money_safe);
+            sb.Append(", ");
+            sb.Append(this.total_recharge);
+            sb.Append(", ");
+            sb.Append(this.total_consume);
+            sb.Append(", ");
+            sb.Append(this.total_withdraw);
+            sb.Append(", ");
+            sb.Append(this.create_time);
+            sb.Append(", ");
+            sb.Append(this.enabled);
+            sb.Append(", ");
+            sb.Append(this.enter_lobby_time.HasValue ? this.enter_lobby_time.Value.ToString() : "null");
+            sb.Append(", ");
+            sb.Append(this.log_game_id.HasValue ? this.log_game_id.Value.ToString() : "null");
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+
+        }
     }
-    public partial class chat : IBBuffer
+    /// <summary>
+    /// 在线聊天
+    /// </summary>
+    public partial class chat : IObject
     {
-        public string id;
+        public int id;
+        /// <summary>
+        /// 内容
+        /// </summary>
         public string content;
-        public string account_id;
-        public string create_time;
+        /// <summary>
+        /// 聊天人id
+        /// </summary>
+        public int account_id;
+        /// <summary>
+        /// 创建时间
+        /// </summary>
+        public long create_time;
 
         public virtual ushort GetPackageId()
         {
@@ -766,13 +889,10 @@ namespace Tables
 
         public virtual void FromBBuffer(BBuffer bb)
         {
-            bb.readLengthLimit = 0;
             bb.Read(ref this.id);
             bb.readLengthLimit = 0;
             bb.Read(ref this.content);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.account_id);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.create_time);
         }
         public virtual void ToString(ref System.Text.StringBuilder str)
@@ -792,14 +912,11 @@ namespace Tables
         }
         public virtual void ToStringCore(ref System.Text.StringBuilder str)
         {
-            if (id != null) str.Append(", \"id\":\"" + id + "\"");
-            else str.Append(", \"id\":nil");
+            str.Append(", \"id\":" + id);
             if (content != null) str.Append(", \"content\":\"" + content + "\"");
             else str.Append(", \"content\":nil");
-            if (account_id != null) str.Append(", \"account_id\":\"" + account_id + "\"");
-            else str.Append(", \"account_id\":nil");
-            if (create_time != null) str.Append(", \"create_time\":\"" + create_time + "\"");
-            else str.Append(", \"create_time\":nil");
+            str.Append(", \"account_id\":" + account_id);
+            str.Append(", \"create_time\":" + create_time);
         }
         public override string ToString()
         {
@@ -816,14 +933,50 @@ namespace Tables
         {
             return toStringFlag;
         }
+        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+            sb.Append("(");
+            if (!ignoreReadOnly)
+            {
+            sb.Append(this.id);
+            sb.Append(", ");
+            }
+            sb.Append(this.content == null ? "null" : ("'" + this.content.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Append(this.account_id);
+            sb.Append(", ");
+            sb.Append(this.create_time);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+
+        }
     }
-    public partial class config : IBBuffer
+    /// <summary>
+    /// 通用配置表( 带版本号的键值对集合 )
+    /// </summary>
+    public partial class config : IObject
     {
+        /// <summary>
+        /// 键名
+        /// </summary>
         public string key;
+        /// <summary>
+        /// 数据类型名
+        /// </summary>
         public string datatype_name;
+        /// <summary>
+        /// 显示名
+        /// </summary>
         public string title;
+        /// <summary>
+        /// 说明
+        /// </summary>
         public string desc;
-        public string create_time;
+        /// <summary>
+        /// 创建时间
+        /// </summary>
+        public long create_time;
 
         public virtual ushort GetPackageId()
         {
@@ -849,7 +1002,6 @@ namespace Tables
             bb.Read(ref this.title);
             bb.readLengthLimit = 0;
             bb.Read(ref this.desc);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.create_time);
         }
         public virtual void ToString(ref System.Text.StringBuilder str)
@@ -877,8 +1029,7 @@ namespace Tables
             else str.Append(", \"title\":nil");
             if (desc != null) str.Append(", \"desc\":\"" + desc + "\"");
             else str.Append(", \"desc\":nil");
-            if (create_time != null) str.Append(", \"create_time\":\"" + create_time + "\"");
-            else str.Append(", \"create_time\":nil");
+            str.Append(", \"create_time\":" + create_time);
         }
         public override string ToString()
         {
@@ -895,14 +1046,49 @@ namespace Tables
         {
             return toStringFlag;
         }
+        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+            sb.Append("(");
+            sb.Append(this.key == null ? "null" : ("'" + this.key.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Append(this.datatype_name == null ? "null" : ("'" + this.datatype_name.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Append(this.title == null ? "null" : ("'" + this.title.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Append(this.desc == null ? "null" : ("'" + this.desc.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Append(this.create_time);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+
+        }
     }
-    public partial class config_value : IBBuffer
+    /// <summary>
+    /// 配置项所对应的值( 保留历史变化, 通常只有最新的那一个生效 )
+    /// </summary>
+    public partial class config_value : IObject
     {
+        /// <summary>
+        /// 键名
+        /// </summary>
         public string key;
-        public string value_bigint;
-        public string value_double;
+        /// <summary>
+        /// 对应 bigint 数据类型的值( int64 )
+        /// </summary>
+        public long? value_bigint;
+        /// <summary>
+        /// 对应 double 数据类型的值
+        /// </summary>
+        public double? value_double;
+        /// <summary>
+        /// 对应 varchar 数据类型的值( string )
+        /// </summary>
         public string value_varchar;
-        public string create_time;
+        /// <summary>
+        /// 创建时间
+        /// </summary>
+        public long create_time;
 
         public virtual ushort GetPackageId()
         {
@@ -922,13 +1108,10 @@ namespace Tables
         {
             bb.readLengthLimit = 0;
             bb.Read(ref this.key);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.value_bigint);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.value_double);
             bb.readLengthLimit = 0;
             bb.Read(ref this.value_varchar);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.create_time);
         }
         public virtual void ToString(ref System.Text.StringBuilder str)
@@ -950,14 +1133,11 @@ namespace Tables
         {
             if (key != null) str.Append(", \"key\":\"" + key + "\"");
             else str.Append(", \"key\":nil");
-            if (value_bigint != null) str.Append(", \"value_bigint\":\"" + value_bigint + "\"");
-            else str.Append(", \"value_bigint\":nil");
-            if (value_double != null) str.Append(", \"value_double\":\"" + value_double + "\"");
-            else str.Append(", \"value_double\":nil");
+            str.Append(", \"value_bigint\":" + (value_bigint.HasValue ? value_bigint.Value.ToString() : "nil"));
+            str.Append(", \"value_double\":" + (value_double.HasValue ? value_double.Value.ToString() : "nil"));
             if (value_varchar != null) str.Append(", \"value_varchar\":\"" + value_varchar + "\"");
             else str.Append(", \"value_varchar\":nil");
-            if (create_time != null) str.Append(", \"create_time\":\"" + create_time + "\"");
-            else str.Append(", \"create_time\":nil");
+            str.Append(", \"create_time\":" + create_time);
         }
         public override string ToString()
         {
@@ -974,8 +1154,28 @@ namespace Tables
         {
             return toStringFlag;
         }
+        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+            sb.Append("(");
+            sb.Append(this.key == null ? "null" : ("'" + this.key.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Append(this.value_bigint.HasValue ? this.value_bigint.Value.ToString() : "null");
+            sb.Append(", ");
+            sb.Append(this.value_double.HasValue ? this.value_double.Value.ToString() : "null");
+            sb.Append(", ");
+            sb.Append(this.value_varchar == null ? "null" : ("'" + this.value_varchar.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Append(this.create_time);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+
+        }
     }
-    public partial class datatype : IBBuffer
+    /// <summary>
+    /// 数据类型列表( 主要供 config 用 )
+    /// </summary>
+    public partial class datatype : IObject
     {
         public string name;
 
@@ -1029,13 +1229,37 @@ namespace Tables
         {
             return toStringFlag;
         }
+        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+            sb.Append("(");
+            sb.Append(this.name == null ? "null" : ("'" + this.name.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+
+        }
     }
-    public partial class fish : IBBuffer
+    /// <summary>
+    /// 鱼种类表
+    /// </summary>
+    public partial class fish : IObject
     {
-        public string id;
+        /// <summary>
+        /// 鱼配置id
+        /// </summary>
+        public int id;
+        /// <summary>
+        /// 名称
+        /// </summary>
         public string name;
-        public string minCoin;
-        public string maxCoin;
+        /// <summary>
+        /// 打死鱼的金币所得最小基数( 也可理解成倍率 )
+        /// </summary>
+        public int minCoin;
+        /// <summary>
+        ///  打死鱼的金币所得最大基数( 也可理解成倍率 )
+        /// </summary>
+        public int maxCoin;
 
         public virtual ushort GetPackageId()
         {
@@ -1052,13 +1276,10 @@ namespace Tables
 
         public virtual void FromBBuffer(BBuffer bb)
         {
-            bb.readLengthLimit = 0;
             bb.Read(ref this.id);
             bb.readLengthLimit = 0;
             bb.Read(ref this.name);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.minCoin);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.maxCoin);
         }
         public virtual void ToString(ref System.Text.StringBuilder str)
@@ -1078,14 +1299,11 @@ namespace Tables
         }
         public virtual void ToStringCore(ref System.Text.StringBuilder str)
         {
-            if (id != null) str.Append(", \"id\":\"" + id + "\"");
-            else str.Append(", \"id\":nil");
+            str.Append(", \"id\":" + id);
             if (name != null) str.Append(", \"name\":\"" + name + "\"");
             else str.Append(", \"name\":nil");
-            if (minCoin != null) str.Append(", \"minCoin\":\"" + minCoin + "\"");
-            else str.Append(", \"minCoin\":nil");
-            if (maxCoin != null) str.Append(", \"maxCoin\":\"" + maxCoin + "\"");
-            else str.Append(", \"maxCoin\":nil");
+            str.Append(", \"minCoin\":" + minCoin);
+            str.Append(", \"maxCoin\":" + maxCoin);
         }
         public override string ToString()
         {
@@ -1102,13 +1320,43 @@ namespace Tables
         {
             return toStringFlag;
         }
+        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+            sb.Append("(");
+            sb.Append(this.id);
+            sb.Append(", ");
+            sb.Append(this.name == null ? "null" : ("'" + this.name.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Append(this.minCoin);
+            sb.Append(", ");
+            sb.Append(this.maxCoin);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+
+        }
     }
-    public partial class game : IBBuffer
+    /// <summary>
+    /// 所有游戏列表( 基表 )
+    /// </summary>
+    public partial class game : IObject
     {
-        public string id;
+        /// <summary>
+        /// 游戏编号( 非自增, 直接填死 )
+        /// </summary>
+        public int id;
+        /// <summary>
+        /// 游戏名
+        /// </summary>
         public string name;
+        /// <summary>
+        /// 类型名( 派生表名 )
+        /// </summary>
         public string type_name;
-        public string enabled;
+        /// <summary>
+        /// 是否启用 1: true
+        /// </summary>
+        public int enabled;
 
         public virtual ushort GetPackageId()
         {
@@ -1125,13 +1373,11 @@ namespace Tables
 
         public virtual void FromBBuffer(BBuffer bb)
         {
-            bb.readLengthLimit = 0;
             bb.Read(ref this.id);
             bb.readLengthLimit = 0;
             bb.Read(ref this.name);
             bb.readLengthLimit = 0;
             bb.Read(ref this.type_name);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.enabled);
         }
         public virtual void ToString(ref System.Text.StringBuilder str)
@@ -1151,14 +1397,12 @@ namespace Tables
         }
         public virtual void ToStringCore(ref System.Text.StringBuilder str)
         {
-            if (id != null) str.Append(", \"id\":\"" + id + "\"");
-            else str.Append(", \"id\":nil");
+            str.Append(", \"id\":" + id);
             if (name != null) str.Append(", \"name\":\"" + name + "\"");
             else str.Append(", \"name\":nil");
             if (type_name != null) str.Append(", \"type_name\":\"" + type_name + "\"");
             else str.Append(", \"type_name\":nil");
-            if (enabled != null) str.Append(", \"enabled\":\"" + enabled + "\"");
-            else str.Append(", \"enabled\":nil");
+            str.Append(", \"enabled\":" + enabled);
         }
         public override string ToString()
         {
@@ -1175,11 +1419,35 @@ namespace Tables
         {
             return toStringFlag;
         }
+        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+            sb.Append("(");
+            sb.Append(this.id);
+            sb.Append(", ");
+            sb.Append(this.name == null ? "null" : ("'" + this.name.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Append(this.type_name == null ? "null" : ("'" + this.type_name.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Append(this.enabled);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+
+        }
     }
-    public partial class game_catchfish : IBBuffer
+    /// <summary>
+    /// game 的 捕鱼游戏 派生表( 存放专属字段 )
+    /// </summary>
+    public partial class game_catchfish : IObject
     {
-        public string id;
-        public string exchange_coin_ratio;
+        /// <summary>
+        /// 基表游戏编号
+        /// </summary>
+        public int id;
+        /// <summary>
+        /// 进出游戏时 money 自动兑换成 coin 要 乘除 的系数
+        /// </summary>
+        public int exchange_coin_ratio;
 
         public virtual ushort GetPackageId()
         {
@@ -1194,9 +1462,7 @@ namespace Tables
 
         public virtual void FromBBuffer(BBuffer bb)
         {
-            bb.readLengthLimit = 0;
             bb.Read(ref this.id);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.exchange_coin_ratio);
         }
         public virtual void ToString(ref System.Text.StringBuilder str)
@@ -1216,10 +1482,8 @@ namespace Tables
         }
         public virtual void ToStringCore(ref System.Text.StringBuilder str)
         {
-            if (id != null) str.Append(", \"id\":\"" + id + "\"");
-            else str.Append(", \"id\":nil");
-            if (exchange_coin_ratio != null) str.Append(", \"exchange_coin_ratio\":\"" + exchange_coin_ratio + "\"");
-            else str.Append(", \"exchange_coin_ratio\":nil");
+            str.Append(", \"id\":" + id);
+            str.Append(", \"exchange_coin_ratio\":" + exchange_coin_ratio);
         }
         public override string ToString()
         {
@@ -1236,14 +1500,43 @@ namespace Tables
         {
             return toStringFlag;
         }
+        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+            sb.Append("(");
+            sb.Append(this.id);
+            sb.Append(", ");
+            sb.Append(this.exchange_coin_ratio);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+
+        }
     }
-    public partial class game_catchfish_account : IBBuffer
+    /// <summary>
+    /// 玩家于捕鱼游戏的个人配置信息
+    /// </summary>
+    public partial class game_catchfish_account : IObject
     {
-        public string account_id;
-        public string game_id;
-        public string level_id;
-        public string last_bet;
-        public string last_cannon_id;
+        /// <summary>
+        /// 账号id
+        /// </summary>
+        public int account_id;
+        /// <summary>
+        /// 捕鱼游戏id
+        /// </summary>
+        public int game_id;
+        /// <summary>
+        /// 级别id
+        /// </summary>
+        public int level_id;
+        /// <summary>
+        /// 玩家上次游戏退出前用的子弹的倍率( 游戏内金币整数值 )
+        /// </summary>
+        public long last_bet;
+        /// <summary>
+        /// 玩家上次游戏退出前用的炮台id
+        /// </summary>
+        public int last_cannon_id;
 
         public virtual ushort GetPackageId()
         {
@@ -1261,15 +1554,10 @@ namespace Tables
 
         public virtual void FromBBuffer(BBuffer bb)
         {
-            bb.readLengthLimit = 0;
             bb.Read(ref this.account_id);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.game_id);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.level_id);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.last_bet);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.last_cannon_id);
         }
         public virtual void ToString(ref System.Text.StringBuilder str)
@@ -1289,16 +1577,11 @@ namespace Tables
         }
         public virtual void ToStringCore(ref System.Text.StringBuilder str)
         {
-            if (account_id != null) str.Append(", \"account_id\":\"" + account_id + "\"");
-            else str.Append(", \"account_id\":nil");
-            if (game_id != null) str.Append(", \"game_id\":\"" + game_id + "\"");
-            else str.Append(", \"game_id\":nil");
-            if (level_id != null) str.Append(", \"level_id\":\"" + level_id + "\"");
-            else str.Append(", \"level_id\":nil");
-            if (last_bet != null) str.Append(", \"last_bet\":\"" + last_bet + "\"");
-            else str.Append(", \"last_bet\":nil");
-            if (last_cannon_id != null) str.Append(", \"last_cannon_id\":\"" + last_cannon_id + "\"");
-            else str.Append(", \"last_cannon_id\":nil");
+            str.Append(", \"account_id\":" + account_id);
+            str.Append(", \"game_id\":" + game_id);
+            str.Append(", \"level_id\":" + level_id);
+            str.Append(", \"last_bet\":" + last_bet);
+            str.Append(", \"last_cannon_id\":" + last_cannon_id);
         }
         public override string ToString()
         {
@@ -1315,11 +1598,37 @@ namespace Tables
         {
             return toStringFlag;
         }
+        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+            sb.Append("(");
+            sb.Append(this.account_id);
+            sb.Append(", ");
+            sb.Append(this.game_id);
+            sb.Append(", ");
+            sb.Append(this.level_id);
+            sb.Append(", ");
+            sb.Append(this.last_bet);
+            sb.Append(", ");
+            sb.Append(this.last_cannon_id);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+
+        }
     }
-    public partial class game_catchfish_cannon : IBBuffer
+    /// <summary>
+    /// 捕鱼游戏内炮台skin与累计充值金额的对应表
+    /// </summary>
+    public partial class game_catchfish_cannon : IObject
     {
-        public string id;
-        public string vip_id;
+        /// <summary>
+        /// 唯一编号 & 炮台Skin
+        /// </summary>
+        public int id;
+        /// <summary>
+        /// VIP等级
+        /// </summary>
+        public int vip_id;
 
         public virtual ushort GetPackageId()
         {
@@ -1334,9 +1643,7 @@ namespace Tables
 
         public virtual void FromBBuffer(BBuffer bb)
         {
-            bb.readLengthLimit = 0;
             bb.Read(ref this.id);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.vip_id);
         }
         public virtual void ToString(ref System.Text.StringBuilder str)
@@ -1356,10 +1663,8 @@ namespace Tables
         }
         public virtual void ToStringCore(ref System.Text.StringBuilder str)
         {
-            if (id != null) str.Append(", \"id\":\"" + id + "\"");
-            else str.Append(", \"id\":nil");
-            if (vip_id != null) str.Append(", \"vip_id\":\"" + vip_id + "\"");
-            else str.Append(", \"vip_id\":nil");
+            str.Append(", \"id\":" + id);
+            str.Append(", \"vip_id\":" + vip_id);
         }
         public override string ToString()
         {
@@ -1376,15 +1681,47 @@ namespace Tables
         {
             return toStringFlag;
         }
+        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+            sb.Append("(");
+            sb.Append(this.id);
+            sb.Append(", ");
+            sb.Append(this.vip_id);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+
+        }
     }
-    public partial class game_catchfish_level : IBBuffer
+    /// <summary>
+    /// 捕鱼游戏的分级表( 1对多 )
+    /// </summary>
+    public partial class game_catchfish_level : IObject
     {
-        public string game_id;
-        public string level_id;
-        public string min_bet;
-        public string max_bet;
-        public string min_money;
-        public string enabled;
+        /// <summary>
+        /// 游戏id
+        /// </summary>
+        public int game_id;
+        /// <summary>
+        /// 游戏级别id. 0 1 2....: 新手厅  进阶厅  高手厅 ....
+        /// </summary>
+        public int level_id;
+        /// <summary>
+        /// 炮值(从)(游戏内金币)
+        /// </summary>
+        public long min_bet;
+        /// <summary>
+        /// 炮值(到)(游戏内金币)
+        /// </summary>
+        public long max_bet;
+        /// <summary>
+        /// 最低准入金额
+        /// </summary>
+        public double min_money;
+        /// <summary>
+        /// 是否启用 1: true
+        /// </summary>
+        public int enabled;
 
         public virtual ushort GetPackageId()
         {
@@ -1403,17 +1740,11 @@ namespace Tables
 
         public virtual void FromBBuffer(BBuffer bb)
         {
-            bb.readLengthLimit = 0;
             bb.Read(ref this.game_id);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.level_id);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.min_bet);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.max_bet);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.min_money);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.enabled);
         }
         public virtual void ToString(ref System.Text.StringBuilder str)
@@ -1433,18 +1764,12 @@ namespace Tables
         }
         public virtual void ToStringCore(ref System.Text.StringBuilder str)
         {
-            if (game_id != null) str.Append(", \"game_id\":\"" + game_id + "\"");
-            else str.Append(", \"game_id\":nil");
-            if (level_id != null) str.Append(", \"level_id\":\"" + level_id + "\"");
-            else str.Append(", \"level_id\":nil");
-            if (min_bet != null) str.Append(", \"min_bet\":\"" + min_bet + "\"");
-            else str.Append(", \"min_bet\":nil");
-            if (max_bet != null) str.Append(", \"max_bet\":\"" + max_bet + "\"");
-            else str.Append(", \"max_bet\":nil");
-            if (min_money != null) str.Append(", \"min_money\":\"" + min_money + "\"");
-            else str.Append(", \"min_money\":nil");
-            if (enabled != null) str.Append(", \"enabled\":\"" + enabled + "\"");
-            else str.Append(", \"enabled\":nil");
+            str.Append(", \"game_id\":" + game_id);
+            str.Append(", \"level_id\":" + level_id);
+            str.Append(", \"min_bet\":" + min_bet);
+            str.Append(", \"max_bet\":" + max_bet);
+            str.Append(", \"min_money\":" + min_money);
+            str.Append(", \"enabled\":" + enabled);
         }
         public override string ToString()
         {
@@ -1461,13 +1786,47 @@ namespace Tables
         {
             return toStringFlag;
         }
+        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+            sb.Append("(");
+            sb.Append(this.game_id);
+            sb.Append(", ");
+            sb.Append(this.level_id);
+            sb.Append(", ");
+            sb.Append(this.min_bet);
+            sb.Append(", ");
+            sb.Append(this.max_bet);
+            sb.Append(", ");
+            sb.Append(this.min_money);
+            sb.Append(", ");
+            sb.Append(this.enabled);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+
+        }
     }
-    public partial class game_catchfish_level_room : IBBuffer
+    /// <summary>
+    /// 捕鱼游戏的分级表 下属房间表( 1对多 )
+    /// </summary>
+    public partial class game_catchfish_level_room : IObject
     {
-        public string game_id;
-        public string level_id;
-        public string room_id;
-        public string enabled;
+        /// <summary>
+        /// 游戏id
+        /// </summary>
+        public int game_id;
+        /// <summary>
+        /// 游戏级别id
+        /// </summary>
+        public int level_id;
+        /// <summary>
+        /// 房号( 从 1 开始填充, 新增取最大值+1 )
+        /// </summary>
+        public int room_id;
+        /// <summary>
+        /// 是否启用 1: true
+        /// </summary>
+        public int enabled;
 
         public virtual ushort GetPackageId()
         {
@@ -1484,13 +1843,9 @@ namespace Tables
 
         public virtual void FromBBuffer(BBuffer bb)
         {
-            bb.readLengthLimit = 0;
             bb.Read(ref this.game_id);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.level_id);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.room_id);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.enabled);
         }
         public virtual void ToString(ref System.Text.StringBuilder str)
@@ -1510,14 +1865,10 @@ namespace Tables
         }
         public virtual void ToStringCore(ref System.Text.StringBuilder str)
         {
-            if (game_id != null) str.Append(", \"game_id\":\"" + game_id + "\"");
-            else str.Append(", \"game_id\":nil");
-            if (level_id != null) str.Append(", \"level_id\":\"" + level_id + "\"");
-            else str.Append(", \"level_id\":nil");
-            if (room_id != null) str.Append(", \"room_id\":\"" + room_id + "\"");
-            else str.Append(", \"room_id\":nil");
-            if (enabled != null) str.Append(", \"enabled\":\"" + enabled + "\"");
-            else str.Append(", \"enabled\":nil");
+            str.Append(", \"game_id\":" + game_id);
+            str.Append(", \"level_id\":" + level_id);
+            str.Append(", \"room_id\":" + room_id);
+            str.Append(", \"enabled\":" + enabled);
         }
         public override string ToString()
         {
@@ -1534,13 +1885,43 @@ namespace Tables
         {
             return toStringFlag;
         }
+        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+            sb.Append("(");
+            if (!ignoreReadOnly)
+            {
+            sb.Append(this.game_id);
+            sb.Append(", ");
+            }
+            sb.Append(this.level_id);
+            sb.Append(", ");
+            sb.Append(this.room_id);
+            sb.Append(", ");
+            sb.Append(this.enabled);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+
+        }
     }
-    public partial class log_account_avatar : IBBuffer
+    /// <summary>
+    /// 头像变更历史表
+    /// </summary>
+    public partial class log_account_avatar : IObject
     {
-        public string id;
-        public string account_id;
-        public string avatar_id;
-        public string create_time;
+        public int id;
+        /// <summary>
+        /// 帐号id
+        /// </summary>
+        public int account_id;
+        /// <summary>
+        /// 头像
+        /// </summary>
+        public int avatar_id;
+        /// <summary>
+        /// 创建时间
+        /// </summary>
+        public long create_time;
 
         public virtual ushort GetPackageId()
         {
@@ -1557,13 +1938,9 @@ namespace Tables
 
         public virtual void FromBBuffer(BBuffer bb)
         {
-            bb.readLengthLimit = 0;
             bb.Read(ref this.id);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.account_id);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.avatar_id);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.create_time);
         }
         public virtual void ToString(ref System.Text.StringBuilder str)
@@ -1583,14 +1960,10 @@ namespace Tables
         }
         public virtual void ToStringCore(ref System.Text.StringBuilder str)
         {
-            if (id != null) str.Append(", \"id\":\"" + id + "\"");
-            else str.Append(", \"id\":nil");
-            if (account_id != null) str.Append(", \"account_id\":\"" + account_id + "\"");
-            else str.Append(", \"account_id\":nil");
-            if (avatar_id != null) str.Append(", \"avatar_id\":\"" + avatar_id + "\"");
-            else str.Append(", \"avatar_id\":nil");
-            if (create_time != null) str.Append(", \"create_time\":\"" + create_time + "\"");
-            else str.Append(", \"create_time\":nil");
+            str.Append(", \"id\":" + id);
+            str.Append(", \"account_id\":" + account_id);
+            str.Append(", \"avatar_id\":" + avatar_id);
+            str.Append(", \"create_time\":" + create_time);
         }
         public override string ToString()
         {
@@ -1607,14 +1980,47 @@ namespace Tables
         {
             return toStringFlag;
         }
+        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+            sb.Append("(");
+            if (!ignoreReadOnly)
+            {
+            sb.Append(this.id);
+            sb.Append(", ");
+            }
+            sb.Append(this.account_id);
+            sb.Append(", ");
+            sb.Append(this.avatar_id);
+            sb.Append(", ");
+            sb.Append(this.create_time);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+
+        }
     }
-    public partial class log_account_enabled : IBBuffer
+    /// <summary>
+    /// 帐号启用标记变更历史表
+    /// </summary>
+    public partial class log_account_enabled : IObject
     {
-        public string id;
-        public string account_id;
-        public string enabled;
+        public int id;
+        /// <summary>
+        /// 帐号id
+        /// </summary>
+        public int account_id;
+        /// <summary>
+        /// 启用标记
+        /// </summary>
+        public int enabled;
+        /// <summary>
+        /// 备注( 含修改人 & 原因 )
+        /// </summary>
         public string memo;
-        public string create_time;
+        /// <summary>
+        /// 日志创建时间( 修改时间 )
+        /// </summary>
+        public long create_time;
 
         public virtual ushort GetPackageId()
         {
@@ -1632,15 +2038,11 @@ namespace Tables
 
         public virtual void FromBBuffer(BBuffer bb)
         {
-            bb.readLengthLimit = 0;
             bb.Read(ref this.id);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.account_id);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.enabled);
             bb.readLengthLimit = 0;
             bb.Read(ref this.memo);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.create_time);
         }
         public virtual void ToString(ref System.Text.StringBuilder str)
@@ -1660,16 +2062,12 @@ namespace Tables
         }
         public virtual void ToStringCore(ref System.Text.StringBuilder str)
         {
-            if (id != null) str.Append(", \"id\":\"" + id + "\"");
-            else str.Append(", \"id\":nil");
-            if (account_id != null) str.Append(", \"account_id\":\"" + account_id + "\"");
-            else str.Append(", \"account_id\":nil");
-            if (enabled != null) str.Append(", \"enabled\":\"" + enabled + "\"");
-            else str.Append(", \"enabled\":nil");
+            str.Append(", \"id\":" + id);
+            str.Append(", \"account_id\":" + account_id);
+            str.Append(", \"enabled\":" + enabled);
             if (memo != null) str.Append(", \"memo\":\"" + memo + "\"");
             else str.Append(", \"memo\":nil");
-            if (create_time != null) str.Append(", \"create_time\":\"" + create_time + "\"");
-            else str.Append(", \"create_time\":nil");
+            str.Append(", \"create_time\":" + create_time);
         }
         public override string ToString()
         {
@@ -1686,13 +2084,45 @@ namespace Tables
         {
             return toStringFlag;
         }
+        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+            sb.Append("(");
+            if (!ignoreReadOnly)
+            {
+            sb.Append(this.id);
+            sb.Append(", ");
+            }
+            sb.Append(this.account_id);
+            sb.Append(", ");
+            sb.Append(this.enabled);
+            sb.Append(", ");
+            sb.Append(this.memo == null ? "null" : ("'" + this.memo.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Append(this.create_time);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+
+        }
     }
-    public partial class log_account_money_safe : IBBuffer
+    /// <summary>
+    /// 保险箱操作日志
+    /// </summary>
+    public partial class log_account_money_safe : IObject
     {
-        public string id;
-        public string account_id;
-        public string value;
-        public string create_time;
+        public int id;
+        /// <summary>
+        /// 帐号id
+        /// </summary>
+        public int account_id;
+        /// <summary>
+        /// 金额( 正数为存入保险箱, 负数为从保险箱提钱 )
+        /// </summary>
+        public double value;
+        /// <summary>
+        /// 创建时间
+        /// </summary>
+        public long create_time;
 
         public virtual ushort GetPackageId()
         {
@@ -1709,13 +2139,9 @@ namespace Tables
 
         public virtual void FromBBuffer(BBuffer bb)
         {
-            bb.readLengthLimit = 0;
             bb.Read(ref this.id);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.account_id);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.value);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.create_time);
         }
         public virtual void ToString(ref System.Text.StringBuilder str)
@@ -1735,14 +2161,10 @@ namespace Tables
         }
         public virtual void ToStringCore(ref System.Text.StringBuilder str)
         {
-            if (id != null) str.Append(", \"id\":\"" + id + "\"");
-            else str.Append(", \"id\":nil");
-            if (account_id != null) str.Append(", \"account_id\":\"" + account_id + "\"");
-            else str.Append(", \"account_id\":nil");
-            if (value != null) str.Append(", \"value\":\"" + value + "\"");
-            else str.Append(", \"value\":nil");
-            if (create_time != null) str.Append(", \"create_time\":\"" + create_time + "\"");
-            else str.Append(", \"create_time\":nil");
+            str.Append(", \"id\":" + id);
+            str.Append(", \"account_id\":" + account_id);
+            str.Append(", \"value\":" + value);
+            str.Append(", \"create_time\":" + create_time);
         }
         public override string ToString()
         {
@@ -1759,13 +2181,43 @@ namespace Tables
         {
             return toStringFlag;
         }
+        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+            sb.Append("(");
+            if (!ignoreReadOnly)
+            {
+            sb.Append(this.id);
+            sb.Append(", ");
+            }
+            sb.Append(this.account_id);
+            sb.Append(", ");
+            sb.Append(this.value);
+            sb.Append(", ");
+            sb.Append(this.create_time);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+
+        }
     }
-    public partial class log_account_nickname : IBBuffer
+    /// <summary>
+    /// 昵称变更历史表
+    /// </summary>
+    public partial class log_account_nickname : IObject
     {
-        public string id;
-        public string account_id;
+        public int id;
+        /// <summary>
+        /// 帐号id
+        /// </summary>
+        public int account_id;
+        /// <summary>
+        /// 昵称
+        /// </summary>
         public string nickname;
-        public string create_time;
+        /// <summary>
+        /// 创建时间
+        /// </summary>
+        public long create_time;
 
         public virtual ushort GetPackageId()
         {
@@ -1782,13 +2234,10 @@ namespace Tables
 
         public virtual void FromBBuffer(BBuffer bb)
         {
-            bb.readLengthLimit = 0;
             bb.Read(ref this.id);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.account_id);
             bb.readLengthLimit = 0;
             bb.Read(ref this.nickname);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.create_time);
         }
         public virtual void ToString(ref System.Text.StringBuilder str)
@@ -1808,14 +2257,11 @@ namespace Tables
         }
         public virtual void ToStringCore(ref System.Text.StringBuilder str)
         {
-            if (id != null) str.Append(", \"id\":\"" + id + "\"");
-            else str.Append(", \"id\":nil");
-            if (account_id != null) str.Append(", \"account_id\":\"" + account_id + "\"");
-            else str.Append(", \"account_id\":nil");
+            str.Append(", \"id\":" + id);
+            str.Append(", \"account_id\":" + account_id);
             if (nickname != null) str.Append(", \"nickname\":\"" + nickname + "\"");
             else str.Append(", \"nickname\":nil");
-            if (create_time != null) str.Append(", \"create_time\":\"" + create_time + "\"");
-            else str.Append(", \"create_time\":nil");
+            str.Append(", \"create_time\":" + create_time);
         }
         public override string ToString()
         {
@@ -1832,13 +2278,43 @@ namespace Tables
         {
             return toStringFlag;
         }
+        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+            sb.Append("(");
+            if (!ignoreReadOnly)
+            {
+            sb.Append(this.id);
+            sb.Append(", ");
+            }
+            sb.Append(this.account_id);
+            sb.Append(", ");
+            sb.Append(this.nickname == null ? "null" : ("'" + this.nickname.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Append(this.create_time);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+
+        }
     }
-    public partial class log_account_password : IBBuffer
+    /// <summary>
+    /// 密码变更历史表
+    /// </summary>
+    public partial class log_account_password : IObject
     {
-        public string id;
-        public string account_id;
+        public int id;
+        /// <summary>
+        /// 帐号id
+        /// </summary>
+        public int account_id;
+        /// <summary>
+        /// 密码
+        /// </summary>
         public string password;
-        public string create_time;
+        /// <summary>
+        /// 创建时间
+        /// </summary>
+        public long create_time;
 
         public virtual ushort GetPackageId()
         {
@@ -1855,13 +2331,10 @@ namespace Tables
 
         public virtual void FromBBuffer(BBuffer bb)
         {
-            bb.readLengthLimit = 0;
             bb.Read(ref this.id);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.account_id);
             bb.readLengthLimit = 0;
             bb.Read(ref this.password);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.create_time);
         }
         public virtual void ToString(ref System.Text.StringBuilder str)
@@ -1881,14 +2354,11 @@ namespace Tables
         }
         public virtual void ToStringCore(ref System.Text.StringBuilder str)
         {
-            if (id != null) str.Append(", \"id\":\"" + id + "\"");
-            else str.Append(", \"id\":nil");
-            if (account_id != null) str.Append(", \"account_id\":\"" + account_id + "\"");
-            else str.Append(", \"account_id\":nil");
+            str.Append(", \"id\":" + id);
+            str.Append(", \"account_id\":" + account_id);
             if (password != null) str.Append(", \"password\":\"" + password + "\"");
             else str.Append(", \"password\":nil");
-            if (create_time != null) str.Append(", \"create_time\":\"" + create_time + "\"");
-            else str.Append(", \"create_time\":nil");
+            str.Append(", \"create_time\":" + create_time);
         }
         public override string ToString()
         {
@@ -1905,13 +2375,43 @@ namespace Tables
         {
             return toStringFlag;
         }
+        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+            sb.Append("(");
+            if (!ignoreReadOnly)
+            {
+            sb.Append(this.id);
+            sb.Append(", ");
+            }
+            sb.Append(this.account_id);
+            sb.Append(", ");
+            sb.Append(this.password == null ? "null" : ("'" + this.password.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Append(this.create_time);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+
+        }
     }
-    public partial class log_account_phone : IBBuffer
+    /// <summary>
+    /// 电话号码变更历史表
+    /// </summary>
+    public partial class log_account_phone : IObject
     {
-        public string id;
-        public string account_id;
+        public int id;
+        /// <summary>
+        /// 帐号id
+        /// </summary>
+        public int account_id;
+        /// <summary>
+        /// 电话号码
+        /// </summary>
         public string phone;
-        public string create_time;
+        /// <summary>
+        /// 创建时间
+        /// </summary>
+        public long create_time;
 
         public virtual ushort GetPackageId()
         {
@@ -1928,13 +2428,10 @@ namespace Tables
 
         public virtual void FromBBuffer(BBuffer bb)
         {
-            bb.readLengthLimit = 0;
             bb.Read(ref this.id);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.account_id);
             bb.readLengthLimit = 0;
             bb.Read(ref this.phone);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.create_time);
         }
         public virtual void ToString(ref System.Text.StringBuilder str)
@@ -1954,14 +2451,11 @@ namespace Tables
         }
         public virtual void ToStringCore(ref System.Text.StringBuilder str)
         {
-            if (id != null) str.Append(", \"id\":\"" + id + "\"");
-            else str.Append(", \"id\":nil");
-            if (account_id != null) str.Append(", \"account_id\":\"" + account_id + "\"");
-            else str.Append(", \"account_id\":nil");
+            str.Append(", \"id\":" + id);
+            str.Append(", \"account_id\":" + account_id);
             if (phone != null) str.Append(", \"phone\":\"" + phone + "\"");
             else str.Append(", \"phone\":nil");
-            if (create_time != null) str.Append(", \"create_time\":\"" + create_time + "\"");
-            else str.Append(", \"create_time\":nil");
+            str.Append(", \"create_time\":" + create_time);
         }
         public override string ToString()
         {
@@ -1978,14 +2472,50 @@ namespace Tables
         {
             return toStringFlag;
         }
+        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+            sb.Append("(");
+            if (!ignoreReadOnly)
+            {
+            sb.Append(this.id);
+            sb.Append(", ");
+            }
+            sb.Append(this.account_id);
+            sb.Append(", ");
+            sb.Append(this.phone == null ? "null" : ("'" + this.phone.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Append(this.create_time);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+
+        }
     }
-    public partial class log_account_recharge : IBBuffer
+    /// <summary>
+    /// 充值记录表
+    /// </summary>
+    public partial class log_account_recharge : IObject
     {
+        /// <summary>
+        /// 充值请求原始令牌
+        /// </summary>
         public string token;
-        public string account_id;
-        public string money;
+        /// <summary>
+        /// 帐号id
+        /// </summary>
+        public int account_id;
+        /// <summary>
+        /// 充值金额
+        /// </summary>
+        public double money;
+        /// <summary>
+        /// 备注( 渠道, 操作人等 )
+        /// </summary>
         public string memo;
-        public string create_time;
+        /// <summary>
+        /// 日志创建时间( 充值时间 )
+        /// </summary>
+        public long create_time;
 
         public virtual ushort GetPackageId()
         {
@@ -2005,13 +2535,10 @@ namespace Tables
         {
             bb.readLengthLimit = 0;
             bb.Read(ref this.token);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.account_id);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.money);
             bb.readLengthLimit = 0;
             bb.Read(ref this.memo);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.create_time);
         }
         public virtual void ToString(ref System.Text.StringBuilder str)
@@ -2033,14 +2560,11 @@ namespace Tables
         {
             if (token != null) str.Append(", \"token\":\"" + token + "\"");
             else str.Append(", \"token\":nil");
-            if (account_id != null) str.Append(", \"account_id\":\"" + account_id + "\"");
-            else str.Append(", \"account_id\":nil");
-            if (money != null) str.Append(", \"money\":\"" + money + "\"");
-            else str.Append(", \"money\":nil");
+            str.Append(", \"account_id\":" + account_id);
+            str.Append(", \"money\":" + money);
             if (memo != null) str.Append(", \"memo\":\"" + memo + "\"");
             else str.Append(", \"memo\":nil");
-            if (create_time != null) str.Append(", \"create_time\":\"" + create_time + "\"");
-            else str.Append(", \"create_time\":nil");
+            str.Append(", \"create_time\":" + create_time);
         }
         public override string ToString()
         {
@@ -2057,11 +2581,34 @@ namespace Tables
         {
             return toStringFlag;
         }
+        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+            sb.Append("(");
+            sb.Append(this.token == null ? "null" : ("'" + this.token.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Append(this.account_id);
+            sb.Append(", ");
+            sb.Append(this.money);
+            sb.Append(", ");
+            sb.Append(this.memo == null ? "null" : ("'" + this.memo.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Append(this.create_time);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+
+        }
     }
-    public partial class log_game : IBBuffer
+    /// <summary>
+    /// 玩家实时对局数据日志表(基表 )
+    /// </summary>
+    public partial class log_game : IObject
     {
-        public string id;
-        public string game_id;
+        public int id;
+        /// <summary>
+        /// 游戏id(game表id)
+        /// </summary>
+        public int game_id;
 
         public virtual ushort GetPackageId()
         {
@@ -2076,9 +2623,7 @@ namespace Tables
 
         public virtual void FromBBuffer(BBuffer bb)
         {
-            bb.readLengthLimit = 0;
             bb.Read(ref this.id);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.game_id);
         }
         public virtual void ToString(ref System.Text.StringBuilder str)
@@ -2098,10 +2643,8 @@ namespace Tables
         }
         public virtual void ToStringCore(ref System.Text.StringBuilder str)
         {
-            if (id != null) str.Append(", \"id\":\"" + id + "\"");
-            else str.Append(", \"id\":nil");
-            if (game_id != null) str.Append(", \"game_id\":\"" + game_id + "\"");
-            else str.Append(", \"game_id\":nil");
+            str.Append(", \"id\":" + id);
+            str.Append(", \"game_id\":" + game_id);
         }
         public override string ToString()
         {
@@ -2118,18 +2661,62 @@ namespace Tables
         {
             return toStringFlag;
         }
+        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+            sb.Append("(");
+            if (!ignoreReadOnly)
+            {
+            sb.Append(this.id);
+            sb.Append(", ");
+            }
+            sb.Append(this.game_id);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+
+        }
     }
-    public partial class log_game_catchfish : IBBuffer
+    /// <summary>
+    /// 捕鱼房内玩家实时对局数据日志表( 数据于玩家进游戏时创建, 出游戏时将继续填充这个表剩余字段 )
+    /// </summary>
+    public partial class log_game_catchfish : IObject
     {
-        public string id;
-        public string level_id;
-        public string room_id;
-        public string account_id;
-        public string enter_time;
-        public string enter_money;
-        public string leave_time;
-        public string leave_money;
-        public string consume;
+        /// <summary>
+        /// 游戏日志id(log_game表id)
+        /// </summary>
+        public int id;
+        /// <summary>
+        /// 游戏级别id
+        /// </summary>
+        public int level_id;
+        /// <summary>
+        /// 房号
+        /// </summary>
+        public int room_id;
+        /// <summary>
+        /// 账号id
+        /// </summary>
+        public int account_id;
+        /// <summary>
+        /// 进房时间
+        /// </summary>
+        public long enter_time;
+        /// <summary>
+        /// 进房时的账户余额
+        /// </summary>
+        public double enter_money;
+        /// <summary>
+        /// 离开时间( 日志记录创建时间 )
+        /// </summary>
+        public long leave_time;
+        /// <summary>
+        /// 离开时游戏内剩余金币换算成的金额
+        /// </summary>
+        public double leave_money;
+        /// <summary>
+        /// 当次游戏内花掉的金币换算成的金额总量
+        /// </summary>
+        public double consume;
 
         public virtual ushort GetPackageId()
         {
@@ -2151,23 +2738,14 @@ namespace Tables
 
         public virtual void FromBBuffer(BBuffer bb)
         {
-            bb.readLengthLimit = 0;
             bb.Read(ref this.id);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.level_id);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.room_id);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.account_id);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.enter_time);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.enter_money);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.leave_time);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.leave_money);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.consume);
         }
         public virtual void ToString(ref System.Text.StringBuilder str)
@@ -2187,24 +2765,15 @@ namespace Tables
         }
         public virtual void ToStringCore(ref System.Text.StringBuilder str)
         {
-            if (id != null) str.Append(", \"id\":\"" + id + "\"");
-            else str.Append(", \"id\":nil");
-            if (level_id != null) str.Append(", \"level_id\":\"" + level_id + "\"");
-            else str.Append(", \"level_id\":nil");
-            if (room_id != null) str.Append(", \"room_id\":\"" + room_id + "\"");
-            else str.Append(", \"room_id\":nil");
-            if (account_id != null) str.Append(", \"account_id\":\"" + account_id + "\"");
-            else str.Append(", \"account_id\":nil");
-            if (enter_time != null) str.Append(", \"enter_time\":\"" + enter_time + "\"");
-            else str.Append(", \"enter_time\":nil");
-            if (enter_money != null) str.Append(", \"enter_money\":\"" + enter_money + "\"");
-            else str.Append(", \"enter_money\":nil");
-            if (leave_time != null) str.Append(", \"leave_time\":\"" + leave_time + "\"");
-            else str.Append(", \"leave_time\":nil");
-            if (leave_money != null) str.Append(", \"leave_money\":\"" + leave_money + "\"");
-            else str.Append(", \"leave_money\":nil");
-            if (consume != null) str.Append(", \"consume\":\"" + consume + "\"");
-            else str.Append(", \"consume\":nil");
+            str.Append(", \"id\":" + id);
+            str.Append(", \"level_id\":" + level_id);
+            str.Append(", \"room_id\":" + room_id);
+            str.Append(", \"account_id\":" + account_id);
+            str.Append(", \"enter_time\":" + enter_time);
+            str.Append(", \"enter_money\":" + enter_money);
+            str.Append(", \"leave_time\":" + leave_time);
+            str.Append(", \"leave_money\":" + leave_money);
+            str.Append(", \"consume\":" + consume);
         }
         public override string ToString()
         {
@@ -2221,14 +2790,57 @@ namespace Tables
         {
             return toStringFlag;
         }
+        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+            sb.Append("(");
+            sb.Append(this.id);
+            sb.Append(", ");
+            sb.Append(this.level_id);
+            sb.Append(", ");
+            sb.Append(this.room_id);
+            sb.Append(", ");
+            sb.Append(this.account_id);
+            sb.Append(", ");
+            sb.Append(this.enter_time);
+            sb.Append(", ");
+            sb.Append(this.enter_money);
+            sb.Append(", ");
+            sb.Append(this.leave_time);
+            sb.Append(", ");
+            sb.Append(this.leave_money);
+            sb.Append(", ");
+            sb.Append(this.consume);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+
+        }
     }
-    public partial class log_game_catchfish_event : IBBuffer
+    /// <summary>
+    /// 捕鱼玩家事件日志基表
+    /// </summary>
+    public partial class log_game_catchfish_event : IObject
     {
-        public string id;
-        public string log_game_catchfish_id;
-        public string event_type_id;
-        public string frame_number;
-        public string create_time;
+        /// <summary>
+        /// 由游戏服自己生成的自增id. 用于派生表关联
+        /// </summary>
+        public int id;
+        /// <summary>
+        /// 所属对局记录id. 用于派生表关联
+        /// </summary>
+        public int log_game_catchfish_id;
+        /// <summary>
+        /// 事件类型编号. 1: fire   2: fishdie   3: bulletdie    4: bulletmiss
+        /// </summary>
+        public int event_type_id;
+        /// <summary>
+        /// 发生时的帧编号
+        /// </summary>
+        public int frame_number;
+        /// <summary>
+        /// 发生时间
+        /// </summary>
+        public long create_time;
 
         public virtual ushort GetPackageId()
         {
@@ -2246,15 +2858,10 @@ namespace Tables
 
         public virtual void FromBBuffer(BBuffer bb)
         {
-            bb.readLengthLimit = 0;
             bb.Read(ref this.id);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.log_game_catchfish_id);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.event_type_id);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.frame_number);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.create_time);
         }
         public virtual void ToString(ref System.Text.StringBuilder str)
@@ -2274,16 +2881,11 @@ namespace Tables
         }
         public virtual void ToStringCore(ref System.Text.StringBuilder str)
         {
-            if (id != null) str.Append(", \"id\":\"" + id + "\"");
-            else str.Append(", \"id\":nil");
-            if (log_game_catchfish_id != null) str.Append(", \"log_game_catchfish_id\":\"" + log_game_catchfish_id + "\"");
-            else str.Append(", \"log_game_catchfish_id\":nil");
-            if (event_type_id != null) str.Append(", \"event_type_id\":\"" + event_type_id + "\"");
-            else str.Append(", \"event_type_id\":nil");
-            if (frame_number != null) str.Append(", \"frame_number\":\"" + frame_number + "\"");
-            else str.Append(", \"frame_number\":nil");
-            if (create_time != null) str.Append(", \"create_time\":\"" + create_time + "\"");
-            else str.Append(", \"create_time\":nil");
+            str.Append(", \"id\":" + id);
+            str.Append(", \"log_game_catchfish_id\":" + log_game_catchfish_id);
+            str.Append(", \"event_type_id\":" + event_type_id);
+            str.Append(", \"frame_number\":" + frame_number);
+            str.Append(", \"create_time\":" + create_time);
         }
         public override string ToString()
         {
@@ -2300,15 +2902,53 @@ namespace Tables
         {
             return toStringFlag;
         }
+        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+            sb.Append("(");
+            sb.Append(this.id);
+            sb.Append(", ");
+            sb.Append(this.log_game_catchfish_id);
+            sb.Append(", ");
+            sb.Append(this.event_type_id);
+            sb.Append(", ");
+            sb.Append(this.frame_number);
+            sb.Append(", ");
+            sb.Append(this.create_time);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+
+        }
     }
-    public partial class log_game_catchfish_event_bulletdie : IBBuffer
+    /// <summary>
+    /// 捕鱼玩家事件日志之子弹没打死鱼, 消耗掉了(bulletdie)
+    /// </summary>
+    public partial class log_game_catchfish_event_bulletdie : IObject
     {
-        public string id;
-        public string log_game_catchfish_id;
-        public string type_id;
-        public string bullet_id;
-        public string coin;
-        public string money;
+        /// <summary>
+        /// 关联到基表
+        /// </summary>
+        public int id;
+        /// <summary>
+        /// 关联到基表
+        /// </summary>
+        public int log_game_catchfish_id;
+        /// <summary>
+        /// 所属类型编号. 0: 普通子弹    1: 钻头蟹    2: 炸弹蟹    3: 闪电鲨
+        /// </summary>
+        public int type_id;
+        /// <summary>
+        /// 子弹序号
+        /// </summary>
+        public int bullet_id;
+        /// <summary>
+        /// 子弹金币数/倍率/强度
+        /// </summary>
+        public long coin;
+        /// <summary>
+        /// 折算成 account.money 相同货币单位的金额
+        /// </summary>
+        public double money;
 
         public virtual ushort GetPackageId()
         {
@@ -2327,17 +2967,11 @@ namespace Tables
 
         public virtual void FromBBuffer(BBuffer bb)
         {
-            bb.readLengthLimit = 0;
             bb.Read(ref this.id);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.log_game_catchfish_id);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.type_id);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.bullet_id);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.coin);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.money);
         }
         public virtual void ToString(ref System.Text.StringBuilder str)
@@ -2357,18 +2991,12 @@ namespace Tables
         }
         public virtual void ToStringCore(ref System.Text.StringBuilder str)
         {
-            if (id != null) str.Append(", \"id\":\"" + id + "\"");
-            else str.Append(", \"id\":nil");
-            if (log_game_catchfish_id != null) str.Append(", \"log_game_catchfish_id\":\"" + log_game_catchfish_id + "\"");
-            else str.Append(", \"log_game_catchfish_id\":nil");
-            if (type_id != null) str.Append(", \"type_id\":\"" + type_id + "\"");
-            else str.Append(", \"type_id\":nil");
-            if (bullet_id != null) str.Append(", \"bullet_id\":\"" + bullet_id + "\"");
-            else str.Append(", \"bullet_id\":nil");
-            if (coin != null) str.Append(", \"coin\":\"" + coin + "\"");
-            else str.Append(", \"coin\":nil");
-            if (money != null) str.Append(", \"money\":\"" + money + "\"");
-            else str.Append(", \"money\":nil");
+            str.Append(", \"id\":" + id);
+            str.Append(", \"log_game_catchfish_id\":" + log_game_catchfish_id);
+            str.Append(", \"type_id\":" + type_id);
+            str.Append(", \"bullet_id\":" + bullet_id);
+            str.Append(", \"coin\":" + coin);
+            str.Append(", \"money\":" + money);
         }
         public override string ToString()
         {
@@ -2385,15 +3013,55 @@ namespace Tables
         {
             return toStringFlag;
         }
+        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+            sb.Append("(");
+            sb.Append(this.id);
+            sb.Append(", ");
+            sb.Append(this.log_game_catchfish_id);
+            sb.Append(", ");
+            sb.Append(this.type_id);
+            sb.Append(", ");
+            sb.Append(this.bullet_id);
+            sb.Append(", ");
+            sb.Append(this.coin);
+            sb.Append(", ");
+            sb.Append(this.money);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+
+        }
     }
-    public partial class log_game_catchfish_event_bulletmiss : IBBuffer
+    /// <summary>
+    /// 捕鱼玩家事件日志之子弹打空, 得返还(bulletmiss)
+    /// </summary>
+    public partial class log_game_catchfish_event_bulletmiss : IObject
     {
-        public string id;
-        public string log_game_catchfish_id;
-        public string type_id;
-        public string bullet_id;
-        public string coin;
-        public string money;
+        /// <summary>
+        /// 关联到基表
+        /// </summary>
+        public int id;
+        /// <summary>
+        /// 关联到基表
+        /// </summary>
+        public int log_game_catchfish_id;
+        /// <summary>
+        /// 所属类型编号. 0: 普通子弹    1: 钻头蟹    2: 炸弹蟹    3: 闪电鲨
+        /// </summary>
+        public int type_id;
+        /// <summary>
+        /// 子弹序号
+        /// </summary>
+        public int bullet_id;
+        /// <summary>
+        /// 子弹金币数/倍率/强度
+        /// </summary>
+        public long coin;
+        /// <summary>
+        /// 折算成 account.money 相同货币单位的金额
+        /// </summary>
+        public double money;
 
         public virtual ushort GetPackageId()
         {
@@ -2412,17 +3080,11 @@ namespace Tables
 
         public virtual void FromBBuffer(BBuffer bb)
         {
-            bb.readLengthLimit = 0;
             bb.Read(ref this.id);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.log_game_catchfish_id);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.type_id);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.bullet_id);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.coin);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.money);
         }
         public virtual void ToString(ref System.Text.StringBuilder str)
@@ -2442,18 +3104,12 @@ namespace Tables
         }
         public virtual void ToStringCore(ref System.Text.StringBuilder str)
         {
-            if (id != null) str.Append(", \"id\":\"" + id + "\"");
-            else str.Append(", \"id\":nil");
-            if (log_game_catchfish_id != null) str.Append(", \"log_game_catchfish_id\":\"" + log_game_catchfish_id + "\"");
-            else str.Append(", \"log_game_catchfish_id\":nil");
-            if (type_id != null) str.Append(", \"type_id\":\"" + type_id + "\"");
-            else str.Append(", \"type_id\":nil");
-            if (bullet_id != null) str.Append(", \"bullet_id\":\"" + bullet_id + "\"");
-            else str.Append(", \"bullet_id\":nil");
-            if (coin != null) str.Append(", \"coin\":\"" + coin + "\"");
-            else str.Append(", \"coin\":nil");
-            if (money != null) str.Append(", \"money\":\"" + money + "\"");
-            else str.Append(", \"money\":nil");
+            str.Append(", \"id\":" + id);
+            str.Append(", \"log_game_catchfish_id\":" + log_game_catchfish_id);
+            str.Append(", \"type_id\":" + type_id);
+            str.Append(", \"bullet_id\":" + bullet_id);
+            str.Append(", \"coin\":" + coin);
+            str.Append(", \"money\":" + money);
         }
         public override string ToString()
         {
@@ -2470,15 +3126,55 @@ namespace Tables
         {
             return toStringFlag;
         }
+        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+            sb.Append("(");
+            sb.Append(this.id);
+            sb.Append(", ");
+            sb.Append(this.log_game_catchfish_id);
+            sb.Append(", ");
+            sb.Append(this.type_id);
+            sb.Append(", ");
+            sb.Append(this.bullet_id);
+            sb.Append(", ");
+            sb.Append(this.coin);
+            sb.Append(", ");
+            sb.Append(this.money);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+
+        }
     }
-    public partial class log_game_catchfish_event_fire : IBBuffer
+    /// <summary>
+    /// 捕鱼玩家事件日志之开火(fire) 注意: 非普通子弹属于服务器强制开火
+    /// </summary>
+    public partial class log_game_catchfish_event_fire : IObject
     {
-        public string id;
-        public string log_game_catchfish_id;
-        public string type_id;
-        public string bullet_id;
-        public string coin;
-        public string money;
+        /// <summary>
+        /// 关联到基表
+        /// </summary>
+        public int id;
+        /// <summary>
+        /// 关联到基表
+        /// </summary>
+        public int log_game_catchfish_id;
+        /// <summary>
+        /// 所属类型编号. 0: 普通子弹    1: 钻头蟹    2: 炸弹蟹    3: 闪电鲨
+        /// </summary>
+        public int type_id;
+        /// <summary>
+        /// 子弹序号
+        /// </summary>
+        public int bullet_id;
+        /// <summary>
+        /// 子弹金币数/倍率/强度( 爆炸等效果大批量剩余子弹可合并填写, miss 表也对应合并 )
+        /// </summary>
+        public long coin;
+        /// <summary>
+        /// 折算成 account.money 相同货币单位的金额
+        /// </summary>
+        public double money;
 
         public virtual ushort GetPackageId()
         {
@@ -2497,17 +3193,11 @@ namespace Tables
 
         public virtual void FromBBuffer(BBuffer bb)
         {
-            bb.readLengthLimit = 0;
             bb.Read(ref this.id);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.log_game_catchfish_id);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.type_id);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.bullet_id);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.coin);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.money);
         }
         public virtual void ToString(ref System.Text.StringBuilder str)
@@ -2527,18 +3217,12 @@ namespace Tables
         }
         public virtual void ToStringCore(ref System.Text.StringBuilder str)
         {
-            if (id != null) str.Append(", \"id\":\"" + id + "\"");
-            else str.Append(", \"id\":nil");
-            if (log_game_catchfish_id != null) str.Append(", \"log_game_catchfish_id\":\"" + log_game_catchfish_id + "\"");
-            else str.Append(", \"log_game_catchfish_id\":nil");
-            if (type_id != null) str.Append(", \"type_id\":\"" + type_id + "\"");
-            else str.Append(", \"type_id\":nil");
-            if (bullet_id != null) str.Append(", \"bullet_id\":\"" + bullet_id + "\"");
-            else str.Append(", \"bullet_id\":nil");
-            if (coin != null) str.Append(", \"coin\":\"" + coin + "\"");
-            else str.Append(", \"coin\":nil");
-            if (money != null) str.Append(", \"money\":\"" + money + "\"");
-            else str.Append(", \"money\":nil");
+            str.Append(", \"id\":" + id);
+            str.Append(", \"log_game_catchfish_id\":" + log_game_catchfish_id);
+            str.Append(", \"type_id\":" + type_id);
+            str.Append(", \"bullet_id\":" + bullet_id);
+            str.Append(", \"coin\":" + coin);
+            str.Append(", \"money\":" + money);
         }
         public override string ToString()
         {
@@ -2555,17 +3239,63 @@ namespace Tables
         {
             return toStringFlag;
         }
+        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+            sb.Append("(");
+            sb.Append(this.id);
+            sb.Append(", ");
+            sb.Append(this.log_game_catchfish_id);
+            sb.Append(", ");
+            sb.Append(this.type_id);
+            sb.Append(", ");
+            sb.Append(this.bullet_id);
+            sb.Append(", ");
+            sb.Append(this.coin);
+            sb.Append(", ");
+            sb.Append(this.money);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+
+        }
     }
-    public partial class log_game_catchfish_event_fishdie : IBBuffer
+    /// <summary>
+    /// 捕鱼玩家事件日志之打死鱼得到钱
+    /// </summary>
+    public partial class log_game_catchfish_event_fishdie : IObject
     {
-        public string id;
-        public string log_game_catchfish_id;
-        public string fish_type_id;
-        public string fish_id;
-        public string fish_ratio;
-        public string bullet_coin;
-        public string coin;
-        public string money;
+        /// <summary>
+        /// 关联到基表
+        /// </summary>
+        public int id;
+        /// <summary>
+        /// 关联到基表
+        /// </summary>
+        public int log_game_catchfish_id;
+        /// <summary>
+        /// 鱼类型/配置编号. miss 情况下为 -1
+        /// </summary>
+        public int fish_type_id;
+        /// <summary>
+        /// 鱼内部编号. miss 情况下为 0
+        /// </summary>
+        public int fish_id;
+        /// <summary>
+        /// 鱼倍率. miss 情况下为 1
+        /// </summary>
+        public long fish_ratio;
+        /// <summary>
+        /// 子弹金币数
+        /// </summary>
+        public long bullet_coin;
+        /// <summary>
+        /// 最终玩家所得 = 子弹金币数 * 鱼倍率
+        /// </summary>
+        public long coin;
+        /// <summary>
+        /// 最终玩家所得 折算成 account.money 相同货币单位的金额
+        /// </summary>
+        public double money;
 
         public virtual ushort GetPackageId()
         {
@@ -2586,21 +3316,13 @@ namespace Tables
 
         public virtual void FromBBuffer(BBuffer bb)
         {
-            bb.readLengthLimit = 0;
             bb.Read(ref this.id);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.log_game_catchfish_id);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.fish_type_id);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.fish_id);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.fish_ratio);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.bullet_coin);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.coin);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.money);
         }
         public virtual void ToString(ref System.Text.StringBuilder str)
@@ -2620,22 +3342,14 @@ namespace Tables
         }
         public virtual void ToStringCore(ref System.Text.StringBuilder str)
         {
-            if (id != null) str.Append(", \"id\":\"" + id + "\"");
-            else str.Append(", \"id\":nil");
-            if (log_game_catchfish_id != null) str.Append(", \"log_game_catchfish_id\":\"" + log_game_catchfish_id + "\"");
-            else str.Append(", \"log_game_catchfish_id\":nil");
-            if (fish_type_id != null) str.Append(", \"fish_type_id\":\"" + fish_type_id + "\"");
-            else str.Append(", \"fish_type_id\":nil");
-            if (fish_id != null) str.Append(", \"fish_id\":\"" + fish_id + "\"");
-            else str.Append(", \"fish_id\":nil");
-            if (fish_ratio != null) str.Append(", \"fish_ratio\":\"" + fish_ratio + "\"");
-            else str.Append(", \"fish_ratio\":nil");
-            if (bullet_coin != null) str.Append(", \"bullet_coin\":\"" + bullet_coin + "\"");
-            else str.Append(", \"bullet_coin\":nil");
-            if (coin != null) str.Append(", \"coin\":\"" + coin + "\"");
-            else str.Append(", \"coin\":nil");
-            if (money != null) str.Append(", \"money\":\"" + money + "\"");
-            else str.Append(", \"money\":nil");
+            str.Append(", \"id\":" + id);
+            str.Append(", \"log_game_catchfish_id\":" + log_game_catchfish_id);
+            str.Append(", \"fish_type_id\":" + fish_type_id);
+            str.Append(", \"fish_id\":" + fish_id);
+            str.Append(", \"fish_ratio\":" + fish_ratio);
+            str.Append(", \"bullet_coin\":" + bullet_coin);
+            str.Append(", \"coin\":" + coin);
+            str.Append(", \"money\":" + money);
         }
         public override string ToString()
         {
@@ -2652,14 +3366,52 @@ namespace Tables
         {
             return toStringFlag;
         }
+        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+            sb.Append("(");
+            sb.Append(this.id);
+            sb.Append(", ");
+            sb.Append(this.log_game_catchfish_id);
+            sb.Append(", ");
+            sb.Append(this.fish_type_id);
+            sb.Append(", ");
+            sb.Append(this.fish_id);
+            sb.Append(", ");
+            sb.Append(this.fish_ratio);
+            sb.Append(", ");
+            sb.Append(this.bullet_coin);
+            sb.Append(", ");
+            sb.Append(this.coin);
+            sb.Append(", ");
+            sb.Append(this.money);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+
+        }
     }
-    public partial class log_login_out : IBBuffer
+    /// <summary>
+    /// 记录玩家上下线情况的日志. 分4种情况:   1. 上线     2. 断线     3. 重连.    4. 下线
+    /// </summary>
+    public partial class log_login_out : IObject
     {
-        public string id;
-        public string account_id;
-        public string type_id;
+        public int id;
+        /// <summary>
+        /// 帐号id
+        /// </summary>
+        public int account_id;
+        /// <summary>
+        /// 1. 上线     2. 断线     3. 重连.    4. 下线
+        /// </summary>
+        public int type_id;
+        /// <summary>
+        /// 上线或重连时的IP地址
+        /// </summary>
         public string ip;
-        public string create_time;
+        /// <summary>
+        /// 创建时间
+        /// </summary>
+        public long create_time;
 
         public virtual ushort GetPackageId()
         {
@@ -2677,15 +3429,11 @@ namespace Tables
 
         public virtual void FromBBuffer(BBuffer bb)
         {
-            bb.readLengthLimit = 0;
             bb.Read(ref this.id);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.account_id);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.type_id);
             bb.readLengthLimit = 0;
             bb.Read(ref this.ip);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.create_time);
         }
         public virtual void ToString(ref System.Text.StringBuilder str)
@@ -2705,16 +3453,12 @@ namespace Tables
         }
         public virtual void ToStringCore(ref System.Text.StringBuilder str)
         {
-            if (id != null) str.Append(", \"id\":\"" + id + "\"");
-            else str.Append(", \"id\":nil");
-            if (account_id != null) str.Append(", \"account_id\":\"" + account_id + "\"");
-            else str.Append(", \"account_id\":nil");
-            if (type_id != null) str.Append(", \"type_id\":\"" + type_id + "\"");
-            else str.Append(", \"type_id\":nil");
+            str.Append(", \"id\":" + id);
+            str.Append(", \"account_id\":" + account_id);
+            str.Append(", \"type_id\":" + type_id);
             if (ip != null) str.Append(", \"ip\":\"" + ip + "\"");
             else str.Append(", \"ip\":nil");
-            if (create_time != null) str.Append(", \"create_time\":\"" + create_time + "\"");
-            else str.Append(", \"create_time\":nil");
+            str.Append(", \"create_time\":" + create_time);
         }
         public override string ToString()
         {
@@ -2731,15 +3475,53 @@ namespace Tables
         {
             return toStringFlag;
         }
+        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+            sb.Append("(");
+            if (!ignoreReadOnly)
+            {
+            sb.Append(this.id);
+            sb.Append(", ");
+            }
+            sb.Append(this.account_id);
+            sb.Append(", ");
+            sb.Append(this.type_id);
+            sb.Append(", ");
+            sb.Append(this.ip == null ? "null" : ("'" + this.ip.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Append(this.create_time);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+
+        }
     }
-    public partial class log_withdrawals : IBBuffer
+    /// <summary>
+    /// 申请提现状态修改日志表
+    /// </summary>
+    public partial class log_withdrawals : IObject
     {
-        public string id;
-        public string withdrawals_id;
+        public int id;
+        /// <summary>
+        /// 申请提现表id
+        /// </summary>
+        public int withdrawals_id;
+        /// <summary>
+        /// 操作人(客服)
+        /// </summary>
         public string person_in_charge;
-        public string state_id;
+        /// <summary>
+        /// 操作状态
+        /// </summary>
+        public int state_id;
+        /// <summary>
+        /// 操作描述
+        /// </summary>
         public string description;
-        public string create_time;
+        /// <summary>
+        /// 创建时间
+        /// </summary>
+        public long create_time;
 
         public virtual ushort GetPackageId()
         {
@@ -2758,17 +3540,13 @@ namespace Tables
 
         public virtual void FromBBuffer(BBuffer bb)
         {
-            bb.readLengthLimit = 0;
             bb.Read(ref this.id);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.withdrawals_id);
             bb.readLengthLimit = 0;
             bb.Read(ref this.person_in_charge);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.state_id);
             bb.readLengthLimit = 0;
             bb.Read(ref this.description);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.create_time);
         }
         public virtual void ToString(ref System.Text.StringBuilder str)
@@ -2788,18 +3566,14 @@ namespace Tables
         }
         public virtual void ToStringCore(ref System.Text.StringBuilder str)
         {
-            if (id != null) str.Append(", \"id\":\"" + id + "\"");
-            else str.Append(", \"id\":nil");
-            if (withdrawals_id != null) str.Append(", \"withdrawals_id\":\"" + withdrawals_id + "\"");
-            else str.Append(", \"withdrawals_id\":nil");
+            str.Append(", \"id\":" + id);
+            str.Append(", \"withdrawals_id\":" + withdrawals_id);
             if (person_in_charge != null) str.Append(", \"person_in_charge\":\"" + person_in_charge + "\"");
             else str.Append(", \"person_in_charge\":nil");
-            if (state_id != null) str.Append(", \"state_id\":\"" + state_id + "\"");
-            else str.Append(", \"state_id\":nil");
+            str.Append(", \"state_id\":" + state_id);
             if (description != null) str.Append(", \"description\":\"" + description + "\"");
             else str.Append(", \"description\":nil");
-            if (create_time != null) str.Append(", \"create_time\":\"" + create_time + "\"");
-            else str.Append(", \"create_time\":nil");
+            str.Append(", \"create_time\":" + create_time);
         }
         public override string ToString()
         {
@@ -2816,15 +3590,55 @@ namespace Tables
         {
             return toStringFlag;
         }
+        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+            sb.Append("(");
+            if (!ignoreReadOnly)
+            {
+            sb.Append(this.id);
+            sb.Append(", ");
+            }
+            sb.Append(this.withdrawals_id);
+            sb.Append(", ");
+            sb.Append(this.person_in_charge == null ? "null" : ("'" + this.person_in_charge.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Append(this.state_id);
+            sb.Append(", ");
+            sb.Append(this.description == null ? "null" : ("'" + this.description.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Append(this.create_time);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+
+        }
     }
-    public partial class mail : IBBuffer
+    /// <summary>
+    /// 邮箱表
+    /// </summary>
+    public partial class mail : IObject
     {
-        public string id;
+        public int id;
+        /// <summary>
+        /// 内容
+        /// </summary>
         public string content;
-        public string account_id;
+        /// <summary>
+        /// 收件人
+        /// </summary>
+        public int account_id;
+        /// <summary>
+        /// 发件人
+        /// </summary>
         public string sender;
-        public string create_time;
-        public string is_read;
+        /// <summary>
+        /// 创建时间
+        /// </summary>
+        public long create_time;
+        /// <summary>
+        /// 是否已读(0未读, 1已读)
+        /// </summary>
+        public int is_read;
 
         public virtual ushort GetPackageId()
         {
@@ -2843,17 +3657,13 @@ namespace Tables
 
         public virtual void FromBBuffer(BBuffer bb)
         {
-            bb.readLengthLimit = 0;
             bb.Read(ref this.id);
             bb.readLengthLimit = 0;
             bb.Read(ref this.content);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.account_id);
             bb.readLengthLimit = 0;
             bb.Read(ref this.sender);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.create_time);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.is_read);
         }
         public virtual void ToString(ref System.Text.StringBuilder str)
@@ -2873,18 +3683,14 @@ namespace Tables
         }
         public virtual void ToStringCore(ref System.Text.StringBuilder str)
         {
-            if (id != null) str.Append(", \"id\":\"" + id + "\"");
-            else str.Append(", \"id\":nil");
+            str.Append(", \"id\":" + id);
             if (content != null) str.Append(", \"content\":\"" + content + "\"");
             else str.Append(", \"content\":nil");
-            if (account_id != null) str.Append(", \"account_id\":\"" + account_id + "\"");
-            else str.Append(", \"account_id\":nil");
+            str.Append(", \"account_id\":" + account_id);
             if (sender != null) str.Append(", \"sender\":\"" + sender + "\"");
             else str.Append(", \"sender\":nil");
-            if (create_time != null) str.Append(", \"create_time\":\"" + create_time + "\"");
-            else str.Append(", \"create_time\":nil");
-            if (is_read != null) str.Append(", \"is_read\":\"" + is_read + "\"");
-            else str.Append(", \"is_read\":nil");
+            str.Append(", \"create_time\":" + create_time);
+            str.Append(", \"is_read\":" + is_read);
         }
         public override string ToString()
         {
@@ -2901,15 +3707,58 @@ namespace Tables
         {
             return toStringFlag;
         }
+        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+            sb.Append("(");
+            if (!ignoreReadOnly)
+            {
+            sb.Append(this.id);
+            sb.Append(", ");
+            }
+            sb.Append(this.content == null ? "null" : ("'" + this.content.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Append(this.account_id);
+            sb.Append(", ");
+            sb.Append(this.sender == null ? "null" : ("'" + this.sender.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Append(this.create_time);
+            sb.Append(", ");
+            sb.Append(this.is_read);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+
+        }
     }
-    public partial class marquee : IBBuffer
+    /// <summary>
+    /// 跑马灯表
+    /// </summary>
+    public partial class marquee : IObject
     {
-        public string id;
+        /// <summary>
+        /// 自增id
+        /// </summary>
+        public int id;
+        /// <summary>
+        /// 内容
+        /// </summary>
         public string content;
-        public string frequency;
-        public string update_time;
-        public string create_time;
-        public string enable;
+        /// <summary>
+        /// 喊话频率(多长时间循环执行一次，单位 秒)
+        /// </summary>
+        public int frequency;
+        /// <summary>
+        /// 更新时间
+        /// </summary>
+        public long update_time;
+        /// <summary>
+        /// 创建时间
+        /// </summary>
+        public long create_time;
+        /// <summary>
+        /// 是否有效(1有效)
+        /// </summary>
+        public int enable;
 
         public virtual ushort GetPackageId()
         {
@@ -2928,17 +3777,12 @@ namespace Tables
 
         public virtual void FromBBuffer(BBuffer bb)
         {
-            bb.readLengthLimit = 0;
             bb.Read(ref this.id);
             bb.readLengthLimit = 0;
             bb.Read(ref this.content);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.frequency);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.update_time);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.create_time);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.enable);
         }
         public virtual void ToString(ref System.Text.StringBuilder str)
@@ -2958,18 +3802,13 @@ namespace Tables
         }
         public virtual void ToStringCore(ref System.Text.StringBuilder str)
         {
-            if (id != null) str.Append(", \"id\":\"" + id + "\"");
-            else str.Append(", \"id\":nil");
+            str.Append(", \"id\":" + id);
             if (content != null) str.Append(", \"content\":\"" + content + "\"");
             else str.Append(", \"content\":nil");
-            if (frequency != null) str.Append(", \"frequency\":\"" + frequency + "\"");
-            else str.Append(", \"frequency\":nil");
-            if (update_time != null) str.Append(", \"update_time\":\"" + update_time + "\"");
-            else str.Append(", \"update_time\":nil");
-            if (create_time != null) str.Append(", \"create_time\":\"" + create_time + "\"");
-            else str.Append(", \"create_time\":nil");
-            if (enable != null) str.Append(", \"enable\":\"" + enable + "\"");
-            else str.Append(", \"enable\":nil");
+            str.Append(", \"frequency\":" + frequency);
+            str.Append(", \"update_time\":" + update_time);
+            str.Append(", \"create_time\":" + create_time);
+            str.Append(", \"enable\":" + enable);
         }
         public override string ToString()
         {
@@ -2986,15 +3825,55 @@ namespace Tables
         {
             return toStringFlag;
         }
+        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+            sb.Append("(");
+            if (!ignoreReadOnly)
+            {
+            sb.Append(this.id);
+            sb.Append(", ");
+            }
+            sb.Append(this.content == null ? "null" : ("'" + this.content.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Append(this.frequency);
+            sb.Append(", ");
+            sb.Append(this.update_time);
+            sb.Append(", ");
+            sb.Append(this.create_time);
+            sb.Append(", ");
+            sb.Append(this.enable);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+
+        }
     }
-    public partial class notice : IBBuffer
+    /// <summary>
+    /// 公告表
+    /// </summary>
+    public partial class notice : IObject
     {
-        public string id;
+        public int id;
+        /// <summary>
+        /// 公告内容
+        /// </summary>
         public string content;
-        public string notice_type_id;
-        public string start_time;
-        public string end_time;
-        public string create_time;
+        /// <summary>
+        /// 公告类型
+        /// </summary>
+        public int notice_type_id;
+        /// <summary>
+        /// 有效起始时间
+        /// </summary>
+        public long? start_time;
+        /// <summary>
+        /// 有效结束时间
+        /// </summary>
+        public long? end_time;
+        /// <summary>
+        /// 创建时间
+        /// </summary>
+        public long create_time;
 
         public virtual ushort GetPackageId()
         {
@@ -3013,17 +3892,12 @@ namespace Tables
 
         public virtual void FromBBuffer(BBuffer bb)
         {
-            bb.readLengthLimit = 0;
             bb.Read(ref this.id);
             bb.readLengthLimit = 0;
             bb.Read(ref this.content);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.notice_type_id);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.start_time);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.end_time);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.create_time);
         }
         public virtual void ToString(ref System.Text.StringBuilder str)
@@ -3043,18 +3917,13 @@ namespace Tables
         }
         public virtual void ToStringCore(ref System.Text.StringBuilder str)
         {
-            if (id != null) str.Append(", \"id\":\"" + id + "\"");
-            else str.Append(", \"id\":nil");
+            str.Append(", \"id\":" + id);
             if (content != null) str.Append(", \"content\":\"" + content + "\"");
             else str.Append(", \"content\":nil");
-            if (notice_type_id != null) str.Append(", \"notice_type_id\":\"" + notice_type_id + "\"");
-            else str.Append(", \"notice_type_id\":nil");
-            if (start_time != null) str.Append(", \"start_time\":\"" + start_time + "\"");
-            else str.Append(", \"start_time\":nil");
-            if (end_time != null) str.Append(", \"end_time\":\"" + end_time + "\"");
-            else str.Append(", \"end_time\":nil");
-            if (create_time != null) str.Append(", \"create_time\":\"" + create_time + "\"");
-            else str.Append(", \"create_time\":nil");
+            str.Append(", \"notice_type_id\":" + notice_type_id);
+            str.Append(", \"start_time\":" + (start_time.HasValue ? start_time.Value.ToString() : "nil"));
+            str.Append(", \"end_time\":" + (end_time.HasValue ? end_time.Value.ToString() : "nil"));
+            str.Append(", \"create_time\":" + create_time);
         }
         public override string ToString()
         {
@@ -3071,12 +3940,46 @@ namespace Tables
         {
             return toStringFlag;
         }
+        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+            sb.Append("(");
+            if (!ignoreReadOnly)
+            {
+            sb.Append(this.id);
+            sb.Append(", ");
+            }
+            sb.Append(this.content == null ? "null" : ("'" + this.content.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Append(this.notice_type_id);
+            sb.Append(", ");
+            sb.Append(this.start_time.HasValue ? this.start_time.Value.ToString() : "null");
+            sb.Append(", ");
+            sb.Append(this.end_time.HasValue ? this.end_time.Value.ToString() : "null");
+            sb.Append(", ");
+            sb.Append(this.create_time);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+
+        }
     }
-    public partial class notice_read : IBBuffer
+    /// <summary>
+    /// 公告读取表
+    /// </summary>
+    public partial class notice_read : IObject
     {
-        public string notice_id;
-        public string account_id;
-        public string create_time;
+        /// <summary>
+        /// 公告id
+        /// </summary>
+        public int notice_id;
+        /// <summary>
+        /// 玩家id
+        /// </summary>
+        public int account_id;
+        /// <summary>
+        /// 创建时间
+        /// </summary>
+        public long create_time;
 
         public virtual ushort GetPackageId()
         {
@@ -3092,11 +3995,8 @@ namespace Tables
 
         public virtual void FromBBuffer(BBuffer bb)
         {
-            bb.readLengthLimit = 0;
             bb.Read(ref this.notice_id);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.account_id);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.create_time);
         }
         public virtual void ToString(ref System.Text.StringBuilder str)
@@ -3116,12 +4016,9 @@ namespace Tables
         }
         public virtual void ToStringCore(ref System.Text.StringBuilder str)
         {
-            if (notice_id != null) str.Append(", \"notice_id\":\"" + notice_id + "\"");
-            else str.Append(", \"notice_id\":nil");
-            if (account_id != null) str.Append(", \"account_id\":\"" + account_id + "\"");
-            else str.Append(", \"account_id\":nil");
-            if (create_time != null) str.Append(", \"create_time\":\"" + create_time + "\"");
-            else str.Append(", \"create_time\":nil");
+            str.Append(", \"notice_id\":" + notice_id);
+            str.Append(", \"account_id\":" + account_id);
+            str.Append(", \"create_time\":" + create_time);
         }
         public override string ToString()
         {
@@ -3138,10 +4035,26 @@ namespace Tables
         {
             return toStringFlag;
         }
+        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+            sb.Append("(");
+            sb.Append(this.notice_id);
+            sb.Append(", ");
+            sb.Append(this.account_id);
+            sb.Append(", ");
+            sb.Append(this.create_time);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+
+        }
     }
-    public partial class notice_type : IBBuffer
+    /// <summary>
+    /// 公告类型表
+    /// </summary>
+    public partial class notice_type : IObject
     {
-        public string id;
+        public int id;
         public string name;
 
         public virtual ushort GetPackageId()
@@ -3157,7 +4070,6 @@ namespace Tables
 
         public virtual void FromBBuffer(BBuffer bb)
         {
-            bb.readLengthLimit = 0;
             bb.Read(ref this.id);
             bb.readLengthLimit = 0;
             bb.Read(ref this.name);
@@ -3179,8 +4091,7 @@ namespace Tables
         }
         public virtual void ToStringCore(ref System.Text.StringBuilder str)
         {
-            if (id != null) str.Append(", \"id\":\"" + id + "\"");
-            else str.Append(", \"id\":nil");
+            str.Append(", \"id\":" + id);
             if (name != null) str.Append(", \"name\":\"" + name + "\"");
             else str.Append(", \"name\":nil");
         }
@@ -3199,12 +4110,35 @@ namespace Tables
         {
             return toStringFlag;
         }
+        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+            sb.Append("(");
+            sb.Append(this.id);
+            sb.Append(", ");
+            sb.Append(this.name == null ? "null" : ("'" + this.name.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+
+        }
     }
-    public partial class verify_code : IBBuffer
+    /// <summary>
+    /// 短信校验状态数据( 数据有有效期. 数据服定时删掉超时数据 )
+    /// </summary>
+    public partial class verify_code : IObject
     {
+        /// <summary>
+        /// 收短信的电话号码
+        /// </summary>
         public string phone;
+        /// <summary>
+        /// 短信验证码内容
+        /// </summary>
         public string content;
-        public string create_time;
+        /// <summary>
+        /// 下发时间( 用于判断数据是否过期, 过期就删除 )
+        /// </summary>
+        public long create_time;
 
         public virtual ushort GetPackageId()
         {
@@ -3224,7 +4158,6 @@ namespace Tables
             bb.Read(ref this.phone);
             bb.readLengthLimit = 0;
             bb.Read(ref this.content);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.create_time);
         }
         public virtual void ToString(ref System.Text.StringBuilder str)
@@ -3248,8 +4181,7 @@ namespace Tables
             else str.Append(", \"phone\":nil");
             if (content != null) str.Append(", \"content\":\"" + content + "\"");
             else str.Append(", \"content\":nil");
-            if (create_time != null) str.Append(", \"create_time\":\"" + create_time + "\"");
-            else str.Append(", \"create_time\":nil");
+            str.Append(", \"create_time\":" + create_time);
         }
         public override string ToString()
         {
@@ -3266,11 +4198,33 @@ namespace Tables
         {
             return toStringFlag;
         }
+        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+            sb.Append("(");
+            sb.Append(this.phone == null ? "null" : ("'" + this.phone.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Append(this.content == null ? "null" : ("'" + this.content.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Append(this.create_time);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+
+        }
     }
-    public partial class vip : IBBuffer
+    /// <summary>
+    /// VIP与累计充值金额的对应表
+    /// </summary>
+    public partial class vip : IObject
     {
-        public string id;
-        public string total_recharge;
+        /// <summary>
+        /// 唯一编号 & 级别
+        /// </summary>
+        public int id;
+        /// <summary>
+        /// 累计充值金额要求
+        /// </summary>
+        public double total_recharge;
 
         public virtual ushort GetPackageId()
         {
@@ -3285,9 +4239,7 @@ namespace Tables
 
         public virtual void FromBBuffer(BBuffer bb)
         {
-            bb.readLengthLimit = 0;
             bb.Read(ref this.id);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.total_recharge);
         }
         public virtual void ToString(ref System.Text.StringBuilder str)
@@ -3307,10 +4259,8 @@ namespace Tables
         }
         public virtual void ToStringCore(ref System.Text.StringBuilder str)
         {
-            if (id != null) str.Append(", \"id\":\"" + id + "\"");
-            else str.Append(", \"id\":nil");
-            if (total_recharge != null) str.Append(", \"total_recharge\":\"" + total_recharge + "\"");
-            else str.Append(", \"total_recharge\":nil");
+            str.Append(", \"id\":" + id);
+            str.Append(", \"total_recharge\":" + total_recharge);
         }
         public override string ToString()
         {
@@ -3327,17 +4277,55 @@ namespace Tables
         {
             return toStringFlag;
         }
+        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+            sb.Append("(");
+            sb.Append(this.id);
+            sb.Append(", ");
+            sb.Append(this.total_recharge);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+
+        }
     }
-    public partial class withdrawals : IBBuffer
+    /// <summary>
+    /// 申请提现表
+    /// </summary>
+    public partial class withdrawals : IObject
     {
-        public string withdrawals_id;
-        public string account_id;
-        public string money;
+        /// <summary>
+        /// 提现订单号( 随机 9 位整数 )
+        /// </summary>
+        public int withdrawals_id;
+        /// <summary>
+        /// 帐号id
+        /// </summary>
+        public int account_id;
+        /// <summary>
+        /// 提现金额
+        /// </summary>
+        public double money;
+        /// <summary>
+        /// 提现请求( 渠道, 账号等 )
+        /// </summary>
         public string requirement;
-        public string state_id;
+        /// <summary>
+        /// 操作状态
+        /// </summary>
+        public int state_id;
+        /// <summary>
+        /// 操作描述
+        /// </summary>
         public string description;
-        public string create_time;
-        public string last_create_time;
+        /// <summary>
+        /// 提现申请时间
+        /// </summary>
+        public long create_time;
+        /// <summary>
+        /// 最后处理时间
+        /// </summary>
+        public long last_create_time;
 
         public virtual ushort GetPackageId()
         {
@@ -3358,21 +4346,15 @@ namespace Tables
 
         public virtual void FromBBuffer(BBuffer bb)
         {
-            bb.readLengthLimit = 0;
             bb.Read(ref this.withdrawals_id);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.account_id);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.money);
             bb.readLengthLimit = 0;
             bb.Read(ref this.requirement);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.state_id);
             bb.readLengthLimit = 0;
             bb.Read(ref this.description);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.create_time);
-            bb.readLengthLimit = 0;
             bb.Read(ref this.last_create_time);
         }
         public virtual void ToString(ref System.Text.StringBuilder str)
@@ -3392,22 +4374,16 @@ namespace Tables
         }
         public virtual void ToStringCore(ref System.Text.StringBuilder str)
         {
-            if (withdrawals_id != null) str.Append(", \"withdrawals_id\":\"" + withdrawals_id + "\"");
-            else str.Append(", \"withdrawals_id\":nil");
-            if (account_id != null) str.Append(", \"account_id\":\"" + account_id + "\"");
-            else str.Append(", \"account_id\":nil");
-            if (money != null) str.Append(", \"money\":\"" + money + "\"");
-            else str.Append(", \"money\":nil");
+            str.Append(", \"withdrawals_id\":" + withdrawals_id);
+            str.Append(", \"account_id\":" + account_id);
+            str.Append(", \"money\":" + money);
             if (requirement != null) str.Append(", \"requirement\":\"" + requirement + "\"");
             else str.Append(", \"requirement\":nil");
-            if (state_id != null) str.Append(", \"state_id\":\"" + state_id + "\"");
-            else str.Append(", \"state_id\":nil");
+            str.Append(", \"state_id\":" + state_id);
             if (description != null) str.Append(", \"description\":\"" + description + "\"");
             else str.Append(", \"description\":nil");
-            if (create_time != null) str.Append(", \"create_time\":\"" + create_time + "\"");
-            else str.Append(", \"create_time\":nil");
-            if (last_create_time != null) str.Append(", \"last_create_time\":\"" + last_create_time + "\"");
-            else str.Append(", \"last_create_time\":nil");
+            str.Append(", \"create_time\":" + create_time);
+            str.Append(", \"last_create_time\":" + last_create_time);
         }
         public override string ToString()
         {
@@ -3424,10 +4400,36 @@ namespace Tables
         {
             return toStringFlag;
         }
+        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+            sb.Append("(");
+            sb.Append(this.withdrawals_id);
+            sb.Append(", ");
+            sb.Append(this.account_id);
+            sb.Append(", ");
+            sb.Append(this.money);
+            sb.Append(", ");
+            sb.Append(this.requirement == null ? "null" : ("'" + this.requirement.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Append(this.state_id);
+            sb.Append(", ");
+            sb.Append(this.description == null ? "null" : ("'" + this.description.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Append(this.create_time);
+            sb.Append(", ");
+            sb.Append(this.last_create_time);
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+
+        }
     }
-    public partial class withdrawals_state : IBBuffer
+    /// <summary>
+    /// 提现状态表
+    /// </summary>
+    public partial class withdrawals_state : IObject
     {
-        public string id;
+        public int id;
         public string name;
 
         public virtual ushort GetPackageId()
@@ -3443,7 +4445,6 @@ namespace Tables
 
         public virtual void FromBBuffer(BBuffer bb)
         {
-            bb.readLengthLimit = 0;
             bb.Read(ref this.id);
             bb.readLengthLimit = 0;
             bb.Read(ref this.name);
@@ -3465,8 +4466,7 @@ namespace Tables
         }
         public virtual void ToStringCore(ref System.Text.StringBuilder str)
         {
-            if (id != null) str.Append(", \"id\":\"" + id + "\"");
-            else str.Append(", \"id\":nil");
+            str.Append(", \"id\":" + id);
             if (name != null) str.Append(", \"name\":\"" + name + "\"");
             else str.Append(", \"name\":nil");
         }
@@ -3485,8 +4485,19 @@ namespace Tables
         {
             return toStringFlag;
         }
+        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+            sb.Append("(");
+            sb.Append(this.id);
+            sb.Append(", ");
+            sb.Append(this.name == null ? "null" : ("'" + this.name.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+
+        }
     }
-    public partial class node : IBBuffer
+    public partial class node : IObject
     {
         public int id;
         public int? pid;
@@ -3542,6 +4553,17 @@ namespace Tables
         {
             return toStringFlag;
         }
+        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+            sb.Append("(");
+            sb.Append(this.id);
+            sb.Append(", ");
+            sb.Append(this.pid.HasValue ? this.pid.Value.ToString() : "null");
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+
+        }
     }
 }
     public static class AllTypes
@@ -3551,7 +4573,7 @@ namespace Tables
             xx.BBuffer.RegisterInternals();
             BBuffer.Register<Foo>(3);
             BBuffer.Register<List<Foo>>(4);
-            BBuffer.Register<List<IBBuffer>>(5);
+            BBuffer.Register<List<IObject>>(5);
             BBuffer.Register<FooEx>(6);
             BBuffer.Register<Node>(7);
             BBuffer.Register<Tables.node>(8);

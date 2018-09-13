@@ -4,7 +4,7 @@ namespace MYSQLGEN
 {
     public static class PkgGenMd5
     {
-        public const string value = "fc89e0204eff3d70f7ad98e684542acb"; 
+        public const string value = "41c5b94fbf19fef604ff7d44dbc53067"; 
     }
 
     public partial class DbTable : Tables.TABLES
@@ -60,6 +60,10 @@ namespace MYSQLGEN
             ToString(ref sb);
             return sb.ToString();
         }
+        public override void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+            base.MySqlAppend(ref sb, ignoreReadOnly);
+        }
     }
     public partial class DbColumn : Tables.COLUMNS
     {
@@ -107,10 +111,14 @@ namespace MYSQLGEN
             ToString(ref sb);
             return sb.ToString();
         }
+        public override void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+            base.MySqlAppend(ref sb, ignoreReadOnly);
+        }
     }
 namespace Tables
 {
-    public partial class TABLES : IBBuffer
+    public partial class TABLES : IObject
     {
         public string TABLE_CATALOG;
         public string TABLE_SCHEMA;
@@ -266,8 +274,57 @@ namespace Tables
         {
             return toStringFlag;
         }
+        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+            sb.Append("(");
+            sb.Append(this.TABLE_CATALOG == null ? "null" : ("'" + this.TABLE_CATALOG.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Append(this.TABLE_SCHEMA == null ? "null" : ("'" + this.TABLE_SCHEMA.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Append(this.TABLE_NAME == null ? "null" : ("'" + this.TABLE_NAME.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Append(this.TABLE_TYPE == null ? "null" : ("'" + this.TABLE_TYPE.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Append(this.ENGINE == null ? "null" : ("'" + this.ENGINE.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Append(this.VERSION.HasValue ? this.VERSION.Value.ToString() : "null");
+            sb.Append(", ");
+            sb.Append(this.ROW_FORMAT == null ? "null" : ("'" + this.ROW_FORMAT.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Append(this.TABLE_ROWS.HasValue ? this.TABLE_ROWS.Value.ToString() : "null");
+            sb.Append(", ");
+            sb.Append(this.AVG_ROW_LENGTH.HasValue ? this.AVG_ROW_LENGTH.Value.ToString() : "null");
+            sb.Append(", ");
+            sb.Append(this.DATA_LENGTH.HasValue ? this.DATA_LENGTH.Value.ToString() : "null");
+            sb.Append(", ");
+            sb.Append(this.MAX_DATA_LENGTH.HasValue ? this.MAX_DATA_LENGTH.Value.ToString() : "null");
+            sb.Append(", ");
+            sb.Append(this.INDEX_LENGTH.HasValue ? this.INDEX_LENGTH.Value.ToString() : "null");
+            sb.Append(", ");
+            sb.Append(this.DATA_FREE.HasValue ? this.DATA_FREE.Value.ToString() : "null");
+            sb.Append(", ");
+            sb.Append(this.AUTO_INCREMENT.HasValue ? this.AUTO_INCREMENT.Value.ToString() : "null");
+            sb.Append(", ");
+            sb.Append(this.CREATE_TIME == null ? "null" : ("'" + this.CREATE_TIME.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Append(this.UPDATE_TIME == null ? "null" : ("'" + this.UPDATE_TIME.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Append(this.CHECK_TIME == null ? "null" : ("'" + this.CHECK_TIME.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Append(this.TABLE_COLLATION == null ? "null" : ("'" + this.TABLE_COLLATION.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Append(this.CHECKSUM.HasValue ? this.CHECKSUM.Value.ToString() : "null");
+            sb.Append(", ");
+            sb.Append(this.CREATE_OPTIONS == null ? "null" : ("'" + this.CREATE_OPTIONS.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Append(this.TABLE_COMMENT == null ? "null" : ("'" + this.TABLE_COMMENT.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+
+        }
     }
-    public partial class COLUMNS : IBBuffer
+    public partial class COLUMNS : IObject
     {
         public string TABLE_CATALOG;
         public string TABLE_SCHEMA;
@@ -429,8 +486,57 @@ namespace Tables
         {
             return toStringFlag;
         }
+        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+            sb.Append("(");
+            sb.Append(this.TABLE_CATALOG == null ? "null" : ("'" + this.TABLE_CATALOG.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Append(this.TABLE_SCHEMA == null ? "null" : ("'" + this.TABLE_SCHEMA.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Append(this.TABLE_NAME == null ? "null" : ("'" + this.TABLE_NAME.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Append(this.COLUMN_NAME == null ? "null" : ("'" + this.COLUMN_NAME.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Append(this.ORDINAL_POSITION);
+            sb.Append(", ");
+            sb.Append(this.COLUMN_DEFAULT == null ? "null" : ("'" + this.COLUMN_DEFAULT.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Append(this.IS_NULLABLE == null ? "null" : ("'" + this.IS_NULLABLE.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Append(this.DATA_TYPE == null ? "null" : ("'" + this.DATA_TYPE.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Append(this.CHARACTER_MAXIMUM_LENGTH.HasValue ? this.CHARACTER_MAXIMUM_LENGTH.Value.ToString() : "null");
+            sb.Append(", ");
+            sb.Append(this.CHARACTER_OCTET_LENGTH.HasValue ? this.CHARACTER_OCTET_LENGTH.Value.ToString() : "null");
+            sb.Append(", ");
+            sb.Append(this.NUMERIC_PRECISION.HasValue ? this.NUMERIC_PRECISION.Value.ToString() : "null");
+            sb.Append(", ");
+            sb.Append(this.NUMERIC_SCALE.HasValue ? this.NUMERIC_SCALE.Value.ToString() : "null");
+            sb.Append(", ");
+            sb.Append(this.DATETIME_PRECISION.HasValue ? this.DATETIME_PRECISION.Value.ToString() : "null");
+            sb.Append(", ");
+            sb.Append(this.CHARACTER_SET_NAME == null ? "null" : ("'" + this.CHARACTER_SET_NAME.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Append(this.COLLATION_NAME == null ? "null" : ("'" + this.COLLATION_NAME.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Append(this.COLUMN_TYPE == null ? "null" : ("'" + this.COLUMN_TYPE.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Append(this.COLUMN_KEY == null ? "null" : ("'" + this.COLUMN_KEY.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Append(this.EXTRA == null ? "null" : ("'" + this.EXTRA.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Append(this.PRIVILEGES == null ? "null" : ("'" + this.PRIVILEGES.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Append(this.COLUMN_COMMENT == null ? "null" : ("'" + this.COLUMN_COMMENT.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Append(this.GENERATION_EXPRESSION == null ? "null" : ("'" + this.GENERATION_EXPRESSION.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+
+        }
     }
-    public partial class show_create_table : IBBuffer
+    public partial class show_create_table : IObject
     {
         public string Table;
         public string CreateTable;
@@ -489,6 +595,17 @@ namespace Tables
         public bool GetToStringFlag()
         {
             return toStringFlag;
+        }
+        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+            sb.Append("(");
+            sb.Append(this.Table == null ? "null" : ("'" + this.Table.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Append(this.CreateTable == null ? "null" : ("'" + this.CreateTable.Replace("'", "''") + "'"));
+            sb.Append(", ");
+            sb.Length -= 2;
+            sb.Append(")");
+
         }
     }
 }

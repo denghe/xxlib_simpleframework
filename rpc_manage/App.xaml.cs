@@ -43,7 +43,7 @@ namespace rpc_manage
 
     public class RecvPkg
     {
-        public xx.IBBuffer ibb;
+        public xx.IObject obj;
         public bool handled;
     }
 
@@ -85,10 +85,10 @@ namespace rpc_manage
             // 收到数据时调用收包处理函数
             OnReceivePackage = bb =>
             {
-                var ibb = bb.TryReadRoot<xx.IBBuffer>();
-                if (ibb != null && recvHandlers != null)
+                var obj = bb.TryReadRoot<xx.IObject>();
+                if (obj != null && recvHandlers != null)
                 {
-                    recvHandlers(new RecvPkg { ibb = ibb });
+                    recvHandlers(new RecvPkg { obj = obj });
                 }
             };
 

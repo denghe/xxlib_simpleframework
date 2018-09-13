@@ -5,7 +5,7 @@ namespace PKG
 {
 	struct PkgGenMd5
 	{
-		static constexpr char const* value = "a6a6b3c8d511000a913006017240448c";
+		static constexpr char const* value = "dde27285e5784277142135589ddf9e51";
     };
 
     class Foo;
@@ -54,150 +54,187 @@ namespace PKG
 
 namespace Tables
 {
+    // 玩家账号表( 基表 )
     class account;
     using account_p = xx::Ptr<account>;
     using account_r = xx::Ref<account>;
 
+    // 在线聊天
     class chat;
     using chat_p = xx::Ptr<chat>;
     using chat_r = xx::Ref<chat>;
 
+    // 通用配置表( 带版本号的键值对集合 )
     class config;
     using config_p = xx::Ptr<config>;
     using config_r = xx::Ref<config>;
 
+    // 配置项所对应的值( 保留历史变化, 通常只有最新的那一个生效 )
     class config_value;
     using config_value_p = xx::Ptr<config_value>;
     using config_value_r = xx::Ref<config_value>;
 
+    // 数据类型列表( 主要供 config 用 )
     class datatype;
     using datatype_p = xx::Ptr<datatype>;
     using datatype_r = xx::Ref<datatype>;
 
+    // 鱼种类表
     class fish;
     using fish_p = xx::Ptr<fish>;
     using fish_r = xx::Ref<fish>;
 
+    // 所有游戏列表( 基表 )
     class game;
     using game_p = xx::Ptr<game>;
     using game_r = xx::Ref<game>;
 
+    // game 的 捕鱼游戏 派生表( 存放专属字段 )
     class game_catchfish;
     using game_catchfish_p = xx::Ptr<game_catchfish>;
     using game_catchfish_r = xx::Ref<game_catchfish>;
 
+    // 玩家于捕鱼游戏的个人配置信息
     class game_catchfish_account;
     using game_catchfish_account_p = xx::Ptr<game_catchfish_account>;
     using game_catchfish_account_r = xx::Ref<game_catchfish_account>;
 
+    // 捕鱼游戏内炮台skin与累计充值金额的对应表
     class game_catchfish_cannon;
     using game_catchfish_cannon_p = xx::Ptr<game_catchfish_cannon>;
     using game_catchfish_cannon_r = xx::Ref<game_catchfish_cannon>;
 
+    // 捕鱼游戏的分级表( 1对多 )
     class game_catchfish_level;
     using game_catchfish_level_p = xx::Ptr<game_catchfish_level>;
     using game_catchfish_level_r = xx::Ref<game_catchfish_level>;
 
+    // 捕鱼游戏的分级表 下属房间表( 1对多 )
     class game_catchfish_level_room;
     using game_catchfish_level_room_p = xx::Ptr<game_catchfish_level_room>;
     using game_catchfish_level_room_r = xx::Ref<game_catchfish_level_room>;
 
+    // 头像变更历史表
     class log_account_avatar;
     using log_account_avatar_p = xx::Ptr<log_account_avatar>;
     using log_account_avatar_r = xx::Ref<log_account_avatar>;
 
+    // 帐号启用标记变更历史表
     class log_account_enabled;
     using log_account_enabled_p = xx::Ptr<log_account_enabled>;
     using log_account_enabled_r = xx::Ref<log_account_enabled>;
 
+    // 保险箱操作日志
     class log_account_money_safe;
     using log_account_money_safe_p = xx::Ptr<log_account_money_safe>;
     using log_account_money_safe_r = xx::Ref<log_account_money_safe>;
 
+    // 昵称变更历史表
     class log_account_nickname;
     using log_account_nickname_p = xx::Ptr<log_account_nickname>;
     using log_account_nickname_r = xx::Ref<log_account_nickname>;
 
+    // 密码变更历史表
     class log_account_password;
     using log_account_password_p = xx::Ptr<log_account_password>;
     using log_account_password_r = xx::Ref<log_account_password>;
 
+    // 电话号码变更历史表
     class log_account_phone;
     using log_account_phone_p = xx::Ptr<log_account_phone>;
     using log_account_phone_r = xx::Ref<log_account_phone>;
 
+    // 充值记录表
     class log_account_recharge;
     using log_account_recharge_p = xx::Ptr<log_account_recharge>;
     using log_account_recharge_r = xx::Ref<log_account_recharge>;
 
+    // 玩家实时对局数据日志表(基表 )
     class log_game;
     using log_game_p = xx::Ptr<log_game>;
     using log_game_r = xx::Ref<log_game>;
 
+    // 捕鱼房内玩家实时对局数据日志表( 数据于玩家进游戏时创建, 出游戏时将继续填充这个表剩余字段 )
     class log_game_catchfish;
     using log_game_catchfish_p = xx::Ptr<log_game_catchfish>;
     using log_game_catchfish_r = xx::Ref<log_game_catchfish>;
 
+    // 捕鱼玩家事件日志基表
     class log_game_catchfish_event;
     using log_game_catchfish_event_p = xx::Ptr<log_game_catchfish_event>;
     using log_game_catchfish_event_r = xx::Ref<log_game_catchfish_event>;
 
+    // 捕鱼玩家事件日志之子弹没打死鱼, 消耗掉了(bulletdie)
     class log_game_catchfish_event_bulletdie;
     using log_game_catchfish_event_bulletdie_p = xx::Ptr<log_game_catchfish_event_bulletdie>;
     using log_game_catchfish_event_bulletdie_r = xx::Ref<log_game_catchfish_event_bulletdie>;
 
+    // 捕鱼玩家事件日志之子弹打空, 得返还(bulletmiss)
     class log_game_catchfish_event_bulletmiss;
     using log_game_catchfish_event_bulletmiss_p = xx::Ptr<log_game_catchfish_event_bulletmiss>;
     using log_game_catchfish_event_bulletmiss_r = xx::Ref<log_game_catchfish_event_bulletmiss>;
 
+    // 捕鱼玩家事件日志之开火(fire) 注意: 非普通子弹属于服务器强制开火
     class log_game_catchfish_event_fire;
     using log_game_catchfish_event_fire_p = xx::Ptr<log_game_catchfish_event_fire>;
     using log_game_catchfish_event_fire_r = xx::Ref<log_game_catchfish_event_fire>;
 
+    // 捕鱼玩家事件日志之打死鱼得到钱
     class log_game_catchfish_event_fishdie;
     using log_game_catchfish_event_fishdie_p = xx::Ptr<log_game_catchfish_event_fishdie>;
     using log_game_catchfish_event_fishdie_r = xx::Ref<log_game_catchfish_event_fishdie>;
 
+    // 记录玩家上下线情况的日志. 分4种情况:   1. 上线     2. 断线     3. 重连.    4. 下线
     class log_login_out;
     using log_login_out_p = xx::Ptr<log_login_out>;
     using log_login_out_r = xx::Ref<log_login_out>;
 
+    // 申请提现状态修改日志表
     class log_withdrawals;
     using log_withdrawals_p = xx::Ptr<log_withdrawals>;
     using log_withdrawals_r = xx::Ref<log_withdrawals>;
 
+    // 邮箱表
     class mail;
     using mail_p = xx::Ptr<mail>;
     using mail_r = xx::Ref<mail>;
 
+    // 跑马灯表
     class marquee;
     using marquee_p = xx::Ptr<marquee>;
     using marquee_r = xx::Ref<marquee>;
 
+    // 公告表
     class notice;
     using notice_p = xx::Ptr<notice>;
     using notice_r = xx::Ref<notice>;
 
+    // 公告读取表
     class notice_read;
     using notice_read_p = xx::Ptr<notice_read>;
     using notice_read_r = xx::Ref<notice_read>;
 
+    // 公告类型表
     class notice_type;
     using notice_type_p = xx::Ptr<notice_type>;
     using notice_type_r = xx::Ref<notice_type>;
 
+    // 短信校验状态数据( 数据有有效期. 数据服定时删掉超时数据 )
     class verify_code;
     using verify_code_p = xx::Ptr<verify_code>;
     using verify_code_r = xx::Ref<verify_code>;
 
+    // VIP与累计充值金额的对应表
     class vip;
     using vip_p = xx::Ptr<vip>;
     using vip_r = xx::Ref<vip>;
 
+    // 申请提现表
     class withdrawals;
     using withdrawals_p = xx::Ptr<withdrawals>;
     using withdrawals_r = xx::Ref<withdrawals>;
 
+    // 提现状态表
     class withdrawals_state;
     using withdrawals_state_p = xx::Ptr<withdrawals_state>;
     using withdrawals_state_r = xx::Ref<withdrawals_state>;
@@ -301,13 +338,17 @@ namespace Tables
     };
 namespace Tables
 {
+    // 电话号码变更历史表
     class log_account_phone : public xx::Object
     {
     public:
-        xx::String_p id;
-        xx::String_p account_id;
+        int32_t id = 0;
+        // 帐号id
+        int32_t account_id = 0;
+        // 电话号码
         xx::String_p phone;
-        xx::String_p create_time;
+        // 创建时间
+        int64_t create_time = 0;
 
         typedef log_account_phone ThisType;
         typedef xx::Object BaseType;
@@ -325,14 +366,20 @@ namespace Tables
         log_account_phone_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
+    // 充值记录表
     class log_account_recharge : public xx::Object
     {
     public:
+        // 充值请求原始令牌
         xx::String_p token;
-        xx::String_p account_id;
-        xx::String_p money;
+        // 帐号id
+        int32_t account_id = 0;
+        // 充值金额
+        double money = 0;
+        // 备注( 渠道, 操作人等 )
         xx::String_p memo;
-        xx::String_p create_time;
+        // 日志创建时间( 充值时间 )
+        int64_t create_time = 0;
 
         typedef log_account_recharge ThisType;
         typedef xx::Object BaseType;
@@ -350,11 +397,13 @@ namespace Tables
         log_account_recharge_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
+    // 玩家实时对局数据日志表(基表 )
     class log_game : public xx::Object
     {
     public:
-        xx::String_p id;
-        xx::String_p game_id;
+        int32_t id = 0;
+        // 游戏id(game表id)
+        int32_t game_id = 0;
 
         typedef log_game ThisType;
         typedef xx::Object BaseType;
@@ -372,18 +421,28 @@ namespace Tables
         log_game_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
+    // 捕鱼房内玩家实时对局数据日志表( 数据于玩家进游戏时创建, 出游戏时将继续填充这个表剩余字段 )
     class log_game_catchfish : public xx::Object
     {
     public:
-        xx::String_p id;
-        xx::String_p level_id;
-        xx::String_p room_id;
-        xx::String_p account_id;
-        xx::String_p enter_time;
-        xx::String_p enter_money;
-        xx::String_p leave_time;
-        xx::String_p leave_money;
-        xx::String_p consume;
+        // 游戏日志id(log_game表id)
+        int32_t id = 0;
+        // 游戏级别id
+        int32_t level_id = 0;
+        // 房号
+        int32_t room_id = 0;
+        // 账号id
+        int32_t account_id = 0;
+        // 进房时间
+        int64_t enter_time = 0;
+        // 进房时的账户余额
+        double enter_money = 0;
+        // 离开时间( 日志记录创建时间 )
+        int64_t leave_time = 0;
+        // 离开时游戏内剩余金币换算成的金额
+        double leave_money = 0;
+        // 当次游戏内花掉的金币换算成的金额总量
+        double consume = 0;
 
         typedef log_game_catchfish ThisType;
         typedef xx::Object BaseType;
@@ -401,14 +460,20 @@ namespace Tables
         log_game_catchfish_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
+    // 捕鱼玩家事件日志基表
     class log_game_catchfish_event : public xx::Object
     {
     public:
-        xx::String_p id;
-        xx::String_p log_game_catchfish_id;
-        xx::String_p event_type_id;
-        xx::String_p frame_number;
-        xx::String_p create_time;
+        // 由游戏服自己生成的自增id. 用于派生表关联
+        int32_t id = 0;
+        // 所属对局记录id. 用于派生表关联
+        int32_t log_game_catchfish_id = 0;
+        // 事件类型编号. 1: fire   2: fishdie   3: bulletdie    4: bulletmiss
+        int32_t event_type_id = 0;
+        // 发生时的帧编号
+        int32_t frame_number = 0;
+        // 发生时间
+        int64_t create_time = 0;
 
         typedef log_game_catchfish_event ThisType;
         typedef xx::Object BaseType;
@@ -426,15 +491,22 @@ namespace Tables
         log_game_catchfish_event_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
+    // 捕鱼玩家事件日志之子弹没打死鱼, 消耗掉了(bulletdie)
     class log_game_catchfish_event_bulletdie : public xx::Object
     {
     public:
-        xx::String_p id;
-        xx::String_p log_game_catchfish_id;
-        xx::String_p type_id;
-        xx::String_p bullet_id;
-        xx::String_p coin;
-        xx::String_p money;
+        // 关联到基表
+        int32_t id = 0;
+        // 关联到基表
+        int32_t log_game_catchfish_id = 0;
+        // 所属类型编号. 0: 普通子弹    1: 钻头蟹    2: 炸弹蟹    3: 闪电鲨
+        int32_t type_id = 0;
+        // 子弹序号
+        int32_t bullet_id = 0;
+        // 子弹金币数/倍率/强度
+        int64_t coin = 0;
+        // 折算成 account.money 相同货币单位的金额
+        double money = 0;
 
         typedef log_game_catchfish_event_bulletdie ThisType;
         typedef xx::Object BaseType;
@@ -452,15 +524,22 @@ namespace Tables
         log_game_catchfish_event_bulletdie_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
+    // 捕鱼玩家事件日志之子弹打空, 得返还(bulletmiss)
     class log_game_catchfish_event_bulletmiss : public xx::Object
     {
     public:
-        xx::String_p id;
-        xx::String_p log_game_catchfish_id;
-        xx::String_p type_id;
-        xx::String_p bullet_id;
-        xx::String_p coin;
-        xx::String_p money;
+        // 关联到基表
+        int32_t id = 0;
+        // 关联到基表
+        int32_t log_game_catchfish_id = 0;
+        // 所属类型编号. 0: 普通子弹    1: 钻头蟹    2: 炸弹蟹    3: 闪电鲨
+        int32_t type_id = 0;
+        // 子弹序号
+        int32_t bullet_id = 0;
+        // 子弹金币数/倍率/强度
+        int64_t coin = 0;
+        // 折算成 account.money 相同货币单位的金额
+        double money = 0;
 
         typedef log_game_catchfish_event_bulletmiss ThisType;
         typedef xx::Object BaseType;
@@ -478,15 +557,22 @@ namespace Tables
         log_game_catchfish_event_bulletmiss_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
+    // 捕鱼玩家事件日志之开火(fire) 注意: 非普通子弹属于服务器强制开火
     class log_game_catchfish_event_fire : public xx::Object
     {
     public:
-        xx::String_p id;
-        xx::String_p log_game_catchfish_id;
-        xx::String_p type_id;
-        xx::String_p bullet_id;
-        xx::String_p coin;
-        xx::String_p money;
+        // 关联到基表
+        int32_t id = 0;
+        // 关联到基表
+        int32_t log_game_catchfish_id = 0;
+        // 所属类型编号. 0: 普通子弹    1: 钻头蟹    2: 炸弹蟹    3: 闪电鲨
+        int32_t type_id = 0;
+        // 子弹序号
+        int32_t bullet_id = 0;
+        // 子弹金币数/倍率/强度( 爆炸等效果大批量剩余子弹可合并填写, miss 表也对应合并 )
+        int64_t coin = 0;
+        // 折算成 account.money 相同货币单位的金额
+        double money = 0;
 
         typedef log_game_catchfish_event_fire ThisType;
         typedef xx::Object BaseType;
@@ -504,17 +590,26 @@ namespace Tables
         log_game_catchfish_event_fire_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
+    // 捕鱼玩家事件日志之打死鱼得到钱
     class log_game_catchfish_event_fishdie : public xx::Object
     {
     public:
-        xx::String_p id;
-        xx::String_p log_game_catchfish_id;
-        xx::String_p fish_type_id;
-        xx::String_p fish_id;
-        xx::String_p fish_ratio;
-        xx::String_p bullet_coin;
-        xx::String_p coin;
-        xx::String_p money;
+        // 关联到基表
+        int32_t id = 0;
+        // 关联到基表
+        int32_t log_game_catchfish_id = 0;
+        // 鱼类型/配置编号. miss 情况下为 -1
+        int32_t fish_type_id = 0;
+        // 鱼内部编号. miss 情况下为 0
+        int32_t fish_id = 0;
+        // 鱼倍率. miss 情况下为 1
+        int64_t fish_ratio = 0;
+        // 子弹金币数
+        int64_t bullet_coin = 0;
+        // 最终玩家所得 = 子弹金币数 * 鱼倍率
+        int64_t coin = 0;
+        // 最终玩家所得 折算成 account.money 相同货币单位的金额
+        double money = 0;
 
         typedef log_game_catchfish_event_fishdie ThisType;
         typedef xx::Object BaseType;
@@ -532,14 +627,19 @@ namespace Tables
         log_game_catchfish_event_fishdie_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
+    // 记录玩家上下线情况的日志. 分4种情况:   1. 上线     2. 断线     3. 重连.    4. 下线
     class log_login_out : public xx::Object
     {
     public:
-        xx::String_p id;
-        xx::String_p account_id;
-        xx::String_p type_id;
+        int32_t id = 0;
+        // 帐号id
+        int32_t account_id = 0;
+        // 1. 上线     2. 断线     3. 重连.    4. 下线
+        int32_t type_id = 0;
+        // 上线或重连时的IP地址
         xx::String_p ip;
-        xx::String_p create_time;
+        // 创建时间
+        int64_t create_time = 0;
 
         typedef log_login_out ThisType;
         typedef xx::Object BaseType;
@@ -557,15 +657,21 @@ namespace Tables
         log_login_out_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
+    // 申请提现状态修改日志表
     class log_withdrawals : public xx::Object
     {
     public:
-        xx::String_p id;
-        xx::String_p withdrawals_id;
+        int32_t id = 0;
+        // 申请提现表id
+        int32_t withdrawals_id = 0;
+        // 操作人(客服)
         xx::String_p person_in_charge;
-        xx::String_p state_id;
+        // 操作状态
+        int32_t state_id = 0;
+        // 操作描述
         xx::String_p description;
-        xx::String_p create_time;
+        // 创建时间
+        int64_t create_time = 0;
 
         typedef log_withdrawals ThisType;
         typedef xx::Object BaseType;
@@ -583,15 +689,21 @@ namespace Tables
         log_withdrawals_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
+    // 邮箱表
     class mail : public xx::Object
     {
     public:
-        xx::String_p id;
+        int32_t id = 0;
+        // 内容
         xx::String_p content;
-        xx::String_p account_id;
+        // 收件人
+        int32_t account_id = 0;
+        // 发件人
         xx::String_p sender;
-        xx::String_p create_time;
-        xx::String_p is_read;
+        // 创建时间
+        int64_t create_time = 0;
+        // 是否已读(0未读, 1已读)
+        int32_t is_read = 0;
 
         typedef mail ThisType;
         typedef xx::Object BaseType;
@@ -609,15 +721,22 @@ namespace Tables
         mail_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
+    // 跑马灯表
     class marquee : public xx::Object
     {
     public:
-        xx::String_p id;
+        // 自增id
+        int32_t id = 0;
+        // 内容
         xx::String_p content;
-        xx::String_p frequency;
-        xx::String_p update_time;
-        xx::String_p create_time;
-        xx::String_p enable;
+        // 喊话频率(多长时间循环执行一次，单位 秒)
+        int32_t frequency = 0;
+        // 更新时间
+        int64_t update_time = 0;
+        // 创建时间
+        int64_t create_time = 0;
+        // 是否有效(1有效)
+        int32_t enable = 0;
 
         typedef marquee ThisType;
         typedef xx::Object BaseType;
@@ -635,15 +754,21 @@ namespace Tables
         marquee_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
+    // 公告表
     class notice : public xx::Object
     {
     public:
-        xx::String_p id;
+        int32_t id = 0;
+        // 公告内容
         xx::String_p content;
-        xx::String_p notice_type_id;
-        xx::String_p start_time;
-        xx::String_p end_time;
-        xx::String_p create_time;
+        // 公告类型
+        int32_t notice_type_id = 0;
+        // 有效起始时间
+        std::optional<int64_t> start_time;
+        // 有效结束时间
+        std::optional<int64_t> end_time;
+        // 创建时间
+        int64_t create_time = 0;
 
         typedef notice ThisType;
         typedef xx::Object BaseType;
@@ -661,12 +786,16 @@ namespace Tables
         notice_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
+    // 公告读取表
     class notice_read : public xx::Object
     {
     public:
-        xx::String_p notice_id;
-        xx::String_p account_id;
-        xx::String_p create_time;
+        // 公告id
+        int32_t notice_id = 0;
+        // 玩家id
+        int32_t account_id = 0;
+        // 创建时间
+        int64_t create_time = 0;
 
         typedef notice_read ThisType;
         typedef xx::Object BaseType;
@@ -684,10 +813,11 @@ namespace Tables
         notice_read_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
+    // 公告类型表
     class notice_type : public xx::Object
     {
     public:
-        xx::String_p id;
+        int32_t id = 0;
         xx::String_p name;
 
         typedef notice_type ThisType;
@@ -706,12 +836,16 @@ namespace Tables
         notice_type_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
+    // 短信校验状态数据( 数据有有效期. 数据服定时删掉超时数据 )
     class verify_code : public xx::Object
     {
     public:
+        // 收短信的电话号码
         xx::String_p phone;
+        // 短信验证码内容
         xx::String_p content;
-        xx::String_p create_time;
+        // 下发时间( 用于判断数据是否过期, 过期就删除 )
+        int64_t create_time = 0;
 
         typedef verify_code ThisType;
         typedef xx::Object BaseType;
@@ -729,11 +863,14 @@ namespace Tables
         verify_code_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
+    // VIP与累计充值金额的对应表
     class vip : public xx::Object
     {
     public:
-        xx::String_p id;
-        xx::String_p total_recharge;
+        // 唯一编号 & 级别
+        int32_t id = 0;
+        // 累计充值金额要求
+        double total_recharge = 0;
 
         typedef vip ThisType;
         typedef xx::Object BaseType;
@@ -751,17 +888,26 @@ namespace Tables
         vip_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
+    // 申请提现表
     class withdrawals : public xx::Object
     {
     public:
-        xx::String_p withdrawals_id;
-        xx::String_p account_id;
-        xx::String_p money;
+        // 提现订单号( 随机 9 位整数 )
+        int32_t withdrawals_id = 0;
+        // 帐号id
+        int32_t account_id = 0;
+        // 提现金额
+        double money = 0;
+        // 提现请求( 渠道, 账号等 )
         xx::String_p requirement;
-        xx::String_p state_id;
+        // 操作状态
+        int32_t state_id = 0;
+        // 操作描述
         xx::String_p description;
-        xx::String_p create_time;
-        xx::String_p last_create_time;
+        // 提现申请时间
+        int64_t create_time = 0;
+        // 最后处理时间
+        int64_t last_create_time = 0;
 
         typedef withdrawals ThisType;
         typedef xx::Object BaseType;
@@ -779,13 +925,17 @@ namespace Tables
         withdrawals_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
+    // 密码变更历史表
     class log_account_password : public xx::Object
     {
     public:
-        xx::String_p id;
-        xx::String_p account_id;
+        int32_t id = 0;
+        // 帐号id
+        int32_t account_id = 0;
+        // 密码
         xx::String_p password;
-        xx::String_p create_time;
+        // 创建时间
+        int64_t create_time = 0;
 
         typedef log_account_password ThisType;
         typedef xx::Object BaseType;
@@ -803,13 +953,17 @@ namespace Tables
         log_account_password_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
+    // 昵称变更历史表
     class log_account_nickname : public xx::Object
     {
     public:
-        xx::String_p id;
-        xx::String_p account_id;
+        int32_t id = 0;
+        // 帐号id
+        int32_t account_id = 0;
+        // 昵称
         xx::String_p nickname;
-        xx::String_p create_time;
+        // 创建时间
+        int64_t create_time = 0;
 
         typedef log_account_nickname ThisType;
         typedef xx::Object BaseType;
@@ -827,13 +981,17 @@ namespace Tables
         log_account_nickname_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
+    // 保险箱操作日志
     class log_account_money_safe : public xx::Object
     {
     public:
-        xx::String_p id;
-        xx::String_p account_id;
-        xx::String_p value;
-        xx::String_p create_time;
+        int32_t id = 0;
+        // 帐号id
+        int32_t account_id = 0;
+        // 金额( 正数为存入保险箱, 负数为从保险箱提钱 )
+        double value = 0;
+        // 创建时间
+        int64_t create_time = 0;
 
         typedef log_account_money_safe ThisType;
         typedef xx::Object BaseType;
@@ -851,10 +1009,11 @@ namespace Tables
         log_account_money_safe_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
+    // 提现状态表
     class withdrawals_state : public xx::Object
     {
     public:
-        xx::String_p id;
+        int32_t id = 0;
         xx::String_p name;
 
         typedef withdrawals_state ThisType;
@@ -1025,24 +1184,40 @@ namespace Tables
     };
 namespace Tables
 {
+    // 玩家账号表( 基表 )
     class account : public xx::Object
     {
     public:
-        xx::String_p id;
+        // 用户Id ( 随机 8 位整数 )
+        int32_t id = 0;
+        // 原始用户名 唯一( GUID )
         xx::String_p username;
+        // 昵称 唯一( 默认用某种规则生成 )
         xx::String_p nickname;
-        xx::String_p avatar_id;
+        // 头像
+        int32_t avatar_id = 0;
+        // 电话号码 唯一( 默认填充 username GUID )
         xx::String_p phone;
+        // 密码( 默认为空 )
         xx::String_p password;
-        xx::String_p money;
-        xx::String_p money_safe;
-        xx::String_p total_recharge;
-        xx::String_p total_consume;
-        xx::String_p total_withdraw;
-        xx::String_p create_time;
-        xx::String_p enabled;
-        xx::String_p enter_lobby_time;
-        xx::String_p log_game_id;
+        // 账户余额( 保留4位小数位, 进部分游戏时会被清0, 结束时会兑换返还 )
+        double money = 0;
+        // 保险箱( 玩家可在账户余额间搬运数据 )
+        double money_safe = 0;
+        // 累计充值金额
+        double total_recharge = 0;
+        // 累计消费金额( 比如在鱼里一共打了多少钱的炮 )
+        double total_consume = 0;
+        // 累计提现金额
+        double total_withdraw = 0;
+        // 创建时间. epoch 10m 精度. 所有表的这个字段都是这个格式
+        int64_t create_time = 0;
+        // 启用标记( 1 : 启用 )
+        int32_t enabled = 0;
+        // 玩家进入大厅时间(为空 则离开大厅)
+        std::optional<int64_t> enter_lobby_time;
+        // 正在游戏中的玩家日志id(为空 则离开游戏)
+        std::optional<int32_t> log_game_id;
 
         typedef account ThisType;
         typedef xx::Object BaseType;
@@ -1060,13 +1235,17 @@ namespace Tables
         account_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
+    // 在线聊天
     class chat : public xx::Object
     {
     public:
-        xx::String_p id;
+        int32_t id = 0;
+        // 内容
         xx::String_p content;
-        xx::String_p account_id;
-        xx::String_p create_time;
+        // 聊天人id
+        int32_t account_id = 0;
+        // 创建时间
+        int64_t create_time = 0;
 
         typedef chat ThisType;
         typedef xx::Object BaseType;
@@ -1109,14 +1288,20 @@ namespace Tables
     };
 namespace Tables
 {
+    // 通用配置表( 带版本号的键值对集合 )
     class config : public xx::Object
     {
     public:
+        // 键名
         xx::String_p key;
+        // 数据类型名
         xx::String_p datatype_name;
+        // 显示名
         xx::String_p title;
+        // 说明
         xx::String_p desc;
-        xx::String_p create_time;
+        // 创建时间
+        int64_t create_time = 0;
 
         typedef config ThisType;
         typedef xx::Object BaseType;
@@ -1134,6 +1319,7 @@ namespace Tables
         config_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
+    // 数据类型列表( 主要供 config 用 )
     class datatype : public xx::Object
     {
     public:
@@ -1155,13 +1341,18 @@ namespace Tables
         datatype_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
+    // 鱼种类表
     class fish : public xx::Object
     {
     public:
-        xx::String_p id;
+        // 鱼配置id
+        int32_t id = 0;
+        // 名称
         xx::String_p name;
-        xx::String_p minCoin;
-        xx::String_p maxCoin;
+        // 打死鱼的金币所得最小基数( 也可理解成倍率 )
+        int32_t minCoin = 0;
+        //  打死鱼的金币所得最大基数( 也可理解成倍率 )
+        int32_t maxCoin = 0;
 
         typedef fish ThisType;
         typedef xx::Object BaseType;
@@ -1179,13 +1370,18 @@ namespace Tables
         fish_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
+    // 所有游戏列表( 基表 )
     class game : public xx::Object
     {
     public:
-        xx::String_p id;
+        // 游戏编号( 非自增, 直接填死 )
+        int32_t id = 0;
+        // 游戏名
         xx::String_p name;
+        // 类型名( 派生表名 )
         xx::String_p type_name;
-        xx::String_p enabled;
+        // 是否启用 1: true
+        int32_t enabled = 0;
 
         typedef game ThisType;
         typedef xx::Object BaseType;
@@ -1203,11 +1399,14 @@ namespace Tables
         game_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
+    // game 的 捕鱼游戏 派生表( 存放专属字段 )
     class game_catchfish : public xx::Object
     {
     public:
-        xx::String_p id;
-        xx::String_p exchange_coin_ratio;
+        // 基表游戏编号
+        int32_t id = 0;
+        // 进出游戏时 money 自动兑换成 coin 要 乘除 的系数
+        int32_t exchange_coin_ratio = 0;
 
         typedef game_catchfish ThisType;
         typedef xx::Object BaseType;
@@ -1225,14 +1424,20 @@ namespace Tables
         game_catchfish_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
+    // 玩家于捕鱼游戏的个人配置信息
     class game_catchfish_account : public xx::Object
     {
     public:
-        xx::String_p account_id;
-        xx::String_p game_id;
-        xx::String_p level_id;
-        xx::String_p last_bet;
-        xx::String_p last_cannon_id;
+        // 账号id
+        int32_t account_id = 0;
+        // 捕鱼游戏id
+        int32_t game_id = 0;
+        // 级别id
+        int32_t level_id = 0;
+        // 玩家上次游戏退出前用的子弹的倍率( 游戏内金币整数值 )
+        int64_t last_bet = 0;
+        // 玩家上次游戏退出前用的炮台id
+        int32_t last_cannon_id = 0;
 
         typedef game_catchfish_account ThisType;
         typedef xx::Object BaseType;
@@ -1250,11 +1455,14 @@ namespace Tables
         game_catchfish_account_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
+    // 捕鱼游戏内炮台skin与累计充值金额的对应表
     class game_catchfish_cannon : public xx::Object
     {
     public:
-        xx::String_p id;
-        xx::String_p vip_id;
+        // 唯一编号 & 炮台Skin
+        int32_t id = 0;
+        // VIP等级
+        int32_t vip_id = 0;
 
         typedef game_catchfish_cannon ThisType;
         typedef xx::Object BaseType;
@@ -1272,15 +1480,22 @@ namespace Tables
         game_catchfish_cannon_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
+    // 捕鱼游戏的分级表( 1对多 )
     class game_catchfish_level : public xx::Object
     {
     public:
-        xx::String_p game_id;
-        xx::String_p level_id;
-        xx::String_p min_bet;
-        xx::String_p max_bet;
-        xx::String_p min_money;
-        xx::String_p enabled;
+        // 游戏id
+        int32_t game_id = 0;
+        // 游戏级别id. 0 1 2....: 新手厅  进阶厅  高手厅 ....
+        int32_t level_id = 0;
+        // 炮值(从)(游戏内金币)
+        int64_t min_bet = 0;
+        // 炮值(到)(游戏内金币)
+        int64_t max_bet = 0;
+        // 最低准入金额
+        double min_money = 0;
+        // 是否启用 1: true
+        int32_t enabled = 0;
 
         typedef game_catchfish_level ThisType;
         typedef xx::Object BaseType;
@@ -1298,13 +1513,18 @@ namespace Tables
         game_catchfish_level_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
+    // 捕鱼游戏的分级表 下属房间表( 1对多 )
     class game_catchfish_level_room : public xx::Object
     {
     public:
-        xx::String_p game_id;
-        xx::String_p level_id;
-        xx::String_p room_id;
-        xx::String_p enabled;
+        // 游戏id
+        int32_t game_id = 0;
+        // 游戏级别id
+        int32_t level_id = 0;
+        // 房号( 从 1 开始填充, 新增取最大值+1 )
+        int32_t room_id = 0;
+        // 是否启用 1: true
+        int32_t enabled = 0;
 
         typedef game_catchfish_level_room ThisType;
         typedef xx::Object BaseType;
@@ -1322,13 +1542,17 @@ namespace Tables
         game_catchfish_level_room_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
+    // 头像变更历史表
     class log_account_avatar : public xx::Object
     {
     public:
-        xx::String_p id;
-        xx::String_p account_id;
-        xx::String_p avatar_id;
-        xx::String_p create_time;
+        int32_t id = 0;
+        // 帐号id
+        int32_t account_id = 0;
+        // 头像
+        int32_t avatar_id = 0;
+        // 创建时间
+        int64_t create_time = 0;
 
         typedef log_account_avatar ThisType;
         typedef xx::Object BaseType;
@@ -1346,14 +1570,20 @@ namespace Tables
         log_account_avatar_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
+    // 配置项所对应的值( 保留历史变化, 通常只有最新的那一个生效 )
     class config_value : public xx::Object
     {
     public:
+        // 键名
         xx::String_p key;
-        xx::String_p value_bigint;
-        xx::String_p value_double;
+        // 对应 bigint 数据类型的值( int64 )
+        std::optional<int64_t> value_bigint;
+        // 对应 double 数据类型的值
+        std::optional<double> value_double;
+        // 对应 varchar 数据类型的值( string )
         xx::String_p value_varchar;
-        xx::String_p create_time;
+        // 创建时间
+        int64_t create_time = 0;
 
         typedef config_value ThisType;
         typedef xx::Object BaseType;
@@ -1371,14 +1601,19 @@ namespace Tables
         config_value_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
+    // 帐号启用标记变更历史表
     class log_account_enabled : public xx::Object
     {
     public:
-        xx::String_p id;
-        xx::String_p account_id;
-        xx::String_p enabled;
+        int32_t id = 0;
+        // 帐号id
+        int32_t account_id = 0;
+        // 启用标记
+        int32_t enabled = 0;
+        // 备注( 含修改人 & 原因 )
         xx::String_p memo;
-        xx::String_p create_time;
+        // 日志创建时间( 修改时间 )
+        int64_t create_time = 0;
 
         typedef log_account_enabled ThisType;
         typedef xx::Object BaseType;
@@ -2190,35 +2425,24 @@ namespace Tables
     }
     inline int account::FromBBufferCore(xx::BBuffer& bb) noexcept
     {
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->id)) return r;
         bb.readLengthLimit = 0;
         if (int r = bb.Read(this->username)) return r;
         bb.readLengthLimit = 0;
         if (int r = bb.Read(this->nickname)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->avatar_id)) return r;
         bb.readLengthLimit = 0;
         if (int r = bb.Read(this->phone)) return r;
         bb.readLengthLimit = 0;
         if (int r = bb.Read(this->password)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->money)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->money_safe)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->total_recharge)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->total_consume)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->total_withdraw)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->create_time)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->enabled)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->enter_lobby_time)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->log_game_id)) return r;
         return 0;
     }
@@ -2241,36 +2465,25 @@ namespace Tables
     inline void account::ToStringCore(xx::String& s) const noexcept
     {
         this->BaseType::ToStringCore(s);
-        if (this->id) s.Append(", \"id\":\"", this->id, "\"");
-        else s.Append(", \"id\":nil");
+        s.Append(", \"id\":", this->id);
         if (this->username) s.Append(", \"username\":\"", this->username, "\"");
         else s.Append(", \"username\":nil");
         if (this->nickname) s.Append(", \"nickname\":\"", this->nickname, "\"");
         else s.Append(", \"nickname\":nil");
-        if (this->avatar_id) s.Append(", \"avatar_id\":\"", this->avatar_id, "\"");
-        else s.Append(", \"avatar_id\":nil");
+        s.Append(", \"avatar_id\":", this->avatar_id);
         if (this->phone) s.Append(", \"phone\":\"", this->phone, "\"");
         else s.Append(", \"phone\":nil");
         if (this->password) s.Append(", \"password\":\"", this->password, "\"");
         else s.Append(", \"password\":nil");
-        if (this->money) s.Append(", \"money\":\"", this->money, "\"");
-        else s.Append(", \"money\":nil");
-        if (this->money_safe) s.Append(", \"money_safe\":\"", this->money_safe, "\"");
-        else s.Append(", \"money_safe\":nil");
-        if (this->total_recharge) s.Append(", \"total_recharge\":\"", this->total_recharge, "\"");
-        else s.Append(", \"total_recharge\":nil");
-        if (this->total_consume) s.Append(", \"total_consume\":\"", this->total_consume, "\"");
-        else s.Append(", \"total_consume\":nil");
-        if (this->total_withdraw) s.Append(", \"total_withdraw\":\"", this->total_withdraw, "\"");
-        else s.Append(", \"total_withdraw\":nil");
-        if (this->create_time) s.Append(", \"create_time\":\"", this->create_time, "\"");
-        else s.Append(", \"create_time\":nil");
-        if (this->enabled) s.Append(", \"enabled\":\"", this->enabled, "\"");
-        else s.Append(", \"enabled\":nil");
-        if (this->enter_lobby_time) s.Append(", \"enter_lobby_time\":\"", this->enter_lobby_time, "\"");
-        else s.Append(", \"enter_lobby_time\":nil");
-        if (this->log_game_id) s.Append(", \"log_game_id\":\"", this->log_game_id, "\"");
-        else s.Append(", \"log_game_id\":nil");
+        s.Append(", \"money\":", this->money);
+        s.Append(", \"money_safe\":", this->money_safe);
+        s.Append(", \"total_recharge\":", this->total_recharge);
+        s.Append(", \"total_consume\":", this->total_consume);
+        s.Append(", \"total_withdraw\":", this->total_withdraw);
+        s.Append(", \"create_time\":", this->create_time);
+        s.Append(", \"enabled\":", this->enabled);
+        s.Append(", \"enter_lobby_time\":", this->enter_lobby_time);
+        s.Append(", \"log_game_id\":", this->log_game_id);
     }
     inline void account::CopyTo(account* const& o) const noexcept
     {
@@ -2323,13 +2536,10 @@ namespace Tables
     }
     inline int chat::FromBBufferCore(xx::BBuffer& bb) noexcept
     {
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->id)) return r;
         bb.readLengthLimit = 0;
         if (int r = bb.Read(this->content)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->account_id)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->create_time)) return r;
         return 0;
     }
@@ -2352,14 +2562,11 @@ namespace Tables
     inline void chat::ToStringCore(xx::String& s) const noexcept
     {
         this->BaseType::ToStringCore(s);
-        if (this->id) s.Append(", \"id\":\"", this->id, "\"");
-        else s.Append(", \"id\":nil");
+        s.Append(", \"id\":", this->id);
         if (this->content) s.Append(", \"content\":\"", this->content, "\"");
         else s.Append(", \"content\":nil");
-        if (this->account_id) s.Append(", \"account_id\":\"", this->account_id, "\"");
-        else s.Append(", \"account_id\":nil");
-        if (this->create_time) s.Append(", \"create_time\":\"", this->create_time, "\"");
-        else s.Append(", \"create_time\":nil");
+        s.Append(", \"account_id\":", this->account_id);
+        s.Append(", \"create_time\":", this->create_time);
     }
     inline void chat::CopyTo(chat* const& o) const noexcept
     {
@@ -2410,7 +2617,6 @@ namespace Tables
         if (int r = bb.Read(this->title)) return r;
         bb.readLengthLimit = 0;
         if (int r = bb.Read(this->desc)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->create_time)) return r;
         return 0;
     }
@@ -2441,8 +2647,7 @@ namespace Tables
         else s.Append(", \"title\":nil");
         if (this->desc) s.Append(", \"desc\":\"", this->desc, "\"");
         else s.Append(", \"desc\":nil");
-        if (this->create_time) s.Append(", \"create_time\":\"", this->create_time, "\"");
-        else s.Append(", \"create_time\":nil");
+        s.Append(", \"create_time\":", this->create_time);
     }
     inline void config::CopyTo(config* const& o) const noexcept
     {
@@ -2488,13 +2693,10 @@ namespace Tables
     {
         bb.readLengthLimit = 0;
         if (int r = bb.Read(this->key)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->value_bigint)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->value_double)) return r;
         bb.readLengthLimit = 0;
         if (int r = bb.Read(this->value_varchar)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->create_time)) return r;
         return 0;
     }
@@ -2519,14 +2721,11 @@ namespace Tables
         this->BaseType::ToStringCore(s);
         if (this->key) s.Append(", \"key\":\"", this->key, "\"");
         else s.Append(", \"key\":nil");
-        if (this->value_bigint) s.Append(", \"value_bigint\":\"", this->value_bigint, "\"");
-        else s.Append(", \"value_bigint\":nil");
-        if (this->value_double) s.Append(", \"value_double\":\"", this->value_double, "\"");
-        else s.Append(", \"value_double\":nil");
+        s.Append(", \"value_bigint\":", this->value_bigint);
+        s.Append(", \"value_double\":", this->value_double);
         if (this->value_varchar) s.Append(", \"value_varchar\":\"", this->value_varchar, "\"");
         else s.Append(", \"value_varchar\":nil");
-        if (this->create_time) s.Append(", \"create_time\":\"", this->create_time, "\"");
-        else s.Append(", \"create_time\":nil");
+        s.Append(", \"create_time\":", this->create_time);
     }
     inline void config_value::CopyTo(config_value* const& o) const noexcept
     {
@@ -2629,13 +2828,10 @@ namespace Tables
     }
     inline int fish::FromBBufferCore(xx::BBuffer& bb) noexcept
     {
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->id)) return r;
         bb.readLengthLimit = 0;
         if (int r = bb.Read(this->name)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->minCoin)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->maxCoin)) return r;
         return 0;
     }
@@ -2658,14 +2854,11 @@ namespace Tables
     inline void fish::ToStringCore(xx::String& s) const noexcept
     {
         this->BaseType::ToStringCore(s);
-        if (this->id) s.Append(", \"id\":\"", this->id, "\"");
-        else s.Append(", \"id\":nil");
+        s.Append(", \"id\":", this->id);
         if (this->name) s.Append(", \"name\":\"", this->name, "\"");
         else s.Append(", \"name\":nil");
-        if (this->minCoin) s.Append(", \"minCoin\":\"", this->minCoin, "\"");
-        else s.Append(", \"minCoin\":nil");
-        if (this->maxCoin) s.Append(", \"maxCoin\":\"", this->maxCoin, "\"");
-        else s.Append(", \"maxCoin\":nil");
+        s.Append(", \"minCoin\":", this->minCoin);
+        s.Append(", \"maxCoin\":", this->maxCoin);
     }
     inline void fish::CopyTo(fish* const& o) const noexcept
     {
@@ -2707,13 +2900,11 @@ namespace Tables
     }
     inline int game::FromBBufferCore(xx::BBuffer& bb) noexcept
     {
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->id)) return r;
         bb.readLengthLimit = 0;
         if (int r = bb.Read(this->name)) return r;
         bb.readLengthLimit = 0;
         if (int r = bb.Read(this->type_name)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->enabled)) return r;
         return 0;
     }
@@ -2736,14 +2927,12 @@ namespace Tables
     inline void game::ToStringCore(xx::String& s) const noexcept
     {
         this->BaseType::ToStringCore(s);
-        if (this->id) s.Append(", \"id\":\"", this->id, "\"");
-        else s.Append(", \"id\":nil");
+        s.Append(", \"id\":", this->id);
         if (this->name) s.Append(", \"name\":\"", this->name, "\"");
         else s.Append(", \"name\":nil");
         if (this->type_name) s.Append(", \"type_name\":\"", this->type_name, "\"");
         else s.Append(", \"type_name\":nil");
-        if (this->enabled) s.Append(", \"enabled\":\"", this->enabled, "\"");
-        else s.Append(", \"enabled\":nil");
+        s.Append(", \"enabled\":", this->enabled);
     }
     inline void game::CopyTo(game* const& o) const noexcept
     {
@@ -2783,9 +2972,7 @@ namespace Tables
     }
     inline int game_catchfish::FromBBufferCore(xx::BBuffer& bb) noexcept
     {
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->id)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->exchange_coin_ratio)) return r;
         return 0;
     }
@@ -2808,10 +2995,8 @@ namespace Tables
     inline void game_catchfish::ToStringCore(xx::String& s) const noexcept
     {
         this->BaseType::ToStringCore(s);
-        if (this->id) s.Append(", \"id\":\"", this->id, "\"");
-        else s.Append(", \"id\":nil");
-        if (this->exchange_coin_ratio) s.Append(", \"exchange_coin_ratio\":\"", this->exchange_coin_ratio, "\"");
-        else s.Append(", \"exchange_coin_ratio\":nil");
+        s.Append(", \"id\":", this->id);
+        s.Append(", \"exchange_coin_ratio\":", this->exchange_coin_ratio);
     }
     inline void game_catchfish::CopyTo(game_catchfish* const& o) const noexcept
     {
@@ -2852,15 +3037,10 @@ namespace Tables
     }
     inline int game_catchfish_account::FromBBufferCore(xx::BBuffer& bb) noexcept
     {
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->account_id)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->game_id)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->level_id)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->last_bet)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->last_cannon_id)) return r;
         return 0;
     }
@@ -2883,16 +3063,11 @@ namespace Tables
     inline void game_catchfish_account::ToStringCore(xx::String& s) const noexcept
     {
         this->BaseType::ToStringCore(s);
-        if (this->account_id) s.Append(", \"account_id\":\"", this->account_id, "\"");
-        else s.Append(", \"account_id\":nil");
-        if (this->game_id) s.Append(", \"game_id\":\"", this->game_id, "\"");
-        else s.Append(", \"game_id\":nil");
-        if (this->level_id) s.Append(", \"level_id\":\"", this->level_id, "\"");
-        else s.Append(", \"level_id\":nil");
-        if (this->last_bet) s.Append(", \"last_bet\":\"", this->last_bet, "\"");
-        else s.Append(", \"last_bet\":nil");
-        if (this->last_cannon_id) s.Append(", \"last_cannon_id\":\"", this->last_cannon_id, "\"");
-        else s.Append(", \"last_cannon_id\":nil");
+        s.Append(", \"account_id\":", this->account_id);
+        s.Append(", \"game_id\":", this->game_id);
+        s.Append(", \"level_id\":", this->level_id);
+        s.Append(", \"last_bet\":", this->last_bet);
+        s.Append(", \"last_cannon_id\":", this->last_cannon_id);
     }
     inline void game_catchfish_account::CopyTo(game_catchfish_account* const& o) const noexcept
     {
@@ -2933,9 +3108,7 @@ namespace Tables
     }
     inline int game_catchfish_cannon::FromBBufferCore(xx::BBuffer& bb) noexcept
     {
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->id)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->vip_id)) return r;
         return 0;
     }
@@ -2958,10 +3131,8 @@ namespace Tables
     inline void game_catchfish_cannon::ToStringCore(xx::String& s) const noexcept
     {
         this->BaseType::ToStringCore(s);
-        if (this->id) s.Append(", \"id\":\"", this->id, "\"");
-        else s.Append(", \"id\":nil");
-        if (this->vip_id) s.Append(", \"vip_id\":\"", this->vip_id, "\"");
-        else s.Append(", \"vip_id\":nil");
+        s.Append(", \"id\":", this->id);
+        s.Append(", \"vip_id\":", this->vip_id);
     }
     inline void game_catchfish_cannon::CopyTo(game_catchfish_cannon* const& o) const noexcept
     {
@@ -3003,17 +3174,11 @@ namespace Tables
     }
     inline int game_catchfish_level::FromBBufferCore(xx::BBuffer& bb) noexcept
     {
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->game_id)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->level_id)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->min_bet)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->max_bet)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->min_money)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->enabled)) return r;
         return 0;
     }
@@ -3036,18 +3201,12 @@ namespace Tables
     inline void game_catchfish_level::ToStringCore(xx::String& s) const noexcept
     {
         this->BaseType::ToStringCore(s);
-        if (this->game_id) s.Append(", \"game_id\":\"", this->game_id, "\"");
-        else s.Append(", \"game_id\":nil");
-        if (this->level_id) s.Append(", \"level_id\":\"", this->level_id, "\"");
-        else s.Append(", \"level_id\":nil");
-        if (this->min_bet) s.Append(", \"min_bet\":\"", this->min_bet, "\"");
-        else s.Append(", \"min_bet\":nil");
-        if (this->max_bet) s.Append(", \"max_bet\":\"", this->max_bet, "\"");
-        else s.Append(", \"max_bet\":nil");
-        if (this->min_money) s.Append(", \"min_money\":\"", this->min_money, "\"");
-        else s.Append(", \"min_money\":nil");
-        if (this->enabled) s.Append(", \"enabled\":\"", this->enabled, "\"");
-        else s.Append(", \"enabled\":nil");
+        s.Append(", \"game_id\":", this->game_id);
+        s.Append(", \"level_id\":", this->level_id);
+        s.Append(", \"min_bet\":", this->min_bet);
+        s.Append(", \"max_bet\":", this->max_bet);
+        s.Append(", \"min_money\":", this->min_money);
+        s.Append(", \"enabled\":", this->enabled);
     }
     inline void game_catchfish_level::CopyTo(game_catchfish_level* const& o) const noexcept
     {
@@ -3091,13 +3250,9 @@ namespace Tables
     }
     inline int game_catchfish_level_room::FromBBufferCore(xx::BBuffer& bb) noexcept
     {
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->game_id)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->level_id)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->room_id)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->enabled)) return r;
         return 0;
     }
@@ -3120,14 +3275,10 @@ namespace Tables
     inline void game_catchfish_level_room::ToStringCore(xx::String& s) const noexcept
     {
         this->BaseType::ToStringCore(s);
-        if (this->game_id) s.Append(", \"game_id\":\"", this->game_id, "\"");
-        else s.Append(", \"game_id\":nil");
-        if (this->level_id) s.Append(", \"level_id\":\"", this->level_id, "\"");
-        else s.Append(", \"level_id\":nil");
-        if (this->room_id) s.Append(", \"room_id\":\"", this->room_id, "\"");
-        else s.Append(", \"room_id\":nil");
-        if (this->enabled) s.Append(", \"enabled\":\"", this->enabled, "\"");
-        else s.Append(", \"enabled\":nil");
+        s.Append(", \"game_id\":", this->game_id);
+        s.Append(", \"level_id\":", this->level_id);
+        s.Append(", \"room_id\":", this->room_id);
+        s.Append(", \"enabled\":", this->enabled);
     }
     inline void game_catchfish_level_room::CopyTo(game_catchfish_level_room* const& o) const noexcept
     {
@@ -3169,13 +3320,9 @@ namespace Tables
     }
     inline int log_account_avatar::FromBBufferCore(xx::BBuffer& bb) noexcept
     {
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->id)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->account_id)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->avatar_id)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->create_time)) return r;
         return 0;
     }
@@ -3198,14 +3345,10 @@ namespace Tables
     inline void log_account_avatar::ToStringCore(xx::String& s) const noexcept
     {
         this->BaseType::ToStringCore(s);
-        if (this->id) s.Append(", \"id\":\"", this->id, "\"");
-        else s.Append(", \"id\":nil");
-        if (this->account_id) s.Append(", \"account_id\":\"", this->account_id, "\"");
-        else s.Append(", \"account_id\":nil");
-        if (this->avatar_id) s.Append(", \"avatar_id\":\"", this->avatar_id, "\"");
-        else s.Append(", \"avatar_id\":nil");
-        if (this->create_time) s.Append(", \"create_time\":\"", this->create_time, "\"");
-        else s.Append(", \"create_time\":nil");
+        s.Append(", \"id\":", this->id);
+        s.Append(", \"account_id\":", this->account_id);
+        s.Append(", \"avatar_id\":", this->avatar_id);
+        s.Append(", \"create_time\":", this->create_time);
     }
     inline void log_account_avatar::CopyTo(log_account_avatar* const& o) const noexcept
     {
@@ -3248,15 +3391,11 @@ namespace Tables
     }
     inline int log_account_enabled::FromBBufferCore(xx::BBuffer& bb) noexcept
     {
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->id)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->account_id)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->enabled)) return r;
         bb.readLengthLimit = 0;
         if (int r = bb.Read(this->memo)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->create_time)) return r;
         return 0;
     }
@@ -3279,16 +3418,12 @@ namespace Tables
     inline void log_account_enabled::ToStringCore(xx::String& s) const noexcept
     {
         this->BaseType::ToStringCore(s);
-        if (this->id) s.Append(", \"id\":\"", this->id, "\"");
-        else s.Append(", \"id\":nil");
-        if (this->account_id) s.Append(", \"account_id\":\"", this->account_id, "\"");
-        else s.Append(", \"account_id\":nil");
-        if (this->enabled) s.Append(", \"enabled\":\"", this->enabled, "\"");
-        else s.Append(", \"enabled\":nil");
+        s.Append(", \"id\":", this->id);
+        s.Append(", \"account_id\":", this->account_id);
+        s.Append(", \"enabled\":", this->enabled);
         if (this->memo) s.Append(", \"memo\":\"", this->memo, "\"");
         else s.Append(", \"memo\":nil");
-        if (this->create_time) s.Append(", \"create_time\":\"", this->create_time, "\"");
-        else s.Append(", \"create_time\":nil");
+        s.Append(", \"create_time\":", this->create_time);
     }
     inline void log_account_enabled::CopyTo(log_account_enabled* const& o) const noexcept
     {
@@ -3331,13 +3466,9 @@ namespace Tables
     }
     inline int log_account_money_safe::FromBBufferCore(xx::BBuffer& bb) noexcept
     {
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->id)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->account_id)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->value)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->create_time)) return r;
         return 0;
     }
@@ -3360,14 +3491,10 @@ namespace Tables
     inline void log_account_money_safe::ToStringCore(xx::String& s) const noexcept
     {
         this->BaseType::ToStringCore(s);
-        if (this->id) s.Append(", \"id\":\"", this->id, "\"");
-        else s.Append(", \"id\":nil");
-        if (this->account_id) s.Append(", \"account_id\":\"", this->account_id, "\"");
-        else s.Append(", \"account_id\":nil");
-        if (this->value) s.Append(", \"value\":\"", this->value, "\"");
-        else s.Append(", \"value\":nil");
-        if (this->create_time) s.Append(", \"create_time\":\"", this->create_time, "\"");
-        else s.Append(", \"create_time\":nil");
+        s.Append(", \"id\":", this->id);
+        s.Append(", \"account_id\":", this->account_id);
+        s.Append(", \"value\":", this->value);
+        s.Append(", \"create_time\":", this->create_time);
     }
     inline void log_account_money_safe::CopyTo(log_account_money_safe* const& o) const noexcept
     {
@@ -3409,13 +3536,10 @@ namespace Tables
     }
     inline int log_account_nickname::FromBBufferCore(xx::BBuffer& bb) noexcept
     {
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->id)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->account_id)) return r;
         bb.readLengthLimit = 0;
         if (int r = bb.Read(this->nickname)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->create_time)) return r;
         return 0;
     }
@@ -3438,14 +3562,11 @@ namespace Tables
     inline void log_account_nickname::ToStringCore(xx::String& s) const noexcept
     {
         this->BaseType::ToStringCore(s);
-        if (this->id) s.Append(", \"id\":\"", this->id, "\"");
-        else s.Append(", \"id\":nil");
-        if (this->account_id) s.Append(", \"account_id\":\"", this->account_id, "\"");
-        else s.Append(", \"account_id\":nil");
+        s.Append(", \"id\":", this->id);
+        s.Append(", \"account_id\":", this->account_id);
         if (this->nickname) s.Append(", \"nickname\":\"", this->nickname, "\"");
         else s.Append(", \"nickname\":nil");
-        if (this->create_time) s.Append(", \"create_time\":\"", this->create_time, "\"");
-        else s.Append(", \"create_time\":nil");
+        s.Append(", \"create_time\":", this->create_time);
     }
     inline void log_account_nickname::CopyTo(log_account_nickname* const& o) const noexcept
     {
@@ -3487,13 +3608,10 @@ namespace Tables
     }
     inline int log_account_password::FromBBufferCore(xx::BBuffer& bb) noexcept
     {
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->id)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->account_id)) return r;
         bb.readLengthLimit = 0;
         if (int r = bb.Read(this->password)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->create_time)) return r;
         return 0;
     }
@@ -3516,14 +3634,11 @@ namespace Tables
     inline void log_account_password::ToStringCore(xx::String& s) const noexcept
     {
         this->BaseType::ToStringCore(s);
-        if (this->id) s.Append(", \"id\":\"", this->id, "\"");
-        else s.Append(", \"id\":nil");
-        if (this->account_id) s.Append(", \"account_id\":\"", this->account_id, "\"");
-        else s.Append(", \"account_id\":nil");
+        s.Append(", \"id\":", this->id);
+        s.Append(", \"account_id\":", this->account_id);
         if (this->password) s.Append(", \"password\":\"", this->password, "\"");
         else s.Append(", \"password\":nil");
-        if (this->create_time) s.Append(", \"create_time\":\"", this->create_time, "\"");
-        else s.Append(", \"create_time\":nil");
+        s.Append(", \"create_time\":", this->create_time);
     }
     inline void log_account_password::CopyTo(log_account_password* const& o) const noexcept
     {
@@ -3565,13 +3680,10 @@ namespace Tables
     }
     inline int log_account_phone::FromBBufferCore(xx::BBuffer& bb) noexcept
     {
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->id)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->account_id)) return r;
         bb.readLengthLimit = 0;
         if (int r = bb.Read(this->phone)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->create_time)) return r;
         return 0;
     }
@@ -3594,14 +3706,11 @@ namespace Tables
     inline void log_account_phone::ToStringCore(xx::String& s) const noexcept
     {
         this->BaseType::ToStringCore(s);
-        if (this->id) s.Append(", \"id\":\"", this->id, "\"");
-        else s.Append(", \"id\":nil");
-        if (this->account_id) s.Append(", \"account_id\":\"", this->account_id, "\"");
-        else s.Append(", \"account_id\":nil");
+        s.Append(", \"id\":", this->id);
+        s.Append(", \"account_id\":", this->account_id);
         if (this->phone) s.Append(", \"phone\":\"", this->phone, "\"");
         else s.Append(", \"phone\":nil");
-        if (this->create_time) s.Append(", \"create_time\":\"", this->create_time, "\"");
-        else s.Append(", \"create_time\":nil");
+        s.Append(", \"create_time\":", this->create_time);
     }
     inline void log_account_phone::CopyTo(log_account_phone* const& o) const noexcept
     {
@@ -3646,13 +3755,10 @@ namespace Tables
     {
         bb.readLengthLimit = 0;
         if (int r = bb.Read(this->token)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->account_id)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->money)) return r;
         bb.readLengthLimit = 0;
         if (int r = bb.Read(this->memo)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->create_time)) return r;
         return 0;
     }
@@ -3677,14 +3783,11 @@ namespace Tables
         this->BaseType::ToStringCore(s);
         if (this->token) s.Append(", \"token\":\"", this->token, "\"");
         else s.Append(", \"token\":nil");
-        if (this->account_id) s.Append(", \"account_id\":\"", this->account_id, "\"");
-        else s.Append(", \"account_id\":nil");
-        if (this->money) s.Append(", \"money\":\"", this->money, "\"");
-        else s.Append(", \"money\":nil");
+        s.Append(", \"account_id\":", this->account_id);
+        s.Append(", \"money\":", this->money);
         if (this->memo) s.Append(", \"memo\":\"", this->memo, "\"");
         else s.Append(", \"memo\":nil");
-        if (this->create_time) s.Append(", \"create_time\":\"", this->create_time, "\"");
-        else s.Append(", \"create_time\":nil");
+        s.Append(", \"create_time\":", this->create_time);
     }
     inline void log_account_recharge::CopyTo(log_account_recharge* const& o) const noexcept
     {
@@ -3725,9 +3828,7 @@ namespace Tables
     }
     inline int log_game::FromBBufferCore(xx::BBuffer& bb) noexcept
     {
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->id)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->game_id)) return r;
         return 0;
     }
@@ -3750,10 +3851,8 @@ namespace Tables
     inline void log_game::ToStringCore(xx::String& s) const noexcept
     {
         this->BaseType::ToStringCore(s);
-        if (this->id) s.Append(", \"id\":\"", this->id, "\"");
-        else s.Append(", \"id\":nil");
-        if (this->game_id) s.Append(", \"game_id\":\"", this->game_id, "\"");
-        else s.Append(", \"game_id\":nil");
+        s.Append(", \"id\":", this->id);
+        s.Append(", \"game_id\":", this->game_id);
     }
     inline void log_game::CopyTo(log_game* const& o) const noexcept
     {
@@ -3798,23 +3897,14 @@ namespace Tables
     }
     inline int log_game_catchfish::FromBBufferCore(xx::BBuffer& bb) noexcept
     {
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->id)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->level_id)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->room_id)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->account_id)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->enter_time)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->enter_money)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->leave_time)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->leave_money)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->consume)) return r;
         return 0;
     }
@@ -3837,24 +3927,15 @@ namespace Tables
     inline void log_game_catchfish::ToStringCore(xx::String& s) const noexcept
     {
         this->BaseType::ToStringCore(s);
-        if (this->id) s.Append(", \"id\":\"", this->id, "\"");
-        else s.Append(", \"id\":nil");
-        if (this->level_id) s.Append(", \"level_id\":\"", this->level_id, "\"");
-        else s.Append(", \"level_id\":nil");
-        if (this->room_id) s.Append(", \"room_id\":\"", this->room_id, "\"");
-        else s.Append(", \"room_id\":nil");
-        if (this->account_id) s.Append(", \"account_id\":\"", this->account_id, "\"");
-        else s.Append(", \"account_id\":nil");
-        if (this->enter_time) s.Append(", \"enter_time\":\"", this->enter_time, "\"");
-        else s.Append(", \"enter_time\":nil");
-        if (this->enter_money) s.Append(", \"enter_money\":\"", this->enter_money, "\"");
-        else s.Append(", \"enter_money\":nil");
-        if (this->leave_time) s.Append(", \"leave_time\":\"", this->leave_time, "\"");
-        else s.Append(", \"leave_time\":nil");
-        if (this->leave_money) s.Append(", \"leave_money\":\"", this->leave_money, "\"");
-        else s.Append(", \"leave_money\":nil");
-        if (this->consume) s.Append(", \"consume\":\"", this->consume, "\"");
-        else s.Append(", \"consume\":nil");
+        s.Append(", \"id\":", this->id);
+        s.Append(", \"level_id\":", this->level_id);
+        s.Append(", \"room_id\":", this->room_id);
+        s.Append(", \"account_id\":", this->account_id);
+        s.Append(", \"enter_time\":", this->enter_time);
+        s.Append(", \"enter_money\":", this->enter_money);
+        s.Append(", \"leave_time\":", this->leave_time);
+        s.Append(", \"leave_money\":", this->leave_money);
+        s.Append(", \"consume\":", this->consume);
     }
     inline void log_game_catchfish::CopyTo(log_game_catchfish* const& o) const noexcept
     {
@@ -3902,15 +3983,10 @@ namespace Tables
     }
     inline int log_game_catchfish_event::FromBBufferCore(xx::BBuffer& bb) noexcept
     {
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->id)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->log_game_catchfish_id)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->event_type_id)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->frame_number)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->create_time)) return r;
         return 0;
     }
@@ -3933,16 +4009,11 @@ namespace Tables
     inline void log_game_catchfish_event::ToStringCore(xx::String& s) const noexcept
     {
         this->BaseType::ToStringCore(s);
-        if (this->id) s.Append(", \"id\":\"", this->id, "\"");
-        else s.Append(", \"id\":nil");
-        if (this->log_game_catchfish_id) s.Append(", \"log_game_catchfish_id\":\"", this->log_game_catchfish_id, "\"");
-        else s.Append(", \"log_game_catchfish_id\":nil");
-        if (this->event_type_id) s.Append(", \"event_type_id\":\"", this->event_type_id, "\"");
-        else s.Append(", \"event_type_id\":nil");
-        if (this->frame_number) s.Append(", \"frame_number\":\"", this->frame_number, "\"");
-        else s.Append(", \"frame_number\":nil");
-        if (this->create_time) s.Append(", \"create_time\":\"", this->create_time, "\"");
-        else s.Append(", \"create_time\":nil");
+        s.Append(", \"id\":", this->id);
+        s.Append(", \"log_game_catchfish_id\":", this->log_game_catchfish_id);
+        s.Append(", \"event_type_id\":", this->event_type_id);
+        s.Append(", \"frame_number\":", this->frame_number);
+        s.Append(", \"create_time\":", this->create_time);
     }
     inline void log_game_catchfish_event::CopyTo(log_game_catchfish_event* const& o) const noexcept
     {
@@ -3987,17 +4058,11 @@ namespace Tables
     }
     inline int log_game_catchfish_event_bulletdie::FromBBufferCore(xx::BBuffer& bb) noexcept
     {
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->id)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->log_game_catchfish_id)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->type_id)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->bullet_id)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->coin)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->money)) return r;
         return 0;
     }
@@ -4020,18 +4085,12 @@ namespace Tables
     inline void log_game_catchfish_event_bulletdie::ToStringCore(xx::String& s) const noexcept
     {
         this->BaseType::ToStringCore(s);
-        if (this->id) s.Append(", \"id\":\"", this->id, "\"");
-        else s.Append(", \"id\":nil");
-        if (this->log_game_catchfish_id) s.Append(", \"log_game_catchfish_id\":\"", this->log_game_catchfish_id, "\"");
-        else s.Append(", \"log_game_catchfish_id\":nil");
-        if (this->type_id) s.Append(", \"type_id\":\"", this->type_id, "\"");
-        else s.Append(", \"type_id\":nil");
-        if (this->bullet_id) s.Append(", \"bullet_id\":\"", this->bullet_id, "\"");
-        else s.Append(", \"bullet_id\":nil");
-        if (this->coin) s.Append(", \"coin\":\"", this->coin, "\"");
-        else s.Append(", \"coin\":nil");
-        if (this->money) s.Append(", \"money\":\"", this->money, "\"");
-        else s.Append(", \"money\":nil");
+        s.Append(", \"id\":", this->id);
+        s.Append(", \"log_game_catchfish_id\":", this->log_game_catchfish_id);
+        s.Append(", \"type_id\":", this->type_id);
+        s.Append(", \"bullet_id\":", this->bullet_id);
+        s.Append(", \"coin\":", this->coin);
+        s.Append(", \"money\":", this->money);
     }
     inline void log_game_catchfish_event_bulletdie::CopyTo(log_game_catchfish_event_bulletdie* const& o) const noexcept
     {
@@ -4077,17 +4136,11 @@ namespace Tables
     }
     inline int log_game_catchfish_event_bulletmiss::FromBBufferCore(xx::BBuffer& bb) noexcept
     {
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->id)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->log_game_catchfish_id)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->type_id)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->bullet_id)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->coin)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->money)) return r;
         return 0;
     }
@@ -4110,18 +4163,12 @@ namespace Tables
     inline void log_game_catchfish_event_bulletmiss::ToStringCore(xx::String& s) const noexcept
     {
         this->BaseType::ToStringCore(s);
-        if (this->id) s.Append(", \"id\":\"", this->id, "\"");
-        else s.Append(", \"id\":nil");
-        if (this->log_game_catchfish_id) s.Append(", \"log_game_catchfish_id\":\"", this->log_game_catchfish_id, "\"");
-        else s.Append(", \"log_game_catchfish_id\":nil");
-        if (this->type_id) s.Append(", \"type_id\":\"", this->type_id, "\"");
-        else s.Append(", \"type_id\":nil");
-        if (this->bullet_id) s.Append(", \"bullet_id\":\"", this->bullet_id, "\"");
-        else s.Append(", \"bullet_id\":nil");
-        if (this->coin) s.Append(", \"coin\":\"", this->coin, "\"");
-        else s.Append(", \"coin\":nil");
-        if (this->money) s.Append(", \"money\":\"", this->money, "\"");
-        else s.Append(", \"money\":nil");
+        s.Append(", \"id\":", this->id);
+        s.Append(", \"log_game_catchfish_id\":", this->log_game_catchfish_id);
+        s.Append(", \"type_id\":", this->type_id);
+        s.Append(", \"bullet_id\":", this->bullet_id);
+        s.Append(", \"coin\":", this->coin);
+        s.Append(", \"money\":", this->money);
     }
     inline void log_game_catchfish_event_bulletmiss::CopyTo(log_game_catchfish_event_bulletmiss* const& o) const noexcept
     {
@@ -4167,17 +4214,11 @@ namespace Tables
     }
     inline int log_game_catchfish_event_fire::FromBBufferCore(xx::BBuffer& bb) noexcept
     {
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->id)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->log_game_catchfish_id)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->type_id)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->bullet_id)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->coin)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->money)) return r;
         return 0;
     }
@@ -4200,18 +4241,12 @@ namespace Tables
     inline void log_game_catchfish_event_fire::ToStringCore(xx::String& s) const noexcept
     {
         this->BaseType::ToStringCore(s);
-        if (this->id) s.Append(", \"id\":\"", this->id, "\"");
-        else s.Append(", \"id\":nil");
-        if (this->log_game_catchfish_id) s.Append(", \"log_game_catchfish_id\":\"", this->log_game_catchfish_id, "\"");
-        else s.Append(", \"log_game_catchfish_id\":nil");
-        if (this->type_id) s.Append(", \"type_id\":\"", this->type_id, "\"");
-        else s.Append(", \"type_id\":nil");
-        if (this->bullet_id) s.Append(", \"bullet_id\":\"", this->bullet_id, "\"");
-        else s.Append(", \"bullet_id\":nil");
-        if (this->coin) s.Append(", \"coin\":\"", this->coin, "\"");
-        else s.Append(", \"coin\":nil");
-        if (this->money) s.Append(", \"money\":\"", this->money, "\"");
-        else s.Append(", \"money\":nil");
+        s.Append(", \"id\":", this->id);
+        s.Append(", \"log_game_catchfish_id\":", this->log_game_catchfish_id);
+        s.Append(", \"type_id\":", this->type_id);
+        s.Append(", \"bullet_id\":", this->bullet_id);
+        s.Append(", \"coin\":", this->coin);
+        s.Append(", \"money\":", this->money);
     }
     inline void log_game_catchfish_event_fire::CopyTo(log_game_catchfish_event_fire* const& o) const noexcept
     {
@@ -4259,21 +4294,13 @@ namespace Tables
     }
     inline int log_game_catchfish_event_fishdie::FromBBufferCore(xx::BBuffer& bb) noexcept
     {
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->id)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->log_game_catchfish_id)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->fish_type_id)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->fish_id)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->fish_ratio)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->bullet_coin)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->coin)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->money)) return r;
         return 0;
     }
@@ -4296,22 +4323,14 @@ namespace Tables
     inline void log_game_catchfish_event_fishdie::ToStringCore(xx::String& s) const noexcept
     {
         this->BaseType::ToStringCore(s);
-        if (this->id) s.Append(", \"id\":\"", this->id, "\"");
-        else s.Append(", \"id\":nil");
-        if (this->log_game_catchfish_id) s.Append(", \"log_game_catchfish_id\":\"", this->log_game_catchfish_id, "\"");
-        else s.Append(", \"log_game_catchfish_id\":nil");
-        if (this->fish_type_id) s.Append(", \"fish_type_id\":\"", this->fish_type_id, "\"");
-        else s.Append(", \"fish_type_id\":nil");
-        if (this->fish_id) s.Append(", \"fish_id\":\"", this->fish_id, "\"");
-        else s.Append(", \"fish_id\":nil");
-        if (this->fish_ratio) s.Append(", \"fish_ratio\":\"", this->fish_ratio, "\"");
-        else s.Append(", \"fish_ratio\":nil");
-        if (this->bullet_coin) s.Append(", \"bullet_coin\":\"", this->bullet_coin, "\"");
-        else s.Append(", \"bullet_coin\":nil");
-        if (this->coin) s.Append(", \"coin\":\"", this->coin, "\"");
-        else s.Append(", \"coin\":nil");
-        if (this->money) s.Append(", \"money\":\"", this->money, "\"");
-        else s.Append(", \"money\":nil");
+        s.Append(", \"id\":", this->id);
+        s.Append(", \"log_game_catchfish_id\":", this->log_game_catchfish_id);
+        s.Append(", \"fish_type_id\":", this->fish_type_id);
+        s.Append(", \"fish_id\":", this->fish_id);
+        s.Append(", \"fish_ratio\":", this->fish_ratio);
+        s.Append(", \"bullet_coin\":", this->bullet_coin);
+        s.Append(", \"coin\":", this->coin);
+        s.Append(", \"money\":", this->money);
     }
     inline void log_game_catchfish_event_fishdie::CopyTo(log_game_catchfish_event_fishdie* const& o) const noexcept
     {
@@ -4358,15 +4377,11 @@ namespace Tables
     }
     inline int log_login_out::FromBBufferCore(xx::BBuffer& bb) noexcept
     {
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->id)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->account_id)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->type_id)) return r;
         bb.readLengthLimit = 0;
         if (int r = bb.Read(this->ip)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->create_time)) return r;
         return 0;
     }
@@ -4389,16 +4404,12 @@ namespace Tables
     inline void log_login_out::ToStringCore(xx::String& s) const noexcept
     {
         this->BaseType::ToStringCore(s);
-        if (this->id) s.Append(", \"id\":\"", this->id, "\"");
-        else s.Append(", \"id\":nil");
-        if (this->account_id) s.Append(", \"account_id\":\"", this->account_id, "\"");
-        else s.Append(", \"account_id\":nil");
-        if (this->type_id) s.Append(", \"type_id\":\"", this->type_id, "\"");
-        else s.Append(", \"type_id\":nil");
+        s.Append(", \"id\":", this->id);
+        s.Append(", \"account_id\":", this->account_id);
+        s.Append(", \"type_id\":", this->type_id);
         if (this->ip) s.Append(", \"ip\":\"", this->ip, "\"");
         else s.Append(", \"ip\":nil");
-        if (this->create_time) s.Append(", \"create_time\":\"", this->create_time, "\"");
-        else s.Append(", \"create_time\":nil");
+        s.Append(", \"create_time\":", this->create_time);
     }
     inline void log_login_out::CopyTo(log_login_out* const& o) const noexcept
     {
@@ -4443,17 +4454,13 @@ namespace Tables
     }
     inline int log_withdrawals::FromBBufferCore(xx::BBuffer& bb) noexcept
     {
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->id)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->withdrawals_id)) return r;
         bb.readLengthLimit = 0;
         if (int r = bb.Read(this->person_in_charge)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->state_id)) return r;
         bb.readLengthLimit = 0;
         if (int r = bb.Read(this->description)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->create_time)) return r;
         return 0;
     }
@@ -4476,18 +4483,14 @@ namespace Tables
     inline void log_withdrawals::ToStringCore(xx::String& s) const noexcept
     {
         this->BaseType::ToStringCore(s);
-        if (this->id) s.Append(", \"id\":\"", this->id, "\"");
-        else s.Append(", \"id\":nil");
-        if (this->withdrawals_id) s.Append(", \"withdrawals_id\":\"", this->withdrawals_id, "\"");
-        else s.Append(", \"withdrawals_id\":nil");
+        s.Append(", \"id\":", this->id);
+        s.Append(", \"withdrawals_id\":", this->withdrawals_id);
         if (this->person_in_charge) s.Append(", \"person_in_charge\":\"", this->person_in_charge, "\"");
         else s.Append(", \"person_in_charge\":nil");
-        if (this->state_id) s.Append(", \"state_id\":\"", this->state_id, "\"");
-        else s.Append(", \"state_id\":nil");
+        s.Append(", \"state_id\":", this->state_id);
         if (this->description) s.Append(", \"description\":\"", this->description, "\"");
         else s.Append(", \"description\":nil");
-        if (this->create_time) s.Append(", \"create_time\":\"", this->create_time, "\"");
-        else s.Append(", \"create_time\":nil");
+        s.Append(", \"create_time\":", this->create_time);
     }
     inline void log_withdrawals::CopyTo(log_withdrawals* const& o) const noexcept
     {
@@ -4533,17 +4536,13 @@ namespace Tables
     }
     inline int mail::FromBBufferCore(xx::BBuffer& bb) noexcept
     {
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->id)) return r;
         bb.readLengthLimit = 0;
         if (int r = bb.Read(this->content)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->account_id)) return r;
         bb.readLengthLimit = 0;
         if (int r = bb.Read(this->sender)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->create_time)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->is_read)) return r;
         return 0;
     }
@@ -4566,18 +4565,14 @@ namespace Tables
     inline void mail::ToStringCore(xx::String& s) const noexcept
     {
         this->BaseType::ToStringCore(s);
-        if (this->id) s.Append(", \"id\":\"", this->id, "\"");
-        else s.Append(", \"id\":nil");
+        s.Append(", \"id\":", this->id);
         if (this->content) s.Append(", \"content\":\"", this->content, "\"");
         else s.Append(", \"content\":nil");
-        if (this->account_id) s.Append(", \"account_id\":\"", this->account_id, "\"");
-        else s.Append(", \"account_id\":nil");
+        s.Append(", \"account_id\":", this->account_id);
         if (this->sender) s.Append(", \"sender\":\"", this->sender, "\"");
         else s.Append(", \"sender\":nil");
-        if (this->create_time) s.Append(", \"create_time\":\"", this->create_time, "\"");
-        else s.Append(", \"create_time\":nil");
-        if (this->is_read) s.Append(", \"is_read\":\"", this->is_read, "\"");
-        else s.Append(", \"is_read\":nil");
+        s.Append(", \"create_time\":", this->create_time);
+        s.Append(", \"is_read\":", this->is_read);
     }
     inline void mail::CopyTo(mail* const& o) const noexcept
     {
@@ -4623,17 +4618,12 @@ namespace Tables
     }
     inline int marquee::FromBBufferCore(xx::BBuffer& bb) noexcept
     {
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->id)) return r;
         bb.readLengthLimit = 0;
         if (int r = bb.Read(this->content)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->frequency)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->update_time)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->create_time)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->enable)) return r;
         return 0;
     }
@@ -4656,18 +4646,13 @@ namespace Tables
     inline void marquee::ToStringCore(xx::String& s) const noexcept
     {
         this->BaseType::ToStringCore(s);
-        if (this->id) s.Append(", \"id\":\"", this->id, "\"");
-        else s.Append(", \"id\":nil");
+        s.Append(", \"id\":", this->id);
         if (this->content) s.Append(", \"content\":\"", this->content, "\"");
         else s.Append(", \"content\":nil");
-        if (this->frequency) s.Append(", \"frequency\":\"", this->frequency, "\"");
-        else s.Append(", \"frequency\":nil");
-        if (this->update_time) s.Append(", \"update_time\":\"", this->update_time, "\"");
-        else s.Append(", \"update_time\":nil");
-        if (this->create_time) s.Append(", \"create_time\":\"", this->create_time, "\"");
-        else s.Append(", \"create_time\":nil");
-        if (this->enable) s.Append(", \"enable\":\"", this->enable, "\"");
-        else s.Append(", \"enable\":nil");
+        s.Append(", \"frequency\":", this->frequency);
+        s.Append(", \"update_time\":", this->update_time);
+        s.Append(", \"create_time\":", this->create_time);
+        s.Append(", \"enable\":", this->enable);
     }
     inline void marquee::CopyTo(marquee* const& o) const noexcept
     {
@@ -4713,17 +4698,12 @@ namespace Tables
     }
     inline int notice::FromBBufferCore(xx::BBuffer& bb) noexcept
     {
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->id)) return r;
         bb.readLengthLimit = 0;
         if (int r = bb.Read(this->content)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->notice_type_id)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->start_time)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->end_time)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->create_time)) return r;
         return 0;
     }
@@ -4746,18 +4726,13 @@ namespace Tables
     inline void notice::ToStringCore(xx::String& s) const noexcept
     {
         this->BaseType::ToStringCore(s);
-        if (this->id) s.Append(", \"id\":\"", this->id, "\"");
-        else s.Append(", \"id\":nil");
+        s.Append(", \"id\":", this->id);
         if (this->content) s.Append(", \"content\":\"", this->content, "\"");
         else s.Append(", \"content\":nil");
-        if (this->notice_type_id) s.Append(", \"notice_type_id\":\"", this->notice_type_id, "\"");
-        else s.Append(", \"notice_type_id\":nil");
-        if (this->start_time) s.Append(", \"start_time\":\"", this->start_time, "\"");
-        else s.Append(", \"start_time\":nil");
-        if (this->end_time) s.Append(", \"end_time\":\"", this->end_time, "\"");
-        else s.Append(", \"end_time\":nil");
-        if (this->create_time) s.Append(", \"create_time\":\"", this->create_time, "\"");
-        else s.Append(", \"create_time\":nil");
+        s.Append(", \"notice_type_id\":", this->notice_type_id);
+        s.Append(", \"start_time\":", this->start_time);
+        s.Append(", \"end_time\":", this->end_time);
+        s.Append(", \"create_time\":", this->create_time);
     }
     inline void notice::CopyTo(notice* const& o) const noexcept
     {
@@ -4800,11 +4775,8 @@ namespace Tables
     }
     inline int notice_read::FromBBufferCore(xx::BBuffer& bb) noexcept
     {
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->notice_id)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->account_id)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->create_time)) return r;
         return 0;
     }
@@ -4827,12 +4799,9 @@ namespace Tables
     inline void notice_read::ToStringCore(xx::String& s) const noexcept
     {
         this->BaseType::ToStringCore(s);
-        if (this->notice_id) s.Append(", \"notice_id\":\"", this->notice_id, "\"");
-        else s.Append(", \"notice_id\":nil");
-        if (this->account_id) s.Append(", \"account_id\":\"", this->account_id, "\"");
-        else s.Append(", \"account_id\":nil");
-        if (this->create_time) s.Append(", \"create_time\":\"", this->create_time, "\"");
-        else s.Append(", \"create_time\":nil");
+        s.Append(", \"notice_id\":", this->notice_id);
+        s.Append(", \"account_id\":", this->account_id);
+        s.Append(", \"create_time\":", this->create_time);
     }
     inline void notice_read::CopyTo(notice_read* const& o) const noexcept
     {
@@ -4871,7 +4840,6 @@ namespace Tables
     }
     inline int notice_type::FromBBufferCore(xx::BBuffer& bb) noexcept
     {
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->id)) return r;
         bb.readLengthLimit = 0;
         if (int r = bb.Read(this->name)) return r;
@@ -4896,8 +4864,7 @@ namespace Tables
     inline void notice_type::ToStringCore(xx::String& s) const noexcept
     {
         this->BaseType::ToStringCore(s);
-        if (this->id) s.Append(", \"id\":\"", this->id, "\"");
-        else s.Append(", \"id\":nil");
+        s.Append(", \"id\":", this->id);
         if (this->name) s.Append(", \"name\":\"", this->name, "\"");
         else s.Append(", \"name\":nil");
     }
@@ -4942,7 +4909,6 @@ namespace Tables
         if (int r = bb.Read(this->phone)) return r;
         bb.readLengthLimit = 0;
         if (int r = bb.Read(this->content)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->create_time)) return r;
         return 0;
     }
@@ -4969,8 +4935,7 @@ namespace Tables
         else s.Append(", \"phone\":nil");
         if (this->content) s.Append(", \"content\":\"", this->content, "\"");
         else s.Append(", \"content\":nil");
-        if (this->create_time) s.Append(", \"create_time\":\"", this->create_time, "\"");
-        else s.Append(", \"create_time\":nil");
+        s.Append(", \"create_time\":", this->create_time);
     }
     inline void verify_code::CopyTo(verify_code* const& o) const noexcept
     {
@@ -5009,9 +4974,7 @@ namespace Tables
     }
     inline int vip::FromBBufferCore(xx::BBuffer& bb) noexcept
     {
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->id)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->total_recharge)) return r;
         return 0;
     }
@@ -5034,10 +4997,8 @@ namespace Tables
     inline void vip::ToStringCore(xx::String& s) const noexcept
     {
         this->BaseType::ToStringCore(s);
-        if (this->id) s.Append(", \"id\":\"", this->id, "\"");
-        else s.Append(", \"id\":nil");
-        if (this->total_recharge) s.Append(", \"total_recharge\":\"", this->total_recharge, "\"");
-        else s.Append(", \"total_recharge\":nil");
+        s.Append(", \"id\":", this->id);
+        s.Append(", \"total_recharge\":", this->total_recharge);
     }
     inline void vip::CopyTo(vip* const& o) const noexcept
     {
@@ -5081,21 +5042,15 @@ namespace Tables
     }
     inline int withdrawals::FromBBufferCore(xx::BBuffer& bb) noexcept
     {
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->withdrawals_id)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->account_id)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->money)) return r;
         bb.readLengthLimit = 0;
         if (int r = bb.Read(this->requirement)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->state_id)) return r;
         bb.readLengthLimit = 0;
         if (int r = bb.Read(this->description)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->create_time)) return r;
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->last_create_time)) return r;
         return 0;
     }
@@ -5118,22 +5073,16 @@ namespace Tables
     inline void withdrawals::ToStringCore(xx::String& s) const noexcept
     {
         this->BaseType::ToStringCore(s);
-        if (this->withdrawals_id) s.Append(", \"withdrawals_id\":\"", this->withdrawals_id, "\"");
-        else s.Append(", \"withdrawals_id\":nil");
-        if (this->account_id) s.Append(", \"account_id\":\"", this->account_id, "\"");
-        else s.Append(", \"account_id\":nil");
-        if (this->money) s.Append(", \"money\":\"", this->money, "\"");
-        else s.Append(", \"money\":nil");
+        s.Append(", \"withdrawals_id\":", this->withdrawals_id);
+        s.Append(", \"account_id\":", this->account_id);
+        s.Append(", \"money\":", this->money);
         if (this->requirement) s.Append(", \"requirement\":\"", this->requirement, "\"");
         else s.Append(", \"requirement\":nil");
-        if (this->state_id) s.Append(", \"state_id\":\"", this->state_id, "\"");
-        else s.Append(", \"state_id\":nil");
+        s.Append(", \"state_id\":", this->state_id);
         if (this->description) s.Append(", \"description\":\"", this->description, "\"");
         else s.Append(", \"description\":nil");
-        if (this->create_time) s.Append(", \"create_time\":\"", this->create_time, "\"");
-        else s.Append(", \"create_time\":nil");
-        if (this->last_create_time) s.Append(", \"last_create_time\":\"", this->last_create_time, "\"");
-        else s.Append(", \"last_create_time\":nil");
+        s.Append(", \"create_time\":", this->create_time);
+        s.Append(", \"last_create_time\":", this->last_create_time);
     }
     inline void withdrawals::CopyTo(withdrawals* const& o) const noexcept
     {
@@ -5177,7 +5126,6 @@ namespace Tables
     }
     inline int withdrawals_state::FromBBufferCore(xx::BBuffer& bb) noexcept
     {
-        bb.readLengthLimit = 0;
         if (int r = bb.Read(this->id)) return r;
         bb.readLengthLimit = 0;
         if (int r = bb.Read(this->name)) return r;
@@ -5202,8 +5150,7 @@ namespace Tables
     inline void withdrawals_state::ToStringCore(xx::String& s) const noexcept
     {
         this->BaseType::ToStringCore(s);
-        if (this->id) s.Append(", \"id\":\"", this->id, "\"");
-        else s.Append(", \"id\":nil");
+        s.Append(", \"id\":", this->id);
         if (this->name) s.Append(", \"name\":\"", this->name, "\"");
         else s.Append(", \"name\":nil");
     }

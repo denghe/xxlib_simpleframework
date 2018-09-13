@@ -10,8 +10,8 @@ namespace xx
         // 用户事件绑定区
         public Action<bool> OnConnect;
         public Action OnDisconnect;
-        public Action<IBBuffer> OnReceivePackage;
-        public Action<uint, IBBuffer> OnReceiveRequest;
+        public Action<IObject> OnReceivePackage;
+        public Action<uint, IObject> OnReceiveRequest;
         /******************************************************************************/
 
         public bool disposed;
@@ -153,7 +153,7 @@ namespace xx
                     {
                         bbRecv.Read(ref serial);
                     }
-                    var ibb = bbRecv.TryReadRoot<IBBuffer>();
+                    var ibb = bbRecv.TryReadRoot<IObject>();
                     if (ibb == null)
                     {
                         Disconnect();
@@ -207,7 +207,7 @@ namespace xx
         }
 
         // 每个类一个包, 返回总字节数
-        public int Send(params xx.IBBuffer[] pkgs)
+        public int Send(params xx.IObject[] pkgs)
         {
             if (disposed) throw new ObjectDisposedException("XxUvTcpBase");
             if (pkgs == null || pkgs.Length == 0) throw new NullReferenceException();
@@ -228,7 +228,7 @@ namespace xx
         }
 
         // 合并所有类一个包, 返回总字节数
-        public int SendCombine(params xx.IBBuffer[] pkgs)
+        public int SendCombine(params xx.IObject[] pkgs)
         {
             if (disposed) throw new ObjectDisposedException("XxUvTcpBase");
             if (bbSend == null) bbSend = new BBuffer(65536);
@@ -246,7 +246,7 @@ namespace xx
         }
 
         // 只能单发一个类, 返回流水号
-        public uint SendRequest(xx.IBBuffer pkg, Action<uint, IBBuffer> cb, int interval = 0)
+        public uint SendRequest(xx.IObject pkg, Action<uint, IObject> cb, int interval = 0)
         {
             if (disposed) throw new ObjectDisposedException("XxUvTcpBase");
             if (bbSend == null) bbSend = new BBuffer(65536);
@@ -260,7 +260,7 @@ namespace xx
         }
 
         // 发送 RPC 的应答包, 返回字节数
-        public int SendResponse(uint serial, xx.IBBuffer pkg)
+        public int SendResponse(uint serial, xx.IObject pkg)
         {
             if (disposed) throw new ObjectDisposedException("XxUvTcpBase");
             if (bbSend == null) bbSend = new BBuffer(65536);
@@ -285,7 +285,7 @@ namespace xx
         uint serial;
 
         // 流水号 与 cb(bb) 回调 的映射. bb 为空表示超时调用
-        Dict<uint, Action<uint, IBBuffer>> mapping = new Dict<uint, Action<uint, IBBuffer>>();
+        Dict<uint, Action<uint, IObject>> mapping = new Dict<uint, Action<uint, IObject>>();
 
         // 用一个队列记录流水号的超时时间, 以便删掉超时的. first: timeout ticks
         Queue<Pair<int, uint>> serials = new Queue<Pair<int, uint>>();
@@ -310,7 +310,7 @@ namespace xx
         }
 
         // 放入上下文, 返回流水号
-        uint Register(Action<uint, IBBuffer> cb, int interval = 0)
+        uint Register(Action<uint, IObject> cb, int interval = 0)
         {
             if (interval == 0) interval = rpcDefaultInterval;
             unchecked { ++serial; }                     // 循环自增
@@ -331,7 +331,7 @@ namespace xx
         }
 
         // 根据 流水号 定位到 回调函数并调用( 由 UvTcpXxxx 来 call )
-        void Callback(uint serial, IBBuffer ibb)
+        void Callback(uint serial, IObject ibb)
         {
             int idx = mapping.Find(serial);
             if (idx == -1) return;              // 已超时移除
