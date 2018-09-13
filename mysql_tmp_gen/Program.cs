@@ -1,6 +1,4 @@
-﻿using System.Reflection;
-using System.IO;
-using System.Windows.Forms;
+﻿using System.IO;
 using System.Text;
 using System;
 using MySql.Data.MySqlClient;
@@ -16,25 +14,29 @@ public static class Program
     public const string dbPassword = "root";
     public const string dbDatabase = "game_dev2";
 
-    public const string outputPath = "../../../../pkggen_template_PKG/DB_Tables.cs";
+    public const string outputPath = "../../../../pkggen_template_PKG/DBTables.cs";
 
     static void Main(string[] args)
     {
+        // 查询并填充表结构体
         List<MYSQLGEN.DbTable> ts = null;
         CallMySqlFuncs(fs =>
         {
             ts = fs.GetTables<MYSQLGEN.DbTable>(dbDatabase);
             ts.ForEach(t =>
             {
+                // 查询并填充表结构体中的字段
                 t.childs = fs.GetColumns<MYSQLGEN.DbColumn>(dbDatabase, t.TABLE_NAME);
-                t.createScript = fs.GetCreateScript<MYSQLGEN.Tables.show_create_table>(dbDatabase, t.TABLE_NAME).CreateTable;
                 t.childs.ForEach(c => c.parent = t);
+
+                // 查询并填充表结构体中的创建脚本
+                t.createScript = fs.GetCreateScript<MYSQLGEN.Tables.show_create_table>(dbDatabase, t.TABLE_NAME).CreateTable;
             });
         });
 
+
         var sb = new StringBuilder();
-        sb.Append(@"
-#pragma warning disable 0169, 0414
+        sb.Append(@"#pragma warning disable 0169, 0414
 using TemplateLibrary;
 
 namespace Tables
@@ -43,14 +45,17 @@ namespace Tables
         {
             sb.Append(@"
     /*
-" + t.createScript + @"
+" + t._GetCreateScript() + @"
     */
+    [Desc(@""" + t._GetDesc() + @""")]
     class " + t.TABLE_NAME + @"
     {");
             t.childs.ForEach(c =>
             {
+                //c.COLUMN_DEFAULT
                 sb.Append(@"
-        [Column] " + c.DATA_TYPE._GetCsharpDataType() + @" " + c.COLUMN_NAME + @";");  // todo: type, readonly?
+        [Desc(@""" + c._GetDesc() + @""")]
+        [Column" + c._IfReadonly("(true)") + @"] " + c._GetCsharpDataType() + @" " + c.COLUMN_NAME + @";");
             });
             sb.Append(@"
     }");
@@ -129,17 +134,79 @@ namespace Tables
         }
     }
 
-    public static string _GetCsharpDataType(this string DATA_TYPE)
+
+
+    public static bool _IsUnsigned(this MYSQLGEN.DbColumn c)
     {
-        switch (DATA_TYPE)
+        return c.COLUMN_TYPE.EndsWith("unsigned");
+    }
+    public static string _IfUnsigned(this MYSQLGEN.DbColumn c, string sTrue, string sFalse = "")
+    {
+        return c._IsUnsigned() ? sTrue : sFalse;
+    }
+
+
+    public static bool _IsNullable(this MYSQLGEN.DbColumn c)
+    {
+        return c.IS_NULLABLE == "YES";
+    }
+    public static string _IfNullable(this MYSQLGEN.DbColumn c, string sTrue, string sFalse = "")
+    {
+        return c._IsNullable() ? sTrue : sFalse;
+    }
+
+
+    public static bool _IsAutoIncrement(this MYSQLGEN.DbColumn c)
+    {
+        return c.EXTRA == "auto_increment";
+    }
+    public static string _IfAutoIncrement(this MYSQLGEN.DbColumn c, string sTrue, string sFalse = "")
+    {
+        return c._IsAutoIncrement() ? sTrue : sFalse;
+    }
+
+
+    public static bool _IsReadonly(this MYSQLGEN.DbColumn c)
+    {
+        return c._IsAutoIncrement();    // todo: more check
+    }
+    public static string _IfReadonly(this MYSQLGEN.DbColumn c, string sTrue, string sFalse = "")
+    {
+        return c._IsReadonly() ? sTrue : sFalse;
+    }
+
+
+    public static string _GetCsharpDataType(this MYSQLGEN.DbColumn c)
+    {
+        switch (c.DATA_TYPE)
         {
-            case "int": return "int";
-            case "bigint": return "long";
+            case "int": return c._IfUnsigned("u") + "int" + c._IfNullable("?");
+            case "bigint": return c._IfUnsigned("u") + "long" + c._IfNullable("?");
             case "varchar": return "string";
-            case "float": return "float";
-            case "double": return "double";
+            case "float": return "float" + c._IfNullable("?");
+            case "double": return "double" + c._IfNullable("?");
             case "text": return "string";
+            // todo: more
             default: throw new Exception("unhandled.");
         }
     }
+    public static string _GetDesc(this MYSQLGEN.DbColumn c)
+    {
+        // todo: 处理内含的 /* */
+        return c.COLUMN_COMMENT.Replace("\r\n", "\n").Replace("\n", "\r\n").Replace("\"", "\"\"");
+    }
+
+    public static string _GetDesc(this MYSQLGEN.DbTable t)
+    {
+        // todo: 处理内含的 /* */
+        return t.TABLE_COMMENT.Replace("\r\n", "\n").Replace("\n", "\r\n").Replace("\"", "\"\"");
+    }
+
+    public static string _GetCreateScript(this MYSQLGEN.DbTable t)
+    {
+        // todo: 处理内含的 /* */
+        return t.createScript.Replace("\r\n", "\n").Replace("\n", "\r\n");
+    }
+
+    // todo: GetName 系列, 以防止名称与 c# 关键字相冲, 以及去掉特殊字符
 }

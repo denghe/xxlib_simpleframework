@@ -42,7 +42,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DB_Tables.cs" />
+    <Compile Include="DBTables.cs" />
     <Compile Include="Funcs.cs" />
     <Compile Include="PKG_TypeIdMappings.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
