@@ -61,7 +61,7 @@
 		}
 		if (r)	// 发送失败立即发起超时回调
 		{
-			cb(serial, nullptr);
+			loop.rpcMgr->Callback(serial, nullptr);
 			return 0;
 		}
 		return serial;													// 返回流水号
@@ -199,7 +199,7 @@
 	{
 		auto serial = SendRequest(pkg, [this, cb = std::move(cb)](uint32_t ser, BBuffer* bb)
 		{
-			rpcSerials->Remove(ser);
+			if (rpcSerials) rpcSerials->Remove(ser);
 			Object_p inPkg;		// 如果 超时或 read 异常, inPkg 设空值
 			if (bb)
 			{
