@@ -624,11 +624,15 @@ namespace xx
         {
             if (rpcSerials != null)
             {
-                foreach (var serial in rpcSerials)
+                // 将就用 .net 的 HashSet, 免得导致 版本变化出 except
+                var serials = new uint[rpcSerials.Count];
+                rpcSerials.CopyTo(serials);
+                foreach (var serial in serials)
                 {
                     loop.rpcManager.Callback(serial, null);
+                    break;
                 }
-                if (rpcSerials.Count > 0) throw new InvalidProgramException();
+                serials = null;
             }
         }
 
