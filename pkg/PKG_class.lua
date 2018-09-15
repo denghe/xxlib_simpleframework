@@ -1,26 +1,31 @@
 ﻿
-PKG_PkgGenMd5_Value = '267d82049bdda2a37af33059b40eaf53'
+PKG_PkgGenMd5_Value = 'c4dfb0ecd26efc3cdfa643f478b61473'
 
-PKG_Container = {
-    typeName = "PKG_Container",
-    typeId = 7,
+PKG_Foo = {
+    typeName = "PKG_Foo",
+    typeId = 3,
     Create = function()
         local o = {}
-        o.__proto = PKG_Container
+        o.__proto = PKG_Foo
         o.__index = o
         o.__newindex = o
 
+        o.foo = null -- PKG_Foo
         o.foos = null -- List_PKG_Foo_
         return o
     end,
     FromBBuffer = function( bb, o )
-        o.foos = bb:ReadObject()
+        local ReadObject = bb.ReadObject
+        o.foo = ReadObject( bb )
+        o.foos = ReadObject( bb )
     end,
     ToBBuffer = function( bb, o )
-        bb:WriteObject( o.foos )
+        local WriteObject = bb.WriteObject
+        WriteObject( bb, o.foo )
+        WriteObject( bb, o.foos )
     end
 }
-BBuffer.Register( PKG_Container )
+BBuffer.Register( PKG_Foo )
 List_PKG_Foo_ = {
     typeName = "List_PKG_Foo_",
     typeId = 4,
@@ -48,48 +53,3 @@ List_PKG_Foo_ = {
     end
 }
 BBuffer.Register( List_PKG_Foo_ )
-PKG_Foo = {
-    typeName = "PKG_Foo",
-    typeId = 3,
-    Create = function()
-        local o = {}
-        o.__proto = PKG_Foo
-        o.__index = o
-        o.__newindex = o
-
-        o.childs = null -- List_PKG_Foo_
-        return o
-    end,
-    FromBBuffer = function( bb, o )
-        o.childs = bb:ReadObject()
-    end,
-    ToBBuffer = function( bb, o )
-        bb:WriteObject( o.childs )
-    end
-}
-BBuffer.Register( PKG_Foo )
-PKG_FooEx = {
-    typeName = "PKG_FooEx",
-    typeId = 6,
-    Create = function()
-        local o = {}
-        o.__proto = PKG_FooEx
-        o.__index = o
-        o.__newindex = o
-
-        o.parent = null -- PKG_Foo
-        setmetatable( o, PKG_Foo.Create() )
-        return o
-    end,
-    FromBBuffer = function( bb, o )
-        local p = getmetatable( o )
-        p.__proto.FromBBuffer( bb, p )
-        o.parent = bb:ReadObject()
-    end,
-    ToBBuffer = function( bb, o )
-        local p = getmetatable( o )
-        p.__proto.ToBBuffer( bb, p )
-        bb:WriteObject( o.parent )
-    end
-}
-BBuffer.Register( PKG_FooEx )

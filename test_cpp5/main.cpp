@@ -10,23 +10,23 @@ int main(int argc, char const* const* argv)
 	PKG::AllTypesRegister();
 	xx::MemPool mp;
 
-	auto c = mp.MPCreatePtr<PKG::Container>();
-	c->foos.MPCreate(&mp);
+	//auto c = mp.MPCreatePtr<PKG::Container>();
+	//c->foos.MPCreate(&mp);
 
-	auto f = mp.MPCreatePtr<PKG::Foo>();
-	f->childs.MPCreate(&mp);
-	c->foos->Add(f);
+	//auto f = mp.MPCreatePtr<PKG::Foo>();
+	//f->childs.MPCreate(&mp);
+	//c->foos->Add(f);
 
-	auto fe = mp.MPCreatePtr<PKG::FooEx>();
-	c->foos->Add(fe);
+	//auto fe = mp.MPCreatePtr<PKG::FooEx>();
+	//c->foos->Add(fe);
 
-	f->childs->Add(f);
-	f->childs->Add(fe);
-	fe->parent = f;
+	//f->childs->Add(f);
+	//f->childs->Add(fe);
+	//fe->parent = f;
 
-	xx::BBuffer bb(&mp);
-	bb.WriteRoot(c);
-	std::cout << bb << std::endl;
+	//xx::BBuffer bb(&mp);
+	//bb.WriteRoot(c);
+	//std::cout << bb << std::endl;
 
 	return 0;
 }

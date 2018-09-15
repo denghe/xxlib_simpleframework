@@ -7,7 +7,7 @@ namespace xx
     /// <summary>
     /// ByteBuffer 序列化类. Stream 的替代品. 带各种 Write Read 函数.
     /// </summary>
-    public class BBuffer : IObject
+    public class BBuffer : Object
     {
         public byte[] buf;
         public int offset, dataLen;     // 读偏移, 数据长
@@ -15,8 +15,6 @@ namespace xx
         public int dataLenBak;          // 用于 WritePackage 过程中计算包长
         public int offsetRoot;          // offset值写入修正
         public int readLengthLimit;     // 主用于传递给容器类进行长度合法校验
-
-        public static BBuffer instance = new BBuffer();     // 作为接收变量默认值比较方便
 
         #region write & read funcs
 
@@ -36,7 +34,7 @@ namespace xx
 
         public void Write(byte? v)
         {
-            if(v.HasValue)
+            if (v.HasValue)
             {
                 Write((byte)1);
                 Write(v.Value);
@@ -845,16 +843,17 @@ namespace xx
         public CustomWriteDelegate CustomWrite;
 
 
-        // 对于结构体来讲, 无法提供这样的函数. Write 会造成复制, Read 在结构体转换后 只能填充到临时变量. 只能靠生成器识别并生成直接调其成员函数的代码.
-        //public void WriteStruct<T>(T v) where T : /*struct, */IObject
-        //{
-        //    v.ToBBuffer(this);
-        //}
-        //public void ReadStruct<T>(ref T v)// where T : /*struct, */IObject
-        //{
-        //    ((IBBuffer)v).FromBBuffer(this);
-        //}
+        // 试适配 Ref<T>
 
+        public void Write<T>(Ref<T> v) where T : Object
+        {
+            if (v) Write(v.pointer);
+        }
+
+        public void Read<T>(ref Ref<T> v) where T : Object
+        {
+            Read(ref v.pointer);
+        }
 
 
         #endregion
@@ -987,7 +986,7 @@ namespace xx
         public override string ToString()
         {
             var s = new StringBuilder();
-            ToString(ref s);
+            ToString(s);
             return s.ToString();
         }
 
@@ -1039,9 +1038,9 @@ namespace xx
 
         // interface impl
 
-        public ushort GetPackageId() { return TypeIdMaps<BBuffer>.typeId; }
+        public override ushort GetPackageId() { return TypeId<BBuffer>.value; }
 
-        public void ToBBuffer(BBuffer bb)
+        public override void ToBBuffer(BBuffer bb)
         {
             var len = dataLen;
             bb.WriteLength(len);
@@ -1051,7 +1050,7 @@ namespace xx
             bb.dataLen += len;
         }
 
-        public void FromBBuffer(BBuffer bb)
+        public override void FromBBuffer(BBuffer bb)
         {
             int len = bb.ReadLength();
             if (bb.readLengthLimit != 0 && len > bb.readLengthLimit) throw new Exception("overflow of limit");
@@ -1062,7 +1061,7 @@ namespace xx
             bb.offset += len;
         }
 
-        public void ToString(ref StringBuilder s)
+        public override void ToString(StringBuilder s)
         {
             s.Append("{ \"len\":" + dataLen + ", \"offset\":" + offset + ", \"data\":[ ");
             for (var i = 0; i < dataLen; i++)
@@ -1071,44 +1070,6 @@ namespace xx
             }
             if (dataLen > 0) s.Length -= 2;
             s.Append(" ] }");
-        }
-        public void ToStringCore(ref StringBuilder sb) { }
-
-
-        bool toStringFlag;
-        public void SetToStringFlag(bool doing)
-        {
-            toStringFlag = doing;
-        }
-        public bool GetToStringFlag()
-        {
-            return toStringFlag;
-        }
-
-
-        #endregion
-
-        #region 3bytes header misc utils
-
-        public void BeginWritePackageEx(bool isRpc = false, uint serial = 0)
-        {
-            dataLenBak = dataLen;
-            Reserve(dataLen + 8);
-            dataLen += 3;
-            if (isRpc) Write(serial);
-        }
-
-        public void EndWritePackageEx(byte pkgTypeId = 0)
-        {
-            var pkgLen = dataLen - dataLenBak - 3;
-            if (pkgLen > ushort.MaxValue)
-            {
-                dataLen = dataLenBak;
-                throw new OverflowException();
-            }
-            buf[dataLenBak] = pkgTypeId;
-            buf[dataLenBak + 1] = (byte)(pkgLen);
-            buf[dataLenBak + 2] = (byte)(pkgLen >> 8);
         }
 
         #endregion
@@ -1383,38 +1344,6 @@ namespace xx
             var sb = new StringBuilder();
             Dump(ref sb, buf, len);
             return sb.ToString();
-        }
-
-        #endregion
-
-        #region type id creator mappings
-
-        public delegate IObject TypeIdCreatorFunc();
-        public static TypeIdCreatorFunc[] typeIdCreatorMappings = new TypeIdCreatorFunc[ushort.MaxValue + 1];
-        public static Dict<Type, ushort> typeTypeIdMappings = new Dict<Type, ushort>();
-
-        public static void Register<T>(ushort typeId) where T : IObject, new()
-        {
-            var r = typeTypeIdMappings.Add(typeof(T), typeId);
-            System.Diagnostics.Debug.Assert(r.success || typeTypeIdMappings.ValueAt(r.index) == typeId);
-            TypeIdMaps<T>.typeId = typeId;
-            typeIdCreatorMappings[typeId] = () => { return new T(); };
-        }
-        public static void RegisterInternals()
-        {
-            Register<BBuffer>(2);
-        }
-
-        public static IObject CreateByTypeId(ushort typeId)
-        {
-            var f = typeIdCreatorMappings[typeId];
-            if (f != null) return f();
-            return null;
-        }
-
-        public void MySqlAppend(ref StringBuilder sb, bool ignoreReadOnly)
-        {
-            throw new NotImplementedException();
         }
 
         #endregion

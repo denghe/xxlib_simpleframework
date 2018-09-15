@@ -4,7 +4,7 @@ namespace LOGDB
 {
     public static class PkgGenMd5
     {
-        public const string value = "3a19241f3d54204cda9f65ed628fac5f"; 
+        public const string value = "379e30357faf80d7cf38cd0466c1304a"; 
     }
 
     /// <summary>
@@ -23,7 +23,7 @@ namespace LOGDB
     /// <summary>
     /// 对应 log 日志表
     /// </summary>
-    public partial class Log : IObject
+    public partial class Log : xx.Object
     {
         /// <summary>
         /// 自增主键
@@ -62,12 +62,12 @@ namespace LOGDB
         /// </summary>
         public string desc;
 
-        public virtual ushort GetPackageId()
+        public override ushort GetPackageId()
         {
-            return TypeIdMaps<Log>.typeId;
+            return TypeId<Log>.value;
         }
 
-        public virtual void ToBBuffer(BBuffer bb)
+        public override void ToBBuffer(BBuffer bb)
         {
             bb.Write(this.id);
             bb.Write((int)this.level);
@@ -80,7 +80,7 @@ namespace LOGDB
             bb.Write(this.desc);
         }
 
-        public virtual void FromBBuffer(BBuffer bb)
+        public override void FromBBuffer(BBuffer bb)
         {
             bb.Read(ref this.id);
             {
@@ -101,54 +101,45 @@ namespace LOGDB
             bb.readLengthLimit = 0;
             bb.Read(ref this.desc);
         }
-        public virtual void ToString(ref System.Text.StringBuilder str)
+        public override void ToString(System.Text.StringBuilder s)
         {
-            if (GetToStringFlag())
+            if (__toStringing)
             {
-        	    str.Append("[ \"***** recursived *****\" ]");
+        	    s.Append("[ \"***** recursived *****\" ]");
         	    return;
             }
-            else SetToStringFlag(true);
+            else __toStringing = true;
 
-            str.Append("{ \"pkgTypeName\":\"Log\", \"pkgTypeId\":" + GetPackageId());
-            ToStringCore(ref str);
-            str.Append(" }");
-        
-            SetToStringFlag(false);
+            s.Append("{ \"pkgTypeName\":\"Log\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(s);
+            s.Append(" }");
+
+            __toStringing = false;
         }
-        public virtual void ToStringCore(ref System.Text.StringBuilder str)
+        public override void ToStringCore(System.Text.StringBuilder s)
         {
-            str.Append(", \"id\":" + id);
-            str.Append(", \"level\":" + level);
-            str.Append(", \"time\":" + time);
-            if (machine != null) str.Append(", \"machine\":\"" + machine + "\"");
-            else str.Append(", \"machine\":nil");
-            if (service != null) str.Append(", \"service\":\"" + service + "\"");
-            else str.Append(", \"service\":nil");
-            if (instanceId != null) str.Append(", \"instanceId\":\"" + instanceId + "\"");
-            else str.Append(", \"instanceId\":nil");
-            if (title != null) str.Append(", \"title\":\"" + title + "\"");
-            else str.Append(", \"title\":nil");
-            str.Append(", \"opcode\":" + opcode);
-            if (desc != null) str.Append(", \"desc\":\"" + desc + "\"");
-            else str.Append(", \"desc\":nil");
+            s.Append(", \"id\":" + id);
+            s.Append(", \"level\":" + level);
+            s.Append(", \"time\":" + time);
+            if (machine != null) s.Append(", \"machine\":\"" + machine + "\"");
+            else s.Append(", \"machine\":nil");
+            if (service != null) s.Append(", \"service\":\"" + service + "\"");
+            else s.Append(", \"service\":nil");
+            if (instanceId != null) s.Append(", \"instanceId\":\"" + instanceId + "\"");
+            else s.Append(", \"instanceId\":nil");
+            if (title != null) s.Append(", \"title\":\"" + title + "\"");
+            else s.Append(", \"title\":nil");
+            s.Append(", \"opcode\":" + opcode);
+            if (desc != null) s.Append(", \"desc\":\"" + desc + "\"");
+            else s.Append(", \"desc\":nil");
         }
         public override string ToString()
         {
             var sb = new System.Text.StringBuilder();
-            ToString(ref sb);
+            ToString(sb);
             return sb.ToString();
         }
-        bool toStringFlag;
-        public void SetToStringFlag(bool doing)
-        {
-            toStringFlag = doing;
-        }
-        public bool GetToStringFlag()
-        {
-            return toStringFlag;
-        }
-        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        public override void MySqlAppend(System.Text.StringBuilder sb, bool ignoreReadOnly)
         {
         }
     }
@@ -156,8 +147,8 @@ namespace LOGDB
     {
         public static void Register()
         {
-            xx.BBuffer.RegisterInternals();
-            BBuffer.Register<Log>(3);
+            xx.Object.RegisterInternals();
+            xx.Object.Register<Log>(3);
         }
     }
 }

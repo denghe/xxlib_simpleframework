@@ -99,7 +99,7 @@ namespace " + c.Namespace + @"
             else
             {
                 sb.Append(c._GetDesc()._GetComment_CSharp(4) + @"
-    public partial class " + c.Name + @" : " + (c._HasBaseType() ? c.BaseType._GetTypeDecl_Csharp() : "IObject") + @"
+    public partial class " + c.Name + @" : " + c.BaseType._GetTypeDecl_Csharp() + @"
     {");
             }
 
@@ -130,12 +130,12 @@ namespace " + c.Namespace + @"
 
             sb.Append(@"
 
-        public" + (c.IsValueType ? "" : (c._HasBaseType() ? " override" : " virtual")) + @" ushort GetPackageId()
+        public" + (c.IsValueType ? "" : " override") + @" ushort GetPackageId()
         {
-            return TypeIdMaps<" + c.Name + @">.typeId;
+            return TypeId<" + c.Name + @">.value;
         }
 
-        public" + (c.IsValueType ? "" : (c._HasBaseType() ? " override" : " virtual")) + @" void ToBBuffer(BBuffer bb)
+        public" + (c.IsValueType ? "" : " override") + @" void ToBBuffer(BBuffer bb)
         {");
 
             if (!c.IsValueType && c._HasBaseType())
@@ -178,7 +178,7 @@ namespace " + c.Namespace + @"
             sb.Append(@"
         }
 
-        public" + (c.IsValueType ? "" : (c._HasBaseType() ? " override" : " virtual")) + @" void FromBBuffer(BBuffer bb)
+        public" + (c.IsValueType ? "" : " override") + @" void FromBBuffer(BBuffer bb)
         {");
             if (!c.IsValueType && c._HasBaseType())
             {
@@ -220,24 +220,36 @@ namespace " + c.Namespace + @"
             }
             sb.Append(@"
         }
-        public" + (c.IsValueType ? "" : (c._HasBaseType() ? " override" : " virtual")) + @" void ToString(ref System.Text.StringBuilder str)
-        {
-            if (GetToStringFlag())
+        public" + (c.IsValueType ? "" : " override") + @" void ToString(System.Text.StringBuilder s)
+        {");
+
+            if (!c.IsValueType)
             {
-        	    str.Append(""[ \""***** recursived *****\"" ]"");
+                sb.Append(@"
+            if (__toStringing)
+            {
+        	    s.Append(""[ \""***** recursived *****\"" ]"");
         	    return;
             }
-            else SetToStringFlag(true);
+            else __toStringing = true;
+");
+            }
+            sb.Append(@"
+            s.Append(""{ \""pkgTypeName\"":\""" + (string.IsNullOrEmpty(c.Namespace) ? c.Name : c.Namespace + "." + c.Name) + @"\"", \""pkgTypeId\"":"" + GetPackageId());
+            ToStringCore(s);
+            s.Append("" }"");");
+            if (!c.IsValueType)
+            {
+                sb.Append(@"
 
-            str.Append(""{ \""pkgTypeName\"":\""" + (string.IsNullOrEmpty(c.Namespace) ? c.Name : c.Namespace + "." + c.Name) + @"\"", \""pkgTypeId\"":"" + GetPackageId());
-            ToStringCore(ref str);
-            str.Append("" }"");
-        
-            SetToStringFlag(false);
+            __toStringing = false;");
+            }
+
+            sb.Append(@"
         }
-        public" + (c.IsValueType ? "" : (c._HasBaseType() ? " override" : " virtual")) + @" void ToStringCore(ref System.Text.StringBuilder str)
+        public" + (c.IsValueType ? "" : " override") + @" void ToStringCore(System.Text.StringBuilder s)
         {" + (c._HasBaseType() ? @"
-            base.ToStringCore(ref str);" : ""));
+            base.ToStringCore(s);" : ""));
             foreach (var f in fs)
             {
                 var ft = f.FieldType;
@@ -245,23 +257,23 @@ namespace " + c.Namespace + @"
                 if (ft._IsString())
                 {
                     sb.Append(@"
-            if (" + f.Name + @" != null) str.Append("", \""" + f.Name + @"\"":\"""" + " + f.Name + @" + ""\"""");
-            else str.Append("", \""" + f.Name + @"\"":nil"");");
+            if (" + f.Name + @" != null) s.Append("", \""" + f.Name + @"\"":\"""" + " + f.Name + @" + ""\"""");
+            else s.Append("", \""" + f.Name + @"\"":nil"");");
                 }
                 else if (ft._IsNullable())
                 {
                     sb.Append(@"
-            str.Append("", \""" + f.Name + @"\"":"" + (" + f.Name + @".HasValue ? " + f.Name + @".Value.ToString() : ""nil""));");
+            s.Append("", \""" + f.Name + @"\"":"" + (" + f.Name + @".HasValue ? " + f.Name + @".Value.ToString() : ""nil""));");
                 }
                 else if (ft._IsUserClass() || ft._IsString() || ft._IsList())  // todo: 进一步判断所有可能为空的
                 {
                     sb.Append(@"
-            str.Append("", \""" + f.Name + @"\"":"" + (" + f.Name + @" == null ? ""nil"" : " + f.Name + @".ToString()));");
+            s.Append("", \""" + f.Name + @"\"":"" + (" + f.Name + @" == null ? ""nil"" : " + f.Name + @".ToString()));");
                 }
                 else
                 {
                     sb.Append(@"
-            str.Append("", \""" + f.Name + @"\"":"" + " + f.Name + @");");
+            s.Append("", \""" + f.Name + @"\"":"" + " + f.Name + @");");
                 }
             }
             sb.Append(@"
@@ -269,94 +281,83 @@ namespace " + c.Namespace + @"
         public override string ToString()
         {
             var sb = new System.Text.StringBuilder();
-            ToString(ref sb);
+            ToString(sb);
             return sb.ToString();
         }");
 
-            if (!c._HasBaseType())
+            if (!c.IsValueType)
             {
                 sb.Append(@"
-        bool toStringFlag;
-        public void SetToStringFlag(bool doing)
-        {
-            toStringFlag = doing;
-        }
-        public bool GetToStringFlag()
-        {
-            return toStringFlag;
-        }");
-            }
-
-            sb.Append(@"
-        public" + (c.IsValueType ? "" : (c._HasBaseType() ? " override" : " virtual")) + @" void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        public override void MySqlAppend(System.Text.StringBuilder sb, bool ignoreReadOnly)
         {");
-            if (sqlcs.Contains(c))
-            {
-                sb.Append(@"
+                if (sqlcs.Contains(c))
+                {
+                    sb.Append(@"
             sb.Append(""("");");
 
-                foreach (var m in fs)
-                {
-                    if (!m._Has<TemplateLibrary.Column>()) continue;
-                    if (m._IsReadOnly())
+                    foreach (var m in fs)
                     {
-                        sb.Append(@"
+                        if (!m._Has<TemplateLibrary.Column>()) continue;
+                        if (m._IsReadOnly())
+                        {
+                            sb.Append(@"
             if (!ignoreReadOnly)
             {");
-                    }
+                        }
 
-                    var mt = m.FieldType;
-                    var mtn = mt._GetTypeDecl_Csharp();
+                        var mt = m.FieldType;
+                        var mtn = mt._GetTypeDecl_Csharp();
 
-                    if (mt._IsUserClass())
-                    {
-                        throw new Exception("column is Object, unsupported now.");
-                    }
-                    else if (mt._IsString())
-                    {
-                        sb.Append(@"
+                        if (mt._IsUserClass())
+                        {
+                            throw new Exception("column is Object, unsupported now.");
+                        }
+                        else if (mt._IsString())
+                        {
+                            sb.Append(@"
             sb.Append(this." + m.Name + @" == null ? ""null"" : (""'"" + this." + m.Name + @".Replace(""'"", ""''"") + ""'""));");
-                    }
-                    else if (mt.IsEnum)
-                    {
-                        sb.Append(@"
+                        }
+                        else if (mt.IsEnum)
+                        {
+                            sb.Append(@"
             sb.Append(" + "(" + mt._GetEnumUnderlyingTypeName_Csharp() + ")this." + m.Name + @");");
-                    }
-                    else if (mt._IsNullable())
-                    {
-                        sb.Append(@"
+                        }
+                        else if (mt._IsNullable())
+                        {
+                            sb.Append(@"
             sb.Append(this." + m.Name + @".HasValue ? this." + m.Name + @".Value.ToString() : ""null"");");
-                    }
-                    else
-                    {
-                        sb.Append(@"
+                        }
+                        else
+                        {
+                            sb.Append(@"
             sb.Append(this." + m.Name + @");");
-                    }
+                        }
 
-                    sb.Append(@"
+                        sb.Append(@"
             sb.Append("", "");");
 
-                    if (m._IsReadOnly())
-                    {
-                        sb.Append(@"
+                        if (m._IsReadOnly())
+                        {
+                            sb.Append(@"
             }");
+                        }
                     }
-                }
-                sb.Append(@"
+                    sb.Append(@"
             sb.Length -= 2;
             sb.Append("")"");
 ");
-            }
-            else
-            {
-                if (c._HasBaseType())
-                {
-                    sb.Append(@"
-            base.MySqlAppend(ref sb, ignoreReadOnly);");
                 }
-            }
-            sb.Append(@"
+                else
+                {
+                    if (c._HasBaseType())
+                    {
+                        sb.Append(@"
+            base.MySqlAppend(sb, ignoreReadOnly);");
+                    }
+                }
+                sb.Append(@"
         }");
+            }
 
             // todo: ToString support
 
@@ -383,7 +384,7 @@ namespace " + c.Namespace + @"
     {
         public static void Register()
         {
-            xx.BBuffer.RegisterInternals();");
+            xx.Object.RegisterInternals();");
 
         foreach (var kv in typeIds.types)
         {
@@ -393,7 +394,7 @@ namespace " + c.Namespace + @"
             var typeId = kv.Value;
 
             sb.Append(@"
-            BBuffer.Register<" + ct._GetTypeDecl_Csharp() + @">(" + typeId++ + ");");
+            xx.Object.Register<" + ct._GetTypeDecl_Csharp() + @">(" + typeId++ + ");");
         }
 
         sb.Append(@"

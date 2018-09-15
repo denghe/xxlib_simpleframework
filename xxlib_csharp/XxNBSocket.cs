@@ -450,3 +450,31 @@ namespace xx
     }
 
 }
+
+
+
+
+#region 3bytes header misc utils
+
+public void BeginWritePackageEx(bool isRpc = false, uint serial = 0)
+{
+    dataLenBak = dataLen;
+    Reserve(dataLen + 8);
+    dataLen += 3;
+    if (isRpc) Write(serial);
+}
+
+public void EndWritePackageEx(byte pkgTypeId = 0)
+{
+    var pkgLen = dataLen - dataLenBak - 3;
+    if (pkgLen > ushort.MaxValue)
+    {
+        dataLen = dataLenBak;
+        throw new OverflowException();
+    }
+    buf[dataLenBak] = pkgTypeId;
+    buf[dataLenBak + 1] = (byte)(pkgLen);
+    buf[dataLenBak + 2] = (byte)(pkgLen >> 8);
+}
+
+#endregion

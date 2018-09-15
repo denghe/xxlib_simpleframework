@@ -4,7 +4,7 @@ namespace MYSQLGEN
 {
     public static class PkgGenMd5
     {
-        public const string value = "ac667c7e9a29ebbae0e6434c4c261786"; 
+        public const string value = "c5aa5ca9f5580ed6e1fcc6053e0e625d"; 
     }
 
     public partial class DbTable : Tables.TABLES
@@ -14,7 +14,7 @@ namespace MYSQLGEN
 
         public override ushort GetPackageId()
         {
-            return TypeIdMaps<DbTable>.typeId;
+            return TypeId<DbTable>.value;
         }
 
         public override void ToBBuffer(BBuffer bb)
@@ -32,37 +32,37 @@ namespace MYSQLGEN
             bb.readLengthLimit = 0;
             bb.Read(ref this.createScript);
         }
-        public override void ToString(ref System.Text.StringBuilder str)
+        public override void ToString(System.Text.StringBuilder s)
         {
-            if (GetToStringFlag())
+            if (__toStringing)
             {
-        	    str.Append("[ \"***** recursived *****\" ]");
+        	    s.Append("[ \"***** recursived *****\" ]");
         	    return;
             }
-            else SetToStringFlag(true);
+            else __toStringing = true;
 
-            str.Append("{ \"pkgTypeName\":\"DbTable\", \"pkgTypeId\":" + GetPackageId());
-            ToStringCore(ref str);
-            str.Append(" }");
-        
-            SetToStringFlag(false);
+            s.Append("{ \"pkgTypeName\":\"DbTable\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(s);
+            s.Append(" }");
+
+            __toStringing = false;
         }
-        public override void ToStringCore(ref System.Text.StringBuilder str)
+        public override void ToStringCore(System.Text.StringBuilder s)
         {
-            base.ToStringCore(ref str);
-            str.Append(", \"childs\":" + (childs == null ? "nil" : childs.ToString()));
-            if (createScript != null) str.Append(", \"createScript\":\"" + createScript + "\"");
-            else str.Append(", \"createScript\":nil");
+            base.ToStringCore(s);
+            s.Append(", \"childs\":" + (childs == null ? "nil" : childs.ToString()));
+            if (createScript != null) s.Append(", \"createScript\":\"" + createScript + "\"");
+            else s.Append(", \"createScript\":nil");
         }
         public override string ToString()
         {
             var sb = new System.Text.StringBuilder();
-            ToString(ref sb);
+            ToString(sb);
             return sb.ToString();
         }
-        public override void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        public override void MySqlAppend(System.Text.StringBuilder sb, bool ignoreReadOnly)
         {
-            base.MySqlAppend(ref sb, ignoreReadOnly);
+            base.MySqlAppend(sb, ignoreReadOnly);
         }
     }
     public partial class DbColumn : Tables.COLUMNS
@@ -71,7 +71,7 @@ namespace MYSQLGEN
 
         public override ushort GetPackageId()
         {
-            return TypeIdMaps<DbColumn>.typeId;
+            return TypeId<DbColumn>.value;
         }
 
         public override void ToBBuffer(BBuffer bb)
@@ -85,40 +85,40 @@ namespace MYSQLGEN
             base.FromBBuffer(bb);
             bb.Read(ref this.parent);
         }
-        public override void ToString(ref System.Text.StringBuilder str)
+        public override void ToString(System.Text.StringBuilder s)
         {
-            if (GetToStringFlag())
+            if (__toStringing)
             {
-        	    str.Append("[ \"***** recursived *****\" ]");
+        	    s.Append("[ \"***** recursived *****\" ]");
         	    return;
             }
-            else SetToStringFlag(true);
+            else __toStringing = true;
 
-            str.Append("{ \"pkgTypeName\":\"DbColumn\", \"pkgTypeId\":" + GetPackageId());
-            ToStringCore(ref str);
-            str.Append(" }");
-        
-            SetToStringFlag(false);
+            s.Append("{ \"pkgTypeName\":\"DbColumn\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(s);
+            s.Append(" }");
+
+            __toStringing = false;
         }
-        public override void ToStringCore(ref System.Text.StringBuilder str)
+        public override void ToStringCore(System.Text.StringBuilder s)
         {
-            base.ToStringCore(ref str);
-            str.Append(", \"parent\":" + (parent == null ? "nil" : parent.ToString()));
+            base.ToStringCore(s);
+            s.Append(", \"parent\":" + (parent == null ? "nil" : parent.ToString()));
         }
         public override string ToString()
         {
             var sb = new System.Text.StringBuilder();
-            ToString(ref sb);
+            ToString(sb);
             return sb.ToString();
         }
-        public override void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        public override void MySqlAppend(System.Text.StringBuilder sb, bool ignoreReadOnly)
         {
-            base.MySqlAppend(ref sb, ignoreReadOnly);
+            base.MySqlAppend(sb, ignoreReadOnly);
         }
     }
 namespace Tables
 {
-    public partial class TABLES : IObject
+    public partial class TABLES : xx.Object
     {
         public string TABLE_CATALOG;
         public string TABLE_SCHEMA;
@@ -142,12 +142,12 @@ namespace Tables
         public string CREATE_OPTIONS;
         public string TABLE_COMMENT;
 
-        public virtual ushort GetPackageId()
+        public override ushort GetPackageId()
         {
-            return TypeIdMaps<TABLES>.typeId;
+            return TypeId<TABLES>.value;
         }
 
-        public virtual void ToBBuffer(BBuffer bb)
+        public override void ToBBuffer(BBuffer bb)
         {
             bb.Write(this.TABLE_CATALOG);
             bb.Write(this.TABLE_SCHEMA);
@@ -172,7 +172,7 @@ namespace Tables
             bb.Write(this.TABLE_COMMENT);
         }
 
-        public virtual void FromBBuffer(BBuffer bb)
+        public override void FromBBuffer(BBuffer bb)
         {
             bb.readLengthLimit = 0;
             bb.Read(ref this.TABLE_CATALOG);
@@ -208,73 +208,64 @@ namespace Tables
             bb.readLengthLimit = 0;
             bb.Read(ref this.TABLE_COMMENT);
         }
-        public virtual void ToString(ref System.Text.StringBuilder str)
+        public override void ToString(System.Text.StringBuilder s)
         {
-            if (GetToStringFlag())
+            if (__toStringing)
             {
-        	    str.Append("[ \"***** recursived *****\" ]");
+        	    s.Append("[ \"***** recursived *****\" ]");
         	    return;
             }
-            else SetToStringFlag(true);
+            else __toStringing = true;
 
-            str.Append("{ \"pkgTypeName\":\"Tables.TABLES\", \"pkgTypeId\":" + GetPackageId());
-            ToStringCore(ref str);
-            str.Append(" }");
-        
-            SetToStringFlag(false);
+            s.Append("{ \"pkgTypeName\":\"Tables.TABLES\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(s);
+            s.Append(" }");
+
+            __toStringing = false;
         }
-        public virtual void ToStringCore(ref System.Text.StringBuilder str)
+        public override void ToStringCore(System.Text.StringBuilder s)
         {
-            if (TABLE_CATALOG != null) str.Append(", \"TABLE_CATALOG\":\"" + TABLE_CATALOG + "\"");
-            else str.Append(", \"TABLE_CATALOG\":nil");
-            if (TABLE_SCHEMA != null) str.Append(", \"TABLE_SCHEMA\":\"" + TABLE_SCHEMA + "\"");
-            else str.Append(", \"TABLE_SCHEMA\":nil");
-            if (TABLE_NAME != null) str.Append(", \"TABLE_NAME\":\"" + TABLE_NAME + "\"");
-            else str.Append(", \"TABLE_NAME\":nil");
-            if (TABLE_TYPE != null) str.Append(", \"TABLE_TYPE\":\"" + TABLE_TYPE + "\"");
-            else str.Append(", \"TABLE_TYPE\":nil");
-            if (ENGINE != null) str.Append(", \"ENGINE\":\"" + ENGINE + "\"");
-            else str.Append(", \"ENGINE\":nil");
-            str.Append(", \"VERSION\":" + (VERSION.HasValue ? VERSION.Value.ToString() : "nil"));
-            if (ROW_FORMAT != null) str.Append(", \"ROW_FORMAT\":\"" + ROW_FORMAT + "\"");
-            else str.Append(", \"ROW_FORMAT\":nil");
-            str.Append(", \"TABLE_ROWS\":" + (TABLE_ROWS.HasValue ? TABLE_ROWS.Value.ToString() : "nil"));
-            str.Append(", \"AVG_ROW_LENGTH\":" + (AVG_ROW_LENGTH.HasValue ? AVG_ROW_LENGTH.Value.ToString() : "nil"));
-            str.Append(", \"DATA_LENGTH\":" + (DATA_LENGTH.HasValue ? DATA_LENGTH.Value.ToString() : "nil"));
-            str.Append(", \"MAX_DATA_LENGTH\":" + (MAX_DATA_LENGTH.HasValue ? MAX_DATA_LENGTH.Value.ToString() : "nil"));
-            str.Append(", \"INDEX_LENGTH\":" + (INDEX_LENGTH.HasValue ? INDEX_LENGTH.Value.ToString() : "nil"));
-            str.Append(", \"DATA_FREE\":" + (DATA_FREE.HasValue ? DATA_FREE.Value.ToString() : "nil"));
-            str.Append(", \"AUTO_INCREMENT\":" + (AUTO_INCREMENT.HasValue ? AUTO_INCREMENT.Value.ToString() : "nil"));
-            if (CREATE_TIME != null) str.Append(", \"CREATE_TIME\":\"" + CREATE_TIME + "\"");
-            else str.Append(", \"CREATE_TIME\":nil");
-            if (UPDATE_TIME != null) str.Append(", \"UPDATE_TIME\":\"" + UPDATE_TIME + "\"");
-            else str.Append(", \"UPDATE_TIME\":nil");
-            if (CHECK_TIME != null) str.Append(", \"CHECK_TIME\":\"" + CHECK_TIME + "\"");
-            else str.Append(", \"CHECK_TIME\":nil");
-            if (TABLE_COLLATION != null) str.Append(", \"TABLE_COLLATION\":\"" + TABLE_COLLATION + "\"");
-            else str.Append(", \"TABLE_COLLATION\":nil");
-            str.Append(", \"CHECKSUM\":" + (CHECKSUM.HasValue ? CHECKSUM.Value.ToString() : "nil"));
-            if (CREATE_OPTIONS != null) str.Append(", \"CREATE_OPTIONS\":\"" + CREATE_OPTIONS + "\"");
-            else str.Append(", \"CREATE_OPTIONS\":nil");
-            if (TABLE_COMMENT != null) str.Append(", \"TABLE_COMMENT\":\"" + TABLE_COMMENT + "\"");
-            else str.Append(", \"TABLE_COMMENT\":nil");
+            if (TABLE_CATALOG != null) s.Append(", \"TABLE_CATALOG\":\"" + TABLE_CATALOG + "\"");
+            else s.Append(", \"TABLE_CATALOG\":nil");
+            if (TABLE_SCHEMA != null) s.Append(", \"TABLE_SCHEMA\":\"" + TABLE_SCHEMA + "\"");
+            else s.Append(", \"TABLE_SCHEMA\":nil");
+            if (TABLE_NAME != null) s.Append(", \"TABLE_NAME\":\"" + TABLE_NAME + "\"");
+            else s.Append(", \"TABLE_NAME\":nil");
+            if (TABLE_TYPE != null) s.Append(", \"TABLE_TYPE\":\"" + TABLE_TYPE + "\"");
+            else s.Append(", \"TABLE_TYPE\":nil");
+            if (ENGINE != null) s.Append(", \"ENGINE\":\"" + ENGINE + "\"");
+            else s.Append(", \"ENGINE\":nil");
+            s.Append(", \"VERSION\":" + (VERSION.HasValue ? VERSION.Value.ToString() : "nil"));
+            if (ROW_FORMAT != null) s.Append(", \"ROW_FORMAT\":\"" + ROW_FORMAT + "\"");
+            else s.Append(", \"ROW_FORMAT\":nil");
+            s.Append(", \"TABLE_ROWS\":" + (TABLE_ROWS.HasValue ? TABLE_ROWS.Value.ToString() : "nil"));
+            s.Append(", \"AVG_ROW_LENGTH\":" + (AVG_ROW_LENGTH.HasValue ? AVG_ROW_LENGTH.Value.ToString() : "nil"));
+            s.Append(", \"DATA_LENGTH\":" + (DATA_LENGTH.HasValue ? DATA_LENGTH.Value.ToString() : "nil"));
+            s.Append(", \"MAX_DATA_LENGTH\":" + (MAX_DATA_LENGTH.HasValue ? MAX_DATA_LENGTH.Value.ToString() : "nil"));
+            s.Append(", \"INDEX_LENGTH\":" + (INDEX_LENGTH.HasValue ? INDEX_LENGTH.Value.ToString() : "nil"));
+            s.Append(", \"DATA_FREE\":" + (DATA_FREE.HasValue ? DATA_FREE.Value.ToString() : "nil"));
+            s.Append(", \"AUTO_INCREMENT\":" + (AUTO_INCREMENT.HasValue ? AUTO_INCREMENT.Value.ToString() : "nil"));
+            if (CREATE_TIME != null) s.Append(", \"CREATE_TIME\":\"" + CREATE_TIME + "\"");
+            else s.Append(", \"CREATE_TIME\":nil");
+            if (UPDATE_TIME != null) s.Append(", \"UPDATE_TIME\":\"" + UPDATE_TIME + "\"");
+            else s.Append(", \"UPDATE_TIME\":nil");
+            if (CHECK_TIME != null) s.Append(", \"CHECK_TIME\":\"" + CHECK_TIME + "\"");
+            else s.Append(", \"CHECK_TIME\":nil");
+            if (TABLE_COLLATION != null) s.Append(", \"TABLE_COLLATION\":\"" + TABLE_COLLATION + "\"");
+            else s.Append(", \"TABLE_COLLATION\":nil");
+            s.Append(", \"CHECKSUM\":" + (CHECKSUM.HasValue ? CHECKSUM.Value.ToString() : "nil"));
+            if (CREATE_OPTIONS != null) s.Append(", \"CREATE_OPTIONS\":\"" + CREATE_OPTIONS + "\"");
+            else s.Append(", \"CREATE_OPTIONS\":nil");
+            if (TABLE_COMMENT != null) s.Append(", \"TABLE_COMMENT\":\"" + TABLE_COMMENT + "\"");
+            else s.Append(", \"TABLE_COMMENT\":nil");
         }
         public override string ToString()
         {
             var sb = new System.Text.StringBuilder();
-            ToString(ref sb);
+            ToString(sb);
             return sb.ToString();
         }
-        bool toStringFlag;
-        public void SetToStringFlag(bool doing)
-        {
-            toStringFlag = doing;
-        }
-        public bool GetToStringFlag()
-        {
-            return toStringFlag;
-        }
-        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        public override void MySqlAppend(System.Text.StringBuilder sb, bool ignoreReadOnly)
         {
             sb.Append("(");
             sb.Append(this.TABLE_CATALOG == null ? "null" : ("'" + this.TABLE_CATALOG.Replace("'", "''") + "'"));
@@ -324,7 +315,7 @@ namespace Tables
 
         }
     }
-    public partial class COLUMNS : IObject
+    public partial class COLUMNS : xx.Object
     {
         public string TABLE_CATALOG;
         public string TABLE_SCHEMA;
@@ -348,12 +339,12 @@ namespace Tables
         public string COLUMN_COMMENT;
         public string GENERATION_EXPRESSION;
 
-        public virtual ushort GetPackageId()
+        public override ushort GetPackageId()
         {
-            return TypeIdMaps<COLUMNS>.typeId;
+            return TypeId<COLUMNS>.value;
         }
 
-        public virtual void ToBBuffer(BBuffer bb)
+        public override void ToBBuffer(BBuffer bb)
         {
             bb.Write(this.TABLE_CATALOG);
             bb.Write(this.TABLE_SCHEMA);
@@ -378,7 +369,7 @@ namespace Tables
             bb.Write(this.GENERATION_EXPRESSION);
         }
 
-        public virtual void FromBBuffer(BBuffer bb)
+        public override void FromBBuffer(BBuffer bb)
         {
             bb.readLengthLimit = 0;
             bb.Read(ref this.TABLE_CATALOG);
@@ -417,76 +408,67 @@ namespace Tables
             bb.readLengthLimit = 0;
             bb.Read(ref this.GENERATION_EXPRESSION);
         }
-        public virtual void ToString(ref System.Text.StringBuilder str)
+        public override void ToString(System.Text.StringBuilder s)
         {
-            if (GetToStringFlag())
+            if (__toStringing)
             {
-        	    str.Append("[ \"***** recursived *****\" ]");
+        	    s.Append("[ \"***** recursived *****\" ]");
         	    return;
             }
-            else SetToStringFlag(true);
+            else __toStringing = true;
 
-            str.Append("{ \"pkgTypeName\":\"Tables.COLUMNS\", \"pkgTypeId\":" + GetPackageId());
-            ToStringCore(ref str);
-            str.Append(" }");
-        
-            SetToStringFlag(false);
+            s.Append("{ \"pkgTypeName\":\"Tables.COLUMNS\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(s);
+            s.Append(" }");
+
+            __toStringing = false;
         }
-        public virtual void ToStringCore(ref System.Text.StringBuilder str)
+        public override void ToStringCore(System.Text.StringBuilder s)
         {
-            if (TABLE_CATALOG != null) str.Append(", \"TABLE_CATALOG\":\"" + TABLE_CATALOG + "\"");
-            else str.Append(", \"TABLE_CATALOG\":nil");
-            if (TABLE_SCHEMA != null) str.Append(", \"TABLE_SCHEMA\":\"" + TABLE_SCHEMA + "\"");
-            else str.Append(", \"TABLE_SCHEMA\":nil");
-            if (TABLE_NAME != null) str.Append(", \"TABLE_NAME\":\"" + TABLE_NAME + "\"");
-            else str.Append(", \"TABLE_NAME\":nil");
-            if (COLUMN_NAME != null) str.Append(", \"COLUMN_NAME\":\"" + COLUMN_NAME + "\"");
-            else str.Append(", \"COLUMN_NAME\":nil");
-            str.Append(", \"ORDINAL_POSITION\":" + ORDINAL_POSITION);
-            if (COLUMN_DEFAULT != null) str.Append(", \"COLUMN_DEFAULT\":\"" + COLUMN_DEFAULT + "\"");
-            else str.Append(", \"COLUMN_DEFAULT\":nil");
-            if (IS_NULLABLE != null) str.Append(", \"IS_NULLABLE\":\"" + IS_NULLABLE + "\"");
-            else str.Append(", \"IS_NULLABLE\":nil");
-            if (DATA_TYPE != null) str.Append(", \"DATA_TYPE\":\"" + DATA_TYPE + "\"");
-            else str.Append(", \"DATA_TYPE\":nil");
-            str.Append(", \"CHARACTER_MAXIMUM_LENGTH\":" + (CHARACTER_MAXIMUM_LENGTH.HasValue ? CHARACTER_MAXIMUM_LENGTH.Value.ToString() : "nil"));
-            str.Append(", \"CHARACTER_OCTET_LENGTH\":" + (CHARACTER_OCTET_LENGTH.HasValue ? CHARACTER_OCTET_LENGTH.Value.ToString() : "nil"));
-            str.Append(", \"NUMERIC_PRECISION\":" + (NUMERIC_PRECISION.HasValue ? NUMERIC_PRECISION.Value.ToString() : "nil"));
-            str.Append(", \"NUMERIC_SCALE\":" + (NUMERIC_SCALE.HasValue ? NUMERIC_SCALE.Value.ToString() : "nil"));
-            str.Append(", \"DATETIME_PRECISION\":" + (DATETIME_PRECISION.HasValue ? DATETIME_PRECISION.Value.ToString() : "nil"));
-            if (CHARACTER_SET_NAME != null) str.Append(", \"CHARACTER_SET_NAME\":\"" + CHARACTER_SET_NAME + "\"");
-            else str.Append(", \"CHARACTER_SET_NAME\":nil");
-            if (COLLATION_NAME != null) str.Append(", \"COLLATION_NAME\":\"" + COLLATION_NAME + "\"");
-            else str.Append(", \"COLLATION_NAME\":nil");
-            if (COLUMN_TYPE != null) str.Append(", \"COLUMN_TYPE\":\"" + COLUMN_TYPE + "\"");
-            else str.Append(", \"COLUMN_TYPE\":nil");
-            if (COLUMN_KEY != null) str.Append(", \"COLUMN_KEY\":\"" + COLUMN_KEY + "\"");
-            else str.Append(", \"COLUMN_KEY\":nil");
-            if (EXTRA != null) str.Append(", \"EXTRA\":\"" + EXTRA + "\"");
-            else str.Append(", \"EXTRA\":nil");
-            if (PRIVILEGES != null) str.Append(", \"PRIVILEGES\":\"" + PRIVILEGES + "\"");
-            else str.Append(", \"PRIVILEGES\":nil");
-            if (COLUMN_COMMENT != null) str.Append(", \"COLUMN_COMMENT\":\"" + COLUMN_COMMENT + "\"");
-            else str.Append(", \"COLUMN_COMMENT\":nil");
-            if (GENERATION_EXPRESSION != null) str.Append(", \"GENERATION_EXPRESSION\":\"" + GENERATION_EXPRESSION + "\"");
-            else str.Append(", \"GENERATION_EXPRESSION\":nil");
+            if (TABLE_CATALOG != null) s.Append(", \"TABLE_CATALOG\":\"" + TABLE_CATALOG + "\"");
+            else s.Append(", \"TABLE_CATALOG\":nil");
+            if (TABLE_SCHEMA != null) s.Append(", \"TABLE_SCHEMA\":\"" + TABLE_SCHEMA + "\"");
+            else s.Append(", \"TABLE_SCHEMA\":nil");
+            if (TABLE_NAME != null) s.Append(", \"TABLE_NAME\":\"" + TABLE_NAME + "\"");
+            else s.Append(", \"TABLE_NAME\":nil");
+            if (COLUMN_NAME != null) s.Append(", \"COLUMN_NAME\":\"" + COLUMN_NAME + "\"");
+            else s.Append(", \"COLUMN_NAME\":nil");
+            s.Append(", \"ORDINAL_POSITION\":" + ORDINAL_POSITION);
+            if (COLUMN_DEFAULT != null) s.Append(", \"COLUMN_DEFAULT\":\"" + COLUMN_DEFAULT + "\"");
+            else s.Append(", \"COLUMN_DEFAULT\":nil");
+            if (IS_NULLABLE != null) s.Append(", \"IS_NULLABLE\":\"" + IS_NULLABLE + "\"");
+            else s.Append(", \"IS_NULLABLE\":nil");
+            if (DATA_TYPE != null) s.Append(", \"DATA_TYPE\":\"" + DATA_TYPE + "\"");
+            else s.Append(", \"DATA_TYPE\":nil");
+            s.Append(", \"CHARACTER_MAXIMUM_LENGTH\":" + (CHARACTER_MAXIMUM_LENGTH.HasValue ? CHARACTER_MAXIMUM_LENGTH.Value.ToString() : "nil"));
+            s.Append(", \"CHARACTER_OCTET_LENGTH\":" + (CHARACTER_OCTET_LENGTH.HasValue ? CHARACTER_OCTET_LENGTH.Value.ToString() : "nil"));
+            s.Append(", \"NUMERIC_PRECISION\":" + (NUMERIC_PRECISION.HasValue ? NUMERIC_PRECISION.Value.ToString() : "nil"));
+            s.Append(", \"NUMERIC_SCALE\":" + (NUMERIC_SCALE.HasValue ? NUMERIC_SCALE.Value.ToString() : "nil"));
+            s.Append(", \"DATETIME_PRECISION\":" + (DATETIME_PRECISION.HasValue ? DATETIME_PRECISION.Value.ToString() : "nil"));
+            if (CHARACTER_SET_NAME != null) s.Append(", \"CHARACTER_SET_NAME\":\"" + CHARACTER_SET_NAME + "\"");
+            else s.Append(", \"CHARACTER_SET_NAME\":nil");
+            if (COLLATION_NAME != null) s.Append(", \"COLLATION_NAME\":\"" + COLLATION_NAME + "\"");
+            else s.Append(", \"COLLATION_NAME\":nil");
+            if (COLUMN_TYPE != null) s.Append(", \"COLUMN_TYPE\":\"" + COLUMN_TYPE + "\"");
+            else s.Append(", \"COLUMN_TYPE\":nil");
+            if (COLUMN_KEY != null) s.Append(", \"COLUMN_KEY\":\"" + COLUMN_KEY + "\"");
+            else s.Append(", \"COLUMN_KEY\":nil");
+            if (EXTRA != null) s.Append(", \"EXTRA\":\"" + EXTRA + "\"");
+            else s.Append(", \"EXTRA\":nil");
+            if (PRIVILEGES != null) s.Append(", \"PRIVILEGES\":\"" + PRIVILEGES + "\"");
+            else s.Append(", \"PRIVILEGES\":nil");
+            if (COLUMN_COMMENT != null) s.Append(", \"COLUMN_COMMENT\":\"" + COLUMN_COMMENT + "\"");
+            else s.Append(", \"COLUMN_COMMENT\":nil");
+            if (GENERATION_EXPRESSION != null) s.Append(", \"GENERATION_EXPRESSION\":\"" + GENERATION_EXPRESSION + "\"");
+            else s.Append(", \"GENERATION_EXPRESSION\":nil");
         }
         public override string ToString()
         {
             var sb = new System.Text.StringBuilder();
-            ToString(ref sb);
+            ToString(sb);
             return sb.ToString();
         }
-        bool toStringFlag;
-        public void SetToStringFlag(bool doing)
-        {
-            toStringFlag = doing;
-        }
-        public bool GetToStringFlag()
-        {
-            return toStringFlag;
-        }
-        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        public override void MySqlAppend(System.Text.StringBuilder sb, bool ignoreReadOnly)
         {
             sb.Append("(");
             sb.Append(this.TABLE_CATALOG == null ? "null" : ("'" + this.TABLE_CATALOG.Replace("'", "''") + "'"));
@@ -536,67 +518,58 @@ namespace Tables
 
         }
     }
-    public partial class show_create_table : IObject
+    public partial class show_create_table : xx.Object
     {
         public string Table;
         public string CreateTable;
 
-        public virtual ushort GetPackageId()
+        public override ushort GetPackageId()
         {
-            return TypeIdMaps<show_create_table>.typeId;
+            return TypeId<show_create_table>.value;
         }
 
-        public virtual void ToBBuffer(BBuffer bb)
+        public override void ToBBuffer(BBuffer bb)
         {
             bb.Write(this.Table);
             bb.Write(this.CreateTable);
         }
 
-        public virtual void FromBBuffer(BBuffer bb)
+        public override void FromBBuffer(BBuffer bb)
         {
             bb.readLengthLimit = 0;
             bb.Read(ref this.Table);
             bb.readLengthLimit = 0;
             bb.Read(ref this.CreateTable);
         }
-        public virtual void ToString(ref System.Text.StringBuilder str)
+        public override void ToString(System.Text.StringBuilder s)
         {
-            if (GetToStringFlag())
+            if (__toStringing)
             {
-        	    str.Append("[ \"***** recursived *****\" ]");
+        	    s.Append("[ \"***** recursived *****\" ]");
         	    return;
             }
-            else SetToStringFlag(true);
+            else __toStringing = true;
 
-            str.Append("{ \"pkgTypeName\":\"Tables.show_create_table\", \"pkgTypeId\":" + GetPackageId());
-            ToStringCore(ref str);
-            str.Append(" }");
-        
-            SetToStringFlag(false);
+            s.Append("{ \"pkgTypeName\":\"Tables.show_create_table\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(s);
+            s.Append(" }");
+
+            __toStringing = false;
         }
-        public virtual void ToStringCore(ref System.Text.StringBuilder str)
+        public override void ToStringCore(System.Text.StringBuilder s)
         {
-            if (Table != null) str.Append(", \"Table\":\"" + Table + "\"");
-            else str.Append(", \"Table\":nil");
-            if (CreateTable != null) str.Append(", \"CreateTable\":\"" + CreateTable + "\"");
-            else str.Append(", \"CreateTable\":nil");
+            if (Table != null) s.Append(", \"Table\":\"" + Table + "\"");
+            else s.Append(", \"Table\":nil");
+            if (CreateTable != null) s.Append(", \"CreateTable\":\"" + CreateTable + "\"");
+            else s.Append(", \"CreateTable\":nil");
         }
         public override string ToString()
         {
             var sb = new System.Text.StringBuilder();
-            ToString(ref sb);
+            ToString(sb);
             return sb.ToString();
         }
-        bool toStringFlag;
-        public void SetToStringFlag(bool doing)
-        {
-            toStringFlag = doing;
-        }
-        public bool GetToStringFlag()
-        {
-            return toStringFlag;
-        }
-        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        public override void MySqlAppend(System.Text.StringBuilder sb, bool ignoreReadOnly)
         {
             sb.Append("(");
             sb.Append(this.Table == null ? "null" : ("'" + this.Table.Replace("'", "''") + "'"));
@@ -613,13 +586,13 @@ namespace Tables
     {
         public static void Register()
         {
-            xx.BBuffer.RegisterInternals();
-            BBuffer.Register<DbTable>(3);
-            BBuffer.Register<Tables.TABLES>(4);
-            BBuffer.Register<List<DbColumn>>(8);
-            BBuffer.Register<DbColumn>(6);
-            BBuffer.Register<Tables.COLUMNS>(7);
-            BBuffer.Register<Tables.show_create_table>(9);
+            xx.Object.RegisterInternals();
+            xx.Object.Register<DbTable>(3);
+            xx.Object.Register<Tables.TABLES>(4);
+            xx.Object.Register<List<DbColumn>>(8);
+            xx.Object.Register<DbColumn>(6);
+            xx.Object.Register<Tables.COLUMNS>(7);
+            xx.Object.Register<Tables.show_create_table>(9);
         }
     }
 }

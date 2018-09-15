@@ -7,7 +7,7 @@ namespace xx
 {
     // 抄自 MS 代码并删除小改加料( 支持多级序列化 )
 
-    public class List<T> : IObject
+    public class List<T> : Object
     {
         public T[] buf;
         public int bufLen { get { return buf.Length; } }
@@ -364,33 +364,33 @@ namespace xx
         public override string ToString()
         {
             var s = new StringBuilder();
-            ToString(ref s);
+            ToString(s);
             return s.ToString();
         }
 
-        public ushort GetPackageId()
+        public override ushort GetPackageId()
         {
-            return TypeIdMaps<List<T>>.typeId;
+            return TypeId<List<T>>.value;
         }
 
-        public void ToBBuffer(BBuffer bb)
+        public override void ToBBuffer(BBuffer bb)
         {
             ListIBBufferImpl<T>.instance.ToBBuffer(bb, this);
         }
 
-        public void FromBBuffer(BBuffer bb)
+        public override void FromBBuffer(BBuffer bb)
         {
             ListIBBufferImpl<T>.instance.FromBBuffer(bb, this);
         }
 
-        public void ToString(ref StringBuilder s)
+        public override void ToString(StringBuilder s)
         {
-            if (GetToStringFlag())
+            if (__toStringing)
             {
                 s.Append("[ \"***** recursived *****\" ]");
                 return;
             }
-            else SetToStringFlag(true);
+            else __toStringing = true;
 
             s.Append("[ ");
             for (var i = 0; i < dataLen; i++)
@@ -407,24 +407,13 @@ namespace xx
                 s[s.Length - 1] = ']';
             }
 
-            SetToStringFlag(false);
-        }
-        public void ToStringCore(ref StringBuilder s) { }
-
-        bool toStringFlag;
-        public void SetToStringFlag(bool doing)
-        {
-            toStringFlag = doing;
-        }
-        public bool GetToStringFlag()
-        {
-            return toStringFlag;
+            __toStringing = false;
         }
 
-        public void MySqlAppend(ref StringBuilder sb, bool ignoreReadOnly)
+        public override void MySqlAppend(StringBuilder sb, bool ignoreReadOnly)
         {
             if (dataLen == 0) throw new Exception("List no data ??");
-            ListIBBufferImpl<T>.instance.MySqlAppend(ref sb, ignoreReadOnly, this);
+            ListIBBufferImpl<T>.instance.MySqlAppend(sb, ignoreReadOnly, this);
             sb.Length -= 2;
         }
     }
@@ -439,7 +428,7 @@ namespace xx
             return vs[idx].ToString();
         }
 
-        public virtual void MySqlAppend(ref StringBuilder sb, bool ignoreReadOnly, List<T> vs)
+        public virtual void MySqlAppend(StringBuilder sb, bool ignoreReadOnly, List<T> vs)
         {
             var vsBuf = vs.buf;
             for (int i = 0; i < vs.dataLen; i++)
@@ -455,7 +444,7 @@ namespace xx
         static ListIBBufferImpl()
         {
             var t = typeof(T);
-            if (t.IsGenericType && t.IsValueType)   // Nullable<T>
+            if (t.IsGenericType && t.IsValueType)   // Nullable<T> / Ref<T>
             {
                 switch (Type.GetTypeCode(t.GetGenericArguments()[0]))
                 {
@@ -501,6 +490,7 @@ namespace xx
                         instance = new ListIBBufferImpl_NullableDouble() as ListIBBufferImpl<T>;
                         break;
                     default:
+                        instance = new ListIBBufferImpl_Ref<T>() as ListIBBufferImpl<T>;
                         break;// throw new NotSupportedException();
                 }
             }
@@ -920,13 +910,46 @@ namespace xx
             }
         }
 
-        public override void MySqlAppend(ref StringBuilder sb, bool ignoreReadOnly, List<T> vs)
+        public override void MySqlAppend(StringBuilder sb, bool ignoreReadOnly, List<T> vs)
         {
             var vsBuf = vs.buf;
             for (int i = 0; i < vs.dataLen; i++)
             {
-                ((IObject)vs[i]).MySqlAppend(ref sb, ignoreReadOnly);
+                ((Object)(IObject)vs[i]).MySqlAppend(sb, ignoreReadOnly);
                 sb.Append(", ");
+            }
+        }
+    }
+    public partial class ListIBBufferImpl_Ref<T> : ListIBBufferImpl<T>
+    {
+        public override void ToBBuffer(BBuffer bb, List<T> vs)
+        {
+            var vsDataLen = vs.dataLen;
+            bb.WriteLength(vsDataLen);
+            if (vsDataLen == 0) return;
+
+            for (int i = 0; i < vsDataLen; i++)
+            {
+                var r = (IRef)vs[i];
+                if (r.NotNull()) bb.Write(r.Lock());
+                else bb.Write((byte)0);
+            }
+        }
+        public override void FromBBuffer(BBuffer bb, List<T> vs)
+        {
+            int len = bb.ReadLength();
+            if (bb.readLengthLimit != 0 && len > bb.readLengthLimit) throw new Exception("overflow of limit");
+            vs.Clear();
+            vs.Resize(len);
+            if (len == 0) return;
+
+            for (int i = 0; i < len; i++)
+            {
+                IObject tmp = null;
+                bb.Read(ref tmp);
+                var v = (IRef)vs[i];
+                v.Reset(tmp);
+                vs[i] = (T)v;
             }
         }
     }
@@ -1401,13 +1424,13 @@ namespace xx
             return s == null ? "nil" : ("\"" + s + "\"");   // todo: 对内容做 json 转义?
         }
 
-        public override void MySqlAppend(ref StringBuilder sb, bool ignoreReadOnly, List<string> vs)
+        public override void MySqlAppend(StringBuilder sb, bool ignoreReadOnly, List<string> vs)
         {
             var vsBuf = vs.buf;
             for (int i = 0; i < vs.dataLen; i++)
             {
                 sb.Append("'");
-                sb.Append(vsBuf[i].Replace("'","''"));
+                sb.Append(vsBuf[i].Replace("'", "''"));
                 sb.Append("', ");
             }
         }

@@ -611,7 +611,7 @@ public static class GenExtensions
                 }
                 else if (t.Name == "DateTime")
                 {
-                    return "DateTime";
+                    return "xx.DateTime";
                 }
                 else if (t.Name == "BBuffer")
                 {
@@ -623,7 +623,7 @@ public static class GenExtensions
                 switch (t.Name)
                 {
                     case "Object":
-                        return "IObject";
+                        return "xx.Object";
                     case "Void":
                         return "void";
                     case "Byte":
@@ -669,26 +669,25 @@ public static class GenExtensions
     /// <summary>
     /// 获取 C++ 的安全类型声明串( Xxxxx_p ). 无法序列化的外部引用类型不加 _p. 弱引用加 _r.
     /// </summary>
-    public static string _GetSafeTypeDecl_Cpp(this FieldInfo f, string templateName, int deepLevel = 0)
+    public static string _GetSafeTypeDecl_Cpp(this FieldInfo f, string templateName)
     {
         var r = f._GetRef();
         var t = f.FieldType;
-        if (r == null) return _GetSafeTypeDecl_Cpp(t, templateName, "_p");
         if (t._IsList())
         {
-            return "xx::List_" + (r[deepLevel] ? "r" : "p") + "<" + _GetSafeTypeDecl_Cpp(f, t.GenericTypeArguments[0], templateName, deepLevel + 1) + ">";
+            return "xx::List_p" + "<" + _GetSafeTypeDecl_Cpp(f, t.GenericTypeArguments[0], templateName) + ">";
         }
-        else return _GetSafeTypeDecl_Cpp(t, templateName, r[deepLevel] ? "_r" : "_p");
+        else return _GetSafeTypeDecl_Cpp(t, templateName, r == null ? "_p" : r[0] ? "_r" : "_p");
     }
-    public static string _GetSafeTypeDecl_Cpp(this FieldInfo f, Type t, string templateName, int deepLevel = 0)
+    // 暂时只支持 List<List<....   T 本身为 ref
+    public static string _GetSafeTypeDecl_Cpp(this FieldInfo f, Type t, string templateName)
     {
         var r = f._GetRef();
-        if (r == null) return _GetSafeTypeDecl_Cpp(t, templateName, "_p");
         if (t._IsList())
         {
-            return "xx::List_" + (r[deepLevel] ? "r" : "p") + "<" + _GetSafeTypeDecl_Cpp(f, t.GenericTypeArguments[0], templateName, deepLevel + 1) + ">";
+            return "xx::List_p" + _GetSafeTypeDecl_Cpp(f, t.GenericTypeArguments[0], templateName) + ">";
         }
-        else return _GetSafeTypeDecl_Cpp(t, templateName, r[deepLevel] ? "_r" : "_p");
+        else return _GetSafeTypeDecl_Cpp(t, templateName, r == null ? "_p" : r[0] ? "_r" : "_p");
     }
 
 

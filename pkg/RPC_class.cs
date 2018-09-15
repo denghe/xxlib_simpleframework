@@ -4,7 +4,7 @@ namespace RPC
 {
     public static class PkgGenMd5
     {
-        public const string value = "5c8626686cff1c7ca77a18b165314c4b"; 
+        public const string value = "b929730facd3f0446e741c706674f242"; 
     }
 
 namespace Generic
@@ -30,374 +30,320 @@ namespace Generic
 }
 namespace DB_Manage
 {
-    public partial class MsgResult : IObject
+    public partial class MsgResult : xx.Object
     {
         public string txt;
 
-        public virtual ushort GetPackageId()
+        public override ushort GetPackageId()
         {
-            return TypeIdMaps<MsgResult>.typeId;
+            return TypeId<MsgResult>.value;
         }
 
-        public virtual void ToBBuffer(BBuffer bb)
+        public override void ToBBuffer(BBuffer bb)
         {
             bb.Write(this.txt);
         }
 
-        public virtual void FromBBuffer(BBuffer bb)
+        public override void FromBBuffer(BBuffer bb)
         {
             bb.readLengthLimit = 0;
             bb.Read(ref this.txt);
         }
-        public virtual void ToString(ref System.Text.StringBuilder str)
+        public override void ToString(System.Text.StringBuilder s)
         {
-            if (GetToStringFlag())
+            if (__toStringing)
             {
-        	    str.Append("[ \"***** recursived *****\" ]");
+        	    s.Append("[ \"***** recursived *****\" ]");
         	    return;
             }
-            else SetToStringFlag(true);
+            else __toStringing = true;
 
-            str.Append("{ \"pkgTypeName\":\"DB_Manage.MsgResult\", \"pkgTypeId\":" + GetPackageId());
-            ToStringCore(ref str);
-            str.Append(" }");
-        
-            SetToStringFlag(false);
+            s.Append("{ \"pkgTypeName\":\"DB_Manage.MsgResult\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(s);
+            s.Append(" }");
+
+            __toStringing = false;
         }
-        public virtual void ToStringCore(ref System.Text.StringBuilder str)
+        public override void ToStringCore(System.Text.StringBuilder s)
         {
-            if (txt != null) str.Append(", \"txt\":\"" + txt + "\"");
-            else str.Append(", \"txt\":nil");
+            if (txt != null) s.Append(", \"txt\":\"" + txt + "\"");
+            else s.Append(", \"txt\":nil");
         }
         public override string ToString()
         {
             var sb = new System.Text.StringBuilder();
-            ToString(ref sb);
+            ToString(sb);
             return sb.ToString();
         }
-        bool toStringFlag;
-        public void SetToStringFlag(bool doing)
-        {
-            toStringFlag = doing;
-        }
-        public bool GetToStringFlag()
-        {
-            return toStringFlag;
-        }
-        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        public override void MySqlAppend(System.Text.StringBuilder sb, bool ignoreReadOnly)
         {
         }
     }
 }
 namespace Manage_DB
 {
-    public partial class Msg : IObject
+    public partial class Msg : xx.Object
     {
         public string txt;
 
-        public virtual ushort GetPackageId()
+        public override ushort GetPackageId()
         {
-            return TypeIdMaps<Msg>.typeId;
+            return TypeId<Msg>.value;
         }
 
-        public virtual void ToBBuffer(BBuffer bb)
+        public override void ToBBuffer(BBuffer bb)
         {
             bb.Write(this.txt);
         }
 
-        public virtual void FromBBuffer(BBuffer bb)
+        public override void FromBBuffer(BBuffer bb)
         {
             bb.readLengthLimit = 200;
             bb.Read(ref this.txt);
         }
-        public virtual void ToString(ref System.Text.StringBuilder str)
+        public override void ToString(System.Text.StringBuilder s)
         {
-            if (GetToStringFlag())
+            if (__toStringing)
             {
-        	    str.Append("[ \"***** recursived *****\" ]");
+        	    s.Append("[ \"***** recursived *****\" ]");
         	    return;
             }
-            else SetToStringFlag(true);
+            else __toStringing = true;
 
-            str.Append("{ \"pkgTypeName\":\"Manage_DB.Msg\", \"pkgTypeId\":" + GetPackageId());
-            ToStringCore(ref str);
-            str.Append(" }");
-        
-            SetToStringFlag(false);
+            s.Append("{ \"pkgTypeName\":\"Manage_DB.Msg\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(s);
+            s.Append(" }");
+
+            __toStringing = false;
         }
-        public virtual void ToStringCore(ref System.Text.StringBuilder str)
+        public override void ToStringCore(System.Text.StringBuilder s)
         {
-            if (txt != null) str.Append(", \"txt\":\"" + txt + "\"");
-            else str.Append(", \"txt\":nil");
+            if (txt != null) s.Append(", \"txt\":\"" + txt + "\"");
+            else s.Append(", \"txt\":nil");
         }
         public override string ToString()
         {
             var sb = new System.Text.StringBuilder();
-            ToString(ref sb);
+            ToString(sb);
             return sb.ToString();
         }
-        bool toStringFlag;
-        public void SetToStringFlag(bool doing)
-        {
-            toStringFlag = doing;
-        }
-        public bool GetToStringFlag()
-        {
-            return toStringFlag;
-        }
-        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        public override void MySqlAppend(System.Text.StringBuilder sb, bool ignoreReadOnly)
         {
         }
     }
 }
 namespace Login_Client
 {
-    public partial class LoginSuccess : IObject
+    public partial class LoginSuccess : xx.Object
     {
         public int id;
 
-        public virtual ushort GetPackageId()
+        public override ushort GetPackageId()
         {
-            return TypeIdMaps<LoginSuccess>.typeId;
+            return TypeId<LoginSuccess>.value;
         }
 
-        public virtual void ToBBuffer(BBuffer bb)
+        public override void ToBBuffer(BBuffer bb)
         {
             bb.Write(this.id);
         }
 
-        public virtual void FromBBuffer(BBuffer bb)
+        public override void FromBBuffer(BBuffer bb)
         {
             bb.Read(ref this.id);
         }
-        public virtual void ToString(ref System.Text.StringBuilder str)
+        public override void ToString(System.Text.StringBuilder s)
         {
-            if (GetToStringFlag())
+            if (__toStringing)
             {
-        	    str.Append("[ \"***** recursived *****\" ]");
+        	    s.Append("[ \"***** recursived *****\" ]");
         	    return;
             }
-            else SetToStringFlag(true);
+            else __toStringing = true;
 
-            str.Append("{ \"pkgTypeName\":\"Login_Client.LoginSuccess\", \"pkgTypeId\":" + GetPackageId());
-            ToStringCore(ref str);
-            str.Append(" }");
-        
-            SetToStringFlag(false);
+            s.Append("{ \"pkgTypeName\":\"Login_Client.LoginSuccess\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(s);
+            s.Append(" }");
+
+            __toStringing = false;
         }
-        public virtual void ToStringCore(ref System.Text.StringBuilder str)
+        public override void ToStringCore(System.Text.StringBuilder s)
         {
-            str.Append(", \"id\":" + id);
+            s.Append(", \"id\":" + id);
         }
         public override string ToString()
         {
             var sb = new System.Text.StringBuilder();
-            ToString(ref sb);
+            ToString(sb);
             return sb.ToString();
         }
-        bool toStringFlag;
-        public void SetToStringFlag(bool doing)
-        {
-            toStringFlag = doing;
-        }
-        public bool GetToStringFlag()
-        {
-            return toStringFlag;
-        }
-        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        public override void MySqlAppend(System.Text.StringBuilder sb, bool ignoreReadOnly)
         {
         }
     }
 }
 namespace Client_Login
 {
-    public partial class Login : IObject
+    public partial class Login : xx.Object
     {
         public string username;
         public string password;
 
-        public virtual ushort GetPackageId()
+        public override ushort GetPackageId()
         {
-            return TypeIdMaps<Login>.typeId;
+            return TypeId<Login>.value;
         }
 
-        public virtual void ToBBuffer(BBuffer bb)
+        public override void ToBBuffer(BBuffer bb)
         {
             bb.Write(this.username);
             bb.Write(this.password);
         }
 
-        public virtual void FromBBuffer(BBuffer bb)
+        public override void FromBBuffer(BBuffer bb)
         {
             bb.readLengthLimit = 50;
             bb.Read(ref this.username);
             bb.readLengthLimit = 50;
             bb.Read(ref this.password);
         }
-        public virtual void ToString(ref System.Text.StringBuilder str)
+        public override void ToString(System.Text.StringBuilder s)
         {
-            if (GetToStringFlag())
+            if (__toStringing)
             {
-        	    str.Append("[ \"***** recursived *****\" ]");
+        	    s.Append("[ \"***** recursived *****\" ]");
         	    return;
             }
-            else SetToStringFlag(true);
+            else __toStringing = true;
 
-            str.Append("{ \"pkgTypeName\":\"Client_Login.Login\", \"pkgTypeId\":" + GetPackageId());
-            ToStringCore(ref str);
-            str.Append(" }");
-        
-            SetToStringFlag(false);
+            s.Append("{ \"pkgTypeName\":\"Client_Login.Login\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(s);
+            s.Append(" }");
+
+            __toStringing = false;
         }
-        public virtual void ToStringCore(ref System.Text.StringBuilder str)
+        public override void ToStringCore(System.Text.StringBuilder s)
         {
-            if (username != null) str.Append(", \"username\":\"" + username + "\"");
-            else str.Append(", \"username\":nil");
-            if (password != null) str.Append(", \"password\":\"" + password + "\"");
-            else str.Append(", \"password\":nil");
+            if (username != null) s.Append(", \"username\":\"" + username + "\"");
+            else s.Append(", \"username\":nil");
+            if (password != null) s.Append(", \"password\":\"" + password + "\"");
+            else s.Append(", \"password\":nil");
         }
         public override string ToString()
         {
             var sb = new System.Text.StringBuilder();
-            ToString(ref sb);
+            ToString(sb);
             return sb.ToString();
         }
-        bool toStringFlag;
-        public void SetToStringFlag(bool doing)
-        {
-            toStringFlag = doing;
-        }
-        public bool GetToStringFlag()
-        {
-            return toStringFlag;
-        }
-        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        public override void MySqlAppend(System.Text.StringBuilder sb, bool ignoreReadOnly)
         {
         }
     }
 }
 namespace DB_Login
 {
-    public partial class AuthSuccess : IObject
+    public partial class AuthSuccess : xx.Object
     {
         public int id;
 
-        public virtual ushort GetPackageId()
+        public override ushort GetPackageId()
         {
-            return TypeIdMaps<AuthSuccess>.typeId;
+            return TypeId<AuthSuccess>.value;
         }
 
-        public virtual void ToBBuffer(BBuffer bb)
+        public override void ToBBuffer(BBuffer bb)
         {
             bb.Write(this.id);
         }
 
-        public virtual void FromBBuffer(BBuffer bb)
+        public override void FromBBuffer(BBuffer bb)
         {
             bb.Read(ref this.id);
         }
-        public virtual void ToString(ref System.Text.StringBuilder str)
+        public override void ToString(System.Text.StringBuilder s)
         {
-            if (GetToStringFlag())
+            if (__toStringing)
             {
-        	    str.Append("[ \"***** recursived *****\" ]");
+        	    s.Append("[ \"***** recursived *****\" ]");
         	    return;
             }
-            else SetToStringFlag(true);
+            else __toStringing = true;
 
-            str.Append("{ \"pkgTypeName\":\"DB_Login.AuthSuccess\", \"pkgTypeId\":" + GetPackageId());
-            ToStringCore(ref str);
-            str.Append(" }");
-        
-            SetToStringFlag(false);
+            s.Append("{ \"pkgTypeName\":\"DB_Login.AuthSuccess\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(s);
+            s.Append(" }");
+
+            __toStringing = false;
         }
-        public virtual void ToStringCore(ref System.Text.StringBuilder str)
+        public override void ToStringCore(System.Text.StringBuilder s)
         {
-            str.Append(", \"id\":" + id);
+            s.Append(", \"id\":" + id);
         }
         public override string ToString()
         {
             var sb = new System.Text.StringBuilder();
-            ToString(ref sb);
+            ToString(sb);
             return sb.ToString();
         }
-        bool toStringFlag;
-        public void SetToStringFlag(bool doing)
-        {
-            toStringFlag = doing;
-        }
-        public bool GetToStringFlag()
-        {
-            return toStringFlag;
-        }
-        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        public override void MySqlAppend(System.Text.StringBuilder sb, bool ignoreReadOnly)
         {
         }
     }
 }
 namespace Login_DB
 {
-    public partial class Auth : IObject
+    public partial class Auth : xx.Object
     {
         public string username;
         public string password;
 
-        public virtual ushort GetPackageId()
+        public override ushort GetPackageId()
         {
-            return TypeIdMaps<Auth>.typeId;
+            return TypeId<Auth>.value;
         }
 
-        public virtual void ToBBuffer(BBuffer bb)
+        public override void ToBBuffer(BBuffer bb)
         {
             bb.Write(this.username);
             bb.Write(this.password);
         }
 
-        public virtual void FromBBuffer(BBuffer bb)
+        public override void FromBBuffer(BBuffer bb)
         {
             bb.readLengthLimit = 0;
             bb.Read(ref this.username);
             bb.readLengthLimit = 0;
             bb.Read(ref this.password);
         }
-        public virtual void ToString(ref System.Text.StringBuilder str)
+        public override void ToString(System.Text.StringBuilder s)
         {
-            if (GetToStringFlag())
+            if (__toStringing)
             {
-        	    str.Append("[ \"***** recursived *****\" ]");
+        	    s.Append("[ \"***** recursived *****\" ]");
         	    return;
             }
-            else SetToStringFlag(true);
+            else __toStringing = true;
 
-            str.Append("{ \"pkgTypeName\":\"Login_DB.Auth\", \"pkgTypeId\":" + GetPackageId());
-            ToStringCore(ref str);
-            str.Append(" }");
-        
-            SetToStringFlag(false);
+            s.Append("{ \"pkgTypeName\":\"Login_DB.Auth\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(s);
+            s.Append(" }");
+
+            __toStringing = false;
         }
-        public virtual void ToStringCore(ref System.Text.StringBuilder str)
+        public override void ToStringCore(System.Text.StringBuilder s)
         {
-            if (username != null) str.Append(", \"username\":\"" + username + "\"");
-            else str.Append(", \"username\":nil");
-            if (password != null) str.Append(", \"password\":\"" + password + "\"");
-            else str.Append(", \"password\":nil");
+            if (username != null) s.Append(", \"username\":\"" + username + "\"");
+            else s.Append(", \"username\":nil");
+            if (password != null) s.Append(", \"password\":\"" + password + "\"");
+            else s.Append(", \"password\":nil");
         }
         public override string ToString()
         {
             var sb = new System.Text.StringBuilder();
-            ToString(ref sb);
+            ToString(sb);
             return sb.ToString();
         }
-        bool toStringFlag;
-        public void SetToStringFlag(bool doing)
-        {
-            toStringFlag = doing;
-        }
-        public bool GetToStringFlag()
-        {
-            return toStringFlag;
-        }
-        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        public override void MySqlAppend(System.Text.StringBuilder sb, bool ignoreReadOnly)
         {
         }
     }
@@ -407,24 +353,24 @@ namespace Generic
     /// <summary>
     /// 服务间创建连接, 刚连上时, 首包需要发这个来说明自己是谁
     /// </summary>
-    public partial class ServiceInfo : IObject
+    public partial class ServiceInfo : xx.Object
     {
         /// <summary>
         /// 服务类型
         /// </summary>
         public Generic.ServiceTypes type;
 
-        public virtual ushort GetPackageId()
+        public override ushort GetPackageId()
         {
-            return TypeIdMaps<ServiceInfo>.typeId;
+            return TypeId<ServiceInfo>.value;
         }
 
-        public virtual void ToBBuffer(BBuffer bb)
+        public override void ToBBuffer(BBuffer bb)
         {
             bb.Write((int)this.type);
         }
 
-        public virtual void FromBBuffer(BBuffer bb)
+        public override void FromBBuffer(BBuffer bb)
         {
             {
                 int tmp = 0;
@@ -432,48 +378,39 @@ namespace Generic
                 this.type = (Generic.ServiceTypes)tmp;
             }
         }
-        public virtual void ToString(ref System.Text.StringBuilder str)
+        public override void ToString(System.Text.StringBuilder s)
         {
-            if (GetToStringFlag())
+            if (__toStringing)
             {
-        	    str.Append("[ \"***** recursived *****\" ]");
+        	    s.Append("[ \"***** recursived *****\" ]");
         	    return;
             }
-            else SetToStringFlag(true);
+            else __toStringing = true;
 
-            str.Append("{ \"pkgTypeName\":\"Generic.ServiceInfo\", \"pkgTypeId\":" + GetPackageId());
-            ToStringCore(ref str);
-            str.Append(" }");
-        
-            SetToStringFlag(false);
+            s.Append("{ \"pkgTypeName\":\"Generic.ServiceInfo\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(s);
+            s.Append(" }");
+
+            __toStringing = false;
         }
-        public virtual void ToStringCore(ref System.Text.StringBuilder str)
+        public override void ToStringCore(System.Text.StringBuilder s)
         {
-            str.Append(", \"type\":" + type);
+            s.Append(", \"type\":" + type);
         }
         public override string ToString()
         {
             var sb = new System.Text.StringBuilder();
-            ToString(ref sb);
+            ToString(sb);
             return sb.ToString();
         }
-        bool toStringFlag;
-        public void SetToStringFlag(bool doing)
-        {
-            toStringFlag = doing;
-        }
-        public bool GetToStringFlag()
-        {
-            return toStringFlag;
-        }
-        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        public override void MySqlAppend(System.Text.StringBuilder sb, bool ignoreReadOnly)
         {
         }
     }
     /// <summary>
     /// 通用错误返回
     /// </summary>
-    public partial class Error : IObject
+    public partial class Error : xx.Object
     {
         /// <summary>
         /// 错误码
@@ -484,178 +421,151 @@ namespace Generic
         /// </summary>
         public string errMsg;
 
-        public virtual ushort GetPackageId()
+        public override ushort GetPackageId()
         {
-            return TypeIdMaps<Error>.typeId;
+            return TypeId<Error>.value;
         }
 
-        public virtual void ToBBuffer(BBuffer bb)
+        public override void ToBBuffer(BBuffer bb)
         {
             bb.Write(this.errNo);
             bb.Write(this.errMsg);
         }
 
-        public virtual void FromBBuffer(BBuffer bb)
+        public override void FromBBuffer(BBuffer bb)
         {
             bb.Read(ref this.errNo);
             bb.readLengthLimit = 0;
             bb.Read(ref this.errMsg);
         }
-        public virtual void ToString(ref System.Text.StringBuilder str)
+        public override void ToString(System.Text.StringBuilder s)
         {
-            if (GetToStringFlag())
+            if (__toStringing)
             {
-        	    str.Append("[ \"***** recursived *****\" ]");
+        	    s.Append("[ \"***** recursived *****\" ]");
         	    return;
             }
-            else SetToStringFlag(true);
+            else __toStringing = true;
 
-            str.Append("{ \"pkgTypeName\":\"Generic.Error\", \"pkgTypeId\":" + GetPackageId());
-            ToStringCore(ref str);
-            str.Append(" }");
-        
-            SetToStringFlag(false);
+            s.Append("{ \"pkgTypeName\":\"Generic.Error\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(s);
+            s.Append(" }");
+
+            __toStringing = false;
         }
-        public virtual void ToStringCore(ref System.Text.StringBuilder str)
+        public override void ToStringCore(System.Text.StringBuilder s)
         {
-            str.Append(", \"errNo\":" + errNo);
-            if (errMsg != null) str.Append(", \"errMsg\":\"" + errMsg + "\"");
-            else str.Append(", \"errMsg\":nil");
+            s.Append(", \"errNo\":" + errNo);
+            if (errMsg != null) s.Append(", \"errMsg\":\"" + errMsg + "\"");
+            else s.Append(", \"errMsg\":nil");
         }
         public override string ToString()
         {
             var sb = new System.Text.StringBuilder();
-            ToString(ref sb);
+            ToString(sb);
             return sb.ToString();
         }
-        bool toStringFlag;
-        public void SetToStringFlag(bool doing)
-        {
-            toStringFlag = doing;
-        }
-        public bool GetToStringFlag()
-        {
-            return toStringFlag;
-        }
-        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        public override void MySqlAppend(System.Text.StringBuilder sb, bool ignoreReadOnly)
         {
         }
     }
     /// <summary>
     /// 心跳保持兼延迟测试 -- 请求
     /// </summary>
-    public partial class Ping : IObject
+    public partial class Ping : xx.Object
     {
         public double ticks;
 
-        public virtual ushort GetPackageId()
+        public override ushort GetPackageId()
         {
-            return TypeIdMaps<Ping>.typeId;
+            return TypeId<Ping>.value;
         }
 
-        public virtual void ToBBuffer(BBuffer bb)
+        public override void ToBBuffer(BBuffer bb)
         {
             bb.Write(this.ticks);
         }
 
-        public virtual void FromBBuffer(BBuffer bb)
+        public override void FromBBuffer(BBuffer bb)
         {
             bb.Read(ref this.ticks);
         }
-        public virtual void ToString(ref System.Text.StringBuilder str)
+        public override void ToString(System.Text.StringBuilder s)
         {
-            if (GetToStringFlag())
+            if (__toStringing)
             {
-        	    str.Append("[ \"***** recursived *****\" ]");
+        	    s.Append("[ \"***** recursived *****\" ]");
         	    return;
             }
-            else SetToStringFlag(true);
+            else __toStringing = true;
 
-            str.Append("{ \"pkgTypeName\":\"Generic.Ping\", \"pkgTypeId\":" + GetPackageId());
-            ToStringCore(ref str);
-            str.Append(" }");
-        
-            SetToStringFlag(false);
+            s.Append("{ \"pkgTypeName\":\"Generic.Ping\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(s);
+            s.Append(" }");
+
+            __toStringing = false;
         }
-        public virtual void ToStringCore(ref System.Text.StringBuilder str)
+        public override void ToStringCore(System.Text.StringBuilder s)
         {
-            str.Append(", \"ticks\":" + ticks);
+            s.Append(", \"ticks\":" + ticks);
         }
         public override string ToString()
         {
             var sb = new System.Text.StringBuilder();
-            ToString(ref sb);
+            ToString(sb);
             return sb.ToString();
         }
-        bool toStringFlag;
-        public void SetToStringFlag(bool doing)
-        {
-            toStringFlag = doing;
-        }
-        public bool GetToStringFlag()
-        {
-            return toStringFlag;
-        }
-        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        public override void MySqlAppend(System.Text.StringBuilder sb, bool ignoreReadOnly)
         {
         }
     }
     /// <summary>
     /// 心跳保持兼延迟测试 -- 回应
     /// </summary>
-    public partial class Pong : IObject
+    public partial class Pong : xx.Object
     {
         public double ticks;
 
-        public virtual ushort GetPackageId()
+        public override ushort GetPackageId()
         {
-            return TypeIdMaps<Pong>.typeId;
+            return TypeId<Pong>.value;
         }
 
-        public virtual void ToBBuffer(BBuffer bb)
+        public override void ToBBuffer(BBuffer bb)
         {
             bb.Write(this.ticks);
         }
 
-        public virtual void FromBBuffer(BBuffer bb)
+        public override void FromBBuffer(BBuffer bb)
         {
             bb.Read(ref this.ticks);
         }
-        public virtual void ToString(ref System.Text.StringBuilder str)
+        public override void ToString(System.Text.StringBuilder s)
         {
-            if (GetToStringFlag())
+            if (__toStringing)
             {
-        	    str.Append("[ \"***** recursived *****\" ]");
+        	    s.Append("[ \"***** recursived *****\" ]");
         	    return;
             }
-            else SetToStringFlag(true);
+            else __toStringing = true;
 
-            str.Append("{ \"pkgTypeName\":\"Generic.Pong\", \"pkgTypeId\":" + GetPackageId());
-            ToStringCore(ref str);
-            str.Append(" }");
-        
-            SetToStringFlag(false);
+            s.Append("{ \"pkgTypeName\":\"Generic.Pong\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(s);
+            s.Append(" }");
+
+            __toStringing = false;
         }
-        public virtual void ToStringCore(ref System.Text.StringBuilder str)
+        public override void ToStringCore(System.Text.StringBuilder s)
         {
-            str.Append(", \"ticks\":" + ticks);
+            s.Append(", \"ticks\":" + ticks);
         }
         public override string ToString()
         {
             var sb = new System.Text.StringBuilder();
-            ToString(ref sb);
+            ToString(sb);
             return sb.ToString();
         }
-        bool toStringFlag;
-        public void SetToStringFlag(bool doing)
-        {
-            toStringFlag = doing;
-        }
-        public bool GetToStringFlag()
-        {
-            return toStringFlag;
-        }
-        public virtual void MySqlAppend(ref System.Text.StringBuilder sb, bool ignoreReadOnly)
+        public override void MySqlAppend(System.Text.StringBuilder sb, bool ignoreReadOnly)
         {
         }
     }
@@ -664,17 +574,17 @@ namespace Generic
     {
         public static void Register()
         {
-            xx.BBuffer.RegisterInternals();
-            BBuffer.Register<DB_Manage.MsgResult>(11);
-            BBuffer.Register<Manage_DB.Msg>(12);
-            BBuffer.Register<Login_Client.LoginSuccess>(4);
-            BBuffer.Register<Client_Login.Login>(5);
-            BBuffer.Register<DB_Login.AuthSuccess>(6);
-            BBuffer.Register<Login_DB.Auth>(7);
-            BBuffer.Register<Generic.ServiceInfo>(3);
-            BBuffer.Register<Generic.Error>(8);
-            BBuffer.Register<Generic.Ping>(9);
-            BBuffer.Register<Generic.Pong>(10);
+            xx.Object.RegisterInternals();
+            xx.Object.Register<DB_Manage.MsgResult>(11);
+            xx.Object.Register<Manage_DB.Msg>(12);
+            xx.Object.Register<Login_Client.LoginSuccess>(4);
+            xx.Object.Register<Client_Login.Login>(5);
+            xx.Object.Register<DB_Login.AuthSuccess>(6);
+            xx.Object.Register<Login_DB.Auth>(7);
+            xx.Object.Register<Generic.ServiceInfo>(3);
+            xx.Object.Register<Generic.Error>(8);
+            xx.Object.Register<Generic.Ping>(9);
+            xx.Object.Register<Generic.Pong>(10);
         }
     }
 }

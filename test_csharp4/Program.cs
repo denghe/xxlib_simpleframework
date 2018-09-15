@@ -4,18 +4,14 @@ public static class Program
 {
     static void Main(string[] args)
     {
-        xx.BBuffer.RegisterInternals();
         PKG.AllTypes.Register();
 
         var f = new PKG.Foo();
+        f.foo.pointer = f;
+        f.foos = new xx.List<xx.Ref<PKG.Foo>>();
+        f.foos.Add(new xx.Ref<PKG.Foo> { pointer = f });
         Console.WriteLine(f);
 
-        //f.id = 1;
-        //f.age = 123;
-        //f.floats = new xx.List<float?>();
-        //f.floats.Add(1.2f);
-        //f.floats.Add(null);
-        //f.floats.Add(3.4f);
 
         var bb = new xx.BBuffer();
         bb.WriteRoot(f);
@@ -23,6 +19,9 @@ public static class Program
 
         PKG.Foo f2 = null;
         bb.ReadRoot(ref f2);
+        Console.WriteLine(f2);
+
+        f2.Release();
         Console.WriteLine(f2);
     }
 }

@@ -7,14 +7,14 @@ namespace xx
     /// <summary>
     /// 这是从 System.Random 复制的源代码. 并加上了序列化功能( 与 C++ 那边保持一致 )
     /// </summary>
-    public class Random : IObject
+    public class Random : Object
     {
-        public ushort GetPackageId()
+        public override ushort GetPackageId()
         {
-            return TypeIdMaps<Random>.typeId;
+            return TypeId<Random>.value;
         }
 
-        public void ToBBuffer(BBuffer bb)
+        public override void ToBBuffer(BBuffer bb)
         {
             bb.Reserve(bb.dataLen + 58 * 4);
             var nexts = new int[2];
@@ -25,7 +25,7 @@ namespace xx
             bb.dataLen += 58 * 4;
         }
 
-        public void FromBBuffer(BBuffer bb)
+        public override void FromBBuffer(BBuffer bb)
         {
             if (bb.offset + 58 * 4 > bb.dataLen) throw new IndexOutOfRangeException();
             var nexts = new int[2];
@@ -39,25 +39,13 @@ namespace xx
         public override string ToString()
         {
             var sb = new StringBuilder();
-            ToString(ref sb);
+            ToString(sb);
             return sb.ToString();
         }
-        public void ToString(ref StringBuilder s)
+        public override void ToString(StringBuilder s)
         {
             s.Append("{ \"type\":\"Random\" }");
         }
-        public void ToStringCore(ref StringBuilder sb) { }
-
-        bool toStringFlag;
-        public void SetToStringFlag(bool doing)
-        {
-            toStringFlag = doing;
-        }
-        public bool GetToStringFlag()
-        {
-            return toStringFlag;
-        }
-
 
 
         //public string FindDiff(Random o, string rootName = "")
@@ -283,9 +271,5 @@ namespace xx
             }
         }
 
-        public void MySqlAppend(ref StringBuilder sb, bool ignoreReadOnly)
-        {
-            throw new NotImplementedException();
-        }
     }
 }

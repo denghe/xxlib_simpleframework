@@ -1,22 +1,42 @@
 ﻿#pragma warning disable 0169, 0414
 using TemplateLibrary;
 
-class Container
-{
-    List<Foo> foos;
-}
+
 
 class Foo
 {
-    [Ref(false, true)]
-    List<Foo> childs;
+    [Ref]
+    Foo foo;
+
+    [Ref]
+    List<Foo> foos;
 }
 
-class FooEx : Foo
-{
-    [Ref]
-    Foo parent;
-}
+
+
+
+
+
+
+
+
+
+//class Container
+//{
+//    List<Foo> foos;
+//}
+
+//class Foo
+//{
+//    [Ref(false, true)]
+//    List<Foo> childs;
+//}
+
+//class FooEx : Foo
+//{
+//    [Ref]
+//    Foo parent;
+//}
 
 
 
