@@ -154,6 +154,14 @@ public static class GenExtensions
     }
 
     /// <summary>
+    /// 返回 t 是否为 object
+    /// </summary>
+    public static bool _IsObject(this Type t)
+    {
+        return t.Namespace == nameof(System) && t.Name == nameof(Object);
+    }
+
+    /// <summary>
     /// 返回 t 是否为 BBuffer
     /// </summary>
     public static bool _IsBBuffer(this Type t)
@@ -169,15 +177,6 @@ public static class GenExtensions
     {
         return t._IsString() || t._IsList() || t._IsBBuffer();
     }
-
-    /// <summary>
-    /// 返回 t 是否为引用类型
-    /// </summary>
-    public static bool _IsRef(this Type t)
-    {
-        return _IsContainer(t) || _IsUserClass(t);
-    }
-
 
     /// <summary>
     /// 获取字段是否只读属性
@@ -407,12 +406,12 @@ public static class GenExtensions
             if (t.IsEnum)
             {
                 var sv = v._ToEnumInteger(t);
-                if (sv == "0") return "(" + _GetTypeDecl_Cpp(t, templateName) + ")0";
+                if (sv == "0") return "(" + _GetSafeTypeDecl_Cpp(t, templateName) + ")0";
                 // 如果 v 的值在枚举中找不到, 输出硬转格式. 否则输出枚举项
                 var fs = t._GetEnumFields();
                 if (fs.Exists(f => f._GetEnumValue(t).ToString() == sv))
                 {
-                    return _GetTypeDecl_Cpp(t, templateName) + "::" + v.ToString();
+                    return _GetSafeTypeDecl_Cpp(t, templateName) + "::" + v.ToString();
                 }
                 else
                 {
@@ -480,11 +479,11 @@ public static class GenExtensions
     /// <summary>
     /// 获取 C# 模板 的类型声明串
     /// </summary>
-    public static string _GetTypeDecl_Template(this Type t)
+    public static string _GetTypeDecl_GenTypeIdTemplate(this Type t)
     {
         if (t._IsNullable())
         {
-            return t.GenericTypeArguments[0]._GetTypeDecl_Template() + "?";
+            return t.GenericTypeArguments[0]._GetTypeDecl_GenTypeIdTemplate() + "?";
         }
         if (t.IsArray)
         {
@@ -498,7 +497,7 @@ public static class GenExtensions
             {
                 if (i > 0)
                     rtv += ", ";
-                rtv += _GetTypeDecl_Template(t.GenericTypeArguments[i]);
+                rtv += _GetTypeDecl_GenTypeIdTemplate(t.GenericTypeArguments[i]);
             }
             rtv += ">";
             return rtv;
@@ -513,7 +512,7 @@ public static class GenExtensions
             {
                 if (t.Name == "List`1")
                 {
-                    return "List<" + _GetTypeDecl_Template(t.GenericTypeArguments[0]) + ">";
+                    return "List<" + _GetTypeDecl_GenTypeIdTemplate(t.GenericTypeArguments[0]) + ">";
                 }
                 else if (t.Name == "DateTime")
                 {
@@ -667,120 +666,40 @@ public static class GenExtensions
         }
     }
 
-
     /// <summary>
-    /// 获取 C++ 的类型声明串
+    /// 获取 C++ 的安全类型声明串( Xxxxx_p ). 无法序列化的外部引用类型不加 _p. 弱引用加 _r.
     /// </summary>
-    public static string _GetTypeDecl_Cpp(this Type t, string templateName)
+    public static string _GetSafeTypeDecl_Cpp(this FieldInfo f, string templateName, int deepLevel = 0)
     {
-        if (t._IsNullable())
+        var r = f._GetRef();
+        var t = f.FieldType;
+        if (r == null) return _GetSafeTypeDecl_Cpp(t, templateName, "_p");
+        if (t._IsList())
         {
-            return "std::optional<" + t.GenericTypeArguments[0]._GetTypeDecl_Cpp(templateName) + ">";
+            return "xx::List_" + (r[deepLevel] ? "r" : "p") + "<" + _GetSafeTypeDecl_Cpp(f, t.GenericTypeArguments[0], templateName, deepLevel + 1) + ">";
         }
-        if (t.IsArray)                // 当前特指 byte[]
-        {
-            throw new NotSupportedException();
-            //return _GetTypeDecl_Cpp(t.GetElementType(), templateName) + "[]";
-        }
-        else if (t._IsTuple())
-        {
-            string rtv = "std::tuple<";
-            for (int i = 0; i < t.GenericTypeArguments.Length; ++i)
-            {
-                if (i > 0)
-                    rtv += ", ";
-                rtv += _GetTypeDecl_Cpp(t.GenericTypeArguments[i], templateName);
-            }
-            rtv += ">";
-            return rtv;
-        }
-        else if (t.IsEnum) // enum & struct
-        {
-            return (t._IsExternal() ? "" : templateName) + "::" + t.FullName.Replace(".", "::");
-        }
-        else
-        {
-            if (t.Namespace == nameof(TemplateLibrary))
-            {
-                if (t.Name == "List`1")
-                {
-                    return "xx::List<" + _GetTypeDecl_Cpp(t.GenericTypeArguments[0], templateName) + ">*";
-                }
-                else if (t.Name == "DateTime")
-                {
-                    return "xx::DateTime";
-                }
-                else if (t.Name == "BBuffer")
-                {
-                    return "xx::BBuffer*";
-                }
-            }
-            else if (t.Namespace == nameof(System))
-            {
-                switch (t.Name)
-                {
-                    case "Object":
-                        return "xx::Object*";
-                    case "Void":
-                        return "void";
-                    case "Byte":
-                        return "uint8_t";
-                    case "UInt8":
-                        return "uint8_t";
-                    case "UInt16":
-                        return "uint16_t";
-                    case "UInt32":
-                        return "uint32_t";
-                    case "UInt64":
-                        return "uint64_t";
-                    case "SByte":
-                        return "int8_t";
-                    case "Int8":
-                        return "int8_t";
-                    case "Int16":
-                        return "int16_t";
-                    case "Int32":
-                        return "int32_t";
-                    case "Int64":
-                        return "int64_t";
-                    case "Double":
-                        return "double";
-                    case "Float":
-                        return "float";
-                    case "Single":
-                        return "float";
-                    case "Boolean":
-                        return "bool";
-                    case "Bool":
-                        return "bool";
-                    case "String":
-                        return "xx::String*";
-                }
-            }
-
-            return (t._IsExternal() ? "" : templateName) + "::" + t.FullName.Replace(".", "::") + (t.IsValueType ? "" : "*");
-            //throw new Exception("unhandled data type");
-        }
+        else return _GetSafeTypeDecl_Cpp(t, templateName, r[deepLevel] ? "_r" : "_p");
     }
-
-    public static string CutLastStar(this string s)
+    public static string _GetSafeTypeDecl_Cpp(this FieldInfo f, Type t, string templateName, int deepLevel = 0)
     {
-        if (string.IsNullOrEmpty(s)) return s;
-        if (s[s.Length - 1] != '*') return s;
-        return s.Substring(0, s.Length - 1);
+        var r = f._GetRef();
+        if (r == null) return _GetSafeTypeDecl_Cpp(t, templateName, "_p");
+        if (t._IsList())
+        {
+            return "xx::List_" + (r[deepLevel] ? "r" : "p") + "<" + _GetSafeTypeDecl_Cpp(f, t.GenericTypeArguments[0], templateName, deepLevel + 1) + ">";
+        }
+        else return _GetSafeTypeDecl_Cpp(t, templateName, r[deepLevel] ? "_r" : "_p");
     }
 
 
-
-
     /// <summary>
-    /// 获取 C++ 的安全类型声明串( Xxxxx_p ). 无法序列化的外部引用类型不加 _p
+    /// 获取 C++ 的安全类型声明串( Xxxxx_p ). 无法序列化的外部引用类型不加 _p. 弱引用加 _r.
     /// </summary>
-    public static string _GetSafeTypeDecl_Cpp(this Type t, string templateName, bool cutOutside_p = false)
+    public static string _GetSafeTypeDecl_Cpp(this Type t, string templateName, string suffix = "")
     {
         if (t._IsNullable())
         {
-            return "std::optional<" + t.GenericTypeArguments[0]._GetSafeTypeDecl_Cpp(templateName) + ">";
+            return "std::optional<" + t.GenericTypeArguments[0]._GetSafeTypeDecl_Cpp(templateName, "_p") + ">";
         }
         if (t.IsArray)                // 当前特指 byte[]
         {
@@ -794,7 +713,7 @@ public static class GenExtensions
             {
                 if (i > 0)
                     rtv += ", ";
-                rtv += _GetSafeTypeDecl_Cpp(t.GenericTypeArguments[i], templateName);
+                rtv += _GetSafeTypeDecl_Cpp(t.GenericTypeArguments[i], templateName, "_p");
             }
             rtv += ">";
             return rtv;
@@ -809,15 +728,15 @@ public static class GenExtensions
             {
                 if (t.Name == "List`1")
                 {
-                    return "xx::List" + (cutOutside_p ? "" : "_p") + @"<" + _GetSafeTypeDecl_Cpp(t.GenericTypeArguments[0], templateName) + ">";
+                    return "xx::List" + suffix + @"<" + _GetSafeTypeDecl_Cpp(t.GenericTypeArguments[0], templateName, "_p") + ">";
                 }
                 else if (t.Name == "DateTime")
                 {
-                    return "xx::DateTime_p";
+                    return "xx::DateTime";
                 }
                 else if (t.Name == "BBuffer")
                 {
-                    return "xx::BBuffer_p";
+                    return "xx::BBuffer" + suffix;
                 }
             }
             else if (t.Namespace == nameof(System))
@@ -825,7 +744,7 @@ public static class GenExtensions
                 switch (t.Name)
                 {
                     case "Object":
-                        return "xx::Object_p";
+                        return "xx::Object" + suffix;
                     case "Void":
                         return "void";
                     case "Byte":
@@ -859,14 +778,15 @@ public static class GenExtensions
                     case "Bool":
                         return "bool";
                     case "String":
-                        return "xx::String_p";
+                        return "xx::String" + suffix;
                 }
             }
 
-            return (t._IsExternal() ? "" : templateName) + "::" + t.FullName.Replace(".", "::") + (t.IsValueType ? "" : ((t._IsExternal() && !t._GetExternalSerializable()) ? "" : "_p"));
+            return (t._IsExternal() ? "" : templateName) + "::" + t.FullName.Replace(".", "::") + (t.IsValueType ? "" : ((t._IsExternal() && !t._GetExternalSerializable()) ? "" : suffix));
             //throw new Exception("unhandled data type");
         }
     }
+
 
 
     /// <summary>
@@ -1264,14 +1184,18 @@ public static class GenExtensions
 
 
 
-
-
-
+    /// <summary>
+    /// 判断目标上是否有附加某个类型的 Attribute
+    /// </summary>
+    public static bool _Has<T>(this ICustomAttributeProvider f)
+    {
+        return f.GetCustomAttributes(false).Any(a => a is T);
+    }
 
     /// <summary>
     /// 获取 Attribute 之 Limit 值. 未找到将返回 0
     /// </summary>
-    public static int _GetLimit<T>(this T t) where T : ICustomAttributeProvider
+    public static int _GetLimit(this ICustomAttributeProvider t)
     {
         foreach (var r_attribute in t.GetCustomAttributes(false))
         {
@@ -1282,11 +1206,10 @@ public static class GenExtensions
     }
 
 
-
     /// <summary>
     /// 获取 Attribute 之 Desc 注释. 未找到将返回 ""
     /// </summary>
-    public static string _GetDesc<T>(this T t) where T : ICustomAttributeProvider
+    public static string _GetDesc(this ICustomAttributeProvider t)
     {
         foreach (var r_attribute in t.GetCustomAttributes(false))
         {
@@ -1297,11 +1220,10 @@ public static class GenExtensions
     }
 
 
-
     /// <summary>
     /// 获取 Attribute 之 Sql 文本. 未找到将返回 ""
     /// </summary>
-    public static string _GetSql<T>(this T t) where T : ICustomAttributeProvider
+    public static string _GetSql(this ICustomAttributeProvider t)
     {
         foreach (var r_attribute in t.GetCustomAttributes(false))
         {
@@ -1314,7 +1236,7 @@ public static class GenExtensions
     /// <summary>
     /// 获取 Attribute 之 Key. 未找到将返回 null
     /// </summary>
-    public static bool? _GetKey<T>(this T t) where T : ICustomAttributeProvider
+    public static bool? _GetKey(this ICustomAttributeProvider t)
     {
         foreach (var r_attribute in t.GetCustomAttributes(false))
         {
@@ -1324,21 +1246,20 @@ public static class GenExtensions
         return false;
     }
 
-    /// <summary>
-    /// 判断目标上是否有附加某个类型的 Attribute
-    /// </summary>
-    public static bool _Has<T>(this _MemberInfo mi)
-    {
-        return mi.GetCustomAttributes(false).Any(a => a is T);
-    }
 
     /// <summary>
-    /// 判断目标上是否有附加某个类型的 Attribute
+    /// 获取 Attribute 之 Ref. 未找到将返回 null
     /// </summary>
-    public static bool _Has<T>(this ParameterInfo pi)
+    public static bool[] _GetRef(this ICustomAttributeProvider t)
     {
-        return pi.GetCustomAttributes(false).Any(a => a is T);
+        foreach (var r_attribute in t.GetCustomAttributes(false))
+        {
+            if (r_attribute is TemplateLibrary.Ref)
+                return ((TemplateLibrary.Ref)r_attribute).values;
+        }
+        return null;
     }
+
 
     /// <summary>
     /// 判断目标类型是否为数据包类
@@ -1371,6 +1292,10 @@ public static class GenExtensions
         // todo: 过滤掉 非 package
         return asm._GetTypes()._GetClasss().Where(a => t.IsAssignableFrom(a)).ToList();
     }
+
+
+
+
 
 
 

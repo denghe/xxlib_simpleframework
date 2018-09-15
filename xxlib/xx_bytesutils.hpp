@@ -360,7 +360,6 @@ namespace xx
 	};
 
 	// 适配 Ptr<T>
-	// 当前仅对 Ptr<T> 有良好支持. 裸指针, Ref 还需要进一步设计( C#, Lua 那边需要模拟, 且序列化和反序列化失败回滚策略很难设计 )
 	template<typename T>
 	struct BytesFunc<T, std::enable_if_t<IsPtr_v<T>>>
 	{
@@ -377,6 +376,27 @@ namespace xx
 			return rtv;
 		}
 	};
+
+	// 适配 Ref<T>
+	// 当前仅对 Ptr<T> 有良好支持. 裸指针, Ref 还需要进一步设计( C#, Lua 那边需要模拟 )
+	template<typename T>
+	struct BytesFunc<T, std::enable_if_t<IsRef_v<T>>>
+	{
+		typedef typename T::ChildType CT;
+		static inline void WriteTo(BBuffer& bb, T const &in) noexcept
+		{
+			if(in) bb.WritePtr(in.pointer);
+			else bb.Write((uint8_t)0);
+		}
+		static inline int ReadFrom(BBuffer& bb, T &out) noexcept
+		{
+			CT* t = nullptr;
+			auto rtv = bb.ReadPtr(t);
+			out = t;
+			return rtv;
+		}
+	};
+
 
 	// 适配 std::optional<T>
 	template<typename T>

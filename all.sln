@@ -14,10 +14,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "pkggen", "pkggen\pkggen.csp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "xxlib_csharp", "xxlib_csharp\xxlib_csharp.csproj", "{6DD7A5A2-3411-4ECB-A811-2421BE960743}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "dbgen", "dbgen\dbgen.csproj", "{F7D1F3FD-F41C-4750-8954-9EC95CF6C0AC}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "dbgen_template_DB", "dbgen_template_DB\dbgen_template_DB.csproj", "{4A51E5A3-6A23-46E3-ACD8-691CA3C5E9E1}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{03B66A93-339F-4940-B72F-B7D58B2FC3E5}"
 	ProjectSection(SolutionItems) = preProject
 		README.md = README.md
@@ -47,8 +43,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "rpc_manage", "rpc_manage\rpc_manage.csproj", "{77C8BA45-84F7-4F37-8A3B-33ADA63EDEF7}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "rpc_client_udp", "rpc_client_udp\rpc_client_udp.csproj", "{81F5A627-3698-43C3-84FF-DC65F2A73B47}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "dbgen_template_LOGDB", "dbgen_template_LOGDB\dbgen_template_LOGDB.csproj", "{4A51E5A3-6A23-46E3-ACD8-691CA3C5E9E2}"
 EndProject
 Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "db", "db\db.shproj", "{A9662F53-81E7-4019-915F-4B92FED39A70}"
 EndProject
@@ -97,14 +91,6 @@ Global
 		{6DD7A5A2-3411-4ECB-A811-2421BE960743}.Debug|x64.Build.0 = Debug|x64
 		{6DD7A5A2-3411-4ECB-A811-2421BE960743}.Release|x64.ActiveCfg = Release|x64
 		{6DD7A5A2-3411-4ECB-A811-2421BE960743}.Release|x64.Build.0 = Release|x64
-		{F7D1F3FD-F41C-4750-8954-9EC95CF6C0AC}.Debug|x64.ActiveCfg = Debug|x64
-		{F7D1F3FD-F41C-4750-8954-9EC95CF6C0AC}.Debug|x64.Build.0 = Debug|x64
-		{F7D1F3FD-F41C-4750-8954-9EC95CF6C0AC}.Release|x64.ActiveCfg = Release|x64
-		{F7D1F3FD-F41C-4750-8954-9EC95CF6C0AC}.Release|x64.Build.0 = Release|x64
-		{4A51E5A3-6A23-46E3-ACD8-691CA3C5E9E1}.Debug|x64.ActiveCfg = Debug|x64
-		{4A51E5A3-6A23-46E3-ACD8-691CA3C5E9E1}.Debug|x64.Build.0 = Debug|x64
-		{4A51E5A3-6A23-46E3-ACD8-691CA3C5E9E1}.Release|x64.ActiveCfg = Release|x64
-		{4A51E5A3-6A23-46E3-ACD8-691CA3C5E9E1}.Release|x64.Build.0 = Release|x64
 		{9947D8D7-2CAB-4637-8F4B-4E2E3DCB7FAB}.Debug|x64.ActiveCfg = Debug|x64
 		{9947D8D7-2CAB-4637-8F4B-4E2E3DCB7FAB}.Debug|x64.Build.0 = Debug|x64
 		{9947D8D7-2CAB-4637-8F4B-4E2E3DCB7FAB}.Release|x64.ActiveCfg = Release|x64
@@ -149,10 +135,6 @@ Global
 		{81F5A627-3698-43C3-84FF-DC65F2A73B47}.Debug|x64.Build.0 = Debug|x64
 		{81F5A627-3698-43C3-84FF-DC65F2A73B47}.Release|x64.ActiveCfg = Release|x64
 		{81F5A627-3698-43C3-84FF-DC65F2A73B47}.Release|x64.Build.0 = Release|x64
-		{4A51E5A3-6A23-46E3-ACD8-691CA3C5E9E2}.Debug|x64.ActiveCfg = Debug|x64
-		{4A51E5A3-6A23-46E3-ACD8-691CA3C5E9E2}.Debug|x64.Build.0 = Debug|x64
-		{4A51E5A3-6A23-46E3-ACD8-691CA3C5E9E2}.Release|x64.ActiveCfg = Release|x64
-		{4A51E5A3-6A23-46E3-ACD8-691CA3C5E9E2}.Release|x64.Build.0 = Release|x64
 		{D8BFF53C-188B-4D4D-8483-0A1F9DFE39F6}.Debug|x64.ActiveCfg = Debug|x64
 		{D8BFF53C-188B-4D4D-8483-0A1F9DFE39F6}.Debug|x64.Build.0 = Debug|x64
 		{D8BFF53C-188B-4D4D-8483-0A1F9DFE39F6}.Release|x64.ActiveCfg = Release|x64

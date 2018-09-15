@@ -35,6 +35,68 @@ select `id`, `username`, `nickname`, `avatar_id`, `phone`, `password`, `money`, 
  where `id` = 0")]
     Tables.account account__SelectByPrimaryKey(int id);
 
+    [Desc(@"查 account_copy 表所有数据")]
+    [Sql(@"
+select `id`, `username`, `nickname`, `avatar_id`, `phone`, `password`, `money`, `money_safe`, `total_recharge`, `total_consume`, `total_withdraw`, `create_time`, `enabled`, `enter_lobby_time`, `log_game_id`
+  from `account_copy`")]
+    List<Tables.account_copy> account_copy__SelectAll();
+
+    [Desc(@"往 account_copy 表插入单条数据")]
+    [Sql(@"
+insert into `account_copy` (`id`, `username`, `nickname`, `avatar_id`, `phone`, `password`, `money`, `money_safe`, `total_recharge`, `total_consume`, `total_withdraw`, `create_time`, `enabled`, `enter_lobby_time`, `log_game_id`)
+values ({0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}, {8}, {9}, {10}, {11}, {12}, {13}, {14})")]
+    void account_copy__Insert(int id, string username, string nickname, int avatar_id, string phone, string password, double money, double money_safe, double total_recharge, double total_consume, double total_withdraw, long create_time, int enabled, long? enter_lobby_time, int? log_game_id);
+
+    [Desc(@"往 account_copy 表插入单条数据对象")]
+    [Sql(@"
+insert into `account_copy` (`id`, `username`, `nickname`, `avatar_id`, `phone`, `password`, `money`, `money_safe`, `total_recharge`, `total_consume`, `total_withdraw`, `create_time`, `enabled`, `enter_lobby_time`, `log_game_id`)
+values {0}")]
+    void account_copy__Insert([SkipReadOnly] Tables.account_copy row);
+
+    [Desc(@"往 account_copy 表插入多条数据对象")]
+    [Sql(@"
+insert into `account_copy` (`id`, `username`, `nickname`, `avatar_id`, `phone`, `password`, `money`, `money_safe`, `total_recharge`, `total_consume`, `total_withdraw`, `create_time`, `enabled`, `enter_lobby_time`, `log_game_id`)
+values {0}")]
+    void account_copy__Insert([SkipReadOnly] List<Tables.account_copy> rows);
+
+    [Desc(@"根据主键查 account_copy 表指定数据行")]
+    [Sql(@"
+select `id`, `username`, `nickname`, `avatar_id`, `phone`, `password`, `money`, `money_safe`, `total_recharge`, `total_consume`, `total_withdraw`, `create_time`, `enabled`, `enter_lobby_time`, `log_game_id`
+  from `account_copy`
+ where `id` = 0")]
+    Tables.account_copy account_copy__SelectByPrimaryKey(int id);
+
+    [Desc(@"查 account_copy1 表所有数据")]
+    [Sql(@"
+select `id`, `username`, `nickname`, `avatar_id`, `phone`, `password`, `money`, `money_safe`, `total_recharge`, `total_consume`, `total_withdraw`, `create_time`, `enabled`, `enter_lobby_time`, `log_game_id`
+  from `account_copy1`")]
+    List<Tables.account_copy1> account_copy1__SelectAll();
+
+    [Desc(@"往 account_copy1 表插入单条数据")]
+    [Sql(@"
+insert into `account_copy1` (`id`, `username`, `nickname`, `avatar_id`, `phone`, `password`, `money`, `money_safe`, `total_recharge`, `total_consume`, `total_withdraw`, `create_time`, `enabled`, `enter_lobby_time`, `log_game_id`)
+values ({0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}, {8}, {9}, {10}, {11}, {12}, {13}, {14})")]
+    void account_copy1__Insert(int id, string username, string nickname, int avatar_id, string phone, string password, double money, double money_safe, double total_recharge, double total_consume, double total_withdraw, long create_time, int enabled, long? enter_lobby_time, int? log_game_id);
+
+    [Desc(@"往 account_copy1 表插入单条数据对象")]
+    [Sql(@"
+insert into `account_copy1` (`id`, `username`, `nickname`, `avatar_id`, `phone`, `password`, `money`, `money_safe`, `total_recharge`, `total_consume`, `total_withdraw`, `create_time`, `enabled`, `enter_lobby_time`, `log_game_id`)
+values {0}")]
+    void account_copy1__Insert([SkipReadOnly] Tables.account_copy1 row);
+
+    [Desc(@"往 account_copy1 表插入多条数据对象")]
+    [Sql(@"
+insert into `account_copy1` (`id`, `username`, `nickname`, `avatar_id`, `phone`, `password`, `money`, `money_safe`, `total_recharge`, `total_consume`, `total_withdraw`, `create_time`, `enabled`, `enter_lobby_time`, `log_game_id`)
+values {0}")]
+    void account_copy1__Insert([SkipReadOnly] List<Tables.account_copy1> rows);
+
+    [Desc(@"根据主键查 account_copy1 表指定数据行")]
+    [Sql(@"
+select `id`, `username`, `nickname`, `avatar_id`, `phone`, `password`, `money`, `money_safe`, `total_recharge`, `total_consume`, `total_withdraw`, `create_time`, `enabled`, `enter_lobby_time`, `log_game_id`
+  from `account_copy1`
+ where `id` = 0")]
+    Tables.account_copy1 account_copy1__SelectByPrimaryKey(int id);
+
     [Desc(@"查 chat 表所有数据")]
     [Sql(@"
 select `id`, `content`, `account_id`, `create_time`
@@ -502,62 +564,62 @@ select `account_id`, `nickname`, `create_time`
 
     [Desc(@"查 log_account_password 表所有数据")]
     [Sql(@"
-select `id`, `account_id`, `password`, `create_time`
+select `id`, `account_id`, `password`, `content`, `create_time`
   from `log_account_password`")]
     List<Tables.log_account_password> log_account_password__SelectAll();
 
     [Desc(@"往 log_account_password 表插入单条数据")]
     [Sql(@"
-insert into `log_account_password` (`account_id`, `password`, `create_time`)
-values ({0}, {1}, {2})")]
-    void log_account_password__Insert(int account_id, string password, long create_time);
+insert into `log_account_password` (`account_id`, `password`, `content`, `create_time`)
+values ({0}, {1}, {2}, {3})")]
+    void log_account_password__Insert(int account_id, string password, string content, long create_time);
 
     [Desc(@"往 log_account_password 表插入单条数据对象")]
     [Sql(@"
-insert into `log_account_password` (`account_id`, `password`, `create_time`)
+insert into `log_account_password` (`account_id`, `password`, `content`, `create_time`)
 values {0}")]
     void log_account_password__Insert([SkipReadOnly] Tables.log_account_password row);
 
     [Desc(@"往 log_account_password 表插入多条数据对象")]
     [Sql(@"
-insert into `log_account_password` (`account_id`, `password`, `create_time`)
+insert into `log_account_password` (`account_id`, `password`, `content`, `create_time`)
 values {0}")]
     void log_account_password__Insert([SkipReadOnly] List<Tables.log_account_password> rows);
 
     [Desc(@"根据主键查 log_account_password 表指定数据行")]
     [Sql(@"
-select `account_id`, `password`, `create_time`
+select `account_id`, `password`, `content`, `create_time`
   from `log_account_password`
  where `id` = 0")]
     Tables.log_account_password log_account_password__SelectByPrimaryKey(int id);
 
     [Desc(@"查 log_account_phone 表所有数据")]
     [Sql(@"
-select `id`, `account_id`, `phone`, `create_time`
+select `id`, `account_id`, `phone`, `content`, `create_time`
   from `log_account_phone`")]
     List<Tables.log_account_phone> log_account_phone__SelectAll();
 
     [Desc(@"往 log_account_phone 表插入单条数据")]
     [Sql(@"
-insert into `log_account_phone` (`account_id`, `phone`, `create_time`)
-values ({0}, {1}, {2})")]
-    void log_account_phone__Insert(int account_id, string phone, long create_time);
+insert into `log_account_phone` (`account_id`, `phone`, `content`, `create_time`)
+values ({0}, {1}, {2}, {3})")]
+    void log_account_phone__Insert(int account_id, string phone, string content, long create_time);
 
     [Desc(@"往 log_account_phone 表插入单条数据对象")]
     [Sql(@"
-insert into `log_account_phone` (`account_id`, `phone`, `create_time`)
+insert into `log_account_phone` (`account_id`, `phone`, `content`, `create_time`)
 values {0}")]
     void log_account_phone__Insert([SkipReadOnly] Tables.log_account_phone row);
 
     [Desc(@"往 log_account_phone 表插入多条数据对象")]
     [Sql(@"
-insert into `log_account_phone` (`account_id`, `phone`, `create_time`)
+insert into `log_account_phone` (`account_id`, `phone`, `content`, `create_time`)
 values {0}")]
     void log_account_phone__Insert([SkipReadOnly] List<Tables.log_account_phone> rows);
 
     [Desc(@"根据主键查 log_account_phone 表指定数据行")]
     [Sql(@"
-select `account_id`, `phone`, `create_time`
+select `account_id`, `phone`, `content`, `create_time`
   from `log_account_phone`
  where `id` = 0")]
     Tables.log_account_phone log_account_phone__SelectByPrimaryKey(int id);

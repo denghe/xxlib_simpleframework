@@ -62,7 +62,7 @@ namespace " + iface.Namespace + @"
 
                 var ps = f.GetParameters();
                 var rt = f.ReturnType;
-                var rtn = rt._GetSafeTypeDecl_Cpp(templateName);
+                var rtn = rt._GetSafeTypeDecl_Cpp(templateName, "_p");
 
 
                 var sb_template = new StringBuilder();
@@ -214,7 +214,6 @@ namespace " + iface.Namespace + @"
                 else if (rt._IsList())
                 {
                     var ct = rt.GenericTypeArguments[0];
-                    var ctn = ct._GetTypeDecl_Cpp(templateName);
 
                     // 用户类
                     if (ct._IsUserClass())

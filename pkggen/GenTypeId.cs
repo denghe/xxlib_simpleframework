@@ -26,7 +26,7 @@ interface ITypeIdMappings
                 ) continue;
             var typeId = (ushort)kv.Value;
             var c = kv.Key;
-            var cn = c._GetTypeDecl_Template();
+            var cn = c._GetTypeDecl_GenTypeIdTemplate();
             sb.Append(@"
     " + cn + @" _" + typeId + @" { get; }
 ");

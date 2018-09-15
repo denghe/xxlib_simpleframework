@@ -62,6 +62,122 @@ CREATE TABLE `account` (
         [Column] int? log_game_id;
     }
     /*
+CREATE TABLE `account_copy` (
+  `id` int(10) NOT NULL COMMENT '用户Id ( 随机 8 位整数 )',
+  `username` varchar(50) NOT NULL COMMENT '原始用户名 唯一( GUID )',
+  `nickname` varchar(50) NOT NULL COMMENT '昵称 唯一( 默认用某种规则生成 )',
+  `avatar_id` int(11) NOT NULL COMMENT '头像',
+  `phone` varchar(50) NOT NULL COMMENT '电话号码 唯一( 默认填充 username GUID )',
+  `password` varchar(50) NOT NULL COMMENT '密码( 默认为空 )',
+  `money` double NOT NULL COMMENT '账户余额( 保留4位小数位, 进部分游戏时会被清0, 结束时会兑换返还 )',
+  `money_safe` double NOT NULL COMMENT '保险箱( 玩家可在账户余额间搬运数据 )',
+  `total_recharge` double NOT NULL COMMENT '累计充值金额',
+  `total_consume` double NOT NULL COMMENT '累计消费金额( 比如在鱼里一共打了多少钱的炮 )',
+  `total_withdraw` double NOT NULL COMMENT '累计提现金额',
+  `create_time` bigint(20) NOT NULL COMMENT '创建时间. epoch 10m 精度. 所有表的这个字段都是这个格式',
+  `enabled` int(11) NOT NULL COMMENT '启用标记( 1 : 启用 )',
+  `enter_lobby_time` bigint(20) DEFAULT NULL COMMENT '玩家进入大厅时间(为空 则离开大厅)',
+  `log_game_id` int(11) DEFAULT NULL COMMENT '正在游戏中的玩家日志id(为空 则离开游戏)',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `phone` (`phone`),
+  UNIQUE KEY `nickname` (`nickname`),
+  UNIQUE KEY `username` (`username`),
+  KEY `FK_account_log_game_id` (`log_game_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 PACK_KEYS=0 COMMENT='玩家账号表( 基表 )'
+    */
+    [Desc(@"玩家账号表( 基表 )")]
+    class account_copy
+    {
+        [Desc(@"用户Id ( 随机 8 位整数 )")]
+        [Column] int id;
+        [Desc(@"原始用户名 唯一( GUID )")]
+        [Column] string username;
+        [Desc(@"昵称 唯一( 默认用某种规则生成 )")]
+        [Column] string nickname;
+        [Desc(@"头像")]
+        [Column] int avatar_id;
+        [Desc(@"电话号码 唯一( 默认填充 username GUID )")]
+        [Column] string phone;
+        [Desc(@"密码( 默认为空 )")]
+        [Column] string password;
+        [Desc(@"账户余额( 保留4位小数位, 进部分游戏时会被清0, 结束时会兑换返还 )")]
+        [Column] double money;
+        [Desc(@"保险箱( 玩家可在账户余额间搬运数据 )")]
+        [Column] double money_safe;
+        [Desc(@"累计充值金额")]
+        [Column] double total_recharge;
+        [Desc(@"累计消费金额( 比如在鱼里一共打了多少钱的炮 )")]
+        [Column] double total_consume;
+        [Desc(@"累计提现金额")]
+        [Column] double total_withdraw;
+        [Desc(@"创建时间. epoch 10m 精度. 所有表的这个字段都是这个格式")]
+        [Column] long create_time;
+        [Desc(@"启用标记( 1 : 启用 )")]
+        [Column] int enabled;
+        [Desc(@"玩家进入大厅时间(为空 则离开大厅)")]
+        [Column] long? enter_lobby_time;
+        [Desc(@"正在游戏中的玩家日志id(为空 则离开游戏)")]
+        [Column] int? log_game_id;
+    }
+    /*
+CREATE TABLE `account_copy1` (
+  `id` int(10) NOT NULL COMMENT '用户Id ( 随机 8 位整数 )',
+  `username` varchar(50) NOT NULL COMMENT '原始用户名 唯一( GUID )',
+  `nickname` varchar(50) NOT NULL COMMENT '昵称 唯一( 默认用某种规则生成 )',
+  `avatar_id` int(11) NOT NULL COMMENT '头像',
+  `phone` varchar(50) NOT NULL COMMENT '电话号码 唯一( 默认填充 username GUID )',
+  `password` varchar(50) NOT NULL COMMENT '密码( 默认为空 )',
+  `money` double NOT NULL COMMENT '账户余额( 保留4位小数位, 进部分游戏时会被清0, 结束时会兑换返还 )',
+  `money_safe` double NOT NULL COMMENT '保险箱( 玩家可在账户余额间搬运数据 )',
+  `total_recharge` double NOT NULL COMMENT '累计充值金额',
+  `total_consume` double NOT NULL COMMENT '累计消费金额( 比如在鱼里一共打了多少钱的炮 )',
+  `total_withdraw` double NOT NULL COMMENT '累计提现金额',
+  `create_time` bigint(20) NOT NULL COMMENT '创建时间. epoch 10m 精度. 所有表的这个字段都是这个格式',
+  `enabled` int(11) NOT NULL COMMENT '启用标记( 1 : 启用 )',
+  `enter_lobby_time` bigint(20) DEFAULT NULL COMMENT '玩家进入大厅时间(为空 则离开大厅)',
+  `log_game_id` int(11) DEFAULT NULL COMMENT '正在游戏中的玩家日志id(为空 则离开游戏)',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `phone` (`phone`),
+  UNIQUE KEY `nickname` (`nickname`),
+  UNIQUE KEY `username` (`username`),
+  KEY `FK_account_log_game_id` (`log_game_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 PACK_KEYS=0 COMMENT='玩家账号表( 基表 )'
+    */
+    [Desc(@"玩家账号表( 基表 )")]
+    class account_copy1
+    {
+        [Desc(@"用户Id ( 随机 8 位整数 )")]
+        [Column] int id;
+        [Desc(@"原始用户名 唯一( GUID )")]
+        [Column] string username;
+        [Desc(@"昵称 唯一( 默认用某种规则生成 )")]
+        [Column] string nickname;
+        [Desc(@"头像")]
+        [Column] int avatar_id;
+        [Desc(@"电话号码 唯一( 默认填充 username GUID )")]
+        [Column] string phone;
+        [Desc(@"密码( 默认为空 )")]
+        [Column] string password;
+        [Desc(@"账户余额( 保留4位小数位, 进部分游戏时会被清0, 结束时会兑换返还 )")]
+        [Column] double money;
+        [Desc(@"保险箱( 玩家可在账户余额间搬运数据 )")]
+        [Column] double money_safe;
+        [Desc(@"累计充值金额")]
+        [Column] double total_recharge;
+        [Desc(@"累计消费金额( 比如在鱼里一共打了多少钱的炮 )")]
+        [Column] double total_consume;
+        [Desc(@"累计提现金额")]
+        [Column] double total_withdraw;
+        [Desc(@"创建时间. epoch 10m 精度. 所有表的这个字段都是这个格式")]
+        [Column] long create_time;
+        [Desc(@"启用标记( 1 : 启用 )")]
+        [Column] int enabled;
+        [Desc(@"玩家进入大厅时间(为空 则离开大厅)")]
+        [Column] long? enter_lobby_time;
+        [Desc(@"正在游戏中的玩家日志id(为空 则离开游戏)")]
+        [Column] int? log_game_id;
+    }
+    /*
 CREATE TABLE `chat` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `content` varchar(3000) NOT NULL COMMENT '内容',
@@ -312,7 +428,7 @@ CREATE TABLE `log_account_avatar` (
   `avatar_id` int(11) NOT NULL COMMENT '头像',
   `create_time` bigint(20) NOT NULL COMMENT '创建时间',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8 COMMENT='头像变更历史表'
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8 COMMENT='头像变更历史表'
     */
     [Desc(@"头像变更历史表")]
     class log_account_avatar
@@ -357,7 +473,7 @@ CREATE TABLE `log_account_money_safe` (
   `value` double NOT NULL COMMENT '金额( 正数为存入保险箱, 负数为从保险箱提钱 )',
   `create_time` bigint(20) NOT NULL COMMENT '创建时间',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=54 DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC COMMENT='保险箱操作日志'
+) ENGINE=InnoDB AUTO_INCREMENT=61 DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC COMMENT='保险箱操作日志'
     */
     [Desc(@"保险箱操作日志")]
     class log_account_money_safe
@@ -378,7 +494,7 @@ CREATE TABLE `log_account_nickname` (
   `nickname` varchar(50) NOT NULL COMMENT '昵称',
   `create_time` bigint(20) NOT NULL COMMENT '创建时间',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=32 DEFAULT CHARSET=utf8 COMMENT='昵称变更历史表'
+) ENGINE=InnoDB AUTO_INCREMENT=37 DEFAULT CHARSET=utf8 COMMENT='昵称变更历史表'
     */
     [Desc(@"昵称变更历史表")]
     class log_account_nickname
@@ -397,6 +513,7 @@ CREATE TABLE `log_account_password` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `account_id` int(11) NOT NULL COMMENT '帐号id',
   `password` varchar(50) NOT NULL COMMENT '密码',
+  `content` varchar(50) NOT NULL COMMENT '短信验证码内容',
   `create_time` bigint(20) NOT NULL COMMENT '创建时间',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=25 DEFAULT CHARSET=utf8 COMMENT='密码变更历史表'
@@ -410,6 +527,8 @@ CREATE TABLE `log_account_password` (
         [Column] int account_id;
         [Desc(@"密码")]
         [Column] string password;
+        [Desc(@"短信验证码内容")]
+        [Column] string content;
         [Desc(@"创建时间")]
         [Column] long create_time;
     }
@@ -418,6 +537,7 @@ CREATE TABLE `log_account_phone` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `account_id` int(11) NOT NULL COMMENT '帐号id',
   `phone` varchar(50) NOT NULL COMMENT '电话号码',
+  `content` varchar(50) NOT NULL COMMENT '短信验证码内容',
   `create_time` bigint(20) NOT NULL COMMENT '创建时间',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8 COMMENT='电话号码变更历史表'
@@ -431,6 +551,8 @@ CREATE TABLE `log_account_phone` (
         [Column] int account_id;
         [Desc(@"电话号码")]
         [Column] string phone;
+        [Desc(@"短信验证码内容")]
+        [Column] string content;
         [Desc(@"创建时间")]
         [Column] long create_time;
     }
@@ -463,7 +585,7 @@ CREATE TABLE `log_game` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `game_id` int(11) NOT NULL COMMENT '游戏id(game表id)',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=79 DEFAULT CHARSET=utf8 COMMENT='玩家实时对局数据日志表(基表 )'
+) ENGINE=InnoDB AUTO_INCREMENT=1474 DEFAULT CHARSET=utf8 COMMENT='玩家实时对局数据日志表(基表 )'
     */
     [Desc(@"玩家实时对局数据日志表(基表 )")]
     class log_game
@@ -668,7 +790,7 @@ CREATE TABLE `log_login_out` (
   `ip` varchar(50) NOT NULL COMMENT '上线或重连时的IP地址',
   `create_time` bigint(20) NOT NULL COMMENT '创建时间',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2706 DEFAULT CHARSET=utf8 COMMENT='记录玩家上下线情况的日志. 分4种情况:   1. 上线     2. 断线     3. 重连.    4. 下线'
+) ENGINE=InnoDB AUTO_INCREMENT=407410 DEFAULT CHARSET=utf8 COMMENT='记录玩家上下线情况的日志. 分4种情况:   1. 上线     2. 断线     3. 重连.    4. 下线'
     */
     [Desc(@"记录玩家上下线情况的日志. 分4种情况:   1. 上线     2. 断线     3. 重连.    4. 下线")]
     class log_login_out
@@ -695,7 +817,7 @@ CREATE TABLE `log_withdrawals` (
   PRIMARY KEY (`id`),
   KEY `FK_log_withdrawals_state_id` (`state_id`),
   CONSTRAINT `FK_log_withdrawals_state_id` FOREIGN KEY (`state_id`) REFERENCES `withdrawals_state` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=70 DEFAULT CHARSET=utf8 COMMENT='申请提现状态修改日志表'
+) ENGINE=InnoDB AUTO_INCREMENT=71 DEFAULT CHARSET=utf8 COMMENT='申请提现状态修改日志表'
     */
     [Desc(@"申请提现状态修改日志表")]
     class log_withdrawals
