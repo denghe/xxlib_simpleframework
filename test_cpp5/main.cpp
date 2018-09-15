@@ -5,6 +5,9 @@
 // todo: cpp 库那边应该还需要写适配模板
 // todo: 对于 "真身" 不在序列化类中的情况, 考虑将 "真身" 放在 BBuffer 的临时队列中?
 
+// plan.a: 生成方案: key 改成 Tuple<Type,bool> 的格式, 遇到 _r 就能路由了
+// plan.b: 加 Ref 模板. Ref<xxx>  List<List<Ref<xxxx>> 这样来用. 会影响之前的一些只靠泛型来路由的代码.
+
 int main(int argc, char const* const* argv)
 {
 	PKG::AllTypesRegister();
