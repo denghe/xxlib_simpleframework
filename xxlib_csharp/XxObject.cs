@@ -143,10 +143,32 @@ namespace xx
     }
 
 
+    /// <summary>
+    /// 类似 C++ 的 std::pair. 支持值比较, 做 key
+    /// </summary>
     public struct Pair<First, Second>
     {
         public First first;
         public Second second;
+
+        static System.Collections.Generic.IEqualityComparer<First> comparerFirst = System.Collections.Generic.EqualityComparer<First>.Default;
+        static System.Collections.Generic.IEqualityComparer<Second> comparerSecond = System.Collections.Generic.EqualityComparer<Second>.Default;
+        public static bool operator ==(Pair<First, Second> a, Pair<First, Second> b)
+        {
+            return comparerFirst.Equals(a.first, b.first) && comparerSecond.Equals(a.second, b.second);
+        }
+        public static bool operator !=(Pair<First, Second> a, Pair<First, Second> b)
+        {
+            return !comparerFirst.Equals(a.first, b.first) || !comparerSecond.Equals(a.second, b.second);
+        }
+        public override bool Equals(object obj)
+        {
+            return this == (Pair<First, Second>)obj;
+        }
+        public override int GetHashCode()
+        {
+            return first.GetHashCode() ^ second.GetHashCode();
+        }
     }
 
     /// <summary>

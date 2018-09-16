@@ -13,6 +13,13 @@ public static class Program
         Console.WriteLine(f);
 
 
+        xx.Pair<Type, bool> tuple0 = new xx.Pair<Type, bool> { first = typeof(string), second = true };
+        xx.Pair<Type, bool> tuple1 = new xx.Pair<Type, bool> { first = typeof(string), second = true };
+        xx.Pair<Type, bool> tuple2 = new xx.Pair<Type, bool> { first = typeof(string), second = false };
+        Console.WriteLine(tuple0 == tuple1);
+        Console.WriteLine(tuple0 == tuple2);
+
+
         var bb = new xx.BBuffer();
         bb.WriteRoot(f);
         Console.WriteLine(bb);

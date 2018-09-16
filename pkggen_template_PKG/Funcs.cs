@@ -5,10 +5,8 @@ using TemplateLibrary;
 
 class Foo
 {
-    [Ref]
     Foo foo;
 
-    [Ref]
     List<Foo> foos;
 }
 

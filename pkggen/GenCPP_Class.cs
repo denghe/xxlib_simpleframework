@@ -124,7 +124,7 @@ namespace " + c.Namespace.Replace(".", "::") + @"
             foreach (var f in fs)
             {
                 var ft = f.FieldType;
-                var ftn = f._GetSafeTypeDecl_Cpp(templateName);
+                var ftn = ft._GetSafeTypeDecl_Cpp(templateName);
                 sb.Append(f._GetDesc()._GetComment_Cpp(8) + @"
         " + (f.IsStatic ? "constexpr " : "") + ftn + " " + f.Name);
 
@@ -188,7 +188,7 @@ namespace " + c.Namespace.Replace(".", "::") + @"
             foreach (var f in fs)
             {
                 var ft = f.FieldType;
-                var ftn = f._GetSafeTypeDecl_Cpp(templateName);
+                var ftn = ft._GetSafeTypeDecl_Cpp(templateName);
                 sb.Append(f._GetDesc()._GetComment_Cpp(8) + @"
         " + (f.IsStatic ? "constexpr " : "") + ftn + " " + f.Name);
 
@@ -359,11 +359,12 @@ namespace " + c.Namespace.Replace(".", "::") + @"
             fs = c._GetFields();
             foreach (var f in fs)
             {
-                if (f.FieldType._IsExternal() && !f.FieldType._GetExternalSerializable()) continue;
+                var ft = f.FieldType;
+                if (ft._IsExternal() && !ft._GetExternalSerializable()) continue;
                 if (f._Has<TemplateLibrary.NotSerialize>())
                 {
                     sb.Append(@"
-        bb.WriteDefaultValue<" + f._GetSafeTypeDecl_Cpp(templateName) + ">();");
+        bb.WriteDefaultValue<" + ft._GetSafeTypeDecl_Cpp(templateName) + ">();");
                 }
                 else if (f._Has<TemplateLibrary.CustomSerialize>())
                 {

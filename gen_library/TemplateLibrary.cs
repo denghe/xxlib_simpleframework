@@ -18,8 +18,6 @@
 // External()                               // 对标记为这个的 枚举或结构体，属于外部引用，不再填充或生成. 其本身所处命名空间与实际对应, 不受 模板大命名空间影响
 // NaN, Infinity                            // 标记当反列化 浮点 时, 如果值是 nan / infinity, 就替换成指定 Value
 
-// Ref                                      // 用于类成员是否生成 _r 引用版的标记. 仅 C++ 有效. 
-
 // Column, Sql, MySql, ...                  // 数据库相关
 
 /********************************************************/
@@ -37,10 +35,13 @@
 // double
 // float 
 // bool
+
 // string
 // BBuffer   byte[]
 // object    xx::Object / IObject
 // List<T>   可嵌套
+
+// Ref<T>    说明 T 是弱引用类型. T 是用户类或上面4种. 不可嵌套.
 
 // DateTime  暂不可用
 
@@ -124,21 +125,21 @@ namespace TemplateLibrary
     }
 
 
-    /// <summary>
-    /// 用于类成员是否生成 _r 弱引用版的标记. 仅 C++ 有效. 
-    /// 如果类型为 List, 则 bool 数组由外及内用于说明当前层次是否为 _r 引用版.
-    /// </summary>
-    public class Ref : System.Attribute
-    {
-        public Ref() { values = new bool[] { true }; }
-        public Ref(bool v1) { values = new bool[] { v1 }; }
-        public Ref(bool v1, bool v2) { values = new bool[] { v1, v2 }; }
-        public Ref(bool v1, bool v2, bool v3) { values = new bool[] { v1, v2, v3 }; }
-        public Ref(bool v1, bool v2, bool v3, bool v4) { values = new bool[] { v1, v2, v3, v4 }; }
-        public Ref(bool[] vs) { values = vs; }
+    ///// <summary>
+    ///// 用于类成员是否生成 _r 弱引用版的标记. 仅 C++ 有效. 
+    ///// 如果类型为 List, 则 bool 数组由外及内用于说明当前层次是否为 _r 引用版.
+    ///// </summary>
+    //public class Ref : System.Attribute
+    //{
+    //    public Ref() { values = new bool[] { true }; }
+    //    public Ref(bool v1) { values = new bool[] { v1 }; }
+    //    public Ref(bool v1, bool v2) { values = new bool[] { v1, v2 }; }
+    //    public Ref(bool v1, bool v2, bool v3) { values = new bool[] { v1, v2, v3 }; }
+    //    public Ref(bool v1, bool v2, bool v3, bool v4) { values = new bool[] { v1, v2, v3, v4 }; }
+    //    public Ref(bool[] vs) { values = vs; }
 
-        public bool[] values;
-    }
+    //    public bool[] values;
+    //}
 
 
 
