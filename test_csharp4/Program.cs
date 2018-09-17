@@ -7,11 +7,13 @@ public static class Program
         PKG.AllTypes.Register();
 
         var f = new PKG.Foo();
-        //f.foo.pointer = f;
-        //f.foos = new xx.List<xx.Ref<PKG.Foo>>();
-        //f.foos.Add(new xx.Ref<PKG.Foo> { pointer = f });
+        f.foo = f;
+        f.refFoo.pointer = f;
+        f.foos = new xx.List<PKG.Foo>();
+        f.foos.Add(f);
+        f.refFoos = new xx.List<xx.Ref<PKG.Foo>>();
+        f.refFoos.Add(new xx.Ref<PKG.Foo> { pointer = f });
         Console.WriteLine(f);
-
 
 
         var bb = new xx.BBuffer();
