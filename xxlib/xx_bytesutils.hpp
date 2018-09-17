@@ -426,7 +426,11 @@ namespace xx
 			}
 			else
 			{
+#ifdef __IPHONE_OS_VERSION_MIN_REQUIRED
+				out = std::experimental::nullopt;
+#else
 				out.reset();
+#endif
 			}
 			return 0;
 		}

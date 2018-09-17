@@ -375,6 +375,9 @@ void xx::UvTcpUdpBase::ReceiveImpl(char const* const& bufPtr, int const& len) no
 	auto vn = memHeader().versionNumber;
 
 	bbRecv.WriteBuf(bufPtr, len);					// 追加收到的数据到接收缓冲区
+#ifndef NDEBUG
+	auto maxLen = bbRecv.dataLen;
+#endif
 
 	auto buf = (uint8_t*)bbRecv.buf;				// 方便使用
 	size_t offset = 0;								// 独立于 bbRecv 以避免受到其负面影响
@@ -493,7 +496,7 @@ void xx::UvTcpUdpBase::ReceiveImpl(char const* const& bufPtr, int const& len) no
 		memmove(buf, buf + offset, bbRecv.dataLen - offset);
 	}
 	bbRecv.dataLen -= offset;
-	assert((int)bbRecv.dataLen <= len);
+	assert((int)bbRecv.dataLen <= maxLen);
 }
 
 int xx::UvTcpUdpBase::SendBytes(BBuffer& bb) noexcept
