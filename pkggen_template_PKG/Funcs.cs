@@ -6,8 +6,9 @@ using TemplateLibrary;
 class Foo
 {
     Foo foo;
-
+    Ref<Foo> refFoo;
     List<Foo> foos;
+    List<Ref<Foo>> refFoos;
 }
 
 

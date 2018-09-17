@@ -54,6 +54,11 @@ namespace TemplateLibrary
     public class List<T> { }
 
     /// <summary>
+    /// 模拟 xx.Ref
+    /// </summary>
+    public class Ref<T> { }
+
+    /// <summary>
     /// 模拟 xx.BBuffer
     /// </summary>
     public class BBuffer { }

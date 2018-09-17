@@ -124,13 +124,13 @@ namespace " + c.Namespace.Replace(".", "::") + @"
             foreach (var f in fs)
             {
                 var ft = f.FieldType;
-                var ftn = ft._GetSafeTypeDecl_Cpp(templateName);
+                var ftn = ft._GetTypeDecl_Cpp(templateName);
                 sb.Append(f._GetDesc()._GetComment_Cpp(8) + @"
         " + (f.IsStatic ? "constexpr " : "") + ftn + " " + f.Name);
 
                 var v = f.GetValue(f.IsStatic ? null : o);
                 var dv = v._GetDefaultValueDecl_Cpp(templateName);
-                if (dv != "" && !ft._IsList() && !ft._IsUserClass() && !ft._IsString() && !ft._IsObject())  // 当前还无法正确处理 String 数据类型的默认值
+                if (dv != "" && !ft._IsList() && !ft._IsUserClass() && !ft._IsString() && !ft._IsObject() && !ft._IsRef())  // 当前还无法正确处理 String 数据类型的默认值
                 {
                     sb.Append(" = " + dv + ";");
                 }
@@ -172,7 +172,7 @@ namespace " + c.Namespace.Replace(".", "::") + @"
 
             // 定位到基类
             var bt = c.BaseType;
-            var btn = c._HasBaseType() ? bt._GetSafeTypeDecl_Cpp(templateName) : "xx::Object";
+            var btn = c._HasBaseType() ? bt._GetTypeDecl_Cpp(templateName) : "xx::Object";
 
             // desc
             // T xxxxxxxxx = defaultValue
@@ -188,7 +188,7 @@ namespace " + c.Namespace.Replace(".", "::") + @"
             foreach (var f in fs)
             {
                 var ft = f.FieldType;
-                var ftn = ft._GetSafeTypeDecl_Cpp(templateName);
+                var ftn = ft._GetTypeDecl_Cpp(templateName, "_p");
                 sb.Append(f._GetDesc()._GetComment_Cpp(8) + @"
         " + (f.IsStatic ? "constexpr " : "") + ftn + " " + f.Name);
 
@@ -200,7 +200,7 @@ namespace " + c.Namespace.Replace(".", "::") + @"
                 {
                     var v = f.GetValue(f.IsStatic ? null : o);
                     var dv = v._GetDefaultValueDecl_Cpp(templateName);
-                    if (dv != "" && !ft._IsList() && !(ft._IsUserClass()) && !ft._IsString() && !ft._IsNullable() && !ft._IsObject())  // 当前还无法正确处理 String 数据类型的默认值
+                    if (dv != "" && !ft._IsList() && !(ft._IsUserClass()) && !ft._IsString() && !ft._IsNullable() && !ft._IsObject() && !ft._IsRef())  // 当前还无法正确处理 String 数据类型的默认值
                     {
                         sb.Append(" = " + dv + ";");
                     }
@@ -247,7 +247,7 @@ namespace xx
         cs = ts._GetStructs();
         foreach (var c in cs)
         {
-            var ctn = c._GetSafeTypeDecl_Cpp(templateName);
+            var ctn = c._GetTypeDecl_Cpp(templateName);
             var fs = c._GetFields();
 
             sb.Append(@"
@@ -306,7 +306,7 @@ namespace xx
             var ct = kv.Key;
             if (ct._IsString() || ct._IsBBuffer() || ct._IsExternal() && !ct._GetExternalSerializable()) continue;
             var typeId = kv.Value;
-            var ctn = ct._GetSafeTypeDecl_Cpp(templateName);
+            var ctn = ct._GetTypeDecl_Cpp(templateName);
 
             sb.Append(@"
 	template<> struct TypeId<" + ctn + @"> { static const uint16_t value = " + typeId + @"; };");
@@ -334,7 +334,7 @@ namespace " + c.Namespace.Replace(".", "::") + @"
 
             // 定位到基类
             var bt = c.BaseType;
-            var btn = c._HasBaseType() ? bt._GetSafeTypeDecl_Cpp(templateName) : "xx::Object";
+            var btn = c._HasBaseType() ? bt._GetTypeDecl_Cpp(templateName) : "xx::Object";
             var fs = c._GetFields();
 
             sb.Append(@"
@@ -364,7 +364,7 @@ namespace " + c.Namespace.Replace(".", "::") + @"
                 if (f._Has<TemplateLibrary.NotSerialize>())
                 {
                     sb.Append(@"
-        bb.WriteDefaultValue<" + ft._GetSafeTypeDecl_Cpp(templateName) + ">();");
+        bb.WriteDefaultValue<" + ft._GetTypeDecl_Cpp(templateName) + ">();");
                 }
                 else if (f._Has<TemplateLibrary.CustomSerialize>())
                 {
@@ -493,9 +493,9 @@ namespace " + templateName + @"
         {
             var ct = kv.Key;
             if (ct._IsString() || ct._IsBBuffer() || ct._IsExternal() && !ct._GetExternalSerializable()) continue;
-            var ctn = ct._GetSafeTypeDecl_Cpp(templateName);
+            var ctn = ct._GetTypeDecl_Cpp(templateName);
             var bt = ct.BaseType;
-            var btn = ct._HasBaseType() ? bt._GetSafeTypeDecl_Cpp(templateName) : "xx::Object";
+            var btn = ct._HasBaseType() ? bt._GetTypeDecl_Cpp(templateName) : "xx::Object";
 
             sb.Append(@"
 	    xx::MemPool::Register<" + ctn + @", " + btn + @">();");

@@ -162,6 +162,15 @@ public static class GenExtensions
     }
 
     /// <summary>
+    /// 返回 t 是否为 Ref
+    /// </summary>
+    public static bool _IsRef(this Type t)
+    {
+        return t.Namespace == nameof(TemplateLibrary) && t.Name == "Ref`1";
+    }
+
+
+    /// <summary>
     /// 返回 t 是否为 BBuffer
     /// </summary>
     public static bool _IsBBuffer(this Type t)
@@ -406,12 +415,12 @@ public static class GenExtensions
             if (t.IsEnum)
             {
                 var sv = v._ToEnumInteger(t);
-                if (sv == "0") return "(" + _GetSafeTypeDecl_Cpp(t, templateName) + ")0";
+                if (sv == "0") return "(" + _GetTypeDecl_Cpp(t, templateName) + ")0";
                 // 如果 v 的值在枚举中找不到, 输出硬转格式. 否则输出枚举项
                 var fs = t._GetEnumFields();
                 if (fs.Exists(f => f._GetEnumValue(t).ToString() == sv))
                 {
-                    return _GetSafeTypeDecl_Cpp(t, templateName) + "::" + v.ToString();
+                    return _GetTypeDecl_Cpp(t, templateName) + "::" + v.ToString();
                 }
                 else
                 {
@@ -488,7 +497,6 @@ public static class GenExtensions
         if (t.IsArray)
         {
             throw new NotSupportedException();
-            //return _GetCSharpTypeDecl(t.GetElementType()) + "[]";
         }
         else if (t._IsTuple())
         {
@@ -510,7 +518,11 @@ public static class GenExtensions
         {
             if (t.Namespace == nameof(TemplateLibrary))
             {
-                if (t.Name == "List`1")
+                if (t.Name == "Ref`1")
+                {
+                    return "Ref<" + _GetTypeDecl_GenTypeIdTemplate(t.GenericTypeArguments[0]) + ">";
+                }
+                else if (t.Name == "List`1")
                 {
                     return "List<" + _GetTypeDecl_GenTypeIdTemplate(t.GenericTypeArguments[0]) + ">";
                 }
@@ -605,7 +617,11 @@ public static class GenExtensions
         {
             if (t.Namespace == nameof(TemplateLibrary))
             {
-                if (t.Name == "List`1")
+                if (t.Name == "Ref`1")
+                {
+                    return "Ref<" + _GetTypeDecl_Csharp(t.GenericTypeArguments[0]) + ">";
+                }
+                else if (t.Name == "List`1")
                 {
                     return "List<" + _GetTypeDecl_Csharp(t.GenericTypeArguments[0]) + ">";
                 }
@@ -692,13 +708,13 @@ public static class GenExtensions
 
 
     /// <summary>
-    /// 获取 C++ 的安全类型声明串( Xxxxx_p ). 无法序列化的外部引用类型不加 _p. 弱引用加 _r.
+    /// 获取 C++ 的类型声明串
     /// </summary>
-    public static string _GetSafeTypeDecl_Cpp(this Type t, string templateName, string suffix = "")
+    public static string _GetTypeDecl_Cpp(this Type t, string templateName, string suffix = "")
     {
         if (t._IsNullable())
         {
-            return "std::optional<" + t.GenericTypeArguments[0]._GetSafeTypeDecl_Cpp(templateName, "_p") + ">";
+            return "std::optional<" + t.GenericTypeArguments[0]._GetTypeDecl_Cpp(templateName, "_p") + ">";
         }
         if (t.IsArray)                // 当前特指 byte[]
         {
@@ -712,7 +728,7 @@ public static class GenExtensions
             {
                 if (i > 0)
                     rtv += ", ";
-                rtv += _GetSafeTypeDecl_Cpp(t.GenericTypeArguments[i], templateName, "_p");
+                rtv += _GetTypeDecl_Cpp(t.GenericTypeArguments[i], templateName, "_p");
             }
             rtv += ">";
             return rtv;
@@ -725,9 +741,13 @@ public static class GenExtensions
         {
             if (t.Namespace == nameof(TemplateLibrary))
             {
-                if (t.Name == "List`1")
+                if (t.Name == "Ref`1")
                 {
-                    return "xx::List" + suffix + @"<" + _GetSafeTypeDecl_Cpp(t.GenericTypeArguments[0], templateName, "_p") + ">";
+                    return "xx::Ref<" + _GetTypeDecl_Cpp(t.GenericTypeArguments[0], templateName) + ">";
+                }
+                else if (t.Name == "List`1")
+                {
+                    return "xx::List" + suffix + @"<" + _GetTypeDecl_Cpp(t.GenericTypeArguments[0], templateName, "_p") + ">";
                 }
                 else if (t.Name == "DateTime")
                 {

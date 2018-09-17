@@ -4,13 +4,15 @@ namespace PKG
 {
     public static class PkgGenMd5
     {
-        public const string value = "c4dfb0ecd26efc3cdfa643f478b61473"; 
+        public const string value = "bf0a438febf3b576bbe0485476196fd2"; 
     }
 
     public partial class Foo : xx.Object
     {
-        public Ref<Foo> foo;
-        public List<Ref<Foo>> foos;
+        public Foo foo;
+        public Ref<Foo> refFoo;
+        public List<Foo> foos;
+        public List<Ref<Foo>> refFoos;
 
         public override ushort GetPackageId()
         {
@@ -20,14 +22,19 @@ namespace PKG
         public override void ToBBuffer(BBuffer bb)
         {
             bb.Write(this.foo);
+            bb.Write(this.refFoo);
             bb.Write(this.foos);
+            bb.Write(this.refFoos);
         }
 
         public override void FromBBuffer(BBuffer bb)
         {
             bb.Read(ref this.foo);
+            bb.Read(ref this.refFoo);
             bb.readLengthLimit = 0;
             bb.Read(ref this.foos);
+            bb.readLengthLimit = 0;
+            bb.Read(ref this.refFoos);
         }
         public override void ToString(System.Text.StringBuilder s)
         {
@@ -46,8 +53,10 @@ namespace PKG
         }
         public override void ToStringCore(System.Text.StringBuilder s)
         {
-            s.Append(", \"foo\":" + (!foo ? "nil" : foo.ToString()));
+            s.Append(", \"foo\":" + (foo == null ? "nil" : foo.ToString()));
+            s.Append(", \"refFoo\":" + refFoo);
             s.Append(", \"foos\":" + (foos == null ? "nil" : foos.ToString()));
+            s.Append(", \"refFoos\":" + (refFoos == null ? "nil" : refFoos.ToString()));
         }
         public override string ToString()
         {
@@ -65,7 +74,8 @@ namespace PKG
         {
             xx.Object.RegisterInternals();
             xx.Object.Register<Foo>(3);
-            xx.Object.Register<List<Ref<Foo>>>(4);
+            xx.Object.Register<List<Foo>>(4);
+            xx.Object.Register<List<Ref<Foo>>>(5);
         }
     }
 }

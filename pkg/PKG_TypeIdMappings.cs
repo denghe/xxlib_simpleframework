@@ -8,4 +8,6 @@ interface ITypeIdMappings
 
     List<Foo> _4 { get; }
 
+    List<Ref<Foo>> _5 { get; }
+
 }

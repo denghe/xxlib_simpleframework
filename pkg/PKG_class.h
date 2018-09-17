@@ -5,7 +5,7 @@ namespace PKG
 {
 	struct PkgGenMd5
 	{
-		static constexpr char const* value = "c4dfb0ecd26efc3cdfa643f478b61473";
+		static constexpr char const* value = "bf0a438febf3b576bbe0485476196fd2";
     };
 
     class Foo;
@@ -15,8 +15,10 @@ namespace PKG
     class Foo : public xx::Object
     {
     public:
-        PKG::Foo_r foo;
-        xx::List_p<PKG::Foo_r> foos;
+        PKG::Foo_p foo;
+        xx::Ref<PKG::Foo> refFoo;
+        xx::List_p<PKG::Foo_p> foos;
+        xx::List_p<xx::Ref<PKG::Foo>> refFoos;
 
         typedef Foo ThisType;
         typedef xx::Object BaseType;
@@ -39,6 +41,7 @@ namespace xx
 {
 	template<> struct TypeId<PKG::Foo> { static const uint16_t value = 3; };
 	template<> struct TypeId<xx::List<PKG::Foo_p>> { static const uint16_t value = 4; };
+	template<> struct TypeId<xx::List<xx::Ref<PKG::Foo>>> { static const uint16_t value = 5; };
 }
 namespace PKG
 {
@@ -54,7 +57,9 @@ namespace PKG
     inline void Foo::ToBBuffer(xx::BBuffer& bb) const noexcept
     {
         bb.Write(this->foo);
+        bb.Write(this->refFoo);
         bb.Write(this->foos);
+        bb.Write(this->refFoos);
     }
     inline int Foo::FromBBuffer(xx::BBuffer& bb) noexcept
     {
@@ -63,8 +68,11 @@ namespace PKG
     inline int Foo::FromBBufferCore(xx::BBuffer& bb) noexcept
     {
         if (int r = bb.Read(this->foo)) return r;
+        if (int r = bb.Read(this->refFoo)) return r;
         bb.readLengthLimit = 0;
         if (int r = bb.Read(this->foos)) return r;
+        bb.readLengthLimit = 0;
+        if (int r = bb.Read(this->refFoos)) return r;
         return 0;
     }
 
@@ -87,12 +95,16 @@ namespace PKG
     {
         this->BaseType::ToStringCore(s);
         s.Append(", \"foo\":", this->foo);
+        s.Append(", \"refFoo\":", this->refFoo);
         s.Append(", \"foos\":", this->foos);
+        s.Append(", \"refFoos\":", this->refFoos);
     }
     inline void Foo::CopyTo(Foo* const& o) const noexcept
     {
         o->foo = this->foo;
+        o->refFoo = this->refFoo;
         o->foos = this->foos;
+        o->refFoos = this->refFoos;
     }
     inline Foo* Foo::MakeCopy() const noexcept
     {
@@ -113,5 +125,6 @@ namespace PKG
         xx::MemPool::RegisterInternals();
 	    xx::MemPool::Register<PKG::Foo, xx::Object>();
 	    xx::MemPool::Register<xx::List<PKG::Foo_p>, xx::Object>();
+	    xx::MemPool::Register<xx::List<xx::Ref<PKG::Foo>>, xx::Object>();
 	}
 }

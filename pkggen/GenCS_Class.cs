@@ -390,7 +390,7 @@ namespace " + c.Namespace + @"
         {
             var ct = kv.Key;
             if (ct._IsString() || ct._IsBBuffer() || ct._IsExternal() && !ct._GetExternalSerializable()) continue;
-            var ctn = ct._GetSafeTypeDecl_Cpp(templateName);
+            var ctn = ct._GetTypeDecl_Cpp(templateName);
             var typeId = kv.Value;
 
             sb.Append(@"
