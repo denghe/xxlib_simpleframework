@@ -45,13 +45,13 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(SolutionDir);$(SolutionDir)xxlib_cpp;$(SolutionDir)libuv\include;$(SolutionDir)sqlite3;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)libuv\lib\release;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir);$(SolutionDir)xxlib;$(SolutionDir)libuv\include;$(SolutionDir)sqlite3;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)libuv\lib\win64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(SolutionDir);$(SolutionDir)xxlib_cpp;$(SolutionDir)libuv\include;$(SolutionDir)sqlite3;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)libuv\lib\release;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir);$(SolutionDir)xxlib;$(SolutionDir)libuv\include;$(SolutionDir)sqlite3;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)libuv\lib\win64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -88,44 +88,48 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\sqlite3\sqlite3.c" />
+    <ClCompile Include="..\xxlib\http_parser.c" />
+    <ClCompile Include="..\xxlib\ikcp.cpp" />
+    <ClCompile Include="..\xxlib\xx_uv.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\db\LOGDB_class.h" />
-    <ClInclude Include="..\db\LOGDB_sqlite.h" />
-    <ClInclude Include="..\sqlite3\sqlite3.h" />
-    <ClInclude Include="..\sqlite3\sqlite3ext.h" />
-    <ClInclude Include="..\xxlib_cpp\ajson.hpp" />
-    <ClInclude Include="..\xxlib_cpp\xx_bbqueue.h" />
-    <ClInclude Include="..\xxlib_cpp\xx_bbuffer.h" />
-    <ClInclude Include="..\xxlib_cpp\xx_bytesutils.h" />
-    <ClInclude Include="..\xxlib_cpp\xx_charsutils.h" />
-    <ClInclude Include="..\xxlib_cpp\xx_cursorpool.h" />
-    <ClInclude Include="..\xxlib_cpp\xx_defines.h" />
-    <ClInclude Include="..\xxlib_cpp\xx_dict.h" />
-    <ClInclude Include="..\xxlib_cpp\xx_func.h" />
-    <ClInclude Include="..\xxlib_cpp\xx_hashutils.h" />
-    <ClInclude Include="..\xxlib_cpp\xx_helpers.h" />
-    <ClInclude Include="..\xxlib_cpp\xx_links.h" />
-    <ClInclude Include="..\xxlib_cpp\xx_list.h" />
-    <ClInclude Include="..\xxlib_cpp\xx_luahelper.h" />
-    <ClInclude Include="..\xxlib_cpp\xx_memheader.h" />
-    <ClInclude Include="..\xxlib_cpp\xx_mempool.h" />
-    <ClInclude Include="..\xxlib_cpp\xx_mpobject.h" />
-    <ClInclude Include="..\xxlib_cpp\xx_ptr.h" />
-    <ClInclude Include="..\xxlib_cpp\xx_queue.h" />
-    <ClInclude Include="..\xxlib_cpp\xx_random.h" />
-    <ClInclude Include="..\xxlib_cpp\xx_ref.h" />
-    <ClInclude Include="..\xxlib_cpp\xx_sqlite.h" />
-    <ClInclude Include="..\xxlib_cpp\xx_string.h" />
-    <ClInclude Include="..\xxlib_cpp\xx_structs.h" />
-    <ClInclude Include="..\xxlib_cpp\xx_timer.h" />
-    <ClInclude Include="..\xxlib_cpp\xx_uv.h" />
-    <ClInclude Include="..\xxlib_cpp\xx_uv.hpp" />
+    <ClInclude Include="..\xxlib\fixed_function.hpp" />
+    <ClInclude Include="..\xxlib\http_parser.h" />
+    <ClInclude Include="..\xxlib\ikcp.h" />
+    <ClInclude Include="..\xxlib\xx.h" />
+    <ClInclude Include="..\xxlib\xx_bbuffer.h" />
+    <ClInclude Include="..\xxlib\xx_bbuffer.hpp" />
+    <ClInclude Include="..\xxlib\xx_bytesutils.h" />
+    <ClInclude Include="..\xxlib\xx_bytesutils.hpp" />
+    <ClInclude Include="..\xxlib\xx_charsutils.h" />
+    <ClInclude Include="..\xxlib\xx_charsutils.hpp" />
+    <ClInclude Include="..\xxlib\xx_dict.h" />
+    <ClInclude Include="..\xxlib\xx_dict.hpp" />
+    <ClInclude Include="..\xxlib\xx_guid.h" />
+    <ClInclude Include="..\xxlib\xx_guid.hpp" />
+    <ClInclude Include="..\xxlib\xx_hashset.h" />
+    <ClInclude Include="..\xxlib\xx_hashset.hpp" />
+    <ClInclude Include="..\xxlib\xx_hashutils.h" />
+    <ClInclude Include="..\xxlib\xx_hashutils.hpp" />
+    <ClInclude Include="..\xxlib\xx_list.h" />
+    <ClInclude Include="..\xxlib\xx_list.hpp" />
+    <ClInclude Include="..\xxlib\xx_logger.h" />
+    <ClInclude Include="..\xxlib\xx_mempool.h" />
+    <ClInclude Include="..\xxlib\xx_mempool.hpp" />
+    <ClInclude Include="..\xxlib\xx_pos.h" />
+    <ClInclude Include="..\xxlib\xx_queue.h" />
+    <ClInclude Include="..\xxlib\xx_queue.hpp" />
+    <ClInclude Include="..\xxlib\xx_random.h" />
+    <ClInclude Include="..\xxlib\xx_random.hpp" />
+    <ClInclude Include="..\xxlib\xx_sqlite.h" />
+    <ClInclude Include="..\xxlib\xx_string.h" />
+    <ClInclude Include="..\xxlib\xx_string.hpp" />
+    <ClInclude Include="..\xxlib\xx_uv.h" />
+    <ClInclude Include="..\xxlib\xx_uv.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <Natvis Include="..\xxlib_cpp\xx.natvis" />
+    <Natvis Include="..\xxlib\xx.natvis" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

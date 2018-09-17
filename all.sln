@@ -62,6 +62,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "pkggen_template_MYSQLGEN", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "mysql_tmp_gen", "mysql_tmp_gen\mysql_tmp_gen.csproj", "{FEABEB03-E98F-4265-8A7E-FE2E18CCC25E}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test_cpp4", "test_cpp4\test_cpp4.vcxproj", "{52940E70-11D7-44E8-8A3F-C91AA603A902}"
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		pkg\pkg.projitems*{160a3ee0-261c-4ed1-9194-4c6e75dbc7cf}*SharedItemsImports = 13
@@ -167,6 +169,10 @@ Global
 		{FEABEB03-E98F-4265-8A7E-FE2E18CCC25E}.Debug|x64.Build.0 = Debug|x64
 		{FEABEB03-E98F-4265-8A7E-FE2E18CCC25E}.Release|x64.ActiveCfg = Release|x64
 		{FEABEB03-E98F-4265-8A7E-FE2E18CCC25E}.Release|x64.Build.0 = Release|x64
+		{52940E70-11D7-44E8-8A3F-C91AA603A902}.Debug|x64.ActiveCfg = Debug|x64
+		{52940E70-11D7-44E8-8A3F-C91AA603A902}.Debug|x64.Build.0 = Debug|x64
+		{52940E70-11D7-44E8-8A3F-C91AA603A902}.Release|x64.ActiveCfg = Release|x64
+		{52940E70-11D7-44E8-8A3F-C91AA603A902}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
