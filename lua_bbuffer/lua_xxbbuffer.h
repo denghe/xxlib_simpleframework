@@ -2,6 +2,19 @@
 #pragma once
 #include "xxbuf.h"
 #include <string>
+#include <ctime>
+#include <iomanip>
+#include <chrono>
+
+
+#ifndef _countof
+template<typename T, size_t N>
+size_t _countof_helper(T const (&arr)[N])
+{
+	return N;
+}
+#define _countof(_Array) _countof_helper(_Array)
+#endif
 
 struct Lua_XxBBuffer : XxBuf
 {
@@ -99,6 +112,9 @@ struct Lua_XxBBuffer : XxBuf
 		{ "__tostring", __tostring },
 
 		{ "WritePackage", WritePackage },
+
+		{ "Int64ToDateTime", Int64ToDateTime },
+		{ "Int64ToString", Int64ToString },
 
 		{ nullptr, nullptr }
 		};
@@ -258,12 +274,40 @@ struct Lua_XxBBuffer : XxBuf
 		}
 		else if constexpr (std::is_floating_point<T>::value)
 		{
+			if (!lua_isnumber(L, i))
+			{
+				luaL_error(L, "the args[ %d ]'s type must be a number", i);
+			}
 			T v;
 			v = (T)lua_tonumber(L, i);
 			Write(v);
 		}
+#if LUA_VERSION_NUM < 503
+		else if constexpr (std::is_same<T, int64_t>::value)
+		{
+			if (!lua_isuserdata(L, i))
+			{
+				luaL_error(L, "the args[ %d ]'s type must be a userdata(int64)", i);
+			}
+			T v = *(int64_t*)lua_touserdata(L, i);//tolua_toint64(L, i);
+			Write(v);
+		}
+		else if constexpr (std::is_same<T, uint64_t>::value)
+		{
+			if (!lua_isuserdata(L, i))
+			{
+				luaL_error(L, "the args[ %d ]'s type must be a userdata(uint64)", i);
+			}
+			T v = *(uint64_t*)lua_touserdata(L, i);//tolua_touint64(L, i);
+			Write(v);
+		}
+#endif
 		else
 		{
+			if (!lua_isnumber(L, i))
+			{
+				luaL_error(L, "the args[ %d ]'s type must be a integer", i);
+			}
 			T v;
 			v = (T)lua_tointeger(L, i);
 			Write(v);
@@ -364,6 +408,16 @@ struct Lua_XxBBuffer : XxBuf
 		{
 			lua_pushnumber(L, (lua_Number)v);
 		}
+#if LUA_VERSION_NUM < 503
+		else if constexpr (std::is_same<T, int64_t>::value)
+		{
+			*(int64_t*)lua_newuserdata(L, sizeof(int64_t)) = v;	// tolua_pushint64(L, v);
+		}
+		else if constexpr (std::is_same<T, uint64_t>::value)
+		{
+			*(uint64_t*)lua_newuserdata(L, sizeof(uint64_t)) = v;	// tolua_pushuint64(L, v);
+		}
+#endif
 		else											// int32 or 64(lua5.3+)
 		{
 			lua_pushinteger(L, (lua_Integer)v);
@@ -802,6 +856,49 @@ struct Lua_XxBBuffer : XxBuf
 			lua_insert(L, -2);					// bb, ..., o, dict
 			lua_pop(L, 1);						// bb, ..., o
 		}
+	}
+
+
+	// 将 userdata(int64) 存的 epoch10m 转为 年,月,日,时,分,秒,周几,年日 8个值返回
+	inline static int Int64ToDateTime(lua_State* L)
+	{
+		auto top = lua_gettop(L);
+		if (top != 1 || !lua_isuserdata(L, 1))
+		{
+			luaL_error(L, "Int64ToDateTime args should be userdata(int64)");
+		}
+		auto v = *(int64_t*)lua_touserdata(L, 1);
+
+		std::tm tm;
+		auto tp = std::chrono::system_clock::time_point(std::chrono::duration_cast<std::chrono::system_clock::duration>(std::chrono::duration<long long, std::ratio<1LL, 10000000LL>>(v)));
+		auto t = std::chrono::system_clock::to_time_t(tp);
+		tm = *localtime(&t);
+		lua_pushinteger(L, tm.tm_year + 1900);
+		lua_pushinteger(L, tm.tm_mon + 1);
+		lua_pushinteger(L, tm.tm_mday);
+		lua_pushinteger(L, tm.tm_hour);
+		lua_pushinteger(L, tm.tm_min);
+		lua_pushinteger(L, tm.tm_sec);
+		lua_pushinteger(L, tm.tm_wday);
+		lua_pushinteger(L, tm.tm_yday);
+
+		return 8;
+	}
+
+	// 将 userdata(int64) 存的数值转为 string
+	inline static int Int64ToString(lua_State* L)
+	{
+		auto top = lua_gettop(L);
+		if (top != 1 || !lua_isuserdata(L, 1))
+		{
+			luaL_error(L, "Int64ToString args should be userdata(int64)");
+		}
+		auto v = *(int64_t*)lua_touserdata(L, 1);
+		auto s = std::to_string(v);
+
+		lua_pushstring(L, s.c_str());
+
+		return 1;
 	}
 
 };

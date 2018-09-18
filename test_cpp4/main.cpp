@@ -1,4 +1,4 @@
-﻿#include "xx.h"
+﻿#include "xx_uv.h"
 #include "lua.hpp"
 
 int Lmain(lua_State *L)
@@ -6,13 +6,13 @@ int Lmain(lua_State *L)
 	luaL_openlibs(L);
 
 	auto s = R"(
-local t = {}
+local t
 for j = 1, 10, 1 do
 	for i = 1, 9999999, 1 do
-		t[i] = i
+		t = {}
 	end
 	for i = 1, 9999999, 1 do
-		t[i] = nil
+		t = nil
 	end
 end
 )";
@@ -22,7 +22,6 @@ end
 		lua_pop(L, 1);
 		return 0;
 	}
-
 	lua_call(L, 0, LUA_MULTRET);
 
 	return 0;

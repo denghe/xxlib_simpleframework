@@ -11,18 +11,6 @@
 #include <cmath>
 #include <limits>
 
-#ifndef _countof
-#ifndef _countof_IMPL
-#define _countof_IMPL
-template<typename T, size_t N>
-size_t _countof(T const (&arr)[N])
-{
-	return N;
-}
-#endif
-#endif
-
-
 // 含有最基础的数据序列化功能, 针对 c#, c++, lua 需要各自扩展相应的 引用 继承 部分
 struct XxBuf
 {
