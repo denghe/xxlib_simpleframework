@@ -126,4 +126,8 @@
       <Filter>xxlib</Filter>
     </Natvis>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="src.lua" />
+    <None Include="PKG_class.lua" />
+  </ItemGroup>
 </Project>

@@ -1,5 +1,5 @@
 ﻿
-MYSQLGEN_PkgGenMd5_Value = '433fddf997fdd81b403fa8b8cbeeddfa'
+MYSQLGEN_PkgGenMd5_Value = 'ad6a2aaddf11f8b44823762e507b9620'
 
 MYSQLGEN_DbTable = {
     typeName = "MYSQLGEN_DbTable",
@@ -9,6 +9,11 @@ MYSQLGEN_DbTable = {
         o.__proto = MYSQLGEN_DbTable
         o.__index = o
         o.__newindex = o
+		o.__isReleased = false
+		o.Release = function()
+			o.__isReleased = true
+		end
+
 
         o.childs = null -- List_MYSQLGEN_DbColumn_
         o.createScript = null -- String
@@ -39,6 +44,11 @@ MYSQLGEN_Tables_TABLES = {
         o.__proto = MYSQLGEN_Tables_TABLES
         o.__index = o
         o.__newindex = o
+		o.__isReleased = false
+		o.Release = function()
+			o.__isReleased = true
+		end
+
 
         o.TABLE_CATALOG = null -- String
         o.TABLE_SCHEMA = null -- String
@@ -121,6 +131,11 @@ List_MYSQLGEN_DbColumn_ = {
         o.__proto = List_MYSQLGEN_DbColumn_
         o.__index = o
         o.__newindex = o
+		o.__isReleased = false
+		o.Release = function()
+			o.__isReleased = true
+		end
+
         return o
     end,
     FromBBuffer = function( bb, o )
@@ -148,6 +163,11 @@ MYSQLGEN_DbColumn = {
         o.__proto = MYSQLGEN_DbColumn
         o.__index = o
         o.__newindex = o
+		o.__isReleased = false
+		o.Release = function()
+			o.__isReleased = true
+		end
+
 
         o.parent = null -- MYSQLGEN_DbTable
         setmetatable( o, MYSQLGEN_Tables_COLUMNS.Create() )
@@ -173,6 +193,11 @@ MYSQLGEN_Tables_COLUMNS = {
         o.__proto = MYSQLGEN_Tables_COLUMNS
         o.__index = o
         o.__newindex = o
+		o.__isReleased = false
+		o.Release = function()
+			o.__isReleased = true
+		end
+
 
         o.TABLE_CATALOG = null -- String
         o.TABLE_SCHEMA = null -- String
@@ -255,6 +280,11 @@ MYSQLGEN_Tables_show_create_table = {
         o.__proto = MYSQLGEN_Tables_show_create_table
         o.__index = o
         o.__newindex = o
+		o.__isReleased = false
+		o.Release = function()
+			o.__isReleased = true
+		end
+
 
         o.Table = null -- String
         o.CreateTable = null -- String

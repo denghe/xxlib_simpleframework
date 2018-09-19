@@ -89,7 +89,7 @@ namespace xx
 	}
 
 	// 压 LuaInt64ToDateTime 函数 到 全局
-	inline void LuaRegisterInt64ToDateTime(lua_State* L, xx::UvLoop* uvloop)
+	inline void LuaRegisterInt64ToDateTime(lua_State* L)
 	{
 		lua_pushstring(L, "Int64ToDateTime");
 		lua_pushcclosure(L, LuaInt64ToDateTime, 0);
@@ -114,11 +114,48 @@ namespace xx
 		return 1;
 	}
 	// 压 LuaInt64ToString 函数 到 全局
-	inline void LuaRegisterInt64ToString(lua_State* L, xx::UvLoop* uvloop)
+	inline void LuaRegisterInt64ToString(lua_State* L)
 	{
 		lua_pushstring(L, "Int64ToString");
 		lua_pushcclosure(L, LuaInt64ToDateTime, 0);
 		lua_rawset(L, LUA_GLOBALSINDEX);
+	}
+
+	// 压 MakeRef 函数 到 全局
+	inline void LuaRegisterMakeRef(lua_State* L)
+	{
+		auto code = R"(
+function MakeRef( o )
+	local t = {}
+	t.pointer = o
+	t.NotNull = function()
+		if t.pointer ~= nil then
+            if t.pointer.__isReleased then
+                t.pointer = nil
+                return false
+			end
+            return true
+        end
+        return false
+	end
+	t.Reset = function( o )
+		if o == nil or o == null then
+			t.pointer = nil
+		else
+			t.pointer = o
+		end
+	end
+	t.Lock = function()
+		if t.NotNull() then
+			return t.pointer
+		else
+			return nil
+		end
+	end
+	return t
+end
+)";
+		luaL_dostring(L, code);
 	}
 
 

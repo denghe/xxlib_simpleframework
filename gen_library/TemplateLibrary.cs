@@ -45,6 +45,8 @@
 
 // DateTime  暂不可用
 
+// todo: LUA 下 Ref<T> 的表现形式, 还需要进一步设计
+
 
 namespace TemplateLibrary
 {
@@ -54,7 +56,7 @@ namespace TemplateLibrary
     public class List<T> { }
 
     /// <summary>
-    /// 模拟 xx.Ref
+    /// 模拟 xx.Ref 弱引用数据类型
     /// </summary>
     public class Ref<T> { }
 
@@ -128,24 +130,6 @@ namespace TemplateLibrary
         public Title(string v) { value = v; }
         public string value;
     }
-
-
-    ///// <summary>
-    ///// 用于类成员是否生成 _r 弱引用版的标记. 仅 C++ 有效. 
-    ///// 如果类型为 List, 则 bool 数组由外及内用于说明当前层次是否为 _r 引用版.
-    ///// </summary>
-    //public class Ref : System.Attribute
-    //{
-    //    public Ref() { values = new bool[] { true }; }
-    //    public Ref(bool v1) { values = new bool[] { v1 }; }
-    //    public Ref(bool v1, bool v2) { values = new bool[] { v1, v2 }; }
-    //    public Ref(bool v1, bool v2, bool v3) { values = new bool[] { v1, v2, v3 }; }
-    //    public Ref(bool v1, bool v2, bool v3, bool v4) { values = new bool[] { v1, v2, v3, v4 }; }
-    //    public Ref(bool[] vs) { values = vs; }
-
-    //    public bool[] values;
-    //}
-
 
 
     /// <summary>

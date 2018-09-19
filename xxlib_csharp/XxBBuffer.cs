@@ -847,7 +847,7 @@ namespace xx
 
         public void Write<T>(Ref<T> v) where T : Object
         {
-            if (v) Write(v.pointer);
+            if (v.NotNull()) Write(v.pointer);
         }
 
         public void Read<T>(ref Ref<T> v) where T : Object

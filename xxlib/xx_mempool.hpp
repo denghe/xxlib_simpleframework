@@ -186,8 +186,9 @@ namespace xx
 	{
 		if (!p) return;
 		auto h = (MemHeader_Object*)p - 1;
-		if (!h->versionNumber) return;		// 用这个来防递归 Release
-		assert(h->mpIndex() > 0 && h->mpIndex() < headers.size());
+		if (!h->versionNumber) return;								// 防 Release 重入
+		assert(!h->refs);											// 防 Ptr<> 方式使用时过早的被 Release
+		assert(h->mpIndex() > 0 && h->mpIndex() < headers.size());	// 防长度部分被破坏
 		auto idx = h->mpIndex();
 		h->versionNumber = 0;
 		p->~Object();
@@ -483,9 +484,7 @@ namespace xx
 		{
 			if (--pointer->memHeader().refs == 0)
 			{
-				auto mp = pointer->mempool;
-				pointer->~T();
-				mp->template Free<MemHeader_Object>(pointer);
+				pointer->Release();
 			}
 			pointer = nullptr;
 		}
@@ -647,6 +646,15 @@ namespace xx
 		: pointer(nullptr)
 		, versionNumber(0)
 	{}
+
+	template<typename T>
+	Ref<T>::~Ref() noexcept
+	{
+		if (*this && !pointer->memHeader().refs)
+		{
+			pointer->Release();
+		}
+	}
 
 	template<typename T>
 	template<typename O>

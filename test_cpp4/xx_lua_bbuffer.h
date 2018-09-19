@@ -164,7 +164,7 @@ namespace xx
 				luaL_error(L, "the arg's type must be a proto table");
 			}
 			lua_getfield(L, 1, "typeId");			// t, int
-			auto typeId = lua_tointeger(L, -1);
+			auto typeId = (int)lua_tointeger(L, -1);
 
 			lua_pushlightuserdata(L, (void*)name);	// t, int, name
 			lua_rawget(L, LUA_REGISTRYINDEX);		// t, int, typeIdProtos
@@ -227,18 +227,9 @@ namespace xx
 		inline static int __tostring(lua_State* L)
 		{
 			auto& self = GetSelf(L, 1);
-			std::string s;
-			s += "{ \"len\" : " + std::to_string(self.dataLen) + ", \"offset\" : " + std::to_string(self.offset) + ", \"data\" : [";
-			for (uint32_t i = 0; i < self.dataLen; ++i)
-			{
-				s += i ? ", " : " ";
-				s += std::to_string((uint8_t)self.buf[i]);
-				//s += hexs[self.buf[i] % 16];
-				//s += hexs[self.buf[i] >> 4];
-			}
-			s += self.dataLen ? " ]" : "]";
-			s += " }";
-			lua_pushlstring(L, s.c_str(), s.size());
+			auto s = self.mempool->Str();
+			self.ToString(*s);
+			lua_pushlstring(L, s->c_str(), s->dataLen);
 			return 1;
 		}
 
@@ -364,7 +355,7 @@ namespace xx
 		template<typename T>
 		void Read(lua_State* L, T& v)
 		{
-			if (auto rtv = ReadFrom(buf, dataLen, offset, v))
+			if (auto rtv = this->BBuffer::Read<T>(v))
 			{
 				if (rtv == 1)
 				{
@@ -784,7 +775,7 @@ namespace xx
 			}
 			// else									// bb, ...
 
-			uint32_t ptr_offset = 0, bb_offset_bak = offset - offsetRoot;
+			uint32_t ptr_offset = 0, bb_offset_bak = uint32_t(offset - offsetRoot);
 			Read(L, ptr_offset);
 			if (ptr_offset == bb_offset_bak)		// 首次出现, 后面是内容
 			{

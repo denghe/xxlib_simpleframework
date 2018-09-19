@@ -1,5 +1,5 @@
 ﻿
-RPC_PkgGenMd5_Value = 'f7589dd49638f0ebbcc35a606bbecdc6'
+RPC_PkgGenMd5_Value = 'dfd6327ef3db0b69dc7ca345d134ba72'
 
 --[[
 服务类型列表
@@ -26,6 +26,11 @@ RPC_DB_Manage_MsgResult = {
         o.__proto = RPC_DB_Manage_MsgResult
         o.__index = o
         o.__newindex = o
+		o.__isReleased = false
+		o.Release = function()
+			o.__isReleased = true
+		end
+
 
         o.txt = null -- String
         return o
@@ -46,6 +51,11 @@ RPC_Manage_DB_Msg = {
         o.__proto = RPC_Manage_DB_Msg
         o.__index = o
         o.__newindex = o
+		o.__isReleased = false
+		o.Release = function()
+			o.__isReleased = true
+		end
+
 
         o.txt = null -- String
         return o
@@ -66,6 +76,11 @@ RPC_Login_Client_LoginSuccess = {
         o.__proto = RPC_Login_Client_LoginSuccess
         o.__index = o
         o.__newindex = o
+		o.__isReleased = false
+		o.Release = function()
+			o.__isReleased = true
+		end
+
 
         o.id = 0 -- Int32
         return o
@@ -86,6 +101,11 @@ RPC_Client_Login_Login = {
         o.__proto = RPC_Client_Login_Login
         o.__index = o
         o.__newindex = o
+		o.__isReleased = false
+		o.Release = function()
+			o.__isReleased = true
+		end
+
 
         o.username = null -- String
         o.password = null -- String
@@ -111,6 +131,11 @@ RPC_DB_Login_AuthSuccess = {
         o.__proto = RPC_DB_Login_AuthSuccess
         o.__index = o
         o.__newindex = o
+		o.__isReleased = false
+		o.Release = function()
+			o.__isReleased = true
+		end
+
 
         o.id = 0 -- Int32
         return o
@@ -131,6 +156,11 @@ RPC_Login_DB_Auth = {
         o.__proto = RPC_Login_DB_Auth
         o.__index = o
         o.__newindex = o
+		o.__isReleased = false
+		o.Release = function()
+			o.__isReleased = true
+		end
+
 
         o.username = null -- String
         o.password = null -- String
@@ -159,6 +189,11 @@ RPC_Generic_ServiceInfo = {
         o.__proto = RPC_Generic_ServiceInfo
         o.__index = o
         o.__newindex = o
+		o.__isReleased = false
+		o.Release = function()
+			o.__isReleased = true
+		end
+
 
         --[[
         服务类型
@@ -185,6 +220,11 @@ RPC_Generic_Error = {
         o.__proto = RPC_Generic_Error
         o.__index = o
         o.__newindex = o
+		o.__isReleased = false
+		o.Release = function()
+			o.__isReleased = true
+		end
+
 
         --[[
         错误码
@@ -217,6 +257,11 @@ RPC_Generic_Ping = {
         o.__proto = RPC_Generic_Ping
         o.__index = o
         o.__newindex = o
+		o.__isReleased = false
+		o.Release = function()
+			o.__isReleased = true
+		end
+
 
         o.ticks = 0 -- Double
         return o
@@ -240,6 +285,11 @@ RPC_Generic_Pong = {
         o.__proto = RPC_Generic_Pong
         o.__index = o
         o.__newindex = o
+		o.__isReleased = false
+		o.Release = function()
+			o.__isReleased = true
+		end
+
 
         o.ticks = 0 -- Double
         return o

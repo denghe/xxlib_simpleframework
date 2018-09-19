@@ -1,38 +1,30 @@
 ﻿using System;
-using xx;
 namespace PKG
 {
     public static class PkgGenMd5
     {
-        public const string value = "bf0a438febf3b576bbe0485476196fd2"; 
+        public const string value = "72103084919eecc8fb28cf1d5b43999c"; 
     }
 
     public partial class Foo : xx.Object
     {
-        public Foo foo;
-        public Ref<Foo> refFoo;
-        public List<Foo> foos;
-        public List<Ref<Foo>> refFoos;
+        public xx.Ref<Foo> refFoo;
+        public xx.List<xx.Ref<Foo>> refFoos;
 
         public override ushort GetPackageId()
         {
-            return TypeId<Foo>.value;
+            return xx.TypeId<Foo>.value;
         }
 
-        public override void ToBBuffer(BBuffer bb)
+        public override void ToBBuffer(xx.BBuffer bb)
         {
-            bb.Write(this.foo);
             bb.Write(this.refFoo);
-            bb.Write(this.foos);
             bb.Write(this.refFoos);
         }
 
-        public override void FromBBuffer(BBuffer bb)
+        public override void FromBBuffer(xx.BBuffer bb)
         {
-            bb.Read(ref this.foo);
             bb.Read(ref this.refFoo);
-            bb.readLengthLimit = 0;
-            bb.Read(ref this.foos);
             bb.readLengthLimit = 0;
             bb.Read(ref this.refFoos);
         }
@@ -53,9 +45,7 @@ namespace PKG
         }
         public override void ToStringCore(System.Text.StringBuilder s)
         {
-            s.Append(", \"foo\":" + (foo == null ? "nil" : foo.ToString()));
-            s.Append(", \"refFoo\":" + refFoo);
-            s.Append(", \"foos\":" + (foos == null ? "nil" : foos.ToString()));
+            s.Append(", \"refFoo\":" + refFoo.ToString());
             s.Append(", \"refFoos\":" + (refFoos == null ? "nil" : refFoos.ToString()));
         }
         public override string ToString()
@@ -74,8 +64,7 @@ namespace PKG
         {
             xx.Object.RegisterInternals();
             xx.Object.Register<Foo>(3);
-            xx.Object.Register<List<Foo>>(4);
-            xx.Object.Register<List<Ref<Foo>>>(5);
+            xx.Object.Register<xx.List<xx.Ref<Foo>>>(5);
         }
     }
 }

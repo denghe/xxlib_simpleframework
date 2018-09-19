@@ -205,6 +205,14 @@
   <ItemGroup>
     <Natvis Include="..\xxlib\xx.natvis" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="PKG_class.lua">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+    <None Include="src.lua">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

@@ -365,6 +365,7 @@ namespace xx
 		decltype(MemHeader::versionNumber) versionNumber;
 
 		Ref() noexcept;
+		~Ref() noexcept;	// 用于处理值有效但 refs == 0 的对象析构. 常见于反序列化类成员仅含弱引用部分
 
 		template<typename O>
 		Ref(O* const& o) noexcept;

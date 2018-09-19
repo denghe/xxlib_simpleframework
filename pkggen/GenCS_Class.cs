@@ -13,8 +13,7 @@ public static class GenCS_Class
         var sb = new StringBuilder();
 
         // usings
-        sb.Append(@"using System;
-using xx;");
+        sb.Append(@"using System;");
 
         // template namespace
         sb.Append(@"
@@ -93,7 +92,7 @@ namespace " + c.Namespace + @"
             if (c.IsValueType)
             {
                 sb.Append(c._GetDesc()._GetComment_CSharp(4) + @"
-    public partial struct " + c.Name + @" : IObject
+    public partial struct " + c.Name + @" : xx.IObject
     {");
             }
             else
@@ -132,10 +131,10 @@ namespace " + c.Namespace + @"
 
         public" + (c.IsValueType ? "" : " override") + @" ushort GetPackageId()
         {
-            return TypeId<" + c.Name + @">.value;
+            return xx.TypeId<" + c.Name + @">.value;
         }
 
-        public" + (c.IsValueType ? "" : " override") + @" void ToBBuffer(BBuffer bb)
+        public" + (c.IsValueType ? "" : " override") + @" void ToBBuffer(xx.BBuffer bb)
         {");
 
             if (!c.IsValueType && c._HasBaseType())
@@ -166,7 +165,7 @@ namespace " + c.Namespace + @"
                 else if (!ft._IsNullable() && ft.IsValueType && !ft.IsPrimitive)
                 {
                     sb.Append(@"
-            ((IObject)this." + f.Name + ").ToBBuffer(bb);");
+            ((xx.IObject)this." + f.Name + ").ToBBuffer(bb);");
                 }
                 else
                 {
@@ -178,7 +177,7 @@ namespace " + c.Namespace + @"
             sb.Append(@"
         }
 
-        public" + (c.IsValueType ? "" : " override") + @" void FromBBuffer(BBuffer bb)
+        public" + (c.IsValueType ? "" : " override") + @" void FromBBuffer(xx.BBuffer bb)
         {");
             if (!c.IsValueType && c._HasBaseType())
             {
@@ -205,7 +204,7 @@ namespace " + c.Namespace + @"
                 else if (!ft._IsNullable() && ft.IsValueType && !ft.IsPrimitive)
                 {
                     sb.Append(@"
-            ((IObject)this." + f.Name + ").FromBBuffer(bb);");
+            ((xx.IObject)this." + f.Name + ").FromBBuffer(bb);");
                 }
                 else
                 {
@@ -257,7 +256,7 @@ namespace " + c.Namespace + @"
                 if (ft._IsString())
                 {
                     sb.Append(@"
-            if (" + f.Name + @" != null) s.Append("", \""" + f.Name + @"\"":\"""" + " + f.Name + @" + ""\"""");
+            if (" + f.Name + @" != null) s.Append("", \""" + f.Name + @"\"":\"""" + " + f.Name + @".ToString() + ""\"""");
             else s.Append("", \""" + f.Name + @"\"":nil"");");
                 }
                 else if (ft._IsNullable())
@@ -273,7 +272,7 @@ namespace " + c.Namespace + @"
                 else
                 {
                     sb.Append(@"
-            s.Append("", \""" + f.Name + @"\"":"" + " + f.Name + @");");
+            s.Append("", \""" + f.Name + @"\"":"" + " + f.Name + @".ToString());");
                 }
             }
             sb.Append(@"

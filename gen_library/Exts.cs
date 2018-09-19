@@ -619,19 +619,19 @@ public static class GenExtensions
             {
                 if (t.Name == "Ref`1")
                 {
-                    return "Ref<" + _GetTypeDecl_Csharp(t.GenericTypeArguments[0]) + ">";
+                    return "xx.Ref<" + _GetTypeDecl_Csharp(t.GenericTypeArguments[0]) + ">";
                 }
                 else if (t.Name == "List`1")
                 {
-                    return "List<" + _GetTypeDecl_Csharp(t.GenericTypeArguments[0]) + ">";
+                    return "xx.List<" + _GetTypeDecl_Csharp(t.GenericTypeArguments[0]) + ">";
                 }
                 else if (t.Name == "DateTime")
                 {
-                    return "xx.DateTime";
+                    return "DateTime";
                 }
                 else if (t.Name == "BBuffer")
                 {
-                    return "BBuffer";
+                    return "xx.BBuffer";
                 }
             }
             else if (t.Namespace == nameof(System))
@@ -681,30 +681,6 @@ public static class GenExtensions
             //throw new Exception("unhandled data type");
         }
     }
-
-    ///// <summary>
-    ///// 获取 C++ 的安全类型声明串( Xxxxx_p ). 无法序列化的外部引用类型不加 _p. 弱引用加 _r.
-    ///// </summary>
-    //public static string _GetSafeTypeDecl_Cpp(this FieldInfo f, string templateName)
-    //{
-    //    var r = f._GetRef();
-    //    var t = f.FieldType;
-    //    if (t._IsList())
-    //    {
-    //        return "xx::List_p" + "<" + _GetSafeTypeDecl_Cpp(f, t.GenericTypeArguments[0], templateName) + ">";
-    //    }
-    //    else return _GetSafeTypeDecl_Cpp(t, templateName, r == null ? "_p" : r[0] ? "_r" : "_p");
-    //}
-    //// 暂时只支持 List<List<....   T 本身为 ref
-    //public static string _GetSafeTypeDecl_Cpp(this FieldInfo f, Type t, string templateName)
-    //{
-    //    var r = f._GetRef();
-    //    if (t._IsList())
-    //    {
-    //        return "xx::List_p" + _GetSafeTypeDecl_Cpp(f, t.GenericTypeArguments[0], templateName) + ">";
-    //    }
-    //    else return _GetSafeTypeDecl_Cpp(t, templateName, r == null ? "_p" : r[0] ? "_r" : "_p");
-    //}
 
 
     /// <summary>
@@ -816,6 +792,10 @@ public static class GenExtensions
         if (t._IsNullable())
         {
             return "Nullable" + _GetTypeDecl_Lua(t.GenericTypeArguments[0], templateName);
+        }
+        else if(t._IsRef())
+        {
+            return "Ref_" + _GetTypeDecl_Lua(t.GenericTypeArguments[0], templateName);
         }
         else if (t._IsList())
         {
@@ -1264,20 +1244,6 @@ public static class GenExtensions
         }
         return false;
     }
-
-
-    ///// <summary>
-    ///// 获取 Attribute 之 Ref. 未找到将返回 null
-    ///// </summary>
-    //public static bool[] _GetRef(this ICustomAttributeProvider t)
-    //{
-    //    foreach (var r_attribute in t.GetCustomAttributes(false))
-    //    {
-    //        if (r_attribute is TemplateLibrary.Ref)
-    //            return ((TemplateLibrary.Ref)r_attribute).values;
-    //    }
-    //    return null;
-    //}
 
 
     /// <summary>

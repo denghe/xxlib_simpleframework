@@ -1,10 +1,9 @@
 ﻿using System;
-using xx;
 namespace LOGDB
 {
     public static class PkgGenMd5
     {
-        public const string value = "9a936a14ba3a17b7876f0c93aed7f913"; 
+        public const string value = "d19ec58ccf53bc06696e3e0eb7f3465c"; 
     }
 
     /// <summary>
@@ -64,10 +63,10 @@ namespace LOGDB
 
         public override ushort GetPackageId()
         {
-            return TypeId<Log>.value;
+            return xx.TypeId<Log>.value;
         }
 
-        public override void ToBBuffer(BBuffer bb)
+        public override void ToBBuffer(xx.BBuffer bb)
         {
             bb.Write(this.id);
             bb.Write((int)this.level);
@@ -80,7 +79,7 @@ namespace LOGDB
             bb.Write(this.desc);
         }
 
-        public override void FromBBuffer(BBuffer bb)
+        public override void FromBBuffer(xx.BBuffer bb)
         {
             bb.Read(ref this.id);
             {
@@ -118,19 +117,19 @@ namespace LOGDB
         }
         public override void ToStringCore(System.Text.StringBuilder s)
         {
-            s.Append(", \"id\":" + id);
-            s.Append(", \"level\":" + level);
-            s.Append(", \"time\":" + time);
-            if (machine != null) s.Append(", \"machine\":\"" + machine + "\"");
+            s.Append(", \"id\":" + id.ToString());
+            s.Append(", \"level\":" + level.ToString());
+            s.Append(", \"time\":" + time.ToString());
+            if (machine != null) s.Append(", \"machine\":\"" + machine.ToString() + "\"");
             else s.Append(", \"machine\":nil");
-            if (service != null) s.Append(", \"service\":\"" + service + "\"");
+            if (service != null) s.Append(", \"service\":\"" + service.ToString() + "\"");
             else s.Append(", \"service\":nil");
-            if (instanceId != null) s.Append(", \"instanceId\":\"" + instanceId + "\"");
+            if (instanceId != null) s.Append(", \"instanceId\":\"" + instanceId.ToString() + "\"");
             else s.Append(", \"instanceId\":nil");
-            if (title != null) s.Append(", \"title\":\"" + title + "\"");
+            if (title != null) s.Append(", \"title\":\"" + title.ToString() + "\"");
             else s.Append(", \"title\":nil");
-            s.Append(", \"opcode\":" + opcode);
-            if (desc != null) s.Append(", \"desc\":\"" + desc + "\"");
+            s.Append(", \"opcode\":" + opcode.ToString());
+            if (desc != null) s.Append(", \"desc\":\"" + desc.ToString() + "\"");
             else s.Append(", \"desc\":nil");
         }
         public override string ToString()

@@ -82,8 +82,9 @@ namespace xx
     }
 
 
-    // todo: 序列化器, List 都需要做 Ref<T> 相应适配
-
+    /// <summary>
+    /// for 序列化时易于操作
+    /// </summary>
     public interface IRef
     {
         bool NotNull();
@@ -100,8 +101,9 @@ namespace xx
 
         public IObject Lock()
         {
-            return this ? pointer : null;
+            return this.NotNull() ? pointer : null;
         }
+
         public void Reset(IObject o = null)
         {
             pointer = (T)o;
@@ -109,17 +111,11 @@ namespace xx
 
         public bool NotNull()
         {
-            return this;
-        }
-
-        // 可快速检测是否已 Release
-        public static implicit operator bool(Ref<T> o)
-        {
-            if (o.pointer != null)
+            if (pointer != null)
             {
-                if (o.pointer.__isReleased)
+                if (pointer.__isReleased)
                 {
-                    o.pointer = null;
+                    pointer = null;
                     return false;
                 }
                 return true;
@@ -127,9 +123,14 @@ namespace xx
             return false;
         }
 
+        public static implicit operator Ref<T>(T p)
+        {
+            return new Ref<T> { pointer = p };
+        }
+
         public override string ToString()
         {
-            if (this) return pointer.ToString();
+            if (NotNull()) return pointer.ToString();
             return "nil";
         }
     }

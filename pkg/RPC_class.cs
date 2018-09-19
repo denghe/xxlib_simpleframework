@@ -1,10 +1,9 @@
 ﻿using System;
-using xx;
 namespace RPC
 {
     public static class PkgGenMd5
     {
-        public const string value = "f7589dd49638f0ebbcc35a606bbecdc6"; 
+        public const string value = "dfd6327ef3db0b69dc7ca345d134ba72"; 
     }
 
 namespace Generic
@@ -36,15 +35,15 @@ namespace DB_Manage
 
         public override ushort GetPackageId()
         {
-            return TypeId<MsgResult>.value;
+            return xx.TypeId<MsgResult>.value;
         }
 
-        public override void ToBBuffer(BBuffer bb)
+        public override void ToBBuffer(xx.BBuffer bb)
         {
             bb.Write(this.txt);
         }
 
-        public override void FromBBuffer(BBuffer bb)
+        public override void FromBBuffer(xx.BBuffer bb)
         {
             bb.readLengthLimit = 0;
             bb.Read(ref this.txt);
@@ -66,7 +65,7 @@ namespace DB_Manage
         }
         public override void ToStringCore(System.Text.StringBuilder s)
         {
-            if (txt != null) s.Append(", \"txt\":\"" + txt + "\"");
+            if (txt != null) s.Append(", \"txt\":\"" + txt.ToString() + "\"");
             else s.Append(", \"txt\":nil");
         }
         public override string ToString()
@@ -88,15 +87,15 @@ namespace Manage_DB
 
         public override ushort GetPackageId()
         {
-            return TypeId<Msg>.value;
+            return xx.TypeId<Msg>.value;
         }
 
-        public override void ToBBuffer(BBuffer bb)
+        public override void ToBBuffer(xx.BBuffer bb)
         {
             bb.Write(this.txt);
         }
 
-        public override void FromBBuffer(BBuffer bb)
+        public override void FromBBuffer(xx.BBuffer bb)
         {
             bb.readLengthLimit = 200;
             bb.Read(ref this.txt);
@@ -118,7 +117,7 @@ namespace Manage_DB
         }
         public override void ToStringCore(System.Text.StringBuilder s)
         {
-            if (txt != null) s.Append(", \"txt\":\"" + txt + "\"");
+            if (txt != null) s.Append(", \"txt\":\"" + txt.ToString() + "\"");
             else s.Append(", \"txt\":nil");
         }
         public override string ToString()
@@ -140,15 +139,15 @@ namespace Login_Client
 
         public override ushort GetPackageId()
         {
-            return TypeId<LoginSuccess>.value;
+            return xx.TypeId<LoginSuccess>.value;
         }
 
-        public override void ToBBuffer(BBuffer bb)
+        public override void ToBBuffer(xx.BBuffer bb)
         {
             bb.Write(this.id);
         }
 
-        public override void FromBBuffer(BBuffer bb)
+        public override void FromBBuffer(xx.BBuffer bb)
         {
             bb.Read(ref this.id);
         }
@@ -169,7 +168,7 @@ namespace Login_Client
         }
         public override void ToStringCore(System.Text.StringBuilder s)
         {
-            s.Append(", \"id\":" + id);
+            s.Append(", \"id\":" + id.ToString());
         }
         public override string ToString()
         {
@@ -191,16 +190,16 @@ namespace Client_Login
 
         public override ushort GetPackageId()
         {
-            return TypeId<Login>.value;
+            return xx.TypeId<Login>.value;
         }
 
-        public override void ToBBuffer(BBuffer bb)
+        public override void ToBBuffer(xx.BBuffer bb)
         {
             bb.Write(this.username);
             bb.Write(this.password);
         }
 
-        public override void FromBBuffer(BBuffer bb)
+        public override void FromBBuffer(xx.BBuffer bb)
         {
             bb.readLengthLimit = 50;
             bb.Read(ref this.username);
@@ -224,9 +223,9 @@ namespace Client_Login
         }
         public override void ToStringCore(System.Text.StringBuilder s)
         {
-            if (username != null) s.Append(", \"username\":\"" + username + "\"");
+            if (username != null) s.Append(", \"username\":\"" + username.ToString() + "\"");
             else s.Append(", \"username\":nil");
-            if (password != null) s.Append(", \"password\":\"" + password + "\"");
+            if (password != null) s.Append(", \"password\":\"" + password.ToString() + "\"");
             else s.Append(", \"password\":nil");
         }
         public override string ToString()
@@ -248,15 +247,15 @@ namespace DB_Login
 
         public override ushort GetPackageId()
         {
-            return TypeId<AuthSuccess>.value;
+            return xx.TypeId<AuthSuccess>.value;
         }
 
-        public override void ToBBuffer(BBuffer bb)
+        public override void ToBBuffer(xx.BBuffer bb)
         {
             bb.Write(this.id);
         }
 
-        public override void FromBBuffer(BBuffer bb)
+        public override void FromBBuffer(xx.BBuffer bb)
         {
             bb.Read(ref this.id);
         }
@@ -277,7 +276,7 @@ namespace DB_Login
         }
         public override void ToStringCore(System.Text.StringBuilder s)
         {
-            s.Append(", \"id\":" + id);
+            s.Append(", \"id\":" + id.ToString());
         }
         public override string ToString()
         {
@@ -299,16 +298,16 @@ namespace Login_DB
 
         public override ushort GetPackageId()
         {
-            return TypeId<Auth>.value;
+            return xx.TypeId<Auth>.value;
         }
 
-        public override void ToBBuffer(BBuffer bb)
+        public override void ToBBuffer(xx.BBuffer bb)
         {
             bb.Write(this.username);
             bb.Write(this.password);
         }
 
-        public override void FromBBuffer(BBuffer bb)
+        public override void FromBBuffer(xx.BBuffer bb)
         {
             bb.readLengthLimit = 0;
             bb.Read(ref this.username);
@@ -332,9 +331,9 @@ namespace Login_DB
         }
         public override void ToStringCore(System.Text.StringBuilder s)
         {
-            if (username != null) s.Append(", \"username\":\"" + username + "\"");
+            if (username != null) s.Append(", \"username\":\"" + username.ToString() + "\"");
             else s.Append(", \"username\":nil");
-            if (password != null) s.Append(", \"password\":\"" + password + "\"");
+            if (password != null) s.Append(", \"password\":\"" + password.ToString() + "\"");
             else s.Append(", \"password\":nil");
         }
         public override string ToString()
@@ -362,15 +361,15 @@ namespace Generic
 
         public override ushort GetPackageId()
         {
-            return TypeId<ServiceInfo>.value;
+            return xx.TypeId<ServiceInfo>.value;
         }
 
-        public override void ToBBuffer(BBuffer bb)
+        public override void ToBBuffer(xx.BBuffer bb)
         {
             bb.Write((int)this.type);
         }
 
-        public override void FromBBuffer(BBuffer bb)
+        public override void FromBBuffer(xx.BBuffer bb)
         {
             {
                 int tmp = 0;
@@ -395,7 +394,7 @@ namespace Generic
         }
         public override void ToStringCore(System.Text.StringBuilder s)
         {
-            s.Append(", \"type\":" + type);
+            s.Append(", \"type\":" + type.ToString());
         }
         public override string ToString()
         {
@@ -423,16 +422,16 @@ namespace Generic
 
         public override ushort GetPackageId()
         {
-            return TypeId<Error>.value;
+            return xx.TypeId<Error>.value;
         }
 
-        public override void ToBBuffer(BBuffer bb)
+        public override void ToBBuffer(xx.BBuffer bb)
         {
             bb.Write(this.errNo);
             bb.Write(this.errMsg);
         }
 
-        public override void FromBBuffer(BBuffer bb)
+        public override void FromBBuffer(xx.BBuffer bb)
         {
             bb.Read(ref this.errNo);
             bb.readLengthLimit = 0;
@@ -455,8 +454,8 @@ namespace Generic
         }
         public override void ToStringCore(System.Text.StringBuilder s)
         {
-            s.Append(", \"errNo\":" + errNo);
-            if (errMsg != null) s.Append(", \"errMsg\":\"" + errMsg + "\"");
+            s.Append(", \"errNo\":" + errNo.ToString());
+            if (errMsg != null) s.Append(", \"errMsg\":\"" + errMsg.ToString() + "\"");
             else s.Append(", \"errMsg\":nil");
         }
         public override string ToString()
@@ -478,15 +477,15 @@ namespace Generic
 
         public override ushort GetPackageId()
         {
-            return TypeId<Ping>.value;
+            return xx.TypeId<Ping>.value;
         }
 
-        public override void ToBBuffer(BBuffer bb)
+        public override void ToBBuffer(xx.BBuffer bb)
         {
             bb.Write(this.ticks);
         }
 
-        public override void FromBBuffer(BBuffer bb)
+        public override void FromBBuffer(xx.BBuffer bb)
         {
             bb.Read(ref this.ticks);
         }
@@ -507,7 +506,7 @@ namespace Generic
         }
         public override void ToStringCore(System.Text.StringBuilder s)
         {
-            s.Append(", \"ticks\":" + ticks);
+            s.Append(", \"ticks\":" + ticks.ToString());
         }
         public override string ToString()
         {
@@ -528,15 +527,15 @@ namespace Generic
 
         public override ushort GetPackageId()
         {
-            return TypeId<Pong>.value;
+            return xx.TypeId<Pong>.value;
         }
 
-        public override void ToBBuffer(BBuffer bb)
+        public override void ToBBuffer(xx.BBuffer bb)
         {
             bb.Write(this.ticks);
         }
 
-        public override void FromBBuffer(BBuffer bb)
+        public override void FromBBuffer(xx.BBuffer bb)
         {
             bb.Read(ref this.ticks);
         }
@@ -557,7 +556,7 @@ namespace Generic
         }
         public override void ToStringCore(System.Text.StringBuilder s)
         {
-            s.Append(", \"ticks\":" + ticks);
+            s.Append(", \"ticks\":" + ticks.ToString());
         }
         public override string ToString()
         {

@@ -1,5 +1,5 @@
 ﻿
-LOGDB_PkgGenMd5_Value = '9a936a14ba3a17b7876f0c93aed7f913'
+LOGDB_PkgGenMd5_Value = 'd19ec58ccf53bc06696e3e0eb7f3465c'
 
 --[[
 日志级别
@@ -24,6 +24,11 @@ LOGDB_Log = {
         o.__proto = LOGDB_Log
         o.__index = o
         o.__newindex = o
+		o.__isReleased = false
+		o.Release = function()
+			o.__isReleased = true
+		end
+
 
         --[[
         自增主键

@@ -1,30 +1,29 @@
 ﻿using System;
-using xx;
 namespace MYSQLGEN
 {
     public static class PkgGenMd5
     {
-        public const string value = "433fddf997fdd81b403fa8b8cbeeddfa"; 
+        public const string value = "ad6a2aaddf11f8b44823762e507b9620"; 
     }
 
     public partial class DbTable : Tables.TABLES
     {
-        public List<DbColumn> childs;
+        public xx.List<DbColumn> childs;
         public string createScript;
 
         public override ushort GetPackageId()
         {
-            return TypeId<DbTable>.value;
+            return xx.TypeId<DbTable>.value;
         }
 
-        public override void ToBBuffer(BBuffer bb)
+        public override void ToBBuffer(xx.BBuffer bb)
         {
             base.ToBBuffer(bb);
             bb.Write(this.childs);
             bb.Write(this.createScript);
         }
 
-        public override void FromBBuffer(BBuffer bb)
+        public override void FromBBuffer(xx.BBuffer bb)
         {
             base.FromBBuffer(bb);
             bb.readLengthLimit = 0;
@@ -51,7 +50,7 @@ namespace MYSQLGEN
         {
             base.ToStringCore(s);
             s.Append(", \"childs\":" + (childs == null ? "nil" : childs.ToString()));
-            if (createScript != null) s.Append(", \"createScript\":\"" + createScript + "\"");
+            if (createScript != null) s.Append(", \"createScript\":\"" + createScript.ToString() + "\"");
             else s.Append(", \"createScript\":nil");
         }
         public override string ToString()
@@ -71,16 +70,16 @@ namespace MYSQLGEN
 
         public override ushort GetPackageId()
         {
-            return TypeId<DbColumn>.value;
+            return xx.TypeId<DbColumn>.value;
         }
 
-        public override void ToBBuffer(BBuffer bb)
+        public override void ToBBuffer(xx.BBuffer bb)
         {
             base.ToBBuffer(bb);
             bb.Write(this.parent);
         }
 
-        public override void FromBBuffer(BBuffer bb)
+        public override void FromBBuffer(xx.BBuffer bb)
         {
             base.FromBBuffer(bb);
             bb.Read(ref this.parent);
@@ -144,10 +143,10 @@ namespace Tables
 
         public override ushort GetPackageId()
         {
-            return TypeId<TABLES>.value;
+            return xx.TypeId<TABLES>.value;
         }
 
-        public override void ToBBuffer(BBuffer bb)
+        public override void ToBBuffer(xx.BBuffer bb)
         {
             bb.Write(this.TABLE_CATALOG);
             bb.Write(this.TABLE_SCHEMA);
@@ -172,7 +171,7 @@ namespace Tables
             bb.Write(this.TABLE_COMMENT);
         }
 
-        public override void FromBBuffer(BBuffer bb)
+        public override void FromBBuffer(xx.BBuffer bb)
         {
             bb.readLengthLimit = 0;
             bb.Read(ref this.TABLE_CATALOG);
@@ -225,18 +224,18 @@ namespace Tables
         }
         public override void ToStringCore(System.Text.StringBuilder s)
         {
-            if (TABLE_CATALOG != null) s.Append(", \"TABLE_CATALOG\":\"" + TABLE_CATALOG + "\"");
+            if (TABLE_CATALOG != null) s.Append(", \"TABLE_CATALOG\":\"" + TABLE_CATALOG.ToString() + "\"");
             else s.Append(", \"TABLE_CATALOG\":nil");
-            if (TABLE_SCHEMA != null) s.Append(", \"TABLE_SCHEMA\":\"" + TABLE_SCHEMA + "\"");
+            if (TABLE_SCHEMA != null) s.Append(", \"TABLE_SCHEMA\":\"" + TABLE_SCHEMA.ToString() + "\"");
             else s.Append(", \"TABLE_SCHEMA\":nil");
-            if (TABLE_NAME != null) s.Append(", \"TABLE_NAME\":\"" + TABLE_NAME + "\"");
+            if (TABLE_NAME != null) s.Append(", \"TABLE_NAME\":\"" + TABLE_NAME.ToString() + "\"");
             else s.Append(", \"TABLE_NAME\":nil");
-            if (TABLE_TYPE != null) s.Append(", \"TABLE_TYPE\":\"" + TABLE_TYPE + "\"");
+            if (TABLE_TYPE != null) s.Append(", \"TABLE_TYPE\":\"" + TABLE_TYPE.ToString() + "\"");
             else s.Append(", \"TABLE_TYPE\":nil");
-            if (ENGINE != null) s.Append(", \"ENGINE\":\"" + ENGINE + "\"");
+            if (ENGINE != null) s.Append(", \"ENGINE\":\"" + ENGINE.ToString() + "\"");
             else s.Append(", \"ENGINE\":nil");
             s.Append(", \"VERSION\":" + (VERSION.HasValue ? VERSION.Value.ToString() : "nil"));
-            if (ROW_FORMAT != null) s.Append(", \"ROW_FORMAT\":\"" + ROW_FORMAT + "\"");
+            if (ROW_FORMAT != null) s.Append(", \"ROW_FORMAT\":\"" + ROW_FORMAT.ToString() + "\"");
             else s.Append(", \"ROW_FORMAT\":nil");
             s.Append(", \"TABLE_ROWS\":" + (TABLE_ROWS.HasValue ? TABLE_ROWS.Value.ToString() : "nil"));
             s.Append(", \"AVG_ROW_LENGTH\":" + (AVG_ROW_LENGTH.HasValue ? AVG_ROW_LENGTH.Value.ToString() : "nil"));
@@ -245,18 +244,18 @@ namespace Tables
             s.Append(", \"INDEX_LENGTH\":" + (INDEX_LENGTH.HasValue ? INDEX_LENGTH.Value.ToString() : "nil"));
             s.Append(", \"DATA_FREE\":" + (DATA_FREE.HasValue ? DATA_FREE.Value.ToString() : "nil"));
             s.Append(", \"AUTO_INCREMENT\":" + (AUTO_INCREMENT.HasValue ? AUTO_INCREMENT.Value.ToString() : "nil"));
-            if (CREATE_TIME != null) s.Append(", \"CREATE_TIME\":\"" + CREATE_TIME + "\"");
+            if (CREATE_TIME != null) s.Append(", \"CREATE_TIME\":\"" + CREATE_TIME.ToString() + "\"");
             else s.Append(", \"CREATE_TIME\":nil");
-            if (UPDATE_TIME != null) s.Append(", \"UPDATE_TIME\":\"" + UPDATE_TIME + "\"");
+            if (UPDATE_TIME != null) s.Append(", \"UPDATE_TIME\":\"" + UPDATE_TIME.ToString() + "\"");
             else s.Append(", \"UPDATE_TIME\":nil");
-            if (CHECK_TIME != null) s.Append(", \"CHECK_TIME\":\"" + CHECK_TIME + "\"");
+            if (CHECK_TIME != null) s.Append(", \"CHECK_TIME\":\"" + CHECK_TIME.ToString() + "\"");
             else s.Append(", \"CHECK_TIME\":nil");
-            if (TABLE_COLLATION != null) s.Append(", \"TABLE_COLLATION\":\"" + TABLE_COLLATION + "\"");
+            if (TABLE_COLLATION != null) s.Append(", \"TABLE_COLLATION\":\"" + TABLE_COLLATION.ToString() + "\"");
             else s.Append(", \"TABLE_COLLATION\":nil");
             s.Append(", \"CHECKSUM\":" + (CHECKSUM.HasValue ? CHECKSUM.Value.ToString() : "nil"));
-            if (CREATE_OPTIONS != null) s.Append(", \"CREATE_OPTIONS\":\"" + CREATE_OPTIONS + "\"");
+            if (CREATE_OPTIONS != null) s.Append(", \"CREATE_OPTIONS\":\"" + CREATE_OPTIONS.ToString() + "\"");
             else s.Append(", \"CREATE_OPTIONS\":nil");
-            if (TABLE_COMMENT != null) s.Append(", \"TABLE_COMMENT\":\"" + TABLE_COMMENT + "\"");
+            if (TABLE_COMMENT != null) s.Append(", \"TABLE_COMMENT\":\"" + TABLE_COMMENT.ToString() + "\"");
             else s.Append(", \"TABLE_COMMENT\":nil");
         }
         public override string ToString()
@@ -341,10 +340,10 @@ namespace Tables
 
         public override ushort GetPackageId()
         {
-            return TypeId<COLUMNS>.value;
+            return xx.TypeId<COLUMNS>.value;
         }
 
-        public override void ToBBuffer(BBuffer bb)
+        public override void ToBBuffer(xx.BBuffer bb)
         {
             bb.Write(this.TABLE_CATALOG);
             bb.Write(this.TABLE_SCHEMA);
@@ -369,7 +368,7 @@ namespace Tables
             bb.Write(this.GENERATION_EXPRESSION);
         }
 
-        public override void FromBBuffer(BBuffer bb)
+        public override void FromBBuffer(xx.BBuffer bb)
         {
             bb.readLengthLimit = 0;
             bb.Read(ref this.TABLE_CATALOG);
@@ -425,41 +424,41 @@ namespace Tables
         }
         public override void ToStringCore(System.Text.StringBuilder s)
         {
-            if (TABLE_CATALOG != null) s.Append(", \"TABLE_CATALOG\":\"" + TABLE_CATALOG + "\"");
+            if (TABLE_CATALOG != null) s.Append(", \"TABLE_CATALOG\":\"" + TABLE_CATALOG.ToString() + "\"");
             else s.Append(", \"TABLE_CATALOG\":nil");
-            if (TABLE_SCHEMA != null) s.Append(", \"TABLE_SCHEMA\":\"" + TABLE_SCHEMA + "\"");
+            if (TABLE_SCHEMA != null) s.Append(", \"TABLE_SCHEMA\":\"" + TABLE_SCHEMA.ToString() + "\"");
             else s.Append(", \"TABLE_SCHEMA\":nil");
-            if (TABLE_NAME != null) s.Append(", \"TABLE_NAME\":\"" + TABLE_NAME + "\"");
+            if (TABLE_NAME != null) s.Append(", \"TABLE_NAME\":\"" + TABLE_NAME.ToString() + "\"");
             else s.Append(", \"TABLE_NAME\":nil");
-            if (COLUMN_NAME != null) s.Append(", \"COLUMN_NAME\":\"" + COLUMN_NAME + "\"");
+            if (COLUMN_NAME != null) s.Append(", \"COLUMN_NAME\":\"" + COLUMN_NAME.ToString() + "\"");
             else s.Append(", \"COLUMN_NAME\":nil");
-            s.Append(", \"ORDINAL_POSITION\":" + ORDINAL_POSITION);
-            if (COLUMN_DEFAULT != null) s.Append(", \"COLUMN_DEFAULT\":\"" + COLUMN_DEFAULT + "\"");
+            s.Append(", \"ORDINAL_POSITION\":" + ORDINAL_POSITION.ToString());
+            if (COLUMN_DEFAULT != null) s.Append(", \"COLUMN_DEFAULT\":\"" + COLUMN_DEFAULT.ToString() + "\"");
             else s.Append(", \"COLUMN_DEFAULT\":nil");
-            if (IS_NULLABLE != null) s.Append(", \"IS_NULLABLE\":\"" + IS_NULLABLE + "\"");
+            if (IS_NULLABLE != null) s.Append(", \"IS_NULLABLE\":\"" + IS_NULLABLE.ToString() + "\"");
             else s.Append(", \"IS_NULLABLE\":nil");
-            if (DATA_TYPE != null) s.Append(", \"DATA_TYPE\":\"" + DATA_TYPE + "\"");
+            if (DATA_TYPE != null) s.Append(", \"DATA_TYPE\":\"" + DATA_TYPE.ToString() + "\"");
             else s.Append(", \"DATA_TYPE\":nil");
             s.Append(", \"CHARACTER_MAXIMUM_LENGTH\":" + (CHARACTER_MAXIMUM_LENGTH.HasValue ? CHARACTER_MAXIMUM_LENGTH.Value.ToString() : "nil"));
             s.Append(", \"CHARACTER_OCTET_LENGTH\":" + (CHARACTER_OCTET_LENGTH.HasValue ? CHARACTER_OCTET_LENGTH.Value.ToString() : "nil"));
             s.Append(", \"NUMERIC_PRECISION\":" + (NUMERIC_PRECISION.HasValue ? NUMERIC_PRECISION.Value.ToString() : "nil"));
             s.Append(", \"NUMERIC_SCALE\":" + (NUMERIC_SCALE.HasValue ? NUMERIC_SCALE.Value.ToString() : "nil"));
             s.Append(", \"DATETIME_PRECISION\":" + (DATETIME_PRECISION.HasValue ? DATETIME_PRECISION.Value.ToString() : "nil"));
-            if (CHARACTER_SET_NAME != null) s.Append(", \"CHARACTER_SET_NAME\":\"" + CHARACTER_SET_NAME + "\"");
+            if (CHARACTER_SET_NAME != null) s.Append(", \"CHARACTER_SET_NAME\":\"" + CHARACTER_SET_NAME.ToString() + "\"");
             else s.Append(", \"CHARACTER_SET_NAME\":nil");
-            if (COLLATION_NAME != null) s.Append(", \"COLLATION_NAME\":\"" + COLLATION_NAME + "\"");
+            if (COLLATION_NAME != null) s.Append(", \"COLLATION_NAME\":\"" + COLLATION_NAME.ToString() + "\"");
             else s.Append(", \"COLLATION_NAME\":nil");
-            if (COLUMN_TYPE != null) s.Append(", \"COLUMN_TYPE\":\"" + COLUMN_TYPE + "\"");
+            if (COLUMN_TYPE != null) s.Append(", \"COLUMN_TYPE\":\"" + COLUMN_TYPE.ToString() + "\"");
             else s.Append(", \"COLUMN_TYPE\":nil");
-            if (COLUMN_KEY != null) s.Append(", \"COLUMN_KEY\":\"" + COLUMN_KEY + "\"");
+            if (COLUMN_KEY != null) s.Append(", \"COLUMN_KEY\":\"" + COLUMN_KEY.ToString() + "\"");
             else s.Append(", \"COLUMN_KEY\":nil");
-            if (EXTRA != null) s.Append(", \"EXTRA\":\"" + EXTRA + "\"");
+            if (EXTRA != null) s.Append(", \"EXTRA\":\"" + EXTRA.ToString() + "\"");
             else s.Append(", \"EXTRA\":nil");
-            if (PRIVILEGES != null) s.Append(", \"PRIVILEGES\":\"" + PRIVILEGES + "\"");
+            if (PRIVILEGES != null) s.Append(", \"PRIVILEGES\":\"" + PRIVILEGES.ToString() + "\"");
             else s.Append(", \"PRIVILEGES\":nil");
-            if (COLUMN_COMMENT != null) s.Append(", \"COLUMN_COMMENT\":\"" + COLUMN_COMMENT + "\"");
+            if (COLUMN_COMMENT != null) s.Append(", \"COLUMN_COMMENT\":\"" + COLUMN_COMMENT.ToString() + "\"");
             else s.Append(", \"COLUMN_COMMENT\":nil");
-            if (GENERATION_EXPRESSION != null) s.Append(", \"GENERATION_EXPRESSION\":\"" + GENERATION_EXPRESSION + "\"");
+            if (GENERATION_EXPRESSION != null) s.Append(", \"GENERATION_EXPRESSION\":\"" + GENERATION_EXPRESSION.ToString() + "\"");
             else s.Append(", \"GENERATION_EXPRESSION\":nil");
         }
         public override string ToString()
@@ -525,16 +524,16 @@ namespace Tables
 
         public override ushort GetPackageId()
         {
-            return TypeId<show_create_table>.value;
+            return xx.TypeId<show_create_table>.value;
         }
 
-        public override void ToBBuffer(BBuffer bb)
+        public override void ToBBuffer(xx.BBuffer bb)
         {
             bb.Write(this.Table);
             bb.Write(this.CreateTable);
         }
 
-        public override void FromBBuffer(BBuffer bb)
+        public override void FromBBuffer(xx.BBuffer bb)
         {
             bb.readLengthLimit = 0;
             bb.Read(ref this.Table);
@@ -558,9 +557,9 @@ namespace Tables
         }
         public override void ToStringCore(System.Text.StringBuilder s)
         {
-            if (Table != null) s.Append(", \"Table\":\"" + Table + "\"");
+            if (Table != null) s.Append(", \"Table\":\"" + Table.ToString() + "\"");
             else s.Append(", \"Table\":nil");
-            if (CreateTable != null) s.Append(", \"CreateTable\":\"" + CreateTable + "\"");
+            if (CreateTable != null) s.Append(", \"CreateTable\":\"" + CreateTable.ToString() + "\"");
             else s.Append(", \"CreateTable\":nil");
         }
         public override string ToString()
@@ -589,7 +588,7 @@ namespace Tables
             xx.Object.RegisterInternals();
             xx.Object.Register<DbTable>(3);
             xx.Object.Register<Tables.TABLES>(4);
-            xx.Object.Register<List<DbColumn>>(8);
+            xx.Object.Register<xx.List<DbColumn>>(8);
             xx.Object.Register<DbColumn>(6);
             xx.Object.Register<Tables.COLUMNS>(7);
             xx.Object.Register<Tables.show_create_table>(9);

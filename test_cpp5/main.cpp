@@ -7,24 +7,27 @@ int main(int argc, char const* const* argv)
 {
 	PKG::AllTypesRegister();
 	xx::MemPool mp;
-
-	auto f = mp.MPCreatePtr<PKG::Foo>();
-	f->refFoo = f;
-	f->refFoos.MPCreate(&mp);
-	f->refFoos->Add(f);
-
-	std::cout << f << std::endl;
-	std::cout << f.GetRefs() << std::endl;
-
 	xx::BBuffer bb(&mp);
-	bb.WriteRoot(f);
+	{
+		auto f = mp.MPCreatePtr<PKG::Foo>();
+		auto f2 = mp.MPCreatePtr<PKG::Foo>();
+		f->refFoo = f2;
+		f2->refFoo = f;
+		std::cout << f << std::endl;
+		std::cout << f.GetRefs() << std::endl;
+		bb.WriteRoot(f);
+	}
 	std::cout << bb << std::endl;
+	{
+		xx::Object_p o;
+		auto r = bb.ReadRoot(o);
+		assert(!r);
+		std::cout << o << std::endl;
+		std::cout << o.GetRefs() << std::endl;
+	}
 
-	xx::Object_p o;
-	auto r = bb.ReadRoot(o);
-	assert(!r);
-	std::cout << o << std::endl;
-	std::cout << o.GetRefs() << std::endl;
+	//f->refFoos.MPCreate(&mp);
+	//f->refFoos->Add(f);
 
 	return 0;
 }

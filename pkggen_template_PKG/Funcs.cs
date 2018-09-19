@@ -5,13 +5,21 @@ using TemplateLibrary;
 
 class Foo
 {
-    Foo foo;
     Ref<Foo> refFoo;
-    List<Foo> foos;
+    //Foo foo;
+    //List<Foo> foos;
     List<Ref<Foo>> refFoos;
 }
 
 
+//class Scene
+//{
+//    List<Player> players;
+//}
+//class Player
+//{
+//    Ref<Scene> scene;
+//}
 
 
 
