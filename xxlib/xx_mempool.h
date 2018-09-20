@@ -353,7 +353,7 @@ namespace xx
 
 
 	/***********************************************************************************/
-	// weak_ptr like
+	// weak_ptr like ( 只能和 Ptr 搭配 )
 	/***********************************************************************************/
 
 	template<typename T>
@@ -367,11 +367,11 @@ namespace xx
 		Ref() noexcept;
 		~Ref() noexcept;	// 用于处理值有效但 refs == 0 的对象析构. 常见于反序列化类成员仅含弱引用部分
 
-		template<typename O>
-		Ref(O* const& o) noexcept;
+		//template<typename O>
+		//Ref(O* const& o) noexcept;
 
-		template<typename O>
-		Ref(O* const& o, decltype(MemHeader::versionNumber) versionNumber) noexcept;
+		//template<typename O>
+		//Ref(O* const& o, decltype(MemHeader::versionNumber) versionNumber) noexcept;
 
 		template<typename O>
 		Ref(Ptr<O> const& o) noexcept;
@@ -393,6 +393,10 @@ namespace xx
 		template<typename O>
 		Ref& operator=(O* const& o) noexcept;
 
+		//template<typename O>
+		//bool operator==(O* const& o) const noexcept;
+		//template<typename O>
+		//bool operator!=(O* const& o) const noexcept;
 
 		template<typename O>
 		bool operator==(Ptr<O> const& o) const noexcept;
@@ -404,10 +408,7 @@ namespace xx
 		template<typename O>
 		bool operator!=(Ref<O> const& o) const noexcept;
 
-		template<typename O>
-		bool operator==(O* const& o) const noexcept;
-		template<typename O>
-		bool operator!=(O* const& o) const noexcept;
+
 
 
 		Ptr<T>& Lock() const noexcept;
@@ -440,8 +441,90 @@ namespace xx
 	typedef Ref<Object> Object_r;
 
 
+
+	/***********************************************************************************/
+	// weak_ptr like ( 只能和 裸指针 搭配, 与 Ref 的区别在于析构 )
+	/***********************************************************************************/
+
+	template<typename T>
+	class Weak
+	{
+	public:
+		typedef T ChildType;
+		T* pointer;
+		decltype(MemHeader::versionNumber) versionNumber;
+
+		Weak() noexcept;
+
+		template<typename O>
+		Weak(O* const& o) noexcept;
+
+		template<typename O>
+		Weak(O* const& o, decltype(MemHeader::versionNumber) versionNumber) noexcept;
+
+		Weak(Weak const& o) noexcept;
+		Weak(Weak&& o) noexcept;
+
+		template<typename O>
+		Weak(Weak<O> const& o) noexcept;
+
+		Weak& operator=(Weak const& o) noexcept;
+
+		template<typename O>
+		Weak& operator=(Weak<O> const& o) noexcept;
+
+		template<typename O>
+		Weak& operator=(O* const& o) noexcept;
+
+
+		template<typename O>
+		bool operator==(Weak<O> const& o) const noexcept;
+		template<typename O>
+		bool operator!=(Weak<O> const& o) const noexcept;
+
+		template<typename O>
+		bool operator==(O* const& o) const noexcept;
+		template<typename O>
+		bool operator!=(O* const& o) const noexcept;
+
+
+		T*& Lock() const noexcept;
+
+		void Reset() noexcept;
+
+		operator bool() const noexcept;
+
+		// unsafe funcs
+		T* operator->() const noexcept;
+		T& operator*() const noexcept;
+	};
+
+
+
+
+
+
+
+
+
+	template<typename T>
+	struct IsWeak
+	{
+		static const bool value = false;
+	};
+
+	template<typename T>
+	struct IsWeak<Weak<T>>
+	{
+		static const bool value = true;
+	};
+
+	template<typename T>
+	constexpr bool IsWeak_v = IsWeak<T>::value;
+
+
+
 	// 增强版, 用于替代 is_trivial 的判断以实现针对 Ptr<> Ref<> 的 memcpy 操作. 未来可以继续在此加料
 	template<typename T>
-	constexpr bool IsTrivial_v = std::is_trivial<T>::value || IsPtr_v<T> || IsRef_v<T>;
-
+	constexpr bool IsTrivial_v = std::is_trivial<T>::value || IsPtr_v<T> || IsRef_v<T> || IsWeak_v<T>;
 }

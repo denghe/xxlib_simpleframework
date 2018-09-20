@@ -274,7 +274,7 @@ namespace " + iface.Namespace + @"
                                 if (pt._IsList() || pt._IsUserClass())
                                 {
                                     sb.Append(@"
-            " + pn + @".MySqlAppend(ref sb, " + (p._Has<SkipReadOnly>() ? "true" : "false") + ");");
+            " + pn + @".MySqlAppend(sb, " + (p._Has<SkipReadOnly>() ? "true" : "false") + ");");
                                 }
                                 else if (pt._IsString())
                                 {

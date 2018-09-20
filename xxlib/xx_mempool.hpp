@@ -522,7 +522,9 @@ namespace xx
 	template<typename T>
 	Ref<T> Ptr<T>::MakeRef() const noexcept
 	{
-		return Ref<T>(pointer);
+		Ref<T> r;
+		r = pointer;
+		return r;
 	}
 
 
@@ -656,23 +658,23 @@ namespace xx
 		}
 	}
 
-	template<typename T>
-	template<typename O>
-	Ref<T>::Ref(O* const& o) noexcept
-		: pointer(o)
-	{
-		static_assert(std::is_base_of_v<T, O>);
-		versionNumber = o ? o->memHeader().versionNumber : 0;
-	}
+	//template<typename T>
+	//template<typename O>
+	//Ref<T>::Ref(O* const& o) noexcept
+	//	: pointer(o)
+	//{
+	//	static_assert(std::is_base_of_v<T, O>);
+	//	versionNumber = o ? o->memHeader().versionNumber : 0;
+	//}
 
-	template<typename T>
-	template<typename O>
-	Ref<T>::Ref(O* const& o, decltype(MemHeader::versionNumber) versionNumber) noexcept
-		: pointer(o)
-		, versionNumber(versionNumber)
-	{
-		static_assert(std::is_base_of_v<T, O>);
-	}
+	//template<typename T>
+	//template<typename O>
+	//Ref<T>::Ref(O* const& o, decltype(MemHeader::versionNumber) versionNumber) noexcept
+	//	: pointer(o)
+	//	, versionNumber(versionNumber)
+	//{
+	//	static_assert(std::is_base_of_v<T, O>);
+	//}
 
 	template<typename T>
 	template<typename O>
@@ -765,17 +767,26 @@ namespace xx
 
 	template<typename T>
 	template<typename O>
-	bool Ref<T>::operator==(O* const& o) const noexcept
+	Ref<T>& Ref<T>::operator=(O* const& o) noexcept
 	{
-		return Lock().pointer == o;
-	}
-	template<typename T>
-	template<typename O>
-	bool Ref<T>::operator!=(O* const& o) const noexcept
-	{
-		return Lock().pointer != o;
+		static_assert(std::is_base_of_v<T, O>);
+		pointer = o;
+		versionNumber = o ? o->memHeader().versionNumber : 0;
+		return *this;
 	}
 
+	//template<typename T>
+	//template<typename O>
+	//bool Ref<T>::operator==(O* const& o) const noexcept
+	//{
+	//	return Lock().pointer == o;
+	//}
+	//template<typename T>
+	//template<typename O>
+	//bool Ref<T>::operator!=(O* const& o) const noexcept
+	//{
+	//	return Lock().pointer != o;
+	//}
 
 
 
@@ -789,15 +800,6 @@ namespace xx
 		return *(Ptr<T>*)this;
 	}
 
-	template<typename T>
-	template<typename O>
-	Ref<T>& Ref<T>::operator=(O* const& o) noexcept
-	{
-		static_assert(std::is_base_of_v<T, O>);
-		pointer = o;
-		versionNumber = o ? o->memHeader().versionNumber : 0;
-		return *this;
-	}
 
 	template<typename T>
 	void Ref<T>::Reset() noexcept
@@ -823,6 +825,181 @@ namespace xx
 	{
 		return *(T*)pointer;
 	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	template<typename T>
+	Weak<T>::Weak() noexcept
+		: pointer(nullptr)
+		, versionNumber(0)
+	{}
+
+	template<typename T>
+	template<typename O>
+	Weak<T>::Weak(O* const& o) noexcept
+		: pointer(o)
+	{
+		static_assert(std::is_base_of_v<T, O>);
+		versionNumber = o ? o->memHeader().versionNumber : 0;
+	}
+
+	template<typename T>
+	template<typename O>
+	Weak<T>::Weak(O* const& o, decltype(MemHeader::versionNumber) versionNumber) noexcept
+		: pointer(o)
+		, versionNumber(versionNumber)
+	{
+		static_assert(std::is_base_of_v<T, O>);
+	}
+
+	template<typename T>
+	Weak<T>::Weak(Weak const& o) noexcept
+		: pointer(o.pointer)
+		, versionNumber(o.versionNumber)
+	{
+	}
+
+	template<typename T>
+	Weak<T>::Weak(Weak&& o) noexcept
+		: pointer(o.pointer)
+		, versionNumber(o.versionNumber)
+	{
+		o.pointer = nullptr;
+		o.versionNumber = 0;
+	}
+
+	template<typename T>
+	template<typename O>
+	Weak<T>::Weak(Weak<O> const& o) noexcept
+		: pointer(o.pointer)
+		, versionNumber(o.versionNumber)
+	{
+		static_assert(std::is_base_of_v<T, O>);
+	}
+
+
+	template<typename T>
+	Weak<T>& Weak<T>::operator=(Weak const& o) noexcept
+	{
+		pointer = o.pointer;
+		versionNumber = o.versionNumber;
+		return *this;
+	}
+	template<typename T>
+	template<typename O>
+	Weak<T>& Weak<T>::operator=(Weak<O> const& o) noexcept
+	{
+		pointer = o.pointer;
+		versionNumber = o.versionNumber;
+		return *this;
+	}
+
+
+	template<typename T>
+	template<typename O>
+	bool Weak<T>::operator==(Weak<O> const& o) const noexcept
+	{
+		return Lock().pointer == o.Lock().pointer;
+	}
+	template<typename T>
+	template<typename O>
+	bool Weak<T>::operator!=(Weak<O> const& o) const noexcept
+	{
+		return Lock().pointer != o.Lock().pointer;
+	}
+
+	template<typename T>
+	template<typename O>
+	bool Weak<T>::operator==(O* const& o) const noexcept
+	{
+		return Lock().pointer == o;
+	}
+	template<typename T>
+	template<typename O>
+	bool Weak<T>::operator!=(O* const& o) const noexcept
+	{
+		return Lock().pointer != o;
+	}
+
+
+
+
+	template<typename T>
+	T*& Weak<T>::Lock() const noexcept
+	{
+		if (!(pointer && pointer->memHeader().versionNumber == versionNumber))
+		{
+			((Weak<T>*)this)->Reset();
+		}
+		return (T*)this;
+	}
+
+	template<typename T>
+	template<typename O>
+	Weak<T>& Weak<T>::operator=(O* const& o) noexcept
+	{
+		static_assert(std::is_base_of_v<T, O>);
+		pointer = o;
+		versionNumber = o ? o->memHeader().versionNumber : 0;
+		return *this;
+	}
+
+	template<typename T>
+	void Weak<T>::Reset() noexcept
+	{
+		pointer = nullptr;
+		versionNumber = 0;
+	}
+
+	template<typename T>
+	Weak<T>::operator bool() const noexcept
+	{
+		return pointer && pointer->memHeader().versionNumber == versionNumber;
+	}
+
+	template<typename T>
+	T* Weak<T>::operator->() const noexcept
+	{
+		return (T*)pointer;
+	}
+
+	template<typename T>
+	T& Weak<T>::operator*() const noexcept
+	{
+		return *(T*)pointer;
+	}
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -378,7 +378,6 @@ namespace xx
 	};
 
 	// 适配 Ref<T>
-	// 当前仅对 Ptr<T> 有良好支持. 裸指针, Ref 还需要进一步设计( C#, Lua 那边需要模拟 )
 	template<typename T>
 	struct BytesFunc<T, std::enable_if_t<IsRef_v<T>>>
 	{

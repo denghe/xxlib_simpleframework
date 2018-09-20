@@ -364,7 +364,7 @@ namespace " + c.Namespace.Replace(".", "::") + @"
                 if (f._Has<TemplateLibrary.NotSerialize>())
                 {
                     sb.Append(@"
-        bb.WriteDefaultValue<" + ft._GetTypeDecl_Cpp(templateName) + ">();");
+        bb.WriteDefaultValue<" + ft._GetTypeDecl_Cpp(templateName, "_p") + ">();");
                 }
                 else if (f._Has<TemplateLibrary.CustomSerialize>())
                 {
