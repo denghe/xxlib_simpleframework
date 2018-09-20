@@ -784,18 +784,18 @@ namespace xx
 		return *this;
 	}
 
-	//template<typename T>
-	//template<typename O>
-	//bool Ref<T>::operator==(O* const& o) const noexcept
-	//{
-	//	return Lock().pointer == o;
-	//}
-	//template<typename T>
-	//template<typename O>
-	//bool Ref<T>::operator!=(O* const& o) const noexcept
-	//{
-	//	return Lock().pointer != o;
-	//}
+	template<typename T>
+	template<typename O>
+	bool Ref<T>::operator==(O* const& o) const noexcept
+	{
+		return Lock().pointer == o;
+	}
+	template<typename T>
+	template<typename O>
+	bool Ref<T>::operator!=(O* const& o) const noexcept
+	{
+		return Lock().pointer != o;
+	}
 
 
 
