@@ -431,6 +431,15 @@ namespace xx
 
 	template<typename T>
 	template<typename O>
+	Ptr<T>& Ptr<T>::operator=(Ref<O> const& o) noexcept
+	{
+		static_assert(std::is_base_of_v<T, O>);
+		return operator=<O>(o.Lock());
+	}
+
+
+	template<typename T>
+	template<typename O>
 	Ptr<T>& Ptr<T>::operator=(Ptr<O>&& o) noexcept
 	{
 		static_assert(std::is_base_of_v<T, O>);

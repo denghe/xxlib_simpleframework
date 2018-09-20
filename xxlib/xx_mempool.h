@@ -250,6 +250,8 @@ namespace xx
 		template<typename O>
 		Ptr& operator=(Ptr<O>&& o) noexcept;
 
+		template<typename O>
+		Ptr& operator=(Ref<O> const& o) noexcept;
 
 		Ptr& operator=(Ptr const& o) noexcept;
 		Ptr& operator=(Ptr&& o) noexcept;
