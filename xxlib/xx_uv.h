@@ -268,7 +268,7 @@ namespace xx
 		int SetAddress(char const* const& ipv4, int const& port) noexcept;
 		static void OnConnectCBImpl(void* req, int status) noexcept;
 		int Connect() noexcept;
-		int ConnectEx(char const* const& Ip, int const& port) noexcept;	// 等同于 Disconnect + SetAddress + Connect
+		int ConnectEx(char const* const& ipv4, int const& port) noexcept;	// 等同于 Disconnect + SetAddress + Connect
 		void Disconnect() noexcept;
 		void DisconnectImpl() noexcept override;
 		bool Disconnected() noexcept override;
