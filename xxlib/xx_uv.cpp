@@ -85,6 +85,7 @@ xx::UvLoop::UvLoop(MemPool* const& mp)
 	, udpClients(mp)
 	, timers(mp)
 	, asyncs(mp)
+	, dnsVisitors(mp)
 {
 	ptr = Alloc(mp, sizeof(uv_loop_t), this);
 	if (!ptr) throw - 1;
@@ -170,6 +171,112 @@ bool xx::UvLoop::Alive() const noexcept
 {
 	return uv_loop_alive((uv_loop_t*)ptr) != 0;
 }
+
+bool xx::UvLoop::GetIPList(char const* const& domainName, std::function<void(List<String>*)>&& cb, int timeoutMS)
+{
+	auto s = mempool->Str(domainName);
+	if (dnsVisitors.Find(s) != -1) return false;
+	auto dv = mempool->Create<UvDnsVisitor>(this, s, std::move(cb), timeoutMS);
+	if (!dv) return false;
+	dv->indexAtDict = dnsVisitors.Add(s, dv).index;
+	return true;
+}
+
+xx::UvDnsVisitor::UvDnsVisitor(UvLoop* const& loop, String_p& domainName, std::function<void(List<String>*)>&& cb, int timeoutMS)
+	: xx::Object(loop->mempool)
+	, loop(*loop)
+	, domainName(domainName)
+	, cb(std::move(cb))
+	, results(loop->mempool)
+{
+	// 看上去不需要 hints. 先不传.
+
+	//hints = Alloc(mempool, sizeof(addrinfo));
+	//if (!hints) throw - 1;
+	//xx::ScopeGuard sg_hints([&]() noexcept { Free(mempool, hints); hints = nullptr; });
+
+	//((addrinfo*)hints)->ai_family = PF_INET; // PF_INET6  ? PF_UNSPEC ?
+	//((addrinfo*)hints)->ai_socktype = SOCK_STREAM;
+	//((addrinfo*)hints)->ai_protocol = 0;// IPPROTO_TCP;
+	//((addrinfo*)hints)->ai_flags = 0;
+
+	resolver = Alloc(mempool, sizeof(uv_getaddrinfo_t), this);
+	if (!resolver) throw - 2;
+	xx::ScopeGuard sg_resolver([&]() noexcept { Free(mempool, resolver); resolver = nullptr; });
+
+	if (int r = uv_getaddrinfo((uv_loop_t*)loop->ptr, (uv_getaddrinfo_t*)resolver, (uv_getaddrinfo_cb)OnResolvedCBImpl, domainName->c_str(), nullptr, nullptr/*(const addrinfo*)hints*/)) throw r;
+	xx::ScopeGuard sg_resolver2([&]() noexcept { uv_cancel((uv_req_t*)resolver); });
+
+	if (timeoutMS)
+	{
+		timeouter = loop->CreateTimer(timeoutMS, 0, [this]
+		{
+			if (this->cb)
+			{
+				this->cb(nullptr);
+			}
+			this->timeouter->Release();
+			this->loop.dnsVisitors.RemoveAt(this->indexAtDict);
+			this->Release();
+		});
+		if (!timeouter) throw - 3;
+	}
+
+	sg_resolver2.Cancel();
+	sg_resolver.Cancel();
+	//sg_hints.Cancel();
+}
+
+xx::UvDnsVisitor::~UvDnsVisitor()
+{
+	// timeouter 不需要 Release
+
+	Free(mempool, resolver);
+	resolver = nullptr;
+
+	//Free(mempool, hints);
+	//hints = nullptr;
+}
+
+void xx::UvDnsVisitor::OnResolvedCBImpl(void *resolver, int status, void *res)
+{
+	auto self = *((UvDnsVisitor**)resolver - 1);
+	if (self->timeouter) self->timeouter->Release();
+	if (status < 0)
+	{
+		if (self->cb)
+		{
+			auto vn = self->memHeader().versionNumber;
+			self->cb(nullptr);
+			if (self->IsReleased(vn)) return;
+		}
+	}
+	else
+	{
+		auto ai = (addrinfo*)res;
+		do
+		{
+			auto& s = self->results.Emplace(self->mempool);
+			s.Resize(32);
+			uv_ip4_name((sockaddr_in*)ai->ai_addr, s.buf, s.bufLen);
+			s.dataLen = strlen(s.buf);
+			ai = ai->ai_next;
+		} while (ai);
+		uv_freeaddrinfo((addrinfo*)res);
+		if (self->cb)
+		{
+			auto vn = self->memHeader().versionNumber;
+			self->cb(&self->results);
+			if (self->IsReleased(vn)) return;
+		}
+	}
+	self->loop.dnsVisitors.RemoveAt(self->indexAtDict);
+	self->Release();
+}
+
+
+
+
 
 xx::UvTcpListener* xx::UvLoop::CreateTcpListener() noexcept
 {
@@ -261,7 +368,7 @@ void xx::UvTcpListener::OnAcceptCB(void* server, int status) noexcept
 	{
 		auto vn = listener->memHeader().versionNumber;
 		peer = listener->OnCreatePeer();
-		if(listener->IsReleased(vn)) return;
+		if (listener->IsReleased(vn)) return;
 	}
 	else
 	{

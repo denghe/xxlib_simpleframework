@@ -41,6 +41,25 @@ namespace xx
 		NoWait
 	};
 
+	class UvDnsVisitor : public Object
+	{
+	public:
+		UvLoop& loop;
+		String_p domainName;
+		int indexAtDict = -1;
+		std::function<void(List<String>*)> cb;
+		UvTimer* timeouter = nullptr;
+		List<String> results;
+
+		//void* hints = nullptr;
+		void* resolver = nullptr;
+		static void OnResolvedCBImpl(void *resolver, int status, void *res);
+
+		UvDnsVisitor(UvLoop* const& loop, String_p& domainName, std::function<void(List<String>*)>&& cb, int timeoutMS = 0);
+		~UvDnsVisitor();
+	};
+
+
 	class UvLoop : public Object
 	{
 	public:
@@ -51,6 +70,7 @@ namespace xx
 		List<UvUdpClient*> udpClients;
 		List<UvTimer*> timers;
 		List<UvAsync*> asyncs;
+		Dict<String_p, UvDnsVisitor*> dnsVisitors;
 		UvTimeoutManager* timeoutManager = nullptr;
 		UvRpcManager* rpcMgr = nullptr;
 		UvTimer* udpTimer = nullptr;
@@ -68,6 +88,10 @@ namespace xx
 		int Run(UvRunMode const& mode = UvRunMode::Default) noexcept;
 		void Stop() noexcept;
 		bool Alive() const noexcept;
+
+		// 根据域名得到 ip 列表. 超时触发空值回调. 如果反复针对相同域名发起查询, 且上次的查询还没触发回调, 将返回 false.
+		// 回调参数 bool 为 true: ipv4. false: ipv6
+		bool GetIPList(char const* const& domainName, std::function<void(List<String>*)>&& cb, int timeoutMS = 0);
 
 		UvTcpListener* CreateTcpListener() noexcept;
 		UvTcpClient* CreateTcpClient() noexcept;
@@ -565,24 +589,24 @@ namespace xx
 		// todo: 提供更多请求串拼接函数 以便于使用
 	};
 
-	using UvLoop_r = Ref<UvLoop>;
-	using UvListenerBase_r = Ref<UvListenerBase>;
-	using UvTcpListener_r = Ref<UvTcpListener>;
-	using UvTcpUdpBase_r = Ref<UvTcpUdpBase>;
-	using UvTcpBase_r = Ref<UvTcpBase>;
-	using UvTcpPeer_r = Ref<UvTcpPeer>;
-	using UvTcpClient_r = Ref<UvTcpClient>;
-	using UvTimer_r = Ref<UvTimer>;
-	using UvTimeouterBase_r = Ref<UvTimeouterBase>;
-	using UvTimeouter_r = Ref<UvTimeoutManager>;
-	using UvAsync_r = Ref<UvAsync>;
-	using UvRpcManager_r = Ref<UvRpcManager>;
-	using UvTimeouter_r = Ref<UvTimeoutManager>;
-	using UvContextBase_r = Ref<UvContextBase>;
-	using UvUdpListener_r = Ref<UvUdpListener>;
-	using UvUdpBase_r = Ref<UvUdpBase>;
-	using UvUdpPeer_r = Ref<UvUdpPeer>;
-	using UvUdpClient_r = Ref<UvUdpClient>;
+	using UvLoop_r = Weak<UvLoop>;
+	using UvListenerBase_r = Weak<UvListenerBase>;
+	using UvTcpListener_r = Weak<UvTcpListener>;
+	using UvTcpUdpBase_r = Weak<UvTcpUdpBase>;
+	using UvTcpBase_r = Weak<UvTcpBase>;
+	using UvTcpPeer_r = Weak<UvTcpPeer>;
+	using UvTcpClient_r = Weak<UvTcpClient>;
+	using UvTimer_r = Weak<UvTimer>;
+	using UvTimeouterBase_r = Weak<UvTimeouterBase>;
+	using UvTimeouter_r = Weak<UvTimeoutManager>;
+	using UvAsync_r = Weak<UvAsync>;
+	using UvRpcManager_r = Weak<UvRpcManager>;
+	using UvTimeouter_r = Weak<UvTimeoutManager>;
+	using UvContextBase_r = Weak<UvContextBase>;
+	using UvUdpListener_r = Weak<UvUdpListener>;
+	using UvUdpBase_r = Weak<UvUdpBase>;
+	using UvUdpPeer_r = Weak<UvUdpPeer>;
+	using UvUdpClient_r = Weak<UvUdpClient>;
 }
 
 #include "xx_uv.hpp"

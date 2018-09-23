@@ -83,7 +83,14 @@ namespace xx
 			Reserve(len);
 			for (size_t i = dataLen; i < len; ++i)
 			{
-				new (buf + i) T();
+				if constexpr (CtorTakesMemPool_v<T>)
+				{
+					new (buf + i) T(mempool);
+				}
+				else
+				{
+					new (buf + i) T();
+				}
 			}
 		}
 		auto rtv = dataLen;

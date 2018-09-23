@@ -277,7 +277,7 @@ namespace xx
 		template<typename O>
 		void Reset(O* const& o) noexcept;
 
-		
+
 		// 提供一些快捷读取 memHeader 区域的函数
 		decltype(MemHeader_Object::refs) GetRefs() const noexcept;
 		decltype(MemHeader_Object::typeId) GetTypeId() const noexcept;
@@ -529,4 +529,19 @@ namespace xx
 	// 增强版, 用于替代 is_trivial 的判断以实现针对 Ptr<> Ref<> 的 memcpy 操作. 未来可以继续在此加料
 	template<typename T>
 	constexpr bool IsTrivial_v = std::is_trivial<T>::value || IsPtr_v<T> || IsRef_v<T> || IsWeak_v<T>;
+
+
+
+	// 检查类型是否存在一个 mp* 参数的构造函数
+	template <typename T>
+	struct CtorTakesMemPool
+	{
+		template<typename U> static int32_t SFINAE(decltype(U((MemPool*)0))*);
+		template<typename U> static int8_t SFINAE(...);
+
+		static const bool value = std::is_base_of<Object, T>::value && sizeof(SFINAE<T>(nullptr)) == sizeof(int32_t);
+	};
+
+	template<typename T>
+	constexpr bool CtorTakesMemPool_v = CtorTakesMemPool<T>::value;
 }
