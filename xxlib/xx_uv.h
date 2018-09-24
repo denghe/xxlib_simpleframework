@@ -48,7 +48,7 @@ namespace xx
 		String_p domainName;
 		int indexAtDict = -1;
 		std::function<void(List<String>*)> cb;
-		UvTimer* timeouter = nullptr;
+		xx::Weak<UvTimer> timeouter;
 		List<String> results;
 
 		//void* hints = nullptr;
@@ -284,6 +284,9 @@ namespace xx
 	public:
 		std::function<void(int)> OnConnect;
 		std::function<void()> OnDisconnect;
+		void* req = nullptr;
+		xx::Weak<UvTimer> connTimeouter;	// 超时 cancel 后 uv 还是会产生 OnConnectCBImpl 的回调
+		bool canceled = false;
 
 		UvTcpStates state = UvTcpStates::Disconnected;
 		UvTcpClient(UvLoop& loop);
@@ -291,8 +294,8 @@ namespace xx
 		bool Alive() const noexcept;	// state == UvTcpStates::Connected, 并不能取代外部野指针检测
 		int SetAddress(char const* const& ipv4, int const& port) noexcept;
 		static void OnConnectCBImpl(void* req, int status) noexcept;
-		int Connect() noexcept;
-		int ConnectEx(char const* const& ipv4, int const& port) noexcept;	// 等同于 Disconnect + SetAddress + Connect
+		int Connect(int const& timeoutMS = 0) noexcept;
+		int ConnectEx(char const* const& ipv4, int const& port, int const& timeoutMS = 0) noexcept;	// 等同于 Disconnect + SetAddress + Connect
 		void Disconnect() noexcept;
 		void DisconnectImpl() noexcept override;
 		bool Disconnected() noexcept override;
