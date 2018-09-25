@@ -7,23 +7,33 @@
 // todo: Weak 用起来, 以解决内部 timer 之类的释放问题
 
 #include "xx_uv.h"
-int main()
+int main2()
 {
 	xx::MemPool mp;
 	xx::UvLoop uv(&mp);
 	auto c = uv.CreateTcpClient();
-	c->OnConnect = [](int state) 
+	c->OnConnect = [c](int state)
 	{
 		std::cout << "OnConnect state = " << state << std::endl;
+		if (!state)
+		{
+			c->Disconnect();
+		}
 	};
-	auto t = uv.CreateTimer(1000, 0, [&]
+	c->OnDisconnect = []
 	{
-		int r = uv.GetIPList("www.8F4637D7-2936-4751-A6D6-8933B7D5FEE3.com", [&](xx::List<xx::String>* ips)
+		std::cout << "OnDisconnect" << std::endl;
+	};
+	auto t = uv.CreateTimer(100, 0, [&]
+	{
+		int r = uv.GetIPList("www.baidu.com", [&](xx::List<xx::String>* ips)	//8F4637D7-2936-4751-A6D6-8933B7D5FEE7
 		{
 			if (ips)
 			{
 				std::cout << ips->At(0) << std::endl;
+				c->ConnectEx(ips->At(0).c_str(), 80);
 				//c->ConnectEx(ips->At(0).c_str(), 80, 100);
+				//c->Disconnect();
 				//for (auto& ip : *ips)
 				//{
 				//	std::cout << ip << std::endl;
@@ -39,6 +49,22 @@ int main()
 	return uv.Run();
 }
 
+int main()
+{
+	main2();
+	main2();
+	main2();
+	main2();
+	main2();
+	main2();
+	main2();
+	main2();
+	main2();
+	main2();
+	main2();
+	main2();
+	return main2();
+}
 
 
 

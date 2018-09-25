@@ -282,13 +282,13 @@ namespace xx
 	class UvTcpClient : public UvTcpBase
 	{
 	public:
-		std::function<void(int)> OnConnect;
-		std::function<void()> OnDisconnect;
-		void* req = nullptr;
+		std::function<void(int)> OnConnect;	// int state 为 0 表示连接成功, 非 0 表示错误码
+		std::function<void()> OnDisconnect;	// 唯有 state 从 Connected 变为 Disconnected 时才触发. 包括自己执行 Disconnect 函数. 要小心逻辑递归
 		xx::Weak<UvTimer> connTimeouter;	// 超时 cancel 后 uv 还是会产生 OnConnectCBImpl 的回调
-		bool canceled = false;
-
 		UvTcpStates state = UvTcpStates::Disconnected;
+
+		bool canceled = false;	// 因为取消连接行为也会触发 OnConnectCBImpl, 故用这个标记来告知
+		void* req = nullptr;
 		UvTcpClient(UvLoop& loop);
 		~UvTcpClient() noexcept;
 		bool Alive() const noexcept;	// state == UvTcpStates::Connected, 并不能取代外部野指针检测

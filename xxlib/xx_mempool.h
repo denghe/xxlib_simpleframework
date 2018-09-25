@@ -444,8 +444,169 @@ namespace xx
 
 
 
+
+
+
+
+
+
+
+
+
+
 	/***********************************************************************************/
-	// weak_ptr like ( 只能和 裸指针 搭配, 与 Ref 的区别在于析构 )
+	// std::unique_ptr like
+	/***********************************************************************************/
+
+	template<typename T>
+	class Weak;
+
+	template<typename T>
+	class Unique
+	{
+	public:
+		typedef T ChildType;
+		T* pointer;
+
+		Unique() noexcept;
+
+		template<typename O>
+		Unique(Unique<O> const& o) = delete;
+		Unique(Unique<T> const& o) = delete;
+
+		template<typename O>
+		Unique(O* const& pointer) noexcept;
+
+		template<typename O>
+		Unique(Unique<O>&& o) noexcept;
+		
+		Unique(Unique<T>&& o) noexcept;
+
+
+
+		template<typename O>
+		Unique& operator=(Unique<O> const& o) = delete;
+		Unique& operator=(Unique const& o) = delete;
+
+
+		template<typename O>
+		Unique& operator=(O* const& o) noexcept;
+
+		template<typename O>
+		Unique& operator=(Unique<O>&& o) noexcept;
+
+		Unique& operator=(Unique&& o) noexcept;
+
+
+
+		// 提供到基类 Unique 的隐式转换
+		template<typename O>
+		operator Unique<O>&() const noexcept;
+
+
+		// 提供到基类 * 的隐式转换
+		template<typename O>
+		operator O*() const noexcept;
+
+		template<typename O>
+		operator O const*() const noexcept;
+
+
+		// cleanup
+		void Reset() noexcept;
+
+		// std like
+		template<typename O>
+		void Reset(O* const& o) noexcept;
+
+
+		// 提供一些快捷读取 memHeader 区域的函数
+		decltype(MemHeader_Object::refs) GetRefs() const noexcept;
+		decltype(MemHeader_Object::typeId) GetTypeId() const noexcept;
+
+
+		Weak<T> MakeWeak() const noexcept;
+
+
+		// 比指针硬转科学丁点, 能防手误. 使用 assert 检测实际父子关系
+		template<typename O>
+		Unique<O> const& As() const noexcept;
+		template<typename O>
+		Unique<O>& As() noexcept;
+
+
+		// T can be try cast to O ?
+		template<typename O>
+		bool Is() const noexcept;
+
+		// T is typeId's parent or equals?
+		bool Is(uint16_t const& typeId) const noexcept;
+
+
+		~Unique() noexcept;
+
+		template<typename O>
+		bool operator==(Unique<O> const& o) const noexcept;
+		template<typename O>
+		bool operator!=(Unique<O> const& o) const noexcept;
+
+		template<typename O>
+		bool operator==(Weak<O> const& o) const noexcept;
+		template<typename O>
+		bool operator!=(Weak<O> const& o) const noexcept;
+
+
+		template<typename O>
+		bool operator==(O* const& o) const noexcept;
+		template<typename O>
+		bool operator!=(O* const& o) const noexcept;
+
+
+		operator bool() const noexcept;
+		// unsafe funcs
+		T* operator->() const noexcept;
+		T& operator*() const noexcept;
+
+
+		template<typename O = T, typename...Args>
+		Unique<T>& Create(MemPool* const& mp, Args&&...args) noexcept;
+
+		template<typename O = T, typename...Args>
+		Unique<T>& MPCreate(MemPool* const& mp, Args&&...args) noexcept;
+	};
+
+	template<typename T>
+	struct IsUnique
+	{
+		static const bool value = false;
+	};
+
+	template<typename T>
+	struct IsUnique<Unique<T>>
+	{
+		static const bool value = true;
+	};
+
+	template<typename T>
+	constexpr bool IsUnique_v = IsUnique<T>::value;
+
+
+	typedef Unique<Object> Object_u;
+
+
+
+
+
+
+
+
+
+
+
+
+
+	/***********************************************************************************/
+	// weak_ptr like ( 只能和 裸指针/Unique 搭配, 与 Ref 的区别在于这个不析构 )
 	/***********************************************************************************/
 
 	template<typename T>
@@ -460,6 +621,7 @@ namespace xx
 
 		template<typename O>
 		Weak(O* const& o) noexcept;
+		Weak(T* const& o) noexcept;
 
 		template<typename O>
 		Weak(O* const& o, decltype(MemHeader::versionNumber) versionNumber) noexcept;
@@ -478,6 +640,12 @@ namespace xx
 		template<typename O>
 		Weak& operator=(O* const& o) noexcept;
 
+		// 下面所有比较都会先 operator bool() 再进行
+
+		template<typename O>
+		bool operator==(Unique<O> const& o) const noexcept;
+		template<typename O>
+		bool operator!=(Unique<O> const& o) const noexcept;
 
 		template<typename O>
 		bool operator==(Weak<O> const& o) const noexcept;
@@ -489,11 +657,10 @@ namespace xx
 		template<typename O>
 		bool operator!=(O* const& o) const noexcept;
 
-
-		T*& Lock() const noexcept;
-
+		// pointer & versionNumber 清 0
 		void Reset() noexcept;
 
+		// 重要函数: 有效性检测, 如果已失效, 会自动 Reset
 		operator bool() const noexcept;
 
 		// unsafe funcs
@@ -525,10 +692,22 @@ namespace xx
 	constexpr bool IsWeak_v = IsWeak<T>::value;
 
 
+	typedef Weak<Object> Object_w;
+
+
+
+
+
+
+
+
+
+
+
 
 	// 增强版, 用于替代 is_trivial 的判断以实现针对 Ptr<> Ref<> 的 memcpy 操作. 未来可以继续在此加料
 	template<typename T>
-	constexpr bool IsTrivial_v = std::is_trivial<T>::value || IsPtr_v<T> || IsRef_v<T> || IsWeak_v<T>;
+	constexpr bool IsTrivial_v = std::is_trivial<T>::value || IsPtr_v<T> || IsRef_v<T> || IsUnique_v<T> || IsWeak_v<T>;
 
 
 

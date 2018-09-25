@@ -376,21 +376,21 @@ xx::UvTcpListener::~UvTcpListener() noexcept
 void xx::UvTcpListener::OnAcceptCB(void* server, int status) noexcept
 {
 	if (status != 0) return;
-	auto listener = GetUserData<UvTcpListener>(server);
+	auto self = GetUserData<UvTcpListener>(server);
 	UvTcpPeer* peer = nullptr;
-	if (listener->OnCreatePeer)
+	if (self->OnCreatePeer)
 	{
-		auto vn = listener->memHeader().versionNumber;
-		peer = listener->OnCreatePeer();
-		if (listener->IsReleased(vn)) return;
+		auto vn = self->memHeader().versionNumber;
+		peer = self->OnCreatePeer();
+		if (self->IsReleased(vn)) return;
 	}
 	else
 	{
-		listener->loop.mempool->CreateTo(peer, *listener);
+		self->loop.mempool->CreateTo(peer, *self);
 	}
-	if (peer && listener->OnAccept)
+	if (peer && self->OnAccept)
 	{
-		listener->OnAccept(peer);
+		self->OnAccept(peer);
 	}
 }
 
@@ -748,18 +748,18 @@ xx::UvTcpBase::UvTcpBase(UvLoop& loop)
 
 void xx::UvTcpBase::OnReadCBImpl(void* stream, ptrdiff_t nread, void const* buf_t) noexcept
 {
-	auto tcp = GetUserData<UvTcpBase>(stream);
-	auto mp = tcp->loop.mempool;
+	auto self = GetUserData<UvTcpBase>(stream);
+	auto mp = self->loop.mempool;
 	auto bufPtr = ((uv_buf_t*)buf_t)->base;
 	int len = (int)nread;
 	if (len > 0)
 	{
-		tcp->ReceiveImpl(bufPtr, len);
+		self->ReceiveImpl(bufPtr, len);
 	}
 	mp->Free(bufPtr);
-	if (tcp && len < 0)
+	if (self && len < 0)
 	{
-		tcp->DisconnectImpl();
+		self->DisconnectImpl();
 	}
 }
 
@@ -887,32 +887,32 @@ int xx::UvTcpClient::SetAddress(char const* const& ipv4, int const& port) noexce
 
 void xx::UvTcpClient::OnConnectCBImpl(void* req, int status) noexcept
 {
-	auto client = GetUserData<UvTcpClient>(req);
+	auto self = GetUserData<UvTcpClient>(req);
 	Free(req);
 	req = nullptr;
-	if (!client) return;
-	client->req = nullptr;
-	if (client->canceled) return;
+	if (!self) return;
+	self->req = nullptr;
+	if (self->canceled) return;
 
-	if (client->connTimeouter)
+	if (self->connTimeouter)
 	{
-		client->connTimeouter->Release();
-		client->connTimeouter.Reset();
+		self->connTimeouter->Release();
+		self->connTimeouter.Reset();
 	}
 
 	if (status < 0)
 	{
-		client->Disconnect();
-		if (!client) return;
+		self->Disconnect();
+		if (!self) return;
 	}
 	else
 	{
-		client->state = UvTcpStates::Connected;
-		uv_read_start((uv_stream_t*)client->ptr, AllocCB, (uv_read_cb)OnReadCBImpl);
+		self->state = UvTcpStates::Connected;
+		uv_read_start((uv_stream_t*)self->ptr, AllocCB, (uv_read_cb)OnReadCBImpl);
 	}
-	if (client->OnConnect)
+	if (self->OnConnect)
 	{
-		client->OnConnect(status);
+		self->OnConnect(status);
 	}
 }
 
@@ -941,7 +941,15 @@ int xx::UvTcpClient::Connect(int const& timeoutMS) noexcept
 	{
 		connTimeouter = loop.CreateTimer(timeoutMS, 0, [this]
 		{
-			assert(state == UvTcpStates::Connecting);
+			if (state != UvTcpStates::Connecting)
+			{
+				if (connTimeouter)
+				{
+					connTimeouter->Release();
+					connTimeouter.Reset();
+				}
+				return;
+			}
 			uv_cancel((uv_req_t*)req);
 			req = nullptr;
 			CloseAndFree((uv_handle_t*)ptr);
@@ -1048,10 +1056,10 @@ xx::UvTimer::~UvTimer() noexcept
 
 void xx::UvTimer::OnTimerCBImpl(void* handle) noexcept
 {
-	auto timer = GetUserData<UvTimer>(handle);
-	if (timer && timer->OnFire)
+	auto self = GetUserData<UvTimer>(handle);
+	if (self && self->OnFire)
 	{
-		timer->OnFire();
+		self->OnFire();
 	}
 }
 
@@ -1455,13 +1463,13 @@ xx::UvUdpListener::~UvUdpListener() noexcept
 
 void xx::UvUdpListener::OnRecvCBImpl(void* uvudp, ptrdiff_t nread, void* buf_t, void* addr, uint32_t flags) noexcept
 {
-	auto listener = GetUserData<UvUdpListener>(uvudp);
-	auto mp = listener->mempool;
+	auto self = GetUserData<UvUdpListener>(uvudp);
+	auto mp = self->mempool;
 	auto bufPtr = ((uv_buf_t*)buf_t)->base;
 	int len = (int)nread;
 	if (len > 0)
 	{
-		listener->OnReceiveImpl(bufPtr, len, addr);	// 这里不需要 check listener 的死活
+		self->OnReceiveImpl(bufPtr, len, addr);	// 这里不需要 check listener 的死活
 	}
 	mp->Free(bufPtr);
 	//if (len < 0) return;
@@ -1749,13 +1757,13 @@ int xx::UvUdpClient::Connect(xx::Guid const& g
 
 void xx::UvUdpClient::OnRecvCBImpl(void* uvudp, ptrdiff_t nread, void* buf_t, void* addr, uint32_t flags) noexcept
 {
-	auto client = GetUserData<UvUdpClient>(uvudp);
-	auto mp = client->mempool;
+	auto self = GetUserData<UvUdpClient>(uvudp);
+	auto mp = self->mempool;
 	auto bufPtr = ((uv_buf_t*)buf_t)->base;
 	int len = (int)nread;
 	if (len > 0)
 	{
-		client->OnReceiveImpl(bufPtr, len, addr);
+		self->OnReceiveImpl(bufPtr, len, addr);
 	}
 	mp->Free(bufPtr);
 	//if (len < 0) return;
