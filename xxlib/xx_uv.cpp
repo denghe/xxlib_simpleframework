@@ -185,6 +185,21 @@ bool xx::UvLoop::Alive() const noexcept
 	return uv_loop_alive((uv_loop_t*)ptr) != 0;
 }
 
+int xx::UvLoop::DelayExecute(std::function<void()>&& func, int const& timeoutMS) noexcept
+{
+	auto t = mempool->Create<UvTimer>(*this, timeoutMS, 0);
+	if (!t) return -1;
+	t->OnFire = [wt = Weak<UvTimer>(t), cb = std::move(func)]
+	{
+		cb();
+		if (wt)
+		{
+			wt->Release();
+		}
+	};
+	return 0;
+}
+
 bool xx::UvLoop::GetIPList(char const* const& domainName, std::function<void(List<String>*)>&& cb, int timeoutMS)
 {
 	auto s = mempool->Str(domainName);

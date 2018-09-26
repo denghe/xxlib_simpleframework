@@ -89,6 +89,9 @@ namespace xx
 		void Stop() noexcept;
 		bool Alive() const noexcept;
 
+		// 延迟执行, 以实现执行 需要出了当前函数才能执行的代码. 本质是 timeoutMS, 0 的 timer, 函数执行过后 timer 将自杀. 如果 timer 创建失败将返回非 0.
+		int DelayExecute(std::function<void()>&& func, int const& timeoutMS = 0) noexcept;
+
 		// 根据域名得到 ip 列表. 超时触发空值回调. 如果反复针对相同域名发起查询, 且上次的查询还没触发回调, 将返回 false.
 		// 回调参数 bool 为 true: ipv4. false: ipv6
 		bool GetIPList(char const* const& domainName, std::function<void(List<String>*)>&& cb, int timeoutMS = 0);
