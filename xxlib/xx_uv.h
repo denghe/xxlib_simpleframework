@@ -130,6 +130,7 @@ namespace xx
 
 		static void OnAcceptCB(void* server, int status) noexcept;
 		int Bind(char const* const& ipv4, int const& port) noexcept;
+		int Bind6(char const* const& ipv6, int const& port) noexcept;
 		int Listen(int const& backlog = 128) noexcept;
 	};
 
@@ -409,6 +410,7 @@ namespace xx
 		void OnReceiveImpl(char const* const& bufPtr, int const& len, void* const& addr) noexcept;
 
 		int Bind(char const* const& ipv4, int const& port) noexcept;
+		int Bind6(char const* const& ipv6, int const& port) noexcept;
 		int Listen() noexcept;
 		int StopListen() noexcept;
 
