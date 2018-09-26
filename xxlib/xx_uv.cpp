@@ -367,7 +367,7 @@ xx::UvTcpListener::UvTcpListener(UvLoop& loop)
 	if (int r = uv_tcp_init((uv_loop_t*)loop.ptr, (uv_tcp_t*)ptr)) throw r;
 	xx::ScopeGuard sg_ptr_init([&]() noexcept { CloseAndFree((uv_handle_t*)ptr); ptr = nullptr; sg_ptr.Cancel(); });
 
-	addrPtr = Alloc(sizeof(sockaddr_in));
+	addrPtr = Alloc(sizeof(sockaddr_in6));
 	if (!addrPtr) throw - 2;
 
 	index_at_container = loop.tcpListeners.dataLen;
@@ -814,7 +814,7 @@ xx::UvTcpPeer::UvTcpPeer(UvTcpListener & listener)
 	if (int r = uv_accept((uv_stream_t*)listener.ptr, (uv_stream_t*)ptr)) throw r;
 	if (int r = uv_read_start((uv_stream_t*)ptr, AllocCB, (uv_read_cb)OnReadCBImpl)) throw r;
 
-	addrPtr = Alloc(sizeof(sockaddr_in));
+	addrPtr = Alloc(sizeof(sockaddr_in6));
 	if (!addrPtr) throw - 2;
 
 	index_at_container = listener.peers.dataLen;
@@ -869,7 +869,7 @@ const char* xx::UvTcpPeer::Ip() noexcept
 xx::UvTcpClient::UvTcpClient(UvLoop& loop)
 	: UvTcpBase(loop)
 {
-	addrPtr = Alloc(sizeof(sockaddr_in));
+	addrPtr = Alloc(sizeof(sockaddr_in6));
 	if (!addrPtr) throw - 1;
 
 	index_at_container = loop.tcpClients.dataLen;
@@ -898,6 +898,12 @@ int xx::UvTcpClient::SetAddress(char const* const& ipv4, int const& port) noexce
 {
 	assert(addrPtr);
 	return uv_ip4_addr(ipv4, port, (sockaddr_in*)addrPtr);
+}
+
+int xx::UvTcpClient::SetAddress6(char const* const& ipv6, int const& port) noexcept
+{
+	assert(addrPtr);
+	return uv_ip6_addr(ipv6, port, (sockaddr_in6*)addrPtr);
 }
 
 void xx::UvTcpClient::OnConnectCBImpl(void* req, int status) noexcept
@@ -995,6 +1001,14 @@ int xx::UvTcpClient::ConnectEx(char const* const& ipv4, int const& port, int con
 	Disconnect();
 	int r = 0;
 	if ((r = SetAddress(ipv4, port))) return r;
+	return Connect(timeoutMS);
+}
+
+int xx::UvTcpClient::Connect6Ex(char const* const& ipv6, int const& port, int const& timeoutMS) noexcept
+{
+	Disconnect();
+	int r = 0;
+	if ((r = SetAddress6(ipv6, port))) return r;
 	return Connect(timeoutMS);
 }
 
@@ -1444,7 +1458,7 @@ xx::UvUdpListener::UvUdpListener(UvLoop& loop)
 	if (int r = uv_udp_init((uv_loop_t*)loop.ptr, (uv_udp_t*)ptr)) throw r;
 	xx::ScopeGuard sg_ptr_init([&]() noexcept { CloseAndFree((uv_handle_t*)ptr); ptr = nullptr; sg_ptr.Cancel(); });
 
-	addrPtr = Alloc(sizeof(sockaddr_in));
+	addrPtr = Alloc(sizeof(sockaddr_in6));
 	if (!addrPtr) throw - 2;
 
 	index_at_container = loop.udpListeners.dataLen;
@@ -1521,7 +1535,7 @@ void xx::UvUdpListener::OnReceiveImpl(char const* const& bufPtr, int const& len,
 	}
 
 	// 无脑更新 peer 的目标 ip 地址
-	memcpy(p->addrPtr, addr, sizeof(sockaddr_in));
+	memcpy(p->addrPtr, addr, sizeof(sockaddr_in6));
 
 	if (idx < 0)
 	{
@@ -1605,7 +1619,7 @@ xx::UvUdpPeer::UvUdpPeer(UvUdpListener& listener
 	((ikcpcb*)ptr)->rx_minrto = minrto;
 	ikcp_setoutput((ikcpcb*)ptr, (KcpOutputCB)OutputImpl);
 
-	addrPtr = Alloc(sizeof(sockaddr_in));
+	addrPtr = Alloc(sizeof(sockaddr_in6));
 	if (!addrPtr) throw - 3;
 
 	index_at_container = listener.peers.Add(g, this).index;
@@ -1715,7 +1729,7 @@ char* xx::UvUdpPeer::Ip() noexcept
 xx::UvUdpClient::UvUdpClient(UvLoop& loop)
 	: UvUdpBase(loop)
 {
-	addrPtr = Alloc(sizeof(sockaddr_in));
+	addrPtr = Alloc(sizeof(sockaddr_in6));
 	if (!addrPtr) throw - 1;
 
 	index_at_container = loop.udpClients.dataLen;
@@ -1847,6 +1861,11 @@ void xx::UvUdpClient::Disconnect() noexcept
 int xx::UvUdpClient::SetAddress(char const* const& ipv4, int const& port) noexcept
 {
 	return uv_ip4_addr(ipv4, port, (sockaddr_in*)addrPtr);
+}
+
+int xx::UvUdpClient::SetAddress6(char const* const& ipv6, int const& port) noexcept
+{
+	return uv_ip6_addr(ipv6, port, (sockaddr_in6*)addrPtr);
 }
 
 int xx::UvUdpClient::SendBytes(char const* const& inBuf, int const& len) noexcept

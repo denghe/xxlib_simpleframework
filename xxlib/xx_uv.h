@@ -296,9 +296,11 @@ namespace xx
 		~UvTcpClient() noexcept;
 		bool Alive() const noexcept;	// state == UvTcpStates::Connected, 并不能取代外部野指针检测
 		int SetAddress(char const* const& ipv4, int const& port) noexcept;
+		int SetAddress6(char const* const& ipv6, int const& port) noexcept;
 		static void OnConnectCBImpl(void* req, int status) noexcept;
 		int Connect(int const& timeoutMS = 0) noexcept;
 		int ConnectEx(char const* const& ipv4, int const& port, int const& timeoutMS = 0) noexcept;	// 等同于 Disconnect + SetAddress + Connect
+		int Connect6Ex(char const* const& ipv6, int const& port, int const& timeoutMS = 0) noexcept;	// 等同于 Disconnect + SetAddress6 + Connect
 		void Disconnect() noexcept;
 		void DisconnectImpl() noexcept override;
 		bool Disconnected() noexcept override;
@@ -463,6 +465,7 @@ namespace xx
 		void Update(uint32_t const& current) noexcept;
 		void Disconnect() noexcept;
 		int SetAddress(char const* const& ipv4, int const& port) noexcept;
+		int SetAddress6(char const* const& ipv6, int const& port) noexcept;
 		int SendBytes(char const* const& data, int const& len = 0) noexcept override;
 		void DisconnectImpl() noexcept override;
 		bool Disconnected() noexcept override;
