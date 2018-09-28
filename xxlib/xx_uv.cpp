@@ -282,6 +282,23 @@ void xx::UvDnsVisitor::OnResolvedCBImpl(void *resolver, int status, void *res)
 	if (status >= 0)
 	{
 		auto ai = (addrinfo*)res;
+
+		// 已知苹果下面会返回前后两条重复的 ip 地址
+#ifdef __IPHONE_OS_VERSION_MIN_REQUIRED
+		xx::String s1(self->mempool);
+		do
+		{
+			xx::String s2(self->mempool);
+			s2.Resize(32);
+			uv_ip4_name((sockaddr_in*)ai->ai_addr, s2.buf, s2.bufLen);
+			s2.dataLen = strlen(s2.buf);
+			if (!s1.Equals(s2))
+			{
+				s1.Assign(s2);
+				self->results.Add(std::move(s2));
+			}
+			ai = ai->ai_next;
+#else
 		do
 		{
 			auto& s = self->results.Emplace(self->mempool);
@@ -289,6 +306,7 @@ void xx::UvDnsVisitor::OnResolvedCBImpl(void *resolver, int status, void *res)
 			uv_ip4_name((sockaddr_in*)ai->ai_addr, s.buf, s.bufLen);
 			s.dataLen = strlen(s.buf);
 			ai = ai->ai_next;
+#endif
 		} while (ai);
 
 		uv_freeaddrinfo((addrinfo*)res);
