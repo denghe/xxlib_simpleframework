@@ -290,7 +290,14 @@ void xx::UvDnsVisitor::OnResolvedCBImpl(void *resolver, int status, void *res)
 		{
 			xx::String s2(self->mempool);
 			s2.Resize(32);
-			uv_ip4_name((sockaddr_in*)ai->ai_addr, s2.buf, s2.bufLen);
+			if (ai->ai_addr->sa_family == AF_INET6)
+			{
+				uv_ip6_name((sockaddr_in6*)ai->ai_addr, s2.buf, s2.bufLen);
+			}
+			else
+			{
+				uv_ip4_name((sockaddr_in*)ai->ai_addr, s2.buf, s2.bufLen);
+			}
 			s2.dataLen = strlen(s2.buf);
 			if (!s1.Equals(s2))
 			{
@@ -303,7 +310,14 @@ void xx::UvDnsVisitor::OnResolvedCBImpl(void *resolver, int status, void *res)
 		{
 			auto& s = self->results.Emplace(self->mempool);
 			s.Resize(32);
-			uv_ip4_name((sockaddr_in*)ai->ai_addr, s.buf, s.bufLen);
+			if (ai->ai_addr->sa_family == AF_INET6)
+			{
+				uv_ip6_name((sockaddr_in6*)ai->ai_addr, s.buf, s.bufLen);
+			}
+			else
+			{
+				uv_ip4_name((sockaddr_in*)ai->ai_addr, s.buf, s.bufLen);
+			}
 			s.dataLen = strlen(s.buf);
 			ai = ai->ai_next;
 #endif
