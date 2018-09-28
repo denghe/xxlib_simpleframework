@@ -4,6 +4,8 @@
 
 // 注意: 除了 UvLoop, 其他类型只能以指针方式 Create 出来用. 否则将导致版本号检测变野失败. 所有回调都属于 noexcept, 如有异常, 需要自己 try
 
+// 注意2: IOS 下面可以使用 uvloop.GetIPList 解析域名可以令程序强制弹 网络权限窗
+
 namespace xx
 {
 	class UvLoop;
