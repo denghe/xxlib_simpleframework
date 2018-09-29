@@ -19,9 +19,10 @@ using TemplateLibrary;
 [TypeIdMappings]
 interface ITypeIdMappings
 {");
+        int count = 0;
         foreach (var kv in typeIds.types)
         {
-            if (kv.Key == typeof(string) 
+            if (kv.Key == typeof(string)
                 || kv.Key == typeof(TemplateLibrary.BBuffer)
                 ) continue;
             var typeId = (ushort)kv.Value;
@@ -30,10 +31,12 @@ interface ITypeIdMappings
             sb.Append(@"
     " + cn + @" _" + typeId + @" { get; }
 ");
+            ++count;
         }
         sb.Append(@"
 }
 ");
+        if (count == 0) return true;
         sb._WriteToFile(Path.Combine(outDir, templateName + "_TypeIdMappings.cs"));
         return false;
     }

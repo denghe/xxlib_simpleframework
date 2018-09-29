@@ -206,6 +206,7 @@ namespace " + iface.Namespace + @"
                     }
                 }
 
+                var rtn_bak = rtn;
 
 
                 sb.Append(@"
@@ -305,6 +306,14 @@ namespace " + iface.Namespace + @"
                     sb.Append(@"
             cmd.CommandText = @""" + f._GetSql().Replace("\"", "\"\"") + @""";");
                 }
+
+
+
+
+                var sb_bak = sb;
+                sb = new StringBuilder();
+                var GenRtv = new Action(() => {
+                
 
                 // 根据函数返回值类型，生成不同的代码段。
 
@@ -587,8 +596,94 @@ namespace " + iface.Namespace + @"
                 // func }
                 sb.Append(@"
         }");
-            }
 
+                });
+
+                GenRtv();
+                var sb2 = sb;
+                sb = sb_bak;
+                sb.Append(sb2);
+                rtn = rtn_bak;
+
+
+
+                // 代码基本同上, 生成一个 dynamic o 成员展开传参的重载版本
+                if (ps.Length > 0)
+                {
+
+                    sb.Append(@"
+" + f._GetDesc()._GetComment_CSharp(8) + @"
+        " + "public " + rtn + " " + f.Name + "_d" + w2 + "(dynamic o, MySql.Data.MySqlClient.MySqlTransaction tran_ = null)" + w + @"
+        {
+            cmd.Transaction = tran_;");
+
+                    if (ps.Length > 0)
+                    {
+                        sb.Append(@"
+            recordsAffecteds.Clear();
+            sb.Clear();");
+
+                        // 扫描出 f.Sql 的参数部分并与 f.Parameters 相对应
+                        var sqls = f._GetSql()._SpliteSql();
+                        foreach (var o in sqls)
+                        {
+                            if (o is string)
+                            {
+                                sb.Append(@"
+            sb.Append(@""" + ((string)o).Replace("\"", "\"\"") + @""");");
+                            }
+                            else
+                            {
+                                var p = ps[(int)o];
+                                var pn = p.Name;
+                                var pt = p.ParameterType;
+                                if (p._Has<Literal>() || pt._IsNumeric())
+                                {
+                                    sb.Append(@"
+            sb.Append(o." + pn + @");");
+                                }
+                                else
+                                {
+                                    if (pt._IsList() || pt._IsUserClass())
+                                    {
+                                        sb.Append(@"
+            o." + pn + @".MySqlAppend(sb, " + (p._Has<SkipReadOnly>() ? "true" : "false") + ");");
+                                    }
+                                    else if (pt._IsString())
+                                    {
+                                        sb.Append(@"
+            sb.Append(o." + pn + @" == null ? ""null"" : (""'"" + o." + pn + @".Replace(""'"", ""''"") + ""'""));");
+                                    }
+                                    else if (pt.IsEnum)
+                                    {
+                                        sb.Append(@"
+            sb.Append(" + "(" + pt._GetEnumUnderlyingTypeName_Csharp() + ")o." + pn + @");");
+                                    }
+                                    else
+                                    {
+                                        sb.Append(@"
+            sb.Append(o." + pn + @");");
+                                    }
+
+                                }
+                            }
+                        }
+
+                        sb.Append(@"
+            cmd.CommandText = sb.ToString();
+");
+                    }
+                    else
+                    {
+                        sb.Append(@"
+            cmd.CommandText = @""" + f._GetSql().Replace("\"", "\"\"") + @""";");
+                    }
+
+                    sb.Append(sb2);
+
+                }
+
+            }
 
             // class }
             sb.Append(@"

@@ -251,5 +251,43 @@ namespace xx
             return dt.ToLocalTime();
         }
 
+        public static string Epoch10mDurationToString(long epoch10mDuration)
+        {
+            const double oneMicrosecond = 10;
+            const double oneMillisecond = oneMicrosecond*1000;
+            const double oneSecond = oneMillisecond * 1000;
+            const double oneMinute = oneSecond * 60;
+            const double oneHour = oneMinute * 60;
+            const double oneDay = oneHour * 60;
+            if (epoch10mDuration > oneDay)
+            {
+                return (epoch10mDuration / oneDay)+"D";
+            }
+            else if (epoch10mDuration > oneHour)
+            {
+                return (epoch10mDuration / oneHour) + "h";
+            }
+            else if (epoch10mDuration > oneMinute)
+            {
+                return (epoch10mDuration / oneMinute) + "m";
+            }
+            else if (epoch10mDuration > oneSecond)
+            {
+                return (epoch10mDuration / oneSecond) + "s";
+            }
+            else if (epoch10mDuration > oneMillisecond)
+            {
+                return (epoch10mDuration / oneMillisecond) + "ms";
+            }
+            else if (epoch10mDuration > oneMicrosecond)
+            {
+                return (epoch10mDuration / oneMicrosecond) + "us";
+            }
+            else
+            {
+                return (epoch10mDuration) + "00ns";
+            }
+        }
+
     }
 }
