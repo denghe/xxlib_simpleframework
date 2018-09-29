@@ -9,11 +9,12 @@ int main1()
 {
 	xx::MemPool mp;
 	xx::UvLoop uv(&mp);
-	uv.CreateTimer(100, 100, [] {std::cout << "."; });
-	uv.DelayExecute([&]
-	{
-		uv.Stop();
-	}, 1000);
+	uv.CreateTimer(0, 100, [] {std::cout << "."; });
+	uv.CreateTimer(0, 100, [] {std::cout << "a"; });
+	//uv.DelayExecute([&]
+	//{
+	//	uv.Stop();
+	//}, 1000);
 	uv.Run();
 	return 0;
 }

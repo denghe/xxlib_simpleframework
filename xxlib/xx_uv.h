@@ -53,7 +53,7 @@ namespace xx
 		xx::Weak<UvTimer> timeouter;
 		List<String> results;
 
-		//void* hints = nullptr;
+		void* hints = nullptr;
 		void* resolver = nullptr;
 		static void OnResolvedCBImpl(void *resolver, int status, void *res);
 

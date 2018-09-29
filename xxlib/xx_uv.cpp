@@ -4,30 +4,25 @@
 #include "ikcp.h"
 #include "xx_uv.h"
 
-// 指针 + 版本号 以便于做变野 check
-struct UserData
+// 分配时附加 this + version number
+static void* Alloc(size_t const& size, xx::Weak<xx::Object> const& self = nullptr) noexcept
 {
-	void* ptr;
-	decltype(xx::MemHeader::versionNumber) versionNumber;
-};
-
-template<typename T>
-static xx::Weak<T>& GetUserData(void* const& p) noexcept
-{
-	return *(xx::Weak<T>*)((UserData*)p - 1);
+	auto p = (xx::Weak<xx::Object>*)::malloc(sizeof(xx::Weak<xx::Object>) + size);
+	if (!p) return nullptr;
+	p[0] = self;
+	return &p[1];
 }
 
-static void* Alloc(size_t const& size, UserData const& ud = { 0, 0 }) noexcept
+// 从附加区域拿回 this 指针的 weak 版
+template<typename T>
+static xx::Weak<T>& GetSelf(void* const& p) noexcept
 {
-	auto p = (UserData*)::malloc(sizeof(UserData) + size);
-	if (!p) return nullptr;
-	p[0] = ud;
-	return &p[1];
+	return *((xx::Weak<T>*)p - 1);
 }
 
 static void Free(void* const& p) noexcept
 {
-	::free((UserData*)p - 1);
+	::free((xx::Weak<xx::Object>*)p - 1);
 }
 
 static void CloseAndFree(uv_handle_t* const& p) noexcept
@@ -71,19 +66,32 @@ static int TcpWrite(void* stream, char* inBuf, uint32_t len) noexcept
 
 static int FillIP(uv_tcp_t* stream, char* buf, size_t bufLen) noexcept
 {
-	sockaddr_in saddr;
+	sockaddr_in6 saddr;
 	int len = sizeof(saddr);
 	int r = 0;
 	if ((r = uv_tcp_getpeername(stream, (sockaddr*)&saddr, &len))) return r;
-	if ((r = uv_ip4_name(&saddr, buf, (int)bufLen))) return r;
-	auto dataLen = strlen(buf);
+	if (saddr.sin6_family == AF_INET6)
+	{
+		if ((r = uv_ip6_name(&saddr, buf, (int)bufLen))) return r;
+	}
+	else
+	{
+		if ((r = uv_ip4_name((sockaddr_in*)&saddr, buf, (int)bufLen))) return r;
+	}
 	return 0;
 }
 
 static int FillIP(sockaddr_in* addr, char* buf, size_t bufLen) noexcept
 {
 	int r = 0;
-	if ((r = uv_ip4_name(addr, buf, (int)bufLen))) return r;
+	if (addr->sin_family == AF_INET6)
+	{
+		if ((r = uv_ip6_name((sockaddr_in6*)addr, buf, (int)bufLen))) return r;
+	}
+	else
+	{
+		if ((r = uv_ip4_name(addr, buf, (int)bufLen))) return r;
+	}
 	auto dataLen = strlen(buf);
 	sprintf(buf + dataLen, ":%d", ntohs(addr->sin_port));
 	return 0;
@@ -100,7 +108,7 @@ xx::UvLoop::UvLoop(MemPool* const& mp)
 	, asyncs(mp)
 	, dnsVisitors(mp)
 {
-	ptr = Alloc(sizeof(uv_loop_t));
+	ptr = Alloc(sizeof(uv_loop_t), this);
 	if (!ptr) throw - 1;
 	xx::ScopeGuard sg_ptr([&]() noexcept { Free(ptr); ptr = nullptr; });
 
@@ -185,6 +193,36 @@ bool xx::UvLoop::Alive() const noexcept
 	return uv_loop_alive((uv_loop_t*)ptr) != 0;
 }
 
+xx::UvTcpListener* xx::UvLoop::CreateTcpListener() noexcept
+{
+	return mempool->Create<UvTcpListener>(*this);
+}
+xx::UvTcpClient* xx::UvLoop::CreateTcpClient() noexcept
+{
+	return mempool->Create<UvTcpClient>(*this);
+}
+
+xx::UvUdpListener* xx::UvLoop::CreateUdpListener() noexcept
+{
+	return mempool->Create<UvUdpListener>(*this);
+}
+xx::UvUdpClient* xx::UvLoop::CreateUdpClient() noexcept
+{
+	return mempool->Create<UvUdpClient>(*this);
+}
+
+xx::UvTimer* xx::UvLoop::CreateTimer(uint64_t const& timeoutMS, uint64_t const& repeatIntervalMS, std::function<void()>&& OnFire) noexcept
+{
+	return mempool->Create<UvTimer>(*this, timeoutMS, repeatIntervalMS, std::move(OnFire));
+}
+
+xx::UvAsync* xx::UvLoop::CreateAsync() noexcept
+{
+	return mempool->Create<UvAsync>(*this);
+}
+
+
+
 int xx::UvLoop::DelayExecute(std::function<void()>&& func, int const& timeoutMS) noexcept
 {
 	auto t = mempool->Create<UvTimer>(*this, timeoutMS, 0);
@@ -200,6 +238,8 @@ int xx::UvLoop::DelayExecute(std::function<void()>&& func, int const& timeoutMS)
 	return 0;
 }
 
+
+
 bool xx::UvLoop::GetIPList(char const* const& domainName, std::function<void(List<String>*)>&& cb, int timeoutMS)
 {
 	auto s = mempool->Str(domainName);
@@ -210,6 +250,14 @@ bool xx::UvLoop::GetIPList(char const* const& domainName, std::function<void(Lis
 	return true;
 }
 
+
+
+
+
+
+
+
+
 xx::UvDnsVisitor::UvDnsVisitor(UvLoop* const& loop, String_p& domainName, std::function<void(List<String>*)>&& cb, int timeoutMS)
 	: xx::Object(loop->mempool)
 	, loop(*loop)
@@ -217,22 +265,22 @@ xx::UvDnsVisitor::UvDnsVisitor(UvLoop* const& loop, String_p& domainName, std::f
 	, cb(std::move(cb))
 	, results(loop->mempool)
 {
-	// 看上去不需要 hints. 先注释掉.
+	hints = Alloc(sizeof(addrinfo));
+	if (!hints) throw - 1;
+	xx::ScopeGuard sg_hints([&]() noexcept { Free(hints); hints = nullptr; });
 
-	//hints = Alloc(sizeof(addrinfo));
-	//if (!hints) throw - 1;
-	//xx::ScopeGuard sg_hints([&]() noexcept { Free(hints); hints = nullptr; });
-
-	//((addrinfo*)hints)->ai_family = PF_INET; // PF_INET6  ? PF_UNSPEC ?
-	//((addrinfo*)hints)->ai_socktype = SOCK_STREAM;
-	//((addrinfo*)hints)->ai_protocol = 0;// IPPROTO_TCP;
-	//((addrinfo*)hints)->ai_flags = 0;
+	((addrinfo*)hints)->ai_family = PF_UNSPEC;
+	((addrinfo*)hints)->ai_socktype = SOCK_STREAM;
+	((addrinfo*)hints)->ai_protocol = 0;// IPPROTO_TCP;
+#ifdef __IPHONE_OS_VERSION_MIN_REQUIRED
+	((addrinfo*)hints)->ai_flags = AI_DEFAULT;
+#endif
 
 	resolver = Alloc(sizeof(uv_getaddrinfo_t), { this, memHeader().versionNumber });
 	if (!resolver) throw - 2;
 	xx::ScopeGuard sg_resolver([&]() noexcept { Free(resolver); resolver = nullptr; });
 
-	if (int r = uv_getaddrinfo((uv_loop_t*)loop->ptr, (uv_getaddrinfo_t*)resolver, (uv_getaddrinfo_cb)OnResolvedCBImpl, domainName->c_str(), nullptr, nullptr/*(const addrinfo*)hints*/)) throw r;
+	if (int r = uv_getaddrinfo((uv_loop_t*)loop->ptr, (uv_getaddrinfo_t*)resolver, (uv_getaddrinfo_cb)OnResolvedCBImpl, domainName->c_str(), nullptr, (const addrinfo*)hints)) throw r;
 	xx::ScopeGuard sg_resolver2([&]() noexcept { uv_cancel((uv_req_t*)resolver); });
 
 	if (timeoutMS)
@@ -250,7 +298,7 @@ xx::UvDnsVisitor::UvDnsVisitor(UvLoop* const& loop, String_p& domainName, std::f
 
 	sg_resolver2.Cancel();
 	sg_resolver.Cancel();
-	//sg_hints.Cancel();
+	sg_hints.Cancel();
 }
 
 xx::UvDnsVisitor::~UvDnsVisitor()
@@ -265,15 +313,18 @@ xx::UvDnsVisitor::~UvDnsVisitor()
 		uv_cancel((uv_req_t*)resolver);
 	}
 
-	//Free(hints);
-	//hints = nullptr;
+	if (hints)
+	{
+		Free(hints);
+		hints = nullptr;
+	}
 
 	loop.dnsVisitors.RemoveAt(indexAtDict);
 }
 
 void xx::UvDnsVisitor::OnResolvedCBImpl(void *resolver, int status, void *res)
 {
-	auto self = GetUserData<UvDnsVisitor>(resolver);
+	auto self = GetSelf<UvDnsVisitor>(resolver);
 	Free(resolver);
 	resolver = nullptr;
 	if (!self) return;
@@ -324,7 +375,7 @@ void xx::UvDnsVisitor::OnResolvedCBImpl(void *resolver, int status, void *res)
 		} while (ai);
 
 		uv_freeaddrinfo((addrinfo*)res);
-	}
+		}
 
 	if (self->cb)
 	{
@@ -333,39 +384,8 @@ void xx::UvDnsVisitor::OnResolvedCBImpl(void *resolver, int status, void *res)
 	}
 
 	self->Release();
-}
+	}
 
-
-
-
-
-xx::UvTcpListener* xx::UvLoop::CreateTcpListener() noexcept
-{
-	return mempool->Create<UvTcpListener>(*this);
-}
-xx::UvTcpClient* xx::UvLoop::CreateTcpClient() noexcept
-{
-	return mempool->Create<UvTcpClient>(*this);
-}
-
-xx::UvUdpListener* xx::UvLoop::CreateUdpListener() noexcept
-{
-	return mempool->Create<UvUdpListener>(*this);
-}
-xx::UvUdpClient* xx::UvLoop::CreateUdpClient() noexcept
-{
-	return mempool->Create<UvUdpClient>(*this);
-}
-
-xx::UvTimer* xx::UvLoop::CreateTimer(uint64_t const& timeoutMS, uint64_t const& repeatIntervalMS, std::function<void()>&& OnFire) noexcept
-{
-	return mempool->Create<UvTimer>(*this, timeoutMS, repeatIntervalMS, std::move(OnFire));
-}
-
-xx::UvAsync* xx::UvLoop::CreateAsync() noexcept
-{
-	return mempool->Create<UvAsync>(*this);
-}
 
 
 
@@ -392,7 +412,7 @@ xx::UvTcpListener::UvTcpListener(UvLoop& loop)
 	: UvListenerBase(loop)
 	, peers(loop.mempool)
 {
-	ptr = Alloc(sizeof(uv_tcp_t), { this, memHeader().versionNumber });
+	ptr = Alloc(sizeof(uv_tcp_t), this);
 	if (!ptr) throw - 1;
 	xx::ScopeGuard sg_ptr([&]() noexcept { Free(ptr); ptr = nullptr; });
 
@@ -423,34 +443,27 @@ xx::UvTcpListener::~UvTcpListener() noexcept
 void xx::UvTcpListener::OnAcceptCB(void* server, int status) noexcept
 {
 	if (status != 0) return;
-	auto self = GetUserData<UvTcpListener>(server);
+	auto listener = GetSelf<UvTcpListener>(server);
 	UvTcpPeer* peer = nullptr;
-	if (self->OnCreatePeer)
+	if (listener->OnCreatePeer)
 	{
-		auto vn = self->memHeader().versionNumber;
-		peer = self->OnCreatePeer();
-		if (self->IsReleased(vn)) return;
+		auto vn = listener->memHeader().versionNumber;
+		peer = listener->OnCreatePeer();
+		if (listener->IsReleased(vn)) return;
 	}
 	else
 	{
-		self->loop.mempool->CreateTo(peer, *self);
+		listener->loop.mempool->CreateTo(peer, *listener);
 	}
-	if (peer && self->OnAccept)
+	if (peer && listener->OnAccept)
 	{
-		self->OnAccept(peer);
+		listener->OnAccept(peer);
 	}
 }
 
 int xx::UvTcpListener::Bind(char const* const& ipv4, int const& port) noexcept
 {
 	if (int r = uv_ip4_addr(ipv4, port, (sockaddr_in*)addrPtr)) return r;
-	if (int r = uv_tcp_bind((uv_tcp_t*)ptr, (sockaddr*)addrPtr, 0)) return r;
-	return 0;
-}
-
-int xx::UvTcpListener::Bind6(char const* const& ipv6, int const& port) noexcept
-{
-	if (int r = uv_ip6_addr(ipv6, port, (sockaddr_in6*)addrPtr)) return r;
 	if (int r = uv_tcp_bind((uv_tcp_t*)ptr, (sockaddr*)addrPtr, 0)) return r;
 	return 0;
 }
@@ -802,18 +815,18 @@ xx::UvTcpBase::UvTcpBase(UvLoop& loop)
 
 void xx::UvTcpBase::OnReadCBImpl(void* stream, ptrdiff_t nread, void const* buf_t) noexcept
 {
-	auto self = GetUserData<UvTcpBase>(stream);
-	auto mp = self->loop.mempool;
+	auto tcp = GetSelf<UvTcpBase>(stream);
+	auto mp = tcp->loop.mempool;
 	auto bufPtr = ((uv_buf_t*)buf_t)->base;
 	int len = (int)nread;
 	if (len > 0)
 	{
-		self->ReceiveImpl(bufPtr, len);
+		tcp->ReceiveImpl(bufPtr, len);
 	}
 	mp->Free(bufPtr);
-	if (self && len < 0)
+	if (tcp && len < 0)
 	{
-		self->DisconnectImpl();
+		tcp->DisconnectImpl();
 	}
 }
 
@@ -843,7 +856,7 @@ xx::UvTcpPeer::UvTcpPeer(UvTcpListener & listener)
 {
 	ipBuf.fill(0);
 
-	ptr = Alloc(sizeof(uv_tcp_t), { this, memHeader().versionNumber });
+	ptr = Alloc(sizeof(uv_tcp_t), this);
 	if (!ptr) throw - 1;
 	xx::ScopeGuard sg_ptr([&]() noexcept { Free(ptr); ptr = nullptr; });
 
@@ -947,52 +960,51 @@ int xx::UvTcpClient::SetAddress6(char const* const& ipv6, int const& port) noexc
 
 void xx::UvTcpClient::OnConnectCBImpl(void* req, int status) noexcept
 {
-	auto self = GetUserData<UvTcpClient>(req);
+	auto client = GetSelf<UvTcpClient>(req);
 	Free(req);
 	req = nullptr;
-	if (!self) return;
-	self->req = nullptr;
-	if (self->canceled) return;
+	if (!client) return;
+	client->req = nullptr;
+	if (client->canceled) return;
 
-	if (self->connTimeouter)
+	if (client->connTimeouter)
 	{
-		self->connTimeouter->Release();
-		self->connTimeouter.Reset();
+		client->connTimeouter->Release();
+		client->connTimeouter.Reset();
 	}
 
 	if (status < 0)
 	{
-		self->Disconnect();
-		if (!self) return;
+		client->Disconnect();
+		if (!client) return;
 	}
 	else
 	{
-		self->state = UvTcpStates::Connected;
-		uv_read_start((uv_stream_t*)self->ptr, AllocCB, (uv_read_cb)OnReadCBImpl);
+		client->state = UvTcpStates::Connected;
+		uv_read_start((uv_stream_t*)client->ptr, AllocCB, (uv_read_cb)OnReadCBImpl);
 	}
-	if (self->OnConnect)
+	if (client->OnConnect)
 	{
-		self->OnConnect(status);
+		client->OnConnect(status);
 	}
 }
 
 int xx::UvTcpClient::Connect(int const& timeoutMS) noexcept
 {
-	assert(addrPtr && !ptr && !req);
+	assert(addrPtr && !ptr);
 	if (state != UvTcpStates::Disconnected) return -1;
 
-	ptr = Alloc(sizeof(uv_tcp_t), { this, memHeader().versionNumber });
+	ptr = Alloc(sizeof(uv_tcp_t), this);
 	if (!ptr) return -2;
 	xx::ScopeGuard sg_ptr([&]() noexcept { Free(ptr); ptr = nullptr; });
 
 	if (int r = uv_tcp_init((uv_loop_t*)loop.ptr, (uv_tcp_t*)ptr)) return r;
 	xx::ScopeGuard sg_ptr_init([&]() noexcept { CloseAndFree((uv_handle_t*)ptr); ptr = nullptr; sg_ptr.Cancel(); });
 
-	req = (uv_connect_t*)Alloc(sizeof(uv_connect_t), { this, memHeader().versionNumber });
+	req = (uv_connect_t*)Alloc(sizeof(uv_connect_t), this);
 	xx::ScopeGuard sg_req([&]() noexcept { Free(req); req = nullptr; });
 
 	if (int r = uv_tcp_connect((uv_connect_t*)req, (uv_tcp_t*)ptr, (sockaddr*)addrPtr, (uv_connect_cb)OnConnectCBImpl)) return r;
-	xx::ScopeGuard sg_conn([&]() noexcept { uv_cancel((uv_req_t*)req); sg_req.Cancel(); });
 
 	canceled = false;
 	state = UvTcpStates::Connecting;
@@ -1028,7 +1040,6 @@ int xx::UvTcpClient::Connect(int const& timeoutMS) noexcept
 		if (!connTimeouter) return -2;
 	}
 
-	sg_conn.Cancel();
 	sg_req.Cancel();
 	sg_ptr_init.Cancel();
 	sg_ptr.Cancel();
@@ -1051,6 +1062,7 @@ int xx::UvTcpClient::Connect6Ex(char const* const& ipv6, int const& port, int co
 	return Connect(timeoutMS);
 }
 
+
 void xx::UvTcpClient::Disconnect() noexcept
 {
 	if (!addrPtr) return;
@@ -1058,7 +1070,6 @@ void xx::UvTcpClient::Disconnect() noexcept
 	if (req)
 	{
 		uv_cancel((uv_req_t*)req);
-		//Free(req);
 		req = nullptr;
 	}
 	state = UvTcpStates::Disconnected;
@@ -1086,6 +1097,7 @@ bool xx::UvTcpClient::Disconnected() noexcept
 }
 
 
+// todo: 简单的变野判断去掉, 没用
 
 
 
@@ -1097,7 +1109,7 @@ xx::UvTimer::UvTimer(UvLoop& loop, uint64_t const& timeoutMS, uint64_t const& re
 	, OnFire(std::move(OnFire))
 	, loop(loop)
 {
-	ptr = Alloc(sizeof(uv_timer_t), { this, memHeader().versionNumber });
+	ptr = Alloc(sizeof(uv_timer_t), this);
 	if (!ptr) throw - 1;
 	xx::ScopeGuard sg_ptr([&]() noexcept { Free(ptr); ptr = nullptr; });
 
@@ -1124,10 +1136,10 @@ xx::UvTimer::~UvTimer() noexcept
 
 void xx::UvTimer::OnTimerCBImpl(void* handle) noexcept
 {
-	auto self = GetUserData<UvTimer>(handle);
-	if (self && self->OnFire)
+	auto timer = GetSelf<UvTimer>(handle);
+	if (timer->OnFire)
 	{
-		self->OnFire();
+		timer->OnFire();
 	}
 }
 
@@ -1259,7 +1271,7 @@ xx::UvAsync::UvAsync(UvLoop& loop)
 	, loop(loop)
 	, actions(loop.mempool)
 {
-	ptr = Alloc(sizeof(uv_async_t), { this, memHeader().versionNumber });
+	ptr = Alloc(sizeof(uv_async_t), this);
 	if (!ptr) throw - 1;
 	xx::ScopeGuard sg_ptr([&]() noexcept { Free(ptr); ptr = nullptr; });
 
@@ -1292,8 +1304,8 @@ xx::UvAsync::~UvAsync() noexcept
 
 void xx::UvAsync::OnAsyncCBImpl(void* handle) noexcept
 {
-	auto self = GetUserData<UvAsync>(handle);
-	if (self && self->OnFire)
+	auto self = GetSelf<UvAsync>(handle);
+	if (self->OnFire)
 	{
 		self->OnFire();
 	}
@@ -1490,7 +1502,7 @@ xx::UvUdpListener::UvUdpListener(UvLoop& loop)
 	: UvListenerBase(loop)
 	, peers(loop.mempool)
 {
-	ptr = Alloc(sizeof(uv_udp_t), { this, memHeader().versionNumber });
+	ptr = Alloc(sizeof(uv_udp_t), this);
 	if (!ptr) throw - 1;
 	xx::ScopeGuard sg_ptr([&]() noexcept { Free(ptr); ptr = nullptr; });
 
@@ -1531,13 +1543,13 @@ xx::UvUdpListener::~UvUdpListener() noexcept
 
 void xx::UvUdpListener::OnRecvCBImpl(void* uvudp, ptrdiff_t nread, void* buf_t, void* addr, uint32_t flags) noexcept
 {
-	auto self = GetUserData<UvUdpListener>(uvudp);
-	auto mp = self->mempool;
+	auto listener = GetSelf<UvUdpListener>(uvudp);
+	auto mp = listener->mempool;
 	auto bufPtr = ((uv_buf_t*)buf_t)->base;
 	int len = (int)nread;
 	if (len > 0)
 	{
-		self->OnReceiveImpl(bufPtr, len, addr);	// 这里不需要 check listener 的死活
+		listener->OnReceiveImpl(bufPtr, len, addr);	// 这里不需要 check listener 的死活
 	}
 	mp->Free(bufPtr);
 	//if (len < 0) return;
@@ -1595,13 +1607,6 @@ void xx::UvUdpListener::OnReceiveImpl(char const* const& bufPtr, int const& len,
 int xx::UvUdpListener::Bind(char const* const& ipv4, int const& port) noexcept
 {
 	if (int r = uv_ip4_addr(ipv4, port, (sockaddr_in*)addrPtr)) return r;
-	if (int r = uv_udp_bind((uv_udp_t*)ptr, (sockaddr*)addrPtr, UV_UDP_REUSEADDR)) return r;
-	return 0;
-}
-
-int xx::UvUdpListener::Bind6(char const* const& ipv6, int const& port) noexcept
-{
-	if (int r = uv_ip6_addr(ipv6, port, (sockaddr_in6*)addrPtr)) return r;
 	if (int r = uv_udp_bind((uv_udp_t*)ptr, (sockaddr*)addrPtr, UV_UDP_REUSEADDR)) return r;
 	return 0;
 }
@@ -1802,7 +1807,7 @@ int xx::UvUdpClient::Connect(xx::Guid const& g
 
 	if (ptr) return -2;
 
-	ptr = Alloc(sizeof(uv_udp_t), { this, memHeader().versionNumber });
+	ptr = Alloc(sizeof(uv_udp_t), this);
 	if (!ptr) return -3;
 	xx::ScopeGuard sg_ptr([&]() noexcept { Free(ptr); ptr = nullptr; });
 
@@ -1832,13 +1837,13 @@ int xx::UvUdpClient::Connect(xx::Guid const& g
 
 void xx::UvUdpClient::OnRecvCBImpl(void* uvudp, ptrdiff_t nread, void* buf_t, void* addr, uint32_t flags) noexcept
 {
-	auto self = GetUserData<UvUdpClient>(uvudp);
-	auto mp = self->mempool;
+	auto client = GetSelf<UvUdpClient>(uvudp);
+	auto mp = client->mempool;
 	auto bufPtr = ((uv_buf_t*)buf_t)->base;
 	int len = (int)nread;
 	if (len > 0)
 	{
-		self->OnReceiveImpl(bufPtr, len, addr);
+		client->OnReceiveImpl(bufPtr, len, addr);
 	}
 	mp->Free(bufPtr);
 	//if (len < 0) return;
@@ -1907,11 +1912,6 @@ void xx::UvUdpClient::Disconnect() noexcept
 int xx::UvUdpClient::SetAddress(char const* const& ipv4, int const& port) noexcept
 {
 	return uv_ip4_addr(ipv4, port, (sockaddr_in*)addrPtr);
-}
-
-int xx::UvUdpClient::SetAddress6(char const* const& ipv6, int const& port) noexcept
-{
-	return uv_ip6_addr(ipv6, port, (sockaddr_in6*)addrPtr);
 }
 
 int xx::UvUdpClient::SendBytes(char const* const& inBuf, int const& len) noexcept
