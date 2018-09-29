@@ -467,6 +467,12 @@ int xx::UvTcpListener::Bind(char const* const& ipv4, int const& port) noexcept
 	if (int r = uv_tcp_bind((uv_tcp_t*)ptr, (sockaddr*)addrPtr, 0)) return r;
 	return 0;
 }
+int xx::UvTcpListener::Bind6(char const* const& ipv6, int const& port) noexcept
+{
+	if (int r = uv_ip6_addr(ipv6, port, (sockaddr_in6*)addrPtr)) return r;
+	if (int r = uv_tcp_bind((uv_tcp_t*)ptr, (sockaddr*)addrPtr, 0)) return r;
+	return 0;
+}
 
 int xx::UvTcpListener::Listen(int const& backlog) noexcept
 {
@@ -1607,6 +1613,12 @@ void xx::UvUdpListener::OnReceiveImpl(char const* const& bufPtr, int const& len,
 int xx::UvUdpListener::Bind(char const* const& ipv4, int const& port) noexcept
 {
 	if (int r = uv_ip4_addr(ipv4, port, (sockaddr_in*)addrPtr)) return r;
+	if (int r = uv_udp_bind((uv_udp_t*)ptr, (sockaddr*)addrPtr, UV_UDP_REUSEADDR)) return r;
+	return 0;
+}
+int xx::UvUdpListener::Bind6(char const* const& ipv6, int const& port) noexcept
+{
+	if (int r = uv_ip6_addr(ipv6, port, (sockaddr_in6*)addrPtr)) return r;
 	if (int r = uv_udp_bind((uv_udp_t*)ptr, (sockaddr*)addrPtr, UV_UDP_REUSEADDR)) return r;
 	return 0;
 }
