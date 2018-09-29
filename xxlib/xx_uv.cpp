@@ -384,7 +384,7 @@ void xx::UvDnsVisitor::OnResolvedCBImpl(void *resolver, int status, void *res)
 	}
 
 	self->Release();
-	}
+}
 
 
 
@@ -1007,7 +1007,7 @@ int xx::UvTcpClient::Connect(int const& timeoutMS) noexcept
 	if (int r = uv_tcp_init((uv_loop_t*)loop.ptr, (uv_tcp_t*)ptr)) return r;
 	xx::ScopeGuard sg_ptr_init([&]() noexcept { CloseAndFree((uv_handle_t*)ptr); ptr = nullptr; sg_ptr.Cancel(); });
 
-	req = (uv_connect_t*)Alloc(sizeof(uv_connect_t), this);
+	req = Alloc(sizeof(uv_connect_t), this);
 	xx::ScopeGuard sg_req([&]() noexcept { Free(req); req = nullptr; });
 
 	if (int r = uv_tcp_connect((uv_connect_t*)req, (uv_tcp_t*)ptr, (sockaddr*)addrPtr, (uv_connect_cb)OnConnectCBImpl)) return r;

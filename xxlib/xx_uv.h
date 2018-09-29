@@ -2,9 +2,9 @@
 #include "xx.h"
 #include <mutex>
 
-// 注意: 除了 UvLoop, 其他类型只能以指针方式 Create 出来用. 否则将导致版本号检测变野失败. 所有回调都属于 noexcept, 如有异常, 需要自己 try
+// 重要: 除了 UvLoop, 其他类型只能以指针方式 Create 出来用. 否则将导致版本号检测变野失败. 所有回调都属于 noexcept, 如有异常, 需要自己 try
 
-// 注意2: IOS 下面可以使用 uvloop.GetIPList 解析域名可以令程序强制弹 网络权限窗
+// 提示: IOS 下面可以使用 uvloop.GetIPList 解析域名可以令程序强制弹 网络权限窗
 
 namespace xx
 {
@@ -91,12 +91,15 @@ namespace xx
 		void Stop() noexcept;
 		bool Alive() const noexcept;
 
-		// 延迟执行, 以实现执行 需要出了当前函数才能执行的代码. 本质是 timeoutMS, 0 的 timer, 函数执行过后 timer 将自杀. 如果 timer 创建失败将返回非 0.
-		int DelayExecute(std::function<void()>&& func, int const& timeoutMS = 0) noexcept;
 
 		// 根据域名得到 ip 列表. 超时触发空值回调. 如果反复针对相同域名发起查询, 且上次的查询还没触发回调, 将返回 false.
 		// 回调参数 bool 为 true: ipv4. false: ipv6
 		bool GetIPList(char const* const& domainName, std::function<void(List<String>*)>&& cb, int timeoutMS = 0);
+
+
+		// 延迟执行, 以实现执行 需要出了当前函数才能执行的代码. 本质是 timeoutMS, 0 的 timer, 函数执行过后 timer 将自杀. 如果 timer 创建失败将返回非 0.
+		int DelayExecute(std::function<void()>&& func, int const& timeoutMS = 0) noexcept;
+
 
 		UvTcpListener* CreateTcpListener() noexcept;
 		UvTcpClient* CreateTcpClient() noexcept;
@@ -602,24 +605,47 @@ namespace xx
 		// todo: 提供更多请求串拼接函数 以便于使用
 	};
 
-	using UvLoop_r = Weak<UvLoop>;
-	using UvListenerBase_r = Weak<UvListenerBase>;
-	using UvTcpListener_r = Weak<UvTcpListener>;
-	using UvTcpUdpBase_r = Weak<UvTcpUdpBase>;
-	using UvTcpBase_r = Weak<UvTcpBase>;
-	using UvTcpPeer_r = Weak<UvTcpPeer>;
-	using UvTcpClient_r = Weak<UvTcpClient>;
-	using UvTimer_r = Weak<UvTimer>;
-	using UvTimeouterBase_r = Weak<UvTimeouterBase>;
-	using UvTimeouter_r = Weak<UvTimeoutManager>;
-	using UvAsync_r = Weak<UvAsync>;
-	using UvRpcManager_r = Weak<UvRpcManager>;
-	using UvTimeouter_r = Weak<UvTimeoutManager>;
-	using UvContextBase_r = Weak<UvContextBase>;
-	using UvUdpListener_r = Weak<UvUdpListener>;
-	using UvUdpBase_r = Weak<UvUdpBase>;
-	using UvUdpPeer_r = Weak<UvUdpPeer>;
-	using UvUdpClient_r = Weak<UvUdpClient>;
+
+
+
+	using UvLoop_u = Unique<UvLoop>;
+	using UvListenerBase_u = Unique<UvListenerBase>;
+	using UvTcpListener_u = Unique<UvTcpListener>;
+	using UvTcpUdpBase_u = Unique<UvTcpUdpBase>;
+	using UvTcpBase_u = Unique<UvTcpBase>;
+	using UvTcpPeer_u = Unique<UvTcpPeer>;
+	using UvTcpClient_u = Unique<UvTcpClient>;
+	using UvTimer_u = Unique<UvTimer>;
+	using UvTimeouterBase_u = Unique<UvTimeouterBase>;
+	using UvTimeouter_u = Unique<UvTimeoutManager>;
+	using UvAsync_u = Unique<UvAsync>;
+	using UvRpcManager_u = Unique<UvRpcManager>;
+	using UvTimeouter_u = Unique<UvTimeoutManager>;
+	using UvContextBase_u = Unique<UvContextBase>;
+	using UvUdpListener_u = Unique<UvUdpListener>;
+	using UvUdpBase_u = Unique<UvUdpBase>;
+	using UvUdpPeer_u = Unique<UvUdpPeer>;
+	using UvUdpClient_u = Unique<UvUdpClient>;
+
+
+	using UvLoop_w = Weak<UvLoop>;
+	using UvListenerBase_w = Weak<UvListenerBase>;
+	using UvTcpListener_w = Weak<UvTcpListener>;
+	using UvTcpUdpBase_w = Weak<UvTcpUdpBase>;
+	using UvTcpBase_w = Weak<UvTcpBase>;
+	using UvTcpPeer_w = Weak<UvTcpPeer>;
+	using UvTcpClient_w = Weak<UvTcpClient>;
+	using UvTimer_w = Weak<UvTimer>;
+	using UvTimeouterBase_w = Weak<UvTimeouterBase>;
+	using UvTimeouter_w = Weak<UvTimeoutManager>;
+	using UvAsync_w = Weak<UvAsync>;
+	using UvRpcManager_w = Weak<UvRpcManager>;
+	using UvTimeouter_w = Weak<UvTimeoutManager>;
+	using UvContextBase_w = Weak<UvContextBase>;
+	using UvUdpListener_w = Weak<UvUdpListener>;
+	using UvUdpBase_w = Weak<UvUdpBase>;
+	using UvUdpPeer_w = Weak<UvUdpPeer>;
+	using UvUdpClient_w = Weak<UvUdpClient>;
 }
 
 #include "xx_uv.hpp"
