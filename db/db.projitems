@@ -8,8 +8,4 @@
   <PropertyGroup Label="Configuration">
     <Import_RootNamespace>db</Import_RootNamespace>
   </PropertyGroup>
-  <ItemGroup>
-    <None Include="$(MSBuildThisFileDirectory)LOGDB_class.h" />
-    <None Include="$(MSBuildThisFileDirectory)LOGDB_sqlite.h" />
-  </ItemGroup>
 </Project>

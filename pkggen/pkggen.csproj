@@ -48,6 +48,7 @@
     <Compile Include="GenCPP_Class.cs" />
     <Compile Include="GenCPP_SQLite.cs" />
     <Compile Include="GenCS_Class.cs" />
+    <Compile Include="GenCS_MultiKeyDict.cs" />
     <Compile Include="GenCS_MySql.cs" />
     <Compile Include="GenLUA_Class.cs" />
     <Compile Include="GenTypeId.cs" />

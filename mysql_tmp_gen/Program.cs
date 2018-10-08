@@ -9,11 +9,11 @@ public static class Program
     // 扫目标库中的表结构, 生成模板用的声明代码段. 生成前需要手工改下面这些参数.
     // 生成物仅供参考, 需要自行复制粘贴部分或全部到具体模板中.
 
-    public const string dbIP = "192.168.1.249";
+    public const string dbIP = "192.168.1.254";
     public const string dbPort = "3306";
     public const string dbUserId = "root";
-    public const string dbPassword = "root";
-    public const string dbDatabase = "game_dev2";
+    public const string dbPassword = "1";
+    public const string dbDatabase = "test";
 
     public const string outputPath_tables = "../../../../db/DBTables.cs";
     public const string outputPath_funcs = "../../../../db/DBFuncs.cs";

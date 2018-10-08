@@ -43,6 +43,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="XxBBuffer.cs" />
+    <Compile Include="XxDictEx.cs" />
     <Compile Include="XxDict.cs" />
     <Compile Include="XxLogger.cs" />
     <Compile Include="XxObject.cs" />

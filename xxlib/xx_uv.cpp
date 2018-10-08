@@ -1033,15 +1033,15 @@ int xx::UvTcpClient::Connect(int const& timeoutMS) noexcept
 			CloseAndFree((uv_handle_t*)ptr);
 			ptr = nullptr;
 			state = UvTcpStates::Disconnected;
-			if (OnConnect)
-			{
-				auto vn = memHeader().versionNumber;
-				this->OnConnect(-1);
-				if (IsReleased(vn)) return;
-			}
 			connTimeouter->Release();
 			connTimeouter.Reset();
 			canceled = true;
+			if (OnConnect)
+			{
+				//auto vn = memHeader().versionNumber;
+				this->OnConnect(-1);
+				//if (IsReleased(vn)) return;
+			}
 		});
 		if (!connTimeouter) return -2;
 	}
@@ -1079,17 +1079,18 @@ void xx::UvTcpClient::Disconnect() noexcept
 		req = nullptr;
 	}
 	state = UvTcpStates::Disconnected;
-	RpcTraceCallback();					// 有可能再次触发 Disconnect
-	if (OnDisconnect)
-	{
-		auto vn = memHeader().versionNumber;
-		OnDisconnect();
-		if (IsReleased(vn)) return;
-	}
 	CloseAndFree((uv_handle_t*)ptr);
 	ptr = nullptr;
 	bbSend.Clear();
 	bbRecv.Clear();
+
+	RpcTraceCallback();					// 有可能再次触发 Disconnect
+	if (OnDisconnect)
+	{
+		//auto vn = memHeader().versionNumber;
+		OnDisconnect();
+		//if (IsReleased(vn)) return;
+	}
 }
 
 void xx::UvTcpClient::DisconnectImpl() noexcept
@@ -1099,7 +1100,7 @@ void xx::UvTcpClient::DisconnectImpl() noexcept
 
 bool xx::UvTcpClient::Disconnected() noexcept
 {
-	return ptr == nullptr;
+	return state == UvTcpStates::Disconnected;
 }
 
 

@@ -11,17 +11,32 @@ int main1()
 	xx::UvLoop uv(&mp);
 	uv.CreateTimer(0, 100, [] {std::cout << "."; });
 	uv.CreateTimer(0, 100, [] {std::cout << "a"; });
-	//uv.DelayExecute([&]
-	//{
-	//	uv.Stop();
-	//}, 1000);
+	uv.DelayExecute([&]
+	{
+		uv.Stop();
+	}, 1000);
 	uv.Run();
+	return 0;
+}
+
+struct Foo
+{
+	int v1, v2;
+};
+
+int main2()
+{
+	xx::MemPool mp;
+	xx::DictEx<Foo, int, int, int> de(&mp);
+	//std::cout << de.Add(1, 2, Foo{}).index << std::endl;
+	//std::cout << de.Add(3, 4, Foo{}).index << std::endl;
+	//std::cout << de.Add(5, 6, Foo{}).index << std::endl;
 	return 0;
 }
 
 int main()
 {
-	main1();
+	main2();
 	return 0;
 }
 

@@ -268,6 +268,7 @@ namespace xx
 #include "xx_queue.h"
 #include "xx_hashutils.h"
 #include "xx_dict.h"
+#include "xx_dictex.h"
 #include "xx_charsutils.h"
 #include "xx_string.h"
 #include "xx_bytesutils.h"

@@ -117,6 +117,7 @@
     <ClInclude Include="..\xxlib\xx_charsutils.hpp" />
     <ClInclude Include="..\xxlib\xx_dict.h" />
     <ClInclude Include="..\xxlib\xx_dict.hpp" />
+    <ClInclude Include="..\xxlib\xx_dictex.h" />
     <ClInclude Include="..\xxlib\xx_guid.h" />
     <ClInclude Include="..\xxlib\xx_guid.hpp" />
     <ClInclude Include="..\xxlib\xx_hashset.h" />

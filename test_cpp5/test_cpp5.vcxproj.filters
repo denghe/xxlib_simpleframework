@@ -125,6 +125,9 @@
     </ClInclude>
     <ClInclude Include="..\sqlite3\sqlite3.h" />
     <ClInclude Include="..\sqlite3\sqlite3ext.h" />
+    <ClInclude Include="..\xxlib\xx_dictex.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="..\xxlib\xx.natvis">

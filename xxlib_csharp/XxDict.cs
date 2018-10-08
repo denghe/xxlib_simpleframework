@@ -198,19 +198,22 @@ namespace xx
         }
 
         /// <summary>
-        /// 根据 key 来定位元素, 如果未找到, 则创建元素并返回 default(V). 规则同 std::map
+        /// get: 如果未找到, 则返回 default(V). 
+        /// set: 覆盖 Add
         /// </summary>
         public V this[K key]
         {
             get
             {
-                var value = default(V);
-                var result = Add(key, value, false);
-                if (!result.success)
+                var idx = Find(key);
+                if (idx >= 0)
                 {
-                    return ValueAt(result.index);
+                    return ValueAt(idx);
                 }
-                return value;
+                else
+                {
+                    return default(V);
+                }
             }
             set
             {

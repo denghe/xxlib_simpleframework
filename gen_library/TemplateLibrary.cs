@@ -41,11 +41,15 @@
 // object    xx::Object / IObject
 // List<T>   可嵌套
 
-// Ref<T>    说明 T 是弱引用类型. T 是用户类或上面4种. 不可嵌套.
+// Ref<T>    说明 T 是 Ptr<T> 的弱引用类型. T 是用户类或上面4种. 不可嵌套.
 
 // DateTime  暂不可用
 
-// todo: LUA 下 Ref<T> 的表现形式, 还需要进一步设计
+
+// todo:
+// Unique<T> 说明 T 是唯一强类型. T 是用户类或上面4种. 不可嵌套. C++ only. 不支持 C#, LUA( 为生成顺利, 将生成为 Ptr 形态 )
+// Weak<T>   说明 T 是 Unique<T> 的弱引用类型. T 是用户类或上面4种. C++ only. 不支持 C#, LUA( 为生成顺利, 将生成为 Ref 形态 ). 需要非常小心. 因为不像 Ref 那样在析构时会清理 0 引用内存, 故包发送时如果出现只含 Weak 而缺失 Unique 的情况, 就会出现泄漏
+
 
 
 namespace TemplateLibrary

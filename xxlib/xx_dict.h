@@ -53,6 +53,7 @@ namespace xx
 		void Remove(TK const& key) noexcept;
 		void RemoveAt(int const& idx) noexcept;
 
+		// 规则同 std. 如果 key 不存在, 将创建 key, TV默认值 的元素出来. C++ 不方便像 C# 那样直接返回 default(TV). 无法返回临时变量的引用
 		template<typename K>
 		TV& operator[](K&& key) noexcept;
 
