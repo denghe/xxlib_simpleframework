@@ -33,8 +33,8 @@ namespace web.admin
             Global.MySqlExecute(fs =>
             {
                 var sb = new StringBuilder();
-                var ids = fs.Manager_SelectIds(999, "", "order by `" + gridManagers.SortField + "` " + gridManagers.SortDirection);
-                gridManagers.RecordCount = Math.Min(999, ids.dataLen);
+                var ids = fs.Manager_SelectIds(999, "", "order by `" + gridManagers.SortField + "` " + gridManagers.SortDirection).ToGenericList();
+                gridManagers.RecordCount = Math.Min(999, ids.Count);
                 ViewState["ids"] = ids;
             });
         }
@@ -42,11 +42,9 @@ namespace web.admin
         {
             Global.MySqlExecute(fs =>
             {
-                var ids = ((xx.List<int>)ViewState["ids"]).ToGenericList();
-                var pageIds = ids.GetRange(gridManagers.PageIndex * gridManagers.PageSize, System.Math.Min(gridManagers.PageSize, ids.Count));
-                var tmp = new xx.List<int>();
-                tmp.AddRange(pageIds);
-                var ms = fs.Manager_SelectByIds<WEB.Manager>(tmp, "order by `" + gridManagers.SortField + "` " + gridManagers.SortDirection);
+                var ids = (List<int>)ViewState["ids"];
+                var pageIds = ids.GetRange(gridManagers.PageIndex * gridManagers.PageSize, Math.Min(gridManagers.PageSize, ids.Count)).ToXxList();
+                var ms = fs.Manager_SelectByIds<WEB.Manager>(pageIds, "order by `" + gridManagers.SortField + "` " + gridManagers.SortDirection);
                 gridManagers.DataSource = ms.ToGenericList();
             });
             gridManagers.DataBind();

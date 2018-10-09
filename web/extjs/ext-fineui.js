@@ -626,7 +626,7 @@ var F = function (cmpName) {
 };
 
 // 标识这个页面是由 FineUI 创建的
-F.fineui = '6.0.2';
+F.fineui = '6.1.0';
 
 F.target = function (target) {
     return F.util.getTargetWindow(target);
@@ -2618,12 +2618,16 @@ Ext.onReady(function () {
 
             // 启用排序
             if (cmp.f_sorting) {
-                var gridSorter = cmp.getStore().sorters.get(0);
+                var sorters = cmp.getStore().sorters;
+                
+                if(sorters) {
+                    var gridSorter = sorters.get(0);
 
-                // 如果启用排序，但是默认没有排序，则可能 gridSorter 不存在
-                if (gridSorter) {
-                    saveInHiddenField('SortField', gridSorter.property);
-                    saveInHiddenField('SortDirection', gridSorter.direction);
+                    // 如果启用排序，但是默认没有排序，则可能 gridSorter 不存在
+                    if (gridSorter) {
+                        saveInHiddenField('SortField', gridSorter.property);
+                        saveInHiddenField('SortDirection', gridSorter.direction);
+                    }
                 }
             }
 

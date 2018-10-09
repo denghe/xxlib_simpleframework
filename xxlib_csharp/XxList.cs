@@ -1835,3 +1835,14 @@ namespace xx
         }
     }
 }
+
+public static class xxListExtensions
+{
+    public static xx.List<T> ToXxList<T>(this System.Collections.Generic.List<T> list)
+    {
+        var rtv = new xx.List<T>();
+        rtv.buf = list.ToArray();
+        rtv.dataLen = rtv.buf.Length;
+        return rtv;
+    }
+}
