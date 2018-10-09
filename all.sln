@@ -73,13 +73,8 @@ EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		pkg\pkg.projitems*{160a3ee0-261c-4ed1-9194-4c6e75dbc7cf}*SharedItemsImports = 13
-		pkg\pkg.projitems*{4cbffef7-af1b-452f-8059-eaacc95b446b}*SharedItemsImports = 4
 		pkg\pkg.projitems*{5f3a0385-e8a2-4422-981f-b65f87fedd27}*SharedItemsImports = 4
-		pkg\pkg.projitems*{6b685ba4-fad4-4227-becf-d341f09a8256}*SharedItemsImports = 4
-		pkg\pkg.projitems*{77c8ba45-84f7-4f37-8a3b-33ada63edef7}*SharedItemsImports = 4
 		pkg\pkg.projitems*{787ec44f-a955-4e7c-af59-166c676afd5e}*SharedItemsImports = 4
-		pkg\pkg.projitems*{81f5a627-3698-43c3-84ff-dc65f2a73b47}*SharedItemsImports = 4
-		pkg\pkg.projitems*{85f10995-1a5b-4640-bd60-89f3e1d0c483}*SharedItemsImports = 4
 		db\db.projitems*{a9662f53-81e7-4019-915f-4b92fed39a70}*SharedItemsImports = 13
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
