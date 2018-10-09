@@ -166,7 +166,7 @@ namespace xx
         }
         public void InsertRange(int index, IEnumerable<T> collection)
         {
-            Debug.Assert(collection == null);
+            Debug.Assert(collection != null);
             Debug.Assert((uint)index <= (uint)dataLen);
             ICollection<T> c = collection as ICollection<T>;
             if (c != null)
@@ -355,7 +355,16 @@ namespace xx
         }
 
 
+        public System.Collections.Generic.List<T> ToGenericList()
+        {
+            var list = new System.Collections.Generic.List<T>();
 
+            for (int i = 0; i < dataLen; i++)
+            {
+                list.Add(buf[i]);
+            }
+            return list;
+        }
 
         /****************************************************************/
         // ToString, IBBuffer 相关适配
@@ -413,8 +422,10 @@ namespace xx
         public override void MySqlAppend(StringBuilder sb, bool ignoreReadOnly)
         {
             if (dataLen == 0) throw new Exception("List no data ??");
+            sb.Append("(");
             ListIBBufferImpl<T>.instance.MySqlAppend(sb, ignoreReadOnly, this);
             sb.Length -= 2;
+            sb.Append(")");
         }
     }
 

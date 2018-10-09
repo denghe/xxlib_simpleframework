@@ -8,9 +8,13 @@
 </head>
 <body>
     <form id="form1" runat="server">
-        <f:PageManager ID="PageManager1" runat="server" />
+        <%--<f:PageManager ID="PageManager1" runat="server" />
         <f:Button Text="点击弹出对话框" runat="server" ID="btnHello" OnClick="btnHello_Click">
-        </f:Button>
+        </f:Button>--%>
+            
+        <asp:GridView ID="GridView1" runat="server" AllowPaging="True"  >
+        </asp:GridView>
+        
     </form>
 </body>
 </html>
