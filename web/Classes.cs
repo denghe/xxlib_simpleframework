@@ -202,6 +202,13 @@ public static class Exts
 
     public static void AddRange(this xx.DictEx<WEB.Role, int, string> self, xx.List<WEB.Role> os)
     {
+        var size = os.dataLen;
+        if (size <= 0) return;
 
+        for (int i = 0; i < size; i++)
+        {
+            var item = os[i];
+            self.Add(item, item.id, item.name);
+        }
     }
 }
