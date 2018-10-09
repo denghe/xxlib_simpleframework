@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS `manager` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COMMENT='管理人员表';
 
--- 正在导出表  test.manager 的数据：~0 rows (大约)
+-- 正在导出表  test.manager 的数据：~1 rows (大约)
 /*!40000 ALTER TABLE `manager` DISABLE KEYS */;
 INSERT INTO `manager` (`id`, `username`, `password`) VALUES
 	(1, 'a', 'a');
@@ -40,10 +40,11 @@ CREATE TABLE IF NOT EXISTS `manager_role` (
   CONSTRAINT `FK_manager_role_role` FOREIGN KEY (`role_id`) REFERENCES `role` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COMMENT='管理人员_身份_绑定表';
 
--- 正在导出表  test.manager_role 的数据：~0 rows (大约)
+-- 正在导出表  test.manager_role 的数据：~1 rows (大约)
 /*!40000 ALTER TABLE `manager_role` DISABLE KEYS */;
 INSERT INTO `manager_role` (`manager_id`, `role_id`) VALUES
-	(1, 1);
+	(1, 1),
+	(1, 2);
 /*!40000 ALTER TABLE `manager_role` ENABLE KEYS */;
 
 -- 导出  表 test.permission 结构
@@ -55,7 +56,7 @@ CREATE TABLE IF NOT EXISTS `permission` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COMMENT='权限表';
 
--- 正在导出表  test.permission 的数据：~0 rows (大约)
+-- 正在导出表  test.permission 的数据：~5 rows (大约)
 /*!40000 ALTER TABLE `permission` DISABLE KEYS */;
 INSERT INTO `permission` (`id`, `group`, `name`, `desc`) VALUES
 	(1, 'g1', 'p1', 'p1\'s desc'),
@@ -73,10 +74,11 @@ CREATE TABLE IF NOT EXISTS `role` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COMMENT='管理人员身份表';
 
--- 正在导出表  test.role 的数据：~0 rows (大约)
+-- 正在导出表  test.role 的数据：~1 rows (大约)
 /*!40000 ALTER TABLE `role` DISABLE KEYS */;
 INSERT INTO `role` (`id`, `name`, `desc`) VALUES
-	(1, 'r1', 'r1\'s desc');
+	(1, 'r1', 'r1\'s desc'),
+	(2, 'r2', 'xx');
 /*!40000 ALTER TABLE `role` ENABLE KEYS */;
 
 -- 导出  表 test.role_permission 结构
@@ -89,11 +91,14 @@ CREATE TABLE IF NOT EXISTS `role_permission` (
   CONSTRAINT `FK_role_permission_role` FOREIGN KEY (`role_id`) REFERENCES `role` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COMMENT='身份_权限_绑定表';
 
--- 正在导出表  test.role_permission 的数据：~0 rows (大约)
+-- 正在导出表  test.role_permission 的数据：~2 rows (大约)
 /*!40000 ALTER TABLE `role_permission` DISABLE KEYS */;
 INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES
 	(1, 4),
-	(1, 5);
+	(1, 5),
+	(2, 1),
+	(2, 2),
+	(2, 3);
 /*!40000 ALTER TABLE `role_permission` ENABLE KEYS */;
 
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
