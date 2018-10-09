@@ -218,4 +218,25 @@ public static class Exts
             self.Add(item, item.id, item.name);
         }
     }
+
+    // 用于向 ViewState 写可序列化对象
+    public static void SetValue(this System.Web.UI.StateBag self, string key, xx.Object value)
+    {
+        var bb = new xx.BBuffer();
+        bb.WriteRoot(value);
+        self[key] = Convert.ToBase64String(bb.buf, 0, bb.dataLen);
+    }
+
+    // 用于从 ViewState 还原出可序列化对象
+    public static xx.Object GetValue(this System.Web.UI.StateBag self, string key)
+    {
+        var str = (string)self[key];
+        if (str == null) return null;
+        var bb = new xx.BBuffer();
+        bb.buf = Convert.FromBase64String(str);
+        bb.dataLen = bb.buf.Length;
+        xx.Object rtv = null;
+        bb.ReadRoot<xx.Object>(ref rtv);
+        return rtv;
+    }
 }

@@ -10,18 +10,36 @@ interface ITypeIdMappings
 
     Role _5 { get; }
 
+    Tables.role _11 { get; }
+
     Permission _6 { get; }
-
-    BindManagerRole _7 { get; }
-
-    BindRolePermission _8 { get; }
-
-    Tables.manager_role _9 { get; }
 
     Tables.permission _10 { get; }
 
-    Tables.role _11 { get; }
+    BindManagerRole _7 { get; }
+
+    Tables.manager_role _9 { get; }
+
+    BindRolePermission _8 { get; }
 
     Tables.role_permission _12 { get; }
+
+    Generic.SomeLists _13 { get; }
+
+    List<int> _14 { get; }
+
+    List<long> _15 { get; }
+
+    List<string> _16 { get; }
+
+    List<Manager> _17 { get; }
+
+    List<Role> _18 { get; }
+
+    List<Permission> _19 { get; }
+
+    List<BindManagerRole> _20 { get; }
+
+    List<BindRolePermission> _21 { get; }
 
 }

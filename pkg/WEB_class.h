@@ -5,7 +5,7 @@ namespace WEB
 {
 	struct PkgGenMd5
 	{
-		static constexpr char const* value = "493c5cdfff1560d487bb7c021cd017bc";
+		static constexpr char const* value = "cd86e1871b59a216ef09ac65f285ddc1";
     };
 
     // 管理人员
@@ -33,6 +33,13 @@ namespace WEB
     using BindRolePermission_p = xx::Ptr<BindRolePermission>;
     using BindRolePermission_r = xx::Ref<BindRolePermission>;
 
+namespace Generic
+{
+    class SomeLists;
+    using SomeLists_p = xx::Ptr<SomeLists>;
+    using SomeLists_r = xx::Ref<SomeLists>;
+
+}
 namespace Tables
 {
     // 管理人员表
@@ -292,6 +299,37 @@ namespace Tables
         BindRolePermission_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
+namespace Generic
+{
+    class SomeLists : public xx::Object
+    {
+    public:
+        xx::List_p<int32_t> ints;
+        xx::List_p<int64_t> longs;
+        xx::List_p<xx::String_p> strings;
+        xx::List_p<WEB::Manager_p> Managers;
+        xx::List_p<WEB::Role_p> Roles;
+        xx::List_p<WEB::Permission_p> Permissions;
+        xx::List_p<WEB::BindManagerRole_p> BindManagerRoles;
+        xx::List_p<WEB::BindRolePermission_p> BindRolePermissions;
+
+        typedef SomeLists ThisType;
+        typedef xx::Object BaseType;
+	    SomeLists(xx::MemPool* const& mempool) noexcept;
+	    SomeLists(xx::BBuffer* const& bb);
+		SomeLists(SomeLists const&) = delete;
+		SomeLists& operator=(SomeLists const&) = delete;
+        void ToString(xx::String& s) const noexcept override;
+        void ToStringCore(xx::String& s) const noexcept override;
+        void ToBBuffer(xx::BBuffer& bb) const noexcept override;
+        int FromBBuffer(xx::BBuffer& bb) noexcept override;
+        int FromBBufferCore(xx::BBuffer& bb) noexcept;
+        void CopyTo(SomeLists* const& o) const noexcept;
+        SomeLists* MakeCopy() const noexcept;
+        SomeLists_p MakePtrCopy() const noexcept;
+        inline static xx::Ptr<ThisType> defaultInstance;
+    };
+}
 }
 namespace xx
 {
@@ -305,6 +343,15 @@ namespace xx
 	template<> struct TypeId<WEB::Tables::manager_role> { static const uint16_t value = 9; };
 	template<> struct TypeId<WEB::BindRolePermission> { static const uint16_t value = 8; };
 	template<> struct TypeId<WEB::Tables::role_permission> { static const uint16_t value = 12; };
+	template<> struct TypeId<WEB::Generic::SomeLists> { static const uint16_t value = 13; };
+	template<> struct TypeId<xx::List<int32_t>> { static const uint16_t value = 14; };
+	template<> struct TypeId<xx::List<int64_t>> { static const uint16_t value = 15; };
+	template<> struct TypeId<xx::List<xx::String_p>> { static const uint16_t value = 16; };
+	template<> struct TypeId<xx::List<WEB::Manager_p>> { static const uint16_t value = 17; };
+	template<> struct TypeId<xx::List<WEB::Role_p>> { static const uint16_t value = 18; };
+	template<> struct TypeId<xx::List<WEB::Permission_p>> { static const uint16_t value = 19; };
+	template<> struct TypeId<xx::List<WEB::BindManagerRole_p>> { static const uint16_t value = 20; };
+	template<> struct TypeId<xx::List<WEB::BindRolePermission_p>> { static const uint16_t value = 21; };
 }
 namespace WEB
 {
@@ -603,6 +650,103 @@ namespace WEB
         return BindRolePermission_p(this->MakeCopy());
     }
 
+namespace Generic
+{
+	inline SomeLists::SomeLists(xx::MemPool* const& mempool) noexcept
+        : xx::Object(mempool)
+	{
+	}
+	inline SomeLists::SomeLists(xx::BBuffer* const& bb)
+        : xx::Object(bb)
+	{
+        if (int r = FromBBufferCore(*bb)) throw r;
+	}
+    inline void SomeLists::ToBBuffer(xx::BBuffer& bb) const noexcept
+    {
+        bb.Write(this->ints);
+        bb.Write(this->longs);
+        bb.Write(this->strings);
+        bb.Write(this->Managers);
+        bb.Write(this->Roles);
+        bb.Write(this->Permissions);
+        bb.Write(this->BindManagerRoles);
+        bb.Write(this->BindRolePermissions);
+    }
+    inline int SomeLists::FromBBuffer(xx::BBuffer& bb) noexcept
+    {
+        return this->FromBBufferCore(bb);
+    }
+    inline int SomeLists::FromBBufferCore(xx::BBuffer& bb) noexcept
+    {
+        bb.readLengthLimit = 0;
+        if (int r = bb.Read(this->ints)) return r;
+        bb.readLengthLimit = 0;
+        if (int r = bb.Read(this->longs)) return r;
+        bb.readLengthLimit = 0;
+        if (int r = bb.Read(this->strings)) return r;
+        bb.readLengthLimit = 0;
+        if (int r = bb.Read(this->Managers)) return r;
+        bb.readLengthLimit = 0;
+        if (int r = bb.Read(this->Roles)) return r;
+        bb.readLengthLimit = 0;
+        if (int r = bb.Read(this->Permissions)) return r;
+        bb.readLengthLimit = 0;
+        if (int r = bb.Read(this->BindManagerRoles)) return r;
+        bb.readLengthLimit = 0;
+        if (int r = bb.Read(this->BindRolePermissions)) return r;
+        return 0;
+    }
+
+    inline void SomeLists::ToString(xx::String& s) const noexcept
+    {
+        if (this->memHeader().flags)
+        {
+        	s.Append("[ \"***** recursived *****\" ]");
+        	return;
+        }
+        else this->memHeader().flags = 1;
+
+        s.Append("{ \"pkgTypeName\":\"Generic.SomeLists\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
+        ToStringCore(s);
+        s.Append(" }");
+        
+        this->memHeader().flags = 0;
+    }
+    inline void SomeLists::ToStringCore(xx::String& s) const noexcept
+    {
+        this->BaseType::ToStringCore(s);
+        s.Append(", \"ints\":", this->ints);
+        s.Append(", \"longs\":", this->longs);
+        s.Append(", \"strings\":", this->strings);
+        s.Append(", \"Managers\":", this->Managers);
+        s.Append(", \"Roles\":", this->Roles);
+        s.Append(", \"Permissions\":", this->Permissions);
+        s.Append(", \"BindManagerRoles\":", this->BindManagerRoles);
+        s.Append(", \"BindRolePermissions\":", this->BindRolePermissions);
+    }
+    inline void SomeLists::CopyTo(SomeLists* const& o) const noexcept
+    {
+        o->ints = this->ints;
+        o->longs = this->longs;
+        o->strings = this->strings;
+        o->Managers = this->Managers;
+        o->Roles = this->Roles;
+        o->Permissions = this->Permissions;
+        o->BindManagerRoles = this->BindManagerRoles;
+        o->BindRolePermissions = this->BindRolePermissions;
+    }
+    inline SomeLists* SomeLists::MakeCopy() const noexcept
+    {
+        auto o = mempool->MPCreate<SomeLists>();
+        this->CopyTo(o);
+        return o;
+    }
+    inline SomeLists_p SomeLists::MakePtrCopy() const noexcept
+    {
+        return SomeLists_p(this->MakeCopy());
+    }
+
+}
 namespace Tables
 {
 	inline manager::manager(xx::MemPool* const& mempool) noexcept
@@ -962,5 +1106,14 @@ namespace WEB
 	    xx::MemPool::Register<WEB::Tables::manager_role, xx::Object>();
 	    xx::MemPool::Register<WEB::BindRolePermission, WEB::Tables::role_permission>();
 	    xx::MemPool::Register<WEB::Tables::role_permission, xx::Object>();
+	    xx::MemPool::Register<WEB::Generic::SomeLists, xx::Object>();
+	    xx::MemPool::Register<xx::List<int32_t>, xx::Object>();
+	    xx::MemPool::Register<xx::List<int64_t>, xx::Object>();
+	    xx::MemPool::Register<xx::List<xx::String_p>, xx::Object>();
+	    xx::MemPool::Register<xx::List<WEB::Manager_p>, xx::Object>();
+	    xx::MemPool::Register<xx::List<WEB::Role_p>, xx::Object>();
+	    xx::MemPool::Register<xx::List<WEB::Permission_p>, xx::Object>();
+	    xx::MemPool::Register<xx::List<WEB::BindManagerRole_p>, xx::Object>();
+	    xx::MemPool::Register<xx::List<WEB::BindRolePermission_p>, xx::Object>();
 	}
 }

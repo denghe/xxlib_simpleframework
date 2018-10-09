@@ -45,7 +45,7 @@
                                     <Items>
                                         <f:ContentPanel ID="ContentPanel2" ShowBorder="false" BodyPadding="10px" ShowHeader="false" AutoScroll="true"
                                             runat="server">
-                                            asdfqwer
+                                            fineui 控件示例在 http://demo.fineui.com
                                         </f:ContentPanel>
                                     </Items>
                                 </f:Tab>

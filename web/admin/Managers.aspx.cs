@@ -32,18 +32,17 @@ namespace web.admin
         {
             Global.MySqlExecute(fs =>
             {
-                var sb = new StringBuilder();
-                var ids = fs.Manager_SelectIds(999, "", "order by `" + gridManagers.SortField + "` " + gridManagers.SortDirection).ToGenericList();
-                gridManagers.RecordCount = Math.Min(999, ids.Count);
-                ViewState["ids"] = ids;
+                var ids = fs.Manager_SelectIds(999, "", "order by `" + gridManagers.SortField + "` " + gridManagers.SortDirection);
+                gridManagers.RecordCount = Math.Min(999, ids.dataLen);
+                ViewState.SetValue("ids", ids);
             });
         }
         void Bind()
         {
             Global.MySqlExecute(fs =>
             {
-                var ids = (List<int>)ViewState["ids"];
-                var pageIds = ids.GetRange(gridManagers.PageIndex * gridManagers.PageSize, Math.Min(gridManagers.PageSize, ids.Count)).ToXxList();
+                var ids = ViewState.GetValue("ids") as xx.List<int>;
+                var pageIds = ids.GetRange(gridManagers.PageIndex * gridManagers.PageSize, Math.Min(gridManagers.PageSize, ids.dataLen));
                 var ms = fs.Manager_SelectByIds<WEB.Manager>(pageIds, "order by `" + gridManagers.SortField + "` " + gridManagers.SortDirection);
                 gridManagers.DataSource = ms.ToGenericList();
             });

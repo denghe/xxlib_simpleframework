@@ -45,6 +45,7 @@
     <Compile Include="DBTables.cs" />
     <Compile Include="DBTemplate.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Generic.cs" />
     <Compile Include="WEB_TypeIdMappings.cs" />
   </ItemGroup>
   <ItemGroup>

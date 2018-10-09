@@ -1,5 +1,5 @@
 ﻿
-WEB_PkgGenMd5_Value = '493c5cdfff1560d487bb7c021cd017bc'
+WEB_PkgGenMd5_Value = 'cd86e1871b59a216ef09ac65f285ddc1'
 
 --[[
 管理人员
@@ -342,3 +342,307 @@ WEB_Tables_role_permission = {
     end
 }
 BBuffer.Register( WEB_Tables_role_permission )
+WEB_Generic_SomeLists = {
+    typeName = "WEB_Generic_SomeLists",
+    typeId = 13,
+    Create = function()
+        local o = {}
+        o.__proto = WEB_Generic_SomeLists
+        o.__index = o
+        o.__newindex = o
+		o.__isReleased = false
+		o.Release = function()
+			o.__isReleased = true
+		end
+
+
+        o.ints = null -- List_Int32_
+        o.longs = null -- List_Int64_
+        o.strings = null -- List_String_
+        o.Managers = null -- List_WEB_Manager_
+        o.Roles = null -- List_WEB_Role_
+        o.Permissions = null -- List_WEB_Permission_
+        o.BindManagerRoles = null -- List_WEB_BindManagerRole_
+        o.BindRolePermissions = null -- List_WEB_BindRolePermission_
+        return o
+    end,
+    FromBBuffer = function( bb, o )
+        local ReadObject = bb.ReadObject
+        o.ints = ReadObject( bb )
+        o.longs = ReadObject( bb )
+        o.strings = ReadObject( bb )
+        o.Managers = ReadObject( bb )
+        o.Roles = ReadObject( bb )
+        o.Permissions = ReadObject( bb )
+        o.BindManagerRoles = ReadObject( bb )
+        o.BindRolePermissions = ReadObject( bb )
+    end,
+    ToBBuffer = function( bb, o )
+        local WriteObject = bb.WriteObject
+        WriteObject( bb, o.ints )
+        WriteObject( bb, o.longs )
+        WriteObject( bb, o.strings )
+        WriteObject( bb, o.Managers )
+        WriteObject( bb, o.Roles )
+        WriteObject( bb, o.Permissions )
+        WriteObject( bb, o.BindManagerRoles )
+        WriteObject( bb, o.BindRolePermissions )
+    end
+}
+BBuffer.Register( WEB_Generic_SomeLists )
+List_Int32_ = {
+    typeName = "List_Int32_",
+    typeId = 14,
+    Create = function()
+        local o = {}
+        o.__proto = List_Int32_
+        o.__index = o
+        o.__newindex = o
+		o.__isReleased = false
+		o.Release = function()
+			o.__isReleased = true
+		end
+
+        return o
+    end,
+    FromBBuffer = function( bb, o )
+		local len = bb:ReadUInt32()
+        local f = BBuffer.ReadInt32
+		for i = 1, len do
+			o[ i ] = f( bb )
+		end
+    end,
+    ToBBuffer = function( bb, o )
+        local len = #o
+		bb:WriteUInt32( len )
+        local f = BBuffer.WriteInt32
+        for i = 1, len do
+			f( bb, o[ i ] )
+		end
+    end
+}
+BBuffer.Register( List_Int32_ )
+List_Int64_ = {
+    typeName = "List_Int64_",
+    typeId = 15,
+    Create = function()
+        local o = {}
+        o.__proto = List_Int64_
+        o.__index = o
+        o.__newindex = o
+		o.__isReleased = false
+		o.Release = function()
+			o.__isReleased = true
+		end
+
+        return o
+    end,
+    FromBBuffer = function( bb, o )
+		local len = bb:ReadUInt32()
+        local f = BBuffer.ReadInt64
+		for i = 1, len do
+			o[ i ] = f( bb )
+		end
+    end,
+    ToBBuffer = function( bb, o )
+        local len = #o
+		bb:WriteUInt32( len )
+        local f = BBuffer.WriteInt64
+        for i = 1, len do
+			f( bb, o[ i ] )
+		end
+    end
+}
+BBuffer.Register( List_Int64_ )
+List_String_ = {
+    typeName = "List_String_",
+    typeId = 16,
+    Create = function()
+        local o = {}
+        o.__proto = List_String_
+        o.__index = o
+        o.__newindex = o
+		o.__isReleased = false
+		o.Release = function()
+			o.__isReleased = true
+		end
+
+        return o
+    end,
+    FromBBuffer = function( bb, o )
+		local len = bb:ReadUInt32()
+        local f = BBuffer.ReadObject
+		for i = 1, len do
+			o[ i ] = f( bb )
+		end
+    end,
+    ToBBuffer = function( bb, o )
+        local len = #o
+		bb:WriteUInt32( len )
+        local f = BBuffer.WriteObject
+        for i = 1, len do
+			f( bb, o[ i ] )
+		end
+    end
+}
+BBuffer.Register( List_String_ )
+List_WEB_Manager_ = {
+    typeName = "List_WEB_Manager_",
+    typeId = 17,
+    Create = function()
+        local o = {}
+        o.__proto = List_WEB_Manager_
+        o.__index = o
+        o.__newindex = o
+		o.__isReleased = false
+		o.Release = function()
+			o.__isReleased = true
+		end
+
+        return o
+    end,
+    FromBBuffer = function( bb, o )
+		local len = bb:ReadUInt32()
+        local f = BBuffer.ReadObject
+		for i = 1, len do
+			o[ i ] = f( bb )
+		end
+    end,
+    ToBBuffer = function( bb, o )
+        local len = #o
+		bb:WriteUInt32( len )
+        local f = BBuffer.WriteObject
+        for i = 1, len do
+			f( bb, o[ i ] )
+		end
+    end
+}
+BBuffer.Register( List_WEB_Manager_ )
+List_WEB_Role_ = {
+    typeName = "List_WEB_Role_",
+    typeId = 18,
+    Create = function()
+        local o = {}
+        o.__proto = List_WEB_Role_
+        o.__index = o
+        o.__newindex = o
+		o.__isReleased = false
+		o.Release = function()
+			o.__isReleased = true
+		end
+
+        return o
+    end,
+    FromBBuffer = function( bb, o )
+		local len = bb:ReadUInt32()
+        local f = BBuffer.ReadObject
+		for i = 1, len do
+			o[ i ] = f( bb )
+		end
+    end,
+    ToBBuffer = function( bb, o )
+        local len = #o
+		bb:WriteUInt32( len )
+        local f = BBuffer.WriteObject
+        for i = 1, len do
+			f( bb, o[ i ] )
+		end
+    end
+}
+BBuffer.Register( List_WEB_Role_ )
+List_WEB_Permission_ = {
+    typeName = "List_WEB_Permission_",
+    typeId = 19,
+    Create = function()
+        local o = {}
+        o.__proto = List_WEB_Permission_
+        o.__index = o
+        o.__newindex = o
+		o.__isReleased = false
+		o.Release = function()
+			o.__isReleased = true
+		end
+
+        return o
+    end,
+    FromBBuffer = function( bb, o )
+		local len = bb:ReadUInt32()
+        local f = BBuffer.ReadObject
+		for i = 1, len do
+			o[ i ] = f( bb )
+		end
+    end,
+    ToBBuffer = function( bb, o )
+        local len = #o
+		bb:WriteUInt32( len )
+        local f = BBuffer.WriteObject
+        for i = 1, len do
+			f( bb, o[ i ] )
+		end
+    end
+}
+BBuffer.Register( List_WEB_Permission_ )
+List_WEB_BindManagerRole_ = {
+    typeName = "List_WEB_BindManagerRole_",
+    typeId = 20,
+    Create = function()
+        local o = {}
+        o.__proto = List_WEB_BindManagerRole_
+        o.__index = o
+        o.__newindex = o
+		o.__isReleased = false
+		o.Release = function()
+			o.__isReleased = true
+		end
+
+        return o
+    end,
+    FromBBuffer = function( bb, o )
+		local len = bb:ReadUInt32()
+        local f = BBuffer.ReadObject
+		for i = 1, len do
+			o[ i ] = f( bb )
+		end
+    end,
+    ToBBuffer = function( bb, o )
+        local len = #o
+		bb:WriteUInt32( len )
+        local f = BBuffer.WriteObject
+        for i = 1, len do
+			f( bb, o[ i ] )
+		end
+    end
+}
+BBuffer.Register( List_WEB_BindManagerRole_ )
+List_WEB_BindRolePermission_ = {
+    typeName = "List_WEB_BindRolePermission_",
+    typeId = 21,
+    Create = function()
+        local o = {}
+        o.__proto = List_WEB_BindRolePermission_
+        o.__index = o
+        o.__newindex = o
+		o.__isReleased = false
+		o.Release = function()
+			o.__isReleased = true
+		end
+
+        return o
+    end,
+    FromBBuffer = function( bb, o )
+		local len = bb:ReadUInt32()
+        local f = BBuffer.ReadObject
+		for i = 1, len do
+			o[ i ] = f( bb )
+		end
+    end,
+    ToBBuffer = function( bb, o )
+        local len = #o
+		bb:WriteUInt32( len )
+        local f = BBuffer.WriteObject
+        for i = 1, len do
+			f( bb, o[ i ] )
+		end
+    end
+}
+BBuffer.Register( List_WEB_BindRolePermission_ )

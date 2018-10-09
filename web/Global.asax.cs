@@ -135,6 +135,8 @@ namespace web
 
         protected void Application_Start(object sender, EventArgs e)
         {
+            WEB.AllTypes.Register();
+
             // 连接数据库, 读取所有常驻数据, 填充多键字典( 后期只读 )
             MySqlExecute(fs =>
             {

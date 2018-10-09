@@ -354,7 +354,9 @@ namespace xx
             return default(T);
         }
 
-
+        /// <summary>
+        /// 转为 System.Collections.Generic.List
+        /// </summary>
         public System.Collections.Generic.List<T> ToGenericList()
         {
             var list = new System.Collections.Generic.List<T>();
@@ -365,6 +367,22 @@ namespace xx
             }
             return list;
         }
+
+        /// <summary>
+        /// 得到指定范围的子集
+        /// </summary>
+        public List<T> GetRange(int index, int count)
+        {
+            if (index < 0) throw new ArgumentOutOfRangeException();
+            if (count < 0) throw new ArgumentOutOfRangeException();
+            if (dataLen - index < count) throw new ArgumentOutOfRangeException();
+            var list = new List<T>();
+            list.Reserve(count);
+            Array.Copy(buf, index, list.buf, 0, count);
+            list.dataLen = count;
+            return list;
+        }
+
 
         /****************************************************************/
         // ToString, IBBuffer 相关适配
