@@ -8,4 +8,7 @@
   <PropertyGroup Label="Configuration">
     <Import_RootNamespace>db</Import_RootNamespace>
   </PropertyGroup>
+  <ItemGroup>
+    <Content Include="$(MSBuildThisFileDirectory)create_db_by_hediSQL.txt" />
+  </ItemGroup>
 </Project>
