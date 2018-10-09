@@ -79,6 +79,10 @@
       <Project>{081fd731-af90-4ec5-8cac-603fc9d3a4cb}</Project>
       <Name>pkggen_template_RPC</Name>
     </ProjectReference>
+    <ProjectReference Include="..\pkggen_template_WEB\pkggen_template_WEB.csproj">
+      <Project>{ec2073c1-39d5-48eb-8e77-94cba38481f5}</Project>
+      <Name>pkggen_template_WEB</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -41,10 +41,10 @@ namespace web
             //}
 
             // 去数据库中对比用户名和密码. 如果校验通过, m 将填充从数据库中读入的数据
-            DB.Manager m = null;
-            Global.MsSql(fs =>
+            WEB.Manager m = null;
+            Global.MySqlExecute(fs =>
             {
-                m = fs.Manager_SelectByUsernamePassword(tbxUserName.Text.Trim(), tbxPassword.Text);
+                m = fs.Manager_SelectByUsernamePassword<WEB.Manager>(tbxUserName.Text.Trim(), tbxPassword.Text);
             });
             if (m == null)
             {
@@ -60,18 +60,20 @@ namespace web
 
             if (rtv == m)                           // 如果是新上线, 进一步取相关数据并填充
             {
-                Global.MsSql(fs =>
+                Global.MySqlExecute(fs =>
                 {
                     var sets = fs.SelectRolesPermissionsByManagerId(m.id);
-                    var count = sets.Item1.Count;
+                    var count = sets.Item1.dataLen;
                     for (int i = 0; i < count; ++i)
                     {
-                        m.roles.MK_Add(Global.allRoles.MK_GetById(sets.Item1[i]));
+                        var role = Global.allRoles.GetValue1(sets.Item1[i]);
+                        m.roles.Add(role, role.id, role.name);
                     }
-                    count = sets.Item2.Count;
+                    count = sets.Item2.dataLen;
                     for (int i = 0; i < count; ++i)
                     {
-                        m.permissions.MK_Add(Global.allPermissions.MK_GetById(sets.Item2[i]));
+                        var perm = Global.allPermissions.GetValue1(sets.Item2[i]);
+                        m.permissions.Add(perm, perm.id, perm.name);
                     }
                 });
 

@@ -13,7 +13,7 @@ namespace web
                 // todo: 校验 Ticket
                 // todo: 显示的菜单从 Session 拿
 
-                var rootMenu = (DB.MenuNode)Session[Strings.RootMenu];
+                var rootMenu = (WEB.MenuNode)Session[Strings.RootMenu];
                 leftMenuTree.Nodes.Clear();
                 var n = new TreeNode();
                 leftMenuTree.Nodes.Add(n);
@@ -23,7 +23,7 @@ namespace web
             }
         }
 
-        void FillTreeNode(DB.MenuNode mn, TreeNode tn)
+        void FillTreeNode(WEB.MenuNode mn, TreeNode tn)
         {
             tn.Expanded = true;
             var mnChildsCount = mn.childs.Count;

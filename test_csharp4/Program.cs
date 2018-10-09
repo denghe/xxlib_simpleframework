@@ -10,21 +10,21 @@ public class Foo
         return "foo: id = " + id + ", name = `" + name + "`" + ", phone = `" + phone + "`" + ", token = `" + token + "`";
     }
 }
-public class FooDict : xx.DictEx<int, string, string, string, Foo>
-{
-    public FooDict() : base(o => o.id, o => o.name, o => o.phone, o => o.token) { }
-}
+
 public static class Program
 {
     static void Main(string[] args)
     {
-        var fd = new FooDict();
-        Console.WriteLine(fd.Add(new Foo { id = 1, name = "a", phone = "123", token = Guid.NewGuid().ToString() }));  // true
-        Console.WriteLine(fd.Add(new Foo { id = 2, name = "b", phone = "456", token = Guid.NewGuid().ToString() }));  // true
-        Console.WriteLine(fd.Add(new Foo { id = 3, name = "c", phone = "789", token = Guid.NewGuid().ToString() }));  // true
+        var fd = new xx.DictEx<Foo, int, string, string, string>();
+        var f1 = new Foo { id = 1, name = "a", phone = "123", token = Guid.NewGuid().ToString() };
+        Console.WriteLine(fd.Add(f1, f1.id, f1.name, f1.phone, f1.token));  // true
+        var f2 = new Foo { id = 2, name = "b", phone = "456", token = Guid.NewGuid().ToString() };
+        Console.WriteLine(fd.Add(f2, f2.id, f2.name, f2.phone, f2.token));  // true
+        var f3 = new Foo { id = 3, name = "c", phone = "789", token = Guid.NewGuid().ToString() };
+        Console.WriteLine(fd.Add(f3, f3.id, f3.name, f3.phone, f3.token));  // true
 
-        Console.WriteLine(fd.Add(new Foo { id = 1, name = "d" }));  // false
-        Console.WriteLine(fd.Add(new Foo { id = 4, name = "a" }));  // false
+        Console.WriteLine(fd.Add(f1, f1.id, f1.name, f1.phone, f1.token));  // false
+        Console.WriteLine(fd.Add(f3, f3.id, f3.name, f3.phone, f3.token));  // false
 
         Console.WriteLine(fd.Exists1(1));       // true
         Console.WriteLine(fd.Exists2("b"));     // true

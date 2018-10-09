@@ -30,21 +30,23 @@ namespace web.admin
 
         void Search()
         {
-            Global.MsSql(fs =>
+            Global.MySqlExecute(fs =>
             {
                 var sb = new StringBuilder();
                 var ids = fs.Manager_SelectIds(999, "", "order by [" + gridManagers.SortField + "] " + gridManagers.SortDirection);
-                gridManagers.RecordCount = Math.Min(999, ids.Count);
+                gridManagers.RecordCount = Math.Min(999, ids.dataLen);
                 ViewState["ids"] = ids;
             });
         }
         void Bind()
         {
-            Global.MsSql(fs =>
+            Global.MySqlExecute(fs =>
             {
                 var ids = (List<int>)ViewState["ids"];
                 var pageIds = ids.GetRange(gridManagers.PageIndex * gridManagers.PageSize, gridManagers.PageSize);
-                var ms = fs.Manager_SelectByIds(pageIds, "order by [" + gridManagers.SortField + "] " + gridManagers.SortDirection);
+                var tmp = new xx.List<int>();
+                tmp.AddRange(pageIds);
+                var ms = fs.Manager_SelectByIds<WEB.Manager>(tmp, "order by [" + gridManagers.SortField + "] " + gridManagers.SortDirection);
                 gridManagers.DataSource = ms;
             });
             gridManagers.DataBind();

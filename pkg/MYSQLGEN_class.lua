@@ -1,5 +1,5 @@
 ﻿
-MYSQLGEN_PkgGenMd5_Value = 'ad6a2aaddf11f8b44823762e507b9620'
+MYSQLGEN_PkgGenMd5_Value = 'bb226d2a0d2ae293b28be6a67bf1a219'
 
 MYSQLGEN_DbTable = {
     typeName = "MYSQLGEN_DbTable",

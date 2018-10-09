@@ -1,5 +1,5 @@
 ﻿
-PKG_PkgGenMd5_Value = '72103084919eecc8fb28cf1d5b43999c'
+PKG_PkgGenMd5_Value = '49cedfea12ae8f5fede5915c00b29d10'
 
 PKG_Foo = {
     typeName = "PKG_Foo",

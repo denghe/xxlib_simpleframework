@@ -608,7 +608,7 @@ namespace " + iface.Namespace + @"
 
 
                 // 代码基本同上, 生成一个 dynamic o 成员展开传参的重载版本
-                if (ps.Length > 0)
+                if (false && ps.Length > 0)
                 {
 
                     sb.Append(@"

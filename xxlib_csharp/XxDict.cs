@@ -369,6 +369,16 @@ namespace xx
             return true;
         }
 
+        /// <summary>
+        /// 将一个旧 key 替换为新 key. 如果旧 key 未找到或新 key 已存在将返回 false( 比 idx 版慢但安全方便 )
+        /// </summary>
+        public bool ModifyKey(K oldKey, K newKey)
+        {
+            int idx = Find(oldKey);
+            if (idx == -1) return false;
+            return ModifyKeyAt(idx, newKey);
+        }
+
 
         public delegate bool KVIterEx(Data kv);
         public delegate void KVIter(Data kv);

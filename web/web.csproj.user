@@ -3,8 +3,8 @@
   <PropertyGroup>
     <UseIISExpress>false</UseIISExpress>
     <ProjectView>ShowAllFiles</ProjectView>
-    <LastActiveSolutionConfig>Debug|Any CPU</LastActiveSolutionConfig>
-    <Use64BitIISExpress />
+    <LastActiveSolutionConfig>Debug|x64</LastActiveSolutionConfig>
+    <Use64BitIISExpress>true</Use64BitIISExpress>
     <IISExpressSSLPort />
     <IISExpressAnonymousAuthentication />
     <IISExpressWindowsAuthentication />

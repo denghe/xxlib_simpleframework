@@ -1,5 +1,5 @@
 ﻿
-LOGDB_PkgGenMd5_Value = 'd19ec58ccf53bc06696e3e0eb7f3465c'
+LOGDB_PkgGenMd5_Value = '1f7401bbb5c5003a3b7d0b36e2bf2c40'
 
 --[[
 日志级别

@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.SqlClient;
 using System.Linq;
 using System.Threading;
 using System.Web;
 using System.Web.Configuration;
 using System.Web.Security;
 using System.Web.SessionState;
+using MySql.Data.MySqlClient;
 
 namespace web
 {
@@ -14,7 +14,7 @@ namespace web
     {
         public const string Page_Default = "~/Default.aspx";
         public const string CaptchaImageText = "CaptchaImageText";
-        public const string MsSqlConnectionString = "localdb";
+        public const string SqlConnectionString = "mysql";
         public const string AdminUsername = "admin";
         public const string AdminPassword = "admin";
         public const string Token = "token";
@@ -29,7 +29,7 @@ namespace web
         /// <summary>
         /// 在线用户管理
         /// </summary>
-        public static DB.OnlineManagers onlineManagers = new DB.OnlineManagers();
+        public static WEB.OnlineManagers onlineManagers = new WEB.OnlineManagers();
 
         /// <summary>
         /// 全局随机量( 线程访问时创建 )
@@ -39,47 +39,47 @@ namespace web
         /// <summary>
         /// MSSQL 的数据连接串( 网站启动时加载 )
         /// </summary>
-        public static string msSqlConnStr = WebConfigurationManager.ConnectionStrings[Strings.MsSqlConnectionString].ConnectionString;
+        public static string sqlConnStr = WebConfigurationManager.ConnectionStrings[Strings.SqlConnectionString].ConnectionString;
 
         /// <summary>
         /// 根菜单( 网站启动时加载 )
         /// </summary>
-        public static DB.MenuNode rootMenu = new DB.MenuNode(null, "主选单", "", null);
+        public static WEB.MenuNode rootMenu = new WEB.MenuNode(null, "主选单", "", null);
 
         /// <summary>
         /// 所有菜单( 网站启动时加载 )
         /// </summary>
-        public static List<DB.MenuNode> allMenu = new List<DB.MenuNode>();
+        public static List<WEB.MenuNode> allMenu = new List<WEB.MenuNode>();
 
         /// <summary>
         /// 所有权限( 网站启动时加载 )
         /// </summary>
-        public static DB.Permission_MultiKeyDict allPermissions = new DB.Permission_MultiKeyDict();
+        public static xx.DictEx<WEB.Permission, int, string> allPermissions = new xx.DictEx<WEB.Permission, int, string>();
 
         /// <summary>
         /// 所有身份( 网站启动时加载 )
         /// </summary>
-        public static DB.Role_MultiKeyDict allRoles = new DB.Role_MultiKeyDict();
+        public static xx.DictEx<WEB.Role, int, string> allRoles = new xx.DictEx<WEB.Role, int, string>();
 
 
         /// <summary>
         /// 根据连接串来创建一个连接并返回
         /// </summary>
         /// <returns></returns>
-        public static SqlConnection CreateMsSqlConnection()
+        public static MySqlConnection CreateMsSqlConnection()
         {
-            return new SqlConnection(msSqlConnStr);
+            return new MySqlConnection(sqlConnStr);
         }
 
         /// <summary>
         /// 以 lambda 方式执行一个需要数据库连接的函数
         /// </summary>
-        public static void MsSql(Action<DB.MsSqlFuncs> a)
+        public static void MySqlExecute(Action<WEB.MySqlFuncs> a)
         {
             using (var conn = CreateMsSqlConnection())
             {
                 conn.Open();
-                var fs = new DB.MsSqlFuncs(conn);
+                var fs = new WEB.MySqlFuncs(conn);
                 a(fs);
             }
         }
@@ -103,16 +103,16 @@ namespace web
         /// <summary>
         /// 根据个人权限过滤菜单项, 最后返回根节点
         /// </summary>
-        public static DB.MenuNode GetManagerMenu(DB.Manager m)
+        public static WEB.MenuNode GetManagerMenu(WEB.Manager m)
         {
             // 递归生成个人菜单项
-            void Fill(DB.MenuNode mn, DB.MenuNode tn)
+            void Fill(WEB.MenuNode mn, WEB.MenuNode tn)
             {
                 var mnChildsCount = mn.childs.Count;
                 for (int i = 0; i < mnChildsCount; ++i)
                 {
                     var cmn = mn.childs[i];
-                    var ctn = new DB.MenuNode(null, cmn.text, cmn.navUrl, m.permissions.MK_GetByIds(cmn.permissionIds))
+                    var ctn = new WEB.MenuNode(null, cmn.text, cmn.navUrl, m.permissions.GetByIds(cmn.permissionIds))
                     {
                         parent = tn             // 并不急着加进 parent 的子, 故传入 null, 在外面赋值
                     };
@@ -126,7 +126,7 @@ namespace web
                     }
                 }
             }
-            var rtv = new DB.MenuNode(null, rootMenu.text, rootMenu.navUrl, null);
+            var rtv = new WEB.MenuNode(null, rootMenu.text, rootMenu.navUrl, null);
             Fill(rootMenu, rtv);
             return rtv;
         }
@@ -136,27 +136,27 @@ namespace web
         protected void Application_Start(object sender, EventArgs e)
         {
             // 连接数据库, 读取所有常驻数据, 填充多键字典( 后期只读 )
-            MsSql(fs =>
+            MySqlExecute(fs =>
             {
-                allPermissions.MK_AddRange(fs.Permission_SelectAll());
-                allRoles.MK_AddRange(fs.Role_SelectAll());
+                allPermissions.AddRange(fs.Permission_SelectAll<WEB.Permission>());
+                allRoles.AddRange(fs.Role_SelectAll<WEB.Role>());
             });
 
             // 在这里构造与网站页面对应的完整菜单
             // 权限列表可以放到具体页面对应的类的静态成员中以便直接修改
-            var menuHello = NewMenu(rootMenu, "hello", "~/hello.aspx", allPermissions.MK_GetByNames(hello.permissions));
-            var menuLogin = NewMenu(rootMenu, "managers", "~/admin/Managers.aspx", allPermissions.MK_GetByNames(admin.Managers.permissions));
+            var menuHello = NewMenu(rootMenu, "hello", "~/hello.aspx", allPermissions.GetByNames(hello.permissions));
+            var menuLogin = NewMenu(rootMenu, "managers", "~/admin/Managers.aspx", allPermissions.GetByNames(admin.Managers.permissions));
             var menuNode1 = NewMenu(rootMenu, "node1");
-            var menuNode1_1 = NewMenu(menuNode1, "node1_1", "", allPermissions.MK_GetByNames("p4"));
-            var menuNode1_2 = NewMenu(menuNode1, "node1_2", "", allPermissions.MK_GetByNames("p5"));
+            var menuNode1_1 = NewMenu(menuNode1, "node1_1", "", allPermissions.GetByNames("p4"));
+            var menuNode1_2 = NewMenu(menuNode1, "node1_2", "", allPermissions.GetByNames("p5"));
         }
 
         /// <summary>
         /// 创建一个菜单( 菜单本身会在创建时放入 parent ), 并放入 allMenu 容器
         /// </summary>
-        public static DB.MenuNode NewMenu(DB.MenuNode parent, string text, string navUrl = "", List<DB.Permission> permissions = null)
+        public static WEB.MenuNode NewMenu(WEB.MenuNode parent, string text, string navUrl = "", List<WEB.Permission> permissions = null)
         {
-            var n = new DB.MenuNode(parent, text, navUrl, permissions);
+            var n = new WEB.MenuNode(parent, text, navUrl, permissions);
             allMenu.Add(n);
             if (permissions != null)
             {
