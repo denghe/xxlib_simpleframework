@@ -26,6 +26,8 @@ CREATE TABLE IF NOT EXISTS `manager` (
 
 -- 正在导出表  test.manager 的数据：~0 rows (大约)
 /*!40000 ALTER TABLE `manager` DISABLE KEYS */;
+INSERT INTO `manager` (`id`, `username`, `password`) VALUES
+	(1, 'a', 'a');
 /*!40000 ALTER TABLE `manager` ENABLE KEYS */;
 
 -- 导出  表 test.manager_role 结构
@@ -40,6 +42,8 @@ CREATE TABLE IF NOT EXISTS `manager_role` (
 
 -- 正在导出表  test.manager_role 的数据：~0 rows (大约)
 /*!40000 ALTER TABLE `manager_role` DISABLE KEYS */;
+INSERT INTO `manager_role` (`manager_id`, `role_id`) VALUES
+	(1, 1);
 /*!40000 ALTER TABLE `manager_role` ENABLE KEYS */;
 
 -- 导出  表 test.permission 结构
@@ -53,6 +57,12 @@ CREATE TABLE IF NOT EXISTS `permission` (
 
 -- 正在导出表  test.permission 的数据：~0 rows (大约)
 /*!40000 ALTER TABLE `permission` DISABLE KEYS */;
+INSERT INTO `permission` (`id`, `group`, `name`, `desc`) VALUES
+	(1, 'g1', 'p1', 'p1\'s desc'),
+	(2, 'g1', 'p2', 'p2\'s desc'),
+	(3, 'g1', 'p3', 'p3\'s desc'),
+	(4, 'g2', 'p4', 'p4\'s desc'),
+	(5, 'g2', 'p5', 'p5\'s desc');
 /*!40000 ALTER TABLE `permission` ENABLE KEYS */;
 
 -- 导出  表 test.role 结构
@@ -65,6 +75,8 @@ CREATE TABLE IF NOT EXISTS `role` (
 
 -- 正在导出表  test.role 的数据：~0 rows (大约)
 /*!40000 ALTER TABLE `role` DISABLE KEYS */;
+INSERT INTO `role` (`id`, `name`, `desc`) VALUES
+	(1, 'r1', 'r1\'s desc');
 /*!40000 ALTER TABLE `role` ENABLE KEYS */;
 
 -- 导出  表 test.role_permission 结构
@@ -79,6 +91,9 @@ CREATE TABLE IF NOT EXISTS `role_permission` (
 
 -- 正在导出表  test.role_permission 的数据：~0 rows (大约)
 /*!40000 ALTER TABLE `role_permission` DISABLE KEYS */;
+INSERT INTO `role_permission` (`role_id`, `permission_id`) VALUES
+	(1, 4),
+	(1, 5);
 /*!40000 ALTER TABLE `role_permission` ENABLE KEYS */;
 
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
