@@ -66,13 +66,13 @@ namespace web
                     var count = sets.Item1.dataLen;
                     for (int i = 0; i < count; ++i)
                     {
-                        var role = Global.allRoles.GetValue1(sets.Item1[i]);
+                        var role = Global.allRoles.GetValue0(sets.Item1[i]);
                         m.roles.Add(role, role.id, role.name);
                     }
                     count = sets.Item2.dataLen;
                     for (int i = 0; i < count; ++i)
                     {
-                        var perm = Global.allPermissions.GetValue1(sets.Item2[i]);
+                        var perm = Global.allPermissions.GetValue0(sets.Item2[i]);
                         m.permissions.Add(perm, perm.id, perm.name);
                     }
                 });

@@ -5,12 +5,21 @@
 
 #include "xx_uv.h"
 
+xx::MemPool mp;
+
+template<typename...Args>
+void Cout(Args const&...args)
+{
+	xx::String s(&mp);
+	s.Append(args...);
+	std::cout << s;
+}
+
 int main1()
 {
-	xx::MemPool mp;
 	xx::UvLoop uv(&mp);
-	uv.CreateTimer(0, 100, [] {std::cout << "."; });
-	uv.CreateTimer(0, 100, [] {std::cout << "a"; });
+	uv.CreateTimer(0, 100, [] { Cout("."); });
+	uv.CreateTimer(0, 100, [] { Cout("a"); });
 	uv.DelayExecute([&]
 	{
 		uv.Stop();
@@ -26,12 +35,40 @@ struct Foo
 
 int main2()
 {
-	xx::MemPool mp;
-	xx::DictEx<Foo, int, int> de(&mp);
-	Foo f{ 1,2 };
-	de.Add(f, f.v1, f.v2);
-	//std::cout << de.Add(3, 4, Foo{}).index << std::endl;
-	//std::cout << de.Add(5, 6, Foo{}).index << std::endl;
+	xx::DictEx<Foo, decltype(Foo::v1), decltype(Foo::v2)> de(&mp);
+
+	{
+		Foo f{ 1, 2 };
+
+		auto r = de.Add(f, f.v1, f.v2);
+		Cout(r.success, ", ", r.index, '\n');
+
+		r = de.Add(f, f.v1, f.v2);
+		Cout(r.success, ", ", r.index, '\n');
+	}
+
+	{
+		Foo f{ 2, 3 };
+
+		auto r = de.Add(f, f.v1, f.v2);
+		Cout(r.success, ", ", r.index, '\n');
+
+		r = de.Add(f, f.v1, f.v2);
+		Cout(r.success, ", ", r.index, '\n');
+	}
+
+	de.Add(Foo{}, 3, 4);
+	de.Add(Foo{}, 4, 5);
+	de.Add(Foo{}, 5, 6);
+	de.Add(Foo{}, 6, 7);
+
+	//de.find
+	
+	for (auto& o : de)
+	{
+		Cout("k0: ",de.KeyAt<0>(o.first), ", k1: ", de.KeyAt<1>(o.first), ", foo = ", o.second->v1, ", ", o.second->v2, "\n");
+	}
+
 	return 0;
 }
 

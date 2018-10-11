@@ -60,11 +60,11 @@ namespace WEB
         {
             lock (this)
             {
-                var idx = onlineManagers.Find1(m.id);
+                var idx = onlineManagers.Find0(m.id);
                 if (idx != -1)
                 {
                     var om = onlineManagers.ValueAt(idx);
-                    return onlineManagers.UpdateAt3(idx, m.token) ? om : null;
+                    return onlineManagers.UpdateAt2(idx, m.token) ? om : null;
                 }
                 else
                 {
@@ -77,7 +77,7 @@ namespace WEB
         {
             lock (this)
             {
-                onlineManagers.Remove1(m.id);
+                onlineManagers.Remove0(m.id);
             }
         }
 
@@ -85,7 +85,7 @@ namespace WEB
         {
             lock (this)
             {
-                var idx = onlineManagers.Find1(id);
+                var idx = onlineManagers.Find0(id);
                 return idx != -1 ? onlineManagers.ValueAt(idx) : null;
             }
         }
@@ -93,7 +93,7 @@ namespace WEB
         {
             lock (this)
             {
-                var idx = onlineManagers.Find2(username);
+                var idx = onlineManagers.Find1(username);
                 return idx != -1 ? onlineManagers.ValueAt(idx) : null;
             }
         }
@@ -103,7 +103,7 @@ namespace WEB
         {
             lock (this)
             {
-                var idx = onlineManagers.Find3(token);
+                var idx = onlineManagers.Find2(token);
                 return idx != -1 ? onlineManagers.ValueAt(idx) : null;
             }
         }
@@ -170,7 +170,7 @@ public static class Exts
         var keysLength = keys.Length;
         for (int i = 0; i < keysLength; ++i)
         {
-            var idx = self.Find1(keys[i]);
+            var idx = self.Find0(keys[i]);
             if (idx != -1)
             {
                 rtv.Add(self.ValueAt(idx));
@@ -186,7 +186,7 @@ public static class Exts
         var keysLength = keys.Length;
         for (int i = 0; i < keysLength; ++i)
         {
-            var idx = self.Find2(keys[i]);
+            var idx = self.Find1(keys[i]);
             if (idx != -1)
             {
                 rtv.Add(self.ValueAt(idx));

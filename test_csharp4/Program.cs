@@ -26,17 +26,17 @@ public static class Program
         Console.WriteLine(fd.Add(f1, f1.id, f1.name, f1.phone, f1.token));  // false
         Console.WriteLine(fd.Add(f3, f3.id, f3.name, f3.phone, f3.token));  // false
 
-        Console.WriteLine(fd.Exists1(1));       // true
-        Console.WriteLine(fd.Exists2("b"));     // true
-        Console.WriteLine(fd.Exists1(3));       // true
-        Console.WriteLine(fd.Exists3("123"));   // true
-        Console.WriteLine(fd.Exists2("d"));     // false
-        Console.WriteLine(fd.Exists3("234"));   // false
+        Console.WriteLine(fd.Exists0(1));       // true
+        Console.WriteLine(fd.Exists1("b"));     // true
+        Console.WriteLine(fd.Exists0(3));       // true
+        Console.WriteLine(fd.Exists2("123"));   // true
+        Console.WriteLine(fd.Exists1("d"));     // false
+        Console.WriteLine(fd.Exists2("234"));   // false
 
-        fd.Remove2("a");
-        fd.Remove1(2);
-        Console.WriteLine(fd.Exists1(1));       // false
-        Console.WriteLine(fd.Exists2("b"));     // false
+        fd.Remove1("a");
+        fd.Remove0(2);
+        Console.WriteLine(fd.Exists0(1));       // false
+        Console.WriteLine(fd.Exists1("b"));     // false
 
         fd.ForEach(f => { Console.WriteLine(f); }); // 3, c
     }

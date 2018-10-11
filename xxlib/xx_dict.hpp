@@ -43,7 +43,7 @@ namespace xx
 					new (&items[i].value) TV(std::forward<V>(v));
 					return DictAddResult{ true, i };
 				}
-				return DictAddResult{ false, i };
+				return DictAddResult{ false, -1 };
 			}
 		}
 		// 没找到则新增
@@ -283,13 +283,14 @@ namespace xx
 	template <typename TK, typename TV>
 	TK const& Dict<TK, TV>::KeyAt(int const& idx) const noexcept
 	{
-		return const_cast<Dict*>(this)->IndexAtKey(idx);
+		assert(idx >= 0 && idx < count && items[idx].prev != -2);
+		return items[idx].key;
 	}
 
 	template <typename TK, typename TV>
 	TV const& Dict<TK, TV>::ValueAt(int const& idx) const noexcept
 	{
-		return const_cast<Dict*>(this)->IndexAtValue(idx);
+		return const_cast<Dict*>(this)->ValueAt(idx);
 	}
 
 //	template <typename TK, typename TV>
@@ -303,4 +304,77 @@ namespace xx
 	{
 		return idx >= 0 && idx < count && items[idx].prev != -2;
 	}
+
+
+	template <typename TK, typename TV>
+	template<typename K>
+	bool Dict<TK, TV>::Update(TK const& oldKey, K&& newKey) noexcept
+	{
+		int idx = Find(oldKey);
+		if (idx == -1) return false;
+		return UpdateAt(idx, std::forward<K>(newKey));
+	}
+
+	template <typename TK, typename TV>
+	template<typename K>
+	bool Dict<TK, TV>::UpdateAt(int const& idx, K&& newKey) noexcept
+	{
+		assert(idx >= 0 && idx < count && items[idx].prev != -2);
+		auto& node = nodes[idx];
+		auto& item = items[idx];
+
+		// 如果 hash 相等或位于相同 bucket, 可以直接改 key 并退出函数
+		auto newHashCode = HashFunc<TK>::GetHashCode(k);
+		if (node.hashCode == newHashCode)
+		{
+			item.key = std::forward<K>(newKey);
+			return true;
+		}
+		auto targetBucket = node.hashCode % (uint32_t)bucketsLen;
+		auto newTargetBucket = newHashCode % (uint32_t)bucketsLen;
+		if (targetBucket == newTargetBucket)
+		{
+			item.key = std::forward<K>(newKey);
+			return true;
+		}
+
+		// 检查是否冲突
+		for (int i = buckets[newTargetBucket]; i >= 0; i = nodes[i].next)
+		{
+			if (nodes[i].hashCode == newHashCode && EqualsFunc<TK>::EqualsTo(items[i].key, newKey))
+			{
+				return false;
+			}
+		}
+
+		// 简化的 RemoveAt
+		if (item.prev < 0)
+		{
+			buckets[targetBucket] = node.next;
+		}
+		else
+		{
+			nodes[item.prev].next = node.next;
+		}
+		if (node.next >= 0)
+		{
+			items[node.next].prev = item.prev;
+		}
+
+		// 简化的 Add 后半段
+		node.hashCode = newHashCode;
+		node.next = buckets[newTargetBucket];
+
+		if (buckets[newTargetBucket] >= 0)
+		{
+			items[buckets[newTargetBucket]].prev = idx;
+		}
+		buckets[newTargetBucket] = idx;
+
+		item.key = std::forward<K>(newKey);
+		item.prev = -1;
+
+		return true;
+	}
+
 }

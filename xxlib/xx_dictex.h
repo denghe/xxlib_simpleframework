@@ -24,17 +24,17 @@ namespace xx
 		using Tuple = std::tuple<KS...>;
 
 		template<int idx>
-		using KeyTypeAt = typename std::tuple_element<idx, Tuple>::type;
+		using KeyType_t = typename std::tuple_element<idx, Tuple>::type;
 
 		template<int idx>
 		struct DictType
 		{
-			using type = Dict<KeyTypeAt<idx>, Data*>;
+			using type = Dict<KeyType_t<idx>, Data*>;
 		};
 		template<>
 		struct DictType<(int)0>
 		{
-			using type = Dict<KeyTypeAt<0>, Data>;
+			using type = Dict<KeyType_t<0>, Data>;
 		};
 		template<int idx>
 		using DictType_t = typename DictType<idx>::type;
@@ -43,7 +43,14 @@ namespace xx
 		std::array<Unique<Object>, numKeys> dicts;
 
 		template<int idx>
-		auto DictAt()->Unique<DictType_t<idx>>&
+		auto DictAt()
+			->Unique<DictType_t<idx>>&
+		{
+			return dicts[idx].As<DictType_t<idx>>();
+		}
+		template<int idx>
+		auto DictAt() const
+			->Unique<DictType_t<idx>> const&
 		{
 			return dicts[idx].As<DictType_t<idx>>();
 		}
@@ -94,7 +101,6 @@ namespace xx
 		DictEx(MemPool* const& mp, int const& capacity = 16)
 			: Object(mp)
 		{
-			std::cout << numKeys << std::endl;
 			DictForEach<numKeys - 1>::Init(*this);
 		}
 
@@ -128,6 +134,7 @@ namespace xx
 			return AddCore0(std::forward<TV>(value), std::forward<TKS>(keys)...);
 		}
 
+	protected:
 		template<typename TV, typename TK, typename...TKS>
 		DictAddResult AddCore0(TV&& value, TK&& key, TKS&&...keys) noexcept
 		{
@@ -174,9 +181,25 @@ namespace xx
 			return true;
 		}
 
+	public:
+		template<int idx>
+		int Find(KeyType_t<idx> const& key) noexcept
+		{
+			auto& dict = DictAt<idx>;
+			if constexpr (idx)
+			{
+				auto r = dict->Find(key);
+				if (r == -1) return -1;
+				return dict->ValueAt(r)->idxs(0);
+			}
+			else
+			{
+				return dict->Find(key);
+			}
+		}
 
 		template<int idx>
-		bool Remove(KeyTypeAt<idx> const& key) noexcept
+		bool Remove(KeyType_t<idx> const& key) noexcept
 		{
 			auto& dict = DictAt<idx>();
 			auto idx = dict->Find(key);
@@ -199,6 +222,25 @@ namespace xx
 		}
 
 
+		template<int idx, typename TK>
+		bool Update(KeyType_t<idx> const& oldKey, TK&& newKey) noexcept
+		{
+			return DictAt<idx>()->Update(oldKey, std::forward<TK>(newKey));
+		}
+
+		template<int idx, typename TK>
+		bool UpdateAt(int const& index, TK&& newKey) noexcept
+		{
+			return DictAt<idx>()->UpdateAt(index, std::forward<TK>(newKey));
+		}
+
+
+		template<int idx>
+		KeyType_t<idx> const& KeyAt(int const& index) const noexcept
+		{
+			return DictAt<idx>()->KeyAt(index);
+		}
+
 		V& ValueAt(int const& idx) noexcept
 		{
 			return DictAt<0>()->ValueAt(idx).value;
@@ -220,6 +262,41 @@ namespace xx
 			return DictAt<0>()->Count();
 		}
 
-		// todo: for iter
+
+
+		// for( auto &c :  支持. 返回 pair< 下标, 值* >. 可用 KeyAt<?>( 下标 ) 来查 key
+		struct Iter
+		{
+			DictType_t<0>& dict;
+			int i;
+			bool operator!=(Iter const& other) noexcept 
+			{
+				return i != other.i;
+			}
+			Iter& operator++() noexcept
+			{
+				while (++i < dict.count)
+				{
+					if (dict.items[i].prev != -2) break;
+				}
+				return *this;
+			}
+			std::pair<int, V*> operator*() { return std::make_pair(i, &dict.items[i].value.value); }
+		};
+		Iter begin() noexcept
+		{
+			auto& dict = *DictAt<0>();
+			if (dict.Empty()) return end();
+			for (int i = 0; i < dict.count; ++i)
+			{
+				if (dict.items[i].prev != -2) return Iter{ dict, i };
+			}
+			return end();
+		}
+		Iter end() noexcept 
+		{
+			return Iter{ *DictAt<0>(), DictAt<0>()->count };
+		}
+
 	};
 }
