@@ -1,7 +1,6 @@
 ﻿#pragma once
 namespace xx
 {
-
 	template<typename V, typename ...KS>
 	class DictEx : public Object
 	{
@@ -12,63 +11,103 @@ namespace xx
 			V value;
 			std::array<int, numKeys> idxs;
 
-			Data(V&& value)
-				: value(std::move(value))
+			template<typename TV>
+			Data(TV&& value)
+				: value(std::forward<TV>(value))
 			{}
 
-			// todo: 右值版 copy
+			Data(Data&&) = default;
+			Data(Data const&) = delete;
 		};
 
 
 		using Tuple = std::tuple<KS...>;
 
 		template<int idx>
+		using KeyTypeAt = typename std::tuple_element<idx, Tuple>::type;
+
+		template<int idx>
 		struct DictType
 		{
-			using type = Dict<typename std::tuple_element<idx, Tuple>::type, Data*>;
+			using type = Dict<KeyTypeAt<idx>, Data*>;
 		};
 		template<>
-		struct DictType<0>
+		struct DictType<(int)0>
 		{
-			using type = Dict<typename std::tuple_element<0, Tuple>::type, Data>;
+			using type = Dict<KeyTypeAt<0>, Data>;
 		};
 		template<int idx>
 		using DictType_t = typename DictType<idx>::type;
 
 
-		std::array<Unique<Object>, numKeys - 1> dicts;
+		std::array<Unique<Object>, numKeys> dicts;
 
 		template<int idx>
-		void InitDict()
+		auto DictAt()->Unique<DictType_t<idx>>&
 		{
-			dicts[idx] = mempool->MPCreate<DictType_t<idx>>();
-			InitDict<idx - 1>();
+			return dicts[idx].As<DictType_t<idx>>();
 		}
 
-		template<>
-		void InitDict<0>()
+
+		template<int idx>
+		struct DictForEach;
+		friend DictForEach;
+
+		template<int idx>
+		struct DictForEach
 		{
-			dicts[0] = mempool->MPCreate<DictType_t<0>>();
-		}
+			static void Init(DictEx& self)
+			{
+				self.dicts[idx] = self.mempool->MPCreate<DictType_t<idx>>();
+				DictForEach<idx - 1>::Init(self);
+			}
+			static void RemoveAt(DictEx& self, Data* const& d)
+			{
+				self.DictAt<idx>()->RemoveAt(d->idxs[idx]);
+				DictForEach<idx - 1>::RemoveAt(self, d);
+			}
+			static void Clear(DictEx& self)
+			{
+				self.DictAt<idx>()->Clear();
+				DictForEach<idx - 1>::Clear(self);
+			}
+		};
+		template<>
+		struct DictForEach<(int)0>
+		{
+			static void Init(DictEx& self)
+			{
+				self.dicts[0] = self.mempool->MPCreate<DictType_t<0>>();
+			}
+			static void RemoveAt(DictEx& self, Data* const& d)
+			{
+				self.DictAt<0>()->RemoveAt(d->idxs[0]);
+			}
+			static void Clear(DictEx& self)
+			{
+				self.DictAt<0>()->Clear();
+			}
+		};
 
 
 	public:
 		DictEx(MemPool* const& mp, int const& capacity = 16)
 			: Object(mp)
 		{
-			InitDict<numKeys - 1>();
+			std::cout << numKeys << std::endl;
+			DictForEach<numKeys - 1>::Init(*this);
 		}
 
 		template<int idx>
 		bool Exists(DictType_t<idx> const& key) const noexcept
 		{
-			return dicts[idx].As<DictType_t<idx>>->Find(key1) != -1;
+			return DictAt<idx>()->Find(key1) != -1;
 		}
 
 		template<int idx>
 		bool TryGetValue(DictType_t<idx> const& key, V& value) const noexcept
 		{
-			auto& dict = dicts[idx].As<DictType_t<idx>>();
+			auto& dict = DictAt<idx>();
 			auto idx = dict->Find(key);
 			if (idx == -1) return false;
 			if constexpr (idx)
@@ -82,223 +121,105 @@ namespace xx
 			return true;
 		}
 
-		template<typename TV>
-		DictAddResult Add(TV&& value, KS&&...keys) noexcept
+		template<typename TV, typename...TKS>
+		DictAddResult Add(TV&& value, TKS&&...keys) noexcept
 		{
-			auto r0 = dicts[0].As<DictType_t<0>>()->Add(std::forward<KS>(keys), Data(std::forward<TV>(value)));
-			if (!r1.success)
+			static_assert(sizeof...(keys) == numKeys);
+			return AddCore0(std::forward<TV>(value), std::forward<TKS>(keys)...);
+		}
+
+		template<typename TV, typename TK, typename...TKS>
+		DictAddResult AddCore0(TV&& value, TK&& key, TKS&&...keys) noexcept
+		{
+			auto& dict = DictAt<0>();
+			auto r = dict->Add(std::forward<TK>(key), Data(std::forward<TV>(value)), false);
+			if (!r.success)
 			{
-				return r1;
+				return r;
 			}
-			auto d = &dict.ValueAt(r1.index);
+			auto d = &dict->ValueAt(r.index);
+			d->idxs[0] = r.index;
 
-			auto r2 = d2.Add(std::forward<TK2>(key2), d);
-			if (!r2.success)
+			if (!AddCore<1, TKS...>(d, std::forward<TKS>(keys)...))
 			{
-				dict.RemoveAt(r1.index);
-				return r2;
+				r.index = -1;
+				r.success = false;
 			}
+			return r;
+		}
 
-			d->idx1 = r1.index;
-			d->idx2 = r2.index;
+		template<int idx, typename TK, typename...TKS>
+		bool AddCore(Data* const& d, TK&& key, TKS&&...keys) noexcept
+		{
+			auto r = DictAt<idx>()->Add(std::forward<TKS>(key), d);
+			if (!r.success)
+			{
+				DictForEach<idx - 1>::RemoveAt(*this, d);
+				return false;
+			}
+			d->idxs[idx] = r.index;
+			return AddCore<idx + 1, TKS...>(d, std::forward<TKS>(keys)...);
+		}
 
-			return r1;
+		template<int idx, typename TK>
+		bool AddCore(Data* const& d, TK&& key)
+		{
+			auto r = DictAt<idx>()->Add(std::forward<TK>(key), d);
+			if (!r.success)
+			{
+				DictForEach<idx - 1>::RemoveAt(*this, d);
+				return false;
+			}
+			d->idxs[idx] = r.index;
+			return true;
 		}
 
 
-		//bool Remove1(K1 const& key1) noexcept
-		//{
-		//	auto idx = dict.Find(key1);
-		//	if (idx == -1) return false;
-		//	RemoveAt(d2.ValueAt(idx));
-		//	return true;
-		//}
-		//bool Remove2(K2 const& key2) noexcept
-		//{
-		//	auto idx = d2.Find(key2);
-		//	if (idx == -1) return false;
-		//	RemoveAt(*d2.ValueAt(idx));
-		//	return true;
-		//}
+		template<int idx>
+		bool Remove(KeyTypeAt<idx> const& key) noexcept
+		{
+			auto& dict = DictAt<idx>();
+			auto idx = dict->Find(key);
+			if (idx == -1) return false;
+			if constexpr (idx)
+			{
+				DictForEach<numKeys - 1>::RemoveAt(*this, *dict->ValueAt(idx));
+			}
+			else
+			{
+				DictForEach<numKeys - 1>::RemoveAt(*this, dict->ValueAt(idx));
+			}
+			return true;
+		}
 
 
-		//void RemoveAt(int const& idx) noexcept
-		//{
-		//	RemoveAt(dict.ValueAt(idx));
-		//}
-		//void RemoveAt(D const& d) noexcept
-		//{
-		//	d2.RemoveAt(d.idx2);
-		//	dict.RemoveAt(d.idx1);
-		//}
+		void RemoveAt(int const& idx) noexcept
+		{
+			DictForEach<numKeys - 1>::RemoveAt(*this, DictAt<0>()->ValueAt(idx));
+		}
 
 
-		//void Clear() noexcept
-		//{
-		//	d2.Clear();
-		//	dict.Clear();
-		//}
+		V& ValueAt(int const& idx) noexcept
+		{
+			return DictAt<0>()->ValueAt(idx).value;
+		}
+		V const& ValueAt(int const& idx) const noexcept
+		{
+			return DictAt<0>()->ValueAt(idx).value;
+		}
 
 
-		//uint32_t Count() const noexcept
-		//{
-		//	return dict.Count();
-		//}
+		void Clear() noexcept
+		{
+			DictForEach<numKeys - 1>::Clear();
+		}
 
-		//V& ValueAt(int const& idx) noexcept
-		//{
-		//	return dict.ValueAt(idx);
-		//}
-		//V const& ValueAt(int const& idx) const noexcept
-		//{
-		//	return dict.ValueAt(idx);
-		//}
+
+		uint32_t Count() const noexcept
+		{
+			return DictAt<0>()->Count();
+		}
 
 		// todo: for iter
 	};
-
-
-	// 多 key 字典之 2 个 key
-	//template<typename K1, typename K2, typename K3, typename V>
-	//class DictEx : public Object
-	//{
-	//protected:
-	//	struct D
-	//	{
-	//		V value;
-	//		int idx1;
-	//		int idx2;
-	//		int idx3;
-	//		D(V&& value) : value(std::move(value)) {}
-	//	};
-	//	Dict<K1, D> dict;
-	//	Dict<K2, D*> d2;
-	//	Dict<K2, D*> d3;
-
-	//public:
-	//	DictEx(MemPool* const& mp, int const& capacity = 16)
-	//		: Object(mp)
-	//		, dict(mp, capacity)
-	//		, d2(mp, capacity)
-	//		, d3(mp, capacity)
-	//	{}
-
-
-	//	bool Exists1(K1 const& key1) const noexcept
-	//	{
-	//		return dict.Find(key1) != -1;
-	//	}
-	//	bool Exists2(K2 const& key2) const noexcept
-	//	{
-	//		return d2.Find(key2) != -1;
-	//	}
-	//	bool Exists3(K3 const& key3) const noexcept
-	//	{
-	//		return d3.Find(key3) != -1;
-	//	}
-
-
-	//	bool TryGetValue1(K1 const& key1, V& value) const noexcept
-	//	{
-	//		return dict.TryGetValue(key1, value);
-	//	}
-	//	bool TryGetValue2(K2 const& key2, V& value) const noexcept
-	//	{
-	//		return d2.TryGetValue(key2, value);
-	//	}
-	//	bool TryGetValue3(K3 const& key3, V& value) const noexcept
-	//	{
-	//		return d3.TryGetValue(key3, value);
-	//	}
-
-
-	//	template<typename TK1, typename TK2, typename TV>
-	//	DictAddResult Add(TK1&& key1, TK2&& key2, TV&& value) noexcept
-	//	{
-	//		auto r1 = dict.Add(std::forward<TK1>(key1), D(std::forward<TV>(value)));
-	//		if (!r1.success)
-	//		{
-	//			return r1;
-	//		}
-	//		auto d = &dict.ValueAt(r1.index);
-	//		d->idx1 = r1.index;
-
-	//		auto r2 = d2.Add(std::forward<TK2>(key2), d);
-	//		if (!r2.success)
-	//		{
-	//			dict.RemoveAt(r1.index);
-	//			return r2;
-	//		}
-	//		d->idx2 = r2.index;
-
-	//		auto r3 = d3.Add(std::forward<TK3>(key3), d);
-	//		if (!r3.success)
-	//		{
-	//			d2.RemoveAt(r2.index);
-	//			dict.RemoveAt(r1.index);
-	//			return r3;
-	//		}
-	//		d->idx3 = r3.index;
-
-	//		return r1;
-	//	}
-
-
-	//	bool Remove1(K1 const& key1) noexcept
-	//	{
-	//		auto idx = dict.Find(key1);
-	//		if (idx == -1) return false;
-	//		RemoveAt(d2.ValueAt(idx));
-	//		return true;
-	//	}
-	//	bool Remove2(K2 const& key2) noexcept
-	//	{
-	//		auto idx = d2.Find(key2);
-	//		if (idx == -1) return false;
-	//		RemoveAt(*d2.ValueAt(idx));
-	//		return true;
-	//	}
-	//	bool Remove3(K3 const& key3) noexcept
-	//	{
-	//		auto idx = d3.Find(key3);
-	//		if (idx == -1) return false;
-	//		RemoveAt(*d3.ValueAt(idx));
-	//		return true;
-	//	}
-
-
-	//	void RemoveAt(int const& idx) noexcept
-	//	{
-	//		RemoveAt(dict.ValueAt(idx));
-	//	}
-	//	void RemoveAt(D const& d) noexcept
-	//	{
-	//		d3.RemoveAt(d.idx3);
-	//		d2.RemoveAt(d.idx2);
-	//		dict.RemoveAt(d.idx1);
-	//	}
-
-
-	//	void Clear() noexcept
-	//	{
-	//		d3.Clear();
-	//		d2.Clear();
-	//		dict.Clear();
-	//	}
-
-
-	//	uint32_t Count() const noexcept
-	//	{
-	//		return dict.Count();
-	//	}
-
-	//	V& ValueAt(int const& idx) noexcept
-	//	{
-	//		return dict.ValueAt(idx);
-	//	}
-	//	V const& ValueAt(int const& idx) const noexcept
-	//	{
-	//		return dict.ValueAt(idx);
-	//	}
-	//};
 }

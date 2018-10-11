@@ -27,8 +27,9 @@ struct Foo
 int main2()
 {
 	xx::MemPool mp;
-	xx::DictEx<Foo, int, int, int> de(&mp);
-	//std::cout << de.Add(1, 2, Foo{}).index << std::endl;
+	xx::DictEx<Foo, int, int> de(&mp);
+	Foo f{ 1,2 };
+	de.Add(f, f.v1, f.v2);
 	//std::cout << de.Add(3, 4, Foo{}).index << std::endl;
 	//std::cout << de.Add(5, 6, Foo{}).index << std::endl;
 	return 0;
