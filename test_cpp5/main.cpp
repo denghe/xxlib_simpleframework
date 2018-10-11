@@ -62,11 +62,16 @@ int main2()
 	de.Add(Foo{}, 5, 6);
 	de.Add(Foo{}, 6, 7);
 
-	//de.find
-	
+	Cout("find 0/3, 1/4 : ", de.Find<0>(3), " ", de.Find<1>(4), "\n");
+
+	de.Remove<1>(4);
+	assert(de.Find<0>(3) == -1);
+	int idx = de.Find<0>(4);
+	de.RemoveAt(idx);
+
 	for (auto& o : de)
 	{
-		Cout("k0: ",de.KeyAt<0>(o.first), ", k1: ", de.KeyAt<1>(o.first), ", foo = ", o.second->v1, ", ", o.second->v2, "\n");
+		Cout("k0: ", de.KeyAt<0>(o.first), ", k1: ", de.KeyAt<1>(o.first), ", foo = ", o.second->v1, ", ", o.second->v2, "\n");
 	}
 
 	return 0;

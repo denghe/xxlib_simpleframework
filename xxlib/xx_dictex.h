@@ -6,10 +6,12 @@ namespace xx
 	{
 	protected:
 		static const int numKeys = (int)(sizeof...(KS));
+
+		// 值容器, 附加 *Data 位于各个 dict 中的 index
 		struct Data
 		{
 			V value;
-			std::array<int, numKeys> idxs;
+			std::array<int, numKeys> indexs;
 
 			template<typename TV>
 			Data(TV&& value)
@@ -23,62 +25,64 @@ namespace xx
 
 		using Tuple = std::tuple<KS...>;
 
-		template<int idx>
-		using KeyType_t = typename std::tuple_element<idx, Tuple>::type;
+		template<int keyIndex>
+		using KeyType_t = typename std::tuple_element<keyIndex, Tuple>::type;
 
-		template<int idx>
+		template<int keyIndex>
 		struct DictType
 		{
-			using type = Dict<KeyType_t<idx>, Data*>;
+			using type = Dict<KeyType_t<keyIndex>, Data*>;
 		};
 		template<>
 		struct DictType<(int)0>
 		{
 			using type = Dict<KeyType_t<0>, Data>;
 		};
-		template<int idx>
-		using DictType_t = typename DictType<idx>::type;
+		template<int keyIndex>
+		using DictType_t = typename DictType<keyIndex>::type;
 
 
+		// dicts[0] 作为主体存储, 存 Data. 其他存 *Data
 		std::array<Unique<Object>, numKeys> dicts;
 
-		template<int idx>
+		template<int keyIndex>
 		auto DictAt()
-			->Unique<DictType_t<idx>>&
+			->Unique<DictType_t<keyIndex>>&
 		{
-			return dicts[idx].As<DictType_t<idx>>();
+			return dicts[keyIndex].As<DictType_t<keyIndex>>();
 		}
-		template<int idx>
+		template<int keyIndex>
 		auto DictAt() const
-			->Unique<DictType_t<idx>> const&
+			->Unique<DictType_t<keyIndex>> const&
 		{
-			return dicts[idx].As<DictType_t<idx>>();
+			return dicts[keyIndex].As<DictType_t<keyIndex>>();
 		}
 
 
-		template<int idx>
+		template<int keyIndex>
 		struct DictForEach;
 		friend DictForEach;
 
-		template<int idx>
+		template<int keyIndex>
 		struct DictForEach
 		{
 			static void Init(DictEx& self)
 			{
-				self.dicts[idx] = self.mempool->MPCreate<DictType_t<idx>>();
-				DictForEach<idx - 1>::Init(self);
+				self.dicts[keyIndex] = self.mempool->MPCreate<DictType_t<keyIndex>>();
+				DictForEach<keyIndex - 1>::Init(self);
 			}
 			static void RemoveAt(DictEx& self, Data* const& d)
 			{
-				self.DictAt<idx>()->RemoveAt(d->idxs[idx]);
-				DictForEach<idx - 1>::RemoveAt(self, d);
+				self.DictAt<keyIndex>()->RemoveAt(d->indexs[keyIndex]);
+				DictForEach<keyIndex - 1>::RemoveAt(self, d);
 			}
 			static void Clear(DictEx& self)
 			{
-				self.DictAt<idx>()->Clear();
-				DictForEach<idx - 1>::Clear(self);
+				self.DictAt<keyIndex>()->Clear();
+				DictForEach<keyIndex - 1>::Clear(self);
 			}
 		};
+
 		template<>
 		struct DictForEach<(int)0>
 		{
@@ -88,7 +92,7 @@ namespace xx
 			}
 			static void RemoveAt(DictEx& self, Data* const& d)
 			{
-				self.DictAt<0>()->RemoveAt(d->idxs[0]);
+				self.DictAt<0>()->RemoveAt(d->indexs[0]);
 			}
 			static void Clear(DictEx& self)
 			{
@@ -104,25 +108,25 @@ namespace xx
 			DictForEach<numKeys - 1>::Init(*this);
 		}
 
-		template<int idx>
-		bool Exists(DictType_t<idx> const& key) const noexcept
+		template<int keyIndex>
+		bool Exists(DictType_t<keyIndex> const& key) const noexcept
 		{
-			return DictAt<idx>()->Find(key1) != -1;
+			return DictAt<keyIndex>()->Find(key1) != -1;
 		}
 
-		template<int idx>
-		bool TryGetValue(DictType_t<idx> const& key, V& value) const noexcept
+		template<int keyIndex>
+		bool TryGetValue(DictType_t<keyIndex> const& key, V& value) const noexcept
 		{
-			auto& dict = DictAt<idx>();
-			auto idx = dict->Find(key);
-			if (idx == -1) return false;
-			if constexpr (idx)
+			auto& dict = *DictAt<keyIndex>();
+			auto index = dict.Find(key);
+			if (index == -1) return false;
+			if constexpr (index)
 			{
-				value = dict->ValueAt(idx)->value;
+				value = dict.ValueAt(index)->value;
 			}
 			else
 			{
-				value = dict->ValueAt(idx).value;
+				value = dict.ValueAt(index).value;
 			}
 			return true;
 		}
@@ -138,14 +142,14 @@ namespace xx
 		template<typename TV, typename TK, typename...TKS>
 		DictAddResult AddCore0(TV&& value, TK&& key, TKS&&...keys) noexcept
 		{
-			auto& dict = DictAt<0>();
-			auto r = dict->Add(std::forward<TK>(key), Data(std::forward<TV>(value)), false);
+			auto& dict = *DictAt<0>();
+			auto r = dict.Add(std::forward<TK>(key), Data(std::forward<TV>(value)), false);
 			if (!r.success)
 			{
 				return r;
 			}
-			auto d = &dict->ValueAt(r.index);
-			d->idxs[0] = r.index;
+			auto d = &dict.ValueAt(r.index);
+			d->indexs[0] = r.index;
 
 			if (!AddCore<1, TKS...>(d, std::forward<TKS>(keys)...))
 			{
@@ -155,99 +159,99 @@ namespace xx
 			return r;
 		}
 
-		template<int idx, typename TK, typename...TKS>
+		template<int keyIndex, typename TK, typename...TKS>
 		bool AddCore(Data* const& d, TK&& key, TKS&&...keys) noexcept
 		{
-			auto r = DictAt<idx>()->Add(std::forward<TKS>(key), d);
+			auto r = DictAt<keyIndex>()->Add(std::forward<TKS>(key), d);
 			if (!r.success)
 			{
-				DictForEach<idx - 1>::RemoveAt(*this, d);
+				DictForEach<keyIndex - 1>::RemoveAt(*this, d);
 				return false;
 			}
-			d->idxs[idx] = r.index;
-			return AddCore<idx + 1, TKS...>(d, std::forward<TKS>(keys)...);
+			d->indexs[keyIndex] = r.index;
+			return AddCore<keyIndex + 1, TKS...>(d, std::forward<TKS>(keys)...);
 		}
 
-		template<int idx, typename TK>
+		template<int keyIndex, typename TK>
 		bool AddCore(Data* const& d, TK&& key)
 		{
-			auto r = DictAt<idx>()->Add(std::forward<TK>(key), d);
+			auto r = DictAt<keyIndex>()->Add(std::forward<TK>(key), d);
 			if (!r.success)
 			{
-				DictForEach<idx - 1>::RemoveAt(*this, d);
+				DictForEach<keyIndex - 1>::RemoveAt(*this, d);
 				return false;
 			}
-			d->idxs[idx] = r.index;
+			d->indexs[keyIndex] = r.index;
 			return true;
 		}
 
 	public:
-		template<int idx>
-		int Find(KeyType_t<idx> const& key) noexcept
+		template<int keyIndex>
+		int Find(KeyType_t<keyIndex> const& key) const noexcept
 		{
-			auto& dict = DictAt<idx>;
-			if constexpr (idx)
+			auto& dict = *DictAt<keyIndex>();
+			if constexpr (keyIndex)
 			{
-				auto r = dict->Find(key);
+				int r = dict.Find(key);
 				if (r == -1) return -1;
-				return dict->ValueAt(r)->idxs(0);
+				return dict.ValueAt(r)->indexs[0];
 			}
 			else
 			{
-				return dict->Find(key);
+				return dict.Find(key);
 			}
 		}
 
-		template<int idx>
-		bool Remove(KeyType_t<idx> const& key) noexcept
+		template<int keyIndex>
+		bool Remove(KeyType_t<keyIndex> const& key) noexcept
 		{
-			auto& dict = DictAt<idx>();
-			auto idx = dict->Find(key);
-			if (idx == -1) return false;
-			if constexpr (idx)
+			auto& dict = *DictAt<keyIndex>();
+			auto index = dict.Find(key);
+			if (index == -1) return false;
+			if constexpr (keyIndex)
 			{
-				DictForEach<numKeys - 1>::RemoveAt(*this, *dict->ValueAt(idx));
+				DictForEach<numKeys - 1>::RemoveAt(*this, dict.ValueAt(index));
 			}
 			else
 			{
-				DictForEach<numKeys - 1>::RemoveAt(*this, dict->ValueAt(idx));
+				DictForEach<numKeys - 1>::RemoveAt(*this, &dict.ValueAt(index));
 			}
 			return true;
 		}
 
 
-		void RemoveAt(int const& idx) noexcept
+		void RemoveAt(int const& index) noexcept
 		{
-			DictForEach<numKeys - 1>::RemoveAt(*this, DictAt<0>()->ValueAt(idx));
+			DictForEach<numKeys - 1>::RemoveAt(*this, &DictAt<0>()->ValueAt(index));
 		}
 
 
-		template<int idx, typename TK>
-		bool Update(KeyType_t<idx> const& oldKey, TK&& newKey) noexcept
+		template<int keyIndex, typename TK>
+		bool Update(KeyType_t<keyIndex> const& oldKey, TK&& newKey) noexcept
 		{
-			return DictAt<idx>()->Update(oldKey, std::forward<TK>(newKey));
+			return DictAt<keyIndex>()->Update(oldKey, std::forward<TK>(newKey));
 		}
 
-		template<int idx, typename TK>
+		template<int keyIndex, typename TK>
 		bool UpdateAt(int const& index, TK&& newKey) noexcept
 		{
-			return DictAt<idx>()->UpdateAt(index, std::forward<TK>(newKey));
+			return DictAt<keyIndex>()->UpdateAt(index, std::forward<TK>(newKey));
 		}
 
 
-		template<int idx>
-		KeyType_t<idx> const& KeyAt(int const& index) const noexcept
+		template<int keyIndex>
+		KeyType_t<keyIndex> const& KeyAt(int const& index) const noexcept
 		{
-			return DictAt<idx>()->KeyAt(index);
+			return DictAt<keyIndex>()->KeyAt(index);
 		}
 
-		V& ValueAt(int const& idx) noexcept
+		V& ValueAt(int const& index) noexcept
 		{
-			return DictAt<0>()->ValueAt(idx).value;
+			return DictAt<0>()->ValueAt(index).value;
 		}
-		V const& ValueAt(int const& idx) const noexcept
+		V const& ValueAt(int const& index) const noexcept
 		{
-			return DictAt<0>()->ValueAt(idx).value;
+			return DictAt<0>()->ValueAt(index).value;
 		}
 
 
