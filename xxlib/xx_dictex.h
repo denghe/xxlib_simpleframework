@@ -60,10 +60,6 @@ namespace xx
 
 
 		template<int keyIndex>
-		struct DictForEach;
-		friend DictForEach;
-
-		template<int keyIndex>
 		struct DictForEach
 		{
 			static void Init(DictEx& self)
