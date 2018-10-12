@@ -65,7 +65,7 @@ namespace xx
 		// 可传入一个资源回收函数来搞事
 		void Clear(std::function<void(Data&)> killer = nullptr) noexcept;
 
-		// 放入数据
+		// 放入数据. 如果放入失败, 将返回 false 以及已存在的数据的下标
 		template<typename K, typename V>
 		DictAddResult Add(K&& k, V&& v, bool const& override = false) noexcept;
 

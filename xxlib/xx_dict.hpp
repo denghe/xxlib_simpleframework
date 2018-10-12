@@ -43,7 +43,7 @@ namespace xx
 					new (&items[i].value) TV(std::forward<V>(v));
 					return DictAddResult{ true, i };
 				}
-				return DictAddResult{ false, -1 };
+				return DictAddResult{ false, i };
 			}
 		}
 		// 没找到则新增
