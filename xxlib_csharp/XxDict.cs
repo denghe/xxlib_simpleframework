@@ -294,6 +294,16 @@ namespace xx
         }
 
         /// <summary>
+        /// 根据 存储编号 来返回键. 
+        /// </summary>
+        public K KeyAt(int idx)
+        {
+            Debug.Assert(idx >= 0 && idx < count);
+            Debug.Assert(items[idx].prev != -2);
+            return items[idx].key;
+        }
+
+        /// <summary>
         /// 为 Debug.Assert 服务, 用以校验 存储编号 下的 key 是否正确
         /// </summary>
         public bool ValidateKeyAt(int idx, K key)
@@ -320,6 +330,7 @@ namespace xx
             if (node.hashCode == newHashCode)
             {
                 item.key = newKey;
+                items[idx] = item;  // for struct
                 return true;
             }
             var targetBucket = node.hashCode % (uint)buckets.Length;
@@ -327,6 +338,7 @@ namespace xx
             if (targetBucket == newTargetBucket)
             {
                 item.key = newKey;
+                items[idx] = item;  // for struct
                 return true;
             }
 
@@ -365,6 +377,7 @@ namespace xx
 
             item.key = newKey;
             item.prev = -1;
+            items[idx] = item;  // for struct
 
             return true;
         }

@@ -122,6 +122,16 @@ namespace xx
         }
 
 
+        public K0 KeyAt0(int idx)
+        {
+            return d0.KeyAt(idx);
+        }
+        public K1 KeyAt1(int idx)
+        {
+            return d1.KeyAt(idx);
+        }
+
+
         public V ValueAt(int idx)
         {
             return d0.ValueAt(idx).value;
@@ -163,19 +173,19 @@ namespace xx
             get { return d0.Count; }
         }
 
-        public void ForEach(Func<V, bool> a)
+        public void ForEach(Func<int, V, bool> a)
         {
-            d0.ForEach(new Dict<K0, Data>.KVIterEx(d =>
+            d0.ForEachIndex(new Dict<K0, Data>.IdxIterEx(idx =>
             {
-                return a(d.value.value);
+                return a(idx, d0.ValueAt(idx).value);
             }));
         }
 
-        public void ForEach(Action<V> a)
+        public void ForEach(Action<int, V> a)
         {
-            d0.ForEach(new Dict<K0, Data>.KVIter(d =>
+            d0.ForEachIndex(new Dict<K0, Data>.IdxIter(idx =>
             {
-                a(d.value.value);
+                a(idx, d0.ValueAt(idx).value);
             }));
         }
     }
@@ -342,6 +352,21 @@ namespace xx
             return d2.ValueAt(idx).idx0;
         }
 
+
+        public K0 KeyAt0(int idx)
+        {
+            return d0.KeyAt(idx);
+        }
+        public K1 KeyAt1(int idx)
+        {
+            return d1.KeyAt(idx);
+        }
+        public K2 KeyAt2(int idx)
+        {
+            return d2.KeyAt(idx);
+        }
+
+
         public V ValueAt(int idx)
         {
             return d0.ValueAt(idx).value;
@@ -391,19 +416,19 @@ namespace xx
             get { return d0.Count; }
         }
 
-        public void ForEach(Func<V, bool> a)
+        public void ForEach(Func<int, V, bool> a)
         {
-            d0.ForEach(new Dict<K0, Data>.KVIterEx(d =>
+            d0.ForEachIndex(new Dict<K0, Data>.IdxIterEx(idx =>
             {
-                return a(d.value.value);
+                return a(idx, d0.ValueAt(idx).value);
             }));
         }
 
-        public void ForEach(Action<V> a)
+        public void ForEach(Action<int, V> a)
         {
-            d0.ForEach(new Dict<K0, Data>.KVIter(d =>
+            d0.ForEachIndex(new Dict<K0, Data>.IdxIter(idx =>
             {
-                a(d.value.value);
+                a(idx, d0.ValueAt(idx).value);
             }));
         }
     }
@@ -617,6 +642,24 @@ namespace xx
         }
 
 
+        public K0 KeyAt0(int idx)
+        {
+            return d0.KeyAt(idx);
+        }
+        public K1 KeyAt1(int idx)
+        {
+            return d1.KeyAt(idx);
+        }
+        public K2 KeyAt2(int idx)
+        {
+            return d2.KeyAt(idx);
+        }
+        public K3 KeyAt3(int idx)
+        {
+            return d3.KeyAt(idx);
+        }
+
+
         public V ValueAt(int idx)
         {
             return d0.ValueAt(idx).value;
@@ -674,19 +717,19 @@ namespace xx
             get { return d0.Count; }
         }
 
-        public void ForEach(Func<V, bool> a)
+        public void ForEach(Func<int, V, bool> a)
         {
-            d0.ForEach(new Dict<K0, Data>.KVIterEx(d =>
+            d0.ForEachIndex(new Dict<K0, Data>.IdxIterEx(idx =>
             {
-                return a(d.value.value);
+                return a(idx, d0.ValueAt(idx).value);
             }));
         }
 
-        public void ForEach(Action<V> a)
+        public void ForEach(Action<int, V> a)
         {
-            d0.ForEach(new Dict<K0, Data>.KVIter(d =>
+            d0.ForEachIndex(new Dict<K0, Data>.IdxIter(idx =>
             {
-                a(d.value.value);
+                a(idx, d0.ValueAt(idx).value);
             }));
         }
     }
