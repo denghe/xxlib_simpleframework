@@ -132,27 +132,6 @@ namespace web
         }
 
 
-
-        protected void Application_Start(object sender, EventArgs e)
-        {
-            WEB.AllTypes.Register();
-
-            // 连接数据库, 读取所有常驻数据, 填充多键字典( 后期只读 )
-            MySqlExecute(fs =>
-            {
-                allPermissions.AddRange(fs.Permission_SelectAll<WEB.Permission>());
-                allRoles.AddRange(fs.Role_SelectAll<WEB.Role>());
-            });
-
-            // 在这里构造与网站页面对应的完整菜单
-            // 权限列表可以放到具体页面对应的类的静态成员中以便直接修改
-            var menuHello = NewMenu(rootMenu, "hello", "~/hello.aspx", allPermissions.GetByNames(hello.permissions));
-            var menuLogin = NewMenu(rootMenu, "managers", "~/admin/Managers.aspx", allPermissions.GetByNames(admin.Managers.permissions));
-            var menuNode1 = NewMenu(rootMenu, "node1");
-            var menuNode1_1 = NewMenu(menuNode1, "node1_1", "", allPermissions.GetByNames("p4"));
-            var menuNode1_2 = NewMenu(menuNode1, "node1_2", "", allPermissions.GetByNames("p5"));
-        }
-
         /// <summary>
         /// 创建一个菜单( 菜单本身会在创建时放入 parent ), 并放入 allMenu 容器
         /// </summary>
@@ -170,6 +149,100 @@ namespace web
             return n;
         }
 
+        /// <summary>
+        /// 在这里构造与网站页面对应的完整菜单
+        /// </summary>
+        public static void CreateMenus()
+        {
+            // 权限列表可以放到具体页面对应的类的静态成员中以便直接修改
+            var menuHello = NewMenu(rootMenu, "hello", "~/hello.aspx", allPermissions.GetByNames(hello.permissions));
+            var menuLogin = NewMenu(rootMenu, "managers", "~/admin/Managers.aspx", allPermissions.GetByNames(admin.Managers.permissions));
+            var menuNode1 = NewMenu(rootMenu, "node1");
+            var menuNode1_1 = NewMenu(menuNode1, "node1_1", "", allPermissions.GetByNames("p4"));
+            var menuNode1_2 = NewMenu(menuNode1, "node1_2", "", allPermissions.GetByNames("p5"));
+        }
+
+        protected void Application_Start(object sender, EventArgs e)
+        {
+            WEB.AllTypes.Register();
+
+            // 连接数据库, 读取所有常驻数据, 填充多键字典( 后期只读 )
+            MySqlExecute(fs =>
+            {
+                allPermissions.AddRange(fs.Permission_SelectAll<WEB.Permission>());
+                allRoles.AddRange(fs.Role_SelectAll<WEB.Role>());
+            });
+
+            // 构造菜单
+            CreateMenus();
+
+            // 启动通信线程
+            new Thread(RunUv).Start();
+        }
+
+
+
+
+
+        public static string test_cpp3_ip = WebConfigurationManager.AppSettings["test_cpp3_ip"];
+        public static int test_cpp3_port = int.Parse(WebConfigurationManager.AppSettings["test_cpp3_port"]);
+        public static xx.UvLoop uv;
+        public static xx.UvTcpClient client;
+        public static xx.UvTimer timer;
+        public static xx.UvAsync dispacher;
+
+        public static void RunUv()
+        {
+            uv = new xx.UvLoop();
+            uv.InitRpcManager(1000, 10);
+            client = new xx.UvTcpClient(uv);
+            timer = new xx.UvTimer(uv, 0, 1000, () =>
+            {
+                if (client.state == xx.UvTcpStates.Disconnected)
+                {
+                    client.TryConnect(test_cpp3_ip, test_cpp3_port);
+                }
+            });
+            dispacher = new xx.UvAsync(uv);
+            uv.Run();
+        }
+
+        public class Client
+        {
+            AutoResetEvent are = new AutoResetEvent(false);
+            xx.IObject recv = null;
+
+            public xx.IObject SendRequest(xx.IObject pkg, int interval = 0)
+            {
+                Global.SendRequest(pkg, o =>
+                {
+                    recv = o;
+                }
+                , are, interval);
+                are.WaitOne();
+                return recv;
+            }
+        }
+
+        public static void SendRequest(xx.IObject pkg, Action<xx.IObject> cb, AutoResetEvent are, int interval = 0)
+        {
+            dispacher.Dispatch(() =>
+            {
+                if (!client.alive)
+                {
+                    cb(null);
+                    are.Set();
+                }
+                else
+                {
+                    client.SendRequestEx(pkg, (serial, o) =>
+                    {
+                        cb(o);
+                        are.Set();
+                    }, interval);
+                }
+            });
+        }
 
         #region unused
 

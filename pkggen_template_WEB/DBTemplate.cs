@@ -10,7 +10,7 @@ class Manager : Tables.manager
     string token;
 
     [Desc("最后访问的时间点( 页面每次 Load 时更新该值, 用于超时判断 )")]
-    DateTime lastVisitTime;
+    long lastVisitTime;
 }
 
 

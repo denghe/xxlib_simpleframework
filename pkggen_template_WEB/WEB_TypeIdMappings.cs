@@ -24,6 +24,10 @@ interface ITypeIdMappings
 
     Tables.role_permission _12 { get; }
 
+    Generic.Error _22 { get; }
+
+    Generic.Success _23 { get; }
+
     Generic.SomeLists _13 { get; }
 
     List<int> _14 { get; }
@@ -41,5 +45,11 @@ interface ITypeIdMappings
     List<BindManagerRole> _20 { get; }
 
     List<BindRolePermission> _21 { get; }
+
+    WEB_testcpp3.AuthInfo _24 { get; }
+
+    WEB_testcpp3.Cmd1 _25 { get; }
+
+    WEB_testcpp3.Cmd2 _26 { get; }
 
 }

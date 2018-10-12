@@ -3,7 +3,7 @@ namespace WEB
 {
     public static class PkgGenMd5
     {
-        public const string value = "cd86e1871b59a216ef09ac65f285ddc1"; 
+        public const string value = "42af0518b804f9518773b2c0b43050ed"; 
     }
 
     /// <summary>
@@ -18,7 +18,7 @@ namespace WEB
         /// <summary>
         /// 最后访问的时间点( 页面每次 Load 时更新该值, 用于超时判断 )
         /// </summary>
-        public DateTime lastVisitTime;
+        public long lastVisitTime;
 
         public override ushort GetPackageId()
         {
@@ -274,6 +274,108 @@ namespace WEB
     }
 namespace Generic
 {
+    /// <summary>
+    /// 通用错误返回
+    /// </summary>
+    public partial class Error : xx.Object
+    {
+        public int errNum;
+        public string errMsg;
+
+        public override ushort GetPackageId()
+        {
+            return xx.TypeId<Error>.value;
+        }
+
+        public override void ToBBuffer(xx.BBuffer bb)
+        {
+            bb.Write(this.errNum);
+            bb.Write(this.errMsg);
+        }
+
+        public override void FromBBuffer(xx.BBuffer bb)
+        {
+            bb.Read(ref this.errNum);
+            bb.readLengthLimit = 0;
+            bb.Read(ref this.errMsg);
+        }
+        public override void ToString(System.Text.StringBuilder s)
+        {
+            if (__toStringing)
+            {
+        	    s.Append("[ \"***** recursived *****\" ]");
+        	    return;
+            }
+            else __toStringing = true;
+
+            s.Append("{ \"pkgTypeName\":\"Generic.Error\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(s);
+            s.Append(" }");
+
+            __toStringing = false;
+        }
+        public override void ToStringCore(System.Text.StringBuilder s)
+        {
+            s.Append(", \"errNum\":" + errNum.ToString());
+            if (errMsg != null) s.Append(", \"errMsg\":\"" + errMsg.ToString() + "\"");
+            else s.Append(", \"errMsg\":nil");
+        }
+        public override string ToString()
+        {
+            var sb = new System.Text.StringBuilder();
+            ToString(sb);
+            return sb.ToString();
+        }
+        public override void MySqlAppend(System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+        }
+    }
+    /// <summary>
+    /// 默认 rpc 成功返回
+    /// </summary>
+    public partial class Success : xx.Object
+    {
+
+        public override ushort GetPackageId()
+        {
+            return xx.TypeId<Success>.value;
+        }
+
+        public override void ToBBuffer(xx.BBuffer bb)
+        {
+        }
+
+        public override void FromBBuffer(xx.BBuffer bb)
+        {
+        }
+        public override void ToString(System.Text.StringBuilder s)
+        {
+            if (__toStringing)
+            {
+        	    s.Append("[ \"***** recursived *****\" ]");
+        	    return;
+            }
+            else __toStringing = true;
+
+            s.Append("{ \"pkgTypeName\":\"Generic.Success\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(s);
+            s.Append(" }");
+
+            __toStringing = false;
+        }
+        public override void ToStringCore(System.Text.StringBuilder s)
+        {
+        }
+        public override string ToString()
+        {
+            var sb = new System.Text.StringBuilder();
+            ToString(sb);
+            return sb.ToString();
+        }
+        public override void MySqlAppend(System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+        }
+    }
     public partial class SomeLists : xx.Object
     {
         public xx.List<int> ints;
@@ -355,6 +457,153 @@ namespace Generic
         }
         public override void MySqlAppend(System.Text.StringBuilder sb, bool ignoreReadOnly)
         {
+        }
+    }
+}
+namespace WEB_testcpp3
+{
+    /// <summary>
+    /// 指令基类. 路由用户上下文. 校验身份权限.
+    /// </summary>
+    public partial class AuthInfo : xx.Object
+    {
+        public int id;
+
+        public override ushort GetPackageId()
+        {
+            return xx.TypeId<AuthInfo>.value;
+        }
+
+        public override void ToBBuffer(xx.BBuffer bb)
+        {
+            bb.Write(this.id);
+        }
+
+        public override void FromBBuffer(xx.BBuffer bb)
+        {
+            bb.Read(ref this.id);
+        }
+        public override void ToString(System.Text.StringBuilder s)
+        {
+            if (__toStringing)
+            {
+        	    s.Append("[ \"***** recursived *****\" ]");
+        	    return;
+            }
+            else __toStringing = true;
+
+            s.Append("{ \"pkgTypeName\":\"WEB_testcpp3.AuthInfo\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(s);
+            s.Append(" }");
+
+            __toStringing = false;
+        }
+        public override void ToStringCore(System.Text.StringBuilder s)
+        {
+            s.Append(", \"id\":" + id.ToString());
+        }
+        public override string ToString()
+        {
+            var sb = new System.Text.StringBuilder();
+            ToString(sb);
+            return sb.ToString();
+        }
+        public override void MySqlAppend(System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+        }
+    }
+    public partial class Cmd1 : WEB_testcpp3.AuthInfo
+    {
+
+        public override ushort GetPackageId()
+        {
+            return xx.TypeId<Cmd1>.value;
+        }
+
+        public override void ToBBuffer(xx.BBuffer bb)
+        {
+            base.ToBBuffer(bb);
+        }
+
+        public override void FromBBuffer(xx.BBuffer bb)
+        {
+            base.FromBBuffer(bb);
+        }
+        public override void ToString(System.Text.StringBuilder s)
+        {
+            if (__toStringing)
+            {
+        	    s.Append("[ \"***** recursived *****\" ]");
+        	    return;
+            }
+            else __toStringing = true;
+
+            s.Append("{ \"pkgTypeName\":\"WEB_testcpp3.Cmd1\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(s);
+            s.Append(" }");
+
+            __toStringing = false;
+        }
+        public override void ToStringCore(System.Text.StringBuilder s)
+        {
+            base.ToStringCore(s);
+        }
+        public override string ToString()
+        {
+            var sb = new System.Text.StringBuilder();
+            ToString(sb);
+            return sb.ToString();
+        }
+        public override void MySqlAppend(System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+            base.MySqlAppend(sb, ignoreReadOnly);
+        }
+    }
+    public partial class Cmd2 : WEB_testcpp3.AuthInfo
+    {
+
+        public override ushort GetPackageId()
+        {
+            return xx.TypeId<Cmd2>.value;
+        }
+
+        public override void ToBBuffer(xx.BBuffer bb)
+        {
+            base.ToBBuffer(bb);
+        }
+
+        public override void FromBBuffer(xx.BBuffer bb)
+        {
+            base.FromBBuffer(bb);
+        }
+        public override void ToString(System.Text.StringBuilder s)
+        {
+            if (__toStringing)
+            {
+        	    s.Append("[ \"***** recursived *****\" ]");
+        	    return;
+            }
+            else __toStringing = true;
+
+            s.Append("{ \"pkgTypeName\":\"WEB_testcpp3.Cmd2\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(s);
+            s.Append(" }");
+
+            __toStringing = false;
+        }
+        public override void ToStringCore(System.Text.StringBuilder s)
+        {
+            base.ToStringCore(s);
+        }
+        public override string ToString()
+        {
+            var sb = new System.Text.StringBuilder();
+            ToString(sb);
+            return sb.ToString();
+        }
+        public override void MySqlAppend(System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+            base.MySqlAppend(sb, ignoreReadOnly);
         }
     }
 }
@@ -730,6 +979,8 @@ namespace Tables
             xx.Object.Register<Tables.manager_role>(9);
             xx.Object.Register<BindRolePermission>(8);
             xx.Object.Register<Tables.role_permission>(12);
+            xx.Object.Register<Generic.Error>(22);
+            xx.Object.Register<Generic.Success>(23);
             xx.Object.Register<Generic.SomeLists>(13);
             xx.Object.Register<xx.List<int>>(14);
             xx.Object.Register<xx.List<long>>(15);
@@ -739,6 +990,9 @@ namespace Tables
             xx.Object.Register<xx.List<Permission>>(19);
             xx.Object.Register<xx.List<BindManagerRole>>(20);
             xx.Object.Register<xx.List<BindRolePermission>>(21);
+            xx.Object.Register<WEB_testcpp3.AuthInfo>(24);
+            xx.Object.Register<WEB_testcpp3.Cmd1>(25);
+            xx.Object.Register<WEB_testcpp3.Cmd2>(26);
         }
     }
 }

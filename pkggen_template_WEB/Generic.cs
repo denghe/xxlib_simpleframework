@@ -3,6 +3,18 @@ using TemplateLibrary;
 
 namespace Generic
 {
+    [Desc("通用错误返回")]
+    class Error
+    {
+        int errNum;
+        string errMsg;
+    }
+
+    [Desc("默认 rpc 成功返回")]
+    class Success
+    {
+    }
+
     // 用于声明可能会临时用于序列化的各种集合类型
     class SomeLists
     {

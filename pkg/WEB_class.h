@@ -5,7 +5,7 @@ namespace WEB
 {
 	struct PkgGenMd5
 	{
-		static constexpr char const* value = "cd86e1871b59a216ef09ac65f285ddc1";
+		static constexpr char const* value = "42af0518b804f9518773b2c0b43050ed";
     };
 
     // 管理人员
@@ -35,9 +35,35 @@ namespace WEB
 
 namespace Generic
 {
+    // 通用错误返回
+    class Error;
+    using Error_p = xx::Ptr<Error>;
+    using Error_r = xx::Ref<Error>;
+
+    // 默认 rpc 成功返回
+    class Success;
+    using Success_p = xx::Ptr<Success>;
+    using Success_r = xx::Ref<Success>;
+
     class SomeLists;
     using SomeLists_p = xx::Ptr<SomeLists>;
     using SomeLists_r = xx::Ref<SomeLists>;
+
+}
+namespace WEB_testcpp3
+{
+    // 指令基类. 路由用户上下文. 校验身份权限.
+    class AuthInfo;
+    using AuthInfo_p = xx::Ptr<AuthInfo>;
+    using AuthInfo_r = xx::Ref<AuthInfo>;
+
+    class Cmd1;
+    using Cmd1_p = xx::Ptr<Cmd1>;
+    using Cmd1_r = xx::Ref<Cmd1>;
+
+    class Cmd2;
+    using Cmd2_p = xx::Ptr<Cmd2>;
+    using Cmd2_r = xx::Ref<Cmd2>;
 
 }
 namespace Tables
@@ -67,6 +93,31 @@ namespace Tables
     using role_permission_p = xx::Ptr<role_permission>;
     using role_permission_r = xx::Ref<role_permission>;
 
+}
+namespace WEB_testcpp3
+{
+    // 指令基类. 路由用户上下文. 校验身份权限.
+    class AuthInfo : public xx::Object
+    {
+    public:
+        int32_t id = 0;
+
+        typedef AuthInfo ThisType;
+        typedef xx::Object BaseType;
+	    AuthInfo(xx::MemPool* const& mempool) noexcept;
+	    AuthInfo(xx::BBuffer* const& bb);
+		AuthInfo(AuthInfo const&) = delete;
+		AuthInfo& operator=(AuthInfo const&) = delete;
+        void ToString(xx::String& s) const noexcept override;
+        void ToStringCore(xx::String& s) const noexcept override;
+        void ToBBuffer(xx::BBuffer& bb) const noexcept override;
+        int FromBBuffer(xx::BBuffer& bb) noexcept override;
+        int FromBBufferCore(xx::BBuffer& bb) noexcept;
+        void CopyTo(AuthInfo* const& o) const noexcept;
+        AuthInfo* MakeCopy() const noexcept;
+        AuthInfo_p MakePtrCopy() const noexcept;
+        inline static xx::Ptr<ThisType> defaultInstance;
+    };
 }
 namespace Tables
 {
@@ -197,7 +248,7 @@ namespace Tables
         // 当前令牌( 页面每次 Load 时与存放于 Session 中的值做对比用 )
         xx::String_p token;
         // 最后访问的时间点( 页面每次 Load 时更新该值, 用于超时判断 )
-        xx::DateTime lastVisitTime = nullptr;
+        int64_t lastVisitTime = 0;
 
         typedef Manager ThisType;
         typedef WEB::Tables::manager BaseType;
@@ -301,6 +352,50 @@ namespace Tables
     };
 namespace Generic
 {
+    // 通用错误返回
+    class Error : public xx::Object
+    {
+    public:
+        int32_t errNum = 0;
+        xx::String_p errMsg;
+
+        typedef Error ThisType;
+        typedef xx::Object BaseType;
+	    Error(xx::MemPool* const& mempool) noexcept;
+	    Error(xx::BBuffer* const& bb);
+		Error(Error const&) = delete;
+		Error& operator=(Error const&) = delete;
+        void ToString(xx::String& s) const noexcept override;
+        void ToStringCore(xx::String& s) const noexcept override;
+        void ToBBuffer(xx::BBuffer& bb) const noexcept override;
+        int FromBBuffer(xx::BBuffer& bb) noexcept override;
+        int FromBBufferCore(xx::BBuffer& bb) noexcept;
+        void CopyTo(Error* const& o) const noexcept;
+        Error* MakeCopy() const noexcept;
+        Error_p MakePtrCopy() const noexcept;
+        inline static xx::Ptr<ThisType> defaultInstance;
+    };
+    // 默认 rpc 成功返回
+    class Success : public xx::Object
+    {
+    public:
+
+        typedef Success ThisType;
+        typedef xx::Object BaseType;
+	    Success(xx::MemPool* const& mempool) noexcept;
+	    Success(xx::BBuffer* const& bb);
+		Success(Success const&) = delete;
+		Success& operator=(Success const&) = delete;
+        void ToString(xx::String& s) const noexcept override;
+        void ToStringCore(xx::String& s) const noexcept override;
+        void ToBBuffer(xx::BBuffer& bb) const noexcept override;
+        int FromBBuffer(xx::BBuffer& bb) noexcept override;
+        int FromBBufferCore(xx::BBuffer& bb) noexcept;
+        void CopyTo(Success* const& o) const noexcept;
+        Success* MakeCopy() const noexcept;
+        Success_p MakePtrCopy() const noexcept;
+        inline static xx::Ptr<ThisType> defaultInstance;
+    };
     class SomeLists : public xx::Object
     {
     public:
@@ -330,6 +425,49 @@ namespace Generic
         inline static xx::Ptr<ThisType> defaultInstance;
     };
 }
+namespace WEB_testcpp3
+{
+    class Cmd1 : public WEB::WEB_testcpp3::AuthInfo
+    {
+    public:
+
+        typedef Cmd1 ThisType;
+        typedef WEB::WEB_testcpp3::AuthInfo BaseType;
+	    Cmd1(xx::MemPool* const& mempool) noexcept;
+	    Cmd1(xx::BBuffer* const& bb);
+		Cmd1(Cmd1 const&) = delete;
+		Cmd1& operator=(Cmd1 const&) = delete;
+        void ToString(xx::String& s) const noexcept override;
+        void ToStringCore(xx::String& s) const noexcept override;
+        void ToBBuffer(xx::BBuffer& bb) const noexcept override;
+        int FromBBuffer(xx::BBuffer& bb) noexcept override;
+        int FromBBufferCore(xx::BBuffer& bb) noexcept;
+        void CopyTo(Cmd1* const& o) const noexcept;
+        Cmd1* MakeCopy() const noexcept;
+        Cmd1_p MakePtrCopy() const noexcept;
+        inline static xx::Ptr<ThisType> defaultInstance;
+    };
+    class Cmd2 : public WEB::WEB_testcpp3::AuthInfo
+    {
+    public:
+
+        typedef Cmd2 ThisType;
+        typedef WEB::WEB_testcpp3::AuthInfo BaseType;
+	    Cmd2(xx::MemPool* const& mempool) noexcept;
+	    Cmd2(xx::BBuffer* const& bb);
+		Cmd2(Cmd2 const&) = delete;
+		Cmd2& operator=(Cmd2 const&) = delete;
+        void ToString(xx::String& s) const noexcept override;
+        void ToStringCore(xx::String& s) const noexcept override;
+        void ToBBuffer(xx::BBuffer& bb) const noexcept override;
+        int FromBBuffer(xx::BBuffer& bb) noexcept override;
+        int FromBBufferCore(xx::BBuffer& bb) noexcept;
+        void CopyTo(Cmd2* const& o) const noexcept;
+        Cmd2* MakeCopy() const noexcept;
+        Cmd2_p MakePtrCopy() const noexcept;
+        inline static xx::Ptr<ThisType> defaultInstance;
+    };
+}
 }
 namespace xx
 {
@@ -343,6 +481,8 @@ namespace xx
 	template<> struct TypeId<WEB::Tables::manager_role> { static const uint16_t value = 9; };
 	template<> struct TypeId<WEB::BindRolePermission> { static const uint16_t value = 8; };
 	template<> struct TypeId<WEB::Tables::role_permission> { static const uint16_t value = 12; };
+	template<> struct TypeId<WEB::Generic::Error> { static const uint16_t value = 22; };
+	template<> struct TypeId<WEB::Generic::Success> { static const uint16_t value = 23; };
 	template<> struct TypeId<WEB::Generic::SomeLists> { static const uint16_t value = 13; };
 	template<> struct TypeId<xx::List<int32_t>> { static const uint16_t value = 14; };
 	template<> struct TypeId<xx::List<int64_t>> { static const uint16_t value = 15; };
@@ -352,6 +492,9 @@ namespace xx
 	template<> struct TypeId<xx::List<WEB::Permission_p>> { static const uint16_t value = 19; };
 	template<> struct TypeId<xx::List<WEB::BindManagerRole_p>> { static const uint16_t value = 20; };
 	template<> struct TypeId<xx::List<WEB::BindRolePermission_p>> { static const uint16_t value = 21; };
+	template<> struct TypeId<WEB::WEB_testcpp3::AuthInfo> { static const uint16_t value = 24; };
+	template<> struct TypeId<WEB::WEB_testcpp3::Cmd1> { static const uint16_t value = 25; };
+	template<> struct TypeId<WEB::WEB_testcpp3::Cmd2> { static const uint16_t value = 26; };
 }
 namespace WEB
 {
@@ -652,6 +795,124 @@ namespace WEB
 
 namespace Generic
 {
+	inline Error::Error(xx::MemPool* const& mempool) noexcept
+        : xx::Object(mempool)
+	{
+	}
+	inline Error::Error(xx::BBuffer* const& bb)
+        : xx::Object(bb)
+	{
+        if (int r = FromBBufferCore(*bb)) throw r;
+	}
+    inline void Error::ToBBuffer(xx::BBuffer& bb) const noexcept
+    {
+        bb.Write(this->errNum);
+        bb.Write(this->errMsg);
+    }
+    inline int Error::FromBBuffer(xx::BBuffer& bb) noexcept
+    {
+        return this->FromBBufferCore(bb);
+    }
+    inline int Error::FromBBufferCore(xx::BBuffer& bb) noexcept
+    {
+        if (int r = bb.Read(this->errNum)) return r;
+        bb.readLengthLimit = 0;
+        if (int r = bb.Read(this->errMsg)) return r;
+        return 0;
+    }
+
+    inline void Error::ToString(xx::String& s) const noexcept
+    {
+        if (this->memHeader().flags)
+        {
+        	s.Append("[ \"***** recursived *****\" ]");
+        	return;
+        }
+        else this->memHeader().flags = 1;
+
+        s.Append("{ \"pkgTypeName\":\"Generic.Error\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
+        ToStringCore(s);
+        s.Append(" }");
+        
+        this->memHeader().flags = 0;
+    }
+    inline void Error::ToStringCore(xx::String& s) const noexcept
+    {
+        this->BaseType::ToStringCore(s);
+        s.Append(", \"errNum\":", this->errNum);
+        if (this->errMsg) s.Append(", \"errMsg\":\"", this->errMsg, "\"");
+        else s.Append(", \"errMsg\":nil");
+    }
+    inline void Error::CopyTo(Error* const& o) const noexcept
+    {
+        o->errNum = this->errNum;
+        o->errMsg = this->errMsg;
+    }
+    inline Error* Error::MakeCopy() const noexcept
+    {
+        auto o = mempool->MPCreate<Error>();
+        this->CopyTo(o);
+        return o;
+    }
+    inline Error_p Error::MakePtrCopy() const noexcept
+    {
+        return Error_p(this->MakeCopy());
+    }
+
+	inline Success::Success(xx::MemPool* const& mempool) noexcept
+        : xx::Object(mempool)
+	{
+	}
+	inline Success::Success(xx::BBuffer* const& bb)
+        : xx::Object(bb)
+	{
+        if (int r = FromBBufferCore(*bb)) throw r;
+	}
+    inline void Success::ToBBuffer(xx::BBuffer& bb) const noexcept
+    {
+    }
+    inline int Success::FromBBuffer(xx::BBuffer& bb) noexcept
+    {
+        return this->FromBBufferCore(bb);
+    }
+    inline int Success::FromBBufferCore(xx::BBuffer& bb) noexcept
+    {
+        return 0;
+    }
+
+    inline void Success::ToString(xx::String& s) const noexcept
+    {
+        if (this->memHeader().flags)
+        {
+        	s.Append("[ \"***** recursived *****\" ]");
+        	return;
+        }
+        else this->memHeader().flags = 1;
+
+        s.Append("{ \"pkgTypeName\":\"Generic.Success\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
+        ToStringCore(s);
+        s.Append(" }");
+        
+        this->memHeader().flags = 0;
+    }
+    inline void Success::ToStringCore(xx::String& s) const noexcept
+    {
+        this->BaseType::ToStringCore(s);
+    }
+    inline void Success::CopyTo(Success* const& o) const noexcept
+    {
+    }
+    inline Success* Success::MakeCopy() const noexcept
+    {
+        auto o = mempool->MPCreate<Success>();
+        this->CopyTo(o);
+        return o;
+    }
+    inline Success_p Success::MakePtrCopy() const noexcept
+    {
+        return Success_p(this->MakeCopy());
+    }
+
 	inline SomeLists::SomeLists(xx::MemPool* const& mempool) noexcept
         : xx::Object(mempool)
 	{
@@ -744,6 +1005,181 @@ namespace Generic
     inline SomeLists_p SomeLists::MakePtrCopy() const noexcept
     {
         return SomeLists_p(this->MakeCopy());
+    }
+
+}
+namespace WEB_testcpp3
+{
+	inline AuthInfo::AuthInfo(xx::MemPool* const& mempool) noexcept
+        : xx::Object(mempool)
+	{
+	}
+	inline AuthInfo::AuthInfo(xx::BBuffer* const& bb)
+        : xx::Object(bb)
+	{
+        if (int r = FromBBufferCore(*bb)) throw r;
+	}
+    inline void AuthInfo::ToBBuffer(xx::BBuffer& bb) const noexcept
+    {
+        bb.Write(this->id);
+    }
+    inline int AuthInfo::FromBBuffer(xx::BBuffer& bb) noexcept
+    {
+        return this->FromBBufferCore(bb);
+    }
+    inline int AuthInfo::FromBBufferCore(xx::BBuffer& bb) noexcept
+    {
+        if (int r = bb.Read(this->id)) return r;
+        return 0;
+    }
+
+    inline void AuthInfo::ToString(xx::String& s) const noexcept
+    {
+        if (this->memHeader().flags)
+        {
+        	s.Append("[ \"***** recursived *****\" ]");
+        	return;
+        }
+        else this->memHeader().flags = 1;
+
+        s.Append("{ \"pkgTypeName\":\"WEB_testcpp3.AuthInfo\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
+        ToStringCore(s);
+        s.Append(" }");
+        
+        this->memHeader().flags = 0;
+    }
+    inline void AuthInfo::ToStringCore(xx::String& s) const noexcept
+    {
+        this->BaseType::ToStringCore(s);
+        s.Append(", \"id\":", this->id);
+    }
+    inline void AuthInfo::CopyTo(AuthInfo* const& o) const noexcept
+    {
+        o->id = this->id;
+    }
+    inline AuthInfo* AuthInfo::MakeCopy() const noexcept
+    {
+        auto o = mempool->MPCreate<AuthInfo>();
+        this->CopyTo(o);
+        return o;
+    }
+    inline AuthInfo_p AuthInfo::MakePtrCopy() const noexcept
+    {
+        return AuthInfo_p(this->MakeCopy());
+    }
+
+	inline Cmd1::Cmd1(xx::MemPool* const& mempool) noexcept
+        : WEB::WEB_testcpp3::AuthInfo(mempool)
+	{
+	}
+	inline Cmd1::Cmd1(xx::BBuffer* const& bb)
+        : WEB::WEB_testcpp3::AuthInfo(bb)
+	{
+        if (int r = FromBBufferCore(*bb)) throw r;
+	}
+    inline void Cmd1::ToBBuffer(xx::BBuffer& bb) const noexcept
+    {
+        this->BaseType::ToBBuffer(bb);
+    }
+    inline int Cmd1::FromBBuffer(xx::BBuffer& bb) noexcept
+    {
+        if (int r = this->BaseType::FromBBuffer(bb)) return r;
+        return this->FromBBufferCore(bb);
+    }
+    inline int Cmd1::FromBBufferCore(xx::BBuffer& bb) noexcept
+    {
+        return 0;
+    }
+
+    inline void Cmd1::ToString(xx::String& s) const noexcept
+    {
+        if (this->memHeader().flags)
+        {
+        	s.Append("[ \"***** recursived *****\" ]");
+        	return;
+        }
+        else this->memHeader().flags = 1;
+
+        s.Append("{ \"pkgTypeName\":\"WEB_testcpp3.Cmd1\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
+        ToStringCore(s);
+        s.Append(" }");
+        
+        this->memHeader().flags = 0;
+    }
+    inline void Cmd1::ToStringCore(xx::String& s) const noexcept
+    {
+        this->BaseType::ToStringCore(s);
+    }
+    inline void Cmd1::CopyTo(Cmd1* const& o) const noexcept
+    {
+        this->BaseType::CopyTo(o);
+    }
+    inline Cmd1* Cmd1::MakeCopy() const noexcept
+    {
+        auto o = mempool->MPCreate<Cmd1>();
+        this->CopyTo(o);
+        return o;
+    }
+    inline Cmd1_p Cmd1::MakePtrCopy() const noexcept
+    {
+        return Cmd1_p(this->MakeCopy());
+    }
+
+	inline Cmd2::Cmd2(xx::MemPool* const& mempool) noexcept
+        : WEB::WEB_testcpp3::AuthInfo(mempool)
+	{
+	}
+	inline Cmd2::Cmd2(xx::BBuffer* const& bb)
+        : WEB::WEB_testcpp3::AuthInfo(bb)
+	{
+        if (int r = FromBBufferCore(*bb)) throw r;
+	}
+    inline void Cmd2::ToBBuffer(xx::BBuffer& bb) const noexcept
+    {
+        this->BaseType::ToBBuffer(bb);
+    }
+    inline int Cmd2::FromBBuffer(xx::BBuffer& bb) noexcept
+    {
+        if (int r = this->BaseType::FromBBuffer(bb)) return r;
+        return this->FromBBufferCore(bb);
+    }
+    inline int Cmd2::FromBBufferCore(xx::BBuffer& bb) noexcept
+    {
+        return 0;
+    }
+
+    inline void Cmd2::ToString(xx::String& s) const noexcept
+    {
+        if (this->memHeader().flags)
+        {
+        	s.Append("[ \"***** recursived *****\" ]");
+        	return;
+        }
+        else this->memHeader().flags = 1;
+
+        s.Append("{ \"pkgTypeName\":\"WEB_testcpp3.Cmd2\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
+        ToStringCore(s);
+        s.Append(" }");
+        
+        this->memHeader().flags = 0;
+    }
+    inline void Cmd2::ToStringCore(xx::String& s) const noexcept
+    {
+        this->BaseType::ToStringCore(s);
+    }
+    inline void Cmd2::CopyTo(Cmd2* const& o) const noexcept
+    {
+        this->BaseType::CopyTo(o);
+    }
+    inline Cmd2* Cmd2::MakeCopy() const noexcept
+    {
+        auto o = mempool->MPCreate<Cmd2>();
+        this->CopyTo(o);
+        return o;
+    }
+    inline Cmd2_p Cmd2::MakePtrCopy() const noexcept
+    {
+        return Cmd2_p(this->MakeCopy());
     }
 
 }
@@ -1106,6 +1542,8 @@ namespace WEB
 	    xx::MemPool::Register<WEB::Tables::manager_role, xx::Object>();
 	    xx::MemPool::Register<WEB::BindRolePermission, WEB::Tables::role_permission>();
 	    xx::MemPool::Register<WEB::Tables::role_permission, xx::Object>();
+	    xx::MemPool::Register<WEB::Generic::Error, xx::Object>();
+	    xx::MemPool::Register<WEB::Generic::Success, xx::Object>();
 	    xx::MemPool::Register<WEB::Generic::SomeLists, xx::Object>();
 	    xx::MemPool::Register<xx::List<int32_t>, xx::Object>();
 	    xx::MemPool::Register<xx::List<int64_t>, xx::Object>();
@@ -1115,5 +1553,8 @@ namespace WEB
 	    xx::MemPool::Register<xx::List<WEB::Permission_p>, xx::Object>();
 	    xx::MemPool::Register<xx::List<WEB::BindManagerRole_p>, xx::Object>();
 	    xx::MemPool::Register<xx::List<WEB::BindRolePermission_p>, xx::Object>();
+	    xx::MemPool::Register<WEB::WEB_testcpp3::AuthInfo, xx::Object>();
+	    xx::MemPool::Register<WEB::WEB_testcpp3::Cmd1, WEB::WEB_testcpp3::AuthInfo>();
+	    xx::MemPool::Register<WEB::WEB_testcpp3::Cmd2, WEB::WEB_testcpp3::AuthInfo>();
 	}
 }

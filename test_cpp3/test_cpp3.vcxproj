@@ -88,11 +88,52 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\xxlib\http_parser.c" />
+    <ClCompile Include="..\xxlib\ikcp.cpp" />
+    <ClCompile Include="..\xxlib\xx_uv.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="main.cpp.bak" />
     <None Include="main.cpp.bak2" />
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="..\xxlib\xx.natvis" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\xxlib\fixed_function.hpp" />
+    <ClInclude Include="..\xxlib\http_parser.h" />
+    <ClInclude Include="..\xxlib\ikcp.h" />
+    <ClInclude Include="..\xxlib\xx.h" />
+    <ClInclude Include="..\xxlib\xx_bbuffer.h" />
+    <ClInclude Include="..\xxlib\xx_bbuffer.hpp" />
+    <ClInclude Include="..\xxlib\xx_bytesutils.h" />
+    <ClInclude Include="..\xxlib\xx_bytesutils.hpp" />
+    <ClInclude Include="..\xxlib\xx_charsutils.h" />
+    <ClInclude Include="..\xxlib\xx_charsutils.hpp" />
+    <ClInclude Include="..\xxlib\xx_dict.h" />
+    <ClInclude Include="..\xxlib\xx_dict.hpp" />
+    <ClInclude Include="..\xxlib\xx_dictex.h" />
+    <ClInclude Include="..\xxlib\xx_guid.h" />
+    <ClInclude Include="..\xxlib\xx_guid.hpp" />
+    <ClInclude Include="..\xxlib\xx_hashset.h" />
+    <ClInclude Include="..\xxlib\xx_hashset.hpp" />
+    <ClInclude Include="..\xxlib\xx_hashutils.h" />
+    <ClInclude Include="..\xxlib\xx_hashutils.hpp" />
+    <ClInclude Include="..\xxlib\xx_list.h" />
+    <ClInclude Include="..\xxlib\xx_list.hpp" />
+    <ClInclude Include="..\xxlib\xx_logger.h" />
+    <ClInclude Include="..\xxlib\xx_mempool.h" />
+    <ClInclude Include="..\xxlib\xx_mempool.hpp" />
+    <ClInclude Include="..\xxlib\xx_queue.h" />
+    <ClInclude Include="..\xxlib\xx_queue.hpp" />
+    <ClInclude Include="..\xxlib\xx_random.h" />
+    <ClInclude Include="..\xxlib\xx_random.hpp" />
+    <ClInclude Include="..\xxlib\xx_sqlite.h" />
+    <ClInclude Include="..\xxlib\xx_string.h" />
+    <ClInclude Include="..\xxlib\xx_string.hpp" />
+    <ClInclude Include="..\xxlib\xx_uv.h" />
+    <ClInclude Include="..\xxlib\xx_uv.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
