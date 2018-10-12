@@ -69,9 +69,9 @@ int main2()
 	int idx = de.Find<0>(4);
 	de.RemoveAt(idx);
 
-	for (auto& o : de)
+	for (auto o : de)
 	{
-		Cout("k0: ", de.KeyAt<0>(o.first), ", k1: ", de.KeyAt<1>(o.first), ", foo = ", o.second->v1, ", ", o.second->v2, "\n");
+		Cout("k0: ", de.KeyAt<0>(o.index), ", k1: ", de.KeyAt<1>(o.index), ", foo = ", o.Value().v1, ", ", o.Value().v2, "\n");
 	}
 
 	return 0;

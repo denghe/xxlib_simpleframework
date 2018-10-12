@@ -264,7 +264,19 @@ namespace xx
 
 
 
-		// for( auto &c :  支持. 返回 pair< 下标, 值* >. 可用 KeyAt<?>( 下标 ) 来查 key
+		// for( auto c :  支持. 返回 IterValue.
+		// 注意: auto 后面不能加 &. 
+		// 可用 KeyAt<?>( IterValue.index ) 来查 key. 
+		struct IterValue
+		{
+			int index;
+			V* valuePtr;
+			V& Value()
+			{
+				return *valuePtr;
+			}
+		};
+
 		struct Iter
 		{
 			DictType_t<0>& dict;
@@ -281,7 +293,7 @@ namespace xx
 				}
 				return *this;
 			}
-			std::pair<int, V*> operator*() { return std::make_pair(i, &dict.items[i].value.value); }
+			IterValue operator*() { return IterValue{ i, &dict.items[i].value.value }; }
 		};
 		Iter begin() noexcept
 		{
