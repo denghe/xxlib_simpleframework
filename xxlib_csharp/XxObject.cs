@@ -251,6 +251,36 @@ namespace xx
             return dt.ToLocalTime();
         }
 
+
+
+        /// <summary>
+        /// 以北京时间返回"今日" 0时0分0秒的 epoch10m
+        /// </summary>
+        public static long BeiJingTodayEpoch10m()
+        {
+            var t = DateTime.UtcNow.AddHours(+8);
+            t = new DateTime(t.Year, t.Month, t.Day, 0, 0, 0, DateTimeKind.Utc);
+            return xx.Utils.DateTimeToEpoch10m(t.AddHours(-8));
+        }
+
+        /// <summary>
+        /// 以北京时间"今日" 0时0分0秒的 epoch10m 为基础, 按天偏移
+        /// </summary>
+        public static long BeiJingTodayEpoch10m(long days)
+        {
+            return BeiJingTodayEpoch10m() + days * 864000000000L;
+        }
+
+        /// <summary>
+        /// 按天偏移传入的 epoch10m 值
+        /// </summary>
+        public static long Epoch10mAddDays(long value, long days)
+        {
+            return value + days * 864000000000L;
+        }
+
+
+
         public static string Epoch10mDurationToString(long epoch10mDuration)
         {
             const double oneMicrosecond = 10;
