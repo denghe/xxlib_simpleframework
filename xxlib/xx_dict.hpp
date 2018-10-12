@@ -324,7 +324,7 @@ namespace xx
 		auto& item = items[idx];
 
 		// 如果 hash 相等或位于相同 bucket, 可以直接改 key 并退出函数
-		auto newHashCode = HashFunc<TK>::GetHashCode(k);
+		auto newHashCode = HashFunc<TK>::GetHashCode(newKey);
 		if (node.hashCode == newHashCode)
 		{
 			item.key = std::forward<K>(newKey);
