@@ -69,7 +69,7 @@ int main2()
 	int idx = de.Find<0>(4);
 	de.RemoveAt(idx);
 
-	for (auto iv : de)
+	for (decltype(auto) iv : de)
 	{
 		Cout("k0: ", de.KeyAt<0>(iv.index), ", k1: ", de.KeyAt<1>(iv.index), ", foo = ", iv.Value().v1, ", ", iv.Value().v2, "\n");
 	}
@@ -121,7 +121,7 @@ int main()
 //				c->ConnectEx(ips->At(0).c_str(), 80);
 //				//c->ConnectEx(ips->At(0).c_str(), 80, 100);
 //				//c->Disconnect();
-//				//for (auto& ip : *ips)
+//				//for (decltype(auto) ip : *ips)
 //				//{
 //				//	std::cout << ip << std::endl;
 //				//}

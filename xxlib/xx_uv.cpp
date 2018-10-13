@@ -164,7 +164,7 @@ int xx::UvLoop::InitKcpFlushInterval(uint32_t const& interval) noexcept
 		for (int i = (int)udpListeners.dataLen - 1; i >= 0; --i)
 		{
 			auto& L = udpListeners[i];
-			for (auto& kv : L->peers)
+			for (decltype(auto) kv : L->peers)
 			{
 				kv.value->Update(udpTicks);
 				if (udpTimer->IsReleased(vn)) return;
@@ -788,7 +788,7 @@ void xx::UvTcpUdpBase::RpcTraceCallback() noexcept
 {
 	if (rpcSerials)
 	{
-		for (auto& serial : *rpcSerials)
+		for (decltype(auto) serial : *rpcSerials)
 		{
 			loop.rpcMgr->Callback(serial, nullptr);
 		}
@@ -1533,7 +1533,7 @@ xx::UvUdpListener::~UvUdpListener() noexcept
 	{
 		OnDispose();
 	}
-	for (auto& kv : peers)
+	for (decltype(auto) kv : peers)
 	{
 		kv.value->Release();
 	}

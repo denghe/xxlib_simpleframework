@@ -13,7 +13,7 @@ int main()
 	std::vector<std::wstring> words = { L"我日", L"日你", L"我日你妈", L"日你妈", L"操", L"fuck" };
 	for (int i = 0; i < 9999999; ++i) words.push_back(std::to_wstring(i));
 	size_t len = 0, minLen = -1;
-	for (auto& word : words)
+	for (decltype(auto) word : words)
 	{
 		if (len < word.size()) len = word.size();
 		if (minLen > word.size()) minLen = word.size();
@@ -24,7 +24,7 @@ int main()
 	ends.resize(len + 1);
 	for (int i = 0; i < len; ++i)
 	{
-		for (auto& word : words)
+		for (decltype(auto) word : words)
 		{
 			if (i >= word.size()) continue;
 			if (ends[i][(size_t)word[i]]) continue;
@@ -74,7 +74,7 @@ int main()
 {
 	std::vector<std::string> words = { "suck", "sucks", "sucker", "fuck", "fucker" };
 	size_t len = 0, minLen = -1;
-	for (auto& word : words)
+	for (decltype(auto) word : words)
 	{
 		if (len < word.size()) len = word.size();
 		if (minLen > word.size()) minLen = word.size();
@@ -83,7 +83,7 @@ int main()
 	masks.resize(len + 1);
 	for (int i = 0; i < len; ++i)
 	{
-		for (auto& word : words)
+		for (decltype(auto) word : words)
 		{
 			if (i >= word.size()) continue;
 			auto& m = masks[i][(size_t)word[i]];

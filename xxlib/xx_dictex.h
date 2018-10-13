@@ -1,6 +1,8 @@
 ﻿#pragma once
 namespace xx
 {
+	// todo: 看上去多个dict的下标是一致的. 可换用 hashset. hashset 需要改造一下以符合使用条件
+
 	template<typename V, typename ...KS>
 	class DictEx : public Object
 	{
@@ -264,8 +266,7 @@ namespace xx
 
 
 
-		// for( auto c :  支持. 返回 IterValue.
-		// 注意: auto 后面不能加 &. 
+		// 支持 for (decltype(auto) iv : dictex) 遍历
 		// 可用 KeyAt<?>( IterValue.index ) 来查 key. 
 		struct IterValue
 		{

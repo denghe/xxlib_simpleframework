@@ -244,7 +244,7 @@ inline Router::Router(xx::UvLoop& loop)
 	serviceClientGuests.Add(sc);
 
 	// 批量绑连接实例的事件
-	for (auto& sc : serviceClientGuests)
+	for (decltype(auto) sc : serviceClientGuests)
 	{
 		sc->OnDisconnect = [this, sc]
 		{
@@ -363,7 +363,7 @@ inline Router::Router(xx::UvLoop& loop)
 inline void Router::Update()
 {
 	// 断线自动重连
-	for (auto& c : serviceClientGuests)
+	for (decltype(auto) c : serviceClientGuests)
 	{
 		if (c->state == xx::UvTcpStates::Disconnected)
 		{
