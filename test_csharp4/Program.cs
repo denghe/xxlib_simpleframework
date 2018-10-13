@@ -38,6 +38,8 @@ public static class Program
         Console.WriteLine(fd.Exists0(1));       // false
         Console.WriteLine(fd.Exists1("b"));     // false
 
-        fd.ForEach(f => { Console.WriteLine(f); }); // 3, c
+        fd.ForEach((i, f) => { Console.WriteLine("key0 = " + fd.KeyAt0(i) + ", key1 = " + fd.KeyAt1(i) + ", f = " + f); });
+        fd.Update0(3, 2);
+        fd.ForEach((i, f) => { Console.WriteLine("key0 = " + fd.KeyAt0(i) + ", key1 = " + fd.KeyAt1(i) + ", f = " + f); });
     }
 }

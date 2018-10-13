@@ -31,7 +31,7 @@ namespace xx
 		template<int keyIndex>
 		struct DictType
 		{
-			using type = Dict<KeyType_t<keyIndex>, Data*>;
+			using type = Dict<KeyType_t<keyIndex>, int>;
 		};
 		template<>
 		struct DictType<(int)0>
@@ -42,7 +42,7 @@ namespace xx
 		using DictType_t = typename DictType<keyIndex>::type;
 
 
-		// dicts[0] 作为主体存储, 存 Data. 其他存 *Data
+		// dicts[0] 作为主体存储, 存 Data. 其他存 dicts[0] 的下标
 		std::array<Unique<Object>, numKeys> dicts;
 
 		template<int keyIndex>
@@ -118,7 +118,7 @@ namespace xx
 			if (index == -1) return false;
 			if constexpr (index)
 			{
-				value = dict.ValueAt(index)->value;
+				value = DictAt<0>()->ValueAt(dict.ValueAt(index)).value;
 			}
 			else
 			{
@@ -158,7 +158,7 @@ namespace xx
 		template<int keyIndex, typename TK, typename...TKS>
 		bool AddCore(Data* const& d, TK&& key, TKS&&...keys) noexcept
 		{
-			auto r = DictAt<keyIndex>()->Add(std::forward<TKS>(key), d);
+			auto r = DictAt<keyIndex>()->Add(std::forward<TKS>(key), d->indexs[0]);
 			if (!r.success)
 			{
 				DictForEach<keyIndex - 1>::RemoveAt(*this, d);
@@ -171,7 +171,7 @@ namespace xx
 		template<int keyIndex, typename TK>
 		bool AddCore(Data* const& d, TK&& key)
 		{
-			auto r = DictAt<keyIndex>()->Add(std::forward<TK>(key), d);
+			auto r = DictAt<keyIndex>()->Add(std::forward<TK>(key), d->indexs[0]);
 			if (!r.success)
 			{
 				DictForEach<keyIndex - 1>::RemoveAt(*this, d);
@@ -190,7 +190,7 @@ namespace xx
 			{
 				int r = dict.Find(key);
 				if (r == -1) return -1;
-				return dict.ValueAt(r)->indexs[0];
+				return dict.ValueAt(r);
 			}
 			else
 			{
@@ -206,7 +206,7 @@ namespace xx
 			if (index == -1) return false;
 			if constexpr (keyIndex)
 			{
-				DictForEach<numKeys - 1>::RemoveAt(*this, dict.ValueAt(index));
+				DictForEach<numKeys - 1>::RemoveAt(*this, &DictAt<0>()->ValueAt(dict.ValueAt(index)));
 			}
 			else
 			{
@@ -281,7 +281,7 @@ namespace xx
 		{
 			DictType_t<0>& dict;
 			int i;
-			bool operator!=(Iter const& other) noexcept 
+			bool operator!=(Iter const& other) noexcept
 			{
 				return i != other.i;
 			}
@@ -305,7 +305,7 @@ namespace xx
 			}
 			return end();
 		}
-		Iter end() noexcept 
+		Iter end() noexcept
 		{
 			return Iter{ *DictAt<0>(), DictAt<0>()->count };
 		}

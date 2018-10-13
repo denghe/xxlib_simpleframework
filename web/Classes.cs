@@ -113,7 +113,7 @@ namespace WEB
             lock (this)
             {
                 var rtv = new List<Manager>();
-                onlineManagers.ForEach(m =>
+                onlineManagers.ForEach((idx, m) =>
                 {
                     rtv.Add(m);
                 });

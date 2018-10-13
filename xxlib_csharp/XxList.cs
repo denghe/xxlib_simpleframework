@@ -437,13 +437,13 @@ namespace xx
             __toStringing = false;
         }
 
+        /// <summary>
+        /// 专用于拼接 mysql 查询串. 简单类型将拼接为 ( xx, xx, .... ) 这样, IObject 将不会在外面加括号
+        /// </summary>
         public override void MySqlAppend(StringBuilder sb, bool ignoreReadOnly)
         {
             if (dataLen == 0) throw new Exception("List no data ??");
-            sb.Append("(");
             ListIBBufferImpl<T>.instance.MySqlAppend(sb, ignoreReadOnly, this);
-            sb.Length -= 2;
-            sb.Append(")");
         }
     }
 
@@ -465,6 +465,7 @@ namespace xx
                 sb.Append(vsBuf[i]);
                 sb.Append(", ");
             }
+            if (vs.dataLen > 0) sb.Length -= 2;
         }
 
 
@@ -632,6 +633,12 @@ namespace xx
         {
             return ((byte)(object)vs[idx]).ToString();
         }
+        public override void MySqlAppend(StringBuilder sb, bool ignoreReadOnly, List<T> vs)
+        {
+            sb.Append("(");
+            base.MySqlAppend(sb, ignoreReadOnly, vs);
+            sb.Append(")");
+        }
     }
     public partial class ListIBBufferImpl_Enum_SByte<T> : ListIBBufferImpl<T>
     {
@@ -670,6 +677,12 @@ namespace xx
         {
             return ((sbyte)(object)vs[idx]).ToString();
         }
+        public override void MySqlAppend(StringBuilder sb, bool ignoreReadOnly, List<T> vs)
+        {
+            sb.Append("(");
+            base.MySqlAppend(sb, ignoreReadOnly, vs);
+            sb.Append(")");
+        }
     }
     public partial class ListIBBufferImpl_Enum_UInt16<T> : ListIBBufferImpl<T>
     {
@@ -705,6 +718,13 @@ namespace xx
         public override string ToStringCore(List<T> vs, int idx)
         {
             return ((ushort)(object)vs[idx]).ToString();
+        }
+
+        public override void MySqlAppend(StringBuilder sb, bool ignoreReadOnly, List<T> vs)
+        {
+            sb.Append("(");
+            base.MySqlAppend(sb, ignoreReadOnly, vs);
+            sb.Append(")");
         }
     }
     public partial class ListIBBufferImpl_Enum_Int16<T> : ListIBBufferImpl<T>
@@ -742,6 +762,13 @@ namespace xx
         {
             return ((short)(object)vs[idx]).ToString();
         }
+
+        public override void MySqlAppend(StringBuilder sb, bool ignoreReadOnly, List<T> vs)
+        {
+            sb.Append("(");
+            base.MySqlAppend(sb, ignoreReadOnly, vs);
+            sb.Append(")");
+        }
     }
     public partial class ListIBBufferImpl_Enum_UInt32<T> : ListIBBufferImpl<T>
     {
@@ -777,6 +804,13 @@ namespace xx
         public override string ToStringCore(List<T> vs, int idx)
         {
             return ((uint)(object)vs[idx]).ToString();
+        }
+
+        public override void MySqlAppend(StringBuilder sb, bool ignoreReadOnly, List<T> vs)
+        {
+            sb.Append("(");
+            base.MySqlAppend(sb, ignoreReadOnly, vs);
+            sb.Append(")");
         }
     }
     public partial class ListIBBufferImpl_Enum_Int32<T> : ListIBBufferImpl<T>
@@ -814,6 +848,13 @@ namespace xx
         {
             return ((int)(object)vs[idx]).ToString();
         }
+
+        public override void MySqlAppend(StringBuilder sb, bool ignoreReadOnly, List<T> vs)
+        {
+            sb.Append("(");
+            base.MySqlAppend(sb, ignoreReadOnly, vs);
+            sb.Append(")");
+        }
     }
     public partial class ListIBBufferImpl_Enum_UInt64<T> : ListIBBufferImpl<T>
     {
@@ -850,6 +891,13 @@ namespace xx
         {
             return ((ulong)(object)vs[idx]).ToString();
         }
+
+        public override void MySqlAppend(StringBuilder sb, bool ignoreReadOnly, List<T> vs)
+        {
+            sb.Append("(");
+            base.MySqlAppend(sb, ignoreReadOnly, vs);
+            sb.Append(")");
+        }
     }
     public partial class ListIBBufferImpl_Enum_Int64<T> : ListIBBufferImpl<T>
     {
@@ -885,6 +933,13 @@ namespace xx
         public override string ToStringCore(List<T> vs, int idx)
         {
             return ((long)(object)vs[idx]).ToString();
+        }
+
+        public override void MySqlAppend(StringBuilder sb, bool ignoreReadOnly, List<T> vs)
+        {
+            sb.Append("(");
+            base.MySqlAppend(sb, ignoreReadOnly, vs);
+            sb.Append(")");
         }
     }
 
@@ -947,6 +1002,7 @@ namespace xx
                 ((Object)(IObject)vs[i]).MySqlAppend(sb, ignoreReadOnly);
                 sb.Append(", ");
             }
+            if (vs.dataLen > 0) sb.Length -= 2;
         }
     }
     public partial class ListIBBufferImpl_Ref<T> : ListIBBufferImpl<T>
@@ -1097,6 +1153,13 @@ namespace xx
         //    }
         //    bb.offset += bytes;
         //}
+
+        public override void MySqlAppend(StringBuilder sb, bool ignoreReadOnly, List<bool> vs)
+        {
+            sb.Append("(");
+            base.MySqlAppend(sb, ignoreReadOnly, vs);
+            sb.Append(")");
+        }
     }
     public partial class ListIBBufferImpl_SByte : ListIBBufferImpl<sbyte>
     {
@@ -1120,6 +1183,13 @@ namespace xx
             Buffer.BlockCopy(bb.buf, bb.offset, vs.buf, 0, len);
             bb.offset += len;
         }
+
+        public override void MySqlAppend(StringBuilder sb, bool ignoreReadOnly, List<sbyte> vs)
+        {
+            sb.Append("(");
+            base.MySqlAppend(sb, ignoreReadOnly, vs);
+            sb.Append(")");
+        }
     }
     public partial class ListIBBufferImpl_Byte : ListIBBufferImpl<byte>
     {
@@ -1142,6 +1212,13 @@ namespace xx
 
             Buffer.BlockCopy(bb.buf, bb.offset, vs.buf, 0, len);
             bb.offset += len;
+        }
+
+        public override void MySqlAppend(StringBuilder sb, bool ignoreReadOnly, List<byte> vs)
+        {
+            sb.Append("(");
+            base.MySqlAppend(sb, ignoreReadOnly, vs);
+            sb.Append(")");
         }
     }
     public partial class ListIBBufferImpl_Int16 : ListIBBufferImpl<short>
@@ -1175,6 +1252,13 @@ namespace xx
                 vsBuf[i] = tmp;
             }
         }
+
+        public override void MySqlAppend(StringBuilder sb, bool ignoreReadOnly, List<short> vs)
+        {
+            sb.Append("(");
+            base.MySqlAppend(sb, ignoreReadOnly, vs);
+            sb.Append(")");
+        }
     }
     public partial class ListIBBufferImpl_UInt16 : ListIBBufferImpl<ushort>
     {
@@ -1206,6 +1290,13 @@ namespace xx
                 bb.Read(ref tmp);
                 vsBuf[i] = tmp;
             }
+        }
+
+        public override void MySqlAppend(StringBuilder sb, bool ignoreReadOnly, List<ushort> vs)
+        {
+            sb.Append("(");
+            base.MySqlAppend(sb, ignoreReadOnly, vs);
+            sb.Append(")");
         }
     }
     public partial class ListIBBufferImpl_Int32 : ListIBBufferImpl<int>
@@ -1239,6 +1330,13 @@ namespace xx
                 vsBuf[i] = tmp;
             }
         }
+
+        public override void MySqlAppend(StringBuilder sb, bool ignoreReadOnly, List<int> vs)
+        {
+            sb.Append("(");
+            base.MySqlAppend(sb, ignoreReadOnly, vs);
+            sb.Append(")");
+        }
     }
     public partial class ListIBBufferImpl_UInt32 : ListIBBufferImpl<uint>
     {
@@ -1270,6 +1368,13 @@ namespace xx
                 bb.Read(ref tmp);
                 vsBuf[i] = tmp;
             }
+        }
+
+        public override void MySqlAppend(StringBuilder sb, bool ignoreReadOnly, List<uint> vs)
+        {
+            sb.Append("(");
+            base.MySqlAppend(sb, ignoreReadOnly, vs);
+            sb.Append(")");
         }
     }
     public partial class ListIBBufferImpl_Int64 : ListIBBufferImpl<long>
@@ -1303,6 +1408,13 @@ namespace xx
                 vsBuf[i] = tmp;
             }
         }
+
+        public override void MySqlAppend(StringBuilder sb, bool ignoreReadOnly, List<long> vs)
+        {
+            sb.Append("(");
+            base.MySqlAppend(sb, ignoreReadOnly, vs);
+            sb.Append(")");
+        }
     }
     public partial class ListIBBufferImpl_UInt64 : ListIBBufferImpl<ulong>
     {
@@ -1335,6 +1447,13 @@ namespace xx
                 vsBuf[i] = tmp;
             }
         }
+
+        public override void MySqlAppend(StringBuilder sb, bool ignoreReadOnly, List<ulong> vs)
+        {
+            sb.Append("(");
+            base.MySqlAppend(sb, ignoreReadOnly, vs);
+            sb.Append(")");
+        }
     }
     public partial class ListIBBufferImpl_Single : ListIBBufferImpl<float>
     {
@@ -1357,6 +1476,13 @@ namespace xx
 
             Buffer.BlockCopy(bb.buf, bb.offset, vs.buf, 0, len * 4);
             bb.offset += len * 4;
+        }
+
+        public override void MySqlAppend(StringBuilder sb, bool ignoreReadOnly, List<float> vs)
+        {
+            sb.Append("(");
+            base.MySqlAppend(sb, ignoreReadOnly, vs);
+            sb.Append(")");
         }
     }
     public partial class ListIBBufferImpl_Double : ListIBBufferImpl<double>
@@ -1418,6 +1544,13 @@ namespace xx
                 vsBuf[i] = tmp;
             }
         }
+
+        public override void MySqlAppend(StringBuilder sb, bool ignoreReadOnly, List<DateTime> vs)
+        {
+            sb.Append("(");
+            base.MySqlAppend(sb, ignoreReadOnly, vs);
+            sb.Append(")");
+        }
     }
     public partial class ListIBBufferImpl_String : ListIBBufferImpl<string>
     {
@@ -1455,6 +1588,7 @@ namespace xx
 
         public override void MySqlAppend(StringBuilder sb, bool ignoreReadOnly, List<string> vs)
         {
+            sb.Append("(");
             var vsBuf = vs.buf;
             for (int i = 0; i < vs.dataLen; i++)
             {
@@ -1462,10 +1596,10 @@ namespace xx
                 sb.Append(vsBuf[i].Replace("'", "''"));
                 sb.Append("', ");
             }
+            if (vs.dataLen > 0) sb.Length -= 2;
+            sb.Append(")");
         }
     }
-
-
 
     public partial class ListIBBufferImpl_NullableBoolean : ListIBBufferImpl<bool?>
     {
@@ -1500,6 +1634,13 @@ namespace xx
         public override string ToStringCore(List<bool?> vs, int idx)
         {
             return vs[idx].HasValue ? vs[idx].Value.ToString() : "nil";
+        }
+
+        public override void MySqlAppend(StringBuilder sb, bool ignoreReadOnly, List<bool?> vs)
+        {
+            sb.Append("(");
+            base.MySqlAppend(sb, ignoreReadOnly, vs);
+            sb.Append(")");
         }
     }
     public partial class ListIBBufferImpl_NullableSByte : ListIBBufferImpl<sbyte?>
@@ -1536,6 +1677,13 @@ namespace xx
         {
             return vs[idx].HasValue ? vs[idx].Value.ToString() : "nil";
         }
+
+        public override void MySqlAppend(StringBuilder sb, bool ignoreReadOnly, List<sbyte?> vs)
+        {
+            sb.Append("(");
+            base.MySqlAppend(sb, ignoreReadOnly, vs);
+            sb.Append(")");
+        }
     }
     public partial class ListIBBufferImpl_NullableByte : ListIBBufferImpl<byte?>
     {
@@ -1570,6 +1718,13 @@ namespace xx
         public override string ToStringCore(List<byte?> vs, int idx)
         {
             return vs[idx].HasValue ? vs[idx].Value.ToString() : "nil";
+        }
+
+        public override void MySqlAppend(StringBuilder sb, bool ignoreReadOnly, List<byte?> vs)
+        {
+            sb.Append("(");
+            base.MySqlAppend(sb, ignoreReadOnly, vs);
+            sb.Append(")");
         }
     }
     public partial class ListIBBufferImpl_NullableInt16 : ListIBBufferImpl<short?>
@@ -1606,6 +1761,13 @@ namespace xx
         {
             return vs[idx].HasValue ? vs[idx].Value.ToString() : "nil";
         }
+
+        public override void MySqlAppend(StringBuilder sb, bool ignoreReadOnly, List<short?> vs)
+        {
+            sb.Append("(");
+            base.MySqlAppend(sb, ignoreReadOnly, vs);
+            sb.Append(")");
+        }
     }
     public partial class ListIBBufferImpl_NullableUInt16 : ListIBBufferImpl<ushort?>
     {
@@ -1640,6 +1802,13 @@ namespace xx
         public override string ToStringCore(List<ushort?> vs, int idx)
         {
             return vs[idx].HasValue ? vs[idx].Value.ToString() : "nil";
+        }
+
+        public override void MySqlAppend(StringBuilder sb, bool ignoreReadOnly, List<ushort?> vs)
+        {
+            sb.Append("(");
+            base.MySqlAppend(sb, ignoreReadOnly, vs);
+            sb.Append(")");
         }
     }
     public partial class ListIBBufferImpl_NullableInt32 : ListIBBufferImpl<int?>
@@ -1676,6 +1845,13 @@ namespace xx
         {
             return vs[idx].HasValue ? vs[idx].Value.ToString() : "nil";
         }
+
+        public override void MySqlAppend(StringBuilder sb, bool ignoreReadOnly, List<int?> vs)
+        {
+            sb.Append("(");
+            base.MySqlAppend(sb, ignoreReadOnly, vs);
+            sb.Append(")");
+        }
     }
     public partial class ListIBBufferImpl_NullableUInt32 : ListIBBufferImpl<uint?>
     {
@@ -1710,6 +1886,13 @@ namespace xx
         public override string ToStringCore(List<uint?> vs, int idx)
         {
             return vs[idx].HasValue ? vs[idx].Value.ToString() : "nil";
+        }
+
+        public override void MySqlAppend(StringBuilder sb, bool ignoreReadOnly, List<uint?> vs)
+        {
+            sb.Append("(");
+            base.MySqlAppend(sb, ignoreReadOnly, vs);
+            sb.Append(")");
         }
     }
     public partial class ListIBBufferImpl_NullableInt64 : ListIBBufferImpl<long?>
@@ -1746,6 +1929,13 @@ namespace xx
         {
             return vs[idx].HasValue ? vs[idx].Value.ToString() : "nil";
         }
+
+        public override void MySqlAppend(StringBuilder sb, bool ignoreReadOnly, List<long?> vs)
+        {
+            sb.Append("(");
+            base.MySqlAppend(sb, ignoreReadOnly, vs);
+            sb.Append(")");
+        }
     }
     public partial class ListIBBufferImpl_NullableUInt64 : ListIBBufferImpl<ulong?>
     {
@@ -1780,6 +1970,13 @@ namespace xx
         public override string ToStringCore(List<ulong?> vs, int idx)
         {
             return vs[idx].HasValue ? vs[idx].Value.ToString() : "nil";
+        }
+
+        public override void MySqlAppend(StringBuilder sb, bool ignoreReadOnly, List<ulong?> vs)
+        {
+            sb.Append("(");
+            base.MySqlAppend(sb, ignoreReadOnly, vs);
+            sb.Append(")");
         }
     }
     public partial class ListIBBufferImpl_NullableSingle : ListIBBufferImpl<float?>
@@ -1816,6 +2013,13 @@ namespace xx
         {
             return vs[idx].HasValue ? vs[idx].Value.ToString() : "nil";
         }
+
+        public override void MySqlAppend(StringBuilder sb, bool ignoreReadOnly, List<float?> vs)
+        {
+            sb.Append("(");
+            base.MySqlAppend(sb, ignoreReadOnly, vs);
+            sb.Append(")");
+        }
     }
     public partial class ListIBBufferImpl_NullableDouble : ListIBBufferImpl<double?>
     {
@@ -1850,6 +2054,13 @@ namespace xx
         public override string ToStringCore(List<double?> vs, int idx)
         {
             return vs[idx].HasValue ? vs[idx].Value.ToString() : "nil";
+        }
+
+        public override void MySqlAppend(StringBuilder sb, bool ignoreReadOnly, List<double?> vs)
+        {
+            sb.Append("(");
+            base.MySqlAppend(sb, ignoreReadOnly, vs);
+            sb.Append(")");
         }
     }
 }
