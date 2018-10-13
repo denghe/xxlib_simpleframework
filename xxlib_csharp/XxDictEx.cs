@@ -10,21 +10,16 @@ namespace xx
         protected class Data
         {
             public V value;
-            public int idx0 = -1;
-            public int idx1 = -1;
         }
-
 
         protected Dict<K0, Data> d0;
         protected Dict<K1, Data> d1;
-
 
         public DictEx(int capacity = 16)
         {
             d0 = new Dict<K0, Data>(capacity);
             d1 = new Dict<K1, Data>(capacity);
         }
-
 
         public bool Exists0(K0 key0)
         {
@@ -35,22 +30,28 @@ namespace xx
             return d1.Find(key1) != -1;
         }
 
-
         public bool TryGetValue0(K0 key0, out V value)
         {
-            Data d;
-            var r = d0.TryGetValue(key0, out d);
-            value = d.value;
-            return r;
+            int idx = d0.Find(key0);
+            if (idx == -1)
+            {
+                value = default(V);
+                return false;
+            }
+            value = d0.ValueAt(idx).value;
+            return true;
         }
         public bool TryGetValue1(K1 key1, out V value)
         {
-            Data d;
-            var r = d1.TryGetValue(key1, out d);
-            value = d.value;
-            return r;
+            int idx = d1.Find(key1);
+            if (idx == -1)
+            {
+                value = default(V);
+                return false;
+            }
+            value = d1.ValueAt(idx).value;
+            return true;
         }
-
 
         public V GetValue0(K0 key0)
         {
@@ -62,7 +63,6 @@ namespace xx
             var d = d1[key1];
             return d == null ? default(V) : d.value;
         }
-
 
         public bool Add(V value, K0 key0, K1 key1)
         {
@@ -80,28 +80,23 @@ namespace xx
                 return false;
             }
 
-            d.idx0 = r0.index;
-            d.idx1 = r1.index;
-
             return true;
         }
 
-
         public bool Remove0(K0 key0)
         {
-            Data d;
-            if (!d0.TryGetValue(key0, out d)) return false;
-            RemoveAt(d);
+            int idx = d0.Find(key0);
+            if (idx == -1) return false;
+            RemoveAt(idx);
             return true;
         }
         public bool Remove1(K1 key1)
         {
-            Data d;
-            if (!d1.TryGetValue(key1, out d)) return false;
-            RemoveAt(d);
+            int idx = d1.Find(key1);
+            if (idx == -1) return false;
+            RemoveAt(idx);
             return true;
         }
-
 
         public void Clear()
         {
@@ -109,18 +104,14 @@ namespace xx
             d1.Clear();
         }
 
-
         public int Find0(K0 key0)
         {
             return d0.Find(key0);
         }
         public int Find1(K1 key1)
         {
-            var idx = d1.Find(key1);
-            if (idx == -1) return -1;
-            return d1.ValueAt(idx).idx0;
+            return d1.Find(key1);
         }
-
 
         public K0 KeyAt0(int idx)
         {
@@ -131,21 +122,15 @@ namespace xx
             return d1.KeyAt(idx);
         }
 
-
         public V ValueAt(int idx)
         {
             return d0.ValueAt(idx).value;
         }
         public void RemoveAt(int idx)
         {
-            RemoveAt(d0.ValueAt(idx));
+            d0.RemoveAt(idx);
+            d1.RemoveAt(idx);
         }
-        protected void RemoveAt(Data d)
-        {
-            d0.RemoveAt(d.idx0);
-            d1.RemoveAt(d.idx1);
-        }
-
 
         public bool Update0(K0 oldKey0, K0 newKey0)
         {
@@ -155,18 +140,15 @@ namespace xx
         {
             return d1.Update(oldKey1, newKey1);
         }
+
         public bool UpdateAt0(int idx, K0 newKey0)
         {
             return d0.UpdateAt(idx, newKey0);
         }
         public bool UpdateAt1(int idx, K1 newKey1)
         {
-            return d1.UpdateAt(d0.ValueAt(idx).idx1, newKey1);
+            return d1.UpdateAt(idx, newKey1);
         }
-
-
-
-
 
         public int Count
         {
@@ -190,7 +172,6 @@ namespace xx
         }
     }
 
-
     /// <summary>
     /// 多 key 字典之 3 个 key
     /// </summary>
@@ -199,16 +180,11 @@ namespace xx
         protected class Data
         {
             public V value;
-            public int idx0 = -1;
-            public int idx1 = -1;
-            public int idx2 = -1;
         }
-
 
         protected Dict<K0, Data> d0;
         protected Dict<K1, Data> d1;
         protected Dict<K2, Data> d2;
-
 
         public DictEx(int capacity = 16)
         {
@@ -216,7 +192,6 @@ namespace xx
             d1 = new Dict<K1, Data>(capacity);
             d2 = new Dict<K2, Data>(capacity);
         }
-
 
         public bool Exists0(K0 key0)
         {
@@ -231,29 +206,39 @@ namespace xx
             return d2.Find(key2) != -1;
         }
 
-
         public bool TryGetValue0(K0 key0, out V value)
         {
-            Data d;
-            var r = d0.TryGetValue(key0, out d);
-            value = d.value;
-            return r;
+            int idx = d0.Find(key0);
+            if (idx == -1)
+            {
+                value = default(V);
+                return false;
+            }
+            value = d0.ValueAt(idx).value;
+            return true;
         }
         public bool TryGetValue1(K1 key1, out V value)
         {
-            Data d;
-            var r = d1.TryGetValue(key1, out d);
-            value = d.value;
-            return r;
+            int idx = d1.Find(key1);
+            if (idx == -1)
+            {
+                value = default(V);
+                return false;
+            }
+            value = d1.ValueAt(idx).value;
+            return true;
         }
         public bool TryGetValue2(K2 key2, out V value)
         {
-            Data d;
-            var r = d2.TryGetValue(key2, out d);
-            value = d.value;
-            return r;
+            int idx = d2.Find(key2);
+            if (idx == -1)
+            {
+                value = default(V);
+                return false;
+            }
+            value = d2.ValueAt(idx).value;
+            return true;
         }
-
 
         public V GetValue0(K0 key0)
         {
@@ -270,8 +255,6 @@ namespace xx
             var d = d2[key2];
             return d == null ? default(V) : d.value;
         }
-
-
 
         public bool Add(V value, K0 key0, K1 key1, K2 key2)
         {
@@ -297,36 +280,30 @@ namespace xx
                 return false;
             }
 
-            d.idx0 = r0.index;
-            d.idx1 = r1.index;
-            d.idx2 = r2.index;
-
             return true;
         }
 
-
         public bool Remove0(K0 key0)
         {
-            Data d;
-            if (!d0.TryGetValue(key0, out d)) return false;
-            RemoveAt(d);
+            int idx = d0.Find(key0);
+            if (idx == -1) return false;
+            RemoveAt(idx);
             return true;
         }
         public bool Remove1(K1 key1)
         {
-            Data d;
-            if (!d1.TryGetValue(key1, out d)) return false;
-            RemoveAt(d);
+            int idx = d1.Find(key1);
+            if (idx == -1) return false;
+            RemoveAt(idx);
             return true;
         }
         public bool Remove2(K2 key2)
         {
-            Data d;
-            if (!d2.TryGetValue(key2, out d)) return false;
-            RemoveAt(d);
+            int idx = d2.Find(key2);
+            if (idx == -1) return false;
+            RemoveAt(idx);
             return true;
         }
-
 
         public void Clear()
         {
@@ -341,17 +318,12 @@ namespace xx
         }
         public int Find1(K1 key1)
         {
-            var idx = d1.Find(key1);
-            if (idx == -1) return -1;
-            return d1.ValueAt(idx).idx0;
+            return d1.Find(key1);
         }
         public int Find2(K2 key2)
         {
-            var idx = d2.Find(key2);
-            if (idx == -1) return -1;
-            return d2.ValueAt(idx).idx0;
+            return d2.Find(key2);
         }
-
 
         public K0 KeyAt0(int idx)
         {
@@ -366,50 +338,42 @@ namespace xx
             return d2.KeyAt(idx);
         }
 
-
         public V ValueAt(int idx)
         {
             return d0.ValueAt(idx).value;
         }
         public void RemoveAt(int idx)
         {
-            RemoveAt(d0.ValueAt(idx));
-        }
-        protected void RemoveAt(Data d)
-        {
-            d0.RemoveAt(d.idx0);
-            d1.RemoveAt(d.idx1);
-            d2.RemoveAt(d.idx2);
+            d0.RemoveAt(idx);
+            d1.RemoveAt(idx);
+            d2.RemoveAt(idx);
         }
 
+        public bool Update0(K0 oldKey0, K0 newKey0)
+        {
+            return d0.Update(oldKey0, newKey0);
+        }
+        public bool Update1(K1 oldKey1, K1 newKey1)
+        {
+            return d1.Update(oldKey1, newKey1);
+        }
+        public bool Update2(K2 oldKey2, K2 newKey2)
+        {
+            return d2.Update(oldKey2, newKey2);
+        }
 
-        public bool Update0(K0 oldKey1, K0 newKey0)
-        {
-            return d0.Update(oldKey1, newKey0);
-        }
-        public bool Update1(K1 oldKey2, K1 newKey1)
-        {
-            return d1.Update(oldKey2, newKey1);
-        }
-        public bool Update2(K2 oldKey3, K2 newKey2)
-        {
-            return d2.Update(oldKey3, newKey2);
-        }
         public bool UpdateAt0(int idx, K0 newKey0)
         {
             return d0.UpdateAt(idx, newKey0);
         }
         public bool UpdateAt1(int idx, K1 newKey1)
         {
-            return d1.UpdateAt(d0.ValueAt(idx).idx1, newKey1);
+            return d1.UpdateAt(idx, newKey1);
         }
         public bool UpdateAt2(int idx, K2 newKey2)
         {
-            return d2.UpdateAt(d0.ValueAt(idx).idx2, newKey2);
+            return d2.UpdateAt(idx, newKey2);
         }
-
-
-
 
         public int Count
         {
@@ -442,18 +406,12 @@ namespace xx
         protected class Data
         {
             public V value;
-            public int idx0 = -1;
-            public int idx1 = -1;
-            public int idx2 = -1;
-            public int idx3 = -1;
         }
-
 
         protected Dict<K0, Data> d0;
         protected Dict<K1, Data> d1;
         protected Dict<K2, Data> d2;
         protected Dict<K3, Data> d3;
-
 
         public DictEx(int capacity = 16)
         {
@@ -462,7 +420,6 @@ namespace xx
             d2 = new Dict<K2, Data>(capacity);
             d3 = new Dict<K3, Data>(capacity);
         }
-
 
         public bool Exists0(K0 key0)
         {
@@ -481,36 +438,50 @@ namespace xx
             return d3.Find(key3) != -1;
         }
 
-
         public bool TryGetValue0(K0 key0, out V value)
         {
-            Data d;
-            var r = d0.TryGetValue(key0, out d);
-            value = d.value;
-            return r;
+            int idx = d0.Find(key0);
+            if (idx == -1)
+            {
+                value = default(V);
+                return false;
+            }
+            value = d0.ValueAt(idx).value;
+            return true;
         }
         public bool TryGetValue1(K1 key1, out V value)
         {
-            Data d;
-            var r = d1.TryGetValue(key1, out d);
-            value = d.value;
-            return r;
+            int idx = d1.Find(key1);
+            if (idx == -1)
+            {
+                value = default(V);
+                return false;
+            }
+            value = d1.ValueAt(idx).value;
+            return true;
         }
         public bool TryGetValue2(K2 key2, out V value)
         {
-            Data d;
-            var r = d2.TryGetValue(key2, out d);
-            value = d.value;
-            return r;
+            int idx = d2.Find(key2);
+            if (idx == -1)
+            {
+                value = default(V);
+                return false;
+            }
+            value = d2.ValueAt(idx).value;
+            return true;
         }
         public bool TryGetValue3(K3 key3, out V value)
         {
-            Data d;
-            var r = d3.TryGetValue(key3, out d);
-            value = d.value;
-            return r;
+            int idx = d3.Find(key3);
+            if (idx == -1)
+            {
+                value = default(V);
+                return false;
+            }
+            value = d3.ValueAt(idx).value;
+            return true;
         }
-
 
         public V GetValue0(K0 key0)
         {
@@ -532,8 +503,6 @@ namespace xx
             var d = d3[key3];
             return d == null ? default(V) : d.value;
         }
-
-
 
         public bool Add(V value, K0 key0, K1 key1, K2 key2, K3 key3)
         {
@@ -568,46 +537,37 @@ namespace xx
                 return false;
             }
 
-            d.idx0 = r0.index;
-            d.idx1 = r1.index;
-            d.idx2 = r2.index;
-            d.idx3 = r3.index;
-
             return true;
         }
 
-
         public bool Remove0(K0 key0)
         {
-            Data d;
-            if (!d0.TryGetValue(key0, out d)) return false;
-            RemoveAt(d);
+            int idx = d0.Find(key0);
+            if (idx == -1) return false;
+            RemoveAt(idx);
             return true;
         }
         public bool Remove1(K1 key1)
         {
-            Data d;
-            if (!d1.TryGetValue(key1, out d)) return false;
-            RemoveAt(d);
-
+            int idx = d1.Find(key1);
+            if (idx == -1) return false;
+            RemoveAt(idx);
             return true;
         }
         public bool Remove2(K2 key2)
         {
-            Data d;
-            if (!d2.TryGetValue(key2, out d)) return false;
-            RemoveAt(d);
-
+            int idx = d2.Find(key2);
+            if (idx == -1) return false;
+            RemoveAt(idx);
             return true;
         }
         public bool Remove3(K3 key3)
         {
-            Data d;
-            if (!d3.TryGetValue(key3, out d)) return false;
-            RemoveAt(d);
+            int idx = d3.Find(key3);
+            if (idx == -1) return false;
+            RemoveAt(idx);
             return true;
         }
-
 
         public void Clear()
         {
@@ -617,30 +577,22 @@ namespace xx
             d3.Clear();
         }
 
-
         public int Find0(K0 key0)
         {
             return d0.Find(key0);
         }
         public int Find1(K1 key1)
         {
-            var idx = d1.Find(key1);
-            if (idx == -1) return -1;
-            return d1.ValueAt(idx).idx0;
+            return d1.Find(key1);
         }
         public int Find2(K2 key2)
         {
-            var idx = d2.Find(key2);
-            if (idx == -1) return -1;
-            return d2.ValueAt(idx).idx0;
+            return d2.Find(key2);
         }
         public int Find3(K3 key3)
         {
-            var idx = d3.Find(key3);
-            if (idx == -1) return -1;
-            return d3.ValueAt(idx).idx0;
+            return d3.Find(key3);
         }
-
 
         public K0 KeyAt0(int idx)
         {
@@ -659,58 +611,51 @@ namespace xx
             return d3.KeyAt(idx);
         }
 
-
         public V ValueAt(int idx)
         {
             return d0.ValueAt(idx).value;
         }
         public void RemoveAt(int idx)
         {
-            RemoveAt(d0.ValueAt(idx));
-        }
-        protected void RemoveAt(Data d)
-        {
-            d0.RemoveAt(d.idx0);
-            d1.RemoveAt(d.idx1);
-            d2.RemoveAt(d.idx2);
-            d3.RemoveAt(d.idx3);
+            d0.RemoveAt(idx);
+            d1.RemoveAt(idx);
+            d2.RemoveAt(idx);
+            d3.RemoveAt(idx);
         }
 
+        public bool Update0(K0 oldKey0, K0 newKey0)
+        {
+            return d0.Update(oldKey0, newKey0);
+        }
+        public bool Update1(K1 oldKey1, K1 newKey1)
+        {
+            return d1.Update(oldKey1, newKey1);
+        }
+        public bool Update2(K2 oldKey2, K2 newKey2)
+        {
+            return d2.Update(oldKey2, newKey2);
+        }
+        public bool Update3(K3 oldKey3, K3 newKey3)
+        {
+            return d3.Update(oldKey3, newKey3);
+        }
 
-        public bool Update0(K0 oldKey1, K0 newKey0)
-        {
-            return d0.Update(oldKey1, newKey0);
-        }
-        public bool Update1(K1 oldKey2, K1 newKey1)
-        {
-            return d1.Update(oldKey2, newKey1);
-        }
-        public bool Update2(K2 oldKey3, K2 newKey2)
-        {
-            return d2.Update(oldKey3, newKey2);
-        }
-        public bool Update3(K3 oldKey4, K3 newKey3)
-        {
-            return d3.Update(oldKey4, newKey3);
-        }
         public bool UpdateAt0(int idx, K0 newKey0)
         {
             return d0.UpdateAt(idx, newKey0);
         }
         public bool UpdateAt1(int idx, K1 newKey1)
         {
-            return d1.UpdateAt(d0.ValueAt(idx).idx1, newKey1);
+            return d1.UpdateAt(idx, newKey1);
         }
         public bool UpdateAt2(int idx, K2 newKey2)
         {
-            return d2.UpdateAt(d0.ValueAt(idx).idx2, newKey2);
+            return d2.UpdateAt(idx, newKey2);
         }
         public bool UpdateAt3(int idx, K3 newKey3)
         {
-            return d3.UpdateAt(d0.ValueAt(idx).idx3, newKey3);
+            return d3.UpdateAt(idx, newKey3);
         }
-
-
 
         public int Count
         {

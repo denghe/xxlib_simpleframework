@@ -20,11 +20,13 @@ static xx::Weak<T>& GetSelf(void* const& p) noexcept
 	return *((xx::Weak<T>*)p - 1);
 }
 
+// 释放头部含有 this + version number 的指针内存
 static void Free(void* const& p) noexcept
 {
 	::free((xx::Weak<xx::Object>*)p - 1);
 }
 
+// 关闭并释放
 static void CloseAndFree(uv_handle_t* const& p) noexcept
 {
 	if (uv_is_closing(p)) return;
@@ -34,66 +36,35 @@ static void CloseAndFree(uv_handle_t* const& p) noexcept
 	});
 }
 
+// 常用内存分配回调
 static void AllocCB(uv_handle_t* h, size_t suggested_size, uv_buf_t* buf) noexcept
 {
 	buf->base = (char*)((xx::MemPool*)h->loop->data)->Alloc(suggested_size);
 	buf->len = decltype(buf->len)(suggested_size);
 }
 
-static int TcpWrite(void* stream, char* inBuf, uint32_t len) noexcept
-{
-	struct write_req_t
-	{
-		xx::MemPool* mp;
-		uv_write_t req;
-		uv_buf_t buf;
-	};
-	assert(stream);
-	auto mp = (xx::MemPool*)((uv_stream_t*)stream)->loop->data;
-	auto req = (write_req_t*)mp->Alloc(sizeof(write_req_t));
-	req->mp = mp;
-	auto buf = (char*)mp->Alloc(len);
-	memcpy(buf, inBuf, len);
-	req->buf = uv_buf_init(buf, (uint32_t)len);
-	return uv_write((uv_write_t*)req, (uv_stream_t*)stream, &req->buf, 1, [](uv_write_t *req, int status) noexcept
-	{
-		//if (status) fprintf(stderr, "Write error: %s\n", uv_strerror(status));
-		auto *wr = (write_req_t*)req;
-		wr->mp->Free(wr->buf.base);
-		wr->mp->Free(wr);
-	});
-}
-
-static int FillIP(uv_tcp_t* stream, char* buf, size_t bufLen) noexcept
-{
-	sockaddr_in6 saddr;
-	int len = sizeof(saddr);
-	int r = 0;
-	if ((r = uv_tcp_getpeername(stream, (sockaddr*)&saddr, &len))) return r;
-	if (saddr.sin6_family == AF_INET6)
-	{
-		if ((r = uv_ip6_name(&saddr, buf, (int)bufLen))) return r;
-	}
-	else
-	{
-		if ((r = uv_ip4_name((sockaddr_in*)&saddr, buf, (int)bufLen))) return r;
-	}
-	return 0;
-}
-
-static int FillIP(sockaddr_in* addr, char* buf, size_t bufLen) noexcept
+// 地址转为 IP
+static int AddressToIP(sockaddr_in* addr, char* buf, size_t bufLen, bool includePort) noexcept
 {
 	int r = 0;
 	if (addr->sin_family == AF_INET6)
 	{
 		if ((r = uv_ip6_name((sockaddr_in6*)addr, buf, (int)bufLen))) return r;
+		if (includePort)
+		{
+			auto dataLen = strlen(buf);
+			sprintf(buf + dataLen, ":%d", ntohs(((sockaddr_in6*)addr)->sin6_port));
+		}
 	}
 	else
 	{
 		if ((r = uv_ip4_name(addr, buf, (int)bufLen))) return r;
+		if (includePort)
+		{
+			auto dataLen = strlen(buf);
+			sprintf(buf + dataLen, ":%d", ntohs(addr->sin_port));
+		}
 	}
-	auto dataLen = strlen(buf);
-	sprintf(buf + dataLen, ":%d", ntohs(addr->sin_port));
 	return 0;
 }
 
@@ -348,7 +319,7 @@ void xx::UvDnsVisitor::OnResolvedCBImpl(void *resolver, int status, void *res)
 			else
 			{
 				uv_ip4_name((sockaddr_in*)ai->ai_addr, s2.buf, s2.bufLen);
-			}
+}
 			s2.dataLen = strlen(s2.buf);
 			if (!s1.Equals(s2))
 			{
@@ -839,7 +810,27 @@ void xx::UvTcpBase::OnReadCBImpl(void* stream, ptrdiff_t nread, void const* buf_
 int xx::UvTcpBase::SendBytes(char const* const& inBuf, int const& len) noexcept
 {
 	assert(addrPtr && inBuf && len);
-	return TcpWrite(ptr, (char*)inBuf, len);
+	if (!ptr) return -1;
+
+	struct write_req_t
+	{
+		xx::MemPool* mp;
+		uv_write_t req;
+		uv_buf_t buf;
+	};
+	auto mp = (xx::MemPool*)((uv_stream_t*)ptr)->loop->data;
+	auto req = (write_req_t*)mp->Alloc(sizeof(write_req_t));
+	req->mp = mp;
+	auto buf = (char*)mp->Alloc(len);
+	memcpy(buf, inBuf, len);
+	req->buf = uv_buf_init(buf, (uint32_t)len);
+	return uv_write((uv_write_t*)req, (uv_stream_t*)ptr, &req->buf, 1, [](uv_write_t *req, int status) noexcept
+	{
+		//if (status) fprintf(stderr, "Write error: %s\n", uv_strerror(status));
+		auto *wr = (write_req_t*)req;
+		wr->mp->Free(wr->buf.base);
+		wr->mp->Free(wr);
+	});
 }
 
 size_t xx::UvTcpBase::GetSendQueueSize() noexcept
@@ -908,12 +899,16 @@ bool xx::UvTcpPeer::Disconnected() noexcept
 	return false;
 }
 
-const char* xx::UvTcpPeer::Ip() noexcept
+const char* xx::UvTcpPeer::Ip(bool includePort) noexcept
 {
-	assert(ptr);
+	if (!ptr) return nullptr;
 	if (ipBuf[0]) return ipBuf.data();
-	if (FillIP((uv_tcp_t*)ptr, ipBuf.data(), (int)ipBuf.size())) return nullptr;
-	return ipBuf.data();
+
+	sockaddr_in6 saddr;
+	int len = sizeof(saddr);
+	if (uv_tcp_getpeername((uv_tcp_t*)ptr, (sockaddr*)&saddr, &len)) return nullptr;
+
+	return AddressToIP((sockaddr_in*)addrPtr, ipBuf.data(), ipBuf.size(), includePort) ? nullptr : ipBuf.data();
 }
 
 
@@ -1774,12 +1769,12 @@ bool xx::UvUdpPeer::Disconnected() noexcept
 	return false;
 }
 
-char* xx::UvUdpPeer::Ip() noexcept
+const char* xx::UvUdpPeer::Ip(bool includePort) noexcept
 {
-	assert(ptr);
+	if (!ptr) return nullptr;
 	if (ipBuf[0]) return ipBuf.data();
-	if (FillIP((sockaddr_in*)addrPtr, ipBuf.data(), ipBuf.size())) return nullptr;
-	return ipBuf.data();
+
+	return AddressToIP((sockaddr_in*)addrPtr, ipBuf.data(), ipBuf.size(), includePort) ? nullptr : ipBuf.data();
 }
 
 

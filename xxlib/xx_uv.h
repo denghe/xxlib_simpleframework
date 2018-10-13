@@ -285,7 +285,7 @@ namespace xx
 		void DisconnectImpl() noexcept override;
 		bool Disconnected() noexcept override;
 		std::array<char, 64> ipBuf;
-		const char* Ip() noexcept;
+		const char* Ip(bool includePort = true) noexcept;
 	};
 
 	class UvTcpClient : public UvTcpBase
@@ -452,7 +452,7 @@ namespace xx
 		bool Disconnected() noexcept override;
 
 		std::array<char, 64> ipBuf;
-		char* Ip() noexcept;
+		const char* Ip(bool includePort = true) noexcept;
 	};
 
 	class UvUdpClient : public UvUdpBase

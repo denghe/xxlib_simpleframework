@@ -44,7 +44,7 @@ int main2()
 		Cout(r.success, ", ", r.index, '\n');
 
 		r = de.Add(f, f.v1, f.v2);
-		Cout(r.success, ", ", r.index, '\n');
+		Cout(r.success, ", ", r.index, '\n');	// false
 	}
 
 	{
@@ -53,8 +53,9 @@ int main2()
 		auto r = de.Add(f, f.v1, f.v2);
 		Cout(r.success, ", ", r.index, '\n');
 
+		f.v1 = 3;
 		r = de.Add(f, f.v1, f.v2);
-		Cout(r.success, ", ", r.index, '\n');
+		Cout(r.success, ", ", r.index, '\n');	// false
 	}
 
 	de.Add(Foo{}, 3, 4);
@@ -71,7 +72,7 @@ int main2()
 
 	for (decltype(auto) iv : de)
 	{
-		Cout("k0: ", de.KeyAt<0>(iv.index), ", k1: ", de.KeyAt<1>(iv.index), ", foo = ", iv.Value().v1, ", ", iv.Value().v2, "\n");
+		Cout("k0: ", de.KeyAt<0>(iv.index), ", k1: ", de.KeyAt<1>(iv.index), ", foo = ", iv.value.v1, ", ", iv.value.v2, "\n");
 	}
 
 	return 0;

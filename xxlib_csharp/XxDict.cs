@@ -285,6 +285,15 @@ namespace xx
         }
 
         /// <summary>
+        /// 同 ValueAt
+        /// </summary>
+        public V At(int idx)
+        {
+            Debug.Assert(idx >= 0 && idx < count && items[idx].prev != -2);
+            return items[idx].value;
+        }
+
+        /// <summary>
         /// 根据 存储编号 来定位到存储体. 
         /// </summary>
         public Data DataAt(int idx)
