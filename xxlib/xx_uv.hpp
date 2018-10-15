@@ -1,13 +1,20 @@
 ﻿namespace xx
 {
 	template<typename T>
-	inline int UvTcpUdpBase::Send(T const & pkg) noexcept
+	inline int UvTcpUdpBase::Send(T const& pkg) noexcept
 	{
 		//assert(pkg);
 		bbSend.Clear();
 		bbSend.Reserve(5);
 		bbSend.dataLen = 5;
-		bbSend.WriteRoot(pkg);
+		if constexpr (std::is_same<xx::BBuffer, T>::value)
+		{
+			bbSend.WriteBuf(pkg);
+		}
+		else
+		{
+			bbSend.WriteRoot(pkg);
+		}
 		auto dataLen = bbSend.dataLen - 5;
 		if (dataLen <= std::numeric_limits<uint16_t>::max())
 		{
@@ -30,7 +37,7 @@
 	}
 
 	template<typename T>
-	inline uint32_t UvTcpUdpBase::SendRequest(T const & pkg, std::function<void(uint32_t, BBuffer*)>&& cb, int const& interval) noexcept
+	inline uint32_t UvTcpUdpBase::SendRequest(T const& pkg, std::function<void(uint32_t, BBuffer*)>&& cb, int const& interval) noexcept
 	{
 		assert(loop.rpcMgr);
 		bbSend.Clear();
@@ -38,7 +45,14 @@
 		bbSend.dataLen = 5;
 		auto serial = loop.rpcMgr->Register(std::move(cb), interval);	// 注册回调并得到流水号
 		bbSend.Write(serial);											// 在包前写入流水号
-		bbSend.WriteRoot(pkg);
+		if constexpr (std::is_same<xx::BBuffer, T>::value)
+		{
+			bbSend.WriteBuf(pkg);
+		}
+		else
+		{
+			bbSend.WriteRoot(pkg);
+		}
 		auto dataLen = bbSend.dataLen - 5;
 		auto r = 0;
 		if (dataLen <= std::numeric_limits<uint16_t>::max())
@@ -68,13 +82,20 @@
 	}
 
 	template<typename T>
-	inline int UvTcpUdpBase::SendResponse(uint32_t const& serial, T const & pkg) noexcept
+	inline int UvTcpUdpBase::SendResponse(uint32_t const& serial, T const& pkg) noexcept
 	{
 		bbSend.Clear();
 		bbSend.Reserve(5);
 		bbSend.dataLen = 5;
 		bbSend.Write(serial);											// 在包前写入流水号
-		bbSend.WriteRoot(pkg);
+		if constexpr (std::is_same<xx::BBuffer, T>::value)
+		{
+			bbSend.WriteBuf(pkg);
+		}
+		else
+		{
+			bbSend.WriteRoot(pkg);
+		}
 		auto dataLen = bbSend.dataLen - 5;
 		if (dataLen <= std::numeric_limits<uint16_t>::max())
 		{
@@ -98,13 +119,20 @@
 
 
 	template<typename T>
-	inline int UvTcpUdpBase::SendRouting(char const* const& serviceAddr, size_t const& serviceAddrLen, T const & pkg) noexcept
+	inline int UvTcpUdpBase::SendRouting(char const* const& serviceAddr, size_t const& serviceAddrLen, T const& pkg) noexcept
 	{
 		bbSend.Clear();
 		bbSend.Reserve(5);
 		bbSend.dataLen = 5;
 		bbSend.WriteBuf(serviceAddr, serviceAddrLen);					// 在包前写入地址
-		bbSend.WriteRoot(pkg);
+		if constexpr (std::is_same<xx::BBuffer, T>::value)
+		{
+			bbSend.WriteBuf(pkg);
+		}
+		else
+		{
+			bbSend.WriteRoot(pkg);
+		}
 		auto dataLen = bbSend.dataLen - 5;
 		if (dataLen <= std::numeric_limits<uint16_t>::max())
 		{
@@ -127,7 +155,7 @@
 	}
 
 	template<typename T>
-	inline uint32_t UvTcpUdpBase::SendRoutingRequest(char const* const& serviceAddr, size_t const& serviceAddrLen, T const & pkg, std::function<void(uint32_t, BBuffer*)>&& cb, int const& interval) noexcept
+	inline uint32_t UvTcpUdpBase::SendRoutingRequest(char const* const& serviceAddr, size_t const& serviceAddrLen, T const& pkg, std::function<void(uint32_t, BBuffer*)>&& cb, int const& interval) noexcept
 	{
 		bbSend.Clear();
 		bbSend.Reserve(5);
@@ -135,7 +163,14 @@
 		bbSend.WriteBuf(serviceAddr, serviceAddrLen);					// 在包前写入地址
 		auto serial = loop.rpcMgr->Register(std::move(cb), interval);	// 注册回调并得到流水号
 		bbSend.Write(serial);											// 在包前写入流水号
-		bbSend.WriteRoot(pkg);
+		if constexpr (std::is_same<xx::BBuffer, T>::value)
+		{
+			bbSend.WriteBuf(pkg);
+		}
+		else
+		{
+			bbSend.WriteRoot(pkg);
+		}
 		auto dataLen = bbSend.dataLen - 5;
 		auto r = 0;
 		if (dataLen <= std::numeric_limits<uint16_t>::max())
@@ -165,14 +200,21 @@
 	}
 
 	template<typename T>
-	inline int UvTcpUdpBase::SendRoutingResponse(char const* const& serviceAddr, size_t const& serviceAddrLen, uint32_t const& serial, T const & pkg) noexcept
+	inline int UvTcpUdpBase::SendRoutingResponse(char const* const& serviceAddr, size_t const& serviceAddrLen, uint32_t const& serial, T const& pkg) noexcept
 	{
 		bbSend.Clear();
 		bbSend.Reserve(5);
 		bbSend.dataLen = 5;
 		bbSend.WriteBuf(serviceAddr, serviceAddrLen);					// 在包前写入地址
 		bbSend.Write(serial);											// 在包前写入流水号
-		bbSend.WriteRoot(pkg);
+		if constexpr (std::is_same<xx::BBuffer, T>::value)
+		{
+			bbSend.WriteBuf(pkg);
+		}
+		else
+		{
+			bbSend.WriteRoot(pkg);
+		}
 		auto dataLen = bbSend.dataLen - 5;
 		if (dataLen <= std::numeric_limits<uint16_t>::max())
 		{
@@ -195,7 +237,7 @@
 	}
 
 	template<typename T>
-	inline void UvTcpUdpBase::SendRequestEx(T const& pkg, std::function<void(uint32_t, Object_p&)>&& cb, int const& interval) noexcept
+	inline uint32_t UvTcpUdpBase::SendRequestEx(T const& pkg, std::function<void(uint32_t, Object_p&)>&& cb, int const& interval) noexcept
 	{
 		auto serial = SendRequest(pkg, [this, cb = std::move(cb)](uint32_t ser, BBuffer* bb)
 		{
@@ -211,14 +253,13 @@
 			cb(ser, inPkg);	// call 原始 lambda
 		}, interval);
 
-		if (serial)
+		if (!serial) return 0;
+
+		if (!rpcSerials)
 		{
-			if (!rpcSerials)
-			{
-				rpcSerials.MPCreate(mempool);
-			}
-			rpcSerials->Add(serial);
+			rpcSerials.MPCreate(mempool);
 		}
+		rpcSerials->Add(serial);
 	}
 
 	template<typename T>

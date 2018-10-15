@@ -4,7 +4,7 @@
 
 namespace xx
 {
-	struct LuaBBuffer : BBuffer
+	struct LuaBBuffer : public BBuffer
 	{
 		LuaBBuffer(lua_State* L) : BBuffer(LuaGetMemPool(L)) {}
 		LuaBBuffer(LuaBBuffer const&) = delete;
@@ -94,8 +94,6 @@ namespace xx
 			{ "SetOffset", SetOffset },
 			{ "Clear", Clear },
 			{ "__tostring", __tostring },
-
-			{ "WritePackage", WritePackage },
 
 			{ nullptr, nullptr }
 			};
@@ -660,49 +658,6 @@ namespace xx
 		inline void EndRead_(lua_State* L)
 		{
 			ReleaseIdxDict(L);
-		}
-
-
-		inline static int WritePackage(lua_State* L)
-		{
-			auto& self = GetSelf(L, 2);
-
-			int pkgTypeId = 0;
-			uint32_t serial = 0;
-
-			auto top = lua_gettop(L);
-			if (top != 2 && top != 4)
-			{
-				luaL_error(L, "WritePackage args should be self, pkg[, 1/2, serial]");
-			}
-			else if (top == 4)
-			{
-				pkgTypeId = (int)lua_tointeger(L, 3);
-				if ((pkgTypeId != 1 && pkgTypeId != 2))
-				{
-					luaL_error(L, "the args[ 3 ]: pkgTypeId's type must be 1( request ) or 2 ( response )");
-				}
-
-				serial = (uint32_t)lua_tointeger(L, 4);
-			}
-
-			auto lenBak = self.dataLen;
-			self.Reserve(self.dataLen + 3);
-			self.buf[self.dataLen] = (uint8_t)pkgTypeId;
-			self.dataLen += 3;
-			if (serial)
-			{
-				self.Write(serial);
-			}
-
-			self.BeginWrite_(L);
-			self.WriteObject_(L, 2);
-			self.EndWrite_(L);
-
-
-			auto pkgLen = self.dataLen - lenBak - 3;
-			memcpy(self.buf + lenBak + 1, &pkgLen, 2);
-			return 0;
 		}
 
 

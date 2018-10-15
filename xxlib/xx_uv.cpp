@@ -588,7 +588,7 @@ void xx::UvTcpUdpBase::ReceiveImpl(char const* const& bufPtr, int const& len) no
 			bbRecv.offset = offset - headerLen;
 			if (OnReceiveRouting)
 			{
-				OnReceiveRouting(bbRecv, pkgLen, addrOffset, addrLen);
+				OnReceiveRouting(bbRecv, pkgLen, addrOffset, addrLen);	// todo: 部分参数可以省
 			}
 			if (IsReleased(vn) || !bbRecv.dataLen) return;
 			if (Disconnected())
@@ -605,7 +605,10 @@ void xx::UvTcpUdpBase::ReceiveImpl(char const* const& bufPtr, int const& len) no
 
 
 	LabAfterAddress:
-		bbRecv.offset = offset + addrLen;
+		bbRecv.offset = offset + addrLen;			// 数据起始位置
+		bbRecv.offsetRoot = offset - headerLen;		// 存包头位置
+		bbRecv.readLengthLimit = offset + dataLen;	// 存包尾位置( 数据长 = readLengthLimit - offset )
+
 		pkgType = typeId & 3;
 		if (pkgType == 0)
 		{
