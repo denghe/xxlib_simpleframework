@@ -2,7 +2,8 @@
 #include "lua.hpp"
 #include "xx_lua_helpers.h"
 #include "xx_lua_bbuffer.h"
-#include "xx_lua_uv.h"
+#include "xx_lua_uvloop.h"
+#include "xx_lua_uvtcpclient.h"
 
 int Lmain(lua_State *L)
 {
@@ -23,6 +24,7 @@ int Test()
 {
 	xx::MemPool mp;
 	xx::UvLoop uvloop(&mp);
+	uvloop.InitRpcManager(1000, 10);
 
 	auto L = luaL_newstate();
 	if (!L) return -1;
@@ -34,6 +36,7 @@ int Test()
 	xx::LuaRegisterInt64ToDateTime(L);
 	xx::LuaRegisterInt64ToString(L);
 	xx::LuaRegisterMakeRef(L);
+	xx::LuaUvLoop::LuaRegister(L);
 	xx::LuaBBuffer::LuaRegister(L);
 	xx::LuaUvTcpClient::LuaRegister(L);
 
@@ -51,5 +54,7 @@ int Test()
 
 int main()
 {
-	return Test();
+	Test();
+	std::cin.get();
+	//return Test();
 }

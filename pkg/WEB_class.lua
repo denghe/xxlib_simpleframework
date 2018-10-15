@@ -1,6 +1,62 @@
 ﻿
-WEB_PkgGenMd5_Value = 'af917fae71ebd6f269da6026e8cf9da5'
+WEB_PkgGenMd5_Value = '408e6a46b52b91678cffaef30e88c13b'
 
+--[[
+通用错误返回
+]]
+WEB_Generic_Error = {
+    typeName = "WEB_Generic_Error",
+    typeId = 22,
+    Create = function()
+        local o = {}
+        o.__proto = WEB_Generic_Error
+        o.__index = o
+        o.__newindex = o
+		o.__isReleased = false
+		o.Release = function()
+			o.__isReleased = true
+		end
+
+
+        o.errNum = 0 -- Int32
+        o.errMsg = null -- String
+        return o
+    end,
+    FromBBuffer = function( bb, o )
+        o.errNum = bb:ReadInt32()
+        o.errMsg = bb:ReadObject()
+    end,
+    ToBBuffer = function( bb, o )
+        bb:WriteInt32( o.errNum )
+        bb:WriteObject( o.errMsg )
+    end
+}
+BBuffer.Register( WEB_Generic_Error )
+--[[
+默认 rpc 成功返回
+]]
+WEB_Generic_Success = {
+    typeName = "WEB_Generic_Success",
+    typeId = 23,
+    Create = function()
+        local o = {}
+        o.__proto = WEB_Generic_Success
+        o.__index = o
+        o.__newindex = o
+		o.__isReleased = false
+		o.Release = function()
+			o.__isReleased = true
+		end
+
+
+        return o
+    end,
+    FromBBuffer = function( bb, o )
+    end,
+    ToBBuffer = function( bb, o )
+    end
+}
+BBuffer.Register( WEB_Generic_Success )
 --[[
 指令基类. 路由用户上下文. 校验身份权限.
 ]]

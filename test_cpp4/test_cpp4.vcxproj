@@ -201,7 +201,8 @@
     <ClInclude Include="..\xxlib\xx_uv.hpp" />
     <ClInclude Include="xx_lua_bbuffer.h" />
     <ClInclude Include="xx_lua_helpers.h" />
-    <ClInclude Include="xx_lua_uv.h" />
+    <ClInclude Include="xx_lua_uvtcpclient.h" />
+    <ClInclude Include="xx_lua_uvloop.h" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="..\xxlib\xx.natvis" />

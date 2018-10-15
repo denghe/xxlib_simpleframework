@@ -3,7 +3,7 @@ namespace WEB
 {
     public static class PkgGenMd5
     {
-        public const string value = "af917fae71ebd6f269da6026e8cf9da5"; 
+        public const string value = "408e6a46b52b91678cffaef30e88c13b"; 
     }
 
     /// <summary>
@@ -272,6 +272,89 @@ namespace WEB
             base.MySqlAppend(sb, ignoreReadOnly);
         }
     }
+    public partial class SomeLists : xx.Object
+    {
+        public xx.List<int> ints;
+        public xx.List<long> longs;
+        public xx.List<string> strings;
+        public xx.List<Manager> Managers;
+        public xx.List<Role> Roles;
+        public xx.List<Permission> Permissions;
+        public xx.List<BindManagerRole> BindManagerRoles;
+        public xx.List<BindRolePermission> BindRolePermissions;
+
+        public override ushort GetPackageId()
+        {
+            return xx.TypeId<SomeLists>.value;
+        }
+
+        public override void ToBBuffer(xx.BBuffer bb)
+        {
+            bb.Write(this.ints);
+            bb.Write(this.longs);
+            bb.Write(this.strings);
+            bb.Write(this.Managers);
+            bb.Write(this.Roles);
+            bb.Write(this.Permissions);
+            bb.Write(this.BindManagerRoles);
+            bb.Write(this.BindRolePermissions);
+        }
+
+        public override void FromBBuffer(xx.BBuffer bb)
+        {
+            bb.readLengthLimit = 0;
+            bb.Read(ref this.ints);
+            bb.readLengthLimit = 0;
+            bb.Read(ref this.longs);
+            bb.readLengthLimit = 0;
+            bb.Read(ref this.strings);
+            bb.readLengthLimit = 0;
+            bb.Read(ref this.Managers);
+            bb.readLengthLimit = 0;
+            bb.Read(ref this.Roles);
+            bb.readLengthLimit = 0;
+            bb.Read(ref this.Permissions);
+            bb.readLengthLimit = 0;
+            bb.Read(ref this.BindManagerRoles);
+            bb.readLengthLimit = 0;
+            bb.Read(ref this.BindRolePermissions);
+        }
+        public override void ToString(System.Text.StringBuilder s)
+        {
+            if (__toStringing)
+            {
+        	    s.Append("[ \"***** recursived *****\" ]");
+        	    return;
+            }
+            else __toStringing = true;
+
+            s.Append("{ \"pkgTypeName\":\"SomeLists\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(s);
+            s.Append(" }");
+
+            __toStringing = false;
+        }
+        public override void ToStringCore(System.Text.StringBuilder s)
+        {
+            s.Append(", \"ints\":" + (ints == null ? "nil" : ints.ToString()));
+            s.Append(", \"longs\":" + (longs == null ? "nil" : longs.ToString()));
+            s.Append(", \"strings\":" + (strings == null ? "nil" : strings.ToString()));
+            s.Append(", \"Managers\":" + (Managers == null ? "nil" : Managers.ToString()));
+            s.Append(", \"Roles\":" + (Roles == null ? "nil" : Roles.ToString()));
+            s.Append(", \"Permissions\":" + (Permissions == null ? "nil" : Permissions.ToString()));
+            s.Append(", \"BindManagerRoles\":" + (BindManagerRoles == null ? "nil" : BindManagerRoles.ToString()));
+            s.Append(", \"BindRolePermissions\":" + (BindRolePermissions == null ? "nil" : BindRolePermissions.ToString()));
+        }
+        public override string ToString()
+        {
+            var sb = new System.Text.StringBuilder();
+            ToString(sb);
+            return sb.ToString();
+        }
+        public override void MySqlAppend(System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+        }
+    }
 namespace Generic
 {
     /// <summary>
@@ -365,89 +448,6 @@ namespace Generic
         }
         public override void ToStringCore(System.Text.StringBuilder s)
         {
-        }
-        public override string ToString()
-        {
-            var sb = new System.Text.StringBuilder();
-            ToString(sb);
-            return sb.ToString();
-        }
-        public override void MySqlAppend(System.Text.StringBuilder sb, bool ignoreReadOnly)
-        {
-        }
-    }
-    public partial class SomeLists : xx.Object
-    {
-        public xx.List<int> ints;
-        public xx.List<long> longs;
-        public xx.List<string> strings;
-        public xx.List<Manager> Managers;
-        public xx.List<Role> Roles;
-        public xx.List<Permission> Permissions;
-        public xx.List<BindManagerRole> BindManagerRoles;
-        public xx.List<BindRolePermission> BindRolePermissions;
-
-        public override ushort GetPackageId()
-        {
-            return xx.TypeId<SomeLists>.value;
-        }
-
-        public override void ToBBuffer(xx.BBuffer bb)
-        {
-            bb.Write(this.ints);
-            bb.Write(this.longs);
-            bb.Write(this.strings);
-            bb.Write(this.Managers);
-            bb.Write(this.Roles);
-            bb.Write(this.Permissions);
-            bb.Write(this.BindManagerRoles);
-            bb.Write(this.BindRolePermissions);
-        }
-
-        public override void FromBBuffer(xx.BBuffer bb)
-        {
-            bb.readLengthLimit = 0;
-            bb.Read(ref this.ints);
-            bb.readLengthLimit = 0;
-            bb.Read(ref this.longs);
-            bb.readLengthLimit = 0;
-            bb.Read(ref this.strings);
-            bb.readLengthLimit = 0;
-            bb.Read(ref this.Managers);
-            bb.readLengthLimit = 0;
-            bb.Read(ref this.Roles);
-            bb.readLengthLimit = 0;
-            bb.Read(ref this.Permissions);
-            bb.readLengthLimit = 0;
-            bb.Read(ref this.BindManagerRoles);
-            bb.readLengthLimit = 0;
-            bb.Read(ref this.BindRolePermissions);
-        }
-        public override void ToString(System.Text.StringBuilder s)
-        {
-            if (__toStringing)
-            {
-        	    s.Append("[ \"***** recursived *****\" ]");
-        	    return;
-            }
-            else __toStringing = true;
-
-            s.Append("{ \"pkgTypeName\":\"Generic.SomeLists\", \"pkgTypeId\":" + GetPackageId());
-            ToStringCore(s);
-            s.Append(" }");
-
-            __toStringing = false;
-        }
-        public override void ToStringCore(System.Text.StringBuilder s)
-        {
-            s.Append(", \"ints\":" + (ints == null ? "nil" : ints.ToString()));
-            s.Append(", \"longs\":" + (longs == null ? "nil" : longs.ToString()));
-            s.Append(", \"strings\":" + (strings == null ? "nil" : strings.ToString()));
-            s.Append(", \"Managers\":" + (Managers == null ? "nil" : Managers.ToString()));
-            s.Append(", \"Roles\":" + (Roles == null ? "nil" : Roles.ToString()));
-            s.Append(", \"Permissions\":" + (Permissions == null ? "nil" : Permissions.ToString()));
-            s.Append(", \"BindManagerRoles\":" + (BindManagerRoles == null ? "nil" : BindManagerRoles.ToString()));
-            s.Append(", \"BindRolePermissions\":" + (BindRolePermissions == null ? "nil" : BindRolePermissions.ToString()));
         }
         public override string ToString()
         {
@@ -979,9 +979,7 @@ namespace Tables
             xx.Object.Register<Tables.manager_role>(9);
             xx.Object.Register<BindRolePermission>(8);
             xx.Object.Register<Tables.role_permission>(12);
-            xx.Object.Register<Generic.Error>(22);
-            xx.Object.Register<Generic.Success>(23);
-            xx.Object.Register<Generic.SomeLists>(13);
+            xx.Object.Register<SomeLists>(13);
             xx.Object.Register<xx.List<int>>(14);
             xx.Object.Register<xx.List<long>>(15);
             xx.Object.Register<xx.List<string>>(16);
@@ -990,6 +988,8 @@ namespace Tables
             xx.Object.Register<xx.List<Permission>>(19);
             xx.Object.Register<xx.List<BindManagerRole>>(20);
             xx.Object.Register<xx.List<BindRolePermission>>(21);
+            xx.Object.Register<Generic.Error>(22);
+            xx.Object.Register<Generic.Success>(23);
             xx.Object.Register<WEB_testcpp3.AuthInfo>(24);
             xx.Object.Register<WEB_testcpp3.Cmd1>(25);
             xx.Object.Register<WEB_testcpp3.Cmd2>(26);

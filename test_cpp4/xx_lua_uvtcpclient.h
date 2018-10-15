@@ -8,7 +8,7 @@ namespace xx
 	{
 		LuaUvTcpClient(lua_State* L)
 			: UvTcpClient(*LuaGetUvLoop(L))
-			, messages(LuaGetUvLoop(L)->mempool)
+			, messages(LuaGetMemPool(L))
 		{
 		}
 		LuaUvTcpClient(LuaUvTcpClient const&) = delete;
@@ -97,7 +97,7 @@ namespace xx
 			}
 		};
 
-		// 收到的所有网络包, 都堆积在此. 靠 PopMessage 压到 lua
+		// 所有事件数据, 都堆积在此. 靠 PopMessage 压到 lua
 		xx::Queue<xx::Ptr<Message>> messages;
 
 		/**************************************************************************************************/
@@ -108,6 +108,7 @@ namespace xx
 		inline static int __gc(lua_State* L)
 		{
 			auto& self = *(LuaUvTcpClient**)lua_touserdata(L, -1);
+			self->Disconnect();
 			self->~LuaUvTcpClient();
 			return 0;
 		}
@@ -127,22 +128,22 @@ namespace xx
 
 			lua_setmetatable(L, -2);				// ..., ud
 
-			self->OnConnect = [self](int status) 
+			self->OnConnect = [self](int status)
 			{
 				decltype(auto) m = self->messages.Emplace();
 				m.MPCreate(self->mempool);
 				m->typeId = status ? -2 : 3;
 				m->serial = 0;
-				m->funcId = 0;
+				m->funcId = 0;// self->onConnectFuncId;
 			};
 
-			self->OnDisconnect = [self] 
+			self->OnDisconnect = [self]
 			{
 				decltype(auto) m = self->messages.Emplace();
 				m.MPCreate(self->mempool);
 				m->typeId = -3;
 				m->serial = 0;
-				m->funcId = 0;
+				m->funcId = 0;// self->onDisconnectFuncId;
 			};
 
 			self->OnReceivePackage = [self](xx::BBuffer& bb)
@@ -188,7 +189,7 @@ namespace xx
 		{
 			auto& self = GetSelf(L, 1);
 			auto s = self.mempool->Str();
-			s->Append("{ \"state\":\"");
+			s->Append("{ \"ip_port\":\"", self.ip_port, "\", \"state\":\"");
 			switch (self.state)
 			{
 			case UvTcpStates::Disconnected:
@@ -219,7 +220,7 @@ namespace xx
 		inline static int Send_(lua_State* L)
 		{
 			auto& self = GetSelf(L, 2);
-			auto bb = LuaGetPointer<LuaBBuffer>(L, 1);
+			auto bb = LuaGetPointer<LuaBBuffer>(L, 2);
 			if (!bb)
 			{
 				luaL_error(L, "arg[2] isn't BBuffer( forget \":\" ? )");
@@ -234,10 +235,10 @@ namespace xx
 
 		// 发送请求包. 返回 0 则发送失败( 不会触发回调 ), 非 0 则为刚生成的 序列号
 		// 参数: self, bb, cbfunc, interval
-		inline static int SendResponse_(lua_State* L)
+		inline static int SendRequest_(lua_State* L)
 		{
 			auto& self = GetSelf(L, 3);
-			auto bb = LuaGetPointer<LuaBBuffer>(L, 1);
+			auto bb = LuaGetPointer<LuaBBuffer>(L, 2);
 			if (!bb)
 			{
 				luaL_error(L, "arg[2] isn't BBuffer");
@@ -267,7 +268,7 @@ namespace xx
 			int funcId = ++self.luaFuncIndex;
 			StoreFunc(L, funcId, 3);
 
-			uint32_t serial = self.SendRequest(*(xx::BBuffer*)bb, [self = &self, funcId] (uint32_t ser, BBuffer* bb)
+			uint32_t serial = self.SendRequest(*(xx::BBuffer*)bb, [self = &self, funcId](uint32_t ser, BBuffer* bb)
 			{
 				if (!self) return;
 				if (self->rpcSerials) self->rpcSerials->Remove(ser);
@@ -308,10 +309,10 @@ namespace xx
 
 		// 发送回应包. 返回 非0 则发送失败
 		// 参数: self, bb, serial
-		inline static int SendRequest_(lua_State* L)
+		inline static int SendResponse_(lua_State* L)
 		{
 			auto& self = GetSelf(L, 3);
-			auto bb = LuaGetPointer<LuaBBuffer>(L, 1);
+			auto bb = LuaGetPointer<LuaBBuffer>(L, 2);
 			if (!bb)
 			{
 				luaL_error(L, "arg[2] isn't BBuffer( forget \":\" ? )");
@@ -329,6 +330,7 @@ namespace xx
 			return 1;
 		}
 
+		std::string ip_port;
 		inline static int SetAddress_(lua_State* L)
 		{
 			auto& self = GetSelf(L, 3);
@@ -342,6 +344,8 @@ namespace xx
 			}
 			auto ip = lua_tostring(L, 2);
 			auto port = (int)lua_tointeger(L, 3);
+			self.ip_port = ip;
+			self.ip_port.append(std::to_string(port));
 			int r = self.SetAddress(ip, port);
 			lua_pushinteger(L, r);
 			return 1;
@@ -360,6 +364,8 @@ namespace xx
 			}
 			auto ip = lua_tostring(L, 2);
 			auto port = (int)lua_tointeger(L, 3);
+			self.ip_port = ip;
+			self.ip_port.append(std::to_string(port));
 			int r = self.SetAddress6(ip, port);
 			lua_pushinteger(L, r);
 			return 1;
@@ -418,6 +424,8 @@ namespace xx
 			}
 			auto ip = lua_tostring(L, 2);
 			auto port = (int)lua_tointeger(L, 3);
+			self.ip_port = ip;
+			self.ip_port.append(std::to_string(port));
 			int r = self.ConnectEx(ip, port, timeoutMS);
 			lua_pushinteger(L, r);
 			return 1;
@@ -452,6 +460,8 @@ namespace xx
 			}
 			auto ip = lua_tostring(L, 2);
 			auto port = (int)lua_tointeger(L, 3);
+			self.ip_port = ip;
+			self.ip_port.append(std::to_string(port));
 			int r = self.ConnectEx(ip, port, timeoutMS);
 			lua_pushinteger(L, r);
 			return 1;
@@ -507,7 +517,7 @@ namespace xx
 			auto& self = GetSelf(L, 2);
 			return self.OnXxxx(L, self.onConnectFuncId);
 		}
-				
+
 		int onDisconnectFuncId = -1;
 		inline static int OnDisconnect_(lua_State* L)
 		{
@@ -521,7 +531,7 @@ namespace xx
 			auto& self = GetSelf(L, 2);
 			return self.OnXxxx(L, self.onReceiveFuncId);
 		}
-				
+
 		int onReceiveRequestFuncId = -1;
 		inline static int OnReceiveRequest_(lua_State* L)
 		{
@@ -549,7 +559,7 @@ namespace xx
 			lua_pushlightuserdata(L, (void*)name);		// ..., ud
 			lua_rawget(L, LUA_REGISTRYINDEX);			// ..., t
 			lua_pushinteger(L, funcId);					// ..., t, funcId
-			lua_rawget(L, -1);							// ..., t, cb
+			lua_rawget(L, -2);							// ..., t, cb
 			lua_insert(L, -2);							// ..., cb, t
 			lua_pop(L, 1);								// ..., cb
 		}
@@ -589,6 +599,9 @@ namespace xx
 			lua_pushinteger(L, m->typeId);
 			switch (m->typeId)
 			{
+			case -3:						// 连接断开
+				PushFunc(L, self.onDisconnectFuncId);
+				return 2;
 			case -2:						// 连接失败
 				PushFunc(L, self.onConnectFuncId);
 				return 2;
@@ -596,23 +609,24 @@ namespace xx
 				PushFunc(L, m->funcId);
 				return 2;
 			case 0:							// 收到普通包
-				PushBBuffer(L, m->bb);
 				PushFunc(L, self.onReceiveFuncId);
-				return 2;
+				PushBBuffer(L, m->bb);
+				return 3;
 			case 1:							// 收到请求包
+				PushFunc(L, self.onReceiveRequestFuncId);
 				PushBBuffer(L, m->bb);
 				lua_pushinteger(L, m->serial);
-				return 3;
+				return 4;
 			case 2:							// 收到回应包
-				PushBBuffer(L, m->bb);
 				PushFunc(L, m->funcId);
+				PushBBuffer(L, m->bb);
 				return 3;
 			case 3:							// 连接成功
 				PushFunc(L, self.onConnectFuncId);
 				return 2;
 			}
 			return 1;
-		}		
+		}
 
 		inline static int ClearMessages_(lua_State* L)
 		{

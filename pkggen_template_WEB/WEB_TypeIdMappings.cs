@@ -28,7 +28,7 @@ interface ITypeIdMappings
 
     Generic.Success _23 { get; }
 
-    Generic.SomeLists _13 { get; }
+    SomeLists _13 { get; }
 
     List<int> _14 { get; }
 

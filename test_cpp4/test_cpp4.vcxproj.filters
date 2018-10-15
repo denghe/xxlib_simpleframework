@@ -119,7 +119,9 @@
     </ClInclude>
     <ClInclude Include="xx_lua_helpers.h" />
     <ClInclude Include="xx_lua_bbuffer.h" />
-    <ClInclude Include="xx_lua_uv.h" />
+    <ClInclude Include="..\xxlib\xx_dictex.h" />
+    <ClInclude Include="xx_lua_uvloop.h" />
+    <ClInclude Include="xx_lua_uvtcpclient.h" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="..\xxlib\xx.natvis">
