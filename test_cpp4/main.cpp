@@ -3,10 +3,6 @@
 #include "xx_lua_helpers.h"
 #include "xx_lua_bbuffer.h"
 #include "xx_lua_uv.h"
-//#include "../pkg/PKG_class.h"
-
-
-// todo: 封 UvTcpClient 到 lua
 
 int Lmain(lua_State *L)
 {
@@ -26,30 +22,6 @@ int Lmain(lua_State *L)
 int Test()
 {
 	xx::MemPool mp;
-	
-////	local bb = BBuffer.Create()
-////local foo = PKG_Foo.Create()
-////foo.refFoo.Reset( foo )
-////foo.refFoos = List_Ref_PKG_Foo_.Create()
-////foo.refFoos[1] = MakeRef( foo )
-////bb:WriteRoot( foo )
-////print( bb )
-////bb:Clear();
-////foo.Release();
-////bb:WriteRoot( foo )
-////print( bb )
-//	{
-//		auto bb = mp.MPCreatePtr<xx::BBuffer>();
-//		auto foo = mp.MPCreatePtr<PKG::Foo>();
-//		foo->refFoo = foo;
-//		foo->refFoos.MPCreate(&mp);
-//		foo->refFoos->Add(foo);
-//		bb->WriteRoot(foo);
-//		std::cout << bb << std::endl;
-//	}
-
-
-
 	xx::UvLoop uvloop(&mp);
 
 	auto L = luaL_newstate();
@@ -63,6 +35,7 @@ int Test()
 	xx::LuaRegisterInt64ToString(L);
 	xx::LuaRegisterMakeRef(L);
 	xx::LuaBBuffer::LuaRegister(L);
+	xx::LuaUvTcpClient::LuaRegister(L);
 
 	lua_pushcclosure(L, &Lmain, 0);
 

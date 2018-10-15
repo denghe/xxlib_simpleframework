@@ -3,7 +3,7 @@ namespace WEB
 {
     public static class PkgGenMd5
     {
-        public const string value = "42af0518b804f9518773b2c0b43050ed"; 
+        public const string value = "af917fae71ebd6f269da6026e8cf9da5"; 
     }
 
     /// <summary>

@@ -192,22 +192,23 @@ namespace xx
 			switch (self.state)
 			{
 			case UvTcpStates::Disconnected:
-				s->Append("Disconnected");
+				s->Append("0: Disconnected");
 				break;
 			case UvTcpStates::Connecting:
-				s->Append("Connecting");
+				s->Append("1: Connecting");
 				break;
 			case UvTcpStates::Connected:
-				s->Append("Connected");
+				s->Append("2: Connected");
 				break;
 			case UvTcpStates::Disconnecting:
-				s->Append("Disconnecting");
+				s->Append("3: Disconnecting");
 				break;
 			default:
 				s->Append("Unknown(", (int)self.state, ")");
 				break;
 			}
 			s->Append("\" }");
+			lua_pushlstring(L, s->buf, s->dataLen);
 			return 1;
 		}
 
@@ -532,7 +533,7 @@ namespace xx
 
 
 		// 将 lua cb func 放入位于注册表中的容器
-		inline static int StoreFunc(lua_State* L, int funcId, int funcIndex)
+		inline static void StoreFunc(lua_State* L, int funcId, int funcIndex)
 		{
 			lua_pushlightuserdata(L, (void*)name);		// ..., ud
 			lua_rawget(L, LUA_REGISTRYINDEX);			// ..., t

@@ -3,7 +3,7 @@ namespace PKG
 {
     public static class PkgGenMd5
     {
-        public const string value = "e8e63e1242e3a7cebc33ce034f0cc68e"; 
+        public const string value = "905b6cc9bea8da4594a7511c79681eca"; 
     }
 
     public partial class Foo : xx.Object
