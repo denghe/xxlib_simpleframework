@@ -346,6 +346,9 @@ namespace xx
             var newTargetBucket = newHashCode % (uint)buckets.Length;
             if (targetBucket == newTargetBucket)
             {
+                node.hashCode = newHashCode;
+                nodes[idx] = node;  // for struct
+
                 item.key = newKey;
                 items[idx] = item;  // for struct
                 return true;
@@ -377,6 +380,7 @@ namespace xx
             // 简化的 Add 后半段
             node.hashCode = newHashCode;
             node.next = buckets[newTargetBucket];
+            nodes[idx] = node;  // for struct
 
             if (buckets[newTargetBucket] >= 0)
             {

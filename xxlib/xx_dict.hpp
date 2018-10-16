@@ -323,22 +323,25 @@ namespace xx
 		auto& node = nodes[idx];
 		auto& item = items[idx];
 
-		// 如果 hash 相等或位于相同 bucket, 可以直接改 key 并退出函数
+		// 如果 hash 相等可以直接改 key 并退出函数
 		auto newHashCode = HashFunc<TK>::GetHashCode(newKey);
 		if (node.hashCode == newHashCode)
 		{
 			item.key = std::forward<K>(newKey);
 			return true;
 		}
+
+		// 位于相同 bucket, 直接改 has & key 并退出函数
 		auto targetBucket = node.hashCode % (uint32_t)bucketsLen;
 		auto newTargetBucket = newHashCode % (uint32_t)bucketsLen;
 		if (targetBucket == newTargetBucket)
 		{
+			node.hashCode = newHashCode;
 			item.key = std::forward<K>(newKey);
 			return true;
 		}
 
-		// 检查是否冲突
+		// 检查 newKey 是否已存在
 		for (int i = buckets[newTargetBucket]; i >= 0; i = nodes[i].next)
 		{
 			if (nodes[i].hashCode == newHashCode && EqualsFunc<TK>::EqualsTo(items[i].key, newKey))
