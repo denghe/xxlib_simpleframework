@@ -260,6 +260,8 @@
 			rpcSerials.MPCreate(mempool);
 		}
 		rpcSerials->Add(serial);
+
+		return serial;
 	}
 
 	template<typename T>
