@@ -44,7 +44,7 @@ static void AllocCB(uv_handle_t* h, size_t suggested_size, uv_buf_t* buf) noexce
 }
 
 // 地址转为 IP
-static int AddressToIP(sockaddr_in* addr, char* buf, size_t bufLen, bool includePort) noexcept
+static int AddressToIP(sockaddr_in* addr, char* buf, size_t bufLen, bool includePort = true) noexcept
 {
 	int r = 0;
 	if (addr->sin_family == AF_INET6)
@@ -66,6 +66,40 @@ static int AddressToIP(sockaddr_in* addr, char* buf, size_t bufLen, bool include
 		}
 	}
 	return 0;
+}
+
+
+static int FillIP(sockaddr_in6& saddr, char* buf, size_t bufLen, bool includePort = true) noexcept
+{
+	int r = 0;
+	if (saddr.sin6_family == AF_INET6)
+	{
+		if ((r = uv_ip6_name(&saddr, buf, (int)bufLen))) return r;
+		if (includePort)
+		{
+			auto dataLen = strlen(buf);
+			sprintf(buf + dataLen, ":%d", ntohs(saddr.sin6_port));
+		}
+	}
+	else
+	{
+		if ((r = uv_ip4_name((sockaddr_in*)&saddr, buf, (int)bufLen))) return r;
+		if (includePort)
+		{
+			auto dataLen = strlen(buf);
+			sprintf(buf + dataLen, ":%d", ntohs(((sockaddr_in*)&saddr)->sin_port));
+		}
+	}
+	return 0;
+}
+
+static int FillIP(uv_tcp_t* stream, char* buf, size_t bufLen, bool includePort = true) noexcept
+{
+	sockaddr_in6 saddr;
+	int len = sizeof(saddr);
+	int r = 0;
+	if ((r = uv_tcp_getpeername(stream, (sockaddr*)&saddr, &len))) return r;
+	return FillIP(saddr, buf, bufLen, includePort);
 }
 
 
@@ -906,12 +940,8 @@ const char* xx::UvTcpPeer::Ip(bool includePort) noexcept
 {
 	if (!ptr) return nullptr;
 	if (ipBuf[0]) return ipBuf.data();
-
-	sockaddr_in6 saddr;
-	int len = sizeof(saddr);
-	if (uv_tcp_getpeername((uv_tcp_t*)ptr, (sockaddr*)&saddr, &len)) return nullptr;
-
-	return AddressToIP((sockaddr_in*)addrPtr, ipBuf.data(), ipBuf.size(), includePort) ? nullptr : ipBuf.data();
+	if (FillIP((uv_tcp_t*)ptr, ipBuf.data(), (int)ipBuf.size())) return nullptr;
+	return ipBuf.data();
 }
 
 
@@ -1776,8 +1806,8 @@ const char* xx::UvUdpPeer::Ip(bool includePort) noexcept
 {
 	if (!ptr) return nullptr;
 	if (ipBuf[0]) return ipBuf.data();
-
-	return AddressToIP((sockaddr_in*)addrPtr, ipBuf.data(), ipBuf.size(), includePort) ? nullptr : ipBuf.data();
+	if (FillIP(*(sockaddr_in6*)addrPtr, ipBuf.data(), ipBuf.size())) return nullptr;
+	return ipBuf.data();
 }
 
 

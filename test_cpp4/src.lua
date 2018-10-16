@@ -26,10 +26,9 @@ c:OnDisconnect(
 	end
 )
 
-local isFirst = true
 function Update()
-	if isFirst and c:GetState() == 0 then
-		c:ConnectEx("127.0.0.1", 11111)
+	if c:GetState() == 0 then
+		c:ConnectEx("192.168.1.254", 11111)
 		isFirst = false
 	end
 end
