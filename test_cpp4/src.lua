@@ -5,31 +5,45 @@ local c = UvTcpClient.Create()
 c:OnConnect(
 	function(connected)
 		if connected then
-			print("OnConnect() Success")
+			print("连接成功")
 			local pkg = WEB_WEB_testcpp3_Cmd2.Create()
 			pkg.id = 12345
 			local bb = BBuffer.Create()
 			bb:WriteRoot(pkg)
 			c:SendRequest(bb, function(o)
-				print("Recv "..o.__proto.typeName..", errNum = "..o.errNum..", errMsg = "..o.errMsg)
-				c:Disconnect()
+				if o == nil then
+					return
+				end
+				print("收到包 类型为 "..o.__proto.typeName..", errNum = "..o.errNum..", errMsg = "..o.errMsg)
+				c:Disconnect(false)
+				print("主动断开")
 			end)
 		else
-			print("Connect Fail")
+			print("连接失败")
 		end
 	end
 )
 
 c:OnDisconnect(
 	function()
-		print("OnDisconnect()")
+		print("被动断开")
 	end
 )
 
+local frameNumber = 0
 function Update()
-	if c:GetState() == 0 then
-		c:ConnectEx("192.168.1.254", 11111)
-		isFirst = false
+	--if c:GetState() == 0 then
+	frameNumber = frameNumber + 1
+	if frameNumber == 1 then
+		c:Disconnect(false)
+		local r = c:ConnectEx("192.168.1.254", 11111, 2000)
+		print("ConnectEx 返回值 = "..r)
+	end
+
+	if frameNumber == 10 then
+		c:Disconnect(false)
+		local r = c:ConnectEx("192.168.1.254", 11111, 2000)
+		print("ConnectEx 返回值 = "..r)
 	end
 end
 

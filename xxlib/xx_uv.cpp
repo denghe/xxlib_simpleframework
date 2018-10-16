@@ -950,8 +950,6 @@ const char* xx::UvTcpPeer::Ip(bool includePort) noexcept
 
 
 
-
-
 xx::UvTcpClient::UvTcpClient(UvLoop& loop)
 	: UvTcpBase(loop)
 {
@@ -999,21 +997,19 @@ void xx::UvTcpClient::OnConnectCBImpl(void* req, int status) noexcept
 	req = nullptr;
 	if (!client) return;
 	client->req = nullptr;
-	if (client->canceled) return;
-
-	if (client->connTimeouter)
-	{
-		client->connTimeouter->Release();
-		client->connTimeouter.Reset();
-	}
-
+	if (status == -4081) return;	// canceled
 	if (status < 0)
 	{
-		client->Disconnect();
+		client->Disconnect(false);
 		if (!client) return;
 	}
 	else
 	{
+		if (client->connTimeouter)
+		{
+			client->connTimeouter->Release();
+			client->connTimeouter.Reset();
+		}
 		client->state = UvTcpStates::Connected;
 		uv_read_start((uv_stream_t*)client->ptr, AllocCB, (uv_read_cb)OnReadCBImpl);
 	}
@@ -1040,35 +1036,23 @@ int xx::UvTcpClient::Connect(int const& timeoutMS) noexcept
 
 	if (int r = uv_tcp_connect((uv_connect_t*)req, (uv_tcp_t*)ptr, (sockaddr*)addrPtr, (uv_connect_cb)OnConnectCBImpl)) return r;
 
-	canceled = false;
 	state = UvTcpStates::Connecting;
 
 	if (timeoutMS)
 	{
 		connTimeouter = loop.CreateTimer(timeoutMS, 0, [this]
 		{
-			if (state != UvTcpStates::Connecting)
+			auto self = this;
+			if (self->connTimeouter)
 			{
-				if (connTimeouter)
-				{
-					connTimeouter->Release();
-					connTimeouter.Reset();
-				}
-				return;
+				self->connTimeouter->Release();
+				self->connTimeouter.Reset();
 			}
-			uv_cancel((uv_req_t*)req);
-			req = nullptr;
-			CloseAndFree((uv_handle_t*)ptr);
-			ptr = nullptr;
-			state = UvTcpStates::Disconnected;
-			connTimeouter->Release();
-			connTimeouter.Reset();
-			canceled = true;
-			if (OnConnect)
+			if (self->state != UvTcpStates::Connecting) return;
+			self->Disconnect(false);
+			if (self->OnConnect)
 			{
-				//auto vn = memHeader().versionNumber;
-				this->OnConnect(-1);
-				//if (IsReleased(vn)) return;
+				self->OnConnect(-1);
 			}
 		});
 		if (!connTimeouter) return -2;
@@ -1082,7 +1066,7 @@ int xx::UvTcpClient::Connect(int const& timeoutMS) noexcept
 
 int xx::UvTcpClient::ConnectEx(char const* const& ipv4, int const& port, int const& timeoutMS) noexcept
 {
-	Disconnect();
+	if (state != UvTcpStates::Disconnected) return -1;
 	int r = 0;
 	if ((r = SetAddress(ipv4, port))) return r;
 	return Connect(timeoutMS);
@@ -1090,14 +1074,14 @@ int xx::UvTcpClient::ConnectEx(char const* const& ipv4, int const& port, int con
 
 int xx::UvTcpClient::Connect6Ex(char const* const& ipv6, int const& port, int const& timeoutMS) noexcept
 {
-	Disconnect();
+	if (state != UvTcpStates::Disconnected) return -1;
 	int r = 0;
 	if ((r = SetAddress6(ipv6, port))) return r;
 	return Connect(timeoutMS);
 }
 
 
-void xx::UvTcpClient::Disconnect() noexcept
+void xx::UvTcpClient::Disconnect(bool runCallback) noexcept
 {
 	if (!addrPtr) return;
 	if (state == UvTcpStates::Disconnected) return;
@@ -1109,15 +1093,20 @@ void xx::UvTcpClient::Disconnect() noexcept
 	state = UvTcpStates::Disconnected;
 	CloseAndFree((uv_handle_t*)ptr);
 	ptr = nullptr;
+
+	if (connTimeouter)
+	{
+		connTimeouter->Release();
+		connTimeouter.Reset();
+	}
+
 	bbSend.Clear();
 	bbRecv.Clear();
 
 	RpcTraceCallback();					// 有可能再次触发 Disconnect
-	if (OnDisconnect)
+	if (runCallback && OnDisconnect)
 	{
-		//auto vn = memHeader().versionNumber;
 		OnDisconnect();
-		//if (IsReleased(vn)) return;
 	}
 }
 
@@ -1132,7 +1121,6 @@ bool xx::UvTcpClient::Disconnected() noexcept
 }
 
 
-// todo: 简单的变野判断去掉, 没用
 
 
 

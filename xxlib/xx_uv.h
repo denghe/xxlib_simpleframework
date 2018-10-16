@@ -299,8 +299,7 @@ namespace xx
 		xx::Weak<UvTimer> connTimeouter;	// 超时 cancel 后 uv 还是会产生 OnConnectCBImpl 的回调
 		UvTcpStates state = UvTcpStates::Disconnected;
 
-		bool canceled = false;	// 因为取消连接行为也会触发 OnConnectCBImpl, 故用这个标记来告知
-		void* req = nullptr;
+		void* req = nullptr;			// 延迟删除
 		UvTcpClient(UvLoop& loop);
 		~UvTcpClient() noexcept;
 		bool Alive() const noexcept;	// state == UvTcpStates::Connected, 并不能取代外部野指针检测
@@ -308,9 +307,9 @@ namespace xx
 		int SetAddress6(char const* const& ipv6, int const& port) noexcept;
 		static void OnConnectCBImpl(void* req, int status) noexcept;
 		int Connect(int const& timeoutMS = 0) noexcept;
-		int ConnectEx(char const* const& ipv4, int const& port, int const& timeoutMS = 0) noexcept;	// 等同于 Disconnect + SetAddress + Connect
-		int Connect6Ex(char const* const& ipv6, int const& port, int const& timeoutMS = 0) noexcept;	// 等同于 Disconnect + SetAddress6 + Connect
-		void Disconnect() noexcept;
+		int ConnectEx(char const* const& ipv4, int const& port, int const& timeoutMS = 0) noexcept;	// 等同于 SetAddress + Connect
+		int Connect6Ex(char const* const& ipv6, int const& port, int const& timeoutMS = 0) noexcept;	// 等同于 SetAddress6 + Connect
+		void Disconnect(bool runCallback = true) noexcept;
 		void DisconnectImpl() noexcept override;
 		bool Disconnected() noexcept override;
 	};

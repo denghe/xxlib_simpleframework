@@ -33,9 +33,9 @@ namespace xx
 			{ "SetAddress", SetAddress_ },						// 设置目标 ip & port
 			{ "SetAddress6", SetAddress6_ },					// 设置目标 ipv6 & port
 			{ "Connect", Connect_ },							// 开始连接目标 ip & port. 需要先 SetAddress. 兼容 v6.
-			{ "ConnectEx", ConnectEx_ },						// Disconnect + SetAddress + Connect
-			{ "Connect6Ex", Connect6Ex_ },						// Disconnect + SetAddress6 + Connect
-			{ "Disconnect", Disconnect_ },						// Disconnect( 并不会自动清掉之前的消息, 同时可能还会产生一条 OnDisconnect 相关的 message )
+			{ "ConnectEx", ConnectEx_ },						// SetAddress + Connect
+			{ "Connect6Ex", Connect6Ex_ },						// SetAddress6 + Connect
+			{ "Disconnect", Disconnect_ },						// Disconnect( runCallback )
 
 			{ "GetState", GetState_ },							// 注册连接事件处理函数
 
@@ -345,6 +345,7 @@ namespace xx
 			auto ip = lua_tostring(L, 2);
 			auto port = (int)lua_tointeger(L, 3);
 			self.ip_port = ip;
+			self.ip_port.append(":");
 			self.ip_port.append(std::to_string(port));
 			int r = self.SetAddress(ip, port);
 			lua_pushinteger(L, r);
@@ -425,6 +426,7 @@ namespace xx
 			auto ip = lua_tostring(L, 2);
 			auto port = (int)lua_tointeger(L, 3);
 			self.ip_port = ip;
+			self.ip_port.append(":");
 			self.ip_port.append(std::to_string(port));
 			int r = self.ConnectEx(ip, port, timeoutMS);
 			lua_pushinteger(L, r);
@@ -469,8 +471,13 @@ namespace xx
 
 		inline static int Disconnect_(lua_State* L)
 		{
-			auto& self = GetSelf(L, 1);
-			self.Disconnect();
+			auto& self = GetSelf(L, 2);
+			if (!lua_isboolean(L, 2))
+			{
+				luaL_error(L, "arg[2] isn't bool runCallback");
+			}
+			bool runCallback = lua_toboolean(L, 2);
+			self.Disconnect(runCallback);
 			return 0;
 		}
 

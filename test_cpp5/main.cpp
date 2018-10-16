@@ -1,7 +1,7 @@
 ﻿#pragma execution_character_set("utf-8")
 //#include "../pkg/PKG_class.h"
 
-// todo: Unique, Weak 用起来?
+// todo: DictEx Update 函数还需要进一步测试. 看上去有老 HashCode 没被更新的问题
 
 #include "xx_uv.h"
 
@@ -13,19 +13,6 @@ void Cout(Args const&...args)
 	xx::String s(&mp);
 	s.Append(args...);
 	std::cout << s;
-}
-
-int main1()
-{
-	xx::UvLoop uv(&mp);
-	uv.CreateTimer(0, 100, [] { Cout("."); });
-	uv.CreateTimer(0, 100, [] { Cout("a"); });
-	uv.DelayExecute([&]
-	{
-		uv.Stop();
-	}, 1000);
-	uv.Run();
-	return 0;
 }
 
 struct Foo
