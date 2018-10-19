@@ -1,0 +1,28 @@
+{"frames": [
+
+{
+	"filename": "asteroid.png",
+	"frame": {"x":2,"y":2,"w":52,"h":54},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":5,"y":5,"w":52,"h":54},
+	"sourceSize": {"w":64,"h":64}
+},
+{
+	"filename": "zazaka.png",
+	"frame": {"x":2,"y":58,"w":44,"h":64},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":10,"y":0,"w":44,"h":64},
+	"sourceSize": {"w":64,"h":64}
+}],
+"meta": {
+	"app": "http://www.codeandweb.com/texturepacker ",
+	"version": "1.0",
+	"image": "xx.png",
+	"format": "RGBA4444",
+	"size": {"w":56,"h":124},
+	"scale": "1",
+	"smartupdate": "$TexturePacker:SmartUpdate:f7162729f75de09aacad13e66a1eead6:8f71f15d0913bfd98d0648c48f90189a:dbdad776592ddef1ed0a666b0948218b$"
+}
+}
