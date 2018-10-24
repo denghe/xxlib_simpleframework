@@ -27,12 +27,12 @@ int main(int argc, char* argv[])
 	rc = listener->Bind("0.0.0.0", 11111);
 	rc = listener->Listen();
 
-	listener->OnAccept = [](xx::UvTcpPeer* peer)
+	listener->OnAccept = [](xx::UvTcpPeer_w peer)
 	{
 		std::cout << peer->Ip() << " connected." << std::endl;
 
 		// 转为弱引用在回调中方便 if (peer) 以判断是否已释放( 断开 ).
-		peer->OnReceiveRequest = [peer = xx::UvTcpPeer_w(peer)](uint32_t serial, xx::BBuffer& bb)
+		peer->OnReceiveRequest = [peer](uint32_t serial, xx::BBuffer& bb)
 		{
 			xx::Object_p o_;
 

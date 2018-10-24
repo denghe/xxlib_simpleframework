@@ -131,7 +131,7 @@ inline Service1::Service1(xx::UvLoop& loop)
 {
 	routerListener.Bind("0.0.0.0", 12345);
 	routerListener.Listen();
-	routerListener.OnAccept = [this](xx::UvTcpPeer *p)
+	routerListener.OnAccept = [this](xx::UvTcpPeer_w p)
 	{
 		// 通过设置路由地址的方式告知 peer 数据接收处理下发进阶事件
 		p->routingAddress = "Service1";
@@ -173,7 +173,7 @@ inline Service2::Service2(xx::UvLoop& loop)
 {
 	routerListener.Bind("0.0.0.0", 12346);
 	routerListener.Listen();
-	routerListener.OnAccept = [this](xx::UvTcpPeer *p)
+	routerListener.OnAccept = [this](xx::UvTcpPeer_w p)
 	{
 		// 通过设置路由地址的方式告知 peer 数据接收处理下发进阶事件
 		p->routingAddress = "Service2";
@@ -445,7 +445,7 @@ int main()
 	xx::MemPool::RegisterInternals();
 	xx::MemPool mp;
 	xx::UvLoop loop(&mp);
-	loop.InitRpcManager();
+	loop.InitRpcTimeoutManager();
 	Service1 s1(loop);
 	Service2 s2(loop);
 	Router r(loop);

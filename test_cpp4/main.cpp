@@ -24,7 +24,7 @@ int Test()
 {
 	xx::MemPool mp;
 	xx::UvLoop uvloop(&mp);
-	uvloop.InitRpcManager(1000, 10);
+	uvloop.InitRpcTimeoutManager(1000, 10);
 
 	auto L = luaL_newstate();
 	if (!L) return -1;
