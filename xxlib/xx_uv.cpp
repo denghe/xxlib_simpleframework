@@ -146,13 +146,13 @@ xx::UvLoop::~UvLoop() noexcept
 	ptr = nullptr;
 }
 
-int xx::UvLoop::InitTimeoutManager(uint64_t const& intervalMS, int const& wheelLen, int const& defaultInterval) noexcept
+int xx::UvLoop::InitPeerTimeoutManager(uint64_t const& intervalMS, int const& wheelLen, int const& defaultInterval) noexcept
 {
 	assert(!timeoutManager);
 	return mempool->CreateTo(timeoutManager, *this, intervalMS, wheelLen, defaultInterval) ? 0 : -1;
 }
 
-int xx::UvLoop::InitRpcManager(uint64_t const& rpcIntervalMS, int const& rpcDefaultInterval) noexcept
+int xx::UvLoop::InitRpcTimeoutManager(uint64_t const& rpcIntervalMS, int const& rpcDefaultInterval) noexcept
 {
 	assert(!rpcMgr);
 	return mempool->CreateTo(rpcMgr, *this, rpcIntervalMS, rpcDefaultInterval) ? 0 : -1;
@@ -198,30 +198,30 @@ bool xx::UvLoop::Alive() const noexcept
 	return uv_loop_alive((uv_loop_t*)ptr) != 0;
 }
 
-xx::UvTcpListener* xx::UvLoop::CreateTcpListener() noexcept
+xx::UvTcpListener_w xx::UvLoop::CreateTcpListener() noexcept
 {
 	return mempool->Create<UvTcpListener>(*this);
 }
-xx::UvTcpClient* xx::UvLoop::CreateTcpClient() noexcept
+xx::UvTcpClient_w xx::UvLoop::CreateTcpClient() noexcept
 {
 	return mempool->Create<UvTcpClient>(*this);
 }
 
-xx::UvUdpListener* xx::UvLoop::CreateUdpListener() noexcept
+xx::UvUdpListener_w xx::UvLoop::CreateUdpListener() noexcept
 {
 	return mempool->Create<UvUdpListener>(*this);
 }
-xx::UvUdpClient* xx::UvLoop::CreateUdpClient() noexcept
+xx::UvUdpClient_w xx::UvLoop::CreateUdpClient() noexcept
 {
 	return mempool->Create<UvUdpClient>(*this);
 }
 
-xx::UvTimer* xx::UvLoop::CreateTimer(uint64_t const& timeoutMS, uint64_t const& repeatIntervalMS, std::function<void()>&& OnFire) noexcept
+xx::UvTimer_w xx::UvLoop::CreateTimer(uint64_t const& timeoutMS, uint64_t const& repeatIntervalMS, std::function<void()>&& OnFire) noexcept
 {
 	return mempool->Create<UvTimer>(*this, timeoutMS, repeatIntervalMS, std::move(OnFire));
 }
 
-xx::UvAsync* xx::UvLoop::CreateAsync() noexcept
+xx::UvAsync_w xx::UvLoop::CreateAsync() noexcept
 {
 	return mempool->Create<UvAsync>(*this);
 }
@@ -804,12 +804,21 @@ void xx::UvTcpUdpBase::RpcTraceCallback() noexcept
 	}
 }
 
-void xx::UvTcpUdpBase::DelayRelease(int const& interval) noexcept
+void xx::UvTcpUdpBase::ClearHandlers() noexcept
 {
 	OnReceivePackage = nullptr;
 	OnReceiveRequest = nullptr;
 	OnReceiveRouting = nullptr;
 	OnDispose = nullptr;
+	OnTimeout = nullptr;
+}
+
+void xx::UvTcpUdpBase::DelayRelease(int const& interval, bool const& clearHandlers) noexcept
+{
+	if (clearHandlers)
+	{
+		ClearHandlers();
+	}
 	if (!timeoutManager)
 	{
 		BindTimeoutManager();
@@ -847,6 +856,10 @@ void xx::UvTcpBase::OnReadCBImpl(void* stream, ptrdiff_t nread, void const* buf_
 int xx::UvTcpBase::SendBytes(char const* const& inBuf, int const& len) noexcept
 {
 	assert(addrPtr && inBuf && len);
+
+	lastSendData.first = inBuf;
+	lastSendData.second = len;
+
 	if (!ptr) return -1;
 
 	struct write_req_t
@@ -1196,14 +1209,18 @@ xx::UvTimeoutManager::UvTimeoutManager(UvLoop& loop, uint64_t const& intervalMS,
 	: Object(loop.mempool)
 	, timeouterss(loop.mempool)
 {
-	mempool->CreateTo(timer, loop, 0, intervalMS, [this]() noexcept { Process(); });
+	timer = loop.CreateTimer(0, intervalMS, [this]() noexcept { Process(); });
 	timeouterss.Resize(wheelLen);
 	this->defaultInterval = defaultInterval;
 }
 
 xx::UvTimeoutManager::~UvTimeoutManager() noexcept
 {
-	mempool->Release(timer); timer = nullptr;
+	if (timer)
+	{
+		timer->Release();
+		timer.Reset();
+	}
 }
 
 void xx::UvTimeoutManager::Process() noexcept
@@ -1369,7 +1386,6 @@ void xx::UvAsync::OnFireImpl() noexcept
 
 xx::UvRpcManager::UvRpcManager(UvLoop& loop, uint64_t const& intervalMS, int const& defaultInterval)
 	: Object(loop.mempool)
-	, timer(nullptr)
 	, mapping(loop.mempool)
 	, serials(loop.mempool)
 	, defaultInterval(defaultInterval)
@@ -1385,7 +1401,7 @@ xx::UvRpcManager::~UvRpcManager() noexcept
 	if (timer)
 	{
 		timer->Release();
-		timer = nullptr;
+		timer.Reset();
 	}
 }
 
@@ -1436,82 +1452,6 @@ size_t xx::UvRpcManager::Count() noexcept
 }
 
 
-
-
-
-
-
-
-
-
-xx::UvContextBase::UvContextBase(MemPool* const& mp)
-	: Object(mp)
-{
-}
-
-xx::UvContextBase::~UvContextBase() noexcept
-{
-	KickPeer();
-}
-
-bool xx::UvContextBase::PeerAlive() noexcept
-{
-	return peer && !peer->Disconnected();
-}
-
-bool xx::UvContextBase::BindPeer(UvTcpUdpBase* const& p) noexcept
-{
-	if (peer) return false;
-	p->OnReceiveRequest = std::bind(&UvContextBase::OnPeerReceiveRequest, this, std::placeholders::_1, std::placeholders::_2);
-	p->OnReceivePackage = std::bind(&UvContextBase::OnPeerReceivePackage, this, std::placeholders::_1);
-	p->OnDispose = std::bind(&UvContextBase::OnPeerDisconnect, this);
-	peer = p;
-	return true;
-}
-
-void xx::UvContextBase::KickPeer(bool const& immediately) noexcept
-{
-	if (peer)
-	{
-		peer->OnDispose = nullptr;              // 防止产生 OnDispose 调用
-		peer->OnReceivePackage = nullptr;       // 清空收发包回调
-		peer->OnReceiveRequest = nullptr;
-
-		if (immediately)
-		{
-			peer->Release();					// 立即断开
-		}
-		peer = nullptr;
-	}
-}
-
-void xx::UvContextBase::OnPeerReceiveRequest(uint32_t serial, BBuffer& bb) noexcept
-{
-	Ptr<Object> o;
-	if (int r = bb.ReadRoot(o))
-	{
-		KickPeer();
-		return;
-	}
-	HandleRequest(serial, o);
-}
-
-void xx::UvContextBase::OnPeerReceivePackage(BBuffer& bb) noexcept
-{
-	Ptr<Object> o;
-	if (int r = bb.ReadRoot(o))
-	{
-		KickPeer();
-		return;
-	}
-	HandlePackage(o);
-}
-
-void xx::UvContextBase::OnPeerDisconnect() noexcept
-{
-	KickPeer(false);
-	HandleDisconnect();
-}
 
 
 
@@ -1650,7 +1590,7 @@ int xx::UvUdpListener::StopListen() noexcept
 	return uv_udp_recv_stop((uv_udp_t*)ptr);
 }
 
-xx::UvUdpPeer* xx::UvUdpListener::CreatePeer(Guid const& g
+xx::UvUdpPeer_w xx::UvUdpListener::CreatePeer(Guid const& g
 	, int const& sndwnd, int const& rcvwnd
 	, int const& nodelay/*, int const& interval*/, int const& resend, int const& nc, int const& minrto) noexcept
 {
@@ -1941,6 +1881,10 @@ void xx::UvUdpClient::Disconnect() noexcept
 int xx::UvUdpClient::SetAddress(char const* const& ipv4, int const& port) noexcept
 {
 	return uv_ip4_addr(ipv4, port, (sockaddr_in*)addrPtr);
+}
+int xx::UvUdpClient::SetAddress6(char const* const& ipv6, int const& port) noexcept
+{
+	return uv_ip6_addr(ipv6, port, (sockaddr_in6*)addrPtr);
 }
 
 int xx::UvUdpClient::SendBytes(char const* const& inBuf, int const& len) noexcept

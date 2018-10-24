@@ -1259,6 +1259,7 @@ public static class GenExtensions
     /// </summary>
     public static bool _HasBaseType(this Type t)
     {
+        if (t.BaseType == null) return false;
         return t.BaseType != typeof(object) && t.BaseType != typeof(System.ValueType);
     }
 

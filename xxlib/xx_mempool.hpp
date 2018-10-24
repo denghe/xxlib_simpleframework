@@ -1245,6 +1245,39 @@ namespace xx
 
 
 
+
+
+	template<typename T>
+	template<typename O>
+	Weak<O> const& Weak<T>::As() const noexcept
+	{
+		assert(Is<O>());
+		return *(Weak<O>*)this;
+	}
+	template<typename T>
+	template<typename O>
+	Weak<O>& Weak<T>::As() noexcept
+	{
+		assert(Is<O>());
+		return *(Weak<O>*)this;
+	}
+
+	template<typename T>
+	template<typename O>
+	bool Weak<T>::Is() const noexcept
+	{
+		return !this || MemPool::IsBaseOf<O>(pointer->memHeader().typeId);
+	}
+	template<typename T>
+	bool Weak<T>::Is(uint16_t const& typeId) const noexcept
+	{
+		return !this || MemPool::IsBaseOf(typeId, pointer->memHeader().typeId);
+	}
+
+
+
+
+
 	template<typename T>
 	template<typename O>
 	Weak<T>& Weak<T>::operator=(O* const& o) noexcept

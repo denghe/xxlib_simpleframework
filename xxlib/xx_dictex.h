@@ -65,7 +65,7 @@ namespace xx
 		}
 
 		template<int keyIndex, typename TV, typename ...TKS>
-		friend class DictForEach;
+		friend struct DictForEach;
 
 	public:
 		DictEx(MemPool* const& mp, int const& capacity = 16)

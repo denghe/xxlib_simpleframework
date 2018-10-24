@@ -20,13 +20,50 @@ namespace xx
 	class UvAsync;
 	class UvRpcManager;
 	class UvTimeoutManager;
-	class UvContextBase;
 	class UvUdpListener;
 	class UvUdpBase;
 	class UvUdpPeer;
 	class UvUdpClient;
 	class UvHttpPeer;
 	class UvHttpClient;
+
+	using UvLoop_u = Unique<UvLoop>;
+	using UvListenerBase_u = Unique<UvListenerBase>;
+	using UvTcpListener_u = Unique<UvTcpListener>;
+	using UvTcpUdpBase_u = Unique<UvTcpUdpBase>;
+	using UvTcpBase_u = Unique<UvTcpBase>;
+	using UvTcpPeer_u = Unique<UvTcpPeer>;
+	using UvTcpClient_u = Unique<UvTcpClient>;
+	using UvTimer_u = Unique<UvTimer>;
+	using UvTimeouterBase_u = Unique<UvTimeouterBase>;
+	using UvTimeouter_u = Unique<UvTimeoutManager>;
+	using UvAsync_u = Unique<UvAsync>;
+	using UvRpcManager_u = Unique<UvRpcManager>;
+	using UvTimeouter_u = Unique<UvTimeoutManager>;
+	using UvUdpListener_u = Unique<UvUdpListener>;
+	using UvUdpBase_u = Unique<UvUdpBase>;
+	using UvUdpPeer_u = Unique<UvUdpPeer>;
+	using UvUdpClient_u = Unique<UvUdpClient>;
+
+
+	using UvLoop_w = Weak<UvLoop>;
+	using UvListenerBase_w = Weak<UvListenerBase>;
+	using UvTcpListener_w = Weak<UvTcpListener>;
+	using UvTcpUdpBase_w = Weak<UvTcpUdpBase>;
+	using UvTcpBase_w = Weak<UvTcpBase>;
+	using UvTcpPeer_w = Weak<UvTcpPeer>;
+	using UvTcpClient_w = Weak<UvTcpClient>;
+	using UvTimer_w = Weak<UvTimer>;
+	using UvTimeouterBase_w = Weak<UvTimeouterBase>;
+	using UvTimeouter_w = Weak<UvTimeoutManager>;
+	using UvAsync_w = Weak<UvAsync>;
+	using UvRpcManager_w = Weak<UvRpcManager>;
+	using UvTimeouter_w = Weak<UvTimeoutManager>;
+	using UvUdpListener_w = Weak<UvUdpListener>;
+	using UvUdpBase_w = Weak<UvUdpBase>;
+	using UvUdpPeer_w = Weak<UvUdpPeer>;
+	using UvUdpClient_w = Weak<UvUdpClient>;
+
 
 	enum class UvTcpStates
 	{
@@ -83,8 +120,8 @@ namespace xx
 		explicit UvLoop(MemPool* const& mp);
 		~UvLoop() noexcept;
 
-		int InitTimeoutManager(uint64_t const& intervalMS = 1000, int const& wheelLen = 6, int const& defaultInterval = 5) noexcept;
-		int InitRpcManager(uint64_t const& rpcIntervalMS = 1000, int const& rpcDefaultInterval = 5) noexcept;
+		int InitPeerTimeoutManager(uint64_t const& intervalMS = 1000, int const& wheelLen = 6, int const& defaultInterval = 5) noexcept;
+		int InitRpcTimeoutManager(uint64_t const& rpcIntervalMS = 1000, int const& rpcDefaultInterval = 5) noexcept;
 		int InitKcpFlushInterval(uint32_t const& interval = 10) noexcept;
 
 		int Run(UvRunMode const& mode = UvRunMode::Default) noexcept;
@@ -101,12 +138,12 @@ namespace xx
 		int DelayExecute(std::function<void()>&& func, int const& timeoutMS = 0) noexcept;
 
 
-		UvTcpListener* CreateTcpListener() noexcept;
-		UvTcpClient* CreateTcpClient() noexcept;
-		UvUdpListener* CreateUdpListener() noexcept;
-		UvUdpClient* CreateUdpClient() noexcept;
-		UvTimer* CreateTimer(uint64_t const& timeoutMS, uint64_t const& repeatIntervalMS, std::function<void()>&& OnFire = nullptr) noexcept;
-		UvAsync* CreateAsync() noexcept;
+		UvTcpListener_w CreateTcpListener() noexcept;
+		UvTcpClient_w CreateTcpClient() noexcept;
+		UvUdpListener_w CreateUdpListener() noexcept;
+		UvUdpClient_w CreateUdpClient() noexcept;
+		UvTimer_w CreateTimer(uint64_t const& timeoutMS, uint64_t const& repeatIntervalMS, std::function<void()>&& OnFire = nullptr) noexcept;
+		UvAsync_w CreateAsync() noexcept;
 	};
 
 	class UvListenerBase : public Object
@@ -127,7 +164,7 @@ namespace xx
 	{
 	public:
 		std::function<UvTcpPeer*()> OnCreatePeer;
-		std::function<void(UvTcpPeer*)> OnAccept;
+		std::function<void(UvTcpPeer_w)> OnAccept;
 		List<UvTcpPeer*> peers;
 
 		UvTcpListener(UvLoop& loop);
@@ -161,6 +198,11 @@ namespace xx
 	class UvTcpUdpBase : public UvTimeouterBase
 	{
 	public:
+		// 可以随便存点啥, 减少对继承的需求
+		Object_p userObject;
+		void* userData = nullptr;
+		int64_t userNumber = 0;
+
 		std::function<void(BBuffer&)> OnReceivePackage;
 
 		// uint32_t: 流水号
@@ -262,10 +304,13 @@ namespace xx
 
 		// 增强的 SendRequest 实现 断线时 立即发起相关 rpc 超时回调. 封装了解包操作. 
 		template<typename T>
-		uint32_t SendRequestEx(T const& pkg, std::function<void(uint32_t, Object_p&)>&& cb, int const& interval = 0) noexcept;
+		uint32_t SendRequestEx(T const& pkg, std::function<void(Object_p&)>&& cb, int const& interval = 0) noexcept;
+
+		// 清除掉 OnReceiveXxxxxx, OnDispose 的各种事件
+		void ClearHandlers() noexcept;
 
 		// 会清除掉 OnReceiveXxxxxx, OnDispose 的各种事件, BindTimeoutManager 并在 OnTimeout 时 Release
-		void DelayRelease(int const& interval = 0) noexcept;
+		void DelayRelease(int const& interval = 0, bool const& clearHandlers = false) noexcept;
 	};
 
 	class UvTcpBase : public UvTcpUdpBase
@@ -273,8 +318,12 @@ namespace xx
 	public:
 		UvTcpBase(UvLoop& loop);
 
+		// 存储最后一次发送的数据的指针及长度( 便于群发 )
+		std::pair<char const*, int> lastSendData;
+
 		size_t GetSendQueueSize() noexcept override;
 		int SendBytes(char const* const& inBuf, int const& len = 0) noexcept override;
+		// todo: SendBytes 支持传入 BBuffer_p 以利于群发, 支持直接拿走 bb 的内存免 copy
 
 		static void OnReadCBImpl(void* stream, ptrdiff_t nread, const void* buf_t) noexcept;
 	};
@@ -334,7 +383,7 @@ namespace xx
 	class UvTimeoutManager : public Object
 	{
 	public:
-		UvTimer * timer = nullptr;
+		UvTimer_w timer;
 		List<UvTimeouterBase*> timeouterss;
 		int cursor = 0;
 		int defaultInterval;
@@ -368,7 +417,7 @@ namespace xx
 	class UvRpcManager : public Object
 	{
 	public:
-		UvTimer * timer = nullptr;
+		UvTimer_w timer;
 		uint32_t serial = 0;
 		Dict<uint32_t, std::function<void(uint32_t, BBuffer*)>> mapping;
 		Queue<std::pair<int, uint32_t>> serials;
@@ -383,32 +432,11 @@ namespace xx
 		size_t Count() noexcept;
 	};
 
-	// 暂不建议使用
-	class UvContextBase : public Object
-	{
-	public:
-		UvTcpUdpBase * peer = nullptr;
-
-		UvContextBase(MemPool* const& mp);
-		~UvContextBase() noexcept;
-		bool PeerAlive() noexcept;
-
-		// 重要!! 如果该函数执行点位于 peer 之 OnXxxxx 中, 则在 Bind 成功之时, 先前的 lambda 上下文将被 "顶掉", 所有捕获将变"野", 故该函数只能于此类函数退出前执行
-		bool BindPeer(UvTcpUdpBase* const& p) noexcept;
-		void KickPeer(bool const& immediately = true) noexcept;
-		void OnPeerReceiveRequest(uint32_t serial, BBuffer& bb) noexcept;
-		void OnPeerReceivePackage(BBuffer& bb) noexcept;
-		void OnPeerDisconnect() noexcept;
-		virtual void HandleRequest(uint32_t serial, Ptr<Object>& o) noexcept = 0;
-		virtual void HandlePackage(Ptr<Object>& o) noexcept = 0;
-		virtual void HandleDisconnect() noexcept = 0;
-	};
-
 	class UvUdpListener : public UvListenerBase
 	{
 	public:
 		std::function<UvUdpPeer*(Guid const&)> OnCreatePeer;
-		std::function<void(UvUdpPeer*)> OnAccept;
+		std::function<void(UvUdpPeer_w)> OnAccept;
 		Dict<Guid, UvUdpPeer*> peers;
 
 		UvUdpListener(UvLoop& loop);
@@ -421,7 +449,7 @@ namespace xx
 		int Listen() noexcept;
 		int StopListen() noexcept;
 
-		UvUdpPeer* CreatePeer(Guid const& g
+		UvUdpPeer_w CreatePeer(Guid const& g
 			, int const& sndwnd = 128, int const& rcvwnd = 128
 			, int const& nodelay = 1/*, int const& interval = 10*/, int const& resend = 2, int const& nc = 1, int const& minrto = 100) noexcept;
 	};
@@ -489,8 +517,8 @@ namespace xx
 	{
 	public:
 		// 来自 libuv 的转换器及配置
-		http_parser_settings * parser_settings = nullptr;
-		http_parser * parser = nullptr;
+		http_parser_settings* parser_settings = nullptr;
+		http_parser* parser = nullptr;
 
 		// GET / POST / ...
 		String method;
@@ -567,7 +595,7 @@ namespace xx
 	public:
 		// 来自 libuv 的转换器及配置
 		http_parser_settings* parser_settings = nullptr;
-		http_parser * parser = nullptr;
+		http_parser* parser = nullptr;
 
 		// 头部所有键值对
 		Dict<String, String> headers;
@@ -610,44 +638,7 @@ namespace xx
 
 
 
-	using UvLoop_u = Unique<UvLoop>;
-	using UvListenerBase_u = Unique<UvListenerBase>;
-	using UvTcpListener_u = Unique<UvTcpListener>;
-	using UvTcpUdpBase_u = Unique<UvTcpUdpBase>;
-	using UvTcpBase_u = Unique<UvTcpBase>;
-	using UvTcpPeer_u = Unique<UvTcpPeer>;
-	using UvTcpClient_u = Unique<UvTcpClient>;
-	using UvTimer_u = Unique<UvTimer>;
-	using UvTimeouterBase_u = Unique<UvTimeouterBase>;
-	using UvTimeouter_u = Unique<UvTimeoutManager>;
-	using UvAsync_u = Unique<UvAsync>;
-	using UvRpcManager_u = Unique<UvRpcManager>;
-	using UvTimeouter_u = Unique<UvTimeoutManager>;
-	using UvContextBase_u = Unique<UvContextBase>;
-	using UvUdpListener_u = Unique<UvUdpListener>;
-	using UvUdpBase_u = Unique<UvUdpBase>;
-	using UvUdpPeer_u = Unique<UvUdpPeer>;
-	using UvUdpClient_u = Unique<UvUdpClient>;
 
-
-	using UvLoop_w = Weak<UvLoop>;
-	using UvListenerBase_w = Weak<UvListenerBase>;
-	using UvTcpListener_w = Weak<UvTcpListener>;
-	using UvTcpUdpBase_w = Weak<UvTcpUdpBase>;
-	using UvTcpBase_w = Weak<UvTcpBase>;
-	using UvTcpPeer_w = Weak<UvTcpPeer>;
-	using UvTcpClient_w = Weak<UvTcpClient>;
-	using UvTimer_w = Weak<UvTimer>;
-	using UvTimeouterBase_w = Weak<UvTimeouterBase>;
-	using UvTimeouter_w = Weak<UvTimeoutManager>;
-	using UvAsync_w = Weak<UvAsync>;
-	using UvRpcManager_w = Weak<UvRpcManager>;
-	using UvTimeouter_w = Weak<UvTimeoutManager>;
-	using UvContextBase_w = Weak<UvContextBase>;
-	using UvUdpListener_w = Weak<UvUdpListener>;
-	using UvUdpBase_w = Weak<UvUdpBase>;
-	using UvUdpPeer_w = Weak<UvUdpPeer>;
-	using UvUdpClient_w = Weak<UvUdpClient>;
 }
 
 #include "xx_uv.hpp"

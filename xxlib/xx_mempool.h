@@ -640,6 +640,24 @@ namespace xx
 		template<typename O>
 		Weak& operator=(O* const& o) noexcept;
 
+
+
+		// 比指针硬转科学丁点, 能防手误. 使用 assert 检测实际父子关系
+		template<typename O>
+		Weak<O> const& As() const noexcept;
+		template<typename O>
+		Weak<O>& As() noexcept;
+
+
+		// T can be try cast to O ?
+		template<typename O>
+		bool Is() const noexcept;
+
+		// T is typeId's parent or equals?
+		bool Is(uint16_t const& typeId) const noexcept;
+
+
+
 		// 下面所有比较都会先 operator bool() 再进行
 
 		template<typename O>

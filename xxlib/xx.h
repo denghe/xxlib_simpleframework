@@ -189,12 +189,30 @@ namespace xx
 	// RtvChecker
 	/***********************************************************************************/
 
+	template<typename T>
+	class Weak;
+	template<typename T>
+	class Ref;
+
 	struct RtvChecker
 	{
+		template<typename T>
+		void operator=(Weak<T> const& rtv)
+		{
+			assert(rtv);
+		}
+
+		template<typename T>
+		void operator=(Ref<T> const& rtv)
+		{
+			assert(rtv);
+		}
+
 		void operator=(int const& rtv)
 		{
 			assert(!rtv);
 		}
+
 		void operator=(void* const& rtv)
 		{
 			assert(rtv);

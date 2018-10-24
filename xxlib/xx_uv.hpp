@@ -237,7 +237,7 @@
 	}
 
 	template<typename T>
-	inline uint32_t UvTcpUdpBase::SendRequestEx(T const& pkg, std::function<void(uint32_t, Object_p&)>&& cb, int const& interval) noexcept
+	inline uint32_t UvTcpUdpBase::SendRequestEx(T const& pkg, std::function<void(Object_p&)>&& cb, int const& interval) noexcept
 	{
 		auto serial = SendRequest(pkg, [this, cb = std::move(cb)](uint32_t ser, BBuffer* bb)
 		{
@@ -250,7 +250,7 @@
 					inPkg.Reset();
 				}
 			}
-			cb(ser, inPkg);	// call 原始 lambda
+			cb(inPkg);	// call 原始 lambda
 		}, interval);
 
 		if (!serial) return 0;
