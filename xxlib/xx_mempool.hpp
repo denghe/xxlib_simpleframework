@@ -1215,7 +1215,7 @@ namespace xx
 	bool Weak<T>::operator==(Weak<O> const& o) const noexcept
 	{
 		operator bool();
-		o->operator bool();
+		o.operator bool();
 		return pointer == o.pointer;
 	}
 	template<typename T>
@@ -1223,7 +1223,7 @@ namespace xx
 	bool Weak<T>::operator!=(Weak<O> const& o) const noexcept
 	{
 		operator bool();
-		o->operator bool();
+		o.operator bool();
 		return pointer != o.pointer;
 	}
 
