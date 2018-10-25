@@ -953,7 +953,7 @@ const char* xx::UvTcpPeer::Ip(bool includePort) noexcept
 {
 	if (!ptr) return nullptr;
 	if (ipBuf[0]) return ipBuf.data();
-	if (FillIP((uv_tcp_t*)ptr, ipBuf.data(), (int)ipBuf.size())) return nullptr;
+	if (FillIP((uv_tcp_t*)ptr, ipBuf.data(), (int)ipBuf.size(), includePort)) return nullptr;
 	return ipBuf.data();
 }
 
