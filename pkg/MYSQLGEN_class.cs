@@ -3,7 +3,7 @@ namespace MYSQLGEN
 {
     public static class PkgGenMd5
     {
-        public const string value = "bb226d2a0d2ae293b28be6a67bf1a219"; 
+        public const string value = "bd227b96adcf623609c7b4f49ded85fd"; 
     }
 
     public partial class DbTable : Tables.TABLES
