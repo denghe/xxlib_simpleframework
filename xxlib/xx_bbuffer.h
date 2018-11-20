@@ -108,4 +108,8 @@ namespace xx
 
 	using BBuffer_r = Ref<BBuffer>;
 
+	using BBuffer_u = Unique<BBuffer>;
+
+	using BBuffer_w = Weak<BBuffer>;
+
 }

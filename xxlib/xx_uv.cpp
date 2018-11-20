@@ -44,31 +44,6 @@ static void AllocCB(uv_handle_t* h, size_t suggested_size, uv_buf_t* buf) noexce
 }
 
 // 地址转为 IP
-static int AddressToIP(sockaddr_in* addr, char* buf, size_t bufLen, bool includePort = true) noexcept
-{
-	int r = 0;
-	if (addr->sin_family == AF_INET6)
-	{
-		if ((r = uv_ip6_name((sockaddr_in6*)addr, buf, (int)bufLen))) return r;
-		if (includePort)
-		{
-			auto dataLen = strlen(buf);
-			sprintf(buf + dataLen, ":%d", ntohs(((sockaddr_in6*)addr)->sin6_port));
-		}
-	}
-	else
-	{
-		if ((r = uv_ip4_name(addr, buf, (int)bufLen))) return r;
-		if (includePort)
-		{
-			auto dataLen = strlen(buf);
-			sprintf(buf + dataLen, ":%d", ntohs(addr->sin_port));
-		}
-	}
-	return 0;
-}
-
-
 static int FillIP(sockaddr_in6& saddr, char* buf, size_t bufLen, bool includePort = true) noexcept
 {
 	int r = 0;
@@ -198,6 +173,121 @@ bool xx::UvLoop::Alive() const noexcept
 	return uv_loop_alive((uv_loop_t*)ptr) != 0;
 }
 
+bool xx::UvLoop::CreateTcpClientEx(char const* const& domainName, int const& port, std::function<void(xx::UvTcpClient_w)>&& cb, int const& timeoutMS) noexcept
+{
+	if (!cb) return false;
+
+	// 使用一个上下文来存所有连接对象. 连接对象的 userNumber 用来存位于 conns 的下标 以便交换删除
+	struct Ctx : xx::Object
+	{
+		std::function<void(xx::UvTcpClient_w)> cb;
+		xx::List<xx::UvTcpClient_w> conns;
+		Ctx(xx::MemPool* const& mp, std::function<void(xx::UvTcpClient_w)>&& cb)
+			: xx::Object(mp)
+			, conns(mp)
+			, cb(std::move(cb))
+		{
+		}
+		Ctx(Ctx const&) = delete;
+	};
+	auto ctx = mempool->MPCreatePtr<Ctx>(std::move(cb));
+
+	return GetIPList(domainName, [this, port, ctx, timeoutMS](xx::List<xx::String_p>* ips)
+	{
+		// 如果域名转 ip 失败, 直接短路返回
+		if (!ips || !ips->dataLen)
+		{
+			ctx->cb(xx::UvTcpClient_w());
+			return;
+		}
+
+		// 过滤出能合法创建出 conn 的 ip, 添加到 ctx conns
+		for (decltype(auto) ip : *ips)
+		{
+			decltype(auto) conn = CreateTcpClient();
+			int r = 0;
+			if (ip->Find(':') != size_t(-1))
+			{
+				r = conn->SetAddress6(ip->c_str(), port);
+			}
+			else
+			{
+				r = conn->SetAddress(ip->c_str(), port);
+			}
+			if (r)
+			{
+				conn->Release();
+				continue;
+			}
+
+			conn->userNumber = ctx->conns.dataLen;
+			ctx->conns.Add(conn);
+		}
+
+		// 如果一个连接都没有, 直接短路返回
+		if (!ctx->conns.dataLen)
+		{
+			ctx->cb(xx::UvTcpClient_w());
+			return;
+		}
+
+		// 令所有连接开始尝试连接目标地址 & 端口
+		for (decltype(auto) conn : ctx->conns)
+		{
+			conn->OnConnect = [conn_ = conn, ctx_ = ctx](int status)
+			{
+				// 将捕获列表成员复制到栈, 以便 Release 或清除 OnConnect 回调 不至于变野
+				auto conn = conn_;
+				auto ctx = ctx_;
+
+				// 将自己从 conns 移除
+				ctx->conns[ctx->conns.dataLen - 1]->userNumber = conn->userNumber;
+				ctx->conns.SwapRemoveAt(conn->userNumber);
+
+				// 如果连上了, 就干掉其他连接, 产生回调( 同时清掉使用痕迹 )
+				if (!status)
+				{
+					for (decltype(auto) c : ctx->conns)
+					{
+						c->Release();
+					}
+					conn->OnConnect = nullptr;
+					conn->userNumber = 0;
+					ctx->cb(conn);
+					ctx->cb = nullptr;
+					return;
+				}
+				else
+				{
+					conn->Release();
+				}
+
+				// 如果 conns 空了, 当前连接是最后一个, 就发起回调
+				if (!ctx->conns.dataLen)
+				{
+					ctx->cb(xx::UvTcpClient_w());
+					ctx->cb = nullptr;
+					return;
+				}
+				return;
+			};
+
+			// 开始连接. 如果立刻出错, 就从队列移除. 如果移除光了, 就发起回调. 
+			auto r = conn->Connect(timeoutMS);
+			if (r)
+			{
+				conn->Release();
+				if (!ctx->conns.dataLen && ctx->cb)
+				{
+					ctx->cb(xx::UvTcpClient_w());
+				}
+			}
+			if (!ctx->cb) return;	// 万一 Connect 立即连上破坏循环, 这样检测是否已经发起过回调
+		}
+	}, timeoutMS);
+}
+
+
 xx::UvTcpListener_w xx::UvLoop::CreateTcpListener() noexcept
 {
 	return mempool->Create<UvTcpListener>(*this);
@@ -245,7 +335,7 @@ int xx::UvLoop::DelayExecute(std::function<void()>&& func, int const& timeoutMS)
 
 
 
-bool xx::UvLoop::GetIPList(char const* const& domainName, std::function<void(List<String>*)>&& cb, int timeoutMS)
+bool xx::UvLoop::GetIPList(char const* const& domainName, std::function<void(List<String_p>*)>&& cb, int timeoutMS)
 {
 	auto s = mempool->Str(domainName);
 	if (dnsVisitors.Find(s) != -1) return false;
@@ -263,13 +353,14 @@ bool xx::UvLoop::GetIPList(char const* const& domainName, std::function<void(Lis
 
 
 
-xx::UvDnsVisitor::UvDnsVisitor(UvLoop* const& loop, String_p& domainName, std::function<void(List<String>*)>&& cb, int timeoutMS)
+xx::UvDnsVisitor::UvDnsVisitor(UvLoop* const& loop, String_p& domainName, std::function<void(List<String_p>*)>&& cb, int timeoutMS)
 	: xx::Object(loop->mempool)
 	, loop(*loop)
 	, domainName(domainName)
 	, cb(std::move(cb))
 	, results(loop->mempool)
 {
+#ifdef __IPHONE_OS_VERSION_MIN_REQUIRED
 	hints = Alloc(sizeof(addrinfo));
 	if (!hints) throw - 1;
 	xx::ScopeGuard sg_hints([&]() noexcept { Free(hints); hints = nullptr; });
@@ -277,7 +368,6 @@ xx::UvDnsVisitor::UvDnsVisitor(UvLoop* const& loop, String_p& domainName, std::f
 	((addrinfo*)hints)->ai_family = PF_UNSPEC;
 	((addrinfo*)hints)->ai_socktype = SOCK_STREAM;
 	((addrinfo*)hints)->ai_protocol = 0;// IPPROTO_TCP;
-#ifdef __IPHONE_OS_VERSION_MIN_REQUIRED
 	((addrinfo*)hints)->ai_flags = AI_DEFAULT;
 #endif
 
@@ -303,7 +393,9 @@ xx::UvDnsVisitor::UvDnsVisitor(UvLoop* const& loop, String_p& domainName, std::f
 
 	sg_resolver2.Cancel();
 	sg_resolver.Cancel();
+#ifdef __IPHONE_OS_VERSION_MIN_REQUIRED
 	sg_hints.Cancel();
+#endif
 }
 
 xx::UvDnsVisitor::~UvDnsVisitor()
@@ -339,48 +431,33 @@ void xx::UvDnsVisitor::OnResolvedCBImpl(void *resolver, int status, void *res)
 	{
 		auto ai = (addrinfo*)res;
 
-		// 已知苹果下面会返回前后两条重复的 ip 地址
-#ifdef __IPHONE_OS_VERSION_MIN_REQUIRED
-		xx::String s1(self->mempool);
+		// 已知 ios & android 下面会返回重复的 ip 地址. 保险起见去重一下
+		auto mp = self->mempool;
+		mp->strs->Clear();
 		do
 		{
-			xx::String s2(self->mempool);
-			s2.Resize(32);
+			auto s = mp->Str();
+			s->Resize(64);
 			if (ai->ai_addr->sa_family == AF_INET6)
 			{
-				uv_ip6_name((sockaddr_in6*)ai->ai_addr, s2.buf, s2.bufLen);
+				uv_ip6_name((sockaddr_in6*)ai->ai_addr, s->buf, s->bufLen);
 			}
 			else
 			{
-				uv_ip4_name((sockaddr_in*)ai->ai_addr, s2.buf, s2.bufLen);
-}
-			s2.dataLen = strlen(s2.buf);
-			if (!s1.Equals(s2))
-			{
-				s1.Assign(s2);
-				self->results.Add(std::move(s2));
+				uv_ip4_name((sockaddr_in*)ai->ai_addr, s->buf, s->bufLen);
 			}
+			s->dataLen = strlen(s->buf);
+			mp->strs->Add(s);
 			ai = ai->ai_next;
-#else
-		do
-		{
-			auto& s = self->results.Emplace(self->mempool);
-			s.Resize(32);
-			if (ai->ai_addr->sa_family == AF_INET6)
-			{
-				uv_ip6_name((sockaddr_in6*)ai->ai_addr, s.buf, s.bufLen);
-			}
-			else
-			{
-				uv_ip4_name((sockaddr_in*)ai->ai_addr, s.buf, s.bufLen);
-			}
-			s.dataLen = strlen(s.buf);
-			ai = ai->ai_next;
-#endif
 		} while (ai);
-
 		uv_freeaddrinfo((addrinfo*)res);
+
+		for (decltype(auto) s : *mp->strs)
+		{
+			self->results.Add(s);
 		}
+		mp->strs->Clear();
+	}
 
 	if (self->cb)
 	{
@@ -800,7 +877,7 @@ void xx::UvTcpUdpBase::RpcTraceCallback() noexcept
 		{
 			loop.rpcMgr->Callback(serial, nullptr);
 		}
-		assert(rpcSerials->Empty());
+		assert(!memHeader().versionNumber || rpcSerials->Empty());
 	}
 }
 

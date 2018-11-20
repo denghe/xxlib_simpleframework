@@ -57,4 +57,10 @@ namespace xx
 
 	template<typename T>
 	using Queue_r = Ref<Queue<T>>;
+
+	template<typename T>
+	using Queue_u = Unique<Queue<T>>;
+
+	template<typename T>
+	using Queue_w = Weak<Queue<T>>;
 }

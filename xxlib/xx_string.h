@@ -108,4 +108,8 @@ namespace xx
 	using String_p = Ptr<String>;
 
 	using String_r = Ref<String>;
+
+	using String_u = Unique<String>;
+
+	using String_w = Weak<String>;
 }

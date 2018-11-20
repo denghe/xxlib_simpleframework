@@ -86,15 +86,15 @@ namespace xx
 		UvLoop& loop;
 		String_p domainName;
 		int indexAtDict = -1;
-		std::function<void(List<String>*)> cb;
+		std::function<void(List<String_p>*)> cb;
 		xx::Weak<UvTimer> timeouter;
-		List<String> results;
+		List<String_p> results;
 
 		void* hints = nullptr;
 		void* resolver = nullptr;
 		static void OnResolvedCBImpl(void *resolver, int status, void *res);
 
-		UvDnsVisitor(UvLoop* const& loop, String_p& domainName, std::function<void(List<String>*)>&& cb, int timeoutMS = 0);
+		UvDnsVisitor(UvLoop* const& loop, String_p& domainName, std::function<void(List<String_p>*)>&& cb, int timeoutMS = 0);
 		~UvDnsVisitor();
 	};
 
@@ -130,14 +130,20 @@ namespace xx
 
 
 		// 根据域名得到 ip 列表. 超时触发空值回调. 如果反复针对相同域名发起查询, 且上次的查询还没触发回调, 将返回 false.
-		// 回调参数 bool 为 true: ipv4. false: ipv6
-		bool GetIPList(char const* const& domainName, std::function<void(List<String>*)>&& cb, int timeoutMS = 0);
+		bool GetIPList(char const* const& domainName, std::function<void(List<String_p>*)>&& cb, int timeoutMS = 0);
 
 
 		// 延迟执行, 以实现执行 需要出了当前函数才能执行的代码. 本质是 timeoutMS, 0 的 timer, 函数执行过后 timer 将自杀. 如果 timer 创建失败将返回非 0.
 		int DelayExecute(std::function<void()>&& func, int const& timeoutMS = 0) noexcept;
 
+		// 创建一个 tcp client 并解析域名 & 连接指定端口. 多 ip 域名将返回最快连上的. 超时时间可能因域名解析而比指定的要长. 不会超过两倍
+		// 如果域名解析失败, 所有ip全都连不上, 超时, 回调将传入空.
+		// domainName 也可以直接就是一个 ip. 这样会达到在 ipv6 协议栈下自动转换 ip 格式的目的
+		// 同时, 对 apple 手机应用来讲, 调用本函数 或 GetIPList 可达到弹出网络权限请求面板的效果
+		// 如果反复针对相同域名发起查询, 且上次的查询还没触发回调, 将返回 false.
+		bool CreateTcpClientEx(char const* const& domainName, int const& port, std::function<void(UvTcpClient_w)>&& cb, int const& timeoutMS = 0) noexcept;
 
+		// 这组 create 都是建一个初始对象
 		UvTcpListener_w CreateTcpListener() noexcept;
 		UvTcpClient_w CreateTcpClient() noexcept;
 		UvUdpListener_w CreateUdpListener() noexcept;

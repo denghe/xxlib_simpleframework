@@ -145,4 +145,10 @@ namespace xx
 	template <typename TK, typename TV>
 	using Dict_r = Ref<Dict<TK, TV>>;
 
+	template <typename TK, typename TV>
+	using Dict_u = Unique<Dict<TK, TV>>;
+
+	template <typename TK, typename TV>
+	using Dict_w = Weak<Dict<TK, TV>>;
+
 }

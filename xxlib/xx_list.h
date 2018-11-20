@@ -32,7 +32,7 @@ namespace xx
 
 		void Clear(bool const& freeBuf = false) noexcept;
 		void RemoveAt(size_t const& idx) noexcept;
-		void SwapRemoveAt(size_t const& idx) noexcept;		// 和最后一个元素做交换删除
+		void SwapRemoveAt(size_t const& idx) noexcept;		// 和最后一个元素做交换删除. 通常上一句为 list[list.dataLen - 1]->idx = o->idx;
 		void Remove(T const& v) noexcept;
 
 		template<typename...Args>
@@ -81,4 +81,10 @@ namespace xx
 
 	template<typename T>
 	using List_r = Ref<List<T>>;
+
+	template<typename T>
+	using List_u = Unique<List<T>>;
+
+	template<typename T>
+	using List_w = Weak<List<T>>;
 }
