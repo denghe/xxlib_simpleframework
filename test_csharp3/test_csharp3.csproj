@@ -49,9 +49,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="..\x64\Debug\xxuvlib.dll">
-      <Link>xxuvlib.dll</Link>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    <Content Include="..\x64\Release\libtest1.dll">
+      <Link>libtest1.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Compile Include="..\pkg\PKG_class.cs">
       <Link>PKG_class.cs</Link>

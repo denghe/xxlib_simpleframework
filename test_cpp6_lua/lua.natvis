@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
-  <!-- only for lua 5.3.4 latest version -->
+  <!-- only for lua 5.3.x latest version -->
   <Type Name="lua_State">
     <DisplayString>[{top-(ci->func+1)}]</DisplayString>
     <Expand>

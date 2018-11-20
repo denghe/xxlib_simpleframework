@@ -1,137 +1,178 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 using MySql.Data.MySqlClient;
 
-public static class Program
+public static class Dll
 {
-    ///// <summary>
-    ///// 快速执行 sql 的简易封装( 针对 MySqlFuncs ). 返回异常.
-    ///// </summary>
-    //public static Exception CallMySqlFuncs(Action<PKG.MySqlFuncs> a)
-    //{
-    //    try
-    //    {
-    //        using (var conn = new MySqlConnection($"server={"127.0.0.1"};user id={"root"};password={"1"};database={"catch_fish"};port={3306};charset=utf8;sslmode=none"))
-    //        {
-    //            conn.Open();
-    //            var fs = new PKG.MySqlFuncs(conn);
-    //            a(fs);
-    //        }
-    //    }
-    //    catch (Exception ex)
-    //    {
-    //        return ex;
-    //    }
-    //    return null;
-    //}
+#if !UNITY_EDITOR && UNITY_IPHONE
+        const string DLL_NAME = "__Internal";
+#else
+    const string DLL_NAME = "libtest1";
+#endif
+
+    //[MethodImpl(256)]
+    [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
+    public static unsafe extern void* create_mp();
+
+    [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
+    public static unsafe extern void release_mp(void* mp);
+
+    [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
+    public static unsafe extern byte* mp_alloc(void* mp, IntPtr len);
+
+    [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
+    public static unsafe extern void mp_free(void* mp, byte* buf);
+
+    [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
+    public static unsafe extern byte* mp_resize(void* mp, byte* buf, IntPtr newBuflen, IntPtr dataLen);
+
+    [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
+    public static unsafe extern void xxmemcpy(byte* src, byte* dst, IntPtr dataLen);
 
 
-    static void Main(string[] args)
+    public static unsafe void* mp = create_mp();   // todo: free
+    public static unsafe byte* mpAlloc(int len)
     {
-        PKG.AllTypes.Register();
-
-        //PKG.DataSet ds = new PKG.DataSet();
-        //ds.tables = new xx.List<PKG.Table>();
-
-        //var t = new PKG.Table();
-        //t.parent = ds;
-        //t.columns = new xx.List<PKG.TableColumn>();
-        //t.rows = new xx.List<PKG.TableRow>();
-        //t.name = "table_1";
-        //ds.tables.Add(t);
-
-        //var tc = new PKG.TableColumn();
-        //tc.name = "column_1";
-        //t.columns.Add(tc);
-
-        //var tr = new PKG.TableRow();
-        //tr.values = new xx.List<PKG.TableRowValue>();
-        //t.rows.Add(tr);
-
-        //var trv1 = new PKG.TableRowValue_NullableInt();
-        //trv1.value = 123;
-        //tr.values.Add(trv1);
-        //var trv2 = new PKG.TableRowValue_NullableInt();
-        //trv1.value = null;
-        //tr.values.Add(trv1);
-
-        //Console.WriteLine(ds);
-
-        //var bb = new xx.BBuffer();
-        //bb.WriteRoot(ds);
-
-        //Console.WriteLine(bb);
-
-
-        PKG.AllTypes.Register();
-        //var e = CallMySqlFuncs(fs =>
-        //{
-        //    var db_nodes = fs.SelectNodes<PKG.Tables.node>();
-        //    db_nodes.ForEach(o =>
-        //    {
-        //        Console.WriteLine(o);
-        //    });
-
-
-
-        //    // 从 mysql 以 PKG.Node 类型读出结果集( 基类是 Tables.node )
-        //    var nodes = fs.SelectNodes<PKG.Node>();
-
-        //    // 填充父子关联
-        //    nodes.ForEach(node => node.childs = new xx.List<PKG.Node>());
-        //    nodes.ForEach(node =>
-        //    {
-        //        // pid 空者为 root
-        //        if (!node.pid.HasValue) return;
-
-        //        // 根据 pid 定位 parent
-        //        var idx = nodes.Find(n => n.id == node.pid);
-
-        //        // 填充父子关联
-        //        node.parent = nodes[idx];
-        //        node.parent.childs.Add(node);
-        //    });
-
-        //    // 将 root 序列化成 byte[]
-        //    var bb = new xx.BBuffer();
-        //    bb.WriteRoot(nodes[0]);
-        //    Console.WriteLine(bb);
-
-
-
-
-
-
-
-
-
-
-
-
-        //    //var r = fs.SelectFooFoo<PKG.Foo, PKG.FooEx>(1, 2, "");
-        //    //Console.WriteLine(r.Item1);
-        //    //Console.WriteLine(r.Item2);
-        //    //Console.WriteLine(r.Item3);
-        //    //Console.WriteLine(r.Item4);
-
-        //    //var foo1 = fs.SelectFoo<PKG.Foo>(1, null, "this is 1 null");
-        //    //var foo2 = fs.SelectFoo<PKG.Foo>(2, 12, "this is 2 12");
-        //    //foo1.childs = new xx.List<PKG.Foo>();
-        //    //foo1.childs.Add(foo2);
-        //    //foo2.childs = new xx.List<PKG.Foo>();
-        //    //foo2.childs.Add(foo1);
-
-        //    //Console.WriteLine(foo1);
-
-        //    //var bb = new xx.BBuffer();
-        //    //bb.WriteRoot(foo1);
-        //    //Console.WriteLine(bb);
-
-        //    //PKG.Foo foo3 = null;
-        //    //bb.ReadRoot(ref foo3);
-        //    //Console.WriteLine(foo3);
-        //});
+        return mp_alloc(mp, (IntPtr)len);
+    }
+    public static unsafe byte* mpAlloc(long len)
+    {
+        return mp_alloc(mp, (IntPtr)len);
+    }
+    public static unsafe void mpFree(byte* buf)
+    {
+        mp_free(mp, buf);
+    }
+    public static unsafe byte* mpResize(byte* buf, int newBuflen, int dataLen)
+    {
+        return mp_resize(mp, buf, (IntPtr)newBuflen, (IntPtr)dataLen);
+    }
+    public static unsafe byte* mpResize(byte* buf, long newBuflen, long dataLen)
+    {
+        return mp_resize(mp, buf, (IntPtr)newBuflen, (IntPtr)dataLen);
     }
 }
+
+public unsafe class BB : IDisposable
+{
+    public byte* buf;
+    public int bufLen, dataLen;
+
+    public BB()
+    {
+        buf = Dll.mpAlloc(32);
+        bufLen = 32;
+    }
+
+    public void Reserve(int capacity)
+    {
+        if (capacity <= bufLen) return;
+        bufLen = capacity * 2;
+        buf = Dll.mpResize(buf, bufLen, dataLen);
+    }
+
+    public void Write(int v)
+    {
+        if (dataLen + 5 > bufLen) Reserve(dataLen + 5);
+        Bit7Write(ZigZagEncode(v));
+    }
+
+    public static uint ZigZagEncode(int v) { return (uint)((v << 1) ^ (v >> 31)); }
+    public void Bit7Write(uint v)
+    {
+        Lab1:
+        byte b7 = (byte)v;
+        v >>= 7;
+        if (v > 0)
+        {
+            buf[dataLen++] = (byte)(b7 | (byte)0x80);
+            goto Lab1;
+        }
+        buf[dataLen++] = b7;
+    }
+
+    public void Clear()
+    {
+        dataLen = 0;
+    }
+
+    public void Dispose()
+    {
+        Dll.mpFree(buf);
+    }
+}
+
+public static class Program
+{
+    static unsafe void Main(string[] args)
+    {
+        var outBuf = Dll.mpAlloc(512);  // todo: free
+        for (int k = 0; k < 10; k++)
+        {
+
+            var sw = Stopwatch.StartNew();
+            {
+                var count = 0;
+                var bb = new xx.BBuffer();
+                for (int j = 0; j < 10000000; j++)
+                {
+                    bb.Clear();
+                    for (int i = 0; i < 20; i++)
+                    {
+                        bb.Write(1234567);
+                    }
+                    count += bb.dataLen;
+                    Marshal.Copy(bb.buf, 0, (IntPtr)outBuf, bb.dataLen);
+                }
+                Console.WriteLine("write 10000000 times, count = " + count + ", ms = " + sw.ElapsedMilliseconds);
+            }
+
+            sw.Restart();
+            {
+                var count = 0;
+                using (var bb = new BB())
+                {
+                    for (int j = 0; j < 10000000; j++)
+                    {
+                        bb.Clear();
+                        for (int i = 0; i < 20; i++)
+                        {
+                            bb.Write(1234567);
+                        }
+                        count += bb.dataLen;
+                        //Dll.xxmemcpy(bb.buf, outBuf, (IntPtr)bb.dataLen);
+                    }
+                }
+                Console.WriteLine("write 10000000 times, count = " + count + ", ms = " + sw.ElapsedMilliseconds);
+            }
+        }
+    }
+}
+
+
+//var sw = Stopwatch.StartNew();
+//{
+//    for (int i = 0; i < 100000000; i++)
+//    {
+//        var ptr = Marshal.AllocHGlobal(4);
+//        Marshal.FreeHGlobal(ptr);
+//        //Marshal.ReAllocHGlobal
+//    }
+//    Console.WriteLine("new + del 100000000 times, ms = " + sw.ElapsedMilliseconds);
+//}
+
+//sw.Restart();
+//unsafe
+//{
+//    var mp = Dll.create_mp();
+//    for (int i = 0; i < 100000000; i++)
+//    {
+//        var ptr = Dll.mp_alloc(mp, (IntPtr)4);
+//        Dll.mp_free(mp, ptr);
+//    }
+//    Dll.release_mp(mp);
+//    Console.WriteLine("mp.alloc + free 100000000 times, ms = " + sw.ElapsedMilliseconds);
+//}

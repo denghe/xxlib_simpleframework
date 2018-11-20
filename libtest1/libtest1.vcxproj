@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>15.0</VCProjectVersion>
+    <ProjectGuid>{443F99F8-031C-4F7E-80AD-EDACF61FAA71}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>libtest1</RootNamespace>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <IncludePath>$(SolutionDir);$(SolutionDir)xxlib;$(SolutionDir)libuv\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)libuv\lib\win64;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IncludePath>$(SolutionDir);$(SolutionDir)xxlib;$(SolutionDir)libuv\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)libuv\lib\win64;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>NDEBUG;libtest1_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>libuv.lib;ws2_32.lib;Iphlpapi.lib;psapi.lib;userenv.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <IgnoreSpecificDefaultLibraries>libcmt</IgnoreSpecificDefaultLibraries>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>_DEBUG;libtest1_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>libuv.lib;ws2_32.lib;Iphlpapi.lib;psapi.lib;userenv.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <IgnoreSpecificDefaultLibraries>libcmtd</IgnoreSpecificDefaultLibraries>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="..\xxlib\fixed_function.hpp" />
+    <ClInclude Include="..\xxlib\http_parser.h" />
+    <ClInclude Include="..\xxlib\ikcp.h" />
+    <ClInclude Include="..\xxlib\xx.h" />
+    <ClInclude Include="..\xxlib\xx_bbuffer.h" />
+    <ClInclude Include="..\xxlib\xx_bbuffer.hpp" />
+    <ClInclude Include="..\xxlib\xx_bytesutils.h" />
+    <ClInclude Include="..\xxlib\xx_bytesutils.hpp" />
+    <ClInclude Include="..\xxlib\xx_charsutils.h" />
+    <ClInclude Include="..\xxlib\xx_charsutils.hpp" />
+    <ClInclude Include="..\xxlib\xx_dict.h" />
+    <ClInclude Include="..\xxlib\xx_dict.hpp" />
+    <ClInclude Include="..\xxlib\xx_dictex.h" />
+    <ClInclude Include="..\xxlib\xx_guid.h" />
+    <ClInclude Include="..\xxlib\xx_guid.hpp" />
+    <ClInclude Include="..\xxlib\xx_hashset.h" />
+    <ClInclude Include="..\xxlib\xx_hashset.hpp" />
+    <ClInclude Include="..\xxlib\xx_hashutils.h" />
+    <ClInclude Include="..\xxlib\xx_hashutils.hpp" />
+    <ClInclude Include="..\xxlib\xx_list.h" />
+    <ClInclude Include="..\xxlib\xx_list.hpp" />
+    <ClInclude Include="..\xxlib\xx_logger.h" />
+    <ClInclude Include="..\xxlib\xx_mempool.h" />
+    <ClInclude Include="..\xxlib\xx_mempool.hpp" />
+    <ClInclude Include="..\xxlib\xx_queue.h" />
+    <ClInclude Include="..\xxlib\xx_queue.hpp" />
+    <ClInclude Include="..\xxlib\xx_random.h" />
+    <ClInclude Include="..\xxlib\xx_random.hpp" />
+    <ClInclude Include="..\xxlib\xx_sqlite.h" />
+    <ClInclude Include="..\xxlib\xx_string.h" />
+    <ClInclude Include="..\xxlib\xx_string.hpp" />
+    <ClInclude Include="..\xxlib\xx_uv.h" />
+    <ClInclude Include="..\xxlib\xx_uv.hpp" />
+    <ClInclude Include="test.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\xxlib\http_parser.c" />
+    <ClCompile Include="..\xxlib\ikcp.cpp" />
+    <ClCompile Include="..\xxlib\xx_uv.cpp" />
+    <ClCompile Include="test.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="..\xxlib\xx.natvis" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

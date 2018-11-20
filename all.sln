@@ -70,6 +70,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "web", "web\web.csproj", "{3
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "pkggen_template_WEB", "pkggen_template_WEB\pkggen_template_WEB.csproj", "{EC2073C1-39D5-48EB-8E77-94CBA38481F5}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libtest1", "libtest1\libtest1.vcxproj", "{443F99F8-031C-4F7E-80AD-EDACF61FAA71}"
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		pkg\pkg.projitems*{160a3ee0-261c-4ed1-9194-4c6e75dbc7cf}*SharedItemsImports = 13
@@ -186,6 +188,10 @@ Global
 		{EC2073C1-39D5-48EB-8E77-94CBA38481F5}.Debug|x64.Build.0 = Debug|x64
 		{EC2073C1-39D5-48EB-8E77-94CBA38481F5}.Release|x64.ActiveCfg = Release|x64
 		{EC2073C1-39D5-48EB-8E77-94CBA38481F5}.Release|x64.Build.0 = Release|x64
+		{443F99F8-031C-4F7E-80AD-EDACF61FAA71}.Debug|x64.ActiveCfg = Debug|x64
+		{443F99F8-031C-4F7E-80AD-EDACF61FAA71}.Debug|x64.Build.0 = Debug|x64
+		{443F99F8-031C-4F7E-80AD-EDACF61FAA71}.Release|x64.ActiveCfg = Release|x64
+		{443F99F8-031C-4F7E-80AD-EDACF61FAA71}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
