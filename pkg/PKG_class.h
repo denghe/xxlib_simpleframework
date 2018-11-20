@@ -5,70 +5,99 @@ namespace PKG
 {
 	struct PkgGenMd5
 	{
-		static constexpr char const* value = "905b6cc9bea8da4594a7511c79681eca";
+		static constexpr char const* value = "246e7788eb7eee5169e798fd24c1c1be";
     };
 
-    class Foo;
-    using Foo_p = xx::Ptr<Foo>;
-    using Foo_r = xx::Ref<Foo>;
+    class Player;
+    using Player_p = xx::Ptr<Player>;
+    using Player_r = xx::Ref<Player>;
 
-    class Foo : public xx::Object
+    class Scene;
+    using Scene_p = xx::Ptr<Scene>;
+    using Scene_r = xx::Ref<Scene>;
+
+    class Player : public xx::Object
     {
     public:
-        xx::Ref<PKG::Foo> refFoo;
-        xx::List_p<xx::Ref<PKG::Foo>> refFoos;
+        int32_t id = 0;
+        xx::String_p name;
+        PKG::Scene_p owner;
 
-        typedef Foo ThisType;
+        typedef Player ThisType;
         typedef xx::Object BaseType;
-	    Foo(xx::MemPool* const& mempool) noexcept;
-	    Foo(xx::BBuffer* const& bb);
-		Foo(Foo const&) = delete;
-		Foo& operator=(Foo const&) = delete;
+	    Player(xx::MemPool* const& mempool) noexcept;
+	    Player(xx::BBuffer* const& bb);
+		Player(Player const&) = delete;
+		Player& operator=(Player const&) = delete;
         void ToString(xx::String& s) const noexcept override;
         void ToStringCore(xx::String& s) const noexcept override;
         void ToBBuffer(xx::BBuffer& bb) const noexcept override;
         int FromBBuffer(xx::BBuffer& bb) noexcept override;
         int FromBBufferCore(xx::BBuffer& bb) noexcept;
-        void CopyTo(Foo* const& o) const noexcept;
-        Foo* MakeCopy() const noexcept;
-        Foo_p MakePtrCopy() const noexcept;
+        void CopyTo(Player* const& o) const noexcept;
+        Player* MakeCopy() const noexcept;
+        Player_p MakePtrCopy() const noexcept;
+        inline static xx::Ptr<ThisType> defaultInstance;
+    };
+    class Scene : public xx::Object
+    {
+    public:
+        xx::List_p<xx::Ref<PKG::Player>> players;
+
+        typedef Scene ThisType;
+        typedef xx::Object BaseType;
+	    Scene(xx::MemPool* const& mempool) noexcept;
+	    Scene(xx::BBuffer* const& bb);
+		Scene(Scene const&) = delete;
+		Scene& operator=(Scene const&) = delete;
+        void ToString(xx::String& s) const noexcept override;
+        void ToStringCore(xx::String& s) const noexcept override;
+        void ToBBuffer(xx::BBuffer& bb) const noexcept override;
+        int FromBBuffer(xx::BBuffer& bb) noexcept override;
+        int FromBBufferCore(xx::BBuffer& bb) noexcept;
+        void CopyTo(Scene* const& o) const noexcept;
+        Scene* MakeCopy() const noexcept;
+        Scene_p MakePtrCopy() const noexcept;
         inline static xx::Ptr<ThisType> defaultInstance;
     };
 }
 namespace xx
 {
-	template<> struct TypeId<PKG::Foo> { static const uint16_t value = 3; };
-	template<> struct TypeId<xx::List<xx::Ref<PKG::Foo>>> { static const uint16_t value = 5; };
+	template<> struct TypeId<PKG::Player> { static const uint16_t value = 3; };
+	template<> struct TypeId<PKG::Scene> { static const uint16_t value = 4; };
+	template<> struct TypeId<xx::List<xx::Ref<PKG::Player>>> { static const uint16_t value = 5; };
 }
 namespace PKG
 {
-	inline Foo::Foo(xx::MemPool* const& mempool) noexcept
+	inline Player::Player(xx::MemPool* const& mempool) noexcept
         : xx::Object(mempool)
 	{
 	}
-	inline Foo::Foo(xx::BBuffer* const& bb)
+	inline Player::Player(xx::BBuffer* const& bb)
         : xx::Object(bb)
 	{
         if (int r = FromBBufferCore(*bb)) throw r;
 	}
-    inline void Foo::ToBBuffer(xx::BBuffer& bb) const noexcept
+    inline void Player::ToBBuffer(xx::BBuffer& bb) const noexcept
     {
-        bb.Write(this->refFoo);
-        bb.Write(this->refFoos);
+        bb.Write(this->id);
+        bb.Write(this->name);
+        bb.Write(this->owner);
     }
-    inline int Foo::FromBBuffer(xx::BBuffer& bb) noexcept
+    inline int Player::FromBBuffer(xx::BBuffer& bb) noexcept
     {
         return this->FromBBufferCore(bb);
     }
-    inline int Foo::FromBBufferCore(xx::BBuffer& bb) noexcept
+    inline int Player::FromBBufferCore(xx::BBuffer& bb) noexcept
     {
-        if (int r = bb.Read(this->refFoo)) return r;
+        if (int r = bb.Read(this->id)) return r;
         bb.readLengthLimit = 0;
-        if (int r = bb.Read(this->refFoos)) return r;
+        if (int r = bb.Read(this->name)) return r;
+        if (int r = bb.Read(this->owner)) return r;
         return 0;
     }
 
-    inline void Foo::ToString(xx::String& s) const noexcept
+    inline void Player::ToString(xx::String& s) const noexcept
     {
         if (this->memHeader().flags)
         {
@@ -77,32 +106,94 @@ namespace PKG
         }
         else this->memHeader().flags = 1;
 
-        s.Append("{ \"pkgTypeName\":\"Foo\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
+        s.Append("{ \"pkgTypeName\":\"Player\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
         ToStringCore(s);
         s.Append(" }");
         
         this->memHeader().flags = 0;
     }
-    inline void Foo::ToStringCore(xx::String& s) const noexcept
+    inline void Player::ToStringCore(xx::String& s) const noexcept
     {
         this->BaseType::ToStringCore(s);
-        s.Append(", \"refFoo\":", this->refFoo);
-        s.Append(", \"refFoos\":", this->refFoos);
+        s.Append(", \"id\":", this->id);
+        if (this->name) s.Append(", \"name\":\"", this->name, "\"");
+        else s.Append(", \"name\":nil");
+        s.Append(", \"owner\":", this->owner);
     }
-    inline void Foo::CopyTo(Foo* const& o) const noexcept
+    inline void Player::CopyTo(Player* const& o) const noexcept
     {
-        o->refFoo = this->refFoo;
-        o->refFoos = this->refFoos;
+        o->id = this->id;
+        o->name = this->name;
+        o->owner = this->owner;
     }
-    inline Foo* Foo::MakeCopy() const noexcept
+    inline Player* Player::MakeCopy() const noexcept
     {
-        auto o = mempool->MPCreate<Foo>();
+        auto o = mempool->MPCreate<Player>();
         this->CopyTo(o);
         return o;
     }
-    inline Foo_p Foo::MakePtrCopy() const noexcept
+    inline Player_p Player::MakePtrCopy() const noexcept
     {
-        return Foo_p(this->MakeCopy());
+        return Player_p(this->MakeCopy());
+    }
+
+	inline Scene::Scene(xx::MemPool* const& mempool) noexcept
+        : xx::Object(mempool)
+	{
+	}
+	inline Scene::Scene(xx::BBuffer* const& bb)
+        : xx::Object(bb)
+	{
+        if (int r = FromBBufferCore(*bb)) throw r;
+	}
+    inline void Scene::ToBBuffer(xx::BBuffer& bb) const noexcept
+    {
+        bb.Write(this->players);
+    }
+    inline int Scene::FromBBuffer(xx::BBuffer& bb) noexcept
+    {
+        return this->FromBBufferCore(bb);
+    }
+    inline int Scene::FromBBufferCore(xx::BBuffer& bb) noexcept
+    {
+        bb.readLengthLimit = 0;
+        if (int r = bb.Read(this->players)) return r;
+        return 0;
+    }
+
+    inline void Scene::ToString(xx::String& s) const noexcept
+    {
+        if (this->memHeader().flags)
+        {
+        	s.Append("[ \"***** recursived *****\" ]");
+        	return;
+        }
+        else this->memHeader().flags = 1;
+
+        s.Append("{ \"pkgTypeName\":\"Scene\", \"pkgTypeId\":", xx::TypeId_v<ThisType>);
+        ToStringCore(s);
+        s.Append(" }");
+        
+        this->memHeader().flags = 0;
+    }
+    inline void Scene::ToStringCore(xx::String& s) const noexcept
+    {
+        this->BaseType::ToStringCore(s);
+        s.Append(", \"players\":", this->players);
+    }
+    inline void Scene::CopyTo(Scene* const& o) const noexcept
+    {
+        o->players = this->players;
+    }
+    inline Scene* Scene::MakeCopy() const noexcept
+    {
+        auto o = mempool->MPCreate<Scene>();
+        this->CopyTo(o);
+        return o;
+    }
+    inline Scene_p Scene::MakePtrCopy() const noexcept
+    {
+        return Scene_p(this->MakeCopy());
     }
 
 }
@@ -111,7 +202,8 @@ namespace PKG
 	inline void AllTypesRegister() noexcept
 	{
         xx::MemPool::RegisterInternals();
-	    xx::MemPool::Register<PKG::Foo, xx::Object>();
-	    xx::MemPool::Register<xx::List<xx::Ref<PKG::Foo>>, xx::Object>();
+	    xx::MemPool::Register<PKG::Player, xx::Object>();
+	    xx::MemPool::Register<PKG::Scene, xx::Object>();
+	    xx::MemPool::Register<xx::List<xx::Ref<PKG::Player>>, xx::Object>();
 	}
 }

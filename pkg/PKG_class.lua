@@ -1,12 +1,12 @@
 ﻿
-PKG_PkgGenMd5_Value = '905b6cc9bea8da4594a7511c79681eca'
+PKG_PkgGenMd5_Value = '246e7788eb7eee5169e798fd24c1c1be'
 
-PKG_Foo = {
-    typeName = "PKG_Foo",
+PKG_Player = {
+    typeName = "PKG_Player",
     typeId = 3,
     Create = function()
         local o = {}
-        o.__proto = PKG_Foo
+        o.__proto = PKG_Player
         o.__index = o
         o.__newindex = o
 		o.__isReleased = false
@@ -15,28 +15,56 @@ PKG_Foo = {
 		end
 
 
-        o.refFoo = MakeRef() -- Ref_PKG_Foo
-        o.refFoos = null -- List_Ref_PKG_Foo_
+        o.id = 0 -- Int32
+        o.name = null -- String
+        o.owner = null -- PKG_Scene
         return o
     end,
     FromBBuffer = function( bb, o )
         local ReadObject = bb.ReadObject
-        o.refFoo = MakeRef( ReadObject( bb ) )
-        o.refFoos = ReadObject( bb )
+        o.id = bb:ReadInt32()
+        o.name = ReadObject( bb )
+        o.owner = ReadObject( bb )
     end,
     ToBBuffer = function( bb, o )
         local WriteObject = bb.WriteObject
-        WriteObject( bb, o.refFoo.Lock() )
-        WriteObject( bb, o.refFoos )
+        bb:WriteInt32( o.id )
+        WriteObject( bb, o.name )
+        WriteObject( bb, o.owner )
     end
 }
-BBuffer.Register( PKG_Foo )
-List_Ref_PKG_Foo_ = {
-    typeName = "List_Ref_PKG_Foo_",
+BBuffer.Register( PKG_Player )
+PKG_Scene = {
+    typeName = "PKG_Scene",
+    typeId = 4,
+    Create = function()
+        local o = {}
+        o.__proto = PKG_Scene
+        o.__index = o
+        o.__newindex = o
+		o.__isReleased = false
+		o.Release = function()
+			o.__isReleased = true
+		end
+
+
+        o.players = null -- List_Ref_PKG_Player_
+        return o
+    end,
+    FromBBuffer = function( bb, o )
+        o.players = bb:ReadObject()
+    end,
+    ToBBuffer = function( bb, o )
+        bb:WriteObject( o.players )
+    end
+}
+BBuffer.Register( PKG_Scene )
+List_Ref_PKG_Player_ = {
+    typeName = "List_Ref_PKG_Player_",
     typeId = 5,
     Create = function()
         local o = {}
-        o.__proto = List_Ref_PKG_Foo_
+        o.__proto = List_Ref_PKG_Player_
         o.__index = o
         o.__newindex = o
 		o.__isReleased = false
@@ -62,4 +90,4 @@ List_Ref_PKG_Foo_ = {
 		end
     end
 }
-BBuffer.Register( List_Ref_PKG_Foo_ )
+BBuffer.Register( List_Ref_PKG_Player_ )

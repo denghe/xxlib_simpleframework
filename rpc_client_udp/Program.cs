@@ -105,7 +105,7 @@ public class UnityScene
             // 登录成功, 出循环继续执行. 暂时没别的可能了
         }
 
-        LabPing:
+//        LabPing:
         yield return null;
 
         Console.WriteLine("request ping");

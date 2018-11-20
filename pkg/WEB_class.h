@@ -5,7 +5,7 @@ namespace WEB
 {
 	struct PkgGenMd5
 	{
-		static constexpr char const* value = "408e6a46b52b91678cffaef30e88c13b";
+		static constexpr char const* value = "6e43f05b8f2a762c088e2730b4dce25b";
     };
 
     // 管理人员

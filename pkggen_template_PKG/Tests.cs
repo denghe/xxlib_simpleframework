@@ -3,23 +3,17 @@ using TemplateLibrary;
 
 
 
-class Foo
+class Player
 {
-    Ref<Foo> refFoo;
-    //Foo foo;
-    //List<Foo> foos;
-    List<Ref<Foo>> refFoos;
+    int id;
+    string name;
+    Scene owner;
 }
 
-
-//class Scene
-//{
-//    List<Player> players;
-//}
-//class Player
-//{
-//    Ref<Scene> scene;
-//}
+class Scene
+{
+    List<Ref<Player>> players;
+}
 
 
 

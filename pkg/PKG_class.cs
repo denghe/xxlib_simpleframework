@@ -3,30 +3,33 @@ namespace PKG
 {
     public static class PkgGenMd5
     {
-        public const string value = "905b6cc9bea8da4594a7511c79681eca"; 
+        public const string value = "246e7788eb7eee5169e798fd24c1c1be"; 
     }
 
-    public partial class Foo : xx.Object
+    public partial class Player : xx.Object
     {
-        public xx.Ref<Foo> refFoo;
-        public xx.List<xx.Ref<Foo>> refFoos;
+        public int id;
+        public string name;
+        public Scene owner;
 
         public override ushort GetPackageId()
         {
-            return xx.TypeId<Foo>.value;
+            return xx.TypeId<Player>.value;
         }
 
         public override void ToBBuffer(xx.BBuffer bb)
         {
-            bb.Write(this.refFoo);
-            bb.Write(this.refFoos);
+            bb.Write(this.id);
+            bb.Write(this.name);
+            bb.Write(this.owner);
         }
 
         public override void FromBBuffer(xx.BBuffer bb)
         {
-            bb.Read(ref this.refFoo);
+            bb.Read(ref this.id);
             bb.readLengthLimit = 0;
-            bb.Read(ref this.refFoos);
+            bb.Read(ref this.name);
+            bb.Read(ref this.owner);
         }
         public override void ToString(System.Text.StringBuilder s)
         {
@@ -37,7 +40,7 @@ namespace PKG
             }
             else __toStringing = true;
 
-            s.Append("{ \"pkgTypeName\":\"Foo\", \"pkgTypeId\":" + GetPackageId());
+            s.Append("{ \"pkgTypeName\":\"Player\", \"pkgTypeId\":" + GetPackageId());
             ToStringCore(s);
             s.Append(" }");
 
@@ -45,8 +48,58 @@ namespace PKG
         }
         public override void ToStringCore(System.Text.StringBuilder s)
         {
-            s.Append(", \"refFoo\":" + refFoo.ToString());
-            s.Append(", \"refFoos\":" + (refFoos == null ? "nil" : refFoos.ToString()));
+            s.Append(", \"id\":" + id.ToString());
+            if (name != null) s.Append(", \"name\":\"" + name.ToString() + "\"");
+            else s.Append(", \"name\":nil");
+            s.Append(", \"owner\":" + (owner == null ? "nil" : owner.ToString()));
+        }
+        public override string ToString()
+        {
+            var sb = new System.Text.StringBuilder();
+            ToString(sb);
+            return sb.ToString();
+        }
+        public override void MySqlAppend(System.Text.StringBuilder sb, bool ignoreReadOnly)
+        {
+        }
+    }
+    public partial class Scene : xx.Object
+    {
+        public xx.List<xx.Ref<Player>> players;
+
+        public override ushort GetPackageId()
+        {
+            return xx.TypeId<Scene>.value;
+        }
+
+        public override void ToBBuffer(xx.BBuffer bb)
+        {
+            bb.Write(this.players);
+        }
+
+        public override void FromBBuffer(xx.BBuffer bb)
+        {
+            bb.readLengthLimit = 0;
+            bb.Read(ref this.players);
+        }
+        public override void ToString(System.Text.StringBuilder s)
+        {
+            if (__toStringing)
+            {
+        	    s.Append("[ \"***** recursived *****\" ]");
+        	    return;
+            }
+            else __toStringing = true;
+
+            s.Append("{ \"pkgTypeName\":\"Scene\", \"pkgTypeId\":" + GetPackageId());
+            ToStringCore(s);
+            s.Append(" }");
+
+            __toStringing = false;
+        }
+        public override void ToStringCore(System.Text.StringBuilder s)
+        {
+            s.Append(", \"players\":" + (players == null ? "nil" : players.ToString()));
         }
         public override string ToString()
         {
@@ -63,8 +116,9 @@ namespace PKG
         public static void Register()
         {
             xx.Object.RegisterInternals();
-            xx.Object.Register<Foo>(3);
-            xx.Object.Register<xx.List<xx.Ref<Foo>>>(5);
+            xx.Object.Register<Player>(3);
+            xx.Object.Register<Scene>(4);
+            xx.Object.Register<xx.List<xx.Ref<Player>>>(5);
         }
     }
 }
