@@ -3,7 +3,7 @@ namespace LOGDB
 {
     public static class PkgGenMd5
     {
-        public const string value = "dab36444030d7f91e6081718c0323f9c"; 
+        public const string value = "cef7d80349e61ed9ade7587729d512e3"; 
     }
 
     /// <summary>

@@ -1,5 +1,5 @@
 ﻿
-WEB_PkgGenMd5_Value = '6e43f05b8f2a762c088e2730b4dce25b'
+WEB_PkgGenMd5_Value = 'be302a4a4204b84d4f4c97ea720a91ac'
 
 --[[
 通用错误返回
