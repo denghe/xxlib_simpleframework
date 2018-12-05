@@ -348,6 +348,11 @@ namespace xx
 
 		template<typename O = T, typename...Args>
 		Ptr<T>& MPCreate(MemPool* const& mp, Args&&...args) noexcept;
+
+		template<typename O>
+		Ptr<T>& Copy(O const* const& o) noexcept;
+		template<typename O>
+		Ptr<T>& Copy(Ptr<O> const& o) noexcept;
 	};
 
 	template<typename T>
