@@ -670,7 +670,8 @@ namespace xx
 	Ptr<T>& Ptr<T>::Copy(Ptr<O> const& o) noexcept
 	{
 		if (pointer == o.pointer) return *this;
-		Reset(o ? o->mempool->MPCreate<O>(*o) : nullptr);
+		if (!o.pointer) Reset();
+		else MPCreate(o.pointer->mempool, *o);
 		return *this;
 	}
 
@@ -679,7 +680,8 @@ namespace xx
 	Ptr<T>& Ptr<T>::Copy(O const* const& o) noexcept
 	{
 		if (pointer == o) return *this;
-		Reset(o ? o->mempool->MPCreate<O>(*o) : nullptr);
+		if (!o) Reset();
+		else MPCreate(o->mempool, *o);
 		return *this;
 	}
 

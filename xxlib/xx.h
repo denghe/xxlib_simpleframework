@@ -99,6 +99,20 @@ size_t _countof_helper(T const (&arr)[N])
 
 
 /***********************************************************************************/
+// Sleep
+/***********************************************************************************/
+
+// this_thread sleep_for will be create a new thread for sleep, so....
+// btw: windows need include windows.h
+#ifndef _WIN32
+inline void Sleep(int ms)
+{
+	usleep(ms * 1000);
+}
+#endif 
+
+
+/***********************************************************************************/
 // CORO_ BEGIN END YIELDTO GOTO
 /***********************************************************************************/
 // need define lineNumber var 
