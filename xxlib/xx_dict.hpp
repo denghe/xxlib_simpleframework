@@ -208,7 +208,14 @@ namespace xx
 		int idx = Find(k);
 		if (idx < 0)
 		{
-			idx = Add(std::forward<K>(k), TV(), true).index;
+			if constexpr (CtorTakesMemPool_v<TV>)
+			{
+				idx = Add(std::forward<K>(k), TV(mempool), true).index;
+			}
+			else
+			{
+				idx = Add(std::forward<K>(k), TV(), true).index;
+			}
 		}
 		return items[idx].value;
 	}
