@@ -216,7 +216,7 @@ namespace xx
 		// 下面这些函数都是靠 try 来检测错误
 
 		void SetParameter(int parmIdx, int const& v);
-		void SetParameter(int parmIdx, sqlite_int64 const& v);
+		void SetParameter(int parmIdx, int64_t const& v);
 		void SetParameter(int parmIdx, double const& v);
 		void SetParameter(int parmIdx, char const* const& str, int strLen = 0, bool const& makeCopy = false);
 		void SetParameter(int parmIdx, char const* const& buf, size_t const& len, bool const& makeCopy = false);
@@ -252,7 +252,7 @@ namespace xx
 		char const* GetColumnName(int const& colIdx);
 		bool IsDBNull(int const& colIdx);
 		int ReadInt32(int const& colIdx);
-		sqlite_int64 ReadInt64(int const& colIdx);
+		int64_t ReadInt64(int const& colIdx);
 		double ReadDouble(int const& colIdx);
 		char const* ReadString(int const& colIdx);
 		std::pair<char const*, int> ReadText(int const& colIdx);
@@ -472,7 +472,7 @@ namespace xx
 		if (r != SQLITE_OK) owner.ThrowError(r);
 	}
 
-	inline void SQLiteQuery::SetParameter(int parmIdx, sqlite_int64 const& v)
+	inline void SQLiteQuery::SetParameter(int parmIdx, int64_t const& v)
 	{
 		auto r = sqlite3_bind_int64(stmt, parmIdx, v);
 		if (r != SQLITE_OK) owner.ThrowError(r);
@@ -555,8 +555,8 @@ namespace xx
 	void SQLiteQuery::SetParameter(int parmIdx, EnumType const& v)
 	{
 		static_assert(std::is_enum<EnumType>::value, "parameter only support sqlite base types and enum types.");
-		if (sizeof(EnumType) <= 4) SetParameter(parmIdx, (int)(typename std::underlying_type<EnumType>::type)v);
-		else SetParameter(parmIdx, (sqlite_int64)(typename std::underlying_type<EnumType>::type)v);
+		if constexpr (sizeof(EnumType) <= 4) SetParameter(parmIdx, (int)(typename std::underlying_type<EnumType>::type)v);
+		else SetParameter(parmIdx, (int64_t)(typename std::underlying_type<EnumType>::type)v);
 	}
 
 	template<typename...Parameters>
@@ -640,7 +640,7 @@ namespace xx
 		return sqlite3_column_int(stmt, colIdx);
 	}
 
-	inline sqlite_int64 SQLiteReader::ReadInt64(int const& colIdx)
+	inline int64_t SQLiteReader::ReadInt64(int const& colIdx)
 	{
 		assert(colIdx >= 0 && colIdx < numCols && !IsDBNull(colIdx));
 		return sqlite3_column_int64(stmt, colIdx);
