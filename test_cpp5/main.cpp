@@ -16,8 +16,14 @@ using FooPtrsPtr = std::shared_ptr<FooPtrs>;
 using Map = std::unordered_map<int, FooPtrsPtr>;
 using MapPtr = std::shared_ptr<Map>;
 
+struct Foo2 : xx::Object, Foo
+{
+	using xx::Object::Object;
+};
+
 int main()
 {
+	for (int k = 0; k < 2; ++k)
 	{
 		xx::Stopwatch sw;
 		auto map = MapPtr(new Map());
@@ -42,7 +48,7 @@ int main()
 				for (int j = 0; j < 100; j++)
 				{
 					var iter = map->find(i);
-					auto foo = iter->second->at(j);
+					var foo = iter->second->at(j);
 					counter += foo->a;
 					counter += foo->b;
 					counter += foo->c;
@@ -59,6 +65,7 @@ int main()
 
 	std::cout << std::endl;
 
+	for (int k = 0; k < 2; ++k)
 	{
 		xx::Stopwatch sw;
 		std::unordered_map<int, std::vector<Foo>> map;
@@ -97,10 +104,11 @@ int main()
 	}
 
 	std::cout << std::endl;
+	xx::MemPool mp;
 
+	for (int k = 0; k < 2; ++k)
 	{
 		xx::Stopwatch sw;
-		xx::MemPool mp;
 		xx::Dict<int, xx::List<Foo>> map(&mp);
 		for (int i = 0; i < 10000; i++)
 		{
@@ -129,6 +137,56 @@ int main()
 					counter += foo.e;
 					counter += foo.f;
 					for (var o : foo.ints) counter += o;
+				}
+			}
+		}
+		std::cout << sw() << std::endl;
+		std::cout << counter << std::endl;
+	}
+
+	std::cout << std::endl;
+
+	for (int k = 0; k < 2; ++k)
+	{
+		xx::Stopwatch sw;
+		xx::Dict_p<int, xx::List_p<xx::Ptr<Foo2>>> map;
+		map.MPCreate(&mp);
+		for (int i = 0; i < 10000; i++)
+		{
+			var r = map->Add(i, mp.MPCreatePtr<xx::List<xx::Ptr<Foo2>>>());
+			for (int j = 0; j < 100; j++)
+			{
+				xx::Ptr<Foo2> foo2;
+				foo2.MPCreate(&mp);
+				foo2->ints = { 1,2,3 };
+				foo2->a = 1;
+				foo2->b = 2;
+				foo2->c = 3;
+				foo2->d = 4;
+				foo2->e = 5;
+				foo2->f = 6;
+				map->At(r.index)->Emplace(foo2);
+			}
+		}
+		std::cout << sw() << std::endl;
+		std::cout << map->Count() << std::endl;
+
+		size_t counter = 0;
+		for (size_t n = 0; n < 100; n++)
+		{
+			for (int i = 0; i < 10000; i++)
+			{
+				for (int j = 0; j < 100; j++)
+				{
+					var idx = map->Find(i);
+					var foo = map->ValueAt(idx)->At(j);
+					counter += foo->a;
+					counter += foo->b;
+					counter += foo->c;
+					counter += foo->d;
+					counter += foo->e;
+					counter += foo->f;
+					for (var o : foo->ints) counter += o;
 				}
 			}
 		}
