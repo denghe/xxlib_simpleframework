@@ -477,8 +477,19 @@ void xx::UvDnsVisitor::OnResolvedCBImpl(void *resolver, int status, void *res)
 
 
 
+void xx::UvOnDispose::CallOnDispose() noexcept
+{
+	if (disposed) return;
+	if (OnDispose)
+	{
+		OnDispose();
+		OnDispose = nullptr;
+	}
+	disposed = true;
+}
+
 xx::UvListenerBase::UvListenerBase(UvLoop& loop)
-	: Object(loop.mempool)
+	: UvOnDispose(loop.mempool)
 	, loop(loop)
 {
 }
@@ -571,7 +582,7 @@ int xx::UvTcpListener::Listen(int const& backlog) noexcept
 
 
 xx::UvTimeouterBase::UvTimeouterBase(MemPool* const& mp)
-	: Object(mp)
+	: UvOnDispose(mp)
 {
 }
 
@@ -1003,11 +1014,8 @@ xx::UvTcpPeer::UvTcpPeer(UvTcpListener & listener)
 xx::UvTcpPeer::~UvTcpPeer() noexcept
 {
 	assert(addrPtr);
-	RpcTraceCallback();
-	if (OnDispose)
-	{
-		OnDispose();
-	}
+	CallOnDispose();
+
 	CloseAndFree((uv_handle_t*)ptr);
 	ptr = nullptr;
 	Free(addrPtr);
@@ -1039,6 +1047,12 @@ const char* xx::UvTcpPeer::Ip(bool includePort) noexcept
 
 
 
+void xx::UvTcpClient::CallOnDispose() noexcept
+{
+	if (disposed) return;
+	Disconnect();
+	this->BaseType::CallOnDispose();
+}
 
 xx::UvTcpClient::UvTcpClient(UvLoop& loop)
 	: UvTcpBase(loop)
@@ -1052,11 +1066,8 @@ xx::UvTcpClient::UvTcpClient(UvLoop& loop)
 
 xx::UvTcpClient::~UvTcpClient() noexcept
 {
-	Disconnect();
-	if (OnDispose)
-	{
-		OnDispose();
-	}
+	CallOnDispose();
+
 	Free(addrPtr);
 	addrPtr = nullptr;
 	loop.tcpClients[loop.tcpClients.dataLen - 1]->index_at_container = index_at_container;
@@ -1384,7 +1395,7 @@ void xx::UvTimeoutManager::AddOrUpdate(UvTimeouterBase* const& t, int const& int
 
 
 xx::UvAsync::UvAsync(UvLoop& loop)
-	: Object(loop.mempool)
+	: UvOnDispose(loop.mempool)
 	, loop(loop)
 	, actions(loop.mempool)
 {
@@ -1407,10 +1418,7 @@ xx::UvAsync::UvAsync(UvLoop& loop)
 xx::UvAsync::~UvAsync() noexcept
 {
 	assert(ptr);
-	if (OnDispose)
-	{
-		OnDispose();
-	}
+	CallOnDispose();
 
 	CloseAndFree((uv_handle_t*)ptr);
 	ptr = nullptr;
@@ -1562,10 +1570,8 @@ xx::UvUdpListener::UvUdpListener(UvLoop& loop)
 xx::UvUdpListener::~UvUdpListener() noexcept
 {
 	assert(ptr);
-	if (OnDispose)
-	{
-		OnDispose();
-	}
+	CallOnDispose();
+
 	for (decltype(auto) kv : peers)
 	{
 		kv.value->Release();
@@ -1724,13 +1730,17 @@ xx::UvUdpPeer::UvUdpPeer(UvUdpListener& listener
 	sg_ptr.Cancel();
 }
 
+void xx::UvTcpUdpBase::CallOnDispose() noexcept
+{
+	if (disposed) return;
+	RpcTraceCallback();
+	this->BaseType::CallOnDispose();
+}
+
 xx::UvUdpPeer::~UvUdpPeer() noexcept
 {
-	RpcTraceCallback();
-	if (OnDispose)
-	{
-		OnDispose();
-	}
+	CallOnDispose();
+
 	Free(addrPtr);
 	ikcp_release((ikcpcb*)ptr);
 	ptr = nullptr;
@@ -1835,12 +1845,9 @@ xx::UvUdpClient::UvUdpClient(UvLoop& loop)
 
 xx::UvUdpClient::~UvUdpClient() noexcept
 {
-	RpcTraceCallback();
-	if (OnDispose)
-	{
-		OnDispose();
-	}
-	Disconnect();
+	CallOnDispose();
+
+	Disconnect();	// cleanup only
 	loop.udpClients.RemoveAt(index_at_container);
 	index_at_container = (size_t)-1;
 }

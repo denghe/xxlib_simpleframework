@@ -3,6 +3,7 @@
 #include <mutex>
 
 // 重要: 除了 UvLoop, 其他类型只能以指针方式 Create 出来用. 否则将导致版本号检测变野失败. 所有回调都属于 noexcept, 如有异常, 需要自己 try
+// 如果要继承最上层基类为 UvOnDispose 的派生类，需要在最外层析构中执行 CallOnDispose() 以确保 OnDispose, OnDisconnect 之类 的事件函数在最外层类成员析构之前执行
 
 // 提示: IOS 下面可以使用 uvloop.GetIPList 解析域名可以令程序强制弹 网络权限窗
 
@@ -152,11 +153,18 @@ namespace xx
 		UvAsync_w CreateAsync() noexcept;
 	};
 
-	class UvListenerBase : public Object
+	class UvOnDispose : public Object
 	{
 	public:
+		using Object::Object;
 		std::function<void()> OnDispose;
+		bool disposed = false;
+		virtual void CallOnDispose() noexcept;
+	};
 
+	class UvListenerBase : public UvOnDispose
+	{
+	public:
 		UvLoop& loop;
 		size_t index_at_container = -1;
 
@@ -182,7 +190,7 @@ namespace xx
 		int Listen(int const& backlog = 128) noexcept;
 	};
 
-	class UvTimeouterBase : public Object
+	class UvTimeouterBase : public UvOnDispose
 	{
 	public:
 		UvTimeouterBase(MemPool* const& mp);
@@ -204,6 +212,8 @@ namespace xx
 	class UvTcpUdpBase : public UvTimeouterBase
 	{
 	public:
+		using BaseType = UvTimeouterBase;
+
 		// 可以随便存点啥, 减少对继承的需求
 		Object_p userObject;
 		void* userData = nullptr;
@@ -214,6 +224,8 @@ namespace xx
 		// uint32_t: 流水号
 		std::function<void(uint32_t, BBuffer&)> OnReceiveRequest;
 
+		// 重写以确保先于 OnDispose 发起 RpcTraceCallback
+		void CallOnDispose() noexcept override;
 
 
 		// 由于路由服务需要保持 routingAddress 为空, 在收到 Routing 包时, 可抛出 OnReceiveRouting, 以便进一步用相应的 client 转发
@@ -226,9 +238,6 @@ namespace xx
 		// 3 个 size_t 代表 含包头的总包长, 地址起始偏移, 地址长度( 方便替换地址并 memcpy )
 		// BBuffer 的 offset 停在包头起始处
 		std::function<void(BBuffer&, size_t, size_t, size_t)> OnReceiveRouting;
-
-
-		std::function<void()> OnDispose;
 
 
 		UvLoop& loop;
@@ -354,6 +363,9 @@ namespace xx
 		xx::Weak<UvTimer> connTimeouter;	// 超时 cancel 后 uv 还是会产生 OnConnectCBImpl 的回调
 		UvTcpStates state = UvTcpStates::Disconnected;
 
+		// 重写以确保先于 OnDispose 发起 RpcTraceCallback + Disconnect( OnDisconnect )
+		void CallOnDispose() noexcept override;
+
 		void* req = nullptr;			// 延迟删除
 		UvTcpClient(UvLoop& loop);
 		~UvTcpClient() noexcept;
@@ -373,7 +385,6 @@ namespace xx
 	{
 	public:
 		std::function<void()> OnFire;
-		std::function<void()> OnDispose;
 
 		UvLoop& loop;
 		size_t index_at_container = -1;
@@ -402,11 +413,10 @@ namespace xx
 		void AddOrUpdate(UvTimeouterBase* const& t, int const& interval = 0) noexcept;
 	};
 
-	class UvAsync : public Object
+	class UvAsync : public UvOnDispose
 	{
 	public:
 		std::function<void()> OnFire;
-		std::function<void()> OnDispose;
 
 		UvLoop& loop;
 		size_t index_at_container = -1;
