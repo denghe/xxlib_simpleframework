@@ -216,3 +216,61 @@ int main()
 //	std::cout << s << std::endl;
 //	return 0;
 //}
+
+
+
+
+
+/*
+#pragma execution_character_set("utf-8")
+#include <iostream>
+#include <functional>
+
+struct C1
+{
+	~C1()
+	{
+		std::cout << "~C1" << std::endl;
+	}
+};
+
+struct C2
+{
+	std::function<void()> cb;
+	virtual ~C2()
+	{
+		std::cout << "~C2" << std::endl;
+		if (cb)
+		{
+			cb();
+			cb = nullptr;
+		}
+	}
+};
+
+struct C3 : C2
+{
+	C1 c1;
+	~C3()
+	{
+		if (cb)
+		{
+			cb();
+			cb = nullptr;
+		}
+	}
+};
+
+int main()
+{
+	{
+		C3 c;
+		c.cb = []
+		{
+			std::cout << "cb()" << std::endl;
+		};
+	}
+	return 0;
+}
+
+*/

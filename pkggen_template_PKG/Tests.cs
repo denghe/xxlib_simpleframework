@@ -3,11 +3,17 @@ using TemplateLibrary;
 
 
 
-class Player
+class Account
 {
     int id;
     string name;
+    int? vipLevel;
+}
+
+class Player : Account
+{
     Scene owner;
+    // ...
 }
 
 class Scene
