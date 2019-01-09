@@ -9,3 +9,4 @@ Release
 /test_core2/obj
 /web/obj
 /web/bin
+/go/src/.idea

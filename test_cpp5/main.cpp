@@ -23,6 +23,23 @@ struct Foo2 : xx::Object, Foo
 
 int main()
 {
+	xx::Stopwatch sw;
+	xx::MemPool mp;
+	xx::BBuffer bb(&mp);
+	int n = 1000000;
+	float f = 1.234;
+	for (int j = 0; j < n; j++)
+	{
+		bb.Clear();
+		for (int i = 0; i < 1000; i++)
+		{
+			bb.Write(f);
+		}
+	}
+	std::cout << (double)sw.nanos() / n << std::endl;
+	return 0;
+
+
 	for (int k = 0; k < 2; ++k)
 	{
 		xx::Stopwatch sw;
@@ -104,7 +121,6 @@ int main()
 	}
 
 	std::cout << std::endl;
-	xx::MemPool mp;
 
 	for (int k = 0; k < 2; ++k)
 	{

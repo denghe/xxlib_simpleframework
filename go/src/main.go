@@ -270,11 +270,24 @@ func (zs *PKG_Foo) WriteTo(bb *BBuffer) {
 }
 
 type List_IWriteTo []IWriteTo
+func (zs *List_IWriteTo) SwapRemoveAt(idx int) {
+	count := len(*zs)
+	if idx + 1 < count {
+		(*zs)[idx] = (*zs)[count - 1]
+	}
+	*zs = (*zs)[:count - 1]
+}
 func (zs *List_IWriteTo) Add_PKG_Foo(v *PKG_Foo) {
 	*zs = append(*zs, v)
 }
 func (zs *List_IWriteTo) Add_PKG_FooEx(v *PKG_FooEx) {
 	*zs = append(*zs, v)
+}
+func (zs *List_IWriteTo) At_PKG_Foo(idx int) *PKG_Foo {
+	return (*zs)[idx].(*PKG_Foo)
+}
+func (zs *List_IWriteTo) At_PKG_FooEx(idx int) *PKG_FooEx {
+	return (*zs)[idx].(*PKG_FooEx)
 }
 func (zs *List_IWriteTo) WriteTo(bb *BBuffer) {
 	if zs == nil {
@@ -326,4 +339,25 @@ func main() {
 	foos.WriteTo(&bb)
 	fmt.Println(bb)
 	bb.Clear()
+
+	for _, f := range *foos.Foos {
+		switch f.(type) {
+		case *PKG_Foo:
+			o := f.(*PKG_Foo)
+			if o == nil {
+				fmt.Println("PKG_Foo(nil)")
+			} else {
+				fmt.Println("PKG_Foo")
+			}
+		case *PKG_FooEx:
+			o := f.(*PKG_FooEx)
+			if o == nil {
+				fmt.Println("PKG_FooEx(nil)")
+			} else {
+				fmt.Println("PKG_FooEx")
+			}
+		case nil:
+			fmt.Println("nil")
+		}
+	}
 }

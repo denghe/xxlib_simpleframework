@@ -173,6 +173,12 @@ namespace xx
 			Reset();
 			return std::chrono::duration_cast<std::chrono::microseconds>(beginTime - bak).count();
 		}
+		inline int64_t nanos() noexcept
+		{
+			auto bak = beginTime;
+			Reset();
+			return std::chrono::duration_cast<std::chrono::nanoseconds>(beginTime - bak).count();
+		}
 	private:
 		std::chrono::time_point<std::chrono::high_resolution_clock> beginTime;
 	};
