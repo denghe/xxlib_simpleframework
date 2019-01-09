@@ -49,6 +49,10 @@ type NullableFloat64 struct {
 	Value float64
 	HasValue bool
 }
+type NullableString struct {
+	Value string
+	HasValue bool
+}
 
 
 
@@ -163,11 +167,11 @@ func (bb *BBuffer) WriteNullableFloat64(v NullableFloat64) {
 		bb.Buf = append(bb.Buf, uint8(0))
 	}
 }
-func (bb *BBuffer) WriteNullableString(v *string) {
-	if v != nil {
+func (bb *BBuffer) WriteNullableString(v NullableString) {
+	if v.HasValue {
 		bb.Buf = append(bb.Buf, uint8(1))
-		bb.WriteVarLen(len(*v))
-		bb.Buf = append(bb.Buf, *v...)
+		bb.WriteVarLen(len(v.Value))
+		bb.Buf = append(bb.Buf, v.Value...)
 	} else {
 		bb.Buf = append(bb.Buf, uint8(0))
 	}
@@ -255,7 +259,7 @@ type IWriteTo interface {
 // 模拟生成物
 type PKG_Foo struct {
 	Id int32
-	Name *string
+	Name NullableString
 	Age NullableInt32
 }
 func (zs *PKG_Foo) WriteTo(bb *BBuffer) {
@@ -327,8 +331,7 @@ func (zs *PKG_FooEx) WriteTo(bb *BBuffer) {
 
 func main() {
 	bb := BBuffer{}
-	name := "asdf"
-	foo := PKG_Foo{ 10, &name, NullableInt32{20, true } }
+	foo := PKG_Foo{ 10, NullableString{"asdf", true}, NullableInt32{20, true } }
 	fooex := PKG_FooEx {foo, 30 }
 	foos := PKG_Foos { &List_IWriteTo{} }
 	foos.Foos.Add_PKG_FooEx( &fooex )
@@ -340,24 +343,30 @@ func main() {
 	fmt.Println(bb)
 	bb.Clear()
 
-	for _, f := range *foos.Foos {
-		switch f.(type) {
-		case *PKG_Foo:
-			o := f.(*PKG_Foo)
-			if o == nil {
-				fmt.Println("PKG_Foo(nil)")
-			} else {
-				fmt.Println("PKG_Foo")
+	dump := func() {
+		for _, f := range *foos.Foos {
+			switch f.(type) {
+			case *PKG_Foo:
+				o := f.(*PKG_Foo)
+				if o == nil {
+					fmt.Println("PKG_Foo(nil)")
+				} else {
+					fmt.Println("PKG_Foo")
+				}
+			case *PKG_FooEx:
+				o := f.(*PKG_FooEx)
+				if o == nil {
+					fmt.Println("PKG_FooEx(nil)")
+				} else {
+					fmt.Println("PKG_FooEx")
+				}
+			case nil:
+				fmt.Println("nil")
 			}
-		case *PKG_FooEx:
-			o := f.(*PKG_FooEx)
-			if o == nil {
-				fmt.Println("PKG_FooEx(nil)")
-			} else {
-				fmt.Println("PKG_FooEx")
-			}
-		case nil:
-			fmt.Println("nil")
 		}
+		fmt.Println()
 	}
+	dump()
+	foos.Foos.SwapRemoveAt(1)
+	dump()
 }
