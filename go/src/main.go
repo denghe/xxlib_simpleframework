@@ -624,54 +624,18 @@ func (zs *BBuffer) ReadIObject() (r IObject) {
 
 // 模拟生成物
 
-type PKG_Foo_ interface {
-	GetId() int32
-	SetId(v int32)
-
-	GetName() NullableString
-	SetName(v NullableString)
-
-	GetAge() NullableInt32
-	SetAge(v NullableInt32)
-
-	GetParent() PKG_Foo_
-	SetParent(v PKG_Foo_)
+type PKG_Foo_Interface interface {
+	PKG_Foo() *PKG_Foo
 }
-
 type PKG_Foo struct {
 	Id int32
 	Name NullableString
 	Age NullableInt32
-	//Parent *PKG_Foo
-	Parent PKG_Foo_
+	Parent PKG_Foo_Interface
 }
-
-func (zs *PKG_Foo) GetId() int32 {
-	return zs.Id
+func (zs *PKG_Foo) PKG_Foo() *PKG_Foo {
+	return zs
 }
-func (zs *PKG_Foo) SetId(v int32) {
-	zs.Id = v
-}
-func (zs *PKG_Foo) GetName() NullableString {
-	return zs.Name
-}
-func (zs *PKG_Foo) SetName(v NullableString) {
-	zs.Name = v
-}
-func (zs *PKG_Foo) GetAge() NullableInt32 {
-	return zs.Age
-}
-func (zs *PKG_Foo) SetAge(v NullableInt32) {
-	zs.Age = v
-}
-func (zs *PKG_Foo) GetParent() PKG_Foo_ {
-	return zs.Parent
-}
-func (zs *PKG_Foo) SetParent(v PKG_Foo_) {
-	zs.Parent = v
-}
-
-
 
 func (zs *PKG_Foo) GetPackageId() uint16 {
 	return uint16(3)
@@ -686,8 +650,26 @@ func (zs *PKG_Foo) FromBBuffer(bb *BBuffer) {
 	zs.Id = bb.ReadInt32()
 	zs.Name = bb.ReadNullableString()
 	zs.Age = bb.ReadNullableInt32()
-	zs.Parent = bb.ReadIObject().(PKG_Foo_)
+	zs.Parent = bb.ReadIObject().(PKG_Foo_Interface)
 }
+
+
+type ListInt32 []int32
+func (zs *ListInt32) GetPackageId() uint16 {
+	return uint16(4)
+}
+func (zs *ListInt32) ToBBuffer(bb *BBuffer) {
+	bb.WriteLength(len(*zs))
+	for _, v := range *zs {
+		bb.WriteInt32(v)
+	}
+}
+func (zs *ListInt32) FromBBuffer(bb *BBuffer) {
+}
+
+
+
+
 
 func RegisterAll_PKG() {
 	RegisterInternals()
@@ -696,6 +678,7 @@ func RegisterAll_PKG() {
 	})
 	// ... more
 }
+
 
 func main() {
 	RegisterAll_PKG()
@@ -706,6 +689,7 @@ func main() {
 		NullableInt32{0, false},
 		nil}
 	foo.Parent = foo
+	foo.Parent.PKG_Foo().Id = 20
 	bb.WriteRoot(foo)
 
 	fmt.Println(foo)
