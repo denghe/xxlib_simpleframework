@@ -2,8 +2,15 @@ package main
 
 import (
 	"fmt"
+	"reflect"
 	"unsafe"
 )
+
+
+/**********************************************************************************************************************/
+// Nullables
+/**********************************************************************************************************************/
+
 
 type NullableUInt8 struct {
 	Value uint8
@@ -56,6 +63,10 @@ type NullableString struct {
 
 
 
+/**********************************************************************************************************************/
+// IObject
+/**********************************************************************************************************************/
+
 
 type IObject interface {
 	GetPackageId() uint16
@@ -65,14 +76,51 @@ type IObject interface {
 
 
 
+/**********************************************************************************************************************/
+// typeIdCreatorMappings
+/**********************************************************************************************************************/
+
+
+
+var typeIdCreatorMappings = map[uint16] func() IObject {}
+
+func RegisterInternals() {
+	typeIdCreatorMappings[2] = func() IObject {
+		return &BBuffer{}
+	}
+}
+
+func Register(typeId uint16, maker func() IObject) {
+	typeIdCreatorMappings[typeId] = maker
+}
+
+func CreateByTypeId(typeId uint16) IObject {
+	maker, found := typeIdCreatorMappings[typeId]
+	if found {
+		return maker()
+	}
+	panic(-3)
+}
+
+
+
+/**********************************************************************************************************************/
+// BBuffer
+/**********************************************************************************************************************/
+
 
 
 type BBuffer struct {
 	Buf []uint8
-	Offset int
-	ReadLengthLimit int
-	// todo
+	Offset,
+	ReadLengthLimit,
+	DataLenBak,
+	OffsetRoot int
+	ptrStore map[IObject] int
+	idxStore map[int] IObject
 }
+
+
 func (zs *BBuffer) DataLen() int {
 	return len(zs.Buf)
 }
@@ -321,12 +369,14 @@ func (zs *BBuffer) WriteNullableString(v NullableString) {
 	}
 }
 func (zs *BBuffer) ReadNullableString() (r NullableString) {
-	r.HasValue = zs.ReadBool()
-	if r.HasValue {
-		bufLen := zs.ReadLength()
-		r.Value = string(zs.Buf[zs.Offset:zs.Offset + bufLen])
-		zs.Offset += bufLen
+	typeId := zs.ReadUInt16()
+	if typeId == 0 {
+		return NullableString{}
 	}
+	bufLen := zs.ReadLength()
+	r.Value = string(zs.Buf[zs.Offset:zs.Offset + bufLen])
+	zs.Offset += bufLen
+	r.HasValue = true
 	return
 }
 
@@ -460,6 +510,66 @@ func (zs *BBuffer) ReadNullableInt64() (r NullableInt64) {
 
 
 
+func (zs *BBuffer) BeginWrite() {
+	zs.ptrStore = make(map[IObject] int)
+	zs.OffsetRoot = len(zs.Buf)
+}
+func (zs *BBuffer) BeginRead() {
+	zs.idxStore = make(map[int] IObject)
+	zs.OffsetRoot = zs.Offset
+}
+
+func (zs *BBuffer) WriteRoot(v IObject) {
+	zs.BeginWrite()
+	zs.WriteIObject(v)
+}
+func (zs *BBuffer) ReadRoot() IObject {
+	zs.BeginRead()
+	return zs.ReadIObject()
+}
+
+func (zs *BBuffer) WriteIObject(v IObject) {
+	if v == nil || reflect.ValueOf(v).IsNil() {
+		zs.Buf = append(zs.Buf, uint8(0))
+		return
+	}
+	zs.WriteUInt16(v.GetPackageId())
+	offset, found := zs.ptrStore[v]
+	if !found {
+		offset = len(zs.Buf) - zs.OffsetRoot
+		zs.ptrStore[v] = offset
+	}
+	zs.WriteLength(offset)
+	if !found {
+		v.ToBBuffer(zs)
+	}
+}
+func (zs *BBuffer) ReadIObject() (r IObject) {
+	typeId := zs.ReadUInt16()
+	if typeId == 0 {
+		return nil
+	}
+	if typeId == 1 {
+		panic(-4)	// need ReadNullableString
+	}
+	offset := zs.Offset - zs.OffsetRoot
+	ptrOffset := zs.ReadLength()
+	if ptrOffset == offset {
+		r = CreateByTypeId(typeId)
+		zs.idxStore[ptrOffset] = r
+		r.FromBBuffer(zs)
+	} else {
+		var found bool
+		r, found = zs.idxStore[ptrOffset]
+		if !found {
+			panic(-5)
+		}
+		if r.GetPackageId() != typeId {
+			panic(-6)
+		}
+	}
+	return
+}
 
 
 
@@ -506,155 +616,233 @@ func (zs *BBuffer) ReadNullableInt64() (r NullableInt64) {
 
 
 
+
+
+/**********************************************************************************************************************/
+// tests
+/**********************************************************************************************************************/
 
 // 模拟生成物
+
+type PKG_Foo_ interface {
+	GetId() int32
+	SetId(v int32)
+
+	GetName() NullableString
+	SetName(v NullableString)
+
+	GetAge() NullableInt32
+	SetAge(v NullableInt32)
+
+	GetParent() PKG_Foo_
+	SetParent(v PKG_Foo_)
+}
 
 type PKG_Foo struct {
 	Id int32
 	Name NullableString
 	Age NullableInt32
+	//Parent *PKG_Foo
+	Parent PKG_Foo_
 }
+
+func (zs *PKG_Foo) GetId() int32 {
+	return zs.Id
+}
+func (zs *PKG_Foo) SetId(v int32) {
+	zs.Id = v
+}
+func (zs *PKG_Foo) GetName() NullableString {
+	return zs.Name
+}
+func (zs *PKG_Foo) SetName(v NullableString) {
+	zs.Name = v
+}
+func (zs *PKG_Foo) GetAge() NullableInt32 {
+	return zs.Age
+}
+func (zs *PKG_Foo) SetAge(v NullableInt32) {
+	zs.Age = v
+}
+func (zs *PKG_Foo) GetParent() PKG_Foo_ {
+	return zs.Parent
+}
+func (zs *PKG_Foo) SetParent(v PKG_Foo_) {
+	zs.Parent = v
+}
+
+
+
 func (zs *PKG_Foo) GetPackageId() uint16 {
 	return uint16(3)
 }
 func (zs *PKG_Foo) ToBBuffer(bb *BBuffer) {
-	if zs == nil {
-		bb.Buf = append(bb.Buf, uint8(0))
-		return
-	}
-	bb.Buf = append(bb.Buf, uint8(1))
 	bb.WriteInt32(zs.Id)
 	bb.WriteNullableString(zs.Name)
 	bb.WriteNullableInt32(zs.Age)
+	bb.WriteIObject(zs.Parent.(IObject))
 }
 func (zs *PKG_Foo) FromBBuffer(bb *BBuffer) {
 	zs.Id = bb.ReadInt32()
 	zs.Name = bb.ReadNullableString()
 	zs.Age = bb.ReadNullableInt32()
+	zs.Parent = bb.ReadIObject().(PKG_Foo_)
 }
 
-
-type PKG_Foos struct {
-	Foos *List_PKG_Foo
+func RegisterAll_PKG() {
+	RegisterInternals()
+	Register(3, func() IObject {
+		return &PKG_Foo{}
+	})
+	// ... more
 }
-func (zs *PKG_Foos) GetPackageId() uint16 {
-	return uint16(4)
-}
-func (zs *PKG_Foos) ToBBuffer(bb *BBuffer) {
-	if zs == nil {
-		bb.Buf = append(bb.Buf, uint8(0))
-		return
-	}
-	zs.Foos.ToBBuffer(bb)
-}
-func (zs *PKG_Foos) FromBBuffer(bb *BBuffer) {
-	if bb.ReadBool() {
-		zs.Foos = &List_PKG_Foo{}
-		zs.Foos.FromBBuffer(bb)
-	}
-}
-type PKG_FooEx struct {
-	PKG_Foo
-	Weight int32
-}
-func (zs *PKG_FooEx) GetPackageId() uint16 {
-	return uint16(5)
-}
-func (zs *PKG_FooEx) ToBBuffer(bb *BBuffer) {
-	if zs == nil {
-		bb.Buf = append(bb.Buf, uint8(0))
-		return
-	}
-	zs.PKG_Foo.ToBBuffer(bb)
-	bb.WriteInt32(zs.Weight)
-}
-func (zs *PKG_FooEx) FromBBuffer(bb *BBuffer) {
-	zs.PKG_Foo.FromBBuffer(bb)
-	zs.Weight = bb.ReadInt32()
-}
-
-
-
-
-
-type List_PKG_Foo []IObject
-func (zs *List_PKG_Foo) GetPackageId() uint16 {
-	return uint16(6)
-}
-func (zs *List_PKG_Foo) SwapRemoveAt(idx int) {
-	count := len(*zs)
-	if idx + 1 < count {
-		(*zs)[idx] = (*zs)[count - 1]
-	}
-	*zs = (*zs)[:count - 1]
-}
-func (zs *List_PKG_Foo) ToBBuffer(bb *BBuffer) {
-	if zs == nil {
-		bb.Buf = append(bb.Buf, uint8(0))
-		return
-	}
-	bb.Buf = append(bb.Buf, uint8(1))
-	bb.WriteLength(len(*zs))
-	for _, v := range *zs {
-		v.ToBBuffer(bb)
-	}
-}
-func (zs *List_PKG_Foo) FromBBuffer(bb *BBuffer) {
-	// todo
-}
-func (zs *List_PKG_Foo) Add(v *PKG_Foo) {
-	*zs = append(*zs, v)
-}
-func (zs *List_PKG_Foo) Add_PKG_FooEx(v *PKG_FooEx) {
-	*zs = append(*zs, v)
-}
-func (zs *List_PKG_Foo) At(idx int) *PKG_Foo {
-	return (*zs)[idx].(*PKG_Foo)
-}
-func (zs *List_PKG_Foo) At_PKG_FooEx(idx int) *PKG_FooEx {
-	return (*zs)[idx].(*PKG_FooEx)
-}
-
-
 
 func main() {
+	RegisterAll_PKG()
 	bb := BBuffer{}
-	foo := PKG_Foo{ 10, NullableString{"asdf", true}, NullableInt32{20, true } }
-	fooex := PKG_FooEx {foo, 30 }
-	foos := PKG_Foos { &List_PKG_Foo{} }
-	foos.Foos.Add_PKG_FooEx( &fooex )
-	foos.Foos.Add( nil )
-	foos.Foos.Add( nil )
-	foos.Foos.Add( nil )
-	foos.Foos.Add( &foo )
-	foos.ToBBuffer(&bb)
-	fmt.Println(bb)
-	bb.Clear()
+	foo := &PKG_Foo{
+		10,
+		NullableString{"asdf", true},
+		NullableInt32{0, false},
+		nil}
+	foo.Parent = foo
+	bb.WriteRoot(foo)
 
-	dump := func() {
-		for _, f := range *foos.Foos {
-			switch f.(type) {
-			case *PKG_Foo:
-				o := f.(*PKG_Foo)
-				if o == nil {
-					fmt.Println("PKG_Foo(nil)")
-				} else {
-					fmt.Println("PKG_Foo")
-				}
-			case *PKG_FooEx:
-				o := f.(*PKG_FooEx)
-				if o == nil {
-					fmt.Println("PKG_FooEx(nil)")
-				} else {
-					fmt.Println("PKG_FooEx")
-				}
-			case nil:
-				fmt.Println("nil")
-			}
-		}
-		fmt.Println()
-	}
-	dump()
-	foos.Foos.SwapRemoveAt(1)
-	dump()
+	fmt.Println(foo)
+	fmt.Println(bb)
+
+	foo2 := bb.ReadRoot().(*PKG_Foo)
+	fmt.Println(foo2)
 }
+
+
+//
+//
+//type PKG_Foos struct {
+//	Foos *List_PKG_Foo
+//}
+//func (zs *PKG_Foos) GetPackageId() uint16 {
+//	return uint16(4)
+//}
+//func (zs *PKG_Foos) ToBBuffer(bb *BBuffer) {
+//	if zs == nil {
+//		bb.Buf = append(bb.Buf, uint8(0))
+//		return
+//	}
+//	zs.Foos.ToBBuffer(bb)
+//}
+//func (zs *PKG_Foos) FromBBuffer(bb *BBuffer) {
+//	if bb.ReadBool() {
+//		zs.Foos = &List_PKG_Foo{}
+//		zs.Foos.FromBBuffer(bb)
+//	}
+//}
+//
+//
+//
+//
+//type PKG_FooEx struct {
+//	PKG_Foo
+//	Weight int32
+//}
+//func (zs *PKG_FooEx) GetPackageId() uint16 {
+//	return uint16(5)
+//}
+//func (zs *PKG_FooEx) ToBBuffer(bb *BBuffer) {
+//	if zs == nil {
+//		bb.Buf = append(bb.Buf, uint8(0))
+//		return
+//	}
+//	zs.PKG_Foo.ToBBuffer(bb)
+//	bb.WriteInt32(zs.Weight)
+//}
+//func (zs *PKG_FooEx) FromBBuffer(bb *BBuffer) {
+//	zs.PKG_Foo.FromBBuffer(bb)
+//	zs.Weight = bb.ReadInt32()
+//}
+//
+//
+//
+//
+//
+//type List_PKG_Foo []IObject
+//func (zs *List_PKG_Foo) GetPackageId() uint16 {
+//	return uint16(6)
+//}
+//func (zs *List_PKG_Foo) SwapRemoveAt(idx int) {
+//	count := len(*zs)
+//	if idx + 1 < count {
+//		(*zs)[idx] = (*zs)[count - 1]
+//	}
+//	*zs = (*zs)[:count - 1]
+//}
+//func (zs *List_PKG_Foo) ToBBuffer(bb *BBuffer) {
+//	if zs == nil {
+//		bb.Buf = append(bb.Buf, uint8(0))
+//		return
+//	}
+//	bb.Buf = append(bb.Buf, uint8(1))
+//	bb.WriteLength(len(*zs))
+//	for _, v := range *zs {
+//		v.ToBBuffer(bb)
+//	}
+//}
+//func (zs *List_PKG_Foo) FromBBuffer(bb *BBuffer) {
+//	// todo
+//}
+//func (zs *List_PKG_Foo) Add(v *PKG_Foo) {
+//	*zs = append(*zs, v)
+//}
+//func (zs *List_PKG_Foo) Add_PKG_FooEx(v *PKG_FooEx) {
+//	*zs = append(*zs, v)
+//}
+//func (zs *List_PKG_Foo) At(idx int) *PKG_Foo {
+//	return (*zs)[idx].(*PKG_Foo)
+//}
+//func (zs *List_PKG_Foo) At_PKG_FooEx(idx int) *PKG_FooEx {
+//	return (*zs)[idx].(*PKG_FooEx)
+//}
+
+
+
+//func main() {
+//	bb := BBuffer{}
+//	foo := PKG_Foo{ 10, NullableString{"asdf", true}, NullableInt32{20, true } }
+//	fooex := PKG_FooEx {foo, 30 }
+//	foos := PKG_Foos { &List_PKG_Foo{} }
+//	foos.Foos.Add_PKG_FooEx( &fooex )
+//	foos.Foos.Add( nil )
+//	foos.Foos.Add( nil )
+//	foos.Foos.Add( nil )
+//	foos.Foos.Add( &foo )
+//	foos.ToBBuffer(&bb)
+//	fmt.Println(bb)
+//	bb.Clear()
+//
+//	dump := func() {
+//		for _, f := range *foos.Foos {
+//			switch f.(type) {
+//			case *PKG_Foo:
+//				o := f.(*PKG_Foo)
+//				if o == nil {
+//					fmt.Println("PKG_Foo(nil)")
+//				} else {
+//					fmt.Println("PKG_Foo")
+//				}
+//			case *PKG_FooEx:
+//				o := f.(*PKG_FooEx)
+//				if o == nil {
+//					fmt.Println("PKG_FooEx(nil)")
+//				} else {
+//					fmt.Println("PKG_FooEx")
+//				}
+//			case nil:
+//				fmt.Println("nil")
+//			}
+//		}
+//		fmt.Println()
+//	}
+//	dump()
+//	foos.Foos.SwapRemoveAt(1)
+//	dump()
+//}
