@@ -655,16 +655,15 @@ func (zs *BBuffer) Read_PKG_Foo() PKG_Foo_Interface {
 		return v.(PKG_Foo_Interface)
 	}
 }
-func (zs *BBuffer) TryReadRoot_PKG_Foo() (r PKG_Foo_Interface, ok bool) {
-	ok = true
+func (zs *BBuffer) TryReadRoot_PKG_Foo() (r *PKG_Foo, ok bool) {
 	defer func() {
 		//recover()
-		ok = false
 	}()
 	v := zs.ReadRoot()
 	if v != nil {
-		r = v.(PKG_Foo_Interface)
+		r = v.(PKG_Foo_Interface).GetFoo()
 	}
+	ok = true
 	return
 }
 
@@ -713,16 +712,15 @@ func (zs *BBuffer) Read_List_Int32() List_Int32_Interface {
 		return v.(List_Int32_Interface)
 	}
 }
-func (zs *BBuffer) TryReadRoot_List_Int32() (r List_Int32_Interface, ok bool) {
-	ok = true
+func (zs *BBuffer) TryReadRoot_List_Int32() (r *List_Int32, ok bool) {
 	defer func() {
 		//recover()
-		ok = false
 	}()
 	v := zs.ReadRoot()
 	if v != nil {
-		r = v.(List_Int32_Interface)
+		r = v.(List_Int32_Interface).GetList_Int32()
 	}
+	ok = true
 	return
 }
 
@@ -774,9 +772,6 @@ type PKG_FooExt1 struct {
 type PKG_FooExt1_Interface interface {
 	GetFooExt1() *PKG_FooExt1
 }
-//func (zs *PKG_FooExt1) GetFoo() *PKG_Foo {
-//	return &zs.PKG_Foo
-//}
 func (zs *PKG_FooExt1) GetFooExt1() *PKG_FooExt1 {
 	return zs
 }
@@ -795,16 +790,15 @@ func (zs *BBuffer) Read_PKG_FooExt1() PKG_FooExt1_Interface {
 		return v.(PKG_FooExt1_Interface)
 	}
 }
-func (zs *BBuffer) TryReadRoot_PKG_FooExt1() (r PKG_FooExt1_Interface, ok bool) {
-	ok = true
+func (zs *BBuffer) TryReadRoot_PKG_FooExt1() (r *PKG_FooExt1, ok bool) {
 	defer func() {
 		//recover()
-		ok = false
 	}()
 	v := zs.ReadRoot()
 	if v != nil {
-		r = v.(PKG_FooExt1_Interface)
+		r = v.(PKG_FooExt1_Interface).GetFooExt1()
 	}
+	ok = true
 	return
 }
 
@@ -854,16 +848,15 @@ func (zs *BBuffer) Read_List_PKG_FooExt1() List_PKG_FooExt1_Interface {
 		return v.(List_PKG_FooExt1_Interface)
 	}
 }
-func (zs *BBuffer) TryReadRoot_List_PKG_FooExt1() (r List_PKG_FooExt1_Interface, ok bool) {
-	ok = true
+func (zs *BBuffer) TryReadRoot_List_PKG_FooExt1() (r *List_PKG_FooExt1, ok bool) {
 	defer func() {
 		//recover()
-		ok = false
 	}()
 	v := zs.ReadRoot()
 	if v != nil {
-		r = v.(List_PKG_FooExt1_Interface)
+		r = v.(List_PKG_FooExt1_Interface).GetList_PKG_FooExt1()
 	}
+	ok = true
 	return
 }
 
@@ -930,11 +923,13 @@ func PKG_RegisterAll() {
 func main() {
 	PKG_RegisterAll()
 	bb := BBuffer{}
+
 	foo := &PKG_Foo{
 		10,
 		NullableString{"asdf", true},
 		NullableInt32{0, false},
-		nil}
+		nil,
+	}
 	//foo.Parent = foo
 	bb.WriteRoot(foo)
 
@@ -945,7 +940,8 @@ func main() {
 		fmt.Println(foo2)
 	}
 
-	fooExt1 := &PKG_FooExt1{*foo, nil}//&List_Int32{ 1,2,3,4 }}
+
+	fooExt1 := &PKG_FooExt1{*foo, &List_Int32{ 1,2,3,4 }}
 	fooExt1.Parent = fooExt1
 	bb.Clear()
 	bb.WriteRoot(fooExt1)
@@ -956,136 +952,22 @@ func main() {
 	if fooExt2, ok := bb.TryReadRoot_PKG_FooExt1(); ok {
 		fmt.Println(fooExt2)
 	}
+
+
+	fooExts := &List_PKG_FooExt1{}
+	*fooExts = append(*fooExts, fooExt1)
+	*fooExts = append(*fooExts, fooExt1)
+	*fooExts = append(*fooExts, fooExt1)
+
+	bb.Clear()
+	bb.WriteRoot(fooExts)
+	fmt.Println(fooExts)
+	fmt.Println(bb)
+
+	if fooExts2, ok := bb.TryReadRoot_List_PKG_FooExt1(); ok {
+		fmt.Println(fooExts2)
+		fmt.Println((*fooExts2)[0])
+	} else {
+		fmt.Println(ok)
+	}
 }
-
-
-//
-//
-//type PKG_Foos struct {
-//	Foos *List_PKG_Foo
-//}
-//func (zs *PKG_Foos) GetPackageId() uint16 {
-//	return uint16(4)
-//}
-//func (zs *PKG_Foos) ToBBuffer(bb *BBuffer) {
-//	if zs == nil {
-//		bb.Buf = append(bb.Buf, uint8(0))
-//		return
-//	}
-//	zs.Foos.ToBBuffer(bb)
-//}
-//func (zs *PKG_Foos) FromBBuffer(bb *BBuffer) {
-//	if bb.ReadBool() {
-//		zs.Foos = &List_PKG_Foo{}
-//		zs.Foos.FromBBuffer(bb)
-//	}
-//}
-//
-//
-//
-//
-//type PKG_FooEx struct {
-//	PKG_Foo
-//	Weight int32
-//}
-//func (zs *PKG_FooEx) GetPackageId() uint16 {
-//	return uint16(5)
-//}
-//func (zs *PKG_FooEx) ToBBuffer(bb *BBuffer) {
-//	if zs == nil {
-//		bb.Buf = append(bb.Buf, uint8(0))
-//		return
-//	}
-//	zs.PKG_Foo.ToBBuffer(bb)
-//	bb.WriteInt32(zs.Weight)
-//}
-//func (zs *PKG_FooEx) FromBBuffer(bb *BBuffer) {
-//	zs.PKG_Foo.FromBBuffer(bb)
-//	zs.Weight = bb.ReadInt32()
-//}
-//
-//
-//
-//
-//
-//type List_PKG_Foo []IObject
-//func (zs *List_PKG_Foo) GetPackageId() uint16 {
-//	return uint16(6)
-//}
-//func (zs *List_PKG_Foo) SwapRemoveAt(idx int) {
-//	count := len(*zs)
-//	if idx + 1 < count {
-//		(*zs)[idx] = (*zs)[count - 1]
-//	}
-//	*zs = (*zs)[:count - 1]
-//}
-//func (zs *List_PKG_Foo) ToBBuffer(bb *BBuffer) {
-//	if zs == nil {
-//		bb.Buf = append(bb.Buf, uint8(0))
-//		return
-//	}
-//	bb.Buf = append(bb.Buf, uint8(1))
-//	bb.WriteLength(len(*zs))
-//	for _, v := range *zs {
-//		v.ToBBuffer(bb)
-//	}
-//}
-//func (zs *List_PKG_Foo) FromBBuffer(bb *BBuffer) {
-//	// todo
-//}
-//func (zs *List_PKG_Foo) Add(v *PKG_Foo) {
-//	*zs = append(*zs, v)
-//}
-//func (zs *List_PKG_Foo) Add_PKG_FooEx(v *PKG_FooEx) {
-//	*zs = append(*zs, v)
-//}
-//func (zs *List_PKG_Foo) At(idx int) *PKG_Foo {
-//	return (*zs)[idx].(*PKG_Foo)
-//}
-//func (zs *List_PKG_Foo) At_PKG_FooEx(idx int) *PKG_FooEx {
-//	return (*zs)[idx].(*PKG_FooEx)
-//}
-
-
-
-//func main() {
-//	bb := BBuffer{}
-//	foo := PKG_Foo{ 10, NullableString{"asdf", true}, NullableInt32{20, true } }
-//	fooex := PKG_FooEx {foo, 30 }
-//	foos := PKG_Foos { &List_PKG_Foo{} }
-//	foos.Foos.Add_PKG_FooEx( &fooex )
-//	foos.Foos.Add( nil )
-//	foos.Foos.Add( nil )
-//	foos.Foos.Add( nil )
-//	foos.Foos.Add( &foo )
-//	foos.ToBBuffer(&bb)
-//	fmt.Println(bb)
-//	bb.Clear()
-//
-//	dump := func() {
-//		for _, f := range *foos.Foos {
-//			switch f.(type) {
-//			case *PKG_Foo:
-//				o := f.(*PKG_Foo)
-//				if o == nil {
-//					fmt.Println("PKG_Foo(nil)")
-//				} else {
-//					fmt.Println("PKG_Foo")
-//				}
-//			case *PKG_FooEx:
-//				o := f.(*PKG_FooEx)
-//				if o == nil {
-//					fmt.Println("PKG_FooEx(nil)")
-//				} else {
-//					fmt.Println("PKG_FooEx")
-//				}
-//			case nil:
-//				fmt.Println("nil")
-//			}
-//		}
-//		fmt.Println()
-//	}
-//	dump()
-//	foos.Foos.SwapRemoveAt(1)
-//	dump()
-//}
