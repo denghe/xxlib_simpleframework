@@ -950,24 +950,21 @@ int xx::UvTcpBase::SendBytes(char const* const& inBuf, int const& len) noexcept
 
 	if (!ptr) return -1;
 
-	struct write_req_t
+	struct uv_write_t_ex : uv_write_t
 	{
-		xx::MemPool* mp;
-		uv_write_t req;
 		uv_buf_t buf;
+		xx::MemPool* mp;
 	};
 	auto mp = (xx::MemPool*)((uv_stream_t*)ptr)->loop->data;
-	auto req = (write_req_t*)mp->Alloc(sizeof(write_req_t));
+	auto req = (uv_write_t_ex*)mp->Alloc(sizeof(uv_write_t_ex) + len);
 	req->mp = mp;
-	auto buf = (char*)mp->Alloc(len);
+	auto buf = (char*)(req + 1);
 	memcpy(buf, inBuf, len);
 	req->buf = uv_buf_init(buf, (uint32_t)len);
-	return uv_write((uv_write_t*)req, (uv_stream_t*)ptr, &req->buf, 1, [](uv_write_t *req, int status) noexcept
+	return uv_write(req, (uv_stream_t*)ptr, &req->buf, 1, [](uv_write_t *req, int status) noexcept
 	{
+		((uv_write_t_ex*)req)->mp->Free(req);
 		//if (status) fprintf(stderr, "Write error: %s\n", uv_strerror(status));
-		auto *wr = (write_req_t*)req;
-		wr->mp->Free(wr->buf.base);
-		wr->mp->Free(wr);
 	});
 }
 
@@ -1752,24 +1749,21 @@ int xx::UvUdpPeer::OutputImpl(char const* inBuf, int len, void* kcpPtr) noexcept
 {
 	auto peer = (UvUdpPeer*)((ikcpcb*)kcpPtr)->user;
 
-	struct uv_udp_send_t_ex
+	struct uv_udp_send_t_ex : uv_udp_send_t
 	{
-		MemPool* mp;
-		uv_udp_send_t req;
 		uv_buf_t buf;
+		MemPool* mp;
 	};
 	auto mp = peer->mempool;
-	auto req = (uv_udp_send_t_ex*)mp->Alloc(sizeof(uv_udp_send_t_ex));
+	auto req = (uv_udp_send_t_ex*)mp->Alloc(sizeof(uv_udp_send_t_ex) + len);
 	req->mp = mp;
-	auto buf = (char*)mp->Alloc(len);
+	auto buf = (char*)(req + 1);
 	memcpy(buf, inBuf, len);
 	req->buf = uv_buf_init(buf, (uint32_t)len);
-	return uv_udp_send((uv_udp_send_t*)req, (uv_udp_t*)peer->listener.ptr, &req->buf, 1, (sockaddr*)peer->addrPtr, [](uv_udp_send_t* req, int status) noexcept
+	return uv_udp_send(req, (uv_udp_t*)peer->listener.ptr, &req->buf, 1, (sockaddr*)peer->addrPtr, [](uv_udp_send_t* req, int status) noexcept
 	{
+		((uv_udp_send_t_ex*)req)->mp->Free(req);
 		//if (status) fprintf(stderr, "Write error: %s\n", uv_strerror(status));
-		auto *wr = (uv_udp_send_t_ex*)req;
-		wr->mp->Free(wr->buf.base);
-		wr->mp->Free(wr);
 	});
 }
 
