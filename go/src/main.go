@@ -920,6 +920,10 @@ func PKG_RegisterAll() {
 	// ... more
 }
 
+
+// todo: 测试枚举模拟. 参考 pb3
+
+
 func main() {
 	PKG_RegisterAll()
 	bb := BBuffer{}
