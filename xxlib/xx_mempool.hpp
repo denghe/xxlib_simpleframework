@@ -1007,7 +1007,7 @@ namespace xx
 	void Unique<T>::Reset(O* const& o) noexcept
 	{
 		static_assert(std::is_base_of_v<T, O>);
-		if (pointer == o) return *this;
+		if (pointer == o) return;
 		Reset();
 		if (o)
 		{
